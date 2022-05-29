@@ -411,27 +411,29 @@ const dataProviderTest = (provider: DataProvider) => {
     })
 
     test('do not buffer leaves', async () => {
-      const { thoughtIndex, lexemeIndex } = importThoughts(`
+      const state = importText({
+        text: `
         - x
           - y
             - z
-      `)
+      `,
+      })(initialState())
 
-      await provider.updateThoughtIndex(thoughtIndex)
-      await provider.updateLexemeIndex(lexemeIndex)
+      await provider.updateThoughtIndex(state.thoughts.thoughtIndex)
+      await provider.updateLexemeIndex(state.thoughts.lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
       const thoughtY = (await getContext(provider, ['x', 'y']))!
 
       // only fetch 1 level of descendants
-      const it = getDescendantThoughts(provider, thoughtX.id, initialState(), { maxDepth: 1 })
+      const it = getDescendantThoughts(provider, thoughtX.id, state, { maxDepth: 1 })
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.thoughtIndex).toEqual({
-        [thoughtX.id]: thoughtIndex[thoughtX.id],
+        [thoughtX.id]: state.thoughts.thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
-          ...thoughtIndex[thoughtY.id],
+          ...state.thoughts.thoughtIndex[thoughtY.id],
           children: [],
           lastUpdated: never(),
           pending: true,
@@ -444,7 +446,7 @@ const dataProviderTest = (provider: DataProvider) => {
         [key]: _.omit(value, 'id'),
       }))
 
-      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(lexemeIndex, ['x', 'y'].map(hashThought)))
+      expect(lexemeIndexLocalWithoutIds).toEqual(_.pick(state.thoughts.lexemeIndex, ['x', 'y'].map(hashThought)))
     })
 
     test('yield thoughts breadth-first', async () => {

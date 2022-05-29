@@ -181,11 +181,20 @@ export const getLexemeIndex = async () => {
 /** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
 export const updateThought = async (
   id: ThoughtId,
-  { children, lastUpdated, value, parentId, archived, rank }: Thought,
+  { children, childrenMap, lastUpdated, value, parentId, archived, rank }: Thought,
 ) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.thoughtIndex.put({ id, value, parentId, rank, children, updatedBy: getSessionId(), lastUpdated })
+    return db.thoughtIndex.put({
+      id,
+      value,
+      parentId,
+      rank,
+      children,
+      childrenMap,
+      updatedBy: getSessionId(),
+      lastUpdated,
+    })
   })
 
 /** Updates multiple thoughts in the thoughtIndex. */
