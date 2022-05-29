@@ -45,8 +45,8 @@ const pushLocal = (
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[id]
       if (name) {
-        const firstChild = thought?.children.find(child => {
-          const thought = updatedThoughtIndex[child]
+        const firstChild = Object.values(thought?.childrenMap || {}).find(childId => {
+          const thought = updatedThoughtIndex[childId]
           return thought && !isFunction(thought.value)
         })
         if (firstChild) {

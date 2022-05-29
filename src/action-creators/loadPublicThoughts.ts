@@ -25,21 +25,21 @@ const loadPublicThoughts = (): Thunk => (dispatch, getState) => {
 
   // fetch children
   publicContextRef.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
-    const parentEntry: Thought = snapshot.val()
+    const thought: Thought = snapshot.val()
 
     const state = getState()
     const remoteState: State = {
       ...state,
       thoughts: {
         thoughtIndex: {
-          [HOME_TOKEN]: parentEntry,
+          [HOME_TOKEN]: thought,
         },
-        lexemeIndex: parentEntry.children.reduce((accum, child) => {
-          const thought = getThoughtById(state, child)
+        lexemeIndex: Object.values(thought.childrenMap).reduce((accum, childId) => {
+          const thought = getThoughtById(state, childId)
           return {
             ...accum,
             [hashThought(thought.value)]: {
-              id: parentEntry.id || createId(),
+              id: thought.id || createId(),
               value: thought.value,
               contexts: [
                 {

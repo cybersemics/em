@@ -3,7 +3,16 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, mergeThoughts, updateThoughts } from '../reducers'
 import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State } from '../@types'
-import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
+import {
+  appendToPath,
+  createChildrenMap,
+  head,
+  isDescendantPath,
+  normalizeThought,
+  pathToContext,
+  reducerFlow,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 export interface MoveThoughtPayload {
@@ -67,20 +76,25 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         })
       }
 
+      const childrenSrc = sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id)
+      const childrenDest = [...destinationThought.children, sourceThought.id]
+
       const thoughtIndexUpdates = {
         ...(!sameContext
           ? {
               // remove source thought from the previous source parent children array
               [sourceParentThought.id]: {
                 ...sourceParentThought,
-                children: sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id),
+                children: childrenSrc,
+                childrenMap: createChildrenMap(state, childrenSrc),
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },
               // add source thought to the destination thought children array
               [destinationThought.id]: {
                 ...destinationThought,
-                children: [...destinationThought.children, sourceThought.id],
+                children: childrenDest,
+                childrenMap: createChildrenMap(state, childrenDest),
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },

@@ -43,23 +43,23 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   // contextEncodedRaw is firebase encoded
   const thoughtIndexUpdates: Index<Thought | null> = keyValueBy(
     newState.thoughts.thoughtIndex || {},
-    (contextEncodedRaw, parentEntryNew) => {
+    (contextEncodedRaw, thoughtNew) => {
       const contextEncoded =
         newState.schemaVersion < SCHEMA_HASHKEYS
           ? contextEncodedRaw === EMPTY_TOKEN
             ? ''
             : firebaseDecode(contextEncodedRaw)
           : contextEncodedRaw
-      const parentEntryOld = oldState.thoughts.thoughtIndex[contextEncoded]
+      const thoughtOld = oldState.thoughts.thoughtIndex[contextEncoded]
       const updated =
-        !parentEntryOld ||
-        parentEntryNew.lastUpdated > parentEntryOld.lastUpdated ||
+        !thoughtOld ||
+        thoughtNew.lastUpdated > thoughtOld.lastUpdated ||
         // root will be empty but have a newer lastUpdated on a fresh start
         // WARNING: If children are added to the root before the remote state is loaded, they will be overwritten
-        parentEntryOld.children.length === 0
+        Object.keys(thoughtOld.childrenMap).length === 0
 
       // update if entry does not exist locally or is newer
-      return updated ? { [contextEncoded]: parentEntryNew } : null
+      return updated ? { [contextEncoded]: thoughtNew } : null
     },
   )
 

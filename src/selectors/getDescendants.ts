@@ -3,7 +3,6 @@ import { compareByRank, sort, unroot } from '../util'
 import { contextToThoughtId, getChildrenRanked } from '../selectors'
 import { Context, Thought, State, ThoughtId } from '../@types'
 import { getAllChildrenAsThoughts } from './getChildren'
-import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
 
 interface OptionsPath {
@@ -51,7 +50,7 @@ export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, opti
 
   if (!thought) return []
 
-  const thoughts = childIdsToThoughts(state, thought.children)
+  const thoughts = getAllChildrenAsThoughts(state, thoughtId)
 
   const children = ordered ? sort(thoughts, compareByRank) : thoughts
 

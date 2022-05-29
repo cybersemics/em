@@ -34,7 +34,7 @@ const mergeThoughts = (
 
   // moving the children of the source thought to the end of the target context.
   const newStateAfterMove = reducerFlow([
-    ...sourceThought.children.map(
+    ...Object.values(sourceThought.childrenMap).map(
       (childId, index) => (updatedState: State) =>
         moveThought(updatedState, {
           oldPath: appendToPath(sourceThoughtPath, childId),
@@ -72,7 +72,9 @@ const mergeThoughts = (
     // delete source thought from the source parent's children array,
     [sourceParentThought.id]: {
       ...sourceParentThoughtUpdated,
-      children: sourceParentThoughtUpdated.children.filter(thoughtId => thoughtId !== sourceThought.id),
+      children: Object.values(sourceParentThoughtUpdated.childrenMap).filter(
+        thoughtId => thoughtId !== sourceThought.id,
+      ),
       updatedAt: timestamp(),
       updatedBy: getSessionId(),
     },

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { hashThought, timestamp } from '../util'
+import { createChildrenMap, hashThought, normalizeThought, timestamp } from '../util'
 import { getLexeme, getThoughtById } from '../selectors'
 import { State } from '../@types'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -21,9 +21,9 @@ const deleteData = (state: State, { value }: { value: string }) => {
         console.error(`Invariant Violation: parent of ${value} has no context: ${JSON.stringify(parent)}`)
         return state
       }
-      const childrenNew = getAllChildrenAsThoughts(state, parent.id).filter(
-        child => hashThought(child.value) !== hashThought(value),
-      )
+      const childrenNew = getAllChildrenAsThoughts(state, parent.id)
+        .filter(child => normalizeThought(child.value) !== normalizeThought(value))
+        .map(child => child.id)
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
@@ -33,7 +33,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
       else {
         thoughtIndex[parent.id] = {
           ...thoughtIndex[parent.id],
-          children: childrenNew.map(({ id }) => id),
+          childrenMap: createChildrenMap(state, childrenNew),
           lastUpdated: timestamp(),
         }
       }

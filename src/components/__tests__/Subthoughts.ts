@@ -541,60 +541,6 @@ describe('hidden thoughts', () => {
   })
 })
 
-describe('expand thoughts', () => {
-  it('re-render Subthought if it is expanded', () => {
-    /* Note: Sometimes children of a Subthought is updated first and then expanded property is updated later.
-      This test checks if the Subthought re-renders in this scenario. https://github.com/cybersemics/em/pull/951
-    */
-
-    // import thoughts
-    store.dispatch([
-      importText({
-        preventSetCursor: true,
-        text: `
-        - a
-          - b
-        - c`,
-      }),
-      // Note: initially setting =pin attribute to false so that on toogling to true children of ['a'] doesn't change
-      toggleAttribute({
-        context: ['a'],
-        key: '=pin',
-        value: 'false',
-      }),
-    ])
-
-    // update DOM
-    wrapper.update()
-
-    const childrenContextA = getAllChildrenByContext(store.getState(), ['a'])
-
-    /** */
-    const thoughtB = () => wrapper.find(Subthoughts).filterWhere(wherePath(store.getState(), ['a', 'b']))
-
-    // context ['a'] is not yet expanded yet
-    expect(thoughtB()).toHaveLength(0)
-
-    store.dispatch(
-      toggleAttribute({
-        context: ['a'],
-        key: '=pin',
-        value: 'true',
-      }),
-    )
-
-    const updatedChildrenContextA = getAllChildrenByContext(store.getState(), ['a'])
-
-    // children of context ['a'] shouldn't change as this test requires Subthought to rerender due to change in expanded
-    expect(updatedChildrenContextA).toBe(childrenContextA)
-
-    wrapper.update()
-
-    // on change of isExpanded the Subthought should re-render and render it's children
-    expect(thoughtB()).toHaveLength(1)
-  })
-})
-
 describe('multi-column mode', () => {
   it('Multi-column mode must not be active on single nested thought', () => {
     // import thoughts

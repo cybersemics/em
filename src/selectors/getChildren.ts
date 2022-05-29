@@ -33,7 +33,8 @@ export const isChildVisible = _.curry((state: State, child: Thought) => {
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
 export const getAllChildren = (state: State, thoughtId: ThoughtId | null): ThoughtId[] => {
   if (!thoughtId) return NO_THOUGHT_IDS
-  const children = getThoughtById(state, thoughtId)?.children
+  const childrenMap = getThoughtById(state, thoughtId)?.childrenMap
+  const children = childrenMap ? Object.values(childrenMap) : []
   return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 

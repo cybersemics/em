@@ -86,7 +86,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
     // count the total number of new children pulled
     const numDescendantsNew = Object.values(thoughts.thoughtIndex).reduce((accum, thought) => {
-      return accum + thought.children.length
+      return accum + Object.keys(thought.childrenMap).length
     }, 0)
 
     // do not update numDescendants directly, since this callback has a high throughput
