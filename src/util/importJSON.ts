@@ -99,6 +99,7 @@ const insertThought = (
     id: newThoughtId,
     value: value,
     children: [],
+    childrenMap: {},
     parentId: thoughtOld.id,
     lastUpdated,
     updatedBy,

@@ -181,6 +181,7 @@ const dataProviderTest = (provider: DataProvider) => {
     const parentEntryX: Thought = {
       id: 'testIdX' as ThoughtId,
       children: ['child1', 'child2'] as ThoughtId[],
+      childrenMap: {},
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'x',
@@ -191,6 +192,7 @@ const dataProviderTest = (provider: DataProvider) => {
     const parentEntryA: Thought = {
       id: 'testIdA' as ThoughtId,
       children: [],
+      childrenMap: {},
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'a',

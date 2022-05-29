@@ -53,6 +53,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       id,
       parentId: parentId,
       children: [],
+      childrenMap: {},
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, id) : rank,
       value: newValue,
