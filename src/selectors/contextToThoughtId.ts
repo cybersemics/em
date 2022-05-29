@@ -1,7 +1,7 @@
 // import * as murmurHash3 from 'murmurhash3js'
 // import globals from '../globals'
 import { EM_TOKEN } from '../constants'
-import { Context, Thought, State, ThoughtId } from '../@types'
+import { Context, Index, Thought, State, ThoughtId } from '../@types'
 import { isRoot } from '../util'
 import { childIdsToThoughts, getThoughtById } from '../selectors'
 
@@ -34,21 +34,16 @@ const recursiveThoughtFinder = (
   thought: Thought,
   target: Context,
   targetIndex = 0,
-  visitedId: string[] = [],
+  visitedIds: Index<boolean> = {}, // keyed by ThoughtId
 ): Thought | null => {
   if (target.length === 0 && thought.children.length === 0) return null
 
   const children = childIdsToThoughts(state, thought.children)
-
-  const child = children.find(child => {
-    const targetValue = target[targetIndex]
-    return targetValue !== undefined && target[targetIndex] === child.value
-  })
+  const child = children.find(child => target[targetIndex] === child.value)
 
   if (!child) return null
-  const isCircular = visitedId.includes(child.id)
 
-  if (isCircular) {
+  if (visitedIds[child.id]) {
     console.warn('circular context found!', target, child)
     return null
   }
@@ -62,7 +57,10 @@ const recursiveThoughtFinder = (
 
   if (targetIndex === target.length - 1) return nextThought
 
-  return recursiveThoughtFinder(state, nextThought, target, targetIndex + 1, [...visitedId, child.id])
+  return recursiveThoughtFinder(state, nextThought, target, targetIndex + 1, {
+    ...visitedIds,
+    [child.id]: true,
+  })
 }
 
 export default contextToThoughtId
