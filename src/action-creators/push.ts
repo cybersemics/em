@@ -109,7 +109,7 @@ const pushRemote =
         accum['thoughtIndex/' + id] = thoughtUpdate
           ? {
               // whitelist properties for persistence
-              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'children']) as Thought),
+              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'childrenMap']) as Thought),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
               ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),

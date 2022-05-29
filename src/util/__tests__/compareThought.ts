@@ -143,7 +143,7 @@ describe('compareReasonableDescending', () => {
     rank: 0,
     value: value,
     parentId: 'ROOT' as ThoughtId,
-    children: [],
+    childrenMap: {},
     lastUpdated: timestamp(),
     updatedBy: timestamp(),
   })

@@ -38,9 +38,9 @@ const checkDataIntegrity = (state: State, max = 100000) => {
 
       if (!lexemeParent) missingLexemeValues = [...missingLexemeValues, thought.value]
 
-      if (!thought.children) return
+      if (!thought.childrenMap) return
 
-      thought.children.forEach(childId => {
+      Object.values(thought.childrenMap).forEach(childId => {
         const childThought = thoughtIndex[childId]
 
         if (!childThought) return

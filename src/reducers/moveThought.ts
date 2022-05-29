@@ -5,9 +5,10 @@ import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } fro
 import { Path, SimplePath, State } from '../@types'
 import {
   appendToPath,
-  createChildrenMap,
   head,
   isDescendantPath,
+  isFunction,
+  keyValueBy,
   normalizeThought,
   pathToContext,
   reducerFlow,
@@ -76,25 +77,29 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         })
       }
 
-      const childrenSrc = sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id)
-      const childrenDest = [...destinationThought.children, sourceThought.id]
+      // remove sourceThought from sourceParentThought
+      const sourceParentThoughtChildrenMapNew = keyValueBy(sourceParentThought.childrenMap, (key, id) =>
+        id !== sourceThought.id ? { [key]: id } : null,
+      )
+
+      // add source thought to the destination thought children array
+      const destinationThoughtChildrenMapNew = {
+        ...destinationThought.childrenMap,
+        [isFunction(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
+      }
 
       const thoughtIndexUpdates = {
         ...(!sameContext
           ? {
-              // remove source thought from the previous source parent children array
               [sourceParentThought.id]: {
                 ...sourceParentThought,
-                children: childrenSrc,
-                childrenMap: createChildrenMap(state, childrenSrc),
+                childrenMap: sourceParentThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },
-              // add source thought to the destination thought children array
               [destinationThought.id]: {
                 ...destinationThought,
-                children: childrenDest,
-                childrenMap: createChildrenMap(state, childrenDest),
+                childrenMap: destinationThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },

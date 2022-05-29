@@ -30,7 +30,7 @@ const db = dexie as DataProvider
 const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Thought>[]) => {
   const parentThought = (await getContext(provider, context))!
   expect(parentThought).toBeTruthy()
-  const childrenThoughts = await provider.getThoughtsByIds(parentThought.children)
+  const childrenThoughts = await provider.getThoughtsByIds(Object.values(parentThought.childrenMap))
   expect(childrenThoughts).toMatchObject(children)
 }
 
@@ -53,11 +53,11 @@ it('load thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const thoughtA = contextToThought(store.getState(), ['a'])
+  const thoughtA = contextToThought(store.getState(), ['a'])!
 
   const parentEntryRoot = await getContext(db, [HOME_TOKEN])
   expect(parentEntryRoot).toMatchObject({
-    children: [thoughtA?.id],
+    childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
   fakeTimer.useFakeTimer()
@@ -74,7 +74,7 @@ it('load thought', async () => {
   // confirm thought is still in local db after state has been cleared
   const parentEntryRootAfterReload = await getContext(db, [HOME_TOKEN])
   expect(parentEntryRootAfterReload).toMatchObject({
-    children: [thoughtA?.id],
+    childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
   await refreshTestApp()
@@ -100,7 +100,7 @@ it('do not repopulate deleted thought', async () => {
 
   const parentEntryRoot = contextToThought(store.getState(), [HOME_TOKEN])
   expect(parentEntryRoot).toMatchObject({
-    children: [],
+    childrenMap: {},
   })
 
   const parentEntryChild = contextToThought(store.getState(), [''])
@@ -226,13 +226,17 @@ it('move thought with buffered descendants', async () => {
   const thoughtD = contextToThought(store.getState(), ['a', 'b', 'c', 'd'])!
   const thoughtE = contextToThought(store.getState(), ['a', 'b', 'c', 'd', 'e'])!
 
-  expect(await getThoughtByIdFromDB(db, HOME_TOKEN)).toMatchObject({ children: [thoughtX.id, thoughtA.id] })
-  expect(await getThoughtByIdFromDB(db, thoughtA.id)).toMatchObject({ children: [thoughtM.id, thoughtB.id] })
-  expect(await getThoughtByIdFromDB(db, thoughtB.id)).toMatchObject({ children: [thoughtC.id] })
-  expect(await getThoughtByIdFromDB(db, thoughtM.id)).toMatchObject({ children: [] })
-  expect(await getThoughtByIdFromDB(db, thoughtC.id)).toMatchObject({ children: [thoughtD.id] })
-  expect(await getThoughtByIdFromDB(db, thoughtD.id)).toMatchObject({ children: [thoughtE.id] })
-  expect(await getThoughtByIdFromDB(db, thoughtE.id)).toMatchObject({ children: [] })
+  expect(await getThoughtByIdFromDB(db, HOME_TOKEN)).toMatchObject({
+    childrenMap: { [thoughtX.id]: thoughtX.id, [thoughtA.id]: thoughtA.id },
+  })
+  expect(await getThoughtByIdFromDB(db, thoughtA.id)).toMatchObject({
+    childrenMap: { [thoughtM.id]: thoughtM.id, [thoughtB.id]: thoughtB.id },
+  })
+  expect(await getThoughtByIdFromDB(db, thoughtB.id)).toMatchObject({ childrenMap: { [thoughtC.id]: thoughtC.id } })
+  expect(await getThoughtByIdFromDB(db, thoughtM.id)).toMatchObject({ childrenMap: {} })
+  expect(await getThoughtByIdFromDB(db, thoughtC.id)).toMatchObject({ childrenMap: { [thoughtD.id]: thoughtD.id } })
+  expect(await getThoughtByIdFromDB(db, thoughtD.id)).toMatchObject({ childrenMap: { [thoughtE.id]: thoughtE.id } })
+  expect(await getThoughtByIdFromDB(db, thoughtE.id)).toMatchObject({ childrenMap: {} })
 
   await refreshTestApp()
 

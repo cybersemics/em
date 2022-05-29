@@ -175,16 +175,16 @@ it('merge descendants', () => {
 
   expect(thoughtIndex).toMatchObject({
     [contextToThoughtId(newState, [HOME_TOKEN])!]: {
-      children: [thoughtA.id, thoughtJ.id],
+      childrenMap: { [thoughtA.id]: thoughtA.id, [thoughtJ.id]: thoughtJ.id },
     },
     [thoughtA.id]: {
-      children: [thoughtB.id, thoughtX.id],
+      childrenMap: { [thoughtB.id]: thoughtB.id, [thoughtX.id]: thoughtX.id },
     },
     [thoughtB.id]: {
-      children: [thoughtC.id, thoughtQ.id],
+      childrenMap: { [thoughtC.id]: thoughtC.id, [thoughtQ.id]: thoughtQ.id },
     },
     [thoughtX.id]: {
-      children: [thoughtY.id],
+      childrenMap: { [thoughtY.id]: thoughtY.id },
     },
   })
 

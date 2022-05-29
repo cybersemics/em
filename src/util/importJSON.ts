@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf, childIdsToThoughts } from '../selectors'
+import { childIdsToThoughts, getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
 import {
   Block,
   Context,
@@ -19,6 +19,7 @@ import {
   createChildrenMap,
   hashThought,
   head,
+  isFunction,
   pathToContext,
   removeContext,
   timestamp,
@@ -82,23 +83,19 @@ const insertThought = (
     updatedBy,
   }
 
-  const childrenNew = [...thoughtOld.children, newThoughtId]
-
   const thoughtNew: Thought = {
     // TODO: merging thoughtOld results in pending: true when importing into initialState. Is that correct?
     ...thoughtOld,
     value: head(rootContext),
     parentId: thoughtOld.parentId,
-    children: childrenNew,
-    childrenMap: createChildrenMap(state, childrenNew),
+    childrenMap: { ...thoughtOld.childrenMap, [isFunction(value) ? value : newThoughtId]: newThoughtId },
     lastUpdated,
     updatedBy,
   }
 
   const newThought: Thought = {
     id: newThoughtId,
-    value: value,
-    children: [],
+    value,
     childrenMap: {},
     parentId: thoughtOld.id,
     lastUpdated,
@@ -123,9 +120,9 @@ const saveThoughts = (
   lastUpdated = timestamp(),
   updatedBy = getSessionId(),
 ): ThoughtIndices => {
-  const contextEncoded = head(path)
+  const id = head(path)
 
-  if (!contextEncoded)
+  if (!id)
     return {
       lexemeIndex: {},
       thoughtIndex: {},
@@ -152,7 +149,7 @@ const saveThoughts = (
        * Insert thought and return thought indices updates.
        */
       const insert = () => {
-        const existingParent = stateNewBeforeInsert.thoughts.thoughtIndex[contextEncoded]
+        const existingParent = stateNewBeforeInsert.thoughts.thoughtIndex[id]
 
         const childLastUpdated = block.children[0]?.lastUpdated
         const childCreated = block.children[0]?.created
@@ -175,7 +172,7 @@ const saveThoughts = (
             [hashThought(nonDuplicateValue)]: lexeme,
           },
           thoughtIndex: {
-            [contextEncoded]: thought,
+            [id]: thought,
             [newThought.id]: newThought,
           },
         }
@@ -203,11 +200,13 @@ const saveThoughts = (
        * Get the last added child.
        */
       const getLastAddedChild = () => {
-        const thought = updatedState.thoughts.thoughtIndex[contextEncoded]
-        return childIdsToThoughts(updatedState, thought.children).find(child => child.value === nonDuplicateValue)
+        const thought = updatedState.thoughts.thoughtIndex[id]
+        return childIdsToThoughts(updatedState, Object.values(thought.childrenMap)).find(
+          child => child.value === nonDuplicateValue,
+        )!.id
       }
 
-      const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()!.id]
+      const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()]
 
       const updatedAccumulatedThoughtIndex = {
         ...accum.thoughtIndex,
@@ -251,20 +250,20 @@ const saveThoughts = (
 
   // insert the new thoughtIndex into the state just for createChildrenMap
   // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
-  const stateWithNewThoughtIndex = {
-    ...state,
-    thoughts: {
-      ...state.thoughts,
-      thoughtIndex: { ...state.thoughts.thoughtIndex, ...updates.thoughtIndex },
-    },
-  }
+  // const stateWithNewThoughtIndex = {
+  //   ...state,
+  //   thoughts: {
+  //     ...state.thoughts,
+  //     thoughtIndex: { ...state.thoughts.thoughtIndex, ...updates.thoughtIndex },
+  //   },
+  // }
 
   // set childrenMap on each thought
   // this must be done after all thoughts have been inserted, because siblings are not always present when a thought is created, causing them to be omitted from the childrenMap
-  Object.values(updates.thoughtIndex).forEach(update => {
-    if (!update) return
-    update.childrenMap = createChildrenMap(stateWithNewThoughtIndex, update.children)
-  })
+  // Object.values(updates.thoughtIndex).forEach(update => {
+  //   if (!update) return
+  //   update.childrenMap = createChildrenMap(stateWithNewThoughtIndex, Object.values(update.childrenMap))
+  // })
 
   return {
     thoughtIndex: updates.thoughtIndex,
@@ -324,7 +323,7 @@ export const importJSON = (
       const childrenNew = getAllChildren(state, head(path)).filter(child => child !== destThought.id)
       initialThoughtIndex[id] = {
         ...state.thoughts.thoughtIndex[id],
-        children: childrenNew,
+        childrenMap: createChildrenMap(state, childrenNew),
         lastUpdated,
         updatedBy,
       }
@@ -354,9 +353,10 @@ export const importJSON = (
 
   // get the last child imported in the first level so the cursor can be set
   const thought = initialThoughtIndex[id]
-  const lastChildIndex = (thought?.children.length || 0) + blocksNormalized.length - 1
-  const importContextEncoded = headId(importPath)
-  const lastChildFirstLevel = thoughtIndex[importContextEncoded]?.children[lastChildIndex]
+  const lastChildIndex = ((thought && Object.values(thought.childrenMap).length) || 0) + blocksNormalized.length - 1
+  const importId = headId(importPath)
+  const lastChildFirstLevel =
+    thoughtIndex[importId] && Object.values(thoughtIndex[importId].childrenMap)[lastChildIndex]
 
   // there may be no last child even if there are imported blocks, i.e. a lone __ROOT__
   const lastImported = lastChildFirstLevel ? appendToPath(importPath, lastChildFirstLevel) : null

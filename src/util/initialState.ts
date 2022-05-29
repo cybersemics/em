@@ -23,7 +23,6 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: HOME_TOKEN as ThoughtId,
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID as ThoughtId,
-      children: [],
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -35,7 +34,6 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: ABSOLUTE_TOKEN as ThoughtId,
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID as ThoughtId,
-      children: [],
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -47,7 +45,6 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
       id: EM_TOKEN as ThoughtId,
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID as ThoughtId,
-      children: [],
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,

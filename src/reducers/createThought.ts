@@ -49,10 +49,9 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       .filter(child => child !== id)
       .concat(id)
 
-    const thoughtNew = {
+    const thoughtNew: Thought = {
       id,
       parentId: parentId,
-      children: [],
       childrenMap: {},
       lastUpdated: timestamp(),
       rank: addAsContext ? getNextRank(state, id) : rank,
@@ -73,7 +72,6 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
     thoughtIndexUpdates[parentId] = {
       ...parent,
       id: parentId,
-      children,
       childrenMap: createChildrenMap(stateWithNewThought, children),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),

@@ -161,27 +161,33 @@ const dataProviderTest = (provider: DataProvider) => {
     const nocontext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(nocontext).toBeUndefined()
 
-    const parentEntry = {
-      id: 'test',
-      children: ['child1', 'child2', 'child3'],
+    const thought = {
+      id: 'test' as ThoughtId,
+      childrenMap: {
+        child1: 'child1' as ThoughtId,
+        child2: 'child2' as ThoughtId,
+        child3: 'child3' as ThoughtId,
+      },
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'x',
-      parentId: 'parentId',
+      parentId: 'parentId' as ThoughtId,
       rank: 0,
     } as Thought
 
-    await provider.updateThought('test' as ThoughtId, parentEntry)
+    await provider.updateThought('test' as ThoughtId, thought)
 
     const dbContext = await getThoughtById(provider, 'test' as ThoughtId)
-    expect(dbContext).toEqual(parentEntry)
+    expect(dbContext).toEqual(thought)
   })
 
   test('getThoughtsByIds', async () => {
     const parentEntryX: Thought = {
       id: 'testIdX' as ThoughtId,
-      children: ['child1', 'child2'] as ThoughtId[],
-      childrenMap: {},
+      childrenMap: {
+        child1: 'child1' as ThoughtId,
+        child2: 'child2' as ThoughtId,
+      },
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
       value: 'x',
@@ -191,7 +197,6 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const parentEntryA: Thought = {
       id: 'testIdA' as ThoughtId,
-      children: [],
       childrenMap: {},
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
@@ -242,21 +247,29 @@ const dataProviderTest = (provider: DataProvider) => {
 
   test('updateThoughtIndex', async () => {
     const parentEntryX = {
-      id: 'idX',
-      children: ['childId1', 'childId2', 'childId3'],
+      id: 'idX' as ThoughtId,
+      childrenMap: {
+        child1: 'child1' as ThoughtId,
+        child2: 'child2' as ThoughtId,
+        child3: 'child3' as ThoughtId,
+      },
       value: 'x',
-      parentId: 'parent1',
+      parentId: 'parent1' as ThoughtId,
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     } as Thought
 
     const parentEntryY = {
-      id: 'idY',
-      children: ['childId1', 'childId2', 'childId3'],
+      id: 'idY' as ThoughtId,
+      childrenMap: {
+        child1: 'child1' as ThoughtId,
+        child2: 'child2' as ThoughtId,
+        child3: 'child3' as ThoughtId,
+      },
       value: 'y',
       rank: 1,
-      parentId: 'parent2',
+      parentId: 'parent2' as ThoughtId,
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     } as Thought
@@ -350,7 +363,7 @@ const dataProviderTest = (provider: DataProvider) => {
         [thoughtX.id]: thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
           id: thoughtY.id,
-          children: [],
+          childrenMap: {},
           lastUpdated: never(),
           updatedBy: getSessionId(),
           pending: true,
@@ -394,7 +407,7 @@ const dataProviderTest = (provider: DataProvider) => {
         [thoughtZ.id]: {
           id: thoughtZ.id,
           value: 'z',
-          children: [],
+          childrenMap: {},
           lastUpdated: never(),
           updatedBy: getSessionId(),
           pending: true,
@@ -436,7 +449,7 @@ const dataProviderTest = (provider: DataProvider) => {
         [thoughtX.id]: state.thoughts.thoughtIndex[thoughtX.id],
         [thoughtY.id]: {
           ...state.thoughts.thoughtIndex[thoughtY.id],
-          children: [],
+          childrenMap: {},
           lastUpdated: never(),
           pending: true,
         },
@@ -559,14 +572,14 @@ const dataProviderTest = (provider: DataProvider) => {
         ..._.pick(thoughtIndex, ...(await getThoughtIdsForContexts(provider, [['x'], ['x', 'y'], ['t'], ['t', 'u']]))),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          children: [],
+          childrenMap: {},
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
-          children: [],
+          childrenMap: {},
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
@@ -628,7 +641,7 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          children: [],
+          childrenMap: {},
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
