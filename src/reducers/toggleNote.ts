@@ -1,4 +1,4 @@
-import { attribute, hasChild } from '../selectors'
+import { attribute, findDescendant } from '../selectors'
 import { deleteAttribute, setAttribute, setNoteFocus } from '../reducers'
 import { head, pathToContext, reducerFlow } from '../util'
 import { State } from '../@types/State'
@@ -7,7 +7,7 @@ import { State } from '../@types/State'
 const toggleNote = (state: State) => {
   const context = pathToContext(state, state.cursor!)
   const thoughtId = head(state.cursor!)
-  const hasNote = hasChild(state, thoughtId, '=note')
+  const hasNote = findDescendant(state, thoughtId, '=note')
 
   return reducerFlow([
     // create an empty note if it doesn't exist

@@ -63,7 +63,6 @@ import {
   getContexts,
   getSetting,
   getLexeme,
-  hasChild,
   isContextViewActive,
   rootedParentOf,
   getThoughtById,
@@ -180,8 +179,8 @@ const Editable = ({
   const thoughts = pathToContext(state, simplePath)
   const value = thought.value || ''
   const parentId = head(rootedParentOf(state, simplePath))
-  const readonly = hasChild(state, thoughtId, '=readonly')
-  const uneditable = hasChild(state, thoughtId, '=uneditable')
+  const readonly = findDescendant(state, thoughtId, '=readonly')
+  const uneditable = findDescendant(state, thoughtId, '=uneditable')
   const context =
     showContexts && thoughts.length > 2
       ? parentOf(parentOf(thoughts))

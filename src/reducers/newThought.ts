@@ -44,7 +44,7 @@ import {
   getSetting,
   getSortPreference,
   getThoughtById,
-  hasChild,
+  findDescendant,
   isContextViewActive,
   rootedParentOf,
   simplifyPath,
@@ -113,11 +113,11 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // prevent adding Subthought to readonly or unextendable Thought
   const sourceId = insertNewSubthought ? thoughtId : parentId
   const sourceThought = getThoughtById(state, sourceId)
-  if (hasChild(state, sourceId, '=readonly')) {
+  if (findDescendant(state, sourceId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(sourceThought.value)}" is read-only. No subthoughts may be added.`,
     })
-  } else if (hasChild(state, sourceId, '=unextendable')) {
+  } else if (findDescendant(state, sourceId, '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(sourceThought.value)}" is unextendable. No subthoughts may be added.`,
     })

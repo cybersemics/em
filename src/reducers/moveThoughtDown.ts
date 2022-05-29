@@ -7,7 +7,7 @@ import {
   getSortPreference,
   getThoughtAfter,
   getThoughtById,
-  hasChild,
+  findDescendant,
   nextSibling,
   rootedParentOf,
   simplifyPath,
@@ -41,19 +41,19 @@ const moveThoughtDown = (state: State) => {
     return alert(state, {
       value: `Cannot move subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" while sort is enabled.`,
     })
-  } else if (hasChild(state, thoughtId, '=readonly')) {
+  } else if (findDescendant(state, thoughtId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be moved.`,
     })
-  } else if (hasChild(state, thoughtId, '=immovable')) {
+  } else if (findDescendant(state, thoughtId, '=immovable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursor))}" is immovable.`,
     })
-  } else if (hasChild(state, parentId, '=readonly')) {
+  } else if (findDescendant(state, parentId, '=readonly')) {
     return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are read-only and cannot be moved.`,
     })
-  } else if (hasChild(state, parentId, '=immovable')) {
+  } else if (findDescendant(state, parentId, '=immovable')) {
     return alert(state, {
       value: `Subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" are immovable.`,
     })

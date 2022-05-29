@@ -1,5 +1,5 @@
 import { head, isDocumentEditable } from '../util'
-import { hasChild } from '../selectors'
+import { findDescendant } from '../selectors'
 import { indent } from '../action-creators'
 import { Shortcut, State } from '../@types'
 import * as selection from '../device/selection'
@@ -11,10 +11,10 @@ const canExecute = (getState: () => State) => {
   if (!cursor) return false
 
   /** Returns true if the cursor is immovable. */
-  const immovable = () => hasChild(state, head(cursor), '=immovable')
+  const immovable = () => findDescendant(state, head(cursor), '=immovable')
 
   /** Returns true if the cursor is readonly. */
-  const readonly = () => hasChild(state, head(cursor), '=readonly')
+  const readonly = () => findDescendant(state, head(cursor), '=readonly')
 
   // isActive is not enough on its own, because there is a case where there is a selection object but no focusNode and we want to still execute the shortcut
   if (!selection.isActive() && selection.isText()) return false

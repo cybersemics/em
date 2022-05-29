@@ -27,7 +27,7 @@ type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
 export const isChildVisible = _.curry((state: State, child: Thought) => {
   // temporarily disable =hidden for performance
-  return !isFunction(child.value) // && !hasChild(state, child.id, '=hidden')
+  return !isFunction(child.value) // && !findDescendant(state, child.id, '=hidden')
 })
 
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */

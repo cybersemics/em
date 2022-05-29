@@ -1,7 +1,7 @@
 import React from 'react'
 // import { Key } from 'ts-key-enum'
 // import { isTouch } from '../browser'
-// import { hasChild } from '../selectors'
+// import { findDescendant } from '../selectors'
 // import { ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext } from '../util'
 // import { alert, archiveThought, deleteAttribute, error } from '../action-creators'
 // import * as selection from '../device/selection'
@@ -22,7 +22,7 @@ import { Alert } from 'react-native'
 //     if (isEM(cursor) || isRoot(cursor)) {
 //       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
 //     }
-//     else if (hasChild(state, context, '=readonly')) {
+//     else if (findDescendant(state, context, '=readonly')) {
 //       dispatch(error({ value: `"${ellipsize(headValue(cursor))}" is read-only and cannot be deleted.` }))
 //     }
 //     else {

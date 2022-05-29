@@ -1,7 +1,7 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
 import { HOME_PATH } from '../constants'
-import { getThoughtById, hasChild } from '../selectors'
+import { getThoughtById, findDescendant } from '../selectors'
 import { appendToPath, ellipsize, head, isDocumentEditable, isEM, isRoot } from '../util'
 import { alert, archiveThought, error } from '../action-creators'
 import { Icon as IconType, Shortcut } from '../@types'
@@ -18,7 +18,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     const cursorThought = getThoughtById(state, head(cursor))
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
-    } else if (hasChild(state, head(cursor), '=readonly')) {
+    } else if (findDescendant(state, head(cursor), '=readonly')) {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH

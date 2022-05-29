@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { deleteThought } from '../reducers'
-import { hasChild } from '../selectors'
+import { findDescendant } from '../selectors'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { head, pathToContext } from '../util'
 import { Path, State } from '../@types'
@@ -13,7 +13,7 @@ const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }
   const thoughtAttribute = getAllChildrenAsThoughts(state, head(path)).find(child => child.value === key)
   const pathAttribute = thoughtAttribute ? [...path, thoughtAttribute.id] : null
 
-  return pathAttribute && hasChild(state, head(path), key)
+  return pathAttribute && findDescendant(state, head(path), key)
     ? deleteThought(state, {
         context,
         showContexts: false,

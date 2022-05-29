@@ -21,7 +21,7 @@ import {
 import {
   getAllChildren,
   getContextsSortedAndRanked,
-  hasChild,
+  findDescendant,
   isContextViewActive,
   lastThoughtsFromContextChain,
   nextSibling,
@@ -161,7 +161,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       : [
           // create =archive if it does not exist
           (state: State) =>
-            !hasChild(state, head(pathParent), '=archive')
+            !findDescendant(state, head(pathParent), '=archive')
               ? newThought(state, {
                   at: pathParent,
                   insertNewSubthought: true,

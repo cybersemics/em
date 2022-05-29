@@ -5,7 +5,7 @@ import {
   getChildren,
   getThoughtBefore,
   getChildrenRanked,
-  hasChild,
+  findDescendant,
   isContextViewActive,
   lastThoughtsFromContextChain,
   rootedParentOf,
@@ -58,7 +58,7 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const prevThought = getThoughtBefore(state, simplePath)
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
-  const uneditable = contextOfCursor && hasChild(state, head(cursor), '=uneditable')
+  const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
   const children = getChildren(state, head(cursor))
 
   if (prevThought && uneditable) {
