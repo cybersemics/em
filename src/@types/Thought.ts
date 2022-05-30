@@ -1,3 +1,4 @@
+import { Index } from './IndexType'
 import { ThoughtId } from './ThoughtId'
 import { Timestamp } from './Timestamp'
 
@@ -7,7 +8,7 @@ export interface Thought {
   value: string
   rank: number
   parentId: ThoughtId
-  children: ThoughtId[]
+  childrenMap: Index<ThoughtId> // key and value are of type ThoughtId
   lastUpdated: Timestamp
   pending?: boolean
   archived?: Timestamp

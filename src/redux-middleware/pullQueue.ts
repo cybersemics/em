@@ -48,7 +48,7 @@ const appendVisiblePathsChildren = (
       const children = thought
         ? showContexts
           ? getContexts(state, thought.value)
-          : state.thoughts.thoughtIndex[thoughtId].children
+          : Object.values(state.thoughts.thoughtIndex[thoughtId].childrenMap)
         : []
 
       return {

@@ -45,8 +45,8 @@ const pushLocal = (
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[id]
       if (name) {
-        const firstChild = thought?.children.find(child => {
-          const thought = updatedThoughtIndex[child]
+        const firstChild = Object.values(thought?.childrenMap || {}).find(childId => {
+          const thought = updatedThoughtIndex[childId]
           return thought && !isFunction(thought.value)
         })
         if (firstChild) {
@@ -109,7 +109,7 @@ const pushRemote =
         accum['thoughtIndex/' + id] = thoughtUpdate
           ? {
               // whitelist properties for persistence
-              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'children']) as Thought),
+              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'childrenMap']) as Thought),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
               ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),

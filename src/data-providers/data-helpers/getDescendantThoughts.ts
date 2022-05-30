@@ -30,7 +30,7 @@ const isUnbuffered = (state: State, thought: Thought) => {
   }
 
   return (
-    thought.children.length === 0 ||
+    Object.keys(thought.childrenMap).length === 0 ||
     context.includes(EM_TOKEN) ||
     (context.find(isFunction) && !context.includes('=archive'))
   )
@@ -59,13 +59,13 @@ async function* getDescendantThoughts(
   while (thoughtIdQueue.length > 0) {
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
     // filter out the missing thought ids and proceed as usual
-    const providerParentsRaw = await provider.getThoughtsByIds(thoughtIdQueue)
-    const thoughtIdsValidated = thoughtIdQueue.filter((value, i) => providerParentsRaw[i])
-    const providerParentsValidated = providerParentsRaw.filter(Boolean) as Thought[]
+    const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue)
+    const thoughtIdsValidated = thoughtIdQueue.filter((value, i) => providerThoughtsRaw[i])
+    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
 
     // all pulled thought entries
     const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
-      return { [id]: providerParentsValidated[i] }
+      return { [id]: providerThoughtsValidated[i] }
     })
 
     accumulatedThoughtIndex = {
@@ -83,13 +83,13 @@ async function* getDescendantThoughts(
 
     const thoughts =
       currentMaxDepth > 0
-        ? providerParentsValidated
-        : providerParentsValidated.map(thought => ({
+        ? providerThoughtsValidated
+        : providerThoughtsValidated.map(thought => ({
             ...thought,
             ...(!isUnbuffered(updatedState, thought)
               ? {
                   // @MIGRATION_TODO: Previouss implementaion kept the meta children. But now we cannot determine the meta children just by id, without pulling the data from the db.
-                  children: [],
+                  childrenMap: {},
                   lastUpdated: never(),
                   updatedBy: getSessionId(),
                   pending: true,
@@ -98,9 +98,7 @@ async function* getDescendantThoughts(
           }))
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
-    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
-      return { [id]: thoughts[i] }
-    })
+    const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))
 
     const thoughtHashes = thoughtIdsValidated.map(id => {
       const thought = getThoughtById(updatedState, id)
@@ -120,7 +118,7 @@ async function* getDescendantThoughts(
     }
 
     // enqueue children
-    thoughtIdQueue = thoughts.map(thought => thought.children).flat()
+    thoughtIdQueue = thoughts.map(thought => Object.values(thought.childrenMap)).flat()
 
     // yield thought
     yield thoughtsIndices

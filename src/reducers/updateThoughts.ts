@@ -120,7 +120,7 @@ const updateThoughts = (
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
     lexemeIndexUpdates,
-    thoughtIndexUpdates,
+    thoughtIndexUpdates: thoughtIndexUpdates,
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,
@@ -142,7 +142,8 @@ const updateThoughts = (
       // Disable isLoading if the root children have been loaded.
       // Otherwise NewThoughtInstructions will still be shown since there are no children to render.
       // If the root has no children and is no longer pending, we can disable isLoading immediately.
-      (rootThought.children.length === 0 || rootThought.children.find(childId => thoughtIndex[childId]))
+      (Object.keys(rootThought.childrenMap).length === 0 ||
+        Object.values(rootThought.childrenMap).find(childId => thoughtIndex[childId]))
     return isLoading ?? !thoughtsLoaded
   }
 

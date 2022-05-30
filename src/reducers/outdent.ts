@@ -1,5 +1,5 @@
 import { alert, moveThought } from '../reducers'
-import { getRankAfter, hasChild, rootedParentOf, simplifyPath } from '../selectors'
+import { getRankAfter, findDescendant, rootedParentOf, simplifyPath } from '../selectors'
 import { Path, State } from '../@types'
 import { ellipsize, head, headValue, isEM, isRoot, parentOf, unroot } from '../util'
 import * as selection from '../device/selection'
@@ -16,14 +16,14 @@ const outdent = (state: State) => {
     })
   }
   // cancel if parent is readonly or unextendable
-  else if (hasChild(state, head(parentOf(cursor)), '=readonly')) {
+  else if (findDescendant(state, head(parentOf(cursor)), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is read-only so "${headValue(
         state,
         cursor,
       )}" may not be de-indented.`,
     })
-  } else if (hasChild(state, head(parentOf(cursor)), '=unextendable')) {
+  } else if (findDescendant(state, head(parentOf(cursor)), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)))}" is unextendable so "${headValue(
         state,

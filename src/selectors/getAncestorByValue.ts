@@ -7,7 +7,7 @@ import { Index, Thought, State, ThoughtId } from '../@types'
 const getAncestorBy = (
   state: State,
   thoughtId: ThoughtId,
-  checkFn: (thought: Thought) => boolean,
+  predicate: (thought: Thought) => boolean,
   traversedIds: Index<boolean> = {},
 ): Thought | null => {
   const thought = getThoughtById(state, thoughtId)
@@ -22,10 +22,9 @@ const getAncestorBy = (
     return null
   }
 
-  const flag = checkFn(parentThought)
-  return flag
+  return predicate(parentThought)
     ? parentThought
-    : getAncestorBy(state, parentThought.id, checkFn, {
+    : getAncestorBy(state, parentThought.id, predicate, {
         ...traversedIds,
         [thought.id]: true,
         [parentThought.id]: true,
@@ -38,4 +37,4 @@ const getAncestorBy = (
 export const getAncestorByValue = (state: State, thoughtId: ThoughtId, value: string) =>
   getAncestorBy(state, thoughtId, thought => thought.value === value)
 
-export default getAncestorBy
+export default getAncestorByValue

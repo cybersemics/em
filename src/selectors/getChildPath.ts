@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { getAllChildren, getThoughtById, contextToPath } from '../selectors'
-import { hashThought, head, unroot } from '../util'
+import { head, normalizeThought, unroot } from '../util'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
 import parentOfThought from './parentOfThought'
@@ -23,7 +23,7 @@ const getChildPath = _.memoize(
     const simplePathHeadThought = getThoughtById(state, head(simplePath))
     const otherSubthought = (
       showContexts && parentOfThought(state, child)!.id ? getAllChildrenAsThoughts(state, child) : []
-    ).find(child => hashThought(child.value) === hashThought(simplePathHeadThought.value))?.id
+    ).find(child => normalizeThought(child.value) === normalizeThought(simplePathHeadThought.value))?.id
 
     const path = showContexts && contextToPath(state, thoughtToContext(state, child)!)
     const childPath = (

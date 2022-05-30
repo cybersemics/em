@@ -4,7 +4,16 @@ import { updateThoughts } from '../reducers'
 import { getChildrenRanked, getLexeme, getThoughtById, hasLexeme, rootedParentOf, thoughtToPath } from '../selectors'
 import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
 import { getSessionId } from '../util/sessionManager'
-import { equalArrays, hashThought, isDescendant, reducerFlow, removeContext, timestamp, unroot } from '../util'
+import {
+  equalArrays,
+  hashThought,
+  isDescendant,
+  keyValueBy,
+  reducerFlow,
+  removeContext,
+  timestamp,
+  unroot,
+} from '../util'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
@@ -99,8 +108,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   const contextViewsNew = { ...state.contextViews }
   if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const subthoughts = getAllChildrenAsThoughts(state, parent?.id || null).filter(
-    child => child.id !== deletedThought.id,
+  const children = getAllChildrenAsThoughts(state, parent?.id || null).filter(child => child.id !== deletedThought.id)
+  const childrenMap = keyValueBy(
+    parent?.childrenMap || {},
+    (key, id) => (id !== deletedThought.id ? { [key]: id } : null),
+    {},
   )
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
@@ -182,7 +194,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = subthoughts.some(child => hashThought(child.value || '') === key)
+  const hasDuplicateSiblings = children.some(child => hashThought(child.value || '') === key)
   const descendantUpdatesResult = !hasDuplicateSiblings
     ? recursiveDeletes(deletedThought)
     : ({
@@ -202,7 +214,8 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     ...(parent && {
       [parent.id]: {
         ...parent,
-        children: subthoughts.map(({ id }) => id),
+        children: children.map(({ id }) => id),
+        childrenMap,
         lastUpdated: timestamp(),
         updatedBy: getSessionId(),
       } as Thought,

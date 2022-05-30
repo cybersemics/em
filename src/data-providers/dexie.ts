@@ -42,7 +42,7 @@ class EM extends Dexie {
     }
 
     this.version(1).stores({
-      thoughtIndex: 'id, *children, lastUpdated, updatedBy',
+      thoughtIndex: 'id, *childrenMap, lastUpdated, updatedBy',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -96,7 +96,7 @@ const initHelpers = async () => {
 const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(1).stores({
-      thoughtIndex: 'id, *children, lastUpdated',
+      thoughtIndex: 'id, childrenMap, lastUpdated',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
@@ -181,11 +181,19 @@ export const getLexemeIndex = async () => {
 /** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
 export const updateThought = async (
   id: ThoughtId,
-  { children, lastUpdated, value, parentId, archived, rank }: Thought,
+  { childrenMap, lastUpdated, value, parentId, archived, rank }: Thought,
 ) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.thoughtIndex.put({ id, value, parentId, rank, children, updatedBy: getSessionId(), lastUpdated })
+    return db.thoughtIndex.put({
+      id,
+      value,
+      parentId,
+      rank,
+      childrenMap,
+      updatedBy: getSessionId(),
+      lastUpdated,
+    })
   })
 
 /** Updates multiple thoughts in the thoughtIndex. */

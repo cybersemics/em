@@ -2,7 +2,16 @@ import _ from 'lodash'
 import { moveThought, updateThoughts } from '.'
 import { Lexeme, Path, State } from '../@types'
 import { getNextRank, getThoughtById } from '../selectors'
-import { appendToPath, equalPath, hashThought, head, normalizeThought, reducerFlow, timestamp } from '../util'
+import {
+  appendToPath,
+  equalPath,
+  hashThought,
+  head,
+  keyValueBy,
+  normalizeThought,
+  reducerFlow,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 /**
@@ -34,7 +43,7 @@ const mergeThoughts = (
 
   // moving the children of the source thought to the end of the target context.
   const newStateAfterMove = reducerFlow([
-    ...sourceThought.children.map(
+    ...Object.values(sourceThought.childrenMap).map(
       (childId, index) => (updatedState: State) =>
         moveThought(updatedState, {
           oldPath: appendToPath(sourceThoughtPath, childId),
@@ -67,12 +76,18 @@ const mergeThoughts = (
   }
 
   const sourceParentThoughtUpdated = getThoughtById(newStateAfterMove, sourceParentThought.id)
+  const childrenMap = keyValueBy(
+    sourceParentThoughtUpdated.childrenMap || {},
+    (key, id) => (id !== sourceThought.id ? { [key]: id } : null),
+    {},
+  )
 
   const thoughtIndexUpdates = {
     // delete source thought from the source parent's children array,
     [sourceParentThought.id]: {
       ...sourceParentThoughtUpdated,
-      children: sourceParentThoughtUpdated.children.filter(thoughtId => thoughtId !== sourceThought.id),
+      children: Object.values(childrenMap),
+      childrenMap,
       updatedAt: timestamp(),
       updatedBy: getSessionId(),
     },

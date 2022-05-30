@@ -1,11 +1,9 @@
 import { State } from '../../@types'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
-import { createId } from '../createId'
+import { createId, initialState, timestamp } from '../../util'
 import { contextToThoughtId } from '../../selectors'
-import { initialState } from '../initialState'
-import { timestamp } from '../timestamp'
 
-it('hashContext', () => {
+it('contextToThoughtId', () => {
   const state = initialState()
 
   const ids = Array.from({ length: 5 }).map(() => createId())
@@ -18,7 +16,7 @@ it('hashContext', () => {
         ...state.thoughts.thoughtIndex,
         [HOME_TOKEN]: {
           id: HOME_TOKEN,
-          children: [ids[0]],
+          childrenMap: { [ids[0]]: ids[0] },
           lastUpdated: timestamp(),
           value: HOME_TOKEN,
           rank: 0,
@@ -28,7 +26,7 @@ it('hashContext', () => {
         [ids[0]]: {
           id: ids[0],
           value: 'A',
-          children: [ids[1]],
+          childrenMap: { [ids[1]]: ids[1] },
           lastUpdated: timestamp(),
           rank: 0,
           parentId: HOME_TOKEN,
@@ -37,7 +35,7 @@ it('hashContext', () => {
         [ids[1]]: {
           id: ids[1],
           value: 'B',
-          children: [],
+          childrenMap: {},
           lastUpdated: timestamp(),
           parentId: ids[0],
           rank: 0,

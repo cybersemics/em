@@ -38,7 +38,7 @@ import {
   getSortPreference,
   getThoughtById,
   pathToThought,
-  hasChild,
+  findDescendant,
   isBefore,
   rootedParentOf,
   visibleDistanceAboveCursor,
@@ -60,10 +60,10 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
     isDocumentEditable() &&
     !!isDraggable &&
     (!isTouch || globals.touched) &&
-    !hasChild(state, thoughtId, '=immovable') &&
-    !hasChild(state, thoughtId, '=readonly') &&
-    !hasChild(state, pathParentId, '=immovable') &&
-    !hasChild(state, pathParentId, '=readonly')
+    !findDescendant(state, thoughtId, '=immovable') &&
+    !findDescendant(state, thoughtId, '=readonly') &&
+    !findDescendant(state, pathParentId, '=immovable') &&
+    !findDescendant(state, pathParentId, '=readonly')
   )
 }
 

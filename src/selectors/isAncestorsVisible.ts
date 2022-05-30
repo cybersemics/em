@@ -17,7 +17,7 @@ const isAncestorsVisible = _.curry((state: State, context: Context) => {
         return isFunction(value)
         // if (isFunction(value)) return true
         // const thoughtId = contextToThoughtId(state, currentContext)
-        // return thoughtId && hasChild(state, thoughtId, '=hidden')
+        // return thoughtId && findDescendant(state, thoughtId, '=hidden')
       }))
   )
 })

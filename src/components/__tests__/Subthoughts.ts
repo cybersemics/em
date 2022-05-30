@@ -2,13 +2,12 @@ import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { equalArrays, pathToContext, timestamp } from '../../util'
-import { importText, toggleAttribute } from '../../action-creators'
+import { importText } from '../../action-creators'
 import Editable from '../Editable'
 import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 import { Context, Path, SimplePath, State } from '../../@types'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { screen } from '@testing-library/dom'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
@@ -538,60 +537,6 @@ describe('hidden thoughts', () => {
 
     // meta2 should should be visible when it is descendant of the meta cursor
     expect(metaThought2()).toHaveLength(1)
-  })
-})
-
-describe('expand thoughts', () => {
-  it('re-render Subthought if it is expanded', () => {
-    /* Note: Sometimes children of a Subthought is updated first and then expanded property is updated later.
-      This test checks if the Subthought re-renders in this scenario. https://github.com/cybersemics/em/pull/951
-    */
-
-    // import thoughts
-    store.dispatch([
-      importText({
-        preventSetCursor: true,
-        text: `
-        - a
-          - b
-        - c`,
-      }),
-      // Note: initially setting =pin attribute to false so that on toogling to true children of ['a'] doesn't change
-      toggleAttribute({
-        context: ['a'],
-        key: '=pin',
-        value: 'false',
-      }),
-    ])
-
-    // update DOM
-    wrapper.update()
-
-    const childrenContextA = getAllChildrenByContext(store.getState(), ['a'])
-
-    /** */
-    const thoughtB = () => wrapper.find(Subthoughts).filterWhere(wherePath(store.getState(), ['a', 'b']))
-
-    // context ['a'] is not yet expanded yet
-    expect(thoughtB()).toHaveLength(0)
-
-    store.dispatch(
-      toggleAttribute({
-        context: ['a'],
-        key: '=pin',
-        value: 'true',
-      }),
-    )
-
-    const updatedChildrenContextA = getAllChildrenByContext(store.getState(), ['a'])
-
-    // children of context ['a'] shouldn't change as this test requires Subthought to rerender due to change in expanded
-    expect(updatedChildrenContextA).toBe(childrenContextA)
-
-    wrapper.update()
-
-    // on change of isExpanded the Subthought should re-render and render it's children
-    expect(thoughtB()).toHaveLength(1)
   })
 })
 

@@ -33,7 +33,7 @@ it('Hide siblings when curor has focus zoom.', async () => {
 
   // TODO: Create a waitForTransitionEnd helper
   // wait for animation to complete
-  await delay(700)
+  await delay(800)
   const editableNodeA = (await getEditable('a')).asElement()
   expect(editableNodeA).toBeDefined()
 
@@ -59,7 +59,7 @@ it('Allow edit mode when cursor has focus zoom.', async () => {
 
   // TODO: Create a waitForTransitionEnd helper
   // wait for animation to complete
-  await delay(700)
+  await delay(800)
 
   const editableNodeA = (await getEditable('a')).asElement()
   expect(editableNodeA).toBeDefined()
@@ -70,7 +70,7 @@ it('Allow edit mode when cursor has focus zoom.', async () => {
   await clickThought('b')
 
   // wait for animation to complete
-  await delay(700)
+  await delay(800)
 
   const editableNodeAUpdated = (await getEditable('a')).asElement()
   expect(editableNodeAUpdated).toBeDefined()

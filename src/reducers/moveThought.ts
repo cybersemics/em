@@ -3,7 +3,17 @@ import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, mergeThoughts, updateThoughts } from '../reducers'
 import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
 import { Path, SimplePath, State } from '../@types'
-import { appendToPath, head, isDescendantPath, normalizeThought, pathToContext, reducerFlow, timestamp } from '../util'
+import {
+  appendToPath,
+  head,
+  isDescendantPath,
+  isFunction,
+  keyValueBy,
+  normalizeThought,
+  pathToContext,
+  reducerFlow,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 export interface MoveThoughtPayload {
@@ -67,20 +77,29 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         })
       }
 
+      // remove sourceThought from sourceParentThought
+      const sourceParentThoughtChildrenMapNew = keyValueBy(sourceParentThought.childrenMap, (key, id) =>
+        id !== sourceThought.id ? { [key]: id } : null,
+      )
+
+      // add source thought to the destination thought children array
+      const destinationThoughtChildrenMapNew = {
+        ...destinationThought.childrenMap,
+        [isFunction(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
+      }
+
       const thoughtIndexUpdates = {
         ...(!sameContext
           ? {
-              // remove source thought from the previous source parent children array
               [sourceParentThought.id]: {
                 ...sourceParentThought,
-                children: sourceParentThought.children.filter(thoughtId => thoughtId !== sourceThought.id),
+                childrenMap: sourceParentThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },
-              // add source thought to the destination thought children array
               [destinationThought.id]: {
                 ...destinationThought,
-                children: [...destinationThought.children, sourceThought.id],
+                childrenMap: destinationThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: getSessionId(),
               },

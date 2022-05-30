@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { connect, useStore } from 'react-redux'
+import { connect, useSelector, useStore } from 'react-redux'
 import classNames from 'classnames'
 import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { store } from '../store'
@@ -87,11 +87,71 @@ const EMPTY_OBJECT = {}
 /** Check if the given thought is a leaf. */
 const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length === 0
 
-/** Finds the the first env entry with =focus/Zoom. */
+/** Finds the the first env entry with =focus/Zoom. O(children). */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
   const children = getAllChildrenAsThoughts(state, id)
-  const child = children.find(child => env[child.value] && attribute(state, env[child.value], '=focus') === 'Zoom')
+  const child = children.find(
+    child => isFunction(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+  )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
+}
+
+/** Calculates the cursor zoom after initial render for better performance. */
+const useZoom = ({
+  env,
+  isEditing,
+  isEditingPath,
+  simplePath,
+}: {
+  env: LazyEnv
+  isEditing: boolean
+  isEditingPath: boolean
+  simplePath: SimplePath
+}) => {
+  const [zoom, setZoom] = useState(false)
+  const [zoomCursor, setZoomCursor] = useState(false)
+  const [zoomParent, setZoomParent] = useState(false)
+  const cursor = useSelector((state: State) => state.cursor)
+
+  useEffect(() => {
+    const state = store.getState()
+
+    const parentChildrenAttributeId = cursor && findDescendant(state, head(rootedParentOf(state, cursor)), '=children')
+    const grandparentChildrenAttributeId =
+      cursor && findDescendant(state, head(rootedParentOf(state, parentOf(cursor))), '=children')
+
+    /*
+    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
+    1. Force actualDistance to 2 to hide thoughts.
+    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
+  */
+    const zoomCursor =
+      !!cursor &&
+      (attributeEquals(state, head(cursor), '=focus', 'Zoom') ||
+        attributeEquals(state, parentChildrenAttributeId, '=focus', 'Zoom') ||
+        !!findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
+
+    const zoomParent =
+      !!cursor &&
+      (attributeEquals(state, head(rootedParentOf(state, cursor)), '=focus', 'Zoom') ||
+        attributeEquals(state, grandparentChildrenAttributeId, '=focus', 'Zoom') ||
+        !!findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
+
+    const isEditingAncestor = isEditingPath && !isEditing
+
+    /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
+    const zoomParentEditing = () =>
+      !!cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), simplePath) // resolvedPath?
+
+    /** Returns true if the thought is zoomed. */
+    const isZoomed = () => isEditingAncestor && (zoomCursor || zoomParentEditing())
+
+    setZoomCursor(zoomCursor)
+    setZoomParent(zoomParent)
+    setZoom(isZoomed)
+  }, [cursor])
+
+  return { zoom, zoomCursor, zoomParent }
 }
 
 /********************************************************************
@@ -106,15 +166,10 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const resolvedPath = props.path ?? props.simplePath
 
-  // check if the cursor path includes the current thought
-  // include ROOT to prevent re-render when ROOT subthought changes
-  const isEditingPath = isRoot(props.simplePath) || isDescendantPath(cursor, resolvedPath)
-
   // check if the cursor is editing an thought directly
   const isEditing = equalPath(cursor, resolvedPath)
 
   const pathLive = isEditing ? cursor! : resolvedPath
-
   const showContexts = props.showContexts || isContextViewActive(state, pathLive)
   const showContextsParent = isContextViewActive(state, rootedParentOf(state, pathLive))
 
@@ -122,7 +177,13 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const idLive = head(simplePath)
 
-  const contextBinding = parseJsonSafe(attribute(state, idLive, '=bindContext') ?? '', undefined) as Path | undefined
+  // check if the cursor path includes the current thought
+  // include ROOT to prevent re-render when ROOT subthought changes
+  const isEditingPath = isRoot(simplePath) || isDescendantPath(cursor, simplePath) // resolvedPath?
+
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '', undefined) as
+    | Path
+    | undefined
 
   // If the cursor is a leaf, use cursorDepth of cursor.length - 1 so that the autofocus stays one level zoomed out.
   // This feels more intuitive and stable for moving the cursor in and out of leaves.
@@ -201,39 +262,11 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
   */
 
-  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
-  const zoomParentEditing = () =>
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
-
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
   const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
-  const parentChildrenAttributeId = cursor && findDescendant(state, head(rootedParentOf(state, cursor)), '=children')
-  const grandparentChildrenAttributeId =
-    cursor && findDescendant(state, head(rootedParentOf(state, parentOf(cursor))), '=children')
-  /*
-    When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
-    1. Force actualDistance to 2 to hide thoughts.
-    2. Set zoomCursor and zoomParent CSS classes to handle siblings.
-  */
-  const zoomCursor =
-    cursor &&
-    (attributeEquals(state, head(cursor), '=focus', 'Zoom') ||
-      attributeEquals(state, parentChildrenAttributeId, '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
-
-  const zoomParent =
-    cursor &&
-    (attributeEquals(state, head(rootedParentOf(state, cursor)), '=focus', 'Zoom') ||
-      attributeEquals(state, grandparentChildrenAttributeId, '=focus', 'Zoom') ||
-      findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
-
-  const isEditingAncestor = isEditingPath && !isEditing
-
-  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   /*
     Note: The following properties is applied to the immediate childrens with given class.
@@ -245,7 +278,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
     Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
   */
-  const actualDistance = shouldShiftAndHide || zoom ? 2 : shouldDim ? 1 : distance
+  const actualDistance = shouldShiftAndHide ? 2 : shouldDim ? 1 : distance
 
   const sortPreference = getSortPreference(state, idLive)
 
@@ -289,7 +322,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     actualDistance,
     env,
     isAbsoluteContext,
-    isEditingAncestor,
+    isEditing,
+    isEditingPath,
     // expand thought due to cursor and hover expansion
     isExpanded: !!state.expanded[hashedPath] || !!expandedBottom?.[hashedPath],
     isMultiColumnTable: isMultiColumnTable(),
@@ -300,8 +334,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // passing sortPreference directly would re-render the component each time, since the preference object reference changes
     sortType: sortPreference.type,
     sortDirection: sortPreference.direction,
-    zoomCursor,
-    zoomParent,
     // Re-render if children change and when children Thought entry in thoughtIndex is available.
     // Uses getAllChildren for efficient change detection. Probably does not work in context view.
     // Not used by render function, which uses a more complex calculation of children that supports context view.
@@ -532,7 +564,8 @@ export const SubthoughtsComponent = ({
   dropTarget,
   env,
   isDragInProgress,
-  isEditingAncestor,
+  isEditing,
+  isEditingPath,
   isExpanded,
   isHeader,
   isHovering,
@@ -543,8 +576,6 @@ export const SubthoughtsComponent = ({
   simplePath,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
-  zoomCursor,
-  zoomParent,
 }: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
@@ -555,7 +586,10 @@ export const SubthoughtsComponent = ({
   const { value } = thought
   const resolvedPath = path ?? simplePath
 
+  const isEditingAncestor = isEditingPath && !isEditing
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
+
+  const { zoom, zoomCursor, zoomParent } = useZoom({ env, isEditing, isEditingPath, simplePath })
 
   useEffect(() => {
     if (isHovering) {
@@ -601,12 +635,6 @@ export const SubthoughtsComponent = ({
     return null
   }
   const isPaginated = show && filteredChildren.length > proposedPageSize
-  /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
-  const zoomParentEditing = () =>
-    // eslint-disable-next-line jsdoc/require-jsdoc
-    cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), resolvedPath)
-
-  const zoom = isEditingAncestor && (zoomCursor || zoomParentEditing())
 
   /** Calculates the autofocus state to hide or dim thoughts.
    * Note: The following properties is applied to the immediate childrens with given class.

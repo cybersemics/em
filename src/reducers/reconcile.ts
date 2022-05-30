@@ -20,7 +20,7 @@ const isNewer = (src: Thought | Lexeme, dest: Thought | Lexeme) => src.lastUpdat
 
 /** Returns true if the em context should be updated. */
 const shouldUpdateEm = (src: Thought, dest: Thought, key: string) =>
-  key === emContextEncoded && src.children.length > dest.children.length
+  key === emContextEncoded && Object.keys(src.childrenMap).length > Object.keys(dest.childrenMap).length
 
 /** Compares local and remote and updates missing thoughts or those with older timestamps. */
 const reconcile = (state: State, { thoughtsResults, local, remote }: ReconcileOptions) => {

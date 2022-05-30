@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { deleteThought, createThought, setFirstSubthought } from '../reducers'
-import { attributeEquals, getPrevRank, hasChild, contextToPath } from '../selectors'
+import { attributeEquals, getPrevRank, findDescendant, contextToPath } from '../selectors'
 import { head, reducerFlow, unroot } from '../util'
 import { Context, State } from '../@types'
 
@@ -15,7 +15,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
   const exists = !isNullaryAttribute
     ? path && attributeEquals(state, head(path), key, value!)
-    : !path || hasChild(state, head(path), key)
+    : !path || findDescendant(state, head(path), key)
 
   return attributePath && exists
     ? // delete existing attribute
@@ -26,7 +26,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
     : // create new attribute
       reducerFlow([
         // create attribute if it does not exist
-        !path || !hasChild(state, head(path), key)
+        !path || !findDescendant(state, head(path), key)
           ? state =>
               createThought(state, {
                 context,

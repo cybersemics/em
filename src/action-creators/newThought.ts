@@ -1,6 +1,6 @@
 import { isTouch, isSafari } from '../browser'
 import { TUTORIAL_STEP_START } from '../constants'
-import { getSetting, pathToThought, rootedParentOf, hasChild, isContextViewActive } from '../selectors'
+import { getSetting, pathToThought, rootedParentOf, findDescendant, isContextViewActive } from '../selectors'
 import { ellipsize, head } from '../util'
 import asyncFocus from '../device/asyncFocus'
 import { Thunk, Path, SplitResult } from '../@types'
@@ -43,7 +43,7 @@ const newThought =
     if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
     // Determine if thought at path is uneditable
-    const uneditable = path && hasChild(state, head(path), '=uneditable')
+    const uneditable = path && findDescendant(state, head(path), '=uneditable')
 
     const showContexts = path && isContextViewActive(state, rootedParentOf(state, path))
 

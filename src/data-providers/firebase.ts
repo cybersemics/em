@@ -33,7 +33,6 @@ export interface FirebaseChangeHandlers {
 
 // Firebase omits empty arrays, so account for that in the type.
 type FirebaseLexeme = Omit<Lexeme, 'contexts'> & { contexts?: ThoughtId[] }
-type FirebaseThought = Omit<Thought, 'children'> & { children?: ThoughtId[] }
 
 /** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase can omit empty arrays. */
 const lexemeFromFirebase = (firebaseLexeme: FirebaseLexeme | undefined): Lexeme | undefined =>
@@ -41,14 +40,6 @@ const lexemeFromFirebase = (firebaseLexeme: FirebaseLexeme | undefined): Lexeme 
     ? (firebaseLexeme as Lexeme)
     : firebaseLexeme
     ? { ...firebaseLexeme, contexts: [] }
-    : undefined
-
-/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase can omit empty arrays. */
-const thoughtFromFirebase = (firebaseThought: FirebaseThought | undefined): Thought | undefined =>
-  firebaseThought?.children
-    ? (firebaseThought as Thought)
-    : firebaseThought
-    ? { ...firebaseThought, children: [] }
     : undefined
 
 /**
@@ -88,7 +79,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     const ref = userRef!.child('thoughtIndex').child<Thought>(id)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
-        resolve(thoughtFromFirebase(snapshot.val()))
+        resolve(snapshot.val())
       }),
     )
   },
@@ -96,7 +87,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
-    return snapshots.map(snapshot => thoughtFromFirebase(snapshot?.val()))
+    return snapshots.map(snapshot => snapshot?.val())
   },
   /** Updates Firebase data. */
   async update(updates: Index<any>) {
