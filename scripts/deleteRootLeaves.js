@@ -11,8 +11,8 @@ if (!file) {
   process.exit(1)
 }
 
-const thoughts = JSON.parse(fs.readFileSync(file, 'utf8'))
-const { thoughtIndex, lexemeIndex } = thoughts
+const thoughtIndices = JSON.parse(fs.readFileSync(file, 'utf8'))
+const { thoughtIndex, lexemeIndex } = thoughtIndices
 
 const rootChildren = getChildrenByContext(thoughtIndex, thoughtIndex.__ROOT__, context)
 
@@ -20,8 +20,8 @@ const rootChildren = getChildrenByContext(thoughtIndex, thoughtIndex.__ROOT__, c
 rootChildren.forEach(rootChild => {
   const numChildren = Object.keys(rootChild.childrenMap).length
   if (numChildren === 0 && rootChild.value !== '—-') {
-    deleteThought(thoughtIndex, rootChild)
+    deleteThought(thoughtIndices, rootChild)
   }
 })
 
-fs.writeFileSync(file, JSON.stringify(thoughts, null, 2))
+fs.writeFileSync(file, JSON.stringify(thoughtIndices, null, 2))

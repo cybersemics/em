@@ -1,5 +1,15 @@
 /** Deletes a thought from the thoughtIndex and lexemeIndex. */
-const deleteThought = (thoughtIndex, thought) => {
+const deleteThought = (thoughtIndices, thought) => {
+  const { thoughtIndex, lexemeIndex } = thoughtIndices
+  if (!thought.id) {
+    console.error('Invalid thought', thought)
+    process.exit(1)
+  }
+
+  // delete children recursively
+  const children = Object.values(thought.childrenMap || {}).map(childId => thoughtIndex[childId])
+  children.forEach(child => deleteThought(thoughtIndices, child)) // RECURSION
+
   // remove thought
   delete thoughtIndex[thought.id]
 

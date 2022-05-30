@@ -1,9 +1,4 @@
-/** Returns the children of an id as thoughts. */
-const getChildrenById = (thoughtIndex, id) => {
-  const thought = thoughtIndex[id]
-  const children = Object.values(thought.childrenMap)
-  return children.map(childId => thoughtIndex[childId])
-}
+const getChildrenById = require('./getChildrenById')
 
 /** Gets the children as thoughts of a context. */
 const getChildrenByContext = (thoughtIndex, thought, context = []) => {
@@ -14,7 +9,7 @@ const getChildrenByContext = (thoughtIndex, thought, context = []) => {
     console.error(`Thought with value "${context[0]}" not found in "${thought.value}".`)
     process.exit(1)
   }
-  return getChildrenByContext(child, context.slice(1))
+  return getChildrenByContext(thoughtIndex, child, context.slice(1))
 }
 
 module.exports = getChildrenByContext
