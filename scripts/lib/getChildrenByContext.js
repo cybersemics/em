@@ -6,8 +6,7 @@ const getChildrenByContext = (thoughtIndex, thought, context = []) => {
   if (context.length === 0) return children
   const child = children.find(child => child.value === context[0])
   if (!child) {
-    console.error(`Thought with value "${context[0]}" not found in "${thought.value}".`)
-    process.exit(1)
+    throw new Error(`Thought with value "${context[0]}" not found in "${thought.value}".`)
   }
   return getChildrenByContext(thoughtIndex, child, context.slice(1))
 }

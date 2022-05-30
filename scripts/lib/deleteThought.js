@@ -2,8 +2,8 @@
 const deleteThought = (thoughtIndices, thought) => {
   const { thoughtIndex, lexemeIndex } = thoughtIndices
   if (!thought.id) {
-    console.error('Invalid thought', thought)
-    process.exit(1)
+    console.error('thought', thought)
+    throw new Error('Invalid thought')
   }
 
   // delete children recursively
@@ -16,8 +16,8 @@ const deleteThought = (thoughtIndices, thought) => {
   // remove from parent
   const parent = thoughtIndex[thought.parentId]
   if (!parent) {
-    console.error('Missing parent of thought', thought)
-    process.exit(1)
+    console.error('thought', thought)
+    throw new Error('Missing parent of thought')
   }
 
   const removedFromParent = Object.entries(parent.childrenMap).some(([key, parentChildId]) => {
@@ -29,8 +29,8 @@ const deleteThought = (thoughtIndices, thought) => {
   })
 
   if (!removedFromParent) {
-    console.error('Parent childrenMap does not contain thought', parent)
-    process.exit(1)
+    console.error('parent', parent)
+    throw new Error('Parent childrenMap does not contain thought')
   }
 
   // iterate through all Lexemes since hashThought is not available in plain JS
@@ -46,8 +46,7 @@ const deleteThought = (thoughtIndices, thought) => {
     }
   }
 
-  console.error(`Lexeme not found for "${thought.value}".`)
-  process.exit(1)
+  console.warn(`Lexeme not found for "${thought.value}".`)
 }
 
 module.exports = deleteThought
