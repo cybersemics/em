@@ -6,7 +6,7 @@ import { store } from '../store'
 import globals from '../globals'
 import { isTouch } from '../browser'
 import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
 import { ThoughtId, Context, Index, Thought, Path, SimplePath, State } from '../@types'
 
@@ -251,7 +251,13 @@ const ThoughtContainer = ({
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
   const thoughtId = head(simplePath)
-  const thoughts = pathToContext(state, simplePath)
+  let thoughts: Context
+  try {
+    thoughts = pathToContext(state, simplePath)
+  } catch (e) {
+    console.error(e)
+    thoughts = [HOME_TOKEN]
+  }
   const context = parentOf(thoughts)
   const parentId = head(rootedParentOf(state, simplePath))
 
