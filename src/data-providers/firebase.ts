@@ -31,21 +31,32 @@ export interface FirebaseChangeHandlers {
   }
 }
 
-// Firebase omits empty arrays, so account for that in the type.
+// Firebase omits empty arrays and objects, so account for that in the type.
 type FirebaseLexeme = Omit<Lexeme, 'contexts'> & { contexts?: ThoughtId[] }
+type FirebaseThought = Omit<Thought, 'childrenMap'> & { childrenMap?: Index<ThoughtId> }
 
-/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase can omit empty arrays. */
-const lexemeFromFirebase = (firebaseLexeme: FirebaseLexeme | undefined): Lexeme | undefined =>
+/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase omits empty arrays. */
+const lexemeFromFirebase = (firebaseLexeme?: FirebaseLexeme): Lexeme | undefined =>
   firebaseLexeme?.contexts
     ? (firebaseLexeme as Lexeme)
     : firebaseLexeme
     ? { ...firebaseLexeme, contexts: [] }
     : undefined
 
+/** Converts a FirebaseThought to a proper Thought by ensuring childrenMap is defined. Firebase omits empty objects. */
+const thoughtFromFirebase = (firebaseThought?: FirebaseThought): Thought | undefined =>
+  firebaseThought?.childrenMap
+    ? (firebaseThought as Thought)
+    : firebaseThought
+    ? { ...firebaseThought, childrenMap: {} as Index<ThoughtId> }
+    : undefined
+
 /**
  * Get all firebase related functions as an object.
  */
 const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
+  name: 'Firebase',
+
   /** Deletes all data in the data provider. */
   clearAll: () => {
     throw new Error('NOT IMPLEMENTED')
@@ -79,7 +90,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     const ref = userRef!.child('thoughtIndex').child<Thought>(id)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
-        resolve(snapshot.val())
+        resolve(thoughtFromFirebase(snapshot.val()))
       }),
     )
   },
@@ -87,7 +98,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
-    return snapshots.map(snapshot => snapshot?.val())
+    return snapshots.map(snapshot => thoughtFromFirebase(snapshot?.val()))
   },
   /** Updates Firebase data. */
   async update(updates: Index<any>) {
