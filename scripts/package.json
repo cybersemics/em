@@ -1,0 +1,20 @@
+{
+  "name": "",
+  "description": "",
+  "version": "0.0.0",
+  "author": {
+    "name": "Raine Revere",
+    "url": "https://github.com/raineorshine"
+  },
+  "bugs": "",
+  "engines": {
+    "node": ">=10.17"
+  },
+  "keywords": [],
+  "homepage": "",
+  "license": "ISC",
+  "repository": "",
+  "dependencies": {
+    "murmurhash3js": "^3.0.1"
+  }
+}

@@ -1,3 +1,5 @@
+const hashThought = require('./hashThought')
+
 /** Deletes a thought from the thoughtIndex and lexemeIndex. */
 const deleteThought = (thoughtIndices, thought) => {
   const { thoughtIndex, lexemeIndex } = thoughtIndices
@@ -33,20 +35,17 @@ const deleteThought = (thoughtIndices, thought) => {
     throw new Error('Parent childrenMap does not contain thought')
   }
 
-  // iterate through all Lexemes since hashThought is not available in plain JS
-  for (let [key, lexeme] of Object.entries(lexemeIndex)) {
-    if (lexeme.contexts.includes(thought.id)) {
-      lexeme.contexts = lexeme.contexts.filter(id => id !== thought.id)
-
-      // if the Lexeme is no longer in any contexts, remove it completely
-      if (lexeme.contexts.length === 0) {
-        delete lexemeIndex[key]
-      }
-      return
-    }
+  const key = hashThought(thought.value)
+  const lexeme = lexemeIndex[key]
+  if (!lexeme) {
+    throw new Error('Lexeme not found for value: ' + thought.value)
   }
+  lexeme.contexts = lexeme.contexts.filter(id => id !== thought.id)
 
-  console.warn(`Lexeme not found for "${thought.value}".`)
+  // if the Lexeme is no longer in any contexts, remove it completely
+  if (lexeme.contexts.length === 0) {
+    delete lexemeIndex[key]
+  }
 }
 
 module.exports = deleteThought
