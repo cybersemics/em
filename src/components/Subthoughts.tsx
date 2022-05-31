@@ -81,7 +81,7 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 // @MIGRATION_NOTE: toogle view is disabled for the migration
 // if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
-const PAGINATION_SIZE = 100
+const PAGINATION_SIZE = 10
 const EMPTY_OBJECT = {}
 
 /** Check if the given thought is a leaf. */
