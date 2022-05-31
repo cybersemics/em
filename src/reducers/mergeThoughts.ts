@@ -76,10 +76,8 @@ const mergeThoughts = (
   }
 
   const sourceParentThoughtUpdated = getThoughtById(newStateAfterMove, sourceParentThought.id)
-  const childrenMap = keyValueBy(
-    sourceParentThoughtUpdated.childrenMap || {},
-    (key, id) => (id !== sourceThought.id ? { [key]: id } : null),
-    {},
+  const childrenMap = keyValueBy(sourceParentThoughtUpdated.childrenMap || {}, (key, id) =>
+    id !== sourceThought.id ? { [key]: id } : null,
   )
 
   const thoughtIndexUpdates = {

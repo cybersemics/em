@@ -109,10 +109,8 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
   const children = getAllChildrenAsThoughts(state, parent?.id || null).filter(child => child.id !== deletedThought.id)
-  const childrenMap = keyValueBy(
-    parent?.childrenMap || {},
-    (key, id) => (id !== deletedThought.id ? { [key]: id } : null),
-    {},
+  const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
+    id !== deletedThought.id ? { [key]: id } : null,
   )
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */

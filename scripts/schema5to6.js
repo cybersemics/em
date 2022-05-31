@@ -19,8 +19,9 @@ Object.values(thoughts.thoughtIndex).forEach(thought => {
     }
     // Firebase keys cannot contain [.$#[\]] or ASCII control characters 0-31 or 127
     // https://firebase.google.com/docs/database/web/structure-data?authuser=1&hl=en#section-limitations
-    const key = isFunction(child.value) && !accum[child.value] ? child.value.replace(/[.$#[\]]/g, '-') : child.id
-    if (!key || key.match(/[.$#[\]]/)) {
+    const value = child.value.replace(/[.$#[\]]/g, '-')
+    const key = isFunction(value) && !accum[value] ? value : child.id
+    if (!key) {
       console.error('child', child)
       throw new Error(`Invalid key "${key}" for ${child.id}.`)
     }
