@@ -52,8 +52,8 @@ export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerP
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ConnectedThoughtContainerProps) => {
   const state = store.getState()
-  const thoughtId = head(props.simplePathLive!)
-  const pathParentId = head(parentOf(props.simplePathLive!))
+  const thoughtId = head(props.simplePath)
+  const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
 
   return (
@@ -68,16 +68,16 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ simplePathLive }: ConnectedThoughtContainerProps) => {
+const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps) => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
       value: true,
-      draggingThought: simplePathLive,
+      draggingThought: simplePath,
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath: simplePathLive }
+  return { simplePath: simplePath }
 }
 
 /** Handles drag end. */
@@ -98,8 +98,8 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { cursor, expandHoverTopPath } = state
   const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.simplePathLive!
-  const isSorted = getSortPreference(state, head(props.simplePathLive!)).type !== 'None'
+  const thoughtsTo = props.simplePath!
+  const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
 
   const distance = cursor ? cursor?.length - thoughtsTo.length : 0
 
@@ -130,7 +130,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   const { simplePath: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.simplePathLive!
+  const thoughtsTo = props.simplePath!
   const toThought = pathToThought(state, thoughtsTo)
   const fromThought = pathToThought(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)

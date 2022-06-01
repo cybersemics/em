@@ -88,7 +88,6 @@ export interface ThoughtContainerProps {
   showContexts?: boolean
   style?: React.CSSProperties
   simplePath: SimplePath
-  simplePathLive?: SimplePath
   view?: string | null
 }
 
@@ -139,10 +138,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursor, path)
 
-  const simplePathLive = isEditing
-    ? (parentOf(simplePath).concat(head(showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
-    : simplePath
-
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
   const isExpandedHoverTopPath = expandHoverTopPath && equalPath(path, expandHoverTopPath)
@@ -157,7 +152,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
         : // parent
           equalPath(parentOf(cursor), path)))
 
-  const contextBinding = parseJsonSafe(attribute(state, head(simplePathLive), '=bindContext') ?? '') as
+  const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as
     | SimplePath
     | undefined
 
@@ -166,7 +161,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
   const isExpanded = !!expanded[hashPath(path)]
-  const isLeaf = !hasChildren(state, head(simplePathLive))
+  const isLeaf = !hasChildren(state, head(simplePath))
 
   return {
     contextBinding,
@@ -181,8 +176,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isExpanded,
     isLeaf,
     publish: !search && publishMode(),
-    simplePathLive,
-    view: attribute(state, head(simplePathLive), '=view'),
+    simplePath,
+    view: attribute(state, head(simplePath), '=view'),
   }
 }
 
@@ -229,7 +224,6 @@ const ThoughtContainer = ({
   rank,
   showContexts,
   simplePath,
-  simplePathLive,
   style,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
@@ -256,7 +250,7 @@ const ThoughtContainer = ({
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
       store.dispatch([
-        dragHold({ value: true, simplePath: simplePathLive }),
+        dragHold({ value: true, simplePath }),
         alert('Drag and drop to move thought', { showCloseLink: false }),
       ])
     }
@@ -272,7 +266,7 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
-  const value = headValue(state, simplePathLive!)
+  const value = headValue(state, simplePath)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
@@ -283,7 +277,7 @@ const ThoughtContainer = ({
 
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, head(simplePathLive)) // TODO: contextBinding
+    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
@@ -425,7 +419,7 @@ const ThoughtContainer = ({
           view={view}
         />
       </View>
-      <Note path={simplePathLive} />
+      <Note path={simplePath} />
 
       {publish && context.length === 0 && <Byline context={thoughts} />}
 
