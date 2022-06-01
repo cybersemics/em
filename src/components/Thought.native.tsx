@@ -28,7 +28,6 @@ import {
   hashPath,
   head,
   headId,
-  headValue,
   isDescendantPath,
   isFunction,
   isRoot,
@@ -266,7 +265,7 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
-  const value = headValue(state, simplePath)
+  const value = head(thoughts)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
