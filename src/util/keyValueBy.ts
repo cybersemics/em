@@ -15,14 +15,22 @@ export function keyValueBy<T, R>(
   keyValue: KeyValueGenerator<T | string, number | T, R>,
   initialValue: Index<R> = {},
 ): Index<R> {
-  const arr: (T | string)[] = Array.isArray(input) ? input : Object.keys(input)
+  const isArray = Array.isArray(input)
+  const arr = isArray ? input : Object.keys(input)
 
-  return arr.reduce((accum: Index<R>, item: T | string, i: number) => {
-    const key = Array.isArray(input) ? item : item
-    const value = Array.isArray(input) ? i : input[item as string]
-    return {
-      ...accum,
-      ...keyValue(key, value, accum),
-    }
-  }, initialValue)
+  /** A reducer than converts an array into an object through a keyValue function. */
+  const arrayReducer = (accum: Index<R>, item: T | string, i: number) => ({
+    ...accum,
+    ...keyValue(item, i, accum),
+  })
+
+  /** A reducer that maps an object through a keyValue function. */
+  const objectReducer = (accum: Index<R>, item: string, i: number) => ({
+    ...accum,
+    ...keyValue(item, (input as Index<T>)[item], accum),
+  })
+
+  return isArray
+    ? (arr as T[]).reduce(arrayReducer, initialValue)
+    : (arr as string[]).reduce(objectReducer, initialValue)
 }
