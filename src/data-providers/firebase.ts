@@ -149,7 +149,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
  *
  * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
  */
-const parentSubscriptionHandler =
+const thoughtSubscriptionHandler =
   (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Thought | null } = {}) =>
   (snapshot: Firebase.Snapshot<Thought>) => {
     // only contains fields that have changed
@@ -210,13 +210,21 @@ export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptio
   const thoughtIndexRef: Firebase.Ref<Thought> = thoughtsRef.child('thoughtIndex')
   const lexemeIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('lexemeIndex')
 
+  // child_added first triggers once for each existing item at the reference, which is extremely slow
+  // Maybe limitToLast will work?
+  // Disable subscriptions until an efficient solution is found.
+  // https://stackoverflow.com/questions/43440908/firebase-child-added-for-new-items-only
+
+  // eslint-disable-next-line no-constant-condition
+  if (true) return
+
   // thoughtIndex subscriptions
   thoughtIndexRef
     .orderByChild('lastUpdated')
     .startAt(new Date().toISOString())
-    .on('child_added', parentSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_changed', parentSubscriptionHandler(onUpdate))
-  thoughtIndexRef.on('child_removed', parentSubscriptionHandler(onUpdate, { value: null }))
+    .on('child_added', thoughtSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_changed', thoughtSubscriptionHandler(onUpdate))
+  thoughtIndexRef.on('child_removed', thoughtSubscriptionHandler(onUpdate, { value: null }))
 
   // lexemeIndex subscriptions
   lexemeIndexRef

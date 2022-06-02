@@ -28,6 +28,8 @@ export interface Ref<T> {
   child: <R>(name: string) => Ref<R>
   once: (eventName: string, callback?: (snapshot: Snapshot<T>) => void) => Promise<Snapshot<T>>
   on: (eventName: string, callback: (snapshot: Snapshot<T>) => any) => void
+  limitToFirst: (n: number) => Ref<T>
+  limitToLast: (n: number) => Ref<T>
   orderByChild: (fieldName: string) => Ref<T>
   startAt: (value: any) => Ref<T>
   set: (value: any, onComplete?: (a: Error | null) => any) => Promise<any>
