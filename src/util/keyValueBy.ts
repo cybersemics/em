@@ -25,7 +25,7 @@ export function keyValueBy<T, R>(
   })
 
   /** A reducer that maps an object through a keyValue function. */
-  const objectReducer = (accum: Index<R>, item: string, i: number) => ({
+  const objectReducer = (accum: Index<R>, item: string) => ({
     ...accum,
     ...keyValue(item, (input as Index<T>)[item], accum),
   })

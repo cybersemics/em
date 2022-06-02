@@ -63,9 +63,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Gets the Lexeme object by id. */
-  async getLexemeById(id: string): Promise<Lexeme | undefined> {
+  async getLexemeById(key: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('lexemeIndex').child<FirebaseLexeme>(id)
+    const ref = userRef!.child('lexemeIndex').child<FirebaseLexeme>(key)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<FirebaseLexeme>) => {
         const val = snapshot.val()
@@ -73,11 +73,11 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       }),
     )
   },
-  /** Gets multiple Lexeme objects by ids. */
-  async getLexemesByIds(ids: string[]): Promise<(Lexeme | undefined)[]> {
+  /** Gets multiple Lexeme objects by keys. */
+  async getLexemesByIds(keys: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(
-      ids.map(id => userRef?.child('lexemeIndex').child<FirebaseLexeme>(id).once('value')),
+      keys.map(key => userRef?.child('lexemeIndex').child<FirebaseLexeme>(key).once('value')),
     )
     return snapshots.map(snapshot => lexemeFromFirebase(snapshot?.val()))
   },

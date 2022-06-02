@@ -167,16 +167,10 @@ export const deleteLexeme = (id: string) =>
   })
 
 /** Gets a single thought from the lexemeIndex by its id. */
-export const getLexemeById = (id: string) => db.lexemeIndex.get(id)
+export const getLexemeById = (key: string) => db.lexemeIndex.get(key)
 
 /** Gets multiple thoughts from the lexemeIndex by ids. */
-export const getLexemesByIds = (ids: string[]) => db.lexemeIndex.bulkGet(ids)
-
-/** Gets the entire lexemeIndex. */
-export const getLexemeIndex = async () => {
-  const lexemeIndexMap = await db.lexemeIndex.toArray()
-  return _.keyBy(lexemeIndexMap, 'id')
-}
+export const getLexemesByIds = (keys: string[]) => db.lexemeIndex.bulkGet(keys)
 
 /** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
 export const updateThought = async (
@@ -220,13 +214,6 @@ export const getThoughtById = async (id: string) => db.thoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. */
 export const getThoughtsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
-
-/** Gets the entire thoughtIndex. DEPRECATED. Use data-helpers/getDescendantThoughts. */
-export const getThoughtIndex = async () => {
-  const thoughtIndexMap = await db.thoughtIndex.toArray()
-  // mapValues + keyBy much more efficient than reduce + merge
-  return _.mapValues(_.keyBy(thoughtIndexMap, 'id'), 'context')
-}
 
 /** Updates the recentlyEdited helper. */
 export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.update('EM', { recentlyEdited })
