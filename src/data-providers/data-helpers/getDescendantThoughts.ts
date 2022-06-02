@@ -1,39 +1,15 @@
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashThought, isFunction, keyValueBy, never } from '../../util'
+import { hashThought, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
-import { thoughtToContext, getThoughtById } from '../../selectors'
+import { getThoughtById } from '../../selectors'
 import { getSessionId } from '../../util/sessionManager'
 
 const MAX_DEPTH = 100
 
 interface Options {
   maxDepth?: number
-}
-
-/**
- * Returns true if the Parent should not be buffered for any of the following reasons:
- *
- * - Parent has no children.
- * - Context contains the em context.
- * - Context has a non-archive metaprogramming attribute.
- */
-const isUnbuffered = (state: State, thought: Thought) => {
-  // Note: Since thought does not have context and we have to generate context from available state. May not work as intended if the we pull a thought whose ancestors has not been pulled yet.
-  const context = thoughtToContext(state, thought.id)
-
-  // @MIGRATION_TODO: Is it okay to prevent buffering if context is not found ?
-  if (!context) {
-    console.warn(`isUnbuffered: Context not found for thought ${thought.id}`)
-    return false
-  }
-
-  return (
-    Object.keys(thought.childrenMap).length === 0 ||
-    context.includes(EM_TOKEN) ||
-    (context.find(isFunction) && !context.includes('=archive'))
-  )
 }
 
 /**
@@ -86,9 +62,11 @@ async function* getDescendantThoughts(
         ? providerThoughtsValidated
         : providerThoughtsValidated.map(thought => ({
             ...thought,
-            ...(!isUnbuffered(updatedState, thought)
+            // set thoughts with children as pending
+            // do not include descendants of EM
+            // TODO: Should we exclude descendants of functions? How to check without a slow call to contextToThought?
+            ...(thoughtId !== EM_TOKEN && Object.keys(thought.childrenMap || {}).length > 0
               ? {
-                  // @MIGRATION_TODO: Previouss implementaion kept the meta children. But now we cannot determine the meta children just by id, without pulling the data from the db.
                   childrenMap: {},
                   lastUpdated: never(),
                   updatedBy: getSessionId(),
@@ -112,16 +90,13 @@ async function* getDescendantThoughts(
 
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
-    const thoughtsIndices = {
+    // enqueue children
+    thoughtIdQueue = thoughts.map(thought => Object.values(thought.childrenMap || {})).flat()
+
+    yield {
       thoughtIndex,
       lexemeIndex,
     }
-
-    // enqueue children
-    thoughtIdQueue = thoughts.map(thought => Object.values(thought.childrenMap)).flat()
-
-    // yield thought
-    yield thoughtsIndices
 
     currentMaxDepth--
   }
