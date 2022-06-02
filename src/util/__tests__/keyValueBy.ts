@@ -36,6 +36,19 @@ test('generate new object from object using keys and values', () => {
   })
 })
 
+test('support multiple key-value pairs per entry', () => {
+  const result = keyValueBy({ a: 1, b: 2 }, (key, value) => ({
+    [key]: value * 10,
+    [key + 'x']: value * 10 + 1,
+  }))
+  expect(result).toEqual({
+    a: 10,
+    ax: 11,
+    b: 20,
+    bx: 21,
+  })
+})
+
 test('empty object', () => {
   const result = keyValueBy({}, () => null)
   expect(result).toEqual({})

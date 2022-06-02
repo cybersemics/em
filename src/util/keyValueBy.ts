@@ -1,6 +1,8 @@
 import { Index } from '../@types'
 
 type KeyValueGenerator<K, V, R> = (key: K, value: V, accum: Index<R>) => Index<R> | null
+type ArrayKeyValueGenerator<T, R> = KeyValueGenerator<T, number, R>
+type ObjectKeyValueGenerator<T, R> = KeyValueGenerator<string, T, R>
 
 export function keyValueBy<T, R>(arr: T[], keyValue: KeyValueGenerator<T, number, R>, initialValue?: Index<R>): Index<R>
 export function keyValueBy<T, R>(
@@ -12,25 +14,19 @@ export function keyValueBy<T, R>(
 /** Generates an object from an array or object. Simpler than reduce or _.transform. The KeyValueGenerator passes (key, value) if the input is an object, and (value, i) if it is an array. The return object from each iteration is merged into the accumulated object. Return null to skip an item. */
 export function keyValueBy<T, R>(
   input: T[] | Index<T>,
-  keyValue: KeyValueGenerator<T | string, number | T, R>,
-  initialValue: Index<R> = {},
+  keyValue: ArrayKeyValueGenerator<T, R> | ObjectKeyValueGenerator<T, R>,
+  accum: Index<R> = {},
 ): Index<R> {
   const isArray = Array.isArray(input)
-  const arr = isArray ? input : Object.keys(input)
-
-  /** A reducer than converts an array into an object through a keyValue function. */
-  const arrayReducer = (accum: Index<R>, item: T | string, i: number) => ({
-    ...accum,
-    ...keyValue(item, i, accum),
+  // considerably faster than Array.prototype.reduce
+  Object.entries(input || {}).forEach(([key, value], i) => {
+    const o = isArray
+      ? (keyValue as ArrayKeyValueGenerator<T, R>)(value, i, accum)
+      : (keyValue as ObjectKeyValueGenerator<T, R>)(key, value, accum)
+    Object.entries(o || {}).forEach(entry => {
+      accum[entry[0]] = entry[1]
+    })
   })
 
-  /** A reducer that maps an object through a keyValue function. */
-  const objectReducer = (accum: Index<R>, item: string) => ({
-    ...accum,
-    ...keyValue(item, (input as Index<T>)[item], accum),
-  })
-
-  return isArray
-    ? (arr as T[]).reduce(arrayReducer, initialValue)
-    : (arr as string[]).reduce(objectReducer, initialValue)
+  return accum
 }
