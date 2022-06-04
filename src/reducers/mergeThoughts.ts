@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { moveThought, updateThoughts } from '.'
-import { Lexeme, Path, State } from '../@types'
+import { Index, Lexeme, Path, State, Thought } from '../@types'
 import { getNextRank, getThoughtById } from '../selectors'
 import {
   appendToPath,
@@ -80,13 +80,12 @@ const mergeThoughts = (
     id !== sourceThought.id ? { [key]: id } : null,
   )
 
-  const thoughtIndexUpdates = {
+  const thoughtIndexUpdates: Index<Thought | null> = {
     // delete source thought from the source parent's children array,
     [sourceParentThought.id]: {
       ...sourceParentThoughtUpdated,
-      children: Object.values(childrenMap),
       childrenMap,
-      updatedAt: timestamp(),
+      lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     },
     // delete source thought
