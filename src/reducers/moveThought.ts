@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import { treeMove } from '../util/recentlyEditedTree'
+// import { treeMove } from '../util/recentlyEditedTree'
 import { rerank, mergeThoughts, updateThoughts } from '../reducers'
 import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
-import { Path, SimplePath, State } from '../@types'
+import { Index, Path, SimplePath, State, Thought } from '../@types'
 import {
   appendToPath,
   head,
@@ -29,13 +29,13 @@ export interface MoveThoughtPayload {
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
-  try {
-    recentlyEdited = treeMove(state, state.recentlyEdited, oldPath, newPath)
-  } catch (e) {
-    console.error('moveThought: treeMove immer error')
-    console.error(e)
-  }
+  const recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // try {
+  //   recentlyEdited = treeMove(state, state.recentlyEdited, oldPath, newPath)
+  // } catch (e) {
+  //   console.error('moveThought: treeMove immer error')
+  //   console.error(e)
+  // }
 
   const sourceThoughtPath = oldPath
   const destinationThoughtPath = rootedParentOf(state, newPath)
@@ -69,7 +69,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   return reducerFlow([
     state => {
-      // Note: Incase of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
+      // Note: In case of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
       if (duplicateThought && !isPendingMerge) {
         return mergeThoughts(state, {
           sourceThoughtPath,
@@ -88,7 +88,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         [isFunction(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
-      const thoughtIndexUpdates = {
+      const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
               [sourceParentThought.id]: {
