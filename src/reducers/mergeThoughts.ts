@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { moveThought, updateThoughts } from '.'
 import { Index, Lexeme, Path, State, Thought } from '../@types'
 import { getNextRank, getThoughtById } from '../selectors'
+import { HOME_TOKEN } from '../constants'
 import {
   appendToPath,
   equalPath,
@@ -9,13 +10,14 @@ import {
   head,
   keyValueBy,
   normalizeThought,
+  parentOf,
   reducerFlow,
   timestamp,
 } from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 /**
- * Merges two given thoughts with same value by moving all the children of the source thought to the end of the desination context.
+ * Merges two given thoughts with the same value by moving all the children of the source thought to the end of the desination thought.
  */
 const mergeThoughts = (
   state: State,
@@ -29,7 +31,22 @@ const mergeThoughts = (
 ): State => {
   const sourceThought = getThoughtById(state, head(sourceThoughtPath))
   const targetThought = getThoughtById(state, head(targetThoughtPath))
-  const sourceParentThought = getThoughtById(state, sourceThought.parentId)
+
+  // fallback to the parent in sourceThoughtPath if sourceThought.parentId does not have a corresponding thought
+  // in multi-step move and merge, outdated thoughts may be reconciled into state before merge is complete
+  // if no parent thought can be found, warn and safely exit
+  const sourceParentThought =
+    getThoughtById(state, sourceThought.parentId) || getThoughtById(state, head(parentOf(sourceThoughtPath)))
+  if (!sourceParentThought) {
+    console.warn(
+      `mergeThoughts: sourceParentThought not found. Missing thought for both sourceThought.parentId of ${
+        sourceThought.parentId
+      } and head(parentof(sourceThoughtPath)) of ${head(parentOf(sourceThoughtPath))}`,
+    )
+    console.warn('  sourceThought', sourceThought)
+    console.warn('  sourceThoughtPath', sourceThought.id)
+    return state
+  }
 
   if (sourceThought.id === targetThought.id) {
     throw new Error('Cannot merge a thought to itself.')
@@ -61,30 +78,36 @@ const mergeThoughts = (
         : state,
   ])(state)
 
-  const hashedThought = hashThought(sourceThought.value)
+  const lexemeKey = hashThought(sourceThought.value)
 
-  const sourceThoughtlexeme = newStateAfterMove.thoughts.lexemeIndex[hashedThought]!
+  const lexeme = newStateAfterMove.thoughts.lexemeIndex[lexemeKey]
 
   // remove source thought from the lexeme entry as its thought index entry will be deleted
-  const updatedLexeme: Lexeme = {
-    ...sourceThoughtlexeme,
-    contexts: sourceThoughtlexeme!.contexts.filter(thoughtId => thoughtId !== sourceThought.id),
-  }
-
-  const lexemeIndexUpdates = {
-    [hashedThought]: updatedLexeme,
+  const lexemeIndexUpdates: Index<Lexeme | null> = {
+    [lexemeKey]: {
+      ...lexeme,
+      contexts: lexeme.contexts.filter(thoughtId => thoughtId !== sourceThought.id),
+    },
   }
 
   const sourceParentThoughtUpdated = getThoughtById(newStateAfterMove, sourceParentThought.id)
-  const childrenMap = keyValueBy(sourceParentThoughtUpdated.childrenMap || {}, (key, id) =>
-    id !== sourceThought.id ? { [key]: id } : null,
-  )
+
+  if (sourceParentThoughtUpdated.id !== HOME_TOKEN && !getThoughtById(state, sourceParentThoughtUpdated.parentId)) {
+    console.warn(
+      `mergeThoughts: sourceParentThoughtUpdated's parentId of ${sourceParentThoughtUpdated.parentId} is no longer valid. This could be due to a bad sync. Skipping merge.`,
+      sourceParentThoughtUpdated,
+    )
+    console.warn('sourceParentThoughtUpdated', sourceParentThoughtUpdated)
+    return state
+  }
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    // delete source thought from the source parent's children array,
+    // delete source thought from the source parent's children
     [sourceParentThought.id]: {
       ...sourceParentThoughtUpdated,
-      childrenMap,
+      childrenMap: keyValueBy(sourceParentThoughtUpdated.childrenMap || {}, (key, id) =>
+        id !== sourceThought.id ? { [key]: id } : null,
+      ),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     },
