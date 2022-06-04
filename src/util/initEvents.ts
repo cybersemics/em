@@ -79,7 +79,13 @@ export const initEvents = (store: Store<State, any>) => {
   const onError = (e: { message: string; error: Error }) => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
     // https://blog.sentry.io/2016/05/17/what-is-script-error
-    if (e.message === 'Script error.') return
+    if (
+      e.message === 'Script error.' ||
+      // onError now picks up on errors that originate from developers typing into the console
+      e.message.startsWith('Uncaught EvalError') ||
+      e.message.includes('at <anonymous>:')
+    )
+      return
 
     console.error(e.error.stack)
     db.log({ message: e.message, stack: e.error.stack })
