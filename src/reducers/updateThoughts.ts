@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { initialState } from '../util/initialState'
-import { expandThoughts } from '../selectors'
+import { getThoughtById, expandThoughts } from '../selectors'
 import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
@@ -162,35 +162,6 @@ const updateThoughts = (
         lexemeIndex,
       },
     }),
-
-    // Data Integrity Check
-    // Catch Lexeme-Thought rank mismatches on empty thought.
-    // Disable since 2-part moves rely on temporary invalid state.
-    // Re-enable after Independent Editing (#495)
-
-    // state => {
-    //   // loop through all Lexemes that are being updated
-    //   Object.values(lexemeIndexUpdates).forEach(lexeme => {
-    //     // loop through each ThoughtContext of each Lexeme
-    //     lexeme?.contexts.forEach(cx => {
-    //       // find the Child with the same value and rank in the Thought
-    //       const parent = getThoughtById(state, cx.context)
-    //       const child = parent?.children.find(
-    //         child => normalizeThought(child.value) === normalizeThought(lexeme.value) && child.rank === cx.rank,
-    //       )
-    //       if (!child) {
-    //         console.error('lexeme', lexeme)
-    //         console.error('parent', parent)
-    //         throw new Error(
-    //           `ThoughtContext for "${lexeme.value}" in ${JSON.stringify(cx.context)} with rank ${
-    //             cx.rank
-    //           } is not found in corresponding Thought.`,
-    //         )
-    //       }
-    //     })
-    //   })
-    //   return state
-    // },
     // calculate expanded using fresh thoughts and cursor
     !preventExpandThoughts
       ? state => ({
@@ -198,6 +169,30 @@ const updateThoughts = (
           expanded: expandThoughts(state, state.cursor),
         })
       : null,
+
+    // Data Integrity Checks
+    // These can be removed after the upstream problem is identified.
+    state => {
+      Object.values(thoughtIndexUpdates).forEach(thought => {
+        if (!thought) return
+
+        // Check if any thought's children's parentId does not match the thought's id.
+        const children = Object.values(thought.childrenMap || {})
+          .map(id => getThoughtById(state, id))
+          // the child may not exist in the thoughtIndex yet if it is pending
+          .filter(Boolean)
+        children.forEach(child => {
+          if (child.parentId !== thought.id) {
+            console.error('thought', thought)
+            console.error('child', child)
+            console.error('child parent', getThoughtById(state, child.parentId))
+            throw new Error(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
+          }
+        })
+      })
+
+      return state
+    },
   ])(state)
 }
 
