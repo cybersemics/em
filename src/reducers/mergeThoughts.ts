@@ -32,6 +32,11 @@ const mergeThoughts = (
   const sourceThought = getThoughtById(state, head(sourceThoughtPath))
   const targetThought = getThoughtById(state, head(targetThoughtPath))
 
+  if (!sourceThought) {
+    console.warn(`Missing sourceThought${head(sourceThoughtPath)}. Aborting merge.`)
+    return state
+  }
+
   // fallback to the parent in sourceThoughtPath if sourceThought.parentId does not have a corresponding thought
   // in multi-step move and merge, outdated thoughts may be reconciled into state before merge is complete
   // if no parent thought can be found, warn and safely exit
@@ -41,7 +46,7 @@ const mergeThoughts = (
     console.warn(
       `mergeThoughts: sourceParentThought not found. Missing thought for both sourceThought.parentId of ${
         sourceThought.parentId
-      } and head(parentof(sourceThoughtPath)) of ${head(parentOf(sourceThoughtPath))}`,
+      } and head(parentof(sourceThoughtPath)) of ${head(parentOf(sourceThoughtPath))}. Aborting merge.`,
     )
     console.warn('  sourceThought', sourceThought)
     console.warn('  sourceThoughtPath', sourceThought.id)
