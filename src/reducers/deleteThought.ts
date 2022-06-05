@@ -42,7 +42,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     return state
   }
 
-  const { value, rank } = deletedThought
+  const { value } = deletedThought
 
   if (!hasLexeme(state, value)) {
     console.error(`Lexeme not found for thought value: ${value}`)
@@ -65,23 +65,11 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   // guard against missing lexeme
   // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
   if (!lexeme) {
-    console.warn(
-      `Missing Lexeme: "${value}". This indicates that there is a data integrity issue upstream. Deleting Parent anyway.`,
-      value,
-    )
-    return state
+    console.warn('Missing Lexeme:', value)
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
   const path = thoughtToPath(state, deletedThought.id)
-
-  const isValidThought = lexeme && lexeme.contexts.find(thoughtId => thoughtId === deletedThought.id)
-
-  // if thought is not valid then just stop further execution
-  if (!isValidThought) {
-    console.error(`Thought ${value} with rank ${rank} is not in ${JSON.stringify(context)}`)
-    return state
-  }
 
   // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -93,13 +81,13 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
   //   console.error(e)
   // }
 
-  // the old thought less the context
-  const newOldThought =
-    lexeme.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
+  // the old Lexeme less the context
+  const newOldLexeme =
+    lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
 
   // update state so that we do not have to wait for firebase
-  if (newOldThought) {
-    lexemeIndexNew[key] = newOldThought
+  if (newOldLexeme) {
+    lexemeIndexNew[key] = newOldLexeme
   } else {
     delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
   }
@@ -201,7 +189,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
       } as ThoughtUpdates)
 
   const lexemeIndexUpdates = {
-    [key]: newOldThought,
+    [key]: newOldLexeme,
     ...descendantUpdatesResult.lexemeIndex,
     // emptyContextDelete
   }
