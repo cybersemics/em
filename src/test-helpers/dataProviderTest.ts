@@ -42,7 +42,7 @@ const getManyDescendantsByContext = async (
     .filter(Boolean)
     .map(thought => thought!.id)
 
-  return all(getManyDescendants(provider, thoughtIds, initialState(), options))
+  return all(getManyDescendants(provider, thoughtIds, initialState, options))
 }
 
 expect.extend({
@@ -299,7 +299,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex(thoughtIndex)
       await provider.updateLexemeIndex(lexemeIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.thoughtIndex).toEqual(_.omit(thoughtIndex, EM_TOKEN, ABSOLUTE_TOKEN))
@@ -326,7 +326,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex(thoughtIndex)
       await provider.updateLexemeIndex(lexemeIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.thoughtIndex).toEqual(_.omit(thoughtIndex, EM_TOKEN, ABSOLUTE_TOKEN))
@@ -355,7 +355,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtY = (await getContext(provider, ['x', 'y']))!
 
       // only fetch 1 level of descendants
-      const it = getDescendantThoughts(provider, thoughtX!.id, initialState(), { maxDepth: 1 })
+      const it = getDescendantThoughts(provider, thoughtX!.id, initialState, { maxDepth: 1 })
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
@@ -398,7 +398,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtZ = (await getContext(provider, ['x', 'y', 'z']))!
 
       // only fetch 2 levels of descendants
-      const thoughtChunks = await all(getDescendantThoughts(provider, thoughtX.id, initialState(), { maxDepth: 2 }))
+      const thoughtChunks = await all(getDescendantThoughts(provider, thoughtX.id, initialState, { maxDepth: 2 }))
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.thoughtIndex).toMatchObject({
@@ -441,7 +441,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtY = (await getContext(provider, ['x', 'y']))!
 
       // only fetch 1 level of descendants
-      const it = getDescendantThoughts(provider, thoughtX.id, state, { maxDepth: 1 })
+      const it = getDescendantThoughts(provider, thoughtX.id, () => state, { maxDepth: 1 })
       const thoughtChunks = await all(it)
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
@@ -479,7 +479,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex(thoughtIndex)
       await provider.updateLexemeIndex(lexemeIndex)
 
-      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState()))
+      const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
 
       // flatten the thought chunks
       // preserve chunk order

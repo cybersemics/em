@@ -14,14 +14,13 @@ const emContextEncoded = EM_TOKEN
 const getManyDescendants = async function* getManyDescendants(
   provider: DataProvider,
   thoughtIds: ThoughtId[],
-  // @MIGRATION_TODO: Is removing this state dependency possible ??
-  state: State,
+  getState: () => State,
   { maxDepth = 100 } = {},
 ): AsyncIterable<ThoughtsInterface> {
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
     thoughtIds.map(key =>
-      getDescendantThoughts(provider, key, state, {
+      getDescendantThoughts(provider, key, getState, {
         // do not limit the depth of the em context
         maxDepth: key === emContextEncoded ? Infinity : maxDepth,
       }),

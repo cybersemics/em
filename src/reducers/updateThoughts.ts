@@ -183,10 +183,14 @@ const updateThoughts = (
           .filter(Boolean)
         children.forEach(child => {
           if (child.parentId !== thought.id) {
-            console.error('thought', thought)
-            console.error('child', child)
-            console.error('child parent', getThoughtById(state, child.parentId))
-            throw new Error(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
+            console.warn(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
+            console.info('thought', thought)
+            console.info('child', child)
+            console.info('child parent', getThoughtById(state, child.parentId))
+            if (thoughtIndexUpdates[child.id]) {
+              thoughtIndexUpdates[child.id]!.parentId = thought.id
+              console.info('repaired')
+            }
           }
         })
       })

@@ -1,9 +1,10 @@
 import { EM_TOKEN } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashThought, keyValueBy, never } from '../../util'
+import { hashThought, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { getThoughtById } from '../../selectors'
+import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import { getSessionId } from '../../util/sessionManager'
 
 const MAX_DEPTH = 100
@@ -22,13 +23,14 @@ interface Options {
 async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
-  state: State,
+  getState: () => State,
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {
   // use queue for breadth-first search
   let thoughtIdQueue = [thoughtId] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
+  const state = getState()
   let accumulatedThoughtIndex = state.thoughts.thoughtIndex
 
   // eslint-disable-next-line fp/no-loops
@@ -49,6 +51,7 @@ async function* getDescendantThoughts(
       ...pulledThoughtIndex,
     }
 
+    const state = getState()
     const updatedState: State = {
       ...state,
       thoughts: {
@@ -60,20 +63,26 @@ async function* getDescendantThoughts(
     const thoughts =
       currentMaxDepth > 0
         ? providerThoughtsValidated
-        : providerThoughtsValidated.map(thought => ({
-            ...thought,
-            // set thoughts with children as pending
-            // do not include descendants of EM
-            // TODO: Should we exclude descendants of functions? How to check without a slow call to contextToThought?
-            ...(thoughtId !== EM_TOKEN && Object.keys(thought.childrenMap || {}).length > 0
-              ? {
-                  childrenMap: {},
-                  lastUpdated: never(),
-                  updatedBy: getSessionId(),
-                  pending: true,
-                }
-              : null),
-          }))
+        : providerThoughtsValidated.map(thought => {
+            const isEm = thoughtId === EM_TOKEN
+            const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
+            const isAttribute =
+              isFunction(thought.value) || getAncestorBy(state, thought.id, ancestor => isFunction(ancestor.value))
+            return {
+              ...thought,
+              // set thoughts with children as pending
+              // do not include descendants of EM
+              // TODO: Should we exclude descendants of functions? How to check without a slow call to contextToThought?
+              ...(hasChildren && !isEm && !isAttribute
+                ? {
+                    childrenMap: {},
+                    lastUpdated: never(),
+                    updatedBy: getSessionId(),
+                    pending: true,
+                  }
+                : null),
+            }
+          })
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))

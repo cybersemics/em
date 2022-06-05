@@ -280,8 +280,6 @@ const Editable = ({
 
     const oldValue = oldValueRef.current
 
-    const lexeme = getLexeme(state, oldValue)
-
     if (transient) {
       dispatch(
         newThought({
@@ -292,43 +290,41 @@ const Editable = ({
       return
     }
 
-    if (lexeme) {
-      dispatch(
-        editThought({
-          context,
-          showContexts,
-          oldValue,
-          newValue,
-          rankInContext: rank,
-          path: simplePath,
-        }),
-      )
+    dispatch(
+      editThought({
+        context,
+        showContexts,
+        oldValue,
+        newValue,
+        rankInContext: rank,
+        path: simplePath,
+      }),
+    )
 
-      if (isDivider(newValue)) {
-        // remove selection so that the focusOffset does not cause a split false positive in newThought
-        selection.clear()
-      }
-
-      // store the value so that we have a transcendental head when it is changed
-      oldValueRef.current = newValue
-
-      const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
-      const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
-      if (
-        newValue &&
-        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
-          newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
-          (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
-          ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
-            Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
-            newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
-      ) {
-        dispatch(tutorialNext({}))
-      }
-
-      onEdit?.({ context, path, oldValue, newValue })
+    if (isDivider(newValue)) {
+      // remove selection so that the focusOffset does not cause a split false positive in newThought
+      selection.clear()
     }
+
+    // store the value so that we have a transcendental head when it is changed
+    oldValueRef.current = newValue
+
+    const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
+    const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
+    if (
+      newValue &&
+      ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
+        newValue.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()) ||
+        (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_PARENT &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase()) ||
+        ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1 ||
+          Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
+          newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
+    ) {
+      dispatch(tutorialNext({}))
+    }
+
+    onEdit?.({ context, path, oldValue, newValue })
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
