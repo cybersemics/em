@@ -37,17 +37,16 @@ const editThought = (
     return state
   }
 
-  // guard against missing lexeme (although this should never happen)
-  if (!lexemeOld) {
-    console.error(`Lexeme not found: "${oldValue}"`)
-    return state
-  }
-
   const parentOfEditedThought = getThoughtById(state, editedThought.parentId)
-
   if (!parentOfEditedThought) {
     console.error('Parent not found')
     return state
+  }
+
+  // guard against missing Lexeme
+  // although this should never happen, syncing issues can cause this
+  if (!lexemeOld) {
+    console.warn(`Missing Lexeme: ${oldValue}`)
   }
 
   const { rank } = editedThought
@@ -56,19 +55,16 @@ const editThought = (
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
-  try {
-    // recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
-  } catch (e) {
-    console.error('editThought: treeChange immer error')
-    console.error(e)
-  }
+  // try {
+  //   recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
+  // } catch (e) {
+  //   console.error('editThought: treeChange immer error')
+  //   console.error(e)
+  // }
 
   // hasDescendantOfFloatingContext can be done in O(edges)
   // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldOrphan = () => !lexemeOld.contexts || lexemeOld.contexts.length < 2
-
-  // the old thought less the context
-  const newOldThought = !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
+  const isThoughtOldOrphan = () => lexemeOld && (!lexemeOld.contexts || lexemeOld.contexts.length < 2)
 
   // do not add floating thought to context
   const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
@@ -79,8 +75,11 @@ const editThought = (
     value: newValue,
   }
 
+  // the old thought less the context
+  const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
+
   const lexemeNew =
-    lexemeOld.contexts.length > 0
+    lexemeOld && lexemeOld.contexts.length > 0
       ? addContext(lexemeNewWithoutContext, rank, editedThoughtId, archived as Timestamp)
       : lexemeNewWithoutContext
 
@@ -89,8 +88,8 @@ const editThought = (
 
   // do not do anything with old lexemeIndex if hashes match, as the above line already took care of it
   if (oldKey !== newKey) {
-    if (newOldThought) {
-      lexemeIndex[oldKey] = newOldThought
+    if (newOldLexeme) {
+      lexemeIndex[oldKey] = newOldLexeme
     } else {
       delete lexemeIndex[oldKey] // eslint-disable-line fp/no-delete
     }
@@ -102,7 +101,7 @@ const editThought = (
 
   const lexemeIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
-    [oldKey]: newOldThought,
+    [oldKey]: newOldLexeme,
     [newKey]: lexemeNew,
   }
 
