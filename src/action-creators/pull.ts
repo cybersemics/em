@@ -66,8 +66,8 @@ const pull =
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, filteredThoughtIds, getState(), {
-      maxDepth: maxDepth !== undefined ? maxDepth : BUFFER_DEPTH,
+    const thoughtsLocalIterable = getManyDescendants(db, filteredThoughtIds, getState, {
+      maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
     // const thoughtsLocalIterable = getManyDescendants(db, pathMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })
@@ -102,9 +102,9 @@ const pull =
       const thoughtsRemoteIterable = getManyDescendants(
         getFirebaseProvider(getState(), dispatch),
         thoughtIds,
-        getState(),
+        getState,
         {
-          maxDepth: maxDepth || BUFFER_DEPTH,
+          maxDepth: maxDepth ?? BUFFER_DEPTH,
         },
       )
 

@@ -22,13 +22,14 @@ interface Options {
 async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
-  state: State,
+  getState: () => State,
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {
   // use queue for breadth-first search
   let thoughtIdQueue = [thoughtId] // eslint-disable-line fp/no-let
   let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
 
+  const state = getState()
   let accumulatedThoughtIndex = state.thoughts.thoughtIndex
 
   // eslint-disable-next-line fp/no-loops
@@ -49,6 +50,7 @@ async function* getDescendantThoughts(
       ...pulledThoughtIndex,
     }
 
+    const state = getState()
     const updatedState: State = {
       ...state,
       thoughts: {
