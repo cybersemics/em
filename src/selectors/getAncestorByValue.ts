@@ -4,7 +4,7 @@ import { Index, Thought, State, ThoughtId } from '../@types'
 /**
  * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.
  */
-const getAncestorBy = (
+export const getAncestorBy = (
   state: State,
   thoughtId: ThoughtId,
   predicate: (thought: Thought) => boolean,
