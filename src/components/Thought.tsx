@@ -90,6 +90,7 @@ export interface ThoughtContainerProps {
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
 }
@@ -107,6 +108,7 @@ interface ThoughtProps {
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
   editing?: boolean | null
@@ -239,6 +241,7 @@ const ThoughtContainer = ({
   showContexts,
   simplePath,
   style,
+  styleContainer,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -332,6 +335,25 @@ const ThoughtContainer = ({
       EMPTY_OBJECT,
     )
 
+  const styleContainerEnv = children
+    .filter(
+      child =>
+        child.value in GLOBAL_STYLE_ENV ||
+        // children that have an entry in the environment
+        (child.value in { ...env } &&
+          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+          child.id !== env![child.value]),
+    )
+    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
+    .reduce<React.CSSProperties>(
+      (accum, style) => ({
+        ...accum,
+        ...style,
+      }),
+      // use stable object reference
+      EMPTY_OBJECT,
+    )
+
   /** Load =bullet from child expressions that are found in the environment. */
   const bulletEnv = () =>
     children
@@ -350,7 +372,7 @@ const ThoughtContainer = ({
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
   const styleSelf = useSelector((state: State) => getStyle(state, thoughtId))
-  const styleContainer = getStyle(state, thoughtId, { container: true })
+  const styleContainerSelf = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
 
@@ -396,11 +418,23 @@ const ThoughtContainer = ({
       ? styleEnv
       : style
 
+  const styleContainerNew =
+    Object.keys(styleContainerSelf || {}).length > 0 ||
+    (Object.keys(styleContainerEnv || {}).length > 0 && Object.keys(styleContainer || {}).length > 0)
+      ? {
+          ...styleContainer,
+          ...styleContainerEnv,
+          ...styleContainerSelf,
+        }
+      : Object.keys(styleContainerEnv || {}).length > 0
+      ? styleContainerEnv
+      : styleContainer
+
   return dropTarget(
     dragSource(
       <li
         style={{
-          ...styleContainer,
+          ...styleContainerNew,
           ...styleContainerZoom,
         }}
         className={classNames({
