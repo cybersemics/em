@@ -1,18 +1,9 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import {
-  clearPushQueue,
-  deleteThought,
-  isPushing,
-  mergeThoughts,
-  pull,
-  push,
-  setCursor,
-  updateThoughts,
-} from '../action-creators'
+import { clearPushQueue, deleteThought, isPushing, pull, push, updateThoughts } from '../action-creators'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { equalArrays, head, keyValueBy, normalizeThought } from '../util'
+import { keyValueBy, normalizeThought } from '../util'
 import { getThoughtById } from '../selectors'
 import { Thunk, Index, Lexeme, PushBatch, State, ThoughtId } from '../@types'
 
@@ -178,44 +169,6 @@ const flushDeletes =
     }
   }
 
-/** When a thought is moved to another context, duplicates are recursively merged. This function pulls children of pending merges and dispatches move to fully merge. */
-const flushPendingMerges =
-  (pushQueue: PushBatch[]): Thunk<Promise<void>> =>
-  async (dispatch, getState) => {
-    const pendingMerges = pushQueue.map(({ pendingMerges }) => pendingMerges || []).flat()
-
-    if (pendingMerges.length > 0) {
-      const pending: Record<ThoughtId, true> = keyValueBy(pendingMerges, ({ sourcePath, targetPath }) => ({
-        [head(targetPath)]: true,
-        [head(sourcePath)]: true,
-      }))
-
-      const toBePulledThoughts = Object.keys(pending) as ThoughtId[]
-
-      await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: 1 }))
-
-      pendingMerges.forEach(({ sourcePath, targetPath }) => {
-        dispatch([
-          mergeThoughts({
-            sourceThoughtPath: sourcePath,
-            targetThoughtPath: targetPath,
-          }),
-          (): Thunk => (dispatch, getState) => {
-            // source thought would be deleted after merge, so changing the cursor to the target thought
-            const newState = getState()
-            const isSourceCursor = newState.cursor && equalArrays(newState.cursor, sourcePath)
-            isSourceCursor &&
-              dispatch(
-                setCursor({
-                  path: targetPath,
-                }),
-              )
-          },
-        ])
-      })
-    }
-  }
-
 /** Push queued updates to the local and remote. Make sure to clear the queue synchronously after calling this to prevent redundant pushes. */
 const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) => {
   const { pushQueue } = getState()
@@ -254,9 +207,6 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
     // push will detect that these are only remote updates
     Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
   ])
-
-  // Note: Pending merges should be flushed after the updates has been pushed. It is because it requires pulling some already existing thoughts. These thoughts have updates in these batches, so pulling before the the batches has been pushed to data layers will result in stale application state.
-  await dispatch(flushPendingMerges(pushQueue))
 
   // turn off isPushing at the end
   dispatch((dispatch, getState) => {
