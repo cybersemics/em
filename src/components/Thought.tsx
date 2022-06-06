@@ -38,6 +38,7 @@ import {
   parseJsonSafe,
   pathToContext,
   publishMode,
+  safeRefMerge,
 } from '../util'
 
 // selectors
@@ -406,29 +407,8 @@ const ThoughtContainer = ({
       globals.simulateDropHover || isHovering
 
   // avoid re-renders from object reference change
-  const styleNew =
-    Object.keys(styleSelf || {}).length > 0 ||
-    (Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0)
-      ? {
-          ...style,
-          ...styleEnv,
-          ...styleSelf,
-        }
-      : Object.keys(styleEnv || {}).length > 0
-      ? styleEnv
-      : style
-
-  const styleContainerNew =
-    Object.keys(styleContainerSelf || {}).length > 0 ||
-    (Object.keys(styleContainerEnv || {}).length > 0 && Object.keys(styleContainer || {}).length > 0)
-      ? {
-          ...styleContainer,
-          ...styleContainerEnv,
-          ...styleContainerSelf,
-        }
-      : Object.keys(styleContainerEnv || {}).length > 0
-      ? styleContainerEnv
-      : styleContainer
+  const styleNew = safeRefMerge(style, styleEnv, styleSelf)
+  const styleContainerNew = safeRefMerge(styleContainer, styleContainerEnv, styleContainerSelf)
 
   return dropTarget(
     dragSource(
@@ -501,7 +481,7 @@ const ThoughtContainer = ({
             minContexts={allowSingleContext ? 0 : 2}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
-            style={styleNew}
+            style={styleNew || undefined}
             simplePath={simplePath}
           />
 
@@ -515,7 +495,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
-            style={styleNew}
+            style={styleNew || undefined}
             simplePath={simplePath}
             onEdit={!isTouch ? onEdit : undefined}
             view={view}
