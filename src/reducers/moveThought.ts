@@ -1,9 +1,19 @@
 import _ from 'lodash'
 // import { treeMove } from '../util/recentlyEditedTree'
-import { rerank, updateThoughts } from '../reducers'
+import { rerank, mergeThoughts, updateThoughts } from '../reducers'
 import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
 import { Index, Path, SimplePath, State, Thought } from '../@types'
-import { head, isDescendantPath, isFunction, keyValueBy, pathToContext, reducerFlow, timestamp } from '../util'
+import {
+  appendToPath,
+  head,
+  isDescendantPath,
+  isFunction,
+  keyValueBy,
+  normalizeThought,
+  pathToContext,
+  reducerFlow,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
 
 export interface MoveThoughtPayload {
@@ -37,6 +47,18 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const destinationThought = getThoughtById(state, destinationThoughtId)
 
   const sameContext = sourceParentThought.id === destinationThoughtId
+  const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
+
+  /**
+   * Find first normalized duplicate thought.
+   */
+  const duplicateSubthought = () =>
+    childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
+
+  // if thought is being moved to the same context that is not a duplicate case
+  const duplicateThought = !sameContext ? duplicateSubthought() : null
+
+  const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
 
   const destinationContext = pathToContext(state, destinationThoughtPath)
 
@@ -47,6 +69,14 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   return reducerFlow([
     state => {
+      // Note: In case of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
+      if (duplicateThought && !isPendingMerge) {
+        return mergeThoughts(state, {
+          sourceThoughtPath,
+          targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+        })
+      }
+
       // remove sourceThought from sourceParentThought
       const sourceParentThoughtChildrenMapNew = keyValueBy(sourceParentThought.childrenMap, (key, id) =>
         id !== sourceThought.id ? { [key]: id } : null,
@@ -86,10 +116,21 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         },
       }
 
+      const pendingMerges =
+        isPendingMerge && duplicateThought
+          ? [
+              {
+                sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
+                targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+              },
+            ]
+          : []
+
       return updateThoughts(state, {
         thoughtIndexUpdates,
         lexemeIndexUpdates: {},
         recentlyEdited,
+        pendingMerges,
         preventExpandThoughts: true,
       })
     },
