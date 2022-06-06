@@ -96,13 +96,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     pullQueue = {}
 
-    const toBePulledThoughtIds = Object.keys(extendedPullQueue) as ThoughtId[]
+    const extendedPullQueueIds = Object.keys(extendedPullQueue) as ThoughtId[]
 
-    // if there are any pending thoughts remaining after the pull, we need to add them to the pullQueue and immediately flush
-    const hasMorePending = await dispatch(pull(toBePulledThoughtIds, { force: forcePull }))
+    // if there are any pending descendants from the pull, we need to add them to the pullQueue and immediately flush
+    const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forcePull }))
 
+    // TODO: Disable until redundant pulls can be eliminated
     const { user } = getState()
-    if (!user && hasMorePending) {
+    if (!user && Object.keys(pendingThoughts).length > 0) {
       updatePullQueue({ forceFlush: true, forcePull })
     }
   }

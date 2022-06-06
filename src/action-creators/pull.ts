@@ -6,7 +6,7 @@ import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { updateThoughts } from '../action-creators'
 import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
-import { Thunk, State, ThoughtsInterface, ThoughtId } from '../@types'
+import { State, Thunk, ThoughtsInterface, ThoughtId, Thought } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
@@ -55,13 +55,13 @@ const pull =
   (
     thoughtIds: ThoughtId[],
     { force, maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
-  ): Thunk<Promise<boolean>> =>
+  ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending contexts parents unless forced
     const filteredThoughtIds = force ? thoughtIds : getPendingThoughtIds(getState(), thoughtIds)
 
     // short circuit if there are no contexts to fetch
-    if (filteredThoughtIds.length === 0) return false
+    if (filteredThoughtIds.length === 0) return []
 
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
@@ -70,17 +70,15 @@ const pull =
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    // const thoughtsLocalIterable = getManyDescendants(db, pathMapFiltered, { maxDepth: maxDepth || BUFFER_DEPTH })
-    // eslint-disable-next-line fp/no-loops
-    for await (const thoughts of thoughtsLocalIterable) {
+    const localThoughtsFetched = itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
       // eslint-disable-next-line fp/no-mutating-methods
-      thoughtLocalChunks.push(thoughts)
+      thoughtLocalChunks.push(thoughtsChunk)
 
-      // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
+      // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
       dispatch(
         updateThoughts({
-          thoughtIndexUpdates: thoughts.thoughtIndex,
-          lexemeIndexUpdates: thoughts.lexemeIndex,
+          thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
+          lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
           local: false,
           remote: false,
           // if the root is in the pathMap, force isLoading: false
@@ -89,14 +87,12 @@ const pull =
         }),
       )
 
-      onLocalThoughts?.(thoughts)
-    }
+      onLocalThoughts?.(thoughtsChunk)
+    })
 
-    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
-    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
-
-    // get remote thoughts and reconcile with local
+    // get remote thoughts
     const status = getState().status
+    let remoteThoughtsFetched = Promise.resolve()
     if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(
         getFirebaseProvider(getState(), dispatch),
@@ -107,31 +103,40 @@ const pull =
         },
       )
 
-      await itForEach(thoughtsRemoteIterable, (thoughtsRemoteChunk: ThoughtsInterface) => {
+      remoteThoughtsFetched = itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
         dispatch(
           updateThoughts({
-            thoughtIndexUpdates: thoughtsRemoteChunk.thoughtIndex,
-            lexemeIndexUpdates: thoughtsRemoteChunk.lexemeIndex,
+            thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
+            lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
             local: false,
             remote: false,
           }),
         )
 
-        onRemoteThoughts?.(thoughtsRemoteChunk)
+        onRemoteThoughts?.(thoughtsChunk)
       })
     }
 
-    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
-    const hasPending = Object.keys(thoughtsLocal.thoughtIndex || {}).some(
-      key => (thoughtsLocal.thoughtIndex || {})[key].pending,
-    )
+    // the state is updated directly with local and remote thoughts as they load, without conflict resolution
+    // TODO: Use a syncable database that handles conflicts
+    await Promise.all([localThoughtsFetched, remoteThoughtsFetched])
 
-    // if we are pulling the home context and there are no pending thoughts, but the home parent is marked a pending, it means there are no children and we need to clear the pending status manually
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
+    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
+
+    // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
+    const pendingThoughts = Object.values(thoughtsLocal.thoughtIndex || {}).filter(thought => thought.pending)
+
+    // if we are pulling the home context and there are no pending thoughts, but the home parent is marked as pending, it means there are no children and we need to clear the pending status manually
     // https://github.com/cybersemics/em/issues/1344
     const stateNew = getState()
 
     const homeThought = getThoughtById(stateNew, HOME_TOKEN)
-    if (thoughtIds.includes(ROOT_ENCODED) && !hasPending && isPending(stateNew, homeThought)) {
+    if (
+      thoughtIds.includes(ROOT_ENCODED) &&
+      Object.keys(pendingThoughts).length === 0 &&
+      isPending(stateNew, homeThought)
+    ) {
       dispatch(
         updateThoughts({
           thoughtIndexUpdates: {
@@ -148,7 +153,7 @@ const pull =
       )
     }
 
-    return hasPending
+    return pendingThoughts
   }
 
 export default pull
