@@ -84,24 +84,44 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // track when search contexts change
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
 
-  // queque contexts entries to be pulled from the data source
+  // enqueue thoughts be pulled from the data source
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
   let pullQueue = initialPullQueue()
+
+  // a list of indices of ThoughtIds that are currently being pulled
+  // used to prevent redundant pulls
+  // each inner object is the extendedPullQueueFiltered of a single pull
+  // the other object allows the inner objects to be removed in O(1) when the pull is complete
+  const pullQueuePulling: Index<Record<ThoughtId, true>> = {}
+
+  // an autoincrement key for pullQueuePulling
+  let extendedPullQueuePullingId = 0
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forcePull }: { forcePull?: boolean } = {}) => {
     // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisiblePathsChildren(getState(), pullQueue, lastVisiblePaths)
 
+    // filter out thoughts that are currently being pulled
+    const extendedPullQueueFiltered = keyValueBy(extendedPullQueue, id => {
+      const isPulling = Object.values(pullQueuePulling).some(pullQueueObject => id in pullQueueObject)
+      return isPulling ? null : { [id]: true as const }
+    })
+
     pullQueue = {}
 
-    const extendedPullQueueIds = Object.keys(extendedPullQueue) as ThoughtId[]
+    const extendedPullQueueIds = Object.keys(extendedPullQueueFiltered) as ThoughtId[]
+
+    const pullKey = extendedPullQueuePullingId++
+    pullQueuePulling[pullKey] = extendedPullQueueFiltered
 
     // if there are any pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forcePull }))
 
-    // TODO: Disable until redundant pulls can be eliminated
+    // eslint-disable-next-line fp/no-delete
+    delete pullQueuePulling[pullKey]
+
     const { user } = getState()
     if (!user && Object.keys(pendingThoughts).length > 0) {
       updatePullQueue({ forceFlush: true, forcePull })
