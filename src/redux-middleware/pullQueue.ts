@@ -192,7 +192,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
     else if (action.type === 'authenticate' && action.value) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
-      updatePullQueue({ forcePull: true })
+      updatePullQueueDebounced({ forcePull: true })
     }
     // do not pull before cursor has been initialized
     else if (getState().cursorInitialized) {
