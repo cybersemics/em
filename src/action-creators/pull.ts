@@ -4,9 +4,9 @@ import getFirebaseProvider from '../data-providers/firebase'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
-import { reconcile, updateThoughts } from '../action-creators'
+import { updateThoughts } from '../action-creators'
 import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
-import { Thunk, Index, Lexeme, Thought, State, ThoughtsInterface, ThoughtId } from '../@types'
+import { Thunk, State, ThoughtsInterface, ThoughtId } from '../@types'
 
 const BUFFER_DEPTH = 2
 const ROOT_ENCODED = HOME_TOKEN
@@ -76,7 +76,6 @@ const pull =
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLocalChunks.push(thoughts)
 
-      // TODO: Update only thoughts for which shouldUpdate is false in reconcile and remove redundant updateThoughts. Entries for which shouldUpdate is true are updated anyway.
       // mergeUpdates will prevent overwriting non-pending thoughts with pending thoughts
       dispatch(
         updateThoughts({
@@ -108,62 +107,18 @@ const pull =
         },
       )
 
-      const thoughtRemoteChunks: ThoughtsInterface[] = []
-
-      // TODO: Refactor into zipThoughts
       await itForEach(thoughtsRemoteIterable, (thoughtsRemoteChunk: ThoughtsInterface) => {
-        // eslint-disable-next-line fp/no-mutating-methods
-        thoughtRemoteChunks.push(thoughtsRemoteChunk)
-
-        // find the corresponding Thoughts from the local store (if any exist) so it can be reconciled with the remote Thoughts
-        const thoughtsLocalThoughtIndexChunk = _.transform(
-          thoughtsRemoteChunk.thoughtIndex,
-          (accum, parentEntryRemote, key) => {
-            const parentEntryLocal = thoughtsLocal.thoughtIndex[key]
-            if (parentEntryLocal) {
-              accum[key] = parentEntryLocal
-            }
-          },
-          {} as Index<Thought>,
-        )
-
-        // find the corresponding Lexemes from the local store (if any exist) so it can be reconciled with the remote Lexemes
-        const thoughtsLocalLexemeIndexChunk = _.transform(
-          thoughtsRemoteChunk.lexemeIndex,
-          (accum, lexemeRemote, key) => {
-            const lexemeLocal = thoughtsLocal.lexemeIndex[key]
-            if (lexemeLocal) {
-              accum[key] = lexemeLocal
-            }
-          },
-          {} as Index<Lexeme>,
-        )
         dispatch(
-          reconcile({
-            thoughtsResults: [
-              {
-                thoughtIndex: thoughtsLocalThoughtIndexChunk,
-                lexemeIndex: thoughtsLocalLexemeIndexChunk,
-              },
-              thoughtsRemoteChunk,
-            ],
+          updateThoughts({
+            thoughtIndexUpdates: thoughtsRemoteChunk.thoughtIndex,
+            lexemeIndexUpdates: thoughtsRemoteChunk.lexemeIndex,
+            local: false,
+            remote: false,
           }),
         )
 
         onRemoteThoughts?.(thoughtsRemoteChunk)
       })
-
-      // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
-      const thoughtsRemote = thoughtRemoteChunks.reduce(_.ary(mergeThoughts, 2))
-
-      // The reconcile dispatched above only covers remote keys since it is within thoughtsRemoteIterable.
-      // Reconcile thoughts that exist locally but not remotely.
-      dispatch(
-        reconcile({
-          thoughtsResults: [thoughtsLocal, thoughtsRemote],
-          local: false,
-        }),
-      )
     }
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.

@@ -54,7 +54,6 @@ export const newSubthought = reducerToThunk<typeof reducers.newSubthought>('newS
 export const createThought = reducerToThunk<typeof reducers.createThought>('createThought')
 export const outdent = reducerToThunk<typeof reducers.outdent>('outdent')
 export const prependRevision = reducerToThunk<typeof reducers.prependRevision>('prependRevision')
-export const reconcile = reducerToThunk<typeof reducers.reconcile>('reconcile')
 export const search = reducerToThunk<typeof reducers.search>('search')
 export const setRemoteSearch = reducerToThunk<typeof reducers.setRemoteSearch>('setRemoteSearch')
 export const searchContexts = reducerToThunk<typeof reducers.searchContexts>('searchContexts')
