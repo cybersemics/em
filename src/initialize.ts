@@ -218,6 +218,10 @@ const windowEm = {
     getChildrenRanked(state, contextToThoughtId(state, context) || null),
   ),
   getThoughtById: withState(getThoughtById),
+  getThoughtByContext: withState((state: State, context: Context) => {
+    const id = contextToThoughtId(state, context)
+    return id ? getThoughtById(state, id) : undefined
+  }),
   contextToThoughtId,
   hashThought,
   moize,

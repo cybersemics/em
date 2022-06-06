@@ -34,6 +34,7 @@ import {
   parseJsonSafe,
   parseLet,
   pathToContext,
+  safeRefMerge,
 } from '../util'
 
 // selectors
@@ -707,7 +708,9 @@ export const SubthoughtsComponent = ({
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
   const styleChildren = getStyle(state, childrenAttributeId)
-  const styleGrandChildren = getStyle(state, grandchildrenAttributeId)
+  const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
+  const styleContainerChildren = getStyle(state, childrenAttributeId, { container: true })
+  const styleContainerGrandchildren = getStyle(state, grandchildrenAttributeId, { container: true })
 
   const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
   const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
@@ -777,7 +780,7 @@ export const SubthoughtsComponent = ({
                   }
 
                   const style = {
-                    ...styleGrandChildren,
+                    ...styleGrandchildren,
                     ...styleChildren,
                     ...(isEditingChildPath()
                       ? {
@@ -786,6 +789,8 @@ export const SubthoughtsComponent = ({
                         }
                       : null),
                   }
+
+                  const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
 
                   const appendedChildPath = appendChildPath(state, childPath, path)
                   const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
@@ -823,6 +828,7 @@ export const SubthoughtsComponent = ({
                           pointerEvents: 'none',
                           ...style,
                         }}
+                        styleContainer={styleContainer || undefined}
                         path={appendedChildPath}
                         simplePath={childPath}
                         isMultiColumnTable={isMultiColumnTable}
@@ -854,7 +860,7 @@ export const SubthoughtsComponent = ({
             }
 
             const style = {
-              ...styleGrandChildren,
+              ...styleGrandchildren,
               ...styleChildren,
               ...(isEditingChildPath()
                 ? {
@@ -863,6 +869,8 @@ export const SubthoughtsComponent = ({
                   }
                 : null),
             }
+
+            const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
 
             /** Returns true if the bullet should be hidden. */
             const hideBullet = () => attribute(state, head(childPath), '=bullet') === 'None'
@@ -904,6 +912,7 @@ export const SubthoughtsComponent = ({
                 prevChild={filteredChildren[i - 1]}
                 isParentHovering={isParentHovering}
                 style={Object.keys(style).length > 0 ? style : undefined}
+                styleContainer={styleContainer || undefined}
                 path={appendedChildPath}
                 simplePath={childPath}
                 isMultiColumnTable={isMultiColumnTable}

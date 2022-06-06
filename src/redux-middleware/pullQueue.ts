@@ -84,25 +84,46 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // track when search contexts change
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
 
-  // queque contexts entries to be pulled from the data source
+  // enqueue thoughts be pulled from the data source
   // initialize with em and root contexts
   // eslint-disable-next-line fp/no-let
   let pullQueue = initialPullQueue()
+
+  // a list of indices of ThoughtIds that are currently being pulled
+  // used to prevent redundant pulls
+  // each inner object is the extendedPullQueueFiltered of a single pull
+  // the other object allows the inner objects to be removed in O(1) when the pull is complete
+  const pullQueuePulling: Index<Record<ThoughtId, true>> = {}
+
+  // an autoincrement key for pullQueuePulling
+  let extendedPullQueuePullingId = 0
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forcePull }: { forcePull?: boolean } = {}) => {
     // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisiblePathsChildren(getState(), pullQueue, lastVisiblePaths)
 
+    // filter out thoughts that are currently being pulled
+    const extendedPullQueueFiltered = keyValueBy(extendedPullQueue, id => {
+      const isPulling = Object.values(pullQueuePulling).some(pullQueueObject => id in pullQueueObject)
+      return isPulling ? null : { [id]: true as const }
+    })
+
     pullQueue = {}
 
-    const toBePulledThoughtIds = Object.keys(extendedPullQueue) as ThoughtId[]
+    const extendedPullQueueIds = Object.keys(extendedPullQueueFiltered) as ThoughtId[]
 
-    // if there are any pending thoughts remaining after the pull, we need to add them to the pullQueue and immediately flush
-    const hasMorePending = await dispatch(pull(toBePulledThoughtIds, { force: forcePull }))
+    const pullKey = extendedPullQueuePullingId++
+    pullQueuePulling[pullKey] = extendedPullQueueFiltered
+
+    // if there are any pending descendants from the pull, we need to add them to the pullQueue and immediately flush
+    const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forcePull }))
+
+    // eslint-disable-next-line fp/no-delete
+    delete pullQueuePulling[pullKey]
 
     const { user } = getState()
-    if (!user && hasMorePending) {
+    if (!user && Object.keys(pendingThoughts).length > 0) {
       updatePullQueue({ forceFlush: true, forcePull })
     }
   }
@@ -191,12 +212,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.
     else if (action.type === 'authenticate' && action.value) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
-      updatePullQueue({ forcePull: true })
+      updatePullQueueDebounced({ forcePull: true })
     }
     // do not pull before cursor has been initialized
-    // do not updatePullQueue if there are syncs queued or in progress
-    // this gets checked again in updatePullQueue, but short circuit here if possible
-    else if (getState().cursorInitialized && !hasPushes(getState())) {
+    else if (getState().cursorInitialized) {
       updatePullQueueDebounced()
     }
   }

@@ -5,7 +5,7 @@ import { editThoughtPayload } from '../reducers/editThought'
 import { htmlToJson, importJSON, logWithTime, mergeUpdates, once, textToHtml, reducerFlow } from '../util'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { Context, Index, Lexeme, Thought, Path, PendingMerge, PushBatch, SimplePath, State } from '../@types'
+import { Context, Index, Lexeme, Thought, Path, PushBatch, SimplePath, State } from '../@types'
 
 export interface UpdateThoughtsOptions {
   lexemeIndexUpdates: Index<Lexeme | null>
@@ -14,7 +14,6 @@ export interface UpdateThoughtsOptions {
   pendingDeletes?: { context: Context; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
-  pendingMerges?: PendingMerge[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
   preventExpandThoughts?: boolean
   contextChain?: SimplePath[]
@@ -69,7 +68,6 @@ const updateThoughts = (
     updates,
     pendingDeletes,
     pendingPulls,
-    pendingMerges,
     preventExpandThoughts,
     local = true,
     remote = true,
@@ -125,7 +123,6 @@ const updateThoughts = (
     updates,
     pendingDeletes,
     pendingPulls,
-    pendingMerges,
     local,
     remote,
     pendingLexemes,
@@ -183,13 +180,14 @@ const updateThoughts = (
           .filter(Boolean)
         children.forEach(child => {
           if (child.parentId !== thought.id) {
-            console.warn(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
-            console.info('thought', thought)
-            console.info('child', child)
-            console.info('child parent', getThoughtById(state, child.parentId))
+            // Temporarily disable warning until I can repair the data in Firebase
+            // console.warn(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
+            // console.info('thought', thought)
+            // console.info('child', child)
+            // console.info('child parent', getThoughtById(state, child.parentId))
             if (thoughtIndexUpdates[child.id]) {
               thoughtIndexUpdates[child.id]!.parentId = thought.id
-              console.info('repaired')
+              // console.info('repaired')
             }
           }
         })

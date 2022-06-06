@@ -116,21 +116,10 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         },
       }
 
-      const pendingMerges =
-        isPendingMerge && duplicateThought
-          ? [
-              {
-                sourcePath: appendToPath(destinationThoughtPath, sourceThought.id),
-                targetPath: appendToPath(destinationThoughtPath, duplicateThought.id),
-              },
-            ]
-          : []
-
       return updateThoughts(state, {
         thoughtIndexUpdates,
         lexemeIndexUpdates: {},
         recentlyEdited,
-        pendingMerges,
         preventExpandThoughts: true,
       })
     },

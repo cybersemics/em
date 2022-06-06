@@ -5,7 +5,7 @@ import { findDescendant } from '../selectors'
 import { getAllChildrenAsThoughts } from './getChildren'
 import { State, ThoughtId } from '../@types'
 
-/** Parses the =style attribute of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
+/** Parses the =style or =styleContainer attributes of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
 const getStyle = (
   state: State,
   id: ThoughtId | null,

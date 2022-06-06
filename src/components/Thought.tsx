@@ -38,6 +38,7 @@ import {
   parseJsonSafe,
   pathToContext,
   publishMode,
+  safeRefMerge,
 } from '../util'
 
 // selectors
@@ -90,6 +91,7 @@ export interface ThoughtContainerProps {
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
 }
@@ -107,6 +109,7 @@ interface ThoughtProps {
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
   editing?: boolean | null
@@ -239,6 +242,7 @@ const ThoughtContainer = ({
   showContexts,
   simplePath,
   style,
+  styleContainer,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -332,6 +336,25 @@ const ThoughtContainer = ({
       EMPTY_OBJECT,
     )
 
+  const styleContainerEnv = children
+    .filter(
+      child =>
+        child.value in GLOBAL_STYLE_ENV ||
+        // children that have an entry in the environment
+        (child.value in { ...env } &&
+          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+          child.id !== env![child.value]),
+    )
+    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
+    .reduce<React.CSSProperties>(
+      (accum, style) => ({
+        ...accum,
+        ...style,
+      }),
+      // use stable object reference
+      EMPTY_OBJECT,
+    )
+
   /** Load =bullet from child expressions that are found in the environment. */
   const bulletEnv = () =>
     children
@@ -350,7 +373,7 @@ const ThoughtContainer = ({
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
   const styleSelf = useSelector((state: State) => getStyle(state, thoughtId))
-  const styleContainer = getStyle(state, thoughtId, { container: true })
+  const styleContainerSelf = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
 
@@ -384,23 +407,14 @@ const ThoughtContainer = ({
       globals.simulateDropHover || isHovering
 
   // avoid re-renders from object reference change
-  const styleNew =
-    Object.keys(styleSelf || {}).length > 0 ||
-    (Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0)
-      ? {
-          ...style,
-          ...styleEnv,
-          ...styleSelf,
-        }
-      : Object.keys(styleEnv || {}).length > 0
-      ? styleEnv
-      : style
+  const styleNew = safeRefMerge(style, styleEnv, styleSelf)
+  const styleContainerNew = safeRefMerge(styleContainer, styleContainerEnv, styleContainerSelf)
 
   return dropTarget(
     dragSource(
       <li
         style={{
-          ...styleContainer,
+          ...styleContainerNew,
           ...styleContainerZoom,
         }}
         className={classNames({
@@ -467,7 +481,7 @@ const ThoughtContainer = ({
             minContexts={allowSingleContext ? 0 : 2}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
-            style={styleNew}
+            style={styleNew || undefined}
             simplePath={simplePath}
           /> */}
 
@@ -481,7 +495,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs}
             showContexts={showContexts}
-            style={styleNew}
+            style={styleNew || undefined}
             simplePath={simplePath}
             onEdit={!isTouch ? onEdit : undefined}
             view={view}
