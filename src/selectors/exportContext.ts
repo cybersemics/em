@@ -1,6 +1,6 @@
-import { attribute, contextToThoughtId, getChildrenRanked } from '../selectors'
-import { head, isFunction, isRoot, unroot } from '../util'
-import { Context, MimeType, Thought, State } from '../@types'
+import { attribute, contextToThoughtId, thoughtToContext, getChildrenRanked } from '../selectors'
+import { head, isFunction, isRoot } from '../util'
+import { Context, MimeType, Thought, ThoughtId, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
 
@@ -31,7 +31,7 @@ interface Options {
 /** Exports the navigable subtree of the given context. */
 export const exportContext = (
   state: State,
-  context: Context,
+  contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
   { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, depth = 0, excludeArchived }: Options = {},
 ): string => {
@@ -41,8 +41,10 @@ export const exportContext = (
   const tab2 = tab1 + '  '
   const childrenPrefix = format === 'text/html' ? `\n${tab2}<ul>` : ''
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
-  const thoughtId = contextToThoughtId(state, context)
+  const thoughtId =
+    typeof contextOrThoughtId === 'string' ? contextOrThoughtId : contextToThoughtId(state, contextOrThoughtId)
   const children = thoughtId ? getChildrenRanked(state, thoughtId) : []
+  const context = Array.isArray(contextOrThoughtId) ? contextOrThoughtId : thoughtToContext(state, thoughtId!)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
   const childrenFiltered = children.filter(
@@ -62,7 +64,7 @@ export const exportContext = (
   /** Outputs an exported child. */
   const exportChild = (child: Thought) =>
     (isNoteAndMetaExcluded ? '' : '  ') +
-    exportContext(state, unroot(context.concat(child.value)) as Context, format, {
+    exportContext(state, child.id, format, {
       excludeSrc,
       excludeMeta,
       excludeArchived,

@@ -1,5 +1,5 @@
 import 'react-native-get-random-values'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_PATH, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
 import {
@@ -120,76 +120,6 @@ it('basic import with proper thought structure', () => {
   // Note: Jest doesn't have lexicographic string comparison yet :(
   expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
   expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
-})
-
-it('merge descendants', () => {
-  const initialText = `
-  - a
-    - b
-      - c
-  `
-
-  const mergeText = `
-  - a
-    - b
-      - q
-    - x
-      - y
-  - j
-  `
-
-  const now = timestamp()
-
-  const newState = reducerFlow([
-    importText({ text: initialText, lastUpdated: now }),
-    newThought({ at: HOME_PATH, value: '' }),
-    importTextAtFirstMatch({
-      at: [''],
-      text: mergeText,
-      lastUpdated: now,
-    }),
-  ])(initialState(now))
-
-  const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
-
-  const expectedExport = `- ${HOME_TOKEN}
-  - a
-    - b
-      - c
-      - q
-    - x
-      - y
-  - j`
-
-  expect(exported).toBe(expectedExport)
-
-  const { thoughtIndex } = newState.thoughts
-
-  const thoughtA = contextToThought(newState, ['a'])!
-  const thoughtB = contextToThought(newState, ['a', 'b'])!
-  const thoughtC = contextToThought(newState, ['a', 'b', 'c'])!
-  const thoughtQ = contextToThought(newState, ['a', 'b', 'q'])!
-  const thoughtX = contextToThought(newState, ['a', 'x'])!
-  const thoughtY = contextToThought(newState, ['a', 'x', 'y'])!
-  const thoughtJ = contextToThought(newState, ['j'])!
-
-  expect(thoughtIndex).toMatchObject({
-    [contextToThoughtId(newState, [HOME_TOKEN])!]: {
-      childrenMap: { [thoughtA.id]: thoughtA.id, [thoughtJ.id]: thoughtJ.id },
-    },
-    [thoughtA.id]: {
-      childrenMap: { [thoughtB.id]: thoughtB.id, [thoughtX.id]: thoughtX.id },
-    },
-    [thoughtB.id]: {
-      childrenMap: { [thoughtC.id]: thoughtC.id, [thoughtQ.id]: thoughtQ.id },
-    },
-    [thoughtX.id]: {
-      childrenMap: { [thoughtY.id]: thoughtY.id },
-    },
-  })
-
-  expect(getLexeme(newState, 'a')?.contexts).toMatchObject([thoughtA.id])
-  expect(getLexeme(newState, 'b')?.contexts).toMatchObject([thoughtB.id])
 })
 
 it('initialSettings', () => {
