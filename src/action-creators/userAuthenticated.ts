@@ -17,7 +17,7 @@ const userAuthenticated =
     dispatch(authenticate({ value: true, user }))
 
     // login automatically on page load
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       storage.setItem('autologin', 'true')
     })
 
