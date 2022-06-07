@@ -6,15 +6,14 @@ import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { updateThoughts } from '../action-creators'
 import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
-import { State, Thunk, ThoughtsInterface, ThoughtId, Thought } from '../@types'
+import { State, Thunk, ThoughtsInterface, ThoughtId, Thought, ThoughtIndices } from '../@types'
 
 const BUFFER_DEPTH = 2
-const ROOT_ENCODED = HOME_TOKEN
-
 export interface PullOptions {
-  // pull given contexts without checking if they are pending
-  // used when authenticated to force a pull from the remote
+  // force a pull from the remote
   force?: boolean
+  // remote only
+  remote?: boolean
   maxDepth?: number
   onLocalThoughts?: (thoughts: ThoughtsInterface) => void
   onRemoteThoughts?: (thoughts: ThoughtsInterface) => void
@@ -54,7 +53,7 @@ const getPendingThoughtIds = (state: State, thoughtIds: ThoughtId[]): ThoughtId[
 const pull =
   (
     thoughtIds: ThoughtId[],
-    { force, maxDepth, onLocalThoughts, onRemoteThoughts }: PullOptions = {},
+    { force, maxDepth, onLocalThoughts, onRemoteThoughts, remote }: PullOptions = {},
   ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending contexts parents unless forced
@@ -66,7 +65,8 @@ const pull =
     // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
 
-    const thoughtsLocalIterable = getManyDescendants(db, filteredThoughtIds, getState, {
+    // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
+    const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
@@ -83,7 +83,7 @@ const pull =
           remote: false,
           // if the root is in the pathMap, force isLoading: false
           // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
-          ...(ROOT_ENCODED in filteredThoughtIds ? { isLoading: false } : null),
+          ...(HOME_TOKEN in filteredThoughtIds ? { isLoading: false } : null),
         }),
       )
 
@@ -108,7 +108,7 @@ const pull =
           updateThoughts({
             thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
             lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
-            local: false,
+            local: true,
             remote: false,
           }),
         )
@@ -122,7 +122,10 @@ const pull =
     await Promise.all([localThoughtsFetched, remoteThoughtsFetched])
 
     // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
-    const thoughtsLocal = thoughtLocalChunks.reduce(_.ary(mergeThoughts, 2))
+    const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
+      thoughtIndex: {},
+      lexemeIndex: {},
+    })
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
     const pendingThoughts = Object.values(thoughtsLocal.thoughtIndex || {}).filter(thought => thought.pending)
@@ -133,7 +136,7 @@ const pull =
 
     const homeThought = getThoughtById(stateNew, HOME_TOKEN)
     if (
-      thoughtIds.includes(ROOT_ENCODED) &&
+      thoughtIds.includes(HOME_TOKEN) &&
       Object.keys(pendingThoughts).length === 0 &&
       isPending(stateNew, homeThought)
     ) {
@@ -141,8 +144,8 @@ const pull =
         updateThoughts({
           thoughtIndexUpdates: {
             ...stateNew.thoughts.thoughtIndex,
-            [ROOT_ENCODED]: {
-              ...stateNew.thoughts.thoughtIndex[ROOT_ENCODED],
+            [HOME_TOKEN]: {
+              ...stateNew.thoughts.thoughtIndex[HOME_TOKEN],
               pending: false,
             },
           },
