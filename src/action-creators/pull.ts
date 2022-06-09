@@ -5,7 +5,7 @@ import getManyDescendants from '../data-providers/data-helpers/getManyDescendant
 import { HOME_TOKEN } from '../constants'
 import { mergeThoughts } from '../util'
 import { updateThoughts } from '../action-creators'
-import { getDescendantThoughtIds, getThoughtById, isPending } from '../selectors'
+import { getThoughtById, isPending } from '../selectors'
 import { State, Thunk, ThoughtsInterface, ThoughtId, Thought, ThoughtIndices } from '../@types'
 
 const BUFFER_DEPTH = 2
@@ -27,24 +27,12 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   }
 }
 
-/** Returns a list of pending contexts from all pathMap contexts and their descendants. */
-const getPendingThoughtIds = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] => {
-  return _.flatMap(thoughtIds, thoughtId => {
+/** Filters a list of ids to only pending thoughts. */
+const filterPending = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
+  thoughtIds.filter(thoughtId => {
     const thought = getThoughtById(state, thoughtId)
-
-    const isThoughtPending = !thought || thought.pending
-
-    return isThoughtPending
-      ? // if the original pathMap context is pending, use it
-        [thoughtId]
-      : // otherwise search for pending or missing descendants
-        // @MIGRATION_TODO: Fix explicit type conversion here
-        getDescendantThoughtIds(state, thoughtId).filter(thoughtId => {
-          const thought = getThoughtById(state, thoughtId)
-          return !thought || thought.pending
-        })
+    return !thought || thought.pending
   })
-}
 
 /**
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
@@ -56,14 +44,14 @@ const pull =
     { force, maxDepth, onLocalThoughts, onRemoteThoughts, remote }: PullOptions = {},
   ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
-    // pull only pending contexts parents unless forced
-    const filteredThoughtIds = force ? thoughtIds : getPendingThoughtIds(getState(), thoughtIds)
+    // pull only pending thoughts unless forced
+    const filteredThoughtIds = force ? thoughtIds : filterPending(getState(), thoughtIds)
 
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []
 
-    // get local thoughts
     const thoughtLocalChunks: ThoughtsInterface[] = []
+    const thoughtRemoteChunks: ThoughtsInterface[] = []
 
     // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
     const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
@@ -92,6 +80,7 @@ const pull =
 
     // get remote thoughts
     const status = getState().status
+    console.log('  status', status)
     let remoteThoughtsFetched = Promise.resolve()
     if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(
@@ -104,6 +93,9 @@ const pull =
       )
 
       remoteThoughtsFetched = itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
+        // eslint-disable-next-line fp/no-mutating-methods
+        thoughtRemoteChunks.push(thoughtsChunk)
+
         dispatch(
           updateThoughts({
             thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
@@ -127,8 +119,16 @@ const pull =
       lexemeIndex: {},
     })
 
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
+    const thoughtsRemote = thoughtRemoteChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
+      thoughtIndex: {},
+      lexemeIndex: {},
+    })
+
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
-    const pendingThoughts = Object.values(thoughtsLocal.thoughtIndex || {}).filter(thought => thought.pending)
+    const pendingThoughts = Object.values({ ...thoughtsLocal.thoughtIndex, ...thoughtsRemote.thoughtIndex }).filter(
+      thought => thought.pending,
+    )
 
     // if we are pulling the home context and there are no pending thoughts, but the home parent is marked as pending, it means there are no children and we need to clear the pending status manually
     // https://github.com/cybersemics/em/issues/1344

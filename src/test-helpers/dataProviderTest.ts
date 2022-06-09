@@ -426,11 +426,12 @@ const dataProviderTest = (provider: DataProvider) => {
     })
 
     test('do not buffer leaves', async () => {
+      // add 'm' sibling to ensure that y is not visible and will be buffered
       const state = importText({
         text: `
         - x
           - y
-            - z
+        - m
       `,
       })(initialState())
 
@@ -447,12 +448,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       expect(thoughts.thoughtIndex).toEqual({
         [thoughtX.id]: state.thoughts.thoughtIndex[thoughtX.id],
-        [thoughtY.id]: {
-          ...state.thoughts.thoughtIndex[thoughtY.id],
-          childrenMap: {},
-          lastUpdated: never(),
-          pending: true,
-        },
+        [thoughtY.id]: state.thoughts.thoughtIndex[thoughtY.id],
       })
 
       // support optional id property
@@ -661,78 +657,130 @@ const dataProviderTest = (provider: DataProvider) => {
       )
     })
 
-    // @MIGRATION-TODO: Currently we are dependent on local state fot checking if the parent context has any meta attributes. This is because parent doesn't have context field anymore.
-    // test('ignore maxDepth on metaprogramming attributes', async () => {
-    //   const { thoughtIndex, lexemeIndex } = importThoughts(`
-    //     - x
-    //       - y
-    //         - z
-    //           - =note
-    //             - content
-    //           - m
-    //     - t
-    //       - u
-    //         - v
-    //           - m
-    //             - n
-    //   `)
+    test('ignore maxDepth on metaprogramming attributes', async () => {
+      const { thoughtIndex, lexemeIndex } = importThoughts(`
+        - x
+          - y
+            - =note
+              - content
+            - z
+              - m
+        - t
+          - u
+            - v
+              - m
+                - n
+      `)
 
-    //   await provider.updateThoughtIndex(thoughtIndex)
-    //   await provider.updateLexemeIndex(lexemeIndex)
+      await provider.updateThoughtIndex(thoughtIndex)
+      await provider.updateLexemeIndex(lexemeIndex)
 
-    //   const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
-    //   const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
+      const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-    //   const [thoughtZ, thoughtV] = await Promise.all([
-    //     getContext(provider, ['x', 'y', 'z']),
-    //     getContext(provider, ['t', 'u', 'v']),
-    //   ])
+      const [thoughtZ, thoughtV] = await Promise.all([
+        getContext(provider, ['x', 'y', 'z']),
+        getContext(provider, ['t', 'u', 'v']),
+      ])
 
-    //   expect(thoughts.thoughtIndex).toEqual({
-    //     ..._.pick(
-    //       thoughtIndex,
-    //       ...(await getThoughtIdsForContexts(provider, [
-    //         ['x'],
-    //         ['x', 'y'],
-    //         ['x', 'y', 'z', '=note'],
-    //         ['t'],
-    //         ['t', 'u'],
-    //       ])),
-    //     ),
-    //     [thoughtZ!.id]: {
-    //       ...thoughtIndex[thoughtZ!.id],
-    //       children: [
-    //         // take the =note Child from thoughtIndex so that ids match
-    //         thoughtIndex[hashContext(['x', 'y', 'z'])].children.find(child => isFunction(child.value)),
-    //       ],
-    //       pending: true,
-    //       lastUpdated: never(),
-    //       updatedBy: getSessionId(),
-    //     },
-    //     [hashContext(['t', 'u', 'v'])]: {
-    //       ...thoughtIndex[hashContext(['t', 'u', 'v'])],
-    //       children: [],
-    //       pending: true,
-    //       lastUpdated: never(),
-    //       updatedBy: getSessionId(),
-    //     },
-    //     // empty contexts are present in local state but not provider state
-    //     // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
-    //     // [hashContext(['x', 'y', 'z', '=note', 'content'])]: thoughtIndex[hashContext(['x', 'y', 'z', '=note', 'content'])],
-    //     // [hashContext(['t', 'u', 'v', 'm', 'n'])]: thoughtIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
-    //   })
+      expect(thoughts.thoughtIndex).toEqual({
+        ..._.pick(
+          thoughtIndex,
+          ...(await getThoughtIdsForContexts(provider, [
+            ['x'],
+            ['x', 'y'],
+            ['x', 'y', '=note'],
+            ['x', 'y', '=note', 'content'],
+            ['x', 'y', 'z'],
+            ['t'],
+            ['t', 'u'],
+          ])),
+        ),
+        [thoughtZ!.id]: {
+          ...thoughtIndex[thoughtZ!.id],
+          childrenMap: {},
+          lastUpdated: never(),
+          pending: true,
+          updatedBy: getSessionId(),
+        },
+        [thoughtV!.id]: {
+          ...thoughtIndex[thoughtV!.id],
+          childrenMap: {},
+          lastUpdated: never(),
+          pending: true,
+          updatedBy: getSessionId(),
+        },
+        // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
+        // [hashContext(['t', 'u', 'v', 'm', 'n'])]: thoughtIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],
+      })
 
-    //   // support optional id property
-    //   // dexie returns an id while firebase does not
-    //   const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
-    //     [key]: _.omit(value, 'id'),
-    //   }))
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
+        [key]: _.omit(value, 'id'),
+      }))
 
-    //   // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
-    //   expect(lexemeIndexLocalWithoutIds).toEqual(
-    //     _.pick(lexemeIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
-    //   )
-    // })
+      // 'm' is not loaded since ['x', 'y', 'z'] and ['t', 'u', 'v'] are pending
+      expect(lexemeIndexLocalWithoutIds).toEqual(
+        _.pick(lexemeIndex, ['x', 'y', 'z', 't', 'u', 'v', '=note', 'content'].map(hashThought)),
+      )
+    })
+
+    test('load thoughts that become visible when the parent has =pin/true', async () => {
+      const state = importText({
+        text: `
+        - x
+          - a
+          - b
+            - =pin
+              - true
+            - c
+              - d
+            - e
+      `,
+      })(initialState())
+
+      await provider.updateThoughtIndex(state.thoughts.thoughtIndex)
+      await provider.updateLexemeIndex(state.thoughts.lexemeIndex)
+
+      const thoughtX = (await getContext(provider, ['x']))!
+      const thoughtA = (await getContext(provider, ['x', 'a']))!
+      const thoughtB = (await getContext(provider, ['x', 'b']))!
+      const thoughtPin = (await getContext(provider, ['x', 'b', '=pin']))!
+      const thoughtTrue = (await getContext(provider, ['x', 'b', '=pin', 'true']))!
+      const thoughtC = (await getContext(provider, ['x', 'b', 'c']))!
+      const thoughtD = (await getContext(provider, ['x', 'b', 'c', 'd']))!
+      const thoughtE = (await getContext(provider, ['x', 'b', 'e']))!
+
+      // only fetch 1 level of descendants
+      const it = getDescendantThoughts(provider, thoughtX.id, () => state, { maxDepth: 1 })
+      const thoughtChunks = await all(it)
+      const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
+
+      expect(thoughts.thoughtIndex).toEqual({
+        [thoughtX.id]: state.thoughts.thoughtIndex[thoughtX.id],
+        [thoughtA.id]: state.thoughts.thoughtIndex[thoughtA.id],
+        [thoughtB.id]: state.thoughts.thoughtIndex[thoughtB.id],
+        // meta attributes are not buffered
+        [thoughtPin.id]: state.thoughts.thoughtIndex[thoughtPin.id],
+        [thoughtTrue.id]: state.thoughts.thoughtIndex[thoughtTrue.id],
+        // c is not pending since its parent b is visible with =pin/true
+        [thoughtC.id]: state.thoughts.thoughtIndex[thoughtC.id],
+        // d is loaded since c is not pending
+        [thoughtD.id]: state.thoughts.thoughtIndex[thoughtD.id],
+        [thoughtE.id]: state.thoughts.thoughtIndex[thoughtE.id],
+      })
+
+      // support optional id property
+      // dexie returns an id while firebase does not
+      const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
+        [key]: _.omit(value, 'id'),
+      }))
+
+      expect(lexemeIndexLocalWithoutIds).toEqual(
+        _.pick(state.thoughts.lexemeIndex, ['x', 'a', 'b', 'c', 'd', 'e', '=pin', 'true'].map(hashThought)),
+      )
+    })
   })
 }
 
