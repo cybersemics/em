@@ -5,7 +5,7 @@ import { storage } from '../util/storage'
 
 /** Updates local state with newly authenticated user. */
 const userAuthenticated =
-  (user: Firebase.User): Thunk =>
+  (user: Firebase.User, { connected }: { connected?: boolean } = {}): Thunk =>
   (dispatch, getState) => {
     // save the user ref and uid into state
     const userRef = getUserRef({ ...getState(), user })
@@ -14,7 +14,7 @@ const userAuthenticated =
       throw new Error('Could not get userRef')
     }
 
-    dispatch(authenticate({ value: true, user }))
+    dispatch(authenticate({ value: true, user, connected }))
 
     // login automatically on page load
     requestAnimationFrame(() => {
@@ -35,7 +35,15 @@ const userAuthenticated =
       },
     )
 
-    dispatch(status({ value: 'loaded' }))
+    console.log('TEST')
+
+    // only set status to loaded if we have connected
+    // Firebase can be locally authenticated before being connected
+    console.log('userAuthenticated')
+    console.log('  connected', connected)
+    if (connected) {
+      dispatch(status({ value: 'loaded' }))
+    }
   }
 
 export default userAuthenticated
