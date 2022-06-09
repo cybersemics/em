@@ -3,7 +3,7 @@ import { DataProvider } from '../DataProvider'
 import { hashThought, hashPath, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
-import { expandThoughts, getThoughtById, thoughtToPath } from '../../selectors'
+import { getThoughtById, thoughtToPath } from '../../selectors'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import { getSessionId } from '../../util/sessionManager'
 
@@ -82,10 +82,6 @@ async function* getDescendantThoughts(
     if (thoughtIdQueue.total() > 10000) {
       throw new Error('STOP')
     }
-    console.log('\nloop', provider.name)
-    console.log('  depth', depth.get())
-    console.log('  thoughtIdQueue.size', thoughtIdQueue.size())
-    console.log('  thoughtIdQueue.total', thoughtIdQueue.total())
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
     // filter out the missing thought ids and proceed as usual
     const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue.get())
@@ -93,7 +89,6 @@ async function* getDescendantThoughts(
     const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
     const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: providerThoughtsValidated[i] }))
     thoughtIdQueue.clear()
-    console.log('  providerThoughtsValidated', providerThoughtsValidated.map(thought => thought.id).length)
 
     accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pulledThoughtIndex }
 
@@ -104,11 +99,6 @@ async function* getDescendantThoughts(
         ...accumulatedThoughts,
       },
     }
-    if (thoughtIdsValidated.includes('FGyBnhR_5MW9XlPMFIEMK' as ThoughtId)) {
-      console.log('do something')
-    }
-    const expanded = expandThoughts(updatedState, updatedState.cursor)
-    console.log('art history', expanded)
 
     const thoughts = providerThoughtsValidated.map(thought => {
       const childrenIds = Object.values(thought.childrenMap)
@@ -133,17 +123,6 @@ async function* getDescendantThoughts(
         !isEmDescendant &&
         !isMetaDescendant(updatedState, thought)
 
-      console.log('isBuffered?', provider.name, thought.value, isBuffered, {
-        thought,
-        isMaxDepthReached,
-        isMaxThoughtsReached,
-        children: Object.keys(thought.childrenMap || {}).length,
-        isExpanded,
-        isVisible,
-        isEmDescendant,
-        depth: depth.get(),
-      })
-
       // once the buffer limit has been reached, set thoughts with children as pending
       // do not buffer descendants of EM
       // do not buffer descendants of functions (except =archive)
@@ -166,8 +145,6 @@ async function* getDescendantThoughts(
       }
     })
 
-    console.log('  thoughts', thoughts)
-
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))
 
@@ -183,20 +160,6 @@ async function* getDescendantThoughts(
 
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
-    thoughts.forEach(thought => {
-      const path = thoughtToPath(updatedState, thought.id)
-      const context = path.map(id => getThoughtById(updatedState, id).value)
-      if (context.length > 2) {
-        console.log('  context', context, {
-          thought,
-          path,
-          depth: depth.get(),
-          children: Object.values(thought.childrenMap).length,
-          thoughtIdQueueTotal: thoughtIdQueue.total(),
-        })
-      }
-    })
-
     accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...thoughtIndex }
     accumulatedThoughts.lexemeIndex = { ...accumulatedThoughts.lexemeIndex, ...lexemeIndex }
 
@@ -204,8 +167,6 @@ async function* getDescendantThoughts(
       thoughtIndex,
       lexemeIndex,
     }
-
-    console.log('incrementing depth', depth.inc())
   }
 }
 

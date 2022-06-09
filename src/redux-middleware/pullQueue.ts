@@ -24,7 +24,6 @@ const appendVisiblePaths = (
   pullQueue: Record<ThoughtId, true>,
   expandedPaths: Index<Path>,
 ): Record<ThoughtId, true> => {
-  console.log('appendVisiblePathsChildren')
   return keyValueBy(
     expandedPaths,
     (key, path) => {
@@ -74,11 +73,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forceRemote }: { forceRemote?: boolean } = {}) => {
     // expand pull queue to include visible descendants and search contexts
-    console.log('flushPullQueue')
-    console.log('  pullQueue', Object.keys(pullQueue))
-    console.log('  lastExpandedPaths', lastExpandedPaths)
     const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
-    console.log('  extendedPullQueue', Object.keys(extendedPullQueue))
 
     // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
     const extendedPullQueueFiltered = forceRemote
@@ -97,11 +92,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
-    console.log('pendingThoughts', pendingThoughts)
     const visiblePendingThoughts = pendingThoughts.filter(
       thought => getState().expanded[hashPath(thoughtToPath(getState(), thought.parentId))],
     )
-    console.log('visiblePendingThoughts', visiblePendingThoughts)
 
     // eslint-disable-next-line fp/no-delete
     delete pullQueuePulling[pullKey]
@@ -136,8 +129,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const expanded = expandThoughts(state, state.cursor)
 
-    console.log('updatePullQueue A', isLoaded, forceFlush, forceRemote)
-
     // return if expanded is the same, unless force is specified or expanded is empty
     if (
       !forceFlush &&
@@ -147,8 +138,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       isSearchSame
     )
       return
-
-    console.log('updatePullQueue B', isLoaded, forceFlush, forceRemote)
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
 
@@ -163,8 +152,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       isSearchSame
     )
       return
-
-    console.log('updatePullQueue C', isLoaded, forceFlush, forceRemote)
     // update last lastExpandedPaths
     lastExpandedPaths = expandedPaths
 
