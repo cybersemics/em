@@ -2,13 +2,13 @@ import { HOME_TOKEN } from '../constants'
 import { keyValueBy, head } from '../util'
 import { Index, State, Path } from '../@types'
 
-/** Generates a map of all visible paths, including the cursor, all its ancestors, and the expanded contexts. Keyed by ThoughtId. */
-const getVisiblePaths = (state: State, expandedPaths: Index<Path>): Index<Path> => {
+/** Generates a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId. */
+const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path> => {
   const { cursor } = state
   const path = cursor || [HOME_TOKEN]
 
   return {
-    ...expandedPaths,
+    ...expanded,
     // generate the cursor and all its ancestors
     // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
     ...keyValueBy(path, (value, i) => {
@@ -18,4 +18,4 @@ const getVisiblePaths = (state: State, expandedPaths: Index<Path>): Index<Path> 
   }
 }
 
-export default getVisiblePaths
+export default expandedWithAncestors

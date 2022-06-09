@@ -35,12 +35,8 @@ const userAuthenticated =
       },
     )
 
-    console.log('TEST')
-
     // only set status to loaded if we have connected
     // Firebase can be locally authenticated before being connected
-    console.log('userAuthenticated')
-    console.log('  connected', connected)
     if (connected) {
       dispatch(status({ value: 'loaded' }))
     }

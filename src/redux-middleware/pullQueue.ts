@@ -1,15 +1,8 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
-import {
-  expandThoughts,
-  getContexts,
-  getThoughtById,
-  getVisiblePaths,
-  hasPushes,
-  isContextViewActive,
-} from '../selectors'
-import { equalArrays, head, keyValueBy } from '../util'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { expandThoughts, getThoughtById, expandedWithAncestors, thoughtToPath } from '../selectors'
+import { equalArrays, hashPath, head, keyValueBy } from '../util'
 import { pull } from '../action-creators'
 import { ThoughtId, Context, Index, State, Path } from '../@types'
 
@@ -26,39 +19,19 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
 })
 
 /** Appends all visible paths and their children to the pullQueue. */
-const appendVisiblePathsChildren = (
+const appendVisiblePaths = (
   state: State,
   pullQueue: Record<ThoughtId, true>,
-  visiblePaths: Index<Path>,
+  expandedPaths: Index<Path>,
 ): Record<ThoughtId, true> => {
-  // get the encoded context keys that are not in the thoughtIndex
-  const expandedKeys = Object.keys(visiblePaths)
-
+  console.log('appendVisiblePathsChildren')
   return keyValueBy(
-    expandedKeys,
-    contextHash => {
-      const path = visiblePaths[contextHash]
-
+    expandedPaths,
+    (key, path) => {
       const thoughtId = head(path)
-
-      // @MIGRATION-TODO: Fix this after context view starts working
-      const showContexts = isContextViewActive(state, HOME_PATH)
       const thought = getThoughtById(state, thoughtId)
-
-      const children = thought
-        ? showContexts
-          ? getContexts(state, thought.value)
-          : Object.values(state.thoughts.thoughtIndex[thoughtId].childrenMap)
-        : []
-
       return {
-        // current thought
         ...(!thought || thought.pending ? { [thoughtId]: true } : null),
-        // because only parents are specified by visibleContexts, we need to queue the children as well
-        ...keyValueBy(children, childId => {
-          const childThought = getThoughtById(state, childId)
-          return !childThought || childThought.pending ? { [childId]: true } : null
-        }),
       }
     },
     pullQueue,
@@ -78,8 +51,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // track when expanded changes
   let lastExpanded: Index<Context> = {} // eslint-disable-line fp/no-let
 
-  // track when visible paths change
-  let lastVisiblePaths: Index<Path> = {} // eslint-disable-line fp/no-let
+  // track when expanded paths change
+  let lastExpandedPaths: Index<Path> = {} // eslint-disable-line fp/no-let
 
   // track when search contexts change
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
@@ -101,7 +74,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forceRemote }: { forceRemote?: boolean } = {}) => {
     // expand pull queue to include visible descendants and search contexts
-    const extendedPullQueue = appendVisiblePathsChildren(getState(), pullQueue, lastVisiblePaths)
+    console.log('flushPullQueue')
+    console.log('  pullQueue', Object.keys(pullQueue))
+    console.log('  lastExpandedPaths', lastExpandedPaths)
+    const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
+    console.log('  extendedPullQueue', Object.keys(extendedPullQueue))
 
     // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
     const extendedPullQueueFiltered = forceRemote
@@ -118,14 +95,19 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const pullKey = extendedPullQueuePullingId++
     pullQueuePulling[pullKey] = extendedPullQueueFiltered
 
-    // if there are any pending descendants from the pull, we need to add them to the pullQueue and immediately flush
+    // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
+    console.log('pendingThoughts', pendingThoughts)
+    const visiblePendingThoughts = pendingThoughts.filter(
+      thought => getState().expanded[hashPath(thoughtToPath(getState(), thought.parentId))],
+    )
+    console.log('visiblePendingThoughts', visiblePendingThoughts)
 
     // eslint-disable-next-line fp/no-delete
     delete pullQueuePulling[pullKey]
 
-    const { user } = getState()
-    if (!user && Object.keys(pendingThoughts).length > 0) {
+    if (!Math && Object.keys(visiblePendingThoughts).length > 0) {
+      pullQueue = { ...pullQueue, ...keyValueBy(visiblePendingThoughts, (thought, i) => ({ [thought.id]: true })) }
       updatePullQueue({ forceFlush: true, forceRemote })
     }
   }
@@ -148,43 +130,43 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const state = getState()
 
-    // do nothing if there are pending syncs
-    // must do this within this (debounced) function, otherwise state.pushQueue will still be empty
-    if (hasPushes(state)) return
-
     const isSearchSame =
       state.searchContexts === lastSearchContexts ||
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
-    const expandedContexts = expandThoughts(state, state.cursor)
+    const expanded = expandThoughts(state, state.cursor)
+
+    console.log('updatePullQueue A', isLoaded, forceFlush, forceRemote)
 
     // return if expanded is the same, unless force is specified or expanded is empty
     if (
       !forceFlush &&
       !forceRemote &&
       Object.keys(state.expanded).length > 0 &&
-      equalArrays(Object.keys(expandedContexts), Object.keys(lastExpanded)) &&
+      equalArrays(Object.keys(expanded), Object.keys(lastExpanded)) &&
       isSearchSame
     )
       return
 
+    console.log('updatePullQueue B', isLoaded, forceFlush, forceRemote)
     // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
     // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
 
-    lastExpanded = expandedContexts
+    lastExpanded = expanded
 
-    const visiblePaths = getVisiblePaths(state, expandedContexts)
+    const expandedPaths = expandedWithAncestors(state, expanded)
 
     if (
       !forceFlush &&
       !forceRemote &&
-      equalArrays(Object.keys(visiblePaths), Object.keys(lastVisiblePaths)) &&
+      equalArrays(Object.keys(expandedPaths), Object.keys(lastExpandedPaths)) &&
       isSearchSame
     )
       return
 
-    // update last visibleContexts
-    lastVisiblePaths = visiblePaths
+    console.log('updatePullQueue C', isLoaded, forceFlush, forceRemote)
+    // update last lastExpandedPaths
+    lastExpandedPaths = expandedPaths
 
     // update last searchContexts
     lastSearchContexts = state.searchContexts
@@ -208,7 +190,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // reset internal state variables when clear action is dispatched
     if (action.type === 'clear') {
       lastExpanded = {}
-      lastVisiblePaths = {}
+      lastExpandedPaths = {}
       pullQueue = initialPullQueue()
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
