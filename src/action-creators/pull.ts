@@ -80,7 +80,6 @@ const pull =
 
     // get remote thoughts
     const status = getState().status
-    console.log('  status', status)
     let remoteThoughtsFetched = Promise.resolve()
     if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(
