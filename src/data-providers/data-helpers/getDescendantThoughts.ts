@@ -1,17 +1,62 @@
-import { EM_TOKEN } from '../../constants'
+import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashThought, isFunction, keyValueBy, never } from '../../util'
+import { hashThought, hashPath, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
-import { getThoughtById } from '../../selectors'
+import { getThoughtById, thoughtToPath } from '../../selectors'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import { getSessionId } from '../../util/sessionManager'
 
 const MAX_DEPTH = 100
+const MAX_THOUGHTS_QUEUED = 100
 
 interface Options {
   maxDepth?: number
 }
+
+/** A very simple queue. */
+const queue = <T>(initialValue: T[] = []) => {
+  let list: T[] = [...initialValue]
+
+  // the total number of thoughts that have been queued
+  let total = 0
+
+  return {
+    add: (values: T[]) => {
+      list = [...list, ...values]
+      total += values.length
+    },
+    clear: () => {
+      list = []
+    },
+    get: () => [...list],
+    size: () => list.length,
+    total: () => total,
+  }
+}
+
+/** A very simple counter. */
+const counter = (initialValue = 0) => {
+  let n = initialValue
+  return {
+    get: () => n,
+    inc: (step = 1) => {
+      n += step
+      return n
+    },
+  }
+}
+
+/** Returns true if a Thought is a meta attribute but not =archive. */
+const isUnarchivedAttribute = (thought: Thought) => isFunction(thought.value) && thought.value !== '=archive'
+
+/** Returns true if a Thought is a meta attribute or is a descendant of a meta attribute. Ignores =archive. */
+const isMetaDescendant = (state: State, thought: Thought) =>
+  isUnarchivedAttribute(thought) || getAncestorBy(state, thought.id, isUnarchivedAttribute)
+
+/** Returns true if a thought is expanded. O(depth) because expanded is keyed by Path. */
+const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
+  !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
 /**
  * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.
@@ -26,63 +71,79 @@ async function* getDescendantThoughts(
   getState: () => State,
   { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtsInterface> {
-  // use queue for breadth-first search
-  let thoughtIdQueue = [thoughtId] // eslint-disable-line fp/no-let
-  let currentMaxDepth = maxDepth // eslint-disable-line fp/no-let
+  // use queue for breadth-first loading
+  const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
+  const depth = counter() // eslint-disable-line fp/no-let
 
-  const state = getState()
-  let accumulatedThoughtIndex = state.thoughts.thoughtIndex
+  const accumulatedThoughts = { ...getState().thoughts }
 
   // eslint-disable-next-line fp/no-loops
-  while (thoughtIdQueue.length > 0) {
+  while (thoughtIdQueue.size() > 0) {
+    if (thoughtIdQueue.total() > 10000) {
+      throw new Error('STOP')
+    }
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
     // filter out the missing thought ids and proceed as usual
-    const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue)
-    const thoughtIdsValidated = thoughtIdQueue.filter((value, i) => providerThoughtsRaw[i])
+    const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue.get())
+    const thoughtIdsValidated = thoughtIdQueue.get().filter((value, i) => providerThoughtsRaw[i])
     const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
+    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: providerThoughtsValidated[i] }))
+    thoughtIdQueue.clear()
 
-    // all pulled thought entries
-    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => {
-      return { [id]: providerThoughtsValidated[i] }
-    })
+    accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pulledThoughtIndex }
 
-    accumulatedThoughtIndex = {
-      ...accumulatedThoughtIndex,
-      ...pulledThoughtIndex,
-    }
-
-    const state = getState()
     const updatedState: State = {
-      ...state,
+      ...getState(),
       thoughts: {
-        ...state.thoughts,
-        thoughtIndex: accumulatedThoughtIndex,
+        ...getState().thoughts,
+        ...accumulatedThoughts,
       },
     }
 
-    const thoughts =
-      currentMaxDepth > 0
-        ? providerThoughtsValidated
-        : providerThoughtsValidated.map(thought => {
-            const isEm = thoughtId === EM_TOKEN
-            const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
-            const isAttribute =
-              isFunction(thought.value) || getAncestorBy(state, thought.id, ancestor => isFunction(ancestor.value))
-            return {
-              ...thought,
-              // set thoughts with children as pending
-              // do not include descendants of EM
-              // TODO: Should we exclude descendants of functions? How to check without a slow call to contextToThought?
-              ...(hasChildren && !isEm && !isAttribute
-                ? {
-                    childrenMap: {},
-                    lastUpdated: never(),
-                    updatedBy: getSessionId(),
-                    pending: true,
-                  }
-                : null),
-            }
-          })
+    const thoughts = providerThoughtsValidated.map(thought => {
+      const childrenIds = Object.values(thought.childrenMap)
+      const isEmDescendant = thoughtId === EM_TOKEN
+      const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
+      const isMaxDepthReached = depth.get() >= maxDepth
+      const isMaxThoughtsReached = thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED
+      const isExpanded = isThoughtExpanded(updatedState, thought.id)
+      const parent = getThoughtById(updatedState, thought.parentId)
+      const isVisible =
+        // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
+        // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare
+        // we need to determine if this thought should be buffered now, and cannot wait for the =pin child to load
+        isExpanded ||
+        !!isThoughtExpanded(updatedState, thought.parentId) ||
+        !!parent?.childrenMap?.['=pin'] ||
+        parent?.value.endsWith(EXPAND_THOUGHT_CHAR)
+      const isBuffered =
+        (isMaxDepthReached || isMaxThoughtsReached) &&
+        hasChildren &&
+        !isVisible &&
+        !isEmDescendant &&
+        !isMetaDescendant(updatedState, thought)
+
+      // once the buffer limit has been reached, set thoughts with children as pending
+      // do not buffer descendants of EM
+      // do not buffer descendants of functions (except =archive)
+      if (isBuffered) {
+        // enqueue =pin even if the thought is buffered
+        // when =pin/true is loaded, then this thought will be marked as expanded and its children can be loaded
+        if (thought.childrenMap?.['=pin']) {
+          thoughtIdQueue.add([thought.childrenMap?.['=pin']])
+        }
+        return {
+          ...thought,
+          childrenMap: {},
+          lastUpdated: never(),
+          updatedBy: getSessionId(),
+          pending: true,
+        }
+      } else {
+        thoughtIdQueue.add(childrenIds)
+        return thought
+      }
+    })
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))
@@ -99,15 +160,13 @@ async function* getDescendantThoughts(
 
     const lexemeIndex = keyValueBy(thoughtHashes, (id, i) => (lexemes[i] ? { [id]: lexemes[i]! } : null))
 
-    // enqueue children
-    thoughtIdQueue = thoughts.map(thought => Object.values(thought.childrenMap || {})).flat()
+    accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...thoughtIndex }
+    accumulatedThoughts.lexemeIndex = { ...accumulatedThoughts.lexemeIndex, ...lexemeIndex }
 
     yield {
       thoughtIndex,
       lexemeIndex,
     }
-
-    currentMaxDepth--
   }
 }
 
