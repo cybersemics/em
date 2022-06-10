@@ -49,10 +49,10 @@ const lexemeFromFirebase = (firebaseLexeme?: FirebaseLexeme): Lexeme | undefined
 /** Converts a FirebaseThought to a proper Thought by ensuring childrenMap is defined. Firebase omits empty objects. */
 const thoughtFromFirebase = (firebaseThought?: FirebaseThought): Thought | undefined =>
   firebaseThought
-    ? {
+    ? ({
         ..._.omit(firebaseThought, 'children'),
         childrenMap: createChildrenMapFromThoughts(Object.values(firebaseThought.children || {})),
-      }
+      } as Thought)
     : undefined
 
 /**
@@ -87,7 +87,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /**
-   * Gets a Thought by id.
+   * Gets a Thought by id. O(1).
    */
   async getThoughtById(id: string): Promise<Thought | undefined> {
     const userRef = getUserRef(state)
@@ -98,12 +98,35 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       }),
     )
   },
-  /** Gets multiple PrentEntry objects by ids. */
-  getThoughtsByIds: async (ids: string[]): Promise<(Thought | undefined)[]> => {
+
+  /**
+   * Gets a Thought with its children. O(1).
+   */
+  async getThoughtWithChildren(id: string): Promise<{ thought: Thought; children: Index<Thought> } | undefined> {
+    const userRef = getUserRef(state)
+    const ref = userRef!.child('thoughtIndex').child<ThoughtWithChildren>(id)
+    return new Promise(resolve =>
+      ref.once('value', (snapshot: Firebase.Snapshot<ThoughtWithChildren | undefined>) => {
+        const thoughtWithChildren = snapshot.val()
+        resolve(
+          thoughtWithChildren
+            ? {
+                thought: thoughtFromFirebase(thoughtWithChildren)!,
+                children: thoughtWithChildren.children || {},
+              }
+            : undefined,
+        )
+      }),
+    )
+  },
+
+  /** Gets multiple Thoughts by ids. O(n). */
+  async getThoughtsByIds(ids: string[]): Promise<(Thought | undefined)[]> {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(ids.map(id => userRef?.child('thoughtIndex').child<Thought>(id).once('value')))
     return snapshots.map(snapshot => thoughtFromFirebase(snapshot?.val()))
   },
+
   /** Updates Firebase data. */
   async update(updates: Index<any>) {
     const userRef = getUserRef(state)
@@ -119,6 +142,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       })
     })
   },
+
   /** Updates a context in the thoughtIndex. */
   async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
     return this.update({
@@ -134,12 +158,14 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       ]),
     })
   },
+
   /** Updates a Lexeme in the lexemeIndex. */
   async updateLexeme(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
       ['lexemeIndex/' + id]: lexeme,
     })
   },
+
   /** Updates the thoughtIndex. */
   async updateThoughtIndex(thoughtIndex: Index<ThoughtWithChildren>): Promise<unknown> {
     return this.update(
@@ -158,6 +184,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       })),
     )
   },
+
   /** Updates the lexemeIndex. */
   async updateLexemeIndex(lexemeIndex: Index<Lexeme>): Promise<unknown> {
     return this.update(

@@ -2,7 +2,7 @@ import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { DataProvider } from '../DataProvider'
 import { hashThought, hashPath, isFunction, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
-import { Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
+import { Index, Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { getThoughtById, thoughtToPath } from '../../selectors'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import { getSessionId } from '../../util/sessionManager'
@@ -22,15 +22,20 @@ const queue = <T>(initialValue: T[] = []) => {
   let total = 0
 
   return {
+    /** Adds one or more items to the queue and updates the total count. */
     add: (values: T[]) => {
       list = [...list, ...values]
       total += values.length
     },
-    clear: () => {
+    /** Gets the full contents of the queue and clears it. */
+    next: () => {
+      const copy = [...list]
       list = []
+      return copy
     },
-    get: () => [...list],
+    /** Returns the number of items in the list. */
     size: () => list.length,
+    /** Returns the total number of items ever queued. */
     total: () => total,
   }
 }
@@ -75,17 +80,41 @@ async function* getDescendantThoughts(
   const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
   const depth = counter() // eslint-disable-line fp/no-let
 
+  // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
   const accumulatedThoughts = { ...getState().thoughts }
+
+  // cache children fetched with getThoughtWithChildren to avoid additional db calls
+  // TODO: childrenCache can be removed for better memory efficiency yielding the children of getThoughtWithChildren within the same iteration that they are fetched. This is a transitional implementation to minimize risk. Refactoring will likely affect which thoughts are pending and may affect the tests.
+  let childrenCache: Index<Thought> = {}
 
   // eslint-disable-next-line fp/no-loops
   while (thoughtIdQueue.size() > 0) {
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
     // filter out the missing thought ids and proceed as usual
-    const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue.get())
-    const thoughtIdsValidated = thoughtIdQueue.get().filter((value, i) => providerThoughtsRaw[i])
+    // const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue.get())
+
+    const ids = thoughtIdQueue.next()
+
+    // get thoughts from the cache or the database
+    // if database, use the efficient getThoughtWithChildren and cache the thought's children for efficiency
+    // see childrenCache above for more information
+    const providerThoughtsRaw: (Thought | undefined)[] = await Promise.all(
+      // eslint-disable-next-line no-loop-func
+      ids.map(async id => {
+        if (childrenCache[id]) {
+          return childrenCache[id]
+        }
+        const result = await provider.getThoughtWithChildren(id)
+        if (result) {
+          childrenCache = { ...childrenCache, ...result.children }
+        }
+        return result?.thought
+      }),
+    )
+
     const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
+    const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
     const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: providerThoughtsValidated[i] }))
-    thoughtIdQueue.clear()
 
     accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pulledThoughtIndex }
 

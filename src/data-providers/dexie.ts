@@ -212,7 +212,7 @@ export const deleteThought = async (id: string) =>
     return db.thoughtIndex.delete(id)
   })
 
-/** Get a context by id. */
+/** Get a thought by id. */
 export const getThoughtById = async (id: string): Promise<Thought | undefined> => {
   const thoughtWithChildren: ThoughtWithChildren | undefined = await db.thoughtIndex.get(id)
   return thoughtWithChildren
@@ -223,7 +223,23 @@ export const getThoughtById = async (id: string): Promise<Thought | undefined> =
     : undefined
 }
 
-/** Gets multiple contexts from the thoughtIndex by ids. */
+/** Get a thought and its children. O(1). */
+export const getThoughtWithChildren = async (
+  id: string,
+): Promise<{ thought: Thought; children: Index<Thought> } | undefined> => {
+  const thoughtWithChildren: ThoughtWithChildren | undefined = await db.thoughtIndex.get(id)
+  return thoughtWithChildren
+    ? {
+        thought: {
+          ..._.omit(thoughtWithChildren, ['children']),
+          childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+        } as Thought,
+        children: thoughtWithChildren.children || {},
+      }
+    : undefined
+}
+
+/** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => {
   const thoughtsWithChildren: (ThoughtWithChildren | undefined)[] = await db.thoughtIndex.bulkGet(ids)
   return thoughtsWithChildren.map(thoughtWithChildren =>
