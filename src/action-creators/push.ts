@@ -4,12 +4,13 @@ import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import { clientId } from '../browser'
 import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
-import { getUserRef, isFunction, logWithTime, timestamp } from '../util'
+import { getUserRef, isFunction, keyValueBy, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
 import { Thunk, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
 import { contextToThoughtId } from '../selectors'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
@@ -41,6 +42,14 @@ const pushLocal = (
   const thoughtIndexPromises = [
     ...Object.keys(thoughtIndexUpdates).map(id => {
       const thought = thoughtIndexUpdates[id]
+      const thoughtWithChildren = thought
+        ? {
+            ...thought,
+            children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), thought => ({
+              [thought.id]: thought,
+            })),
+          }
+        : null
 
       // some settings are propagated to localStorage for faster load on startup
       const name = localStorageSettingsContexts[id]
@@ -55,7 +64,7 @@ const pushLocal = (
         }
       }
 
-      return thought ? db.updateThought(id as ThoughtId, thought) : db.deleteThought(id)
+      return thoughtWithChildren ? db.updateThought(id as ThoughtId, thoughtWithChildren) : db.deleteThought(id)
     }),
     db.updateLastUpdated(timestamp()),
   ]

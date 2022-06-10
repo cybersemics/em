@@ -1,4 +1,4 @@
-import { Index, Lexeme, Thought, ThoughtId } from '../@types'
+import { Index, Lexeme, Thought, ThoughtId, ThoughtWithChildren } from '../@types'
 
 /** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
 export interface DataProvider {
@@ -9,7 +9,7 @@ export interface DataProvider {
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
   updateLexeme: (id: string, thought: Lexeme) => Promise<unknown>
-  updateThought: (id: ThoughtId, Parent: Thought) => Promise<unknown>
+  updateThought: (id: ThoughtId, thoughtWithChildren: ThoughtWithChildren) => Promise<unknown>
   updateLexemeIndex: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
-  updateThoughtIndex: (thoughtIndex: Index<Thought>) => Promise<unknown>
+  updateThoughtIndex: (thoughtIndex: Index<ThoughtWithChildren>) => Promise<unknown>
 }

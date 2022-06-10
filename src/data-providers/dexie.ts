@@ -4,6 +4,7 @@ import Dexie, { Transaction } from 'dexie'
 import 'dexie-observable'
 import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
 import { hashThought, timestamp } from '../util'
+import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
 import {
@@ -11,6 +12,7 @@ import {
   Index,
   Lexeme,
   Thought,
+  ThoughtWithChildren,
   ThoughtWordsIndex,
   ThoughtSubscriptionUpdates,
   Timestamp,
@@ -25,7 +27,7 @@ import {
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
-  thoughtIndex: Dexie.Table<Thought, string>
+  thoughtIndex: Dexie.Table<ThoughtWithChildren, string>
   lexemeIndex: Dexie.Table<Lexeme, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
@@ -42,7 +44,7 @@ class EM extends Dexie {
     }
 
     this.version(1).stores({
-      thoughtIndex: 'id, *childrenMap, lastUpdated, updatedBy',
+      thoughtIndex: 'id, *children, lastUpdated, updatedBy',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -96,7 +98,7 @@ const initHelpers = async () => {
 const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(1).stores({
-      thoughtIndex: 'id, childrenMap, lastUpdated',
+      thoughtIndex: 'id, children, lastUpdated',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
@@ -172,34 +174,35 @@ export const getLexemeById = (key: string) => db.lexemeIndex.get(key)
 /** Gets multiple thoughts from the lexemeIndex by ids. */
 export const getLexemesByIds = (keys: string[]) => db.lexemeIndex.bulkGet(keys)
 
-/** Updates a single thought in the thoughtIndex. Ignores parentEntry.pending. */
+/** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (
   id: ThoughtId,
-  { childrenMap, lastUpdated, value, parentId, archived, rank }: Thought,
+  { children, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
 ) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     return db.thoughtIndex.put({
       id,
       value,
+      children,
+      lastUpdated,
       parentId,
       rank,
-      childrenMap,
       updatedBy: getSessionId(),
-      lastUpdated,
+      ...(archived ? { archived } : null),
     })
   })
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<Thought | null>) =>
+export const updateThoughtIndex = async (thoughtIndexMap: Index<ThoughtWithChildren | null>) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    const contextsArray = Object.keys(thoughtIndexMap).map(key => ({
-      ...(thoughtIndexMap[key] as Thought),
+    const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
+      ...(thoughtIndexMap[key] as ThoughtWithChildren),
       updatedBy: getSessionId(),
       id: key as ThoughtId,
     }))
-    return db.thoughtIndex.bulkPut(contextsArray)
+    return db.thoughtIndex.bulkPut(thoughtsArray)
   })
 
 /** Deletes a single thought from the thoughtIndex. */
@@ -210,10 +213,28 @@ export const deleteThought = async (id: string) =>
   })
 
 /** Get a context by id. */
-export const getThoughtById = async (id: string) => db.thoughtIndex.get(id)
+export const getThoughtById = async (id: string): Promise<Thought | undefined> => {
+  const thoughtWithChildren: ThoughtWithChildren | undefined = await db.thoughtIndex.get(id)
+  return thoughtWithChildren
+    ? ({
+        ..._.omit(thoughtWithChildren, ['children']),
+        childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+      } as Thought)
+    : undefined
+}
 
 /** Gets multiple contexts from the thoughtIndex by ids. */
-export const getThoughtsByIds = async (ids: string[]) => db.thoughtIndex.bulkGet(ids)
+export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => {
+  const thoughtsWithChildren: (ThoughtWithChildren | undefined)[] = await db.thoughtIndex.bulkGet(ids)
+  return thoughtsWithChildren.map(thoughtWithChildren =>
+    thoughtWithChildren
+      ? ({
+          ..._.omit(thoughtWithChildren, ['children']),
+          childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+        } as Thought)
+      : undefined,
+  )
+}
 
 /** Updates the recentlyEdited helper. */
 export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.update('EM', { recentlyEdited })
@@ -270,14 +291,19 @@ const DatabaseChangeType = {
 const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
   // source is set on the transaction object
   // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
-  const { key, obj, source, table } = change as IUpdateChange
+  const { source, table } = change as IUpdateChange
+  const key = change.key as ThoughtId
+  const obj = change.obj as ThoughtWithChildren | Lexeme
   return {
     thoughtIndexUpdates:
       table === 'thoughtIndex'
         ? {
             [key]: {
               updatedBy: source,
-              value: obj as Thought,
+              value: {
+                ..._.omit(obj as ThoughtWithChildren, ['children']),
+                childrenMap: createChildrenMapFromThoughts(Object.values((obj as ThoughtWithChildren).children)),
+              } as Thought,
             },
           }
         : {},

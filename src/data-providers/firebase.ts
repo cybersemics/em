@@ -1,5 +1,7 @@
+import _ from 'lodash'
 import { Dispatch } from 'react'
 import { hashThought, keyValueBy, getUserRef } from '../util'
+import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import { error } from '../action-creators'
 import {
   Firebase,
@@ -10,6 +12,7 @@ import {
   ThoughtId,
   ThoughtIndices,
   ThoughtSubscriptionUpdates,
+  ThoughtWithChildren,
 } from '../@types'
 
 export enum FirebaseChangeTypes {
@@ -33,7 +36,7 @@ export interface FirebaseChangeHandlers {
 
 // Firebase omits empty arrays and objects, so account for that in the type.
 type FirebaseLexeme = Omit<Lexeme, 'contexts'> & { contexts?: ThoughtId[] }
-type FirebaseThought = Omit<Thought, 'childrenMap'> & { childrenMap?: Index<ThoughtId> }
+type FirebaseThought = Omit<ThoughtWithChildren, 'children'> & { children?: Index<Thought> }
 
 /** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase omits empty arrays. */
 const lexemeFromFirebase = (firebaseLexeme?: FirebaseLexeme): Lexeme | undefined =>
@@ -45,10 +48,11 @@ const lexemeFromFirebase = (firebaseLexeme?: FirebaseLexeme): Lexeme | undefined
 
 /** Converts a FirebaseThought to a proper Thought by ensuring childrenMap is defined. Firebase omits empty objects. */
 const thoughtFromFirebase = (firebaseThought?: FirebaseThought): Thought | undefined =>
-  firebaseThought?.childrenMap
-    ? (firebaseThought as Thought)
-    : firebaseThought
-    ? { ...firebaseThought, childrenMap: {} as Index<ThoughtId> }
+  firebaseThought
+    ? {
+        ..._.omit(firebaseThought, 'children'),
+        childrenMap: createChildrenMapFromThoughts(Object.values(firebaseThought.children || {})),
+      }
     : undefined
 
 /**
@@ -87,9 +91,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
    */
   async getThoughtById(id: string): Promise<Thought | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('thoughtIndex').child<Thought>(id)
+    const ref = userRef!.child('thoughtIndex').child<ThoughtWithChildren>(id)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Firebase.Snapshot<Thought>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<ThoughtWithChildren>) => {
         resolve(thoughtFromFirebase(snapshot.val()))
       }),
     )
@@ -116,56 +120,76 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     })
   },
   /** Updates a context in the thoughtIndex. */
-  async updateThought(id: string, parentEntry: Thought): Promise<unknown> {
+  async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
     return this.update({
-      ['thoughtIndex/' + id]: parentEntry,
+      ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
+        'id',
+        'value',
+        'children',
+        'lastUpdated',
+        'parentId',
+        'rank',
+        'updatedBy',
+        'archived',
+      ]),
     })
   },
-  /** Updates a thought in the lexemeIndex. */
+  /** Updates a Lexeme in the lexemeIndex. */
   async updateLexeme(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
       ['lexemeIndex/' + id]: lexeme,
     })
   },
   /** Updates the thoughtIndex. */
-  async updateThoughtIndex(thoughtIndex: Index<Thought>): Promise<unknown> {
+  async updateThoughtIndex(thoughtIndex: Index<ThoughtWithChildren>): Promise<unknown> {
     return this.update(
-      keyValueBy(Object.entries(thoughtIndex), ([key, value]) => ({
-        ['thoughtIndex/' + key]: value,
+      keyValueBy(Object.entries(thoughtIndex), ([id, thoughtWithChildren]) => ({
+        // save only whitelisted properties since Typescript does not check for additional properties
+        ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
+          'id',
+          'value',
+          'children',
+          'archived',
+          'lastUpdated',
+          'parentId',
+          'rank',
+          'updatedBy',
+        ]),
       })),
     )
   },
   /** Updates the lexemeIndex. */
   async updateLexemeIndex(lexemeIndex: Index<Lexeme>): Promise<unknown> {
     return this.update(
-      keyValueBy(Object.entries(lexemeIndex), ([key, value]) => ({
-        ['lexemeIndex/' + key]: value,
+      keyValueBy(Object.entries(lexemeIndex), ([key, lexeme]) => ({
+        ['lexemeIndex/' + key]: lexeme,
       })),
     )
   },
 })
 
-/** Creates a subscription handler that converts a Parent snapshot to a ThoughtUpdate and invokes a callback.
+/** Creates a subscription handler that converts a Thought snapshot to a ThoughtUpdate and invokes a callback.
  *
- * @param value The Parent value to set in the update. Defaults to the snapshot Parent. Useful for setting to null.
+ * @param value The Thought value to set in the update. Defaults to the snapshot Thought. Useful for setting to null.
  */
 const thoughtSubscriptionHandler =
   (onUpdate: (updates: ThoughtSubscriptionUpdates) => void, { value }: { value?: Thought | null } = {}) =>
-  (snapshot: Firebase.Snapshot<Thought>) => {
+  (snapshot: Firebase.Snapshot<ThoughtWithChildren>) => {
     // only contains fields that have changed
-    const parentPartial = snapshot.val()
-    if (!parentPartial) return null
+    const thoughtPartial = snapshot.val()
+    if (!thoughtPartial) return null
     const updates = {
       thoughtIndex: {
-        [parentPartial.id]: {
+        [thoughtPartial.id]: {
           // snapshot contains updatedBy of deleted thought
-          updatedBy: parentPartial.updatedBy,
+          updatedBy: thoughtPartial.updatedBy,
           value:
             value !== undefined
               ? value
               : {
                   // pass id from snapshot since snapshot only contains changed fields
-                  ...parentPartial,
+                  ..._.omit(thoughtPartial, ['children']),
+                  childrenMap: createChildrenMapFromThoughts(Object.values(thoughtPartial)),
                   id: snapshot.key as ThoughtId,
                 },
         },
@@ -207,7 +231,7 @@ const lexemeSubscriptionHandler =
 /** Subscribe to firebase. */
 export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptionUpdates) => void) => {
   const thoughtsRef: Firebase.Ref<ThoughtIndices> = window.firebase?.database().ref(`users/${userId}`)
-  const thoughtIndexRef: Firebase.Ref<Thought> = thoughtsRef.child('thoughtIndex')
+  const thoughtIndexRef: Firebase.Ref<ThoughtWithChildren> = thoughtsRef.child('thoughtIndex')
   const lexemeIndexRef: Firebase.Ref<Lexeme> = thoughtsRef.child('lexemeIndex')
 
   // child_added first triggers once for each existing item at the reference, which is extremely slow
