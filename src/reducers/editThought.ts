@@ -1,10 +1,23 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren, getThoughtById } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById, parentOfThought, thoughtToPath } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
-import { addContext, createChildrenMap, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
+import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@types'
+import {
+  addContext,
+  createChildrenMap,
+  hashThought,
+  headId,
+  isDivider,
+  isFunction,
+  parentOf,
+  reducerFlow,
+  removeContext,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
+import deleteThought from './deleteThought'
+import setCursor from './setCursor'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -31,6 +44,36 @@ const editThought = (
   const thoughtCollision = getLexeme(state, newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
+
+  const editedThoughtValue = editedThought.value
+
+  const parentThoughtIdsForCollidedThoughts = thoughtCollision?.contexts.map(
+    thoughtId => parentOfThought(state, thoughtId)?.id,
+  )
+  const parentThoughtIdForEditedThought = parentOfThought(state, editedThoughtId)?.id
+
+  const conditionForDuplicateMetaProgrammingAttribute =
+    thoughtCollision &&
+    isFunction(thoughtCollision.value) &&
+    isFunction(editedThoughtValue) &&
+    parentThoughtIdsForCollidedThoughts?.includes(parentThoughtIdForEditedThought)
+
+  // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
+  if (conditionForDuplicateMetaProgrammingAttribute) {
+    const thoughtIdForExistingMetaProgrammingThought = thoughtCollision?.contexts.find(
+      id => parentOfThought(state, id)?.id === editedThought.parentId,
+    )
+
+    return reducerFlow([
+      deleteThought({
+        thoughtId: editedThoughtId,
+        context: parentOf(context),
+      }),
+      setCursor({
+        path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
+      }),
+    ])(state)
+  }
 
   if (!editedThought) {
     console.error('editThought: Edited thought not found!')
