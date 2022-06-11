@@ -1,6 +1,6 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren, getThoughtById, parentOfThought, thoughtToPath } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById, parentOfThought, thoughtToPath, findDescendant } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@types'
 import {
@@ -45,25 +45,17 @@ const editThought = (
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
-  const editedThoughtValue = editedThought.value
-
-  const parentThoughtIdsForCollidedThoughts = thoughtCollision?.contexts.map(
-    thoughtId => parentOfThought(state, thoughtId)?.id,
-  )
   const parentThoughtIdForEditedThought = parentOfThought(state, editedThoughtId)?.id
 
-  const conditionForDuplicateMetaProgrammingAttribute =
-    thoughtCollision &&
-    isFunction(thoughtCollision.value) &&
-    isFunction(editedThoughtValue) &&
-    parentThoughtIdsForCollidedThoughts?.includes(parentThoughtIdForEditedThought)
+  // only calculate decendant thought when current edited thought is a metaprogramming attribute
+
+  const thoughtIdForExistingMetaProgrammingThought =
+    isFunction(newValue) &&
+    parentThoughtIdForEditedThought &&
+    findDescendant(state, parentThoughtIdForEditedThought, newValue)
 
   // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
-  if (conditionForDuplicateMetaProgrammingAttribute) {
-    const thoughtIdForExistingMetaProgrammingThought = thoughtCollision?.contexts.find(
-      id => parentOfThought(state, id)?.id === editedThought.parentId,
-    )
-
+  if (thoughtIdForExistingMetaProgrammingThought) {
     return reducerFlow([
       deleteThought({
         thoughtId: editedThoughtId,

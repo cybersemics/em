@@ -8,7 +8,7 @@ import {
   contextToThought,
   parentOfThought,
 } from '../../selectors'
-import { newThought, importText } from '../../reducers'
+import { newThought, importText, newSubthought } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -194,6 +194,35 @@ it('edit a thought existing in mutliple contexts', () => {
       id: thoughtABC.id,
     },
   ])
+})
+
+it('if meta programming attribute like =style exists in a context, there should not be duplication if new subthought with same attribute is created', () => {
+  const text = `
+- a
+  - =style
+    - color
+      - lightblue`
+
+  const steps = [
+    importText({
+      text,
+    }),
+    setCursorFirstMatch(['a']),
+    newSubthought({ value: '' }),
+    editThoughtByContext({
+      newValue: '=style',
+      oldValue: '',
+      at: ['a', ''],
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =style
+      - color
+        - lightblue`)
 })
 
 it('edit a thought that exists in another context', () => {
