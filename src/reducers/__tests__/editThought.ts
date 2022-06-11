@@ -7,6 +7,7 @@ import {
   getLexeme,
   contextToThought,
   parentOfThought,
+  childIdsToThoughts,
 } from '../../selectors'
 import { newThought, importText, newSubthought } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
@@ -196,7 +197,7 @@ it('edit a thought existing in mutliple contexts', () => {
   ])
 })
 
-it('if meta programming attribute like =style exists in a context, there should not be duplication if new subthought with same attribute is created', () => {
+it('move cursor to existing meta programming thought if any', () => {
   const text = `
 - a
   - =style
@@ -223,6 +224,15 @@ it('if meta programming attribute like =style exists in a context, there should 
     - =style
       - color
         - lightblue`)
+
+  const expectedCursor = [
+    { value: 'a', rank: 0 },
+    { value: '=style', rank: 0 },
+  ]
+
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(cursorThoughts).toMatchObject(expectedCursor)
 })
 
 it('edit a thought that exists in another context', () => {

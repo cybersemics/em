@@ -1,11 +1,12 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren, getThoughtById, parentOfThought, thoughtToPath, findDescendant } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById, thoughtToPath, findDescendant } from '../selectors'
 import updateThoughts from './updateThoughts'
 import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@types'
 import {
   addContext,
   createChildrenMap,
+  equalArrays,
   hashThought,
   headId,
   isDivider,
@@ -45,28 +46,6 @@ const editThought = (
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
-  const parentThoughtIdForEditedThought = parentOfThought(state, editedThoughtId)?.id
-
-  // only calculate decendant thought when current edited thought is a metaprogramming attribute
-
-  const thoughtIdForExistingMetaProgrammingThought =
-    isFunction(newValue) &&
-    parentThoughtIdForEditedThought &&
-    findDescendant(state, parentThoughtIdForEditedThought, newValue)
-
-  // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
-  if (thoughtIdForExistingMetaProgrammingThought) {
-    return reducerFlow([
-      deleteThought({
-        thoughtId: editedThoughtId,
-        context: parentOf(context),
-      }),
-      setCursor({
-        path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
-      }),
-    ])(state)
-  }
-
   if (!editedThought) {
     console.error('editThought: Edited thought not found!')
     return state
@@ -82,6 +61,25 @@ const editThought = (
   // although this should never happen, syncing issues can cause this
   if (!lexemeOld) {
     console.warn(`Missing Lexeme: ${oldValue}`)
+  }
+
+  // only calculate decendant thought when current edited thought is a metaprogramming attribute
+  const thoughtIdForExistingMetaProgrammingThought =
+    isFunction(newValue) &&
+    equalArrays(state.cursor || [], thoughtToPath(state, editedThought.id)) &&
+    findDescendant(state, editedThought.parentId, newValue)
+
+  // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
+  if (thoughtIdForExistingMetaProgrammingThought) {
+    return reducerFlow([
+      deleteThought({
+        thoughtId: editedThoughtId,
+        context: parentOf(context),
+      }),
+      setCursor({
+        path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
+      }),
+    ])(state)
   }
 
   const { rank } = editedThought
