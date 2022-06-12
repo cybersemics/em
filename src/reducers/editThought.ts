@@ -6,8 +6,8 @@ import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@ty
 import {
   addContext,
   createChildrenMap,
-  equalArrays,
   hashThought,
+  head,
   headId,
   isDivider,
   isFunction,
@@ -66,7 +66,8 @@ const editThought = (
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
   const thoughtIdForExistingMetaProgrammingThought =
     isFunction(newValue) &&
-    equalArrays(state.cursor || [], thoughtToPath(state, editedThought.id)) &&
+    state.cursor &&
+    head(state.cursor) === editedThought.id &&
     findDescendant(state, editedThought.parentId, newValue)
 
   // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
