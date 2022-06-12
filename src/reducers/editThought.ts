@@ -1,10 +1,24 @@
 import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
-import { getLexeme, getAllChildren, getThoughtById } from '../selectors'
+import { getLexeme, getAllChildren, getThoughtById, thoughtToPath, findDescendant } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Lexeme, SimplePath, State, Timestamp } from '../@types'
-import { addContext, createChildrenMap, hashThought, headId, isDivider, removeContext, timestamp } from '../util'
+import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@types'
+import {
+  addContext,
+  createChildrenMap,
+  hashThought,
+  head,
+  headId,
+  isDivider,
+  isFunction,
+  parentOf,
+  reducerFlow,
+  removeContext,
+  timestamp,
+} from '../util'
 import { getSessionId } from '../util/sessionManager'
+import deleteThought from './deleteThought'
+import setCursor from './setCursor'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -47,6 +61,26 @@ const editThought = (
   // although this should never happen, syncing issues can cause this
   if (!lexemeOld) {
     console.warn(`Missing Lexeme: ${oldValue}`)
+  }
+
+  // only calculate decendant thought when current edited thought is a metaprogramming attribute
+  const thoughtIdForExistingMetaProgrammingThought =
+    isFunction(newValue) &&
+    state.cursor &&
+    head(state.cursor) === editedThought.id &&
+    findDescendant(state, editedThought.parentId, newValue)
+
+  // We do not want to create a duplicate metaprogramming thought within the same context. Instead this logic ensures we delete the current cursor thought and move the cursor to the existing one
+  if (thoughtIdForExistingMetaProgrammingThought) {
+    return reducerFlow([
+      deleteThought({
+        thoughtId: editedThoughtId,
+        context: parentOf(context),
+      }),
+      setCursor({
+        path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
+      }),
+    ])(state)
   }
 
   const { rank } = editedThought

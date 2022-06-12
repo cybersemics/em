@@ -7,8 +7,9 @@ import {
   getLexeme,
   contextToThought,
   parentOfThought,
+  childIdsToThoughts,
 } from '../../selectors'
-import { newThought, importText } from '../../reducers'
+import { newThought, importText, newSubthought } from '../../reducers'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -194,6 +195,44 @@ it('edit a thought existing in mutliple contexts', () => {
       id: thoughtABC.id,
     },
   ])
+})
+
+it('move cursor to existing meta programming thought if any', () => {
+  const text = `
+- a
+  - =style
+    - color
+      - lightblue`
+
+  const steps = [
+    importText({
+      text,
+    }),
+    setCursorFirstMatch(['a']),
+    newSubthought({ value: '' }),
+    editThoughtByContext({
+      newValue: '=style',
+      oldValue: '',
+      at: ['a', ''],
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =style
+      - color
+        - lightblue`)
+
+  const expectedCursor = [
+    { value: 'a', rank: 0 },
+    { value: '=style', rank: 0 },
+  ]
+
+  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
+
+  expect(cursorThoughts).toMatchObject(expectedCursor)
 })
 
 it('edit a thought that exists in another context', () => {
