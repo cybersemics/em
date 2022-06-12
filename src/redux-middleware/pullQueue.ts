@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { expandThoughts, getThoughtById, expandedWithAncestors, thoughtToPath } from '../selectors'
+import { expandThoughts, getChildren, getThoughtById, expandedWithAncestors, thoughtToPath } from '../selectors'
 import { equalArrays, hashPath, head, keyValueBy } from '../util'
 import { pull } from '../action-creators'
 import { ThoughtId, Context, Index, State, Path } from '../@types'
@@ -18,7 +18,7 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
   [HOME_TOKEN]: true,
 })
 
-/** Appends all visible paths and their children to the pullQueue. */
+/** Appends all visible paths and their visible children to the pullQueue. */
 const appendVisiblePaths = (
   state: State,
   pullQueue: Record<ThoughtId, true>,
@@ -29,8 +29,13 @@ const appendVisiblePaths = (
     (key, path) => {
       const thoughtId = head(path)
       const thought = getThoughtById(state, thoughtId)
+      if (!thought) return null
+
+      // get visible children
+      const children = getChildren(state, thoughtId)
       return {
-        ...(!thought || thought.pending ? { [thoughtId]: true } : null),
+        ...(thought.pending ? { [thoughtId]: true } : null),
+        ...keyValueBy(children, child => (!child || child.pending ? { [child.id]: true } : null)),
       }
     },
     pullQueue,
@@ -82,7 +87,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
           const isPulling = Object.values(pullQueuePulling).some(pullQueueObject => id in pullQueueObject)
           return isPulling ? null : { [id]: true as const }
         })
-
     pullQueue = {}
 
     const extendedPullQueueIds = Object.keys(extendedPullQueueFiltered) as ThoughtId[]

@@ -9,14 +9,14 @@ const waitForThoughtExistInDb = async (page: Page, value: string) => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers
 
-      /** Check thought whether written to DB. */
-      function checkThought() {
+      /** Polls for Lexeme in Dexie. */
+      function pollForLexeme(value: string) {
         setTimeout(async () => {
           const thoughtFromDB = await testHelpers.getLexemeFromDB(value)
-          thoughtFromDB ? resolve(thoughtFromDB) : checkThought()
+          thoughtFromDB ? resolve(thoughtFromDB) : pollForLexeme(value)
         }, 50)
       }
-      checkThought()
+      pollForLexeme(value)
     })
   }, value)
 }
