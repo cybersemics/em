@@ -2,6 +2,7 @@
 
 const fs = require('fs')
 const path = require('path')
+const normalizeThought = require('./lib/normalizeThought')
 
 const [, , file, ...context] = process.argv
 if (!file) {
@@ -18,7 +19,7 @@ const filterChildrenMapBy = (childrenMap, predicate) =>
     {},
   )
 
-const thoughtIndex = JSON.parse(fs.readFileSync(file, 'utf8'))
+const db = JSON.parse(fs.readFileSync(file, 'utf8'))
 
 // track children to eliminate duplicates
 let childrenTouched = {}
@@ -26,16 +27,18 @@ let childrenTouched = {}
 let childThoughtsMissing = 0
 let numRepaired = 0
 let numDuplicates = 0
+let numLexemeContextsMissing = 0
+let numLexemeContextsInvalid = 0
 
-Object.values(thoughtIndex).forEach(thought => {
+Object.values(db.thoughtIndex).forEach(thought => {
   const children = Object.values(thought.childrenMap || {})
-    .map(id => thoughtIndex[id])
+    .map(id => db.thoughtIndex[id])
     .filter(x => x)
 
   // remove children which do not have a corresponding entry in thoughtIndex
   if (children.length < Object.keys(thought.childrenMap || {}).length) {
     childThoughtsMissing += Object.keys(thought.childrenMap || {}).length - children.length
-    thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => thoughtIndex[id])
+    thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => db.thoughtIndex[id])
   }
 
   children.forEach(child => {
@@ -53,9 +56,32 @@ Object.values(thoughtIndex).forEach(thought => {
   })
 })
 
+// validate Lexeme contexts
+Object.values(db.lexemeIndex).forEach(lexeme => {
+  if (!lexeme.contexts) return
+  lexeme.contexts.forEach(id => {
+    const thought = db.thoughtIndex[id]
+
+    // remove contexts with missing thought
+    if (!thought) {
+      lexeme.contexts = lexeme.contexts.filter(_id => _id !== id)
+      numLexemeContextsMissing++
+      return
+    }
+
+    // remove contexts with value that no longer matches Lexeme value
+    if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
+      lexeme.contexts = lexeme.contexts.filter(_id => _id !== id)
+      numLexemeContextsInvalid++
+      return
+    }
+  })
+})
+
 console.info(`Missing child thoughts: ${childThoughtsMissing}`)
 console.info(`Repaired thoughts: ${numRepaired}`)
 console.info(`Thoughts in more than one parent: ${numDuplicates}`)
+console.info(`Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`)
+console.info(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`)
 
-// NOTE: Outputs thoughtIndex only
-fs.writeFileSync(file, JSON.stringify(thoughtIndex, null, 2))
+fs.writeFileSync(file, JSON.stringify(db, null, 2))
