@@ -6,7 +6,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('Superscript should count all the contexts in which it is defined.', async () => {
+it.skip('Superscript should count all the contexts in which it is defined.', async () => {
   store.dispatch([
     importText({
       text: `
@@ -26,7 +26,7 @@ it('Superscript should count all the contexts in which it is defined.', async ()
   expect(element.nodeName).toBe('SUP')
 })
 
-it('Superscript should not count archived contexts', async () => {
+it.skip('Superscript should not count archived contexts', async () => {
   store.dispatch([
     importText({
       text: `
