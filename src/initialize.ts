@@ -56,9 +56,13 @@ export const initFirebase = async (): Promise<void> => {
         const status = store.getState().status
         store.dispatch(userAuthenticated(user, { connected: status === 'loading' || status === 'loaded' }))
 
-        subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
-          store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
-        })
+        // disable Firebase subscription which is way too slow
+        // eslint-disable-next-line no-constant-condition
+        if (false) {
+          subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
+            store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
+          })
+        }
 
         const { applicationId, index } = ALGOLIA_CONFIG
         const hasRemoteConfig = applicationId && index

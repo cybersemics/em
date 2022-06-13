@@ -270,9 +270,6 @@ export const subscribe = (userId: string, onUpdate: (updates: ThoughtSubscriptio
   // Disable subscriptions until an efficient solution is found.
   // https://stackoverflow.com/questions/43440908/firebase-child-added-for-new-items-only
 
-  // eslint-disable-next-line no-constant-condition
-  if (true) return
-
   // thoughtIndex subscriptions
   thoughtIndexRef
     .orderByChild('lastUpdated')

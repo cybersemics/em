@@ -11,7 +11,7 @@ export interface PushBatch {
   thoughtIndexUpdates: Index<Thought | null>
   local?: boolean
   remote?: boolean
-  recentlyEdited: RecentlyEditedTree
+  recentlyEdited?: RecentlyEditedTree
   pendingDeletes?: { context: Context; thought: Thought }[]
   pendingPulls?: { path: Path }[]
   updates?: Index<string>

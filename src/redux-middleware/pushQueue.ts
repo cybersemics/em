@@ -31,8 +31,6 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
     ...accum.updates,
     ...batch.updates,
   },
-  // TODO: Should we set local/remote to true if any of the batches are true?
-  // Or push them separately?
   local: batch.local !== false,
   remote: batch.remote !== false,
 })
@@ -130,13 +128,14 @@ const pullPendingLexemes =
   }
 
 /** Push a batch to the local and/or remote. */
-const pushBatch = (batch: PushBatch) =>
-  push(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, {
+const pushBatch = (batch: PushBatch) => {
+  return push(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, {
     recentlyEdited: batch.recentlyEdited,
-    local: batch.local !== false,
-    remote: batch.remote !== false,
+    local: batch.local,
+    remote: batch.remote,
     updates: batch.updates,
   })
+}
 
 /** Pull all descendants of pending deletes and dispatch deleteThought to fully delete. */
 const flushDeletes =
@@ -181,31 +180,54 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
 
   // Pull all the pending lexemes that are not available in state yet, merge and update the lexemeIndexUpdates. Prevents local and remote lexemes getting overriden by incomplete application state (due to lazy loading). Dispatched updateThoughts
   // Related issue: https://github.com/cybersemics/em/issues/1074
-  const lexemeIndexUpdatesMerged = await dispatch(pullPendingLexemes(combinedBatch))
-
-  const mergedBatch = { lexemeIndexUpdates: lexemeIndexUpdatesMerged } as PushBatch
+  const pulledLexemes = await dispatch(pullPendingLexemes(combinedBatch))
+  const localMergedLexemeBatches =
+    Object.keys(pulledLexemes).length > 0
+      ? [
+          {
+            lexemeIndexUpdates: pulledLexemes,
+            thoughtIndexUpdates: {},
+            local: true,
+            remote: false,
+          },
+        ]
+      : []
+  const remoteMergedLexemeBatches =
+    Object.keys(pulledLexemes).length > 0
+      ? [
+          {
+            lexemeIndexUpdates: pulledLexemes,
+            thoughtIndexUpdates: {},
+            local: false,
+            remote: true,
+          },
+        ]
+      : []
 
   // Note: pushQueue needs to be passed to the flush action creators as lexemeSyncedPushQueue is asychronous and pushQueue is emptied as soon as dispatched.
   await dispatch(flushDeletes(pushQueue))
 
-  // filter batches by data provider
-  const localBatches = pushQueue.filter(batch => batch.local)
-  const remoteBatches = pushQueue.filter(batch => batch.remote)
+  // group batches by data provider
+  // make sure only local or remote are set to true, otherwise push will call both pushLocal and pushRemote
+  // TODO: refactor to avoid awkward filtering and grouping
+  const localBatches = pushQueue.filter(batch => batch.local).map(batch => ({ ...batch, remote: false }))
+  const remoteBatches = pushQueue.filter(batch => batch.remote).map(batch => ({ ...batch, local: false }))
 
   if (localBatches.length + remoteBatches.length < pushQueue.length) {
     throw new Error('Invalid pushQueue batch. local and remote cannot both be false.')
   }
 
-  // merge merged Lexemes into both local and remote batches
-  const localMergedBatch = [...localBatches, mergedBatch].reduce(mergeBatch)
-  const remoteMergedBatch = [...remoteBatches, mergedBatch].reduce(mergeBatch)
+  // merge pulled Lexemes into both local and remote batches
+  const localMergedBatch = [...localBatches, ...localMergedLexemeBatches].reduce(mergeBatch, {} as PushBatch)
+  const remoteMergedBatch = [...remoteBatches, ...remoteMergedLexemeBatches].reduce(mergeBatch, {} as PushBatch)
 
   // push local and remote batches
   await Promise.all([
     // push will detect that these are only local updates
-    Object.keys(localMergedBatch).length > 0 && dispatch(pushBatch(localMergedBatch)),
+    Object.keys(localMergedBatch.thoughtIndexUpdates || {}).length > 0 && dispatch(pushBatch(localMergedBatch)),
     // push will detect that these are only remote updates
-    Object.keys(remoteMergedBatch).length > 0 && dispatch(pushBatch(remoteMergedBatch)),
+    Object.keys(remoteMergedBatch.thoughtIndexUpdates || {}).length > 0 &&
+      dispatch(pushBatch({ ...remoteMergedBatch })),
   ])
 
   // turn off isPushing at the end
