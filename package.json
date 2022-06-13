@@ -7,7 +7,7 @@
   "private": true,
   "engines": {
     "npm": ">=6",
-    "node": ">=12"
+    "node": ">=14"
   },
   "browserslist": {
     "production": [
