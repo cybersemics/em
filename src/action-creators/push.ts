@@ -44,7 +44,7 @@ const pushLocal = (
       const thought = thoughtIndexUpdates[id]
       const thoughtWithChildren = thought
         ? {
-            ...thought,
+            ..._.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
             children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), thought => ({
               [thought.id]: thought,
             })),

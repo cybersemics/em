@@ -2,7 +2,7 @@ import _ from 'lodash'
 // import { treeChange } from '../util/recentlyEditedTree'
 import { getLexeme, getAllChildren, getThoughtById, thoughtToPath, findDescendant } from '../selectors'
 import updateThoughts from './updateThoughts'
-import { Context, Lexeme, SimplePath, State, ThoughtId, Timestamp } from '../@types'
+import { Context, Index, Lexeme, SimplePath, State, Thought, ThoughtId, Timestamp } from '../@types'
 import {
   addContext,
   createChildrenMap,
@@ -139,7 +139,7 @@ const editThought = (
     [newKey]: lexemeNew,
   }
 
-  const thoughtNew = {
+  const thoughtNew: Thought = {
     ...editedThought,
     value: newValue,
     // store the last non-empty value to preserve the sort order of thoughts edited to empty
@@ -155,10 +155,9 @@ const editThought = (
     thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [editedThought.id]: thoughtNew } },
   }
 
-  const thoughtIndexUpdates = {
+  const thoughtIndexUpdates: Index<Thought | null> = {
     [parentOfEditedThought.id]: {
       ...parentOfEditedThought,
-      children: childrenNew,
       childrenMap: createChildrenMap(stateWithNewThought, childrenNew),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
