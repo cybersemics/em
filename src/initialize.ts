@@ -53,7 +53,8 @@ export const initFirebase = async (): Promise<void> => {
     // this is called when the user logs in or the page refreshes when the user is already authenticated
     firebase.auth().onAuthStateChanged((user: Firebase.User) => {
       if (user) {
-        store.dispatch(userAuthenticated(user))
+        const status = store.getState().status
+        store.dispatch(userAuthenticated(user, { connected: status === 'loading' || status === 'loaded' }))
 
         subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
           store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
@@ -92,9 +93,10 @@ export const initFirebase = async (): Promise<void> => {
         clearTimeout(globals.offlineTimer)
 
         // if reconnecting from offline mode, onAuthStateChange is not called since Firebase is still authenticated, but we still need to execute the app authentication logic and subscribe to the main value event
-        // if status is loading, we can assume onAuthStateChanged and thus userAuthenticated was already called
-        if (status !== 'loading' && firebase.auth().currentUser) {
-          await store.dispatch(userAuthenticated(firebase.auth().currentUser))
+        // if status is loading or already loaded, we can assume onAuthStateChanged and thus userAuthenticated was already called
+        // this happens on startup when onAuthStateChange is immediately followed by a connect event
+        if (status !== 'loaded' && firebase.auth().currentUser) {
+          await store.dispatch(userAuthenticated(firebase.auth().currentUser, { connected }))
         }
       }
 

@@ -2,8 +2,9 @@ import { decode as firebaseDecode } from 'firebase-encode'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
 import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { deleteData, updateThoughts } from '../action-creators'
-import { Dispatch, Thunk, Index, Thought, State } from '../@types'
+import { Dispatch, Index, State, Thought, ThoughtWithChildren, Thunk } from '../@types'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {
@@ -40,17 +41,12 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
 
   logWithTime('loadRemoteState: updateLexemeIndex')
 
-  // contextEncodedRaw is firebase encoded
+  // idRaw is firebase encoded
   const thoughtIndexUpdates: Index<Thought | null> = keyValueBy(
     newState.thoughts.thoughtIndex || {},
-    (contextEncodedRaw, thoughtNew) => {
-      const contextEncoded =
-        newState.schemaVersion < SCHEMA_HASHKEYS
-          ? contextEncodedRaw === EMPTY_TOKEN
-            ? ''
-            : firebaseDecode(contextEncodedRaw)
-          : contextEncodedRaw
-      const thoughtOld = oldState.thoughts.thoughtIndex[contextEncoded]
+    (idRaw, thoughtNew) => {
+      const id = newState.schemaVersion < SCHEMA_HASHKEYS ? (idRaw === EMPTY_TOKEN ? '' : firebaseDecode(idRaw)) : idRaw
+      const thoughtOld = oldState.thoughts.thoughtIndex[id]
       const updated =
         !thoughtOld ||
         thoughtNew.lastUpdated > thoughtOld.lastUpdated ||
@@ -59,7 +55,7 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
         Object.keys(thoughtOld.childrenMap).length === 0
 
       // update if entry does not exist locally or is newer
-      return updated ? { [contextEncoded]: thoughtNew } : null
+      return updated ? { [id]: thoughtNew } : null
     },
   )
 
@@ -67,7 +63,18 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
 
   // update local database in background
   if (isDocumentEditable()) {
-    db.updateThoughtIndex(thoughtIndexUpdates)
+    db.updateThoughtIndex(
+      keyValueBy(thoughtIndexUpdates, (id, thought) => ({
+        [id]: thought
+          ? ({
+              ...thought,
+              children: keyValueBy(getAllChildrenAsThoughts(newState, thought.id), thought => ({
+                [thought.id]: thought,
+              })),
+            } as ThoughtWithChildren)
+          : null,
+      })),
+    )
   }
 
   logWithTime('loadRemoteState: updateThoughtIndex')
@@ -75,9 +82,9 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
   // delete local thoughtIndex that no longer exists in firebase
   // only if remote was updated more recently than local since it is O(n)
   if (oldState.lastUpdated! <= newState.lastUpdated!) {
-    Object.keys(oldState.thoughts.thoughtIndex).forEach(contextEncoded => {
-      if (!(contextEncoded in (newState.thoughts.thoughtIndex || {}))) {
-        thoughtIndexUpdates[contextEncoded] = null
+    Object.keys(oldState.thoughts.thoughtIndex).forEach(id => {
+      if (!(id in (newState.thoughts.thoughtIndex || {}))) {
+        thoughtIndexUpdates[id] = null
       }
     })
   }
