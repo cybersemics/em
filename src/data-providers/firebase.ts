@@ -108,11 +108,15 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<ThoughtWithChildren | undefined>) => {
         const thoughtWithChildren = snapshot.val()
+        const children = keyValueBy(thoughtWithChildren?.children || {}, (key, child) => ({
+          // explicitly set childrenMap: {} because firebase does not store empty objects
+          [key]: child.childrenMap ? child : { ...child, childrenMap: {} },
+        }))
         resolve(
           thoughtWithChildren
             ? {
                 thought: thoughtFromFirebase(thoughtWithChildren)!,
-                children: thoughtWithChildren.children || {},
+                children,
               }
             : undefined,
         )

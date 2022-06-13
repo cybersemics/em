@@ -94,6 +94,12 @@ const pull =
       remoteThoughtsFetched = itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsChunk)
+        Object.values(thoughtsChunk.thoughtIndex).forEach(thought => {
+          if (!thought.childrenMap) {
+            console.error('thought', thought)
+            throw new Error('childrenMap missing')
+          }
+        })
 
         dispatch(
           updateThoughts({

@@ -7,7 +7,7 @@ import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
 import { getUserRef, isFunction, keyValueBy, logWithTime, timestamp } from '../util'
 import { getSessionId } from '../util/sessionManager'
 import { error } from '../action-creators'
-import { Thunk, Index, Lexeme, Thought, State, ThoughtId } from '../@types'
+import { Thunk, Index, Lexeme, Thought, ThoughtWithChildren, State, ThoughtId } from '../@types'
 import { storage } from '../util/storage'
 import { contextToThoughtId } from '../selectors'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -115,17 +115,22 @@ const pushRemote =
     const prependedThoughtIndexUpdates = _.transform(
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
-        accum['thoughtIndex/' + id] = thoughtUpdate
+        const thoughtWithChildren: ThoughtWithChildren | null = thoughtUpdate
           ? {
               // whitelist properties for persistence
-              ...(_.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank', 'childrenMap']) as Thought),
+              ..._.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank']),
+              children: keyValueBy(getAllChildrenAsThoughts(state, thoughtUpdate.id), thought => ({
+                [thought.id]: thought,
+              })),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
-              ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),
+              ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
             }
           : null
+
+        accum['thoughtIndex/' + id] = thoughtWithChildren || null
       },
-      {} as Index<Thought | null>,
+      {} as Index<ThoughtWithChildren | null>,
     )
 
     logWithTime('pushRemote: prepend thoughtIndex key')
