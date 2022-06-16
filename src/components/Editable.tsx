@@ -332,7 +332,13 @@ const Editable = ({
 
   /** Set the selection to the current Editable at the cursor offset. */
   const setSelectionToCursorOffset = () => {
-    selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
+    // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
+    // https://github.com/cybersemics/em/issues/1596
+    if (style?.visibility === 'hidden') {
+      selection.clear()
+    } else {
+      selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
+    }
   }
 
   useEffect(() => {
