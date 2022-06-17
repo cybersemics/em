@@ -110,7 +110,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           ...sourceThought,
           parentId: destinationThought.id,
           rank: newRank,
-          archived,
+          ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: getSessionId(),
         },
