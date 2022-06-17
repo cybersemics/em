@@ -1,4 +1,4 @@
-import { initialState, isFunction, reducerFlow } from '../../util'
+import { initialState, isAttribute, reducerFlow } from '../../util'
 import { contextToThoughtId, getAllChildrenSorted } from '../../selectors'
 import { importText, newSubthought, newThought } from '../../reducers'
 import getPrevRank from '../getPrevRank'
@@ -24,7 +24,7 @@ it('get rank less than visible children but greater than hidden children', () =>
   const stateNew = importText({ text })(initialState())
   const id = contextToThoughtId(stateNew, ['a'])
   const children = getAllChildrenSorted(stateNew, id!)
-  const firstVisibleIndex = children.findIndex(child => !isFunction(child.value))
+  const firstVisibleIndex = children.findIndex(child => !isAttribute(child.value))
   const firstVisible = children[firstVisibleIndex]
   const lastHidden = children[firstVisibleIndex - 1]
 

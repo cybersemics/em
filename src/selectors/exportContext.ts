@@ -1,5 +1,5 @@
 import { attribute, contextToThoughtId, thoughtToContext, getChildrenRanked } from '../selectors'
-import { head, isFunction, isRoot } from '../util'
+import { head, isAttribute, isRoot } from '../util'
 import { Context, MimeType, Thought, ThoughtId, State } from '../@types'
 import { REGEXP_TAGS } from '../constants'
 import { and } from 'fp-and-or'
@@ -50,10 +50,10 @@ export const exportContext = (
   const childrenFiltered = children.filter(
     and(
       excludeSrc && thoughtId && attribute(state, thoughtId, '=src')
-        ? (child: Thought) => isFunction(child.value)
+        ? (child: Thought) => isAttribute(child.value)
         : true,
       !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
-      excludeMeta ? (child: Thought) => !isFunction(child.value) || child.value === '=note' : true,
+      excludeMeta ? (child: Thought) => !isAttribute(child.value) || child.value === '=note' : true,
     ),
   )
 

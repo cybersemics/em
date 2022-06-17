@@ -10,7 +10,7 @@ import {
   head,
   headId,
   isDivider,
-  isFunction,
+  isAttribute,
   parentOf,
   reducerFlow,
   removeContext,
@@ -65,7 +65,7 @@ const editThought = (
 
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
   const thoughtIdForExistingMetaProgrammingThought =
-    isFunction(newValue) &&
+    isAttribute(newValue) &&
     state.cursor &&
     head(state.cursor) === editedThought.id &&
     findDescendant(state, editedThought.parentId, newValue)

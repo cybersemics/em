@@ -1,5 +1,5 @@
 import { Index, State, Thought, ThoughtId } from '../@types'
-import { isFunction, keyValueBy } from '../util'
+import { isAttribute, keyValueBy } from '../util'
 import { childIdsToThoughts } from '../selectors'
 
 /** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal or missing thoughts are keyed by id. */
@@ -10,7 +10,7 @@ export const createChildrenMapFromThoughts = (children: Thought[]): Index<Though
     const value = child.value.replace(/[.$#[\]]/g, '-')
 
     // use id as key for duplicate child attributes
-    const key = child && isFunction(value) && !accum[value] ? value : child.id
+    const key = child && isAttribute(value) && !accum[value] ? value : child.id
 
     return { [key]: child.id }
   })

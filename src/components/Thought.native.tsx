@@ -29,7 +29,7 @@ import {
   head,
   headId,
   isDescendantPath,
-  isFunction,
+  isAttribute,
   isRoot,
   parentOf,
   parseJsonSafe,
@@ -284,7 +284,7 @@ const ThoughtContainer = ({
   const optionsId = findDescendant(state, parentId, '=options')
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options =
-    !isFunction(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
+    !isAttribute(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
   /** Load styles from child expressions that are found in the environment. */
   const styleEnv = children

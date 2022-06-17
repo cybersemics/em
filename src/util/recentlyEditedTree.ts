@@ -10,7 +10,7 @@ import {
   pathToContext,
   timeDifference,
   timestamp,
-  isFunction,
+  isAttribute,
 } from '../util'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import { Context, Index, Path, State, Timestamp } from '../@types'
@@ -47,7 +47,7 @@ const findTreeDeepestSubcontext = (tree: Tree, context: Context, index = 0): { n
 }
 
 /** Check if the context has root, em or meta programming thoughts. */
-const shouldHide = (context: Context) => isRoot(context) || isEM(context) || context.find(isFunction)
+const shouldHide = (context: Context) => isRoot(context) || isEM(context) || context.find(isAttribute)
 
 /**
  * Finds all the desecendant for a given context of a specific node.

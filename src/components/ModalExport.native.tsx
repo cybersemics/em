@@ -2,7 +2,7 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import { exportPhrase, head, isFunction, isRoot, pathToContext, removeHome } from '../util'
+import { exportPhrase, head, isAttribute, isRoot, pathToContext, removeHome } from '../util'
 import { alert, error, pull, modalComplete } from '../action-creators'
 import {
   contextToThoughtId,
@@ -206,7 +206,7 @@ const ModalExport = () => {
       setNumDescendantsInState(
         getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((child: Thought) => !isFunction(child.value)),
+            shouldIncludeMetaAttributes || ((child: Thought) => !isAttribute(child.value)),
             shouldIncludeArchived || ((child: Thought) => child.value !== '=archive'),
           ),
         }).length,

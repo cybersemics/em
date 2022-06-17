@@ -32,7 +32,7 @@ import {
   headId,
   isDescendantPath,
   isDivider,
-  isFunction,
+  isAttribute,
   isRoot,
   parentOf,
   parseJsonSafe,
@@ -310,7 +310,7 @@ const ThoughtContainer = ({
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
 
   const options =
-    !isFunction(value) && childrenOptions.length > 0
+    !isAttribute(value) && childrenOptions.length > 0
       ? childrenOptions.map(thought => {
           return thought.value.toLowerCase()
         })
@@ -425,7 +425,7 @@ const ThoughtContainer = ({
           // used so that the autofocus can properly highlight the immediate parent of the cursor
           editing: isEditing,
           expanded: isExpanded,
-          function: isFunction(value), // eslint-disable-line quote-props
+          function: isAttribute(value), // eslint-disable-line quote-props
           'has-only-child': children.length === 1,
           'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
           'is-multi-column': isMultiColumnTable,

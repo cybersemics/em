@@ -33,7 +33,7 @@ import {
   isDescendantPath,
   // isDivider,
   // isEM,
-  isFunction,
+  isAttribute,
   isRoot,
   once,
   parentOf,
@@ -100,7 +100,7 @@ const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length ==
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
   const children = getAllChildrenAsThoughts(state, id)
   const child = children.find(
-    child => isFunction(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }

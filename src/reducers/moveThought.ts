@@ -7,7 +7,7 @@ import {
   appendToPath,
   head,
   isDescendantPath,
-  isFunction,
+  isAttribute,
   keyValueBy,
   normalizeThought,
   pathToContext,
@@ -85,7 +85,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
       // add source thought to the destination thought children array
       const destinationThoughtChildrenMapNew = {
         ...destinationThought.childrenMap,
-        [isFunction(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
+        [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
       const thoughtIndexUpdates: Index<Thought> = {

@@ -19,7 +19,7 @@ import {
   createChildrenMap,
   hashThought,
   head,
-  isFunction,
+  isAttribute,
   pathToContext,
   removeContext,
   timestamp,
@@ -88,7 +88,7 @@ const insertThought = (
     ...thoughtOld,
     value: head(rootContext),
     parentId: thoughtOld.parentId,
-    childrenMap: { ...thoughtOld.childrenMap, [isFunction(value) ? value : newThoughtId]: newThoughtId },
+    childrenMap: { ...thoughtOld.childrenMap, [isAttribute(value) ? value : newThoughtId]: newThoughtId },
     lastUpdated,
     updatedBy,
   }

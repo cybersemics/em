@@ -1,6 +1,6 @@
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import { getThoughtById } from '../selectors'
-import { isFunction } from '../util'
+import { isAttribute } from '../util'
 import { State, ThoughtId } from '../@types'
 
 /** Calls getThoughtById with a nullable ThoughtId. Returns null if id is null. */
@@ -12,7 +12,7 @@ const findDescendant = (state: State, thoughtId: ThoughtId | null, values: strin
   if (!Array.isArray(values)) values = [values]
   // if the value is a meta attribute, use childrenMap for O(1) lookup
   const child =
-    isFunction(values[0]) && getThoughtById(state, thoughtId)
+    isAttribute(values[0]) && getThoughtById(state, thoughtId)
       ? getThoughtByIdGuarded(state, getThoughtById(state, thoughtId)?.childrenMap[values[0]])
       : getAllChildrenAsThoughts(state, thoughtId).find(child => child.value === values[0])
   return child ? findDescendant(state, child.id, values.slice(1)) : null

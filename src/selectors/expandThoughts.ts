@@ -15,7 +15,7 @@ import {
   hashPath,
   head,
   isDescendant,
-  isFunction,
+  isAttribute,
   isURL,
   keyValueBy,
   parentOf,
@@ -153,7 +153,7 @@ function expandThoughtsRecursive(
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return (!isFunction(value) && !isPinClosed(child.id)) || isExpansionBasePath() || isAncestor()
+        return (!isAttribute(value) && !isPinClosed(child.id)) || isExpansionBasePath() || isAncestor()
       })
 
   // expand if child is only child and its child is not url
@@ -193,7 +193,7 @@ function expandThoughtsRecursive(
             If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
             So this predicate prevents from recalculating isAncestor or isexpansionBasePath again by checking if those calculations are already done in visibleChildren logic.
            */
-          const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isFunction(value)
+          const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isAttribute(value)
 
           const strippedValue = strip(value)
 

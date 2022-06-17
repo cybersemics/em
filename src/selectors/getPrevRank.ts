@@ -1,5 +1,5 @@
 import { getChildrenRanked } from '../selectors'
-import { isFunction } from '../util'
+import { isAttribute } from '../util'
 import { State, ThoughtId } from '../@types'
 
 /** Gets a rank that comes before all visible thoughts in a context. */
@@ -12,7 +12,7 @@ const getPrevRank = (state: State, id: ThoughtId, { aboveMeta }: { aboveMeta?: b
 
   const aboveHiddenThoughts = aboveMeta || state.showHiddenThoughts
 
-  const firstVisibleChildrenIndex = children.findIndex(child => !isFunction(child.value))
+  const firstVisibleChildrenIndex = children.findIndex(child => !isAttribute(child.value))
 
   if (aboveHiddenThoughts || firstVisibleChildrenIndex === 0) return children[0].rank - 1
 

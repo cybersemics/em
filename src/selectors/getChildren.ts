@@ -6,7 +6,7 @@ import {
   compareThought,
   compareThoughtDescending,
   isAbsolute,
-  isFunction,
+  isAttribute,
   sort,
   unroot,
   isDescendantPath,
@@ -27,7 +27,7 @@ type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
 export const isChildVisible = _.curry((state: State, child: Thought) => {
   // temporarily disable =hidden for performance
-  return !isFunction(child.value) // && !findDescendant(state, child.id, '=hidden')
+  return !isAttribute(child.value) // && !findDescendant(state, child.id, '=hidden')
 })
 
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
@@ -169,7 +169,7 @@ const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
 
   const { value: cursorValue } = getThoughtById(state, head(state.cursor))
 
-  return isFunction(cursorValue) && isDescendantPath(path, state.cursor)
+  return isAttribute(cursorValue) && isDescendantPath(path, state.cursor)
 }
 
 /** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */

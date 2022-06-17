@@ -27,7 +27,7 @@ import {
   isDescendantPath,
   isDivider,
   isEM,
-  isFunction,
+  isAttribute,
   isRoot,
   once,
   parentOf,
@@ -92,7 +92,7 @@ const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length ==
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
   const children = getAllChildrenAsThoughts(state, id)
   const child = children.find(
-    child => isFunction(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
@@ -291,14 +291,14 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     if (view !== 'Table') return false
     const childrenFiltered = allChildren
       .map(childId => getThoughtById(state, childId))
-      .filter(child => child && !isFunction(child.value))
+      .filter(child => child && !isAttribute(child.value))
 
     if (childrenFiltered.length === 0) return false
 
     const firstColumnId = findDescendant(state, idLive, childrenFiltered[0].value)
     const firstColumnChildren = getAllChildren(state, firstColumnId)
       .map(childId => getThoughtById(state, childId))
-      .filter(child => child && !isFunction(child.value))
+      .filter(child => child && !isAttribute(child.value))
 
     // create a map of column headers from the first row for O(1) lookup when checking other rows
     const columnMap = firstColumnChildren.reduce((accum, child) => ({ ...accum, [child.value]: true }), {})
@@ -306,7 +306,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     const otherChildren = childrenFiltered.slice(1).map(child => {
       const grandchildren = getAllChildren(state, child.id)
         .map(childId => getThoughtById(state, childId))
-        .filter(child => child && !isFunction(child.value))
+        .filter(child => child && !isAttribute(child.value))
       return grandchildren
     })
 
@@ -721,7 +721,7 @@ export const SubthoughtsComponent = ({
     if (!isMultiColumnTable) return []
     const headerChildren = getAllChildren(state, filteredChildren[0]?.id)
       .map(childId => getThoughtById(state, childId))
-      .filter(x => x && !isFunction(x.value))
+      .filter(x => x && !isAttribute(x.value))
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
   }
 

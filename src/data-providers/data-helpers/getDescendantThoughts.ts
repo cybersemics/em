@@ -1,6 +1,6 @@
 import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { DataProvider } from '../DataProvider'
-import { hashThought, hashPath, isFunction, keyValueBy, never } from '../../util'
+import { hashThought, hashPath, isAttribute, keyValueBy, never } from '../../util'
 // import { getSessionId } from '../../util/sessionManager'
 import { Index, Thought, State, ThoughtId, ThoughtsInterface } from '../../@types'
 import { getThoughtById, thoughtToPath } from '../../selectors'
@@ -53,7 +53,7 @@ const counter = (initialValue = 0) => {
 }
 
 /** Returns true if a Thought is a meta attribute but not =archive. */
-const isUnarchivedAttribute = (thought: Thought) => isFunction(thought.value) && thought.value !== '=archive'
+const isUnarchivedAttribute = (thought: Thought) => isAttribute(thought.value) && thought.value !== '=archive'
 
 /** Returns true if a Thought is a meta attribute or is a descendant of a meta attribute. Ignores =archive. */
 const isMetaDescendant = (state: State, thought: Thought) =>

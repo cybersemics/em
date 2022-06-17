@@ -11,7 +11,7 @@ import {
   getPublishUrl,
   head,
   isDocumentEditable,
-  isFunction,
+  isAttribute,
   isRoot,
   pathToContext,
   removeHome,
@@ -317,7 +317,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       setNumDescendantsInState(
         getDescendantThoughtIds(state, head(simplePath), {
           filterFunction: and(
-            shouldIncludeMetaAttributes || ((thought: Thought) => !isFunction(thought.value)),
+            shouldIncludeMetaAttributes || ((thought: Thought) => !isAttribute(thought.value)),
             shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
           ),
         }).length,
