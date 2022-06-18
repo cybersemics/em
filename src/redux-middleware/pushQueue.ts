@@ -17,6 +17,7 @@ import Lexeme from '../@types/Lexeme'
 import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import head from '../util/head'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
@@ -155,8 +156,8 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const pending: Record<ThoughtId, true> = keyValueBy(pendingDeletes, ({ context, thought }) => ({
-        [thought.id]: true,
+      const pending: Record<ThoughtId, true> = keyValueBy(pendingDeletes, ({ pathParent, thought }) => ({
+        [head(pathParent)]: true,
       }))
 
       const toBePulledThoughts = Object.keys(pending) as ThoughtId[]
@@ -167,10 +168,10 @@ const flushDeletes =
       // Therefore, force the pull here to fetch all descendants to delete in Part II.
       await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: Infinity }))
 
-      pendingDeletes.forEach(({ context, thought }) => {
+      pendingDeletes.forEach(({ pathParent, thought }) => {
         dispatch(
           deleteThought({
-            context,
+            pathParent,
             thoughtId: thought.id,
             orphaned: true,
           }),

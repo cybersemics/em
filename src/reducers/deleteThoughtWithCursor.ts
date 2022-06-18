@@ -88,7 +88,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   return reducerFlow([
     // delete thought
     deleteThought({
-      context: parentOf(pathToContext(state, simplePath)),
+      pathParent: parentOf(simplePath),
       showContexts,
       thoughtId: head(simplePath),
     }),

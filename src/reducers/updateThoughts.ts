@@ -12,7 +12,6 @@ import textToHtml from '../util/textToHtml'
 import reducerFlow from '../util/reducerFlow'
 import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
@@ -25,7 +24,7 @@ export interface UpdateThoughtsOptions {
   lexemeIndexUpdates: Index<Lexeme | null>
   thoughtIndexUpdates: Index<Thought | null>
   recentlyEdited?: Index
-  pendingDeletes?: { context: Context; thought: Thought }[]
+  pendingDeletes?: { pathParent: Path; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
   pendingPulls?: { path: Path }[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.

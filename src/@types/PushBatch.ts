@@ -1,4 +1,3 @@
-import Context from './Context'
 import Index from './IndexType'
 import Lexeme from './Lexeme'
 import Thought from './Thought'
@@ -12,7 +11,7 @@ interface PushBatch {
   local?: boolean
   remote?: boolean
   recentlyEdited?: RecentlyEditedTree
-  pendingDeletes?: { context: Context; thought: Thought }[]
+  pendingDeletes?: { pathParent: Path; thought: Thought }[]
   pendingPulls?: { path: Path }[]
   updates?: Index<string>
   pendingLexemes?: Index<boolean>

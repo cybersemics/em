@@ -55,7 +55,7 @@ const join = (state: State) => {
 
   const removalReducers = siblings.map(sibling =>
     deleteThought({
-      context,
+      pathParent: parentOf(simplePath),
       thoughtId: sibling.id,
     }),
   )

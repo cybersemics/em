@@ -19,7 +19,7 @@ const heading = (state: State, { level }: { level: HeadingLevel }): State => {
     // delete other headings
     ...headingChildren.map(thought =>
       deleteThought({
-        context,
+        pathParent: simplifyPath(state, state.cursor!),
         thoughtId: thought.id,
       }),
     ),

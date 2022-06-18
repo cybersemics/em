@@ -68,7 +68,7 @@ const deleteEmptyThought = (state: State): State => {
       },
       // permanently delete the empty thought
       deleteThought({
-        context: parentOf(context),
+        pathParent: parentOf(cursor),
         thoughtId: head(cursor),
       }),
       // @MIGRATION-TODO: Set proper cursor here
@@ -110,7 +110,7 @@ const deleteEmptyThought = (state: State): State => {
 
         // delete second thought
         deleteThought({
-          context: parentContext,
+          pathParent: rootedParentOf(state, cursor),
           thoughtId: head(simplePath),
         }),
 

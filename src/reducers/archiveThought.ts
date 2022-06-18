@@ -156,7 +156,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     ...(isDeletable
       ? [
           deleteThought({
-            context: showContexts ? context : parentOf(pathToContext(state, simplePath)),
+            pathParent: showContexts ? simplePath : parentOf(simplePath),
             showContexts,
             thoughtId: head(simplePath),
           }),

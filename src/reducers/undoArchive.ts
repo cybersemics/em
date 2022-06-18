@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -18,7 +17,6 @@ const undoArchive = (
 ) => {
   const parentId = head(rootedParentOf(state, currPath))
   const originalParentId = head(rootedParentOf(state, originalPath))
-  const originalParentContext = rootedParentOf(state, pathToContext(state, originalPath))
 
   return reducerFlow([
     // set the cursor to the original path before restoring the thought
@@ -42,7 +40,7 @@ const undoArchive = (
     state =>
       !parentId || getAllChildren(state, parentId).length === 0
         ? deleteThought(state, {
-            context: originalParentContext,
+            pathParent: rootedParentOf(state, originalPath),
             thoughtId: getChildrenRanked(state, originalParentId)[0].id,
           })
         : state,

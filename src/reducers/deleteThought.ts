@@ -7,7 +7,6 @@ import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import ThoughtId from '../@types/ThoughtId'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
@@ -22,9 +21,10 @@ import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 import unroot from '../util/unroot'
 import { getChildrenRanked, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import Path from '../@types/Path'
 
 interface Payload {
-  context: Context
+  pathParent: Path
   thoughtId: ThoughtId
   orphaned?: boolean
   showContexts?: boolean
@@ -33,7 +33,7 @@ interface Payload {
 interface ThoughtUpdates {
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
-  pendingDeletes?: { context: Context; thought: Thought }[]
+  pendingDeletes?: { pathParent: Path; thought: Thought }[]
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
@@ -41,7 +41,7 @@ interface ThoughtUpdates {
  *
  * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
-const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) => {
+const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId)
 
   if (!deletedThought) {
@@ -56,8 +56,6 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
     return state
   }
 
-  const thoughts = unroot(context.concat(value))
-  context = rootedParentOf(state, thoughts)
   const key = hashThought(value)
   const lexeme = getLexeme(state, value)
 
@@ -146,7 +144,7 @@ const deleteThought = (state: State, { context, thoughtId, orphaned }: Payload) 
             pendingDeletes: [
               ...(accumRecursive.pendingDeletes || []),
               {
-                context: thoughts,
+                pathParent: [...unroot(pathParent), thought.id],
                 thought: child,
               },
             ],

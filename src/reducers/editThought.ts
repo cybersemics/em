@@ -84,7 +84,7 @@ const editThought = (
     return reducerFlow([
       deleteThought({
         thoughtId: editedThoughtId,
-        context: parentOf(context),
+        pathParent: parentOf(path),
       }),
       setCursor({
         path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),

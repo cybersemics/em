@@ -28,7 +28,7 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
   return attributePath && exists
     ? // delete existing attribute
       deleteThought(state, {
-        context,
+        pathParent: path!,
         thoughtId: head(attributePath),
       })
     : // create new attribute

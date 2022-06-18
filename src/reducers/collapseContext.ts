@@ -1,7 +1,6 @@
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import getRankBefore from '../selectors/getRankBefore'
@@ -30,7 +29,6 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
   if (!path) return state
 
   const simpleCursor = simplifyPath(state, path)
-  const context = pathToContext(state, simpleCursor)
 
   const children = getAllChildrenAsThoughts(state, head(simpleCursor))
 
@@ -67,7 +65,7 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
           !deleteCursor
             ? archiveThought({ path })
             : deleteThought({
-                context: parentOf(context),
+                pathParent: parentOf(simpleCursor),
                 thoughtId: head(simpleCursor),
               }),
           state =>
