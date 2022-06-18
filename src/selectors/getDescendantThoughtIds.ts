@@ -15,7 +15,7 @@ interface OptionsPathInternal extends OptionsPath {
 }
 
 /** Generates a flat list of all descendant Paths. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
-export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: OptionsPath = {}): ThoughtId[] => {
+const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: OptionsPath = {}): ThoughtId[] => {
   const { filterFunction, ordered, recur } = options as OptionsPathInternal
   const thought = getThoughtById(state, thoughtId)
 
@@ -40,20 +40,4 @@ export const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, opti
   )
 }
 
-/** Returns true if any descendants of the given Context fulfills the predicate. Short circuits once found. */
-export const someDescendants = (state: State, id: ThoughtId, predicate: (thought: Thought) => boolean) => {
-  let found = false
-  // ignore the return value of getDescendants
-  // we are just using its filterFunction to check pending
-  getDescendantThoughtIds(state, id, {
-    filterFunction: thought => {
-      if (predicate(thought)) {
-        found = true
-      }
-      // if pending has been found, return false to filter out all remaining children and short circuit
-      return !found
-    },
-  })
-
-  return found
-}
+export default getDescendantThoughtIds
