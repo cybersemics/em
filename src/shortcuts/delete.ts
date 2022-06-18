@@ -42,8 +42,8 @@ const deleteShortcut: Shortcut = {
   id: 'delete',
   label: 'Delete',
   description: 'Permanently delete the current thought.',
-  gesture: 'ldldl',
-  keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
+  gesture: 'ldl',
+  keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
 }

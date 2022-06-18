@@ -79,9 +79,9 @@ const archiveShortcut: Shortcut = {
   id: 'archive',
   label: 'Archive',
   description: 'Archive the current thought.',
-  gesture: 'ldl',
+  gesture: 'ldldl',
   svg: Icon,
-  keyboard: { key: Key.Backspace, shift: true, meta: true },
+  keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
 }
