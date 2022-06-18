@@ -1,11 +1,8 @@
 import React, { Fragment } from 'react'
 import { isTouch } from '../../browser'
 import { store } from '../../store'
-
 import { TUTORIAL_CONTEXT } from '../../constants'
-
-// selectors
-import { getContexts } from '../../selectors'
+import getContexts from '../../selectors/getContexts'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewSelect = ({ tutorialChoice }) => {

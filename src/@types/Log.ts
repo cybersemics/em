@@ -1,7 +1,9 @@
-import { Timestamp } from './Timestamp'
+import Timestamp from './Timestamp'
 
-export interface Log {
+interface Log {
   created: Timestamp
   message: string
   stack?: any
 }
+
+export default Log

@@ -2,11 +2,13 @@ import React from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
-import { headValue, once } from '../../util'
-import { getSetting } from '../../selectors'
+import headValue from '../../util/headValue'
+import once from '../../util/once'
+import getSetting from '../../selectors/getSetting'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
-import { tutorial } from '../../action-creators'
-import { GesturePath, State } from '../../@types'
+import tutorial from '../../action-creators/tutorial'
+import GesturePath from '../../@types/GesturePath'
+import State from '../../@types/State'
 import { StyleSheet } from 'react-native'
 
 // constants
@@ -36,7 +38,7 @@ import { View } from 'moti'
 import { fadeIn } from '../../style/animations'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { commonStyles } from '../../style/commonStyles'
-import { doStringsMatch } from '../../util/doStringsMatch'
+import doStringsMatch from '../../util/doStringsMatch'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')

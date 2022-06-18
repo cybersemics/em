@@ -1,6 +1,9 @@
 import React from 'react'
 import classNames from 'classnames'
-import { tutorial, tutorialChoice, tutorialNext, tutorialStep as setTutorialStep } from '../../action-creators'
+import tutorial from '../../action-creators/tutorial'
+import tutorialChoice from '../../action-creators/tutorialChoice'
+import tutorialNext from '../../action-creators/tutorialNext'
+import setTutorialStep from '../../action-creators/tutorialStep'
 
 import {
   TUTORIAL2_STEP_CHOOSE,

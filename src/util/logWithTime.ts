@@ -4,7 +4,7 @@ let t1 = Date.now() // eslint-disable-line fp/no-let
 const enableLogging = false
 
 /** Measures and prints the time since its last call (seconds). Used for debugging. */
-export const logWithTime = (...args: any[]) => {
+const logWithTime = (...args: any[]) => {
   if (!enableLogging) return
 
   const t2 = Date.now()
@@ -12,3 +12,5 @@ export const logWithTime = (...args: any[]) => {
   t1 = t2
   console.info(diff, ...args)
 }
+
+export default logWithTime

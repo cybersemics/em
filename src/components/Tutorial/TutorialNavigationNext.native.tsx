@@ -2,9 +2,10 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton.native'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
-import { headValue } from '../../util'
-import { getSetting, getAllChildren } from '../../selectors'
-import { tutorialNext } from '../../action-creators'
+import headValue from '../../util/headValue'
+import getSetting from '../../selectors/getSetting'
+import { getAllChildren } from '../../selectors/getChildren'
+import tutorialNext from '../../action-creators/tutorialNext'
 
 import {
   HOME_TOKEN,
@@ -23,7 +24,7 @@ import {
 } from '../../constants'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
-import { State } from '../../@types'
+import State from '../../@types/State'
 
 const tutorialSteps = [
   TUTORIAL_STEP_START,

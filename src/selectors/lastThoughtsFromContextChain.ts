@@ -1,6 +1,12 @@
-import { getLexeme, contextToPath } from '../selectors'
-import { parentOf, head, headValue, splice } from '../util'
-import { SimplePath, State, ThoughtContext } from '../@types'
+import getLexeme from '../selectors/getLexeme'
+import contextToPath from '../selectors/contextToPath'
+import parentOf from '../util/parentOf'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import splice from '../util/splice'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
 import thoughtToContext from './thoughtToContext'
 
 /** Generates path from the last segment of a context chain. */

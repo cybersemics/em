@@ -1,9 +1,17 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PARENT_ID } from '../constants'
 import globals from '../globals'
-// import { canShowModal } from '../selectors'
-import { hashThought, /* isDocumentEditable */ never, parseJsonSafe, timestamp } from './index'
+// import canShowModal from '../selectors/canShowModal'
+import hashThought from './hashThought'
+import never from './never'
+import parseJsonSafe from './parseJsonSafe'
+import timestamp from './timestamp'
 import { getSessionId } from './sessionManager'
-import { Timestamp, ThoughtsInterface, State, Thought, Index, ThoughtId } from '../@types'
+import Timestamp from '../@types/Timestamp'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import Index from '../@types/IndexType'
+import ThoughtId from '../@types/ThoughtId'
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -13,7 +21,7 @@ const getLocal = (key: string) => {
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
-export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
+const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
@@ -159,3 +167,5 @@ export const initialState = (created: Timestamp = timestamp()) => {
 
   return state
 }
+
+export default initialThoughts

@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThought = ({ cursor }) => {

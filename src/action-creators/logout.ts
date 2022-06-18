@@ -1,9 +1,10 @@
 import { clearAll } from '../data-providers/dexie'
-import { never } from '../util'
-import { clear, importText } from '../action-creators'
+import never from '../util/never'
+import clear from '../action-creators/clear'
+import importText from '../action-creators/importText'
 import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
-import { Thunk } from '../@types'
-import { storage } from '../util/storage'
+import Thunk from '../@types/Thunk'
+import storage from '../util/storage'
 import scrollTo from '../device/scrollTo'
 
 /** Logs the user out of Firebase and clears the state. */

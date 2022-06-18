@@ -1,5 +1,6 @@
-import { editingValue, newThought } from '../../action-creators'
-import { exportContext } from '../../selectors'
+import editingValue from '../../action-creators/editingValue'
+import newThought from '../../action-creators/newThought'
+import exportContext from '../../selectors/exportContext'
 import { HOME_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 

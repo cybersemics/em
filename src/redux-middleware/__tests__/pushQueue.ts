@@ -1,12 +1,14 @@
 import { store } from '../../store'
-import { importText, editThought } from '../../action-creators'
-import { getLexeme as getLexemeState, contextToPath } from '../../selectors'
+import importText from '../../action-creators/importText'
+import editThought from '../../action-creators/editThought'
+import getLexemeState from '../../selectors/getLexeme'
+import contextToPath from '../../selectors/contextToPath'
 import * as dexie from '../../data-providers/dexie'
 import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import { DataProvider } from '../../data-providers/DataProvider'
 import testTimer from '../../test-helpers/testTimer'
 import contextToThought from '../../test-helpers/contextToThought'
-import { SimplePath } from '../../@types'
+import SimplePath from '../../@types/SimplePath'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 
 /*

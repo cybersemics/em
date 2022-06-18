@@ -1,4 +1,4 @@
-import { GesturePath } from '../@types'
+import GesturePath from '../@types/GesturePath'
 
 enum gestureEnum {
   newSubThought = 'rdr',

@@ -1,4 +1,4 @@
-import { Thunk } from '../@types'
+import Thunk from '../@types/Thunk'
 
 /** Temporary clear the cursor in response to the clearThought. NOOP if value is no different than current state. See reducers/cursorCleared. */
 const cursorCleared =

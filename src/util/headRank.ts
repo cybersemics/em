@@ -1,7 +1,10 @@
-import { Path, State } from '../@types'
-import { getThoughtById } from '../selectors'
-import { head } from './head'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import getThoughtById from '../selectors/getThoughtById'
+import head from './head'
 
 // @MIGRATION_TODO: Fix all logic that uses headRank
 /** Returns the rank of the last thought in a path. */
-export const headRank = (state: State, path: Path) => getThoughtById(state, head(path)).rank
+const headRank = (state: State, path: Path) => getThoughtById(state, head(path)).rank
+
+export default headRank

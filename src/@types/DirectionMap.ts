@@ -1,3 +1,5 @@
-import { Direction } from './Direction'
+import Direction from './Direction'
 
-export type DirectionMap<T> = (dir: Direction) => T
+type DirectionMap<T> = (dir: Direction) => T
+
+export default DirectionMap

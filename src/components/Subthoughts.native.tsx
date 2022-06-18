@@ -6,65 +6,61 @@ import globals from '../globals'
 import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import {
-  ThoughtId,
-  GesturePath,
-  Index,
-  LazyEnv,
-  Path,
-  SimplePath,
-  SortDirection,
-  State,
-  ThoughtContext,
-} from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import GesturePath from '../@types/GesturePath'
+import Index from '../@types/IndexType'
+import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import SortDirection from '../@types/SortDirection'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
 
 // util
-import {
-  // appendToPath,
-  checkIfPathShareSubcontext,
-  // ellipsize,
-  // equalArrays,
-  equalPath,
-  hashPath,
-  head,
-  headValue,
-  isAbsolute,
-  isDescendant,
-  isDescendantPath,
-  // isDivider,
-  // isEM,
-  isAttribute,
-  isRoot,
-  once,
-  parentOf,
-  parseJsonSafe,
-  parseLet,
-  pathToContext,
-} from '../util'
+// appendToPath from '../util/// appendToPath'
+import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
+// ellipsize from '../util/// ellipsize'
+// equalArrays from '../util/// equalArrays'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isAbsolute from '../util/isAbsolute'
+import isDescendant from '../util/isDescendant'
+import isDescendantPath from '../util/isDescendantPath'
+// isDivider from '../util/// isDivider'
+// isEM from '../util/// isEM'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import once from '../util/once'
+import parentOf from '../util/parentOf'
+import parseJsonSafe from '../util/parseJsonSafe'
+import parseLet from '../util/parseLet'
+import pathToContext from '../util/pathToContext'
 
 // selectors
+import appendChildPath from '../selectors/appendChildPath'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import getChildPath from '../selectors/getChildPath'
 import {
-  appendChildPath,
-  attribute,
-  attributeEquals,
-  childIdsToThoughts,
   childrenFilterPredicate,
-  findDescendant,
-  getAllChildren,
-  getAllChildrenSorted,
-  getChildPath,
+  getAllChildrenAsThoughts,
   getChildren,
   getChildrenRanked,
-  getContextsSortedAndRanked,
-  getGlobalSortPreference,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
+  getAllChildren,
+  getAllChildrenSorted,
+} from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 import { View } from 'moti'
 import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
 import { TouchableOpacity } from 'react-native'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {

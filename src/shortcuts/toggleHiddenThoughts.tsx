@@ -1,6 +1,7 @@
 import React from 'react'
-import { toggleHiddenThoughts } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import toggleHiddenThoughts from '../action-creators/toggleHiddenThoughts'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (

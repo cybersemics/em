@@ -1,8 +1,9 @@
 /** Manages local sessions (tabs), providing a unique id per session that expires after a period of no use. */
 import _ from 'lodash'
 import { v4 as uuid } from 'uuid'
-import { Index } from '../@types'
-import { storage, storeSession } from '../util/storage'
+import Index from '../@types/IndexType'
+import storage from '../util/storage'
+import storeSession from '../util/storeSession'
 
 export enum SessionType {
   LOCAL = 'local',

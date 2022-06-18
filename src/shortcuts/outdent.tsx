@@ -1,7 +1,8 @@
 import React from 'react'
-import { isDocumentEditable } from '../util'
-import { outdent } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import isDocumentEditable from '../util/isDocumentEditable'
+import outdent from '../action-creators/outdent'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 import moveCursorBackward from './moveCursorBackward'
 

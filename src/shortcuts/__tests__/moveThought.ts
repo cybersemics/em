@@ -1,9 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
+import exportContext from '../../selectors/exportContext'
 import { store as appStore } from '../../store'
 import testTimer from '../../test-helpers/testTimer'
 import { initialize } from '../../initialize'
-import { clear, importText as importTextAction } from '../../action-creators'
+import clear from '../../action-creators/clear'
+import importTextAction from '../../action-creators/importText'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'

@@ -1,4 +1,4 @@
-import { Thunk } from '../@types'
+import Thunk from '../@types/Thunk'
 
 /** Tracks the real-time editing value. */
 const setEditingValue =

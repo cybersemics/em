@@ -3,10 +3,11 @@ import { connect } from 'react-redux'
 import { isTouch } from '../browser'
 import { shortcutById } from '../shortcuts'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
-import { getSetting } from '../selectors'
+import getSetting from '../selectors/getSetting'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
-import { GesturePath, State } from '../@types'
+import GesturePath from '../@types/GesturePath'
+import State from '../@types/State'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number

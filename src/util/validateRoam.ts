@@ -17,7 +17,7 @@ const isRoamBlock = (children: RoamBlock[] = []): boolean =>
 /**
  * Validates if a given string can be parsed as a Roam JSON.
  */
-export const validateRoam = (input: string) => {
+const validateRoam = (input: string) => {
   try {
     const json: RoamPage[] = JSON.parse(input)
     return json.every(
@@ -27,3 +27,5 @@ export const validateRoam = (input: string) => {
     return false
   }
 }
+
+export default validateRoam

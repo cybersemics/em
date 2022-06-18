@@ -2,13 +2,18 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers /* isGestureHint */ } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { isRoot, pathToContext } from './index'
-import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { /* alert */ error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import isRoot from './isRoot'
+import pathToContext from './pathToContext'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import pathExists from '../selectors/pathExists'
+import setCursor from '../action-creators/setCursor'
+import errorActionCreator from '../action-creators/error'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import { equalPath } from './equalPath'
+import equalPath from './equalPath'
 import * as selection from '../device/selection'
-import { Path, State } from '../@types'
+import Path from '../@types/Path'
+import State from '../@types/State'
 // import lifecycle from 'page-lifecycle'
 
 declare global {
@@ -81,7 +86,7 @@ export const initEvents = (store: Store<State, any>) => {
 
     console.error(e.error.stack)
     db.log({ message: e.message, stack: e.error.stack })
-    store.dispatch(error({ value: e.message }))
+    store.dispatch(errorActionCreator({ value: e.message }))
   }
 
   /** Handle a page lifecycle state change. */
@@ -125,3 +130,5 @@ export const initEvents = (store: Store<State, any>) => {
   // return input handlers as another way to remove them on cleanup
   return { keyDown, keyUp, cleanup }
 }
+
+export default initEvents

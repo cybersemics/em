@@ -1,40 +1,15 @@
 import _ from 'lodash'
 import { Element, HimalayaNode, parse, Text } from 'himalaya'
-import { Block } from '../@types'
-import stripStyleAttribute from './stripStyleAttribute'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import Block from '../@types/Block'
+import formattingNodeToHtml from './formattingNodeToHtml'
+import isFormattingTag from './isFormattingTag'
 
 /** Retrieve attribute from Element node by key. */
 const getAttribute = (key: string, node: Element) => {
   const { attributes } = node
   if (!attributes) return
   return attributes.find(attr => attr.key === key)?.value
-}
-
-const allowedFormattingTags = ['i', 'b', 'em', 'strong', 'u']
-
-/** Check whether node is formatting tag element (<i>...</i>, <b>...</b> or <span>...</span>). */
-export const isFormattingTag = (node: HimalayaNode) =>
-  node.type === 'element' &&
-  (allowedFormattingTags.includes(node.tagName) || (node.tagName === 'span' && getAttribute('class', node) !== 'note'))
-
-/** Strip span and encode a <i> or <b> element as HTML. */
-export const formattingNodeToHtml = (node: Element) => {
-  const content: string = node.children.reduce((acc, child) => {
-    return acc + (child.type === 'text' ? child.content : child.type === 'comment' ? '' : formattingNodeToHtml(child))
-  }, '')
-
-  if (node.tagName === 'span') {
-    const styleAttribute = _.find(node.attributes, { key: 'style' })
-    if (!styleAttribute) {
-      return content
-    }
-    const strippedStyleAttribute = stripStyleAttribute(styleAttribute.value)
-    return strippedStyleAttribute.length > 0
-      ? `<${node.tagName} style="${strippedStyleAttribute}">${content}</${node.tagName}>`
-      : content
-  }
-
-  return `<${node.tagName}>${content}</${node.tagName}>`
 }
 
 /** Returns true if the text node is only whitespace. */
@@ -215,13 +190,13 @@ const findUniqueTags = (nodes: Element[]): string[] => {
   return _.uniq(tagLists)
 }
 
-const tagsThatAreNotToBeStripped = [...allowedFormattingTags, 'span', 'li', 'ul']
+const tagsThatAreNotToBeStripped = [...ALLOWED_FORMATTING_TAGS, 'li', 'ul']
 
 /** Generates dynamic regex expression. */
 const generateRegexToMatchTags = (tags: string[]): RegExp => new RegExp(`</?(?:${tags.join('|')})>`, 'gim')
 
 /** Parses input HTML and saves in JSON array using Himalaya. */
-export const htmlToJson = (html: string) => {
+const htmlToJson = (html: string) => {
   const nodes = parse(html) as Element[]
 
   const tags = findUniqueTags(nodes)
@@ -231,3 +206,5 @@ export const htmlToJson = (html: string) => {
   const blocks = himalayaToBlock(removeEmptyNodesAndComments(parse(strippedHtml)))
   return Array.isArray(blocks) ? blocks : [blocks]
 }
+
+export default htmlToJson

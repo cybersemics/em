@@ -1,6 +1,8 @@
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
-import { State, ThoughtId } from '../@types'
-import { isHome, timestamp } from '../util'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import isHome from '../util/isHome'
+import timestamp from '../util/timestamp'
 
 const TRANSIENT_THOUGHT_ID = 'TRANSIENT_THOUGHT' as ThoughtId
 

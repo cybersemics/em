@@ -25,3 +25,5 @@ export const getVisibilityChangeEventName = () => {
   }
   return null
 }
+
+export default getVisibilityChangeEventName

@@ -10,10 +10,16 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { headValue, isRoot, joinConjunction } from '../../util'
-import { contextToThoughtId, findDescendant, getContexts, getChildrenRanked, parentOfThought } from '../../selectors'
+import headValue from '../../util/headValue'
+import isRoot from '../../util/isRoot'
+import joinConjunction from '../../util/joinConjunction'
+import findDescendant from '../../selectors/findDescendant'
+import { getChildrenRanked } from '../../selectors/getChildren'
+import getContexts from '../../selectors/getContexts'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
+import parentOfThought from '../../selectors/parentOfThought'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {

@@ -1,5 +1,6 @@
-import { timestamp } from './timestamp'
-import { Block, Timestamp } from '../@types'
+import timestamp from './timestamp'
+import Block from '../@types/Block'
+import Timestamp from '../@types/Timestamp'
 
 export interface RoamBlock {
   uid: string
@@ -75,8 +76,10 @@ const roamBlocksToBlocks = (children: RoamBlock[]): Block[] =>
 /**
  * Converts the Roam to an array of blocks.
  */
-export const roamJsonToBlocks = (roam: RoamPage[]) =>
+const roamJsonToBlocks = (roam: RoamPage[]) =>
   roam.map((item: RoamPage) => ({
     scope: item.title,
     children: roamBlocksToBlocks(item.children),
   }))
+
+export default roamJsonToBlocks

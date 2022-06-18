@@ -1,5 +1,7 @@
-import { getThoughtById } from './index'
-import { State, Thought, ThoughtId } from '../@types'
+import getThoughtById from './getThoughtById'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 
 /** Returns the parent Thought of a given ThoughtId. */
 const parentOfThought = (state: State, thoughtId: ThoughtId): Thought | null => {

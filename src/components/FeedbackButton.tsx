@@ -1,5 +1,5 @@
 import React from 'react'
-import { showModal } from '../action-creators'
+import showModal from '../action-creators/showModal'
 import FeedbackIcon from './icons/FeedbackIcon'
 import { useDispatch } from 'react-redux'
 

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-import { logout, showModal, alert } from '../action-creators'
+import logout from '../action-creators/logout'
+import showModal from '../action-creators/showModal'
+import alert from '../action-creators/alert'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 
 import { View, StyleSheet, TouchableOpacity } from 'react-native'

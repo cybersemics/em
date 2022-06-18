@@ -1,9 +1,18 @@
 import _ from 'lodash'
-import { head, pathToContext, reducerFlow, splitSentence } from '../util'
-import { editableRender, editingValue, editThought, newThought, setCursor } from '../reducers'
-import { getThoughtById, rootedParentOf, simplifyPath } from '../selectors'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import splitSentence from '../util/splitSentence'
+import editableRender from '../reducers/editableRender'
+import editingValue from '../reducers/editingValue'
+import editThought from '../reducers/editThought'
+import newThought from '../reducers/newThought'
+import setCursor from '../reducers/setCursor'
+import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import { State } from '../@types'
+import State from '../@types/State'
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
 const splitSentences = (state: State) => {

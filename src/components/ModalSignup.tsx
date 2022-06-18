@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState, ChangeEventHandler } from 'react'
 import { useDispatch } from 'react-redux'
 import { ActionButton } from './ActionButton'
-import { Index, InviteCode } from '../@types'
-import { showModal } from '../action-creators'
+import Index from '../@types/IndexType'
+import InviteCode from '../@types/InviteCode'
+import showModal from '../action-creators/showModal'
 import Modal from './Modal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
-import { getQueryParam, timestamp, storage } from '../util'
+import getQueryParam from '../util/getQueryParam'
+import timestamp from '../util/timestamp'
+import storage from '../util/storage'
 import InvitesIcon from './icons/InvitesIcon'
 
 interface Mode {

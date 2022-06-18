@@ -1,4 +1,4 @@
-import { Thunk } from '../@types'
+import Thunk from '../@types/Thunk'
 import scrollTo from '../device/scrollTo'
 
 /** Display a given modal dialog box and scroll to the top. */

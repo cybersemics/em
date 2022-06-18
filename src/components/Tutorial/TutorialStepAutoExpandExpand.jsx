@@ -1,8 +1,8 @@
 import React from 'react'
 import { store } from '../../store'
 import { isTouch } from '../../browser'
-import { getAllChildren, getChildrenRanked } from '../../selectors'
-import { ellipsize } from '../../util'
+import { getAllChildren, getChildrenRanked } from '../../selectors/getChildren'
+import ellipsize from '../../util/ellipsize'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ cursor, rootChildren = [] }) => {

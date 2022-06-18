@@ -1,5 +1,5 @@
-import { getSetting } from '../selectors'
-import { State } from '../@types'
+import getSetting from '../selectors/getSetting'
+import State from '../@types/State'
 
 /** Returns true if the tutorial is active. */
 const isTutorial = (state: State) => getSetting(state, 'Tutorial') !== 'Off'

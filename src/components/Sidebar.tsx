@@ -4,9 +4,9 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import { isTouch } from '../browser'
 import _ from 'lodash'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import { toggleSidebar as toggleSidebarActionCreator } from '../action-creators'
+import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
-import { State } from '../@types'
+import State from '../@types/State'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<

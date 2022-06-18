@@ -1,7 +1,7 @@
 import { ReactWrapper } from 'enzyme'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { getChildrenRanked } from '../../selectors'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'

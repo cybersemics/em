@@ -4,10 +4,19 @@ import { ThunkDispatch } from 'redux-thunk'
 import { connect } from 'react-redux'
 import { store } from '../store'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, setCursor } from '../action-creators'
+import alert from '../action-creators/alert'
+import dragHold from '../action-creators/dragHold'
+import dragInProgress from '../action-creators/dragInProgress'
+import setCursor from '../action-creators/setCursor'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { ThoughtId, Context, Index, Path, SimplePath, State, ThoughtContext } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
 
 // components
 import Bullet from './Bullet'
@@ -22,39 +31,32 @@ import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
 
 // util
-import {
-  equalPath,
-  hashContext,
-  hashPath,
-  head,
-  headId,
-  isDescendantPath,
-  isAttribute,
-  isRoot,
-  parentOf,
-  parseJsonSafe,
-  pathToContext,
-  publishMode,
-} from '../util'
+import equalPath from '../util/equalPath'
+import hashContext from '../util/hashContext'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import headId from '../util/headId'
+import isDescendantPath from '../util/isDescendantPath'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
+import parseJsonSafe from '../util/parseJsonSafe'
+import pathToContext from '../util/pathToContext'
+import publishMode from '../util/publishMode'
 
 // selectors
-import {
-  attribute,
-  childIdsToThoughts,
-  findDescendant,
-  getChildren,
-  getChildrenRanked,
-  getSortPreference,
-  getThoughtById,
-  getStyle,
-  hasChildren,
-  rootedParentOf,
-} from '../selectors'
+import attribute from '../selectors/attribute'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import getSortPreference from '../selectors/getSortPreference'
+import getThoughtById from '../selectors/getThoughtById'
+import getStyle from '../selectors/getStyle'
+import rootedParentOf from '../selectors/rootedParentOf'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 import { StyleSheet } from 'react-native'
 import ThoughtAnnotation from './ThoughtAnnotation'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 
 /**********************************************************************
  * Redux

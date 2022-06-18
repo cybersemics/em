@@ -1,5 +1,6 @@
-import { Path, State } from '../@types'
-import { head } from '../util'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import head from '../util/head'
 import getThoughtById from './getThoughtById'
 
 /**

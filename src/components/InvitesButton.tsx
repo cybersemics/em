@@ -1,8 +1,9 @@
 import React from 'react'
-import { showModal } from '../action-creators'
+import showModal from '../action-creators/showModal'
 import InvitesIcon from './icons/InvitesIcon'
 import { connect, useDispatch } from 'react-redux'
-import { Connected, State } from '../@types'
+import Connected from '../@types/Connected'
+import State from '../@types/State'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

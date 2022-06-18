@@ -1,8 +1,11 @@
 import { HOME_PATH } from '../constants'
-import { head, isRoot } from '../util'
-import { importText, setCursor } from '../action-creators'
-import { decodeThoughtsUrl, getAllChildren } from '../selectors'
-import { Thunk } from '../@types'
+import head from '../util/head'
+import isRoot from '../util/isRoot'
+import importText from '../action-creators/importText'
+import setCursor from '../action-creators/setCursor'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import { getAllChildren } from '../selectors/getChildren'
+import Thunk from '../@types/Thunk'
 
 interface Options {
   skipRoot?: boolean

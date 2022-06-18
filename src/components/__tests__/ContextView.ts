@@ -1,4 +1,5 @@
-import { cursorDown, newThought } from '../../action-creators'
+import cursorDown from '../../action-creators/cursorDown'
+import newThought from '../../action-creators/newThought'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findAllThoughtsByText } from '../../test-helpers/queries'

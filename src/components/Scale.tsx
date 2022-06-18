@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { publishMode } from '../util'
+import publishMode from '../util/publishMode'
 
 interface ScaleProps {
   amount: number

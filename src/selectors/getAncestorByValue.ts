@@ -1,5 +1,8 @@
-import { getThoughtById } from './index'
-import { Index, Thought, State, ThoughtId } from '../@types'
+import getThoughtById from './getThoughtById'
+import Index from '../@types/IndexType'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 /**
  * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.

@@ -1,6 +1,7 @@
 import { store } from '../../store'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-import { contextToThoughtId, getChildrenRanked } from '../../selectors'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import { getChildrenRanked } from '../../selectors/getChildren'
 
 /** Returns true if the first context thought has been created, e.g. /Home/To Do/x. */
 export const context1SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {

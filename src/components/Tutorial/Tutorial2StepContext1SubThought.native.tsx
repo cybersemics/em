@@ -6,14 +6,18 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { headValue } from '../../util'
-import { childIdsToThoughts, contextToThoughtId, getChildrenRanked } from '../../selectors'
+import headValue from '../../util/headValue'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
-import { ThoughtId, Path, State } from '../../@types'
+import ThoughtId from '../../@types/ThoughtId'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
-import { doStringsMatch } from '../../util/doStringsMatch'
+import doStringsMatch from '../../util/doStringsMatch'
 import { useStore } from 'react-redux'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT

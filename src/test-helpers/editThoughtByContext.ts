@@ -1,11 +1,12 @@
-import { contextToPath } from '../selectors'
+import contextToPath from '../selectors/contextToPath'
 
-import { State, Thunk } from '../@types'
+import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import editThought, { editThoughtPayload } from '../reducers/editThought'
 import _ from 'lodash'
-import { parentOf } from '../util'
+import parentOf from '../util/parentOf'
 import { HOME_TOKEN } from '../constants'
-import { editThought as editThoughtThunk } from '../action-creators'
+import editThoughtThunk from '../action-creators/editThought'
 
 /**
  * Edit thought at the given Context.

@@ -1,6 +1,9 @@
-import { head } from './head'
-import { Path, State } from '../@types'
-import { getThoughtById } from '../selectors'
+import head from './head'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import getThoughtById from '../selectors/getThoughtById'
 
 /** Returns the value of a the last thought in a path. */
-export const headValue = (state: State, path: Path) => getThoughtById(state, head(path)).value
+const headValue = (state: State, path: Path) => getThoughtById(state, head(path)).value
+
+export default headValue

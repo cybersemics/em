@@ -1,8 +1,13 @@
 import React from 'react'
-import { isDocumentEditable, pathToContext } from '../util'
-import { isContextViewActive, lastThoughtsFromContextChain, rootedParentOf, splitChain } from '../selectors'
-import { toggleAttribute } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import isDocumentEditable from '../util/isDocumentEditable'
+import pathToContext from '../util/pathToContext'
+import isContextViewActive from '../selectors/isContextViewActive'
+import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
+import rootedParentOf from '../selectors/rootedParentOf'
+import splitChain from '../selectors/splitChain'
+import toggleAttribute from '../action-creators/toggleAttribute'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

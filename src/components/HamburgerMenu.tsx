@@ -2,11 +2,11 @@ import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { noop } from 'lodash'
-import { isTutorial } from '../selectors'
-import { toggleSidebar } from '../action-creators'
+import isTutorial from '../selectors/isTutorial'
+import toggleSidebar from '../action-creators/toggleSidebar'
 import { CSSTransition } from 'react-transition-group'
-import { storage } from '../util/storage'
-import { State } from '../@types'
+import storage from '../util/storage'
+import State from '../@types/State'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') !== 'Off'
 
@@ -40,7 +40,7 @@ const HamburgerMenu = () => {
           zIndex: showSidebar || tutorial || error || showModal ? -1 : 10,
         }}
         onClick={() => {
-          dispatch(toggleSidebar())
+          dispatch(toggleSidebar({}))
         }}
       >
         <ReactHamburger

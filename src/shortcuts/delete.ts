@@ -1,8 +1,15 @@
 import { Key } from 'ts-key-enum'
-import { getThoughtById, findDescendant } from '../selectors'
-import { ellipsize, head, isDocumentEditable, isEM, isRoot } from '../util'
-import { alert, deleteThoughtWithCursor, error } from '../action-creators'
-import { Shortcut } from '../@types'
+import getThoughtById from '../selectors/getThoughtById'
+import findDescendant from '../selectors/findDescendant'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
+import isEM from '../util/isEM'
+import isRoot from '../util/isRoot'
+import alert from '../action-creators/alert'
+import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
+import error from '../action-creators/error'
+import Shortcut from '../@types/Shortcut'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {

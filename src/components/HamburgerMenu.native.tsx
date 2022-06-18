@@ -2,7 +2,7 @@ import React from 'react'
 import { TouchableOpacity } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { useDispatch } from 'react-redux'
-import { toggleSidebar } from '../action-creators'
+import toggleSidebar from '../action-creators/toggleSidebar'
 
 //  const tutorialLocal = localStorage['Settings/Tutorial'] !== 'Off'
 

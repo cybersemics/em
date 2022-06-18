@@ -1,11 +1,15 @@
-import { Context, Index, Lexeme, State } from '../@types'
-import { thoughtToContext, getThoughtById } from '../selectors'
-import { unroot } from './unroot'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import State from '../@types/State'
+import thoughtToContext from '../selectors/thoughtToContext'
+import getThoughtById from '../selectors/getThoughtById'
+import unroot from './unroot'
 
 /**
  * Generates index of context from lexemes.
  */
-export const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) => {
+const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) => {
   return (lexemes.filter(lexeme => lexeme) as Lexeme[]).reduce<Index<Context>>((acc, lexeme) => {
     return {
       ...acc,
@@ -19,3 +23,5 @@ export const getContextMap = (state: State, lexemes: (Lexeme | undefined)[]) => 
     }
   }, {})
 }
+
+export default getContextMap

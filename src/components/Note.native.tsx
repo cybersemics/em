@@ -1,19 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { store } from '../store'
-import { attribute, findDescendant, getThoughtById, isContextViewActive, simplifyPath } from '../selectors'
-import {
-  cursorDown,
-  deleteAttribute,
-  editing,
-  setAttribute,
-  setCursor,
-  setNoteFocus,
-  toggleNote,
-} from '../action-creators'
-import { head, pathToContext, strip } from '../util'
+import attribute from '../selectors/attribute'
+import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import simplifyPath from '../selectors/simplifyPath'
+import cursorDown from '../action-creators/cursorDown'
+import deleteAttribute from '../action-creators/deleteAttribute'
+import editing from '../action-creators/editing'
+import setAttribute from '../action-creators/setAttribute'
+import setCursor from '../action-creators/setCursor'
+import setNoteFocus from '../action-creators/setNoteFocus'
+import toggleNote from '../action-creators/toggleNote'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import strip from '../util/strip'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
-import { Path, State } from '../@types'
+import Path from '../@types/Path'
+import State from '../@types/State'
 
 interface NoteProps {
   path: Path

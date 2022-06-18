@@ -1,5 +1,6 @@
-import { Thunk } from '../@types'
-import { hashThought, timestamp } from '../util'
+import Thunk from '../@types/Thunk'
+import hashThought from '../util/hashThought'
+import timestamp from '../util/timestamp'
 import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
 
 /** Low-level action to delete a lexeme directly from State and Dexie. Use deleteThought instead if possible. */

@@ -2,9 +2,9 @@ import React from 'react'
 import { connect } from 'react-redux'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
-import { headValue } from '../../util'
-import { getSetting } from '../../selectors'
-import { tutorialNext } from '../../action-creators'
+import headValue from '../../util/headValue'
+import getSetting from '../../selectors/getSetting'
+import tutorialNext from '../../action-creators/tutorialNext'
 
 import {
   HOME_TOKEN,

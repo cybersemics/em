@@ -1,6 +1,7 @@
 import React from 'react'
-import { outdent } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import outdent from '../action-creators/outdent'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import Svg, { Path } from 'react-native-svg'
 
 // import moveCursorBackward from './moveCursorBackward'

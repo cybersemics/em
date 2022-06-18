@@ -1,5 +1,5 @@
 import { ThunkMiddleware } from 'redux-thunk'
-import { State } from '../@types'
+import State from '../@types/State'
 import { keepalive } from '../util/sessionManager'
 
 /** Runs a throttled session keepalive on every action. */

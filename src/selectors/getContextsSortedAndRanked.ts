@@ -1,6 +1,9 @@
-import { unroot } from '../util'
-import { getContexts, getThoughtById, isAncestorsVisible } from '../selectors'
-import { ContextThought, State } from '../@types'
+import unroot from '../util/unroot'
+import getContexts from '../selectors/getContexts'
+import getThoughtById from '../selectors/getThoughtById'
+import isAncestorsVisible from '../selectors/isAncestorsVisible'
+import ContextThought from '../@types/ContextThought'
+import State from '../@types/State'
 import thoughtToContext from './thoughtToContext'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */

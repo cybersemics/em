@@ -10,8 +10,9 @@ import {
   makeOrderedComparator,
   compareThoughtDescending,
 } from '../../util/compareThought'
-import { Thought, ThoughtId } from '../../@types'
-import { timestamp } from '../../util'
+import Thought from '../../@types/Thought'
+import ThoughtId from '../../@types/ThoughtId'
+import timestamp from '../../util/timestamp'
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)

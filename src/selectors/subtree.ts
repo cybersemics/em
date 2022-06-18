@@ -1,5 +1,7 @@
-import { getChildrenRanked } from '../selectors'
-import { Thought, ThoughtId, State } from '../@types'
+import { getChildrenRanked } from '../selectors/getChildren'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import State from '../@types/State'
 
 /** Gets a nested subtree of all of the given context's descendants. */
 const subtree = (state: State, id: ThoughtId): Thought[] =>

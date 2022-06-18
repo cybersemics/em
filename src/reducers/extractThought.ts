@@ -1,10 +1,14 @@
 import _ from 'lodash'
-import { head, pathToContext, reducerFlow } from '../util'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
 import editThought from './editThought'
 import newThought from './newThought'
-import { getThoughtById, rootedParentOf, simplifyPath } from '../selectors'
+import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import alert from './alert'
-import { State } from '../@types'
+import State from '../@types/State'
 import * as selection from '../device/selection'
 
 /** Extract the selection as child thought. */

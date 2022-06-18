@@ -1,31 +1,31 @@
 import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
-import {
-  attribute,
-  attributeEquals,
-  contextToThoughtId,
-  getAllChildren,
-  getThoughtById,
-  isContextViewActive,
-  simplifyPath,
-} from '../selectors'
-import { ThoughtId, Context, Index, Path, State, ThoughtContext } from '../@types'
-import {
-  appendToPath,
-  equalArrays,
-  hashPath,
-  head,
-  isDescendant,
-  isAttribute,
-  isURL,
-  keyValueBy,
-  parentOf,
-  pathToContext,
-  publishMode,
-  strip,
-  unroot,
-} from '../util'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import simplifyPath from '../selectors/simplifyPath'
+import ThoughtId from '../@types/ThoughtId'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
+import appendToPath from '../util/appendToPath'
+import equalArrays from '../util/equalArrays'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import isDescendant from '../util/isDescendant'
+import isAttribute from '../util/isAttribute'
+import isURL from '../util/isURL'
+import keyValueBy from '../util/keyValueBy'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import publishMode from '../util/publishMode'
+import strip from '../util/strip'
+import unroot from '../util/unroot'
 import parentOfThought from './parentOfThought'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { getAllChildren, getAllChildrenAsThoughts } from './getChildren'
 
 /** Get the value of the Child | ThoughtContext. */
 const childValue = (state: State, child: ThoughtId | ThoughtContext, showContexts: boolean) =>

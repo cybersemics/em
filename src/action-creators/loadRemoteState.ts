@@ -1,10 +1,18 @@
 import { decode as firebaseDecode } from 'firebase-encode'
 import * as db from '../data-providers/dexie'
 import { EMPTY_TOKEN, SCHEMA_HASHKEYS } from '../constants'
-import { isDocumentEditable, keyValueBy, logWithTime } from '../util'
+import isDocumentEditable from '../util/isDocumentEditable'
+import keyValueBy from '../util/keyValueBy'
+import logWithTime from '../util/logWithTime'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { deleteData, updateThoughts } from '../action-creators'
-import { Dispatch, Index, State, Thought, ThoughtWithChildren, Thunk } from '../@types'
+import deleteData from '../action-creators/deleteData'
+import updateThoughts from '../action-creators/updateThoughts'
+import Dispatch from '../@types/Dispatch'
+import Index from '../@types/IndexType'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import Thunk from '../@types/Thunk'
 
 /** Save all firebase state to state and localStorage. */
 export const loadState = async (dispatch: Dispatch, newState: State, oldState: State) => {

@@ -1,15 +1,13 @@
 import React from 'react'
-import { Dispatch } from './Dispatch'
-import { GesturePath } from './GesturePath'
+import Dispatch from './Dispatch'
+import GesturePath from './GesturePath'
 import { GestureResponderEvent } from 'react-native'
-import { Icon } from './Icon'
-import { Key } from './Key'
-import { State } from './State'
+import Icon from './Icon'
+import Key from './Key'
+import ShortcutType from './ShortcutType'
+import State from './State'
 
-// how the shortcut was activated
-export type ShortcutType = 'gesture' | 'keyboard' | 'toolbar'
-
-export interface Shortcut {
+interface Shortcut {
   // a function that returns true if the shortcut can be executed with the current state
   canExecute?: (getState: () => State) => boolean
 
@@ -55,3 +53,5 @@ export interface Shortcut {
   // an icon that represents the shortcut in the Toolbar
   svg?: (icon: Icon) => React.ReactNode
 }
+
+export default Shortcut

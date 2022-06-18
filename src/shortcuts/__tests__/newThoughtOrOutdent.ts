@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
-import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
+import exportContext from '../../selectors/exportContext'
+import importText from '../../action-creators/importText'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import newSubthought from '../newSubthought'
 import newThoughtOrOutdent from '../newThoughtOrOutdent'

@@ -1,10 +1,14 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 
-import { ellipsize, headValue, joinConjunction } from '../../util'
+import ellipsize from '../../util/ellipsize'
+import headValue from '../../util/headValue'
+import joinConjunction from '../../util/joinConjunction'
 
 import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
-import { Thought, Path, State } from '../../@types'
+import Thought from '../../@types/Thought'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { useStore } from 'react-redux'

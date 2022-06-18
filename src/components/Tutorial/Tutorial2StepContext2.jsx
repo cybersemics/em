@@ -5,9 +5,9 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 import TutorialHint from './TutorialHint'
 
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 import { useStore } from 'react-redux'
-import { childIdsToThoughts } from '../../selectors'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {

@@ -1,6 +1,8 @@
-import { cursorBeforeSearch, search, restoreCursorBeforeSearch } from '../action-creators'
+import cursorBeforeSearch from '../action-creators/cursorBeforeSearch'
+import search from '../action-creators/search'
+import restoreCursorBeforeSearch from '../action-creators/restoreCursorBeforeSearch'
 import SearchIcon from '../components/SearchIcon'
-import { Shortcut } from '../@types'
+import Shortcut from '../@types/Shortcut'
 import * as selection from '../device/selection'
 
 const searchShortcut: Shortcut = {

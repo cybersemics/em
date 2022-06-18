@@ -6,11 +6,14 @@ import Thought from '../Thought'
 import Subthoughts from '../Subthoughts'
 
 import { HOME_TOKEN } from '../../constants'
-import { equalArrays, pathToContext } from '../../util'
-import { exportContext } from '../../selectors'
-import { importText } from '../../action-creators'
+import equalArrays from '../../util/equalArrays'
+import pathToContext from '../../util/pathToContext'
+import exportContext from '../../selectors/exportContext'
+import importText from '../../action-creators/importText'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { Context, SimplePath, State } from '../../@types'
+import Context from '../../@types/Context'
+import SimplePath from '../../@types/SimplePath'
+import State from '../../@types/State'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {

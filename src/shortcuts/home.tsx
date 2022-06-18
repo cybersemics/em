@@ -1,5 +1,7 @@
 import React, { Dispatch } from 'react'
-import { Thunk, Icon as IconType, Shortcut } from '../@types'
+import Thunk from '../@types/Thunk'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // action-creators
 import home from '../action-creators/home'

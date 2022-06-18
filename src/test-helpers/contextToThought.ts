@@ -1,5 +1,8 @@
-import { Context, Thought, State } from '../@types'
-import { contextToThoughtId, getThoughtById } from '../selectors'
+import Context from '../@types/Context'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import getThoughtById from '../selectors/getThoughtById'
 
 /**
  * Converts a Context to a Thought. If more than one thought has the same value in the same context, traveerses the first.

@@ -1,4 +1,4 @@
-import { Index } from './IndexType'
+import Index from './IndexType'
 
 export interface Firebase {
   auth: (() => {

@@ -1,8 +1,9 @@
 import React from 'react'
-import { showModal } from '../action-creators'
-import { getAllChildren } from '../selectors'
+import showModal from '../action-creators/showModal'
+import { getAllChildren } from '../selectors/getChildren'
 import { HOME_TOKEN } from '../constants'
-import { Icon as IconType, Shortcut } from '../@types'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import { isTouch } from '../browser'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

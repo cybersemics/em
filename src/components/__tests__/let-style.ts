@@ -1,4 +1,4 @@
-import { importText } from '../../action-creators'
+import importText from '../../action-creators/importText'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'

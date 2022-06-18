@@ -1,4 +1,4 @@
-import { Thunk } from '../@types'
+import Thunk from '../@types/Thunk'
 
 /** Display a given modal dialog box and scroll to the top. */
 const showModal =

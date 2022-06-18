@@ -1,0 +1,10 @@
+import settings from '../reducers/settings'
+import Thunk from '../@types/Thunk'
+
+/** Action-creator for settings. */
+const settingsActionCreator =
+  (payload: Parameters<typeof settings>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'settings', ...payload })
+
+export default settingsActionCreator

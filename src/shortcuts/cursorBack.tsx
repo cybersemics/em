@@ -1,11 +1,12 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../@types'
-import { cursorBack } from '../action-creators'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import cursorBack from '../action-creators/cursorBack'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
-import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => (

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon } from '../@types'
+import Icon from '../@types/Icon'
 
 /** A left-facing svg triangle. */
 const TriangleLeft = ({ fill = 'black', size = 20, width, height }: Icon) => (

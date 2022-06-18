@@ -1,6 +1,8 @@
-import { Path } from '../@types'
+import Path from '../@types/Path'
 
 /**
  * Generates hash for path.
  */
-export const hashPath = (path: Path) => path.join('__SEP__')
+const hashPath = (path: Path) => path.join('__SEP__')
+
+export default hashPath

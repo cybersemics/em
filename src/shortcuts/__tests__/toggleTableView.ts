@@ -1,6 +1,6 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
 import attributeByContext from '../../test-helpers/attributeByContext'
-import { importText } from '../../action-creators'
+import importText from '../../action-creators/importText'
 import toggleTableViewShortcut from '../toggleTableView'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'

@@ -1,8 +1,11 @@
 import _ from 'lodash'
-import { getChildrenRanked } from '../selectors'
-import { moveThought } from '../reducers'
-import { appendToPath, head, reducerFlow } from '../util'
-import { SimplePath, State } from '../@types'
+import { getChildrenRanked } from '../selectors/getChildren'
+import moveThought from '../reducers/moveThought'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import reducerFlow from '../util/reducerFlow'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 /** Recalculate absolute ranks while preserving relative order to avoid rank precision errors. */
 const rerank = (state: State, simplePath: SimplePath): State => {

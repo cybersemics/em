@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from 'react'
 import { noop } from 'lodash'
-import { Direction, GesturePath } from '../@types'
+import Direction from '../@types/Direction'
+import GesturePath from '../@types/GesturePath'
 import { GestureResponderEvent, PanResponder, ScrollView } from 'react-native'
 import { commonStyles } from '../style/commonStyles'
 

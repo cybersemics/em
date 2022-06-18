@@ -1,7 +1,7 @@
-import { Timestamp } from './Timestamp'
+import Timestamp from './Timestamp'
 
 /** An object that contains an invite code details. */
-export interface InviteCode {
+interface InviteCode {
   id: string
   created: Timestamp
   createdBy: string
@@ -9,3 +9,5 @@ export interface InviteCode {
   usedBy?: string
   hasSeen?: boolean
 }
+
+export default InviteCode

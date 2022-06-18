@@ -1,18 +1,17 @@
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { contextToPath } from '../../selectors'
-import {
-  editThought,
-  importText,
-  newThought,
-  setCursor,
-  toggleAttribute,
-  setFirstSubthought,
-} from '../../action-creators'
+import contextToPath from '../../selectors/contextToPath'
+import editThought from '../../action-creators/editThought'
+import importText from '../../action-creators/importText'
+import newThought from '../../action-creators/newThought'
+import setCursor from '../../action-creators/setCursor'
+import toggleAttribute from '../../action-creators/toggleAttribute'
+import setFirstSubthought from '../../action-creators/setFirstSubthought'
 import toggleSortShortcut from '../toggleSort'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import { SimplePath, Thunk } from '../../@types'
+import SimplePath from '../../@types/SimplePath'
+import Thunk from '../../@types/Thunk'
 import { store } from '../../store'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { findAllByPlaceholderText } from '@testing-library/react'

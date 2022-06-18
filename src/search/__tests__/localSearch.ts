@@ -1,7 +1,7 @@
 import initDB, * as db from '../../data-providers/dexie'
-import { importText } from '../../reducers'
+import importText from '../../reducers/importText'
 import { Context } from '../../@types'
-import { initialState } from '../../util'
+import initialState from '../../util/initialState'
 import { getLocalSearch } from '../localSearch'
 
 /** Import text into the root of a blank initial state. */

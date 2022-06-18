@@ -1,5 +1,6 @@
-import { lower } from './lower'
-import { ComparatorFunction, Index } from '../@types'
+import lower from './lower'
+import ComparatorFunction from '../@types/ComparatorFunction'
+import Index from '../@types/IndexType'
 
 /** Returns true if the first object's key is greater than the second object's key. */
 export const isGreater = <T1 extends Index, T2 extends Index, K extends keyof T1 & keyof T2>(a: T1, b: T2, key: K) =>
@@ -13,7 +14,9 @@ export const isSmaller = <T1 extends Index, T2 extends Index, K extends keyof T1
  * Creates a function that takes two values and compares the given key.
  * Does case insensitive comparison with strings.
  */
-export const makeCompareByProp =
+const makeCompareByProp =
   (key: string): ComparatorFunction<Index> =>
   (a: Index, b: Index) =>
     isGreater(a, b, key) ? 1 : isSmaller(a, b, key) ? -1 : 0
+
+export default makeCompareByProp

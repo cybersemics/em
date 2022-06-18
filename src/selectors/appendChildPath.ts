@@ -1,6 +1,10 @@
 import _ from 'lodash'
-import { SimplePath, Path, State } from '../@types'
-import { parentOf, head, unroot } from '../util'
+import SimplePath from '../@types/SimplePath'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import parentOf from '../util/parentOf'
+import head from '../util/head'
+import unroot from '../util/unroot'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import isContextViewActive from './isContextViewActive'
 

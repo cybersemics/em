@@ -2,7 +2,7 @@ import React from 'react'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import { store } from '../../store'
 import { TUTORIAL_STEP_START } from '../../constants'
-import { tutorialPrev } from '../../action-creators'
+import tutorialPrev from '../../action-creators/tutorialPrev'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationPrev = ({ tutorialStep }) => (

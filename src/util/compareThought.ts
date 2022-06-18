@@ -1,5 +1,7 @@
-import { lower } from './lower'
-import { ComparatorFunction, ComparatorValue, Thought } from '../@types'
+import lower from './lower'
+import ComparatorFunction from '../@types/ComparatorFunction'
+import ComparatorValue from '../@types/ComparatorValue'
+import Thought from '../@types/Thought'
 import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)

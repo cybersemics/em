@@ -1,8 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import exportContext from '../../selectors/exportContext'
 
-import { newThought, splitSentences } from '../../reducers'
+import newThought from '../../reducers/newThought'
+import splitSentences from '../../reducers/splitSentences'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 describe('split by comma', () => {

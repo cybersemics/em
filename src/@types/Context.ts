@@ -1,2 +1,4 @@
 /** A sequence of values. */
-export type Context = string[]
+type Context = string[]
+
+export default Context

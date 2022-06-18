@@ -1,8 +1,11 @@
-import { deleteThought, setAttribute } from '../reducers'
-import { simplifyPath } from '../selectors'
-import { head, pathToContext, reducerFlow } from '../util'
+import deleteThought from '../reducers/deleteThought'
+import setAttribute from '../reducers/setAttribute'
+import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
 import { HeadingLevel } from '../shortcuts/headings'
-import { State } from '../@types'
+import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Set or remove a heading on the cursor. */

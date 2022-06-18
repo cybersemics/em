@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { tutorialStep as setTutorialStep } from '../../action-creators'
-import { getSetting } from '../../selectors'
+import setTutorialStep from '../../action-creators/tutorialStep'
+import getSetting from '../../selectors/getSetting'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => ({

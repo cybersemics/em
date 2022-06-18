@@ -1,6 +1,8 @@
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { appendToPath, isRoot } from '../util'
-import { SimplePath, State } from '../@types'
+import appendToPath from '../util/appendToPath'
+import isRoot from '../util/isRoot'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import getRootPath from './getRootPath'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 

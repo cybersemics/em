@@ -1,7 +1,8 @@
 import React from 'react'
-import { cursorForward } from '../action-creators'
+import cursorForward from '../action-creators/cursorForward'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import { Icon as IconType, Shortcut } from '../@types'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

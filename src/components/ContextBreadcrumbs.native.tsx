@@ -1,6 +1,10 @@
 import React from 'react'
-import { ancestors, isRoot, strip } from '../util'
-import { Index, SimplePath, ThoughtId } from '../@types'
+import ancestors from '../util/ancestors'
+import isRoot from '../util/isRoot'
+import strip from '../util/strip'
+import Index from '../@types/IndexType'
+import SimplePath from '../@types/SimplePath'
+import ThoughtId from '../@types/ThoughtId'
 
 // components
 import HomeLink from './HomeLink'
@@ -10,7 +14,7 @@ import { View } from 'moti'
 import { Text } from './Text.native'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
-import { parentOfThought } from '../selectors'
+import parentOfThought from '../selectors/parentOfThought'
 import { store } from '../store'
 
 export interface ContextBreadcrumbProps {

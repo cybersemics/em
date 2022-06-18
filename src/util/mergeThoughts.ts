@@ -1,7 +1,7 @@
-import { ThoughtsInterface } from '../@types'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
 
 /** Merges multiple thought interfaces, preserving extraneous keys. */
-export const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInterface =>
+const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInterface =>
   thoughtsArgs.length <= 1
     ? thoughtsArgs[0] || {}
     : mergeThoughts(
@@ -19,3 +19,5 @@ export const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInt
         },
         ...thoughtsArgs.slice(2),
       )
+
+export default mergeThoughts

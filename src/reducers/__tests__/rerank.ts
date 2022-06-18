@@ -1,7 +1,11 @@
-import { initialState, reducerFlow } from '../../util'
-import { cursorDown, deleteThoughtWithCursor, newThought, rerank } from '../../reducers'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import cursorDown from '../../reducers/cursorDown'
+import deleteThoughtWithCursor from '../../reducers/deleteThoughtWithCursor'
+import newThought from '../../reducers/newThought'
+import rerank from '../../reducers/rerank'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { getChildrenRanked } from '../../selectors'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 
 it('recalculate absolute ranks while preserving relative order to avoid rank precision errors', () => {

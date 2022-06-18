@@ -1,6 +1,7 @@
 import React from 'react'
 import subCategorizeOne from '../action-creators/subCategorizeOne'
-import { Icon as IconType, Shortcut } from '../@types'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import Svg, { Path } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

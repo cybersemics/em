@@ -1,7 +1,9 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-import { childIdsToThoughts, contextToThoughtId, getContexts } from '../../selectors'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import getContexts from '../../selectors/getContexts'
 import { useStore } from 'react-redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

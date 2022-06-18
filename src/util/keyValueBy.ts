@@ -1,18 +1,14 @@
-import { Index } from '../@types'
+import Index from '../@types/IndexType'
 
 type KeyValueGenerator<K, V, R> = (key: K, value: V, accum: Index<R>) => Index<R> | null
 type ArrayKeyValueGenerator<T, R> = KeyValueGenerator<T, number, R>
 type ObjectKeyValueGenerator<T, R> = KeyValueGenerator<string, T, R>
 
-export function keyValueBy<T, R>(arr: T[], keyValue: KeyValueGenerator<T, number, R>, initialValue?: Index<R>): Index<R>
-export function keyValueBy<T, R>(
-  obj: Index<T>,
-  keyValue: KeyValueGenerator<string, T, R>,
-  initialValue?: Index<R>,
-): Index<R>
+function keyValueBy<T, R>(arr: T[], keyValue: KeyValueGenerator<T, number, R>, initialValue?: Index<R>): Index<R>
+function keyValueBy<T, R>(obj: Index<T>, keyValue: KeyValueGenerator<string, T, R>, initialValue?: Index<R>): Index<R>
 
 /** Generates an object from an array or object. Simpler than reduce or _.transform. The KeyValueGenerator passes (key, value) if the input is an object, and (value, i) if it is an array. The return object from each iteration is merged into the accumulated object. Return null to skip an item. */
-export function keyValueBy<T, R>(
+function keyValueBy<T, R>(
   input: T[] | Index<T>,
   keyValue: ArrayKeyValueGenerator<T, R> | ObjectKeyValueGenerator<T, R>,
   accum: Index<R> = {},
@@ -30,3 +26,5 @@ export function keyValueBy<T, R>(
 
   return accum
 }
+
+export default keyValueBy

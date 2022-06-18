@@ -3,12 +3,10 @@ import { store } from '../../store'
 
 import { TUTORIAL_CONTEXT } from '../../constants'
 
-import { headValue } from '../../util'
-
-// selectors
-import { getContexts, getSetting } from '../../selectors'
-
-import { Path } from '../../@types'
+import headValue from '../../util/headValue'
+import getContexts from '../../selectors/getContexts'
+import getSetting from '../../selectors/getSetting'
+import Path from '../../@types/Path'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { useStore } from 'react-redux'

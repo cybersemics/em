@@ -1,19 +1,19 @@
 import _ from 'lodash'
 import { Dispatch } from 'react'
-import { hashThought, keyValueBy, getUserRef } from '../util'
+import hashThought from '../util/hashThought'
+import keyValueBy from '../util/keyValueBy'
+import { getUserRef } from '../util/getUserRef'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
-import { error } from '../action-creators'
-import {
-  Firebase,
-  Index,
-  Lexeme,
-  Thought,
-  State,
-  ThoughtId,
-  ThoughtIndices,
-  ThoughtSubscriptionUpdates,
-  ThoughtWithChildren,
-} from '../@types'
+import error from '../action-creators/error'
+import * as Firebase from '../@types/Firebase'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import ThoughtIndices from '../@types/ThoughtIndices'
+import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
+import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',

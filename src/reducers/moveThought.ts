@@ -1,19 +1,26 @@
 import _ from 'lodash'
 // import { treeMove } from '../util/recentlyEditedTree'
-import { rerank, mergeThoughts, updateThoughts } from '../reducers'
-import { expandThoughts, getThoughtById, getChildrenRanked, rootedParentOf } from '../selectors'
-import { Index, Path, SimplePath, State, Thought } from '../@types'
-import {
-  appendToPath,
-  head,
-  isDescendantPath,
-  isAttribute,
-  keyValueBy,
-  normalizeThought,
-  pathToContext,
-  reducerFlow,
-  timestamp,
-} from '../util'
+import rerank from '../reducers/rerank'
+import mergeThoughts from '../reducers/mergeThoughts'
+import updateThoughts from '../reducers/updateThoughts'
+import expandThoughts from '../selectors/expandThoughts'
+import getThoughtById from '../selectors/getThoughtById'
+import { getChildrenRanked } from '../selectors/getChildren'
+import rootedParentOf from '../selectors/rootedParentOf'
+import Index from '../@types/IndexType'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import isDescendantPath from '../util/isDescendantPath'
+import isAttribute from '../util/isAttribute'
+import keyValueBy from '../util/keyValueBy'
+import normalizeThought from '../util/normalizeThought'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import timestamp from '../util/timestamp'
 import { getSessionId } from '../util/sessionManager'
 
 export interface MoveThoughtPayload {

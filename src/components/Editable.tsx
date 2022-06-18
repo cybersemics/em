@@ -3,20 +3,18 @@ import React, { useEffect, useRef, useState, FocusEventHandler } from 'react'
 import { connect } from 'react-redux'
 import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import {
-  cursorBack,
-  cursorCleared,
-  error,
-  editThought,
-  importText,
-  insertMultipleThoughts,
-  setCursor,
-  setEditingValue,
-  setInvalidState,
-  tutorialNext,
-  newThought,
-  editing as editingAction,
-} from '../action-creators'
+import cursorBack from '../action-creators/cursorBack'
+import cursorCleared from '../action-creators/cursorCleared'
+import error from '../action-creators/error'
+import editThought from '../action-creators/editThought'
+import importText from '../action-creators/importText'
+import insertMultipleThoughts from '../action-creators/insertMultipleThoughts'
+import setCursor from '../action-creators/setCursor'
+import setEditingValue from '../action-creators/setEditingValue'
+import setInvalidState from '../action-creators/setInvalidState'
+import tutorialNext from '../action-creators/tutorialNext'
+import newThought from '../action-creators/newThought'
+import editingAction from '../action-creators/editing'
 import { isTouch, isSafari } from '../browser'
 import globals from '../globals'
 import { store } from '../store'
@@ -24,7 +22,12 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import { shortcutEmitter } from '../shortcuts'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
-import { Connected, Context, Path, SimplePath, State, TutorialChoice } from '../@types'
+import Connected from '../@types/Connected'
+import Context from '../@types/Context'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import TutorialChoice from '../@types/TutorialChoice'
 
 // constants
 import {
@@ -40,36 +43,32 @@ import {
 } from '../constants'
 
 // util
-import {
-  addEmojiSpace,
-  appendToPath,
-  parentOf,
-  ellipsize,
-  ellipsizeUrl,
-  equalPath,
-  head,
-  isDivider,
-  isHTML,
-  isURL,
-  pathToContext,
-  strip,
-  headId,
-} from '../util'
+import addEmojiSpace from '../util/addEmojiSpace'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import ellipsize from '../util/ellipsize'
+import ellipsizeUrl from '../util/ellipsizeUrl'
+import equalPath from '../util/equalPath'
+import head from '../util/head'
+import isDivider from '../util/isDivider'
+import isHTML from '../util/isHTML'
+import isURL from '../util/isURL'
+import pathToContext from '../util/pathToContext'
+import strip from '../util/strip'
+import headId from '../util/headId'
 
 // selectors
-import {
-  attributeEquals,
-  findDescendant,
-  getContexts,
-  getSetting,
-  getLexeme,
-  isContextViewActive,
-  rootedParentOf,
-  getThoughtById,
-} from '../selectors'
+import attributeEquals from '../selectors/attributeEquals'
+import findDescendant from '../selectors/findDescendant'
+import getContexts from '../selectors/getContexts'
+import getSetting from '../selectors/getSetting'
+import getLexeme from '../selectors/getLexeme'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import getThoughtById from '../selectors/getThoughtById'
 
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { stripEmptyFormattingTags } from '../util/stripEmptyFormattingTags'
+import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000

@@ -1,8 +1,8 @@
 import React from 'react'
 import AddIcon from './AddIcon'
 import { useDispatch } from 'react-redux'
-import { toggleAbsoluteContext } from '../action-creators'
-// import { isAbsolute } from '../util'
+import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'
+// import isAbsolute from '../util/isAbsolute'
 import { TouchableOpacity } from 'react-native'
 
 /**

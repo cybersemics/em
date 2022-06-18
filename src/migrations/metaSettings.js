@@ -5,9 +5,9 @@ import {
   SCHEMA_META_SETTINGS as SCHEMA_TO,
 } from '../constants'
 import { store } from '../store'
-import { push } from '../util'
-import { importText } from '../action-creators'
-import { storage } from '../util/storage'
+import push from '../util/push'
+import importText from '../action-creators/importText'
+import storage from '../util/storage'
 
 export const schemaVersionFrom = SCHEMA_FROM
 export const schemaVersionTo = SCHEMA_TO

@@ -1,7 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext, contextToPath } from '../../selectors'
-import { indent, newSubthought, newThought, setCursor } from '../../reducers'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import exportContext from '../../selectors/exportContext'
+import contextToPath from '../../selectors/contextToPath'
+import indent from '../../reducers/indent'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import setCursor from '../../reducers/setCursor'
 
 it('indent within root', () => {
   const steps = [newThought('a'), newThought('b'), indent]

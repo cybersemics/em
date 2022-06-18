@@ -1,10 +1,19 @@
 import { ABSOLUTE_TOKEN, EM_TOKEN, MODALS, HOME_TOKEN, SCHEMA_LATEST, ROOT_PARENT_ID } from '../constants'
 import globals from '../globals'
-import { canShowModal } from '../selectors'
-import { hashThought, isDocumentEditable, never, parseJsonSafe, timestamp } from '../util'
+import canShowModal from '../selectors/canShowModal'
+import hashThought from '../util/hashThought'
+import isDocumentEditable from '../util/isDocumentEditable'
+import never from '../util/never'
+import parseJsonSafe from '../util/parseJsonSafe'
+import timestamp from '../util/timestamp'
 import { getSessionId } from './sessionManager'
-import { storage } from './storage'
-import { State, Timestamp, ThoughtsInterface, Thought, Index, ThoughtId } from '../@types'
+import storage from './storage'
+import State from '../@types/State'
+import Timestamp from '../@types/Timestamp'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
+import Thought from '../@types/Thought'
+import Index from '../@types/IndexType'
+import ThoughtId from '../@types/ThoughtId'
 import { isLocalNetwork } from '../device/router'
 
 /** Safely gets a value from localStorage if it is in the environment. */
@@ -14,7 +23,7 @@ const getLocal = (key: string) => {
 }
 
 /** Generates an initial ThoughtsInterface with the root and em contexts. */
-export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
+const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
@@ -89,7 +98,7 @@ export const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInter
 }
 
 /** Generates the initial state of the application. */
-export const initialState = (created: Timestamp = timestamp()) => {
+const initialState = (created: Timestamp = timestamp()) => {
   const state: State = {
     authenticated: false,
     // eslint-disable-next-line no-mixed-operators
@@ -175,3 +184,5 @@ export const initialState = (created: Timestamp = timestamp()) => {
 
   return state
 }
+
+export default initialState

@@ -1,12 +1,12 @@
 /**
- * Function: isAbbrev.
+ * Function: isAbbreviation.
  *
  * @param str1 The sentence just added into the result sentence, it contains the sentence and the splitter.
  * @param s The current sentence which is right behind the spliter.
  * @returns A boolean value that tells whether the dot comes from an Abbrev word, and shouldn't be split
  * Examples: Mr. Dr.q Apt. Prof. Ph.D.
  */
-export default function isAbbrev(str1: string, s: string) {
+export default function isAbbreviation(str1: string, s: string) {
   return isAbbrEndSplitter(str1) || isAbbrMidSplitter(str1, s) || isAbbrDoubleSplitter(str1, s)
 }
 

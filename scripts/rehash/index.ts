@@ -1,8 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 import _ from 'lodash'
-import { hashContext, hashThought } from '../../src/util'
-import { State, Context, Index, Parent } from '../../src/@types'
+import hashContext from '../../src/util/hashContext'
+import hashThought from '../../src/util/hashThought'
+import State from '../../src/@types/State'
+import Context from '../../src/@types/Context'
+import Index from '../../src/@types/Index'
+import Parent from '../../src/@types/Parent'
 
 const helpText = `Usage: npm run start -- [subcommand] em-proto-m93daff2.json
 

@@ -1,5 +1,5 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { importText } from '../../action-creators'
+import importText from '../../action-creators/importText'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'

@@ -1,6 +1,7 @@
-import { expandThoughts } from '../selectors'
-import { Path, State } from '../@types'
-import { headId } from '../util'
+import expandThoughts from '../selectors/expandThoughts'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import headId from '../util/headId'
 
 interface Options {
   path: Path

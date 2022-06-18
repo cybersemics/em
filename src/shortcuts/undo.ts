@@ -1,9 +1,9 @@
 import UndoIcon from '../components/UndoIcon'
-import { Shortcut } from '../@types'
+import Shortcut from '../@types/Shortcut'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
-import { alert as alertAction } from '../action-creators'
+import alertAction from '../action-creators/alert'
 import { startCase } from 'lodash'
-import { getLatestActionType } from '../util/getLastActionType'
+import getLatestActionType from '../util/getLastActionType'
 
 const undoShortcut: Shortcut = {
   id: 'undo',

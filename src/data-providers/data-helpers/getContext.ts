@@ -1,6 +1,10 @@
-import { Context, Thought, ThoughtId } from '../../@types'
+import Context from '../../@types/Context'
+import Thought from '../../@types/Thought'
+import ThoughtId from '../../@types/ThoughtId'
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
-import { hashThought, head, isRoot } from '../../util'
+import hashThought from '../../util/hashThought'
+import head from '../../util/head'
+import isRoot from '../../util/isRoot'
 import { DataProvider } from '../DataProvider'
 
 /** Ranks the thoughts from their rank in their context. */

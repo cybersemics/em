@@ -1,8 +1,8 @@
 import RedoIcon from '../components/RedoIcon'
-import { Shortcut } from '../@types'
-import { alert as alertAction } from '../action-creators'
+import Shortcut from '../@types/Shortcut'
+import alertAction from '../action-creators/alert'
 import { startCase } from 'lodash'
-import { getLatestActionType } from '../util/getLastActionType'
+import getLatestActionType from '../util/getLastActionType'
 
 const redoShortcut: Shortcut = {
   id: 'redo',

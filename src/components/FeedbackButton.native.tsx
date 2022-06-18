@@ -1,7 +1,7 @@
 import React from 'react'
 import FeedbackIcon from './icons/FeedbackIcon'
 import { TouchableOpacity } from 'react-native'
-import { showModal } from '../action-creators'
+import showModal from '../action-creators/showModal'
 import { useDispatch } from 'react-redux'
 /**
  * Button that opens feedback model.

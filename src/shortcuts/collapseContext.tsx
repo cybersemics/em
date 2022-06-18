@@ -1,6 +1,7 @@
 import React from 'react'
-import { Icon as IconType, Shortcut } from '../@types'
-import { collapseContext } from '../action-creators'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import collapseContext from '../action-creators/collapseContext'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => (

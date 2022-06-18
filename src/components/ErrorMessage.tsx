@@ -1,8 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { error } from '../action-creators'
-import { Connected, State } from '../@types'
+import error from '../action-creators/error'
+import Connected from '../@types/Connected'
+import State from '../@types/State'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ error }: State) => ({ value: error })

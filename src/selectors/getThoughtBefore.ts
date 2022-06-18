@@ -1,6 +1,7 @@
-import { head } from '../util'
-import { getChildrenSorted } from '../selectors'
-import { SimplePath, State } from '../@types'
+import head from '../util/head'
+import { getChildrenSorted } from '../selectors/getChildren'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
 

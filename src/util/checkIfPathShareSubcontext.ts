@@ -1,7 +1,7 @@
-import { Path } from '../@types'
+import Path from '../@types/Path'
 
 /** Checks if the two paths share a subcontext. */
-export const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughtsB: Path): number => {
+const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughtsB: Path): number => {
   /**
    * This method returns -1 if there is no common majority subcontext else returns the index up to which
    * two rankedThought share common majority subcontext.
@@ -23,3 +23,5 @@ export const checkIfPathShareSubcontext = (rankedThoughtsA: Path, rankedThoughts
   // return (index + 1) >= middle ? index : -1
   return index
 }
+
+export default checkIfPathShareSubcontext

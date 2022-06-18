@@ -1,5 +1,7 @@
-import { Brand } from './Brand'
-import { Path } from './Path'
+import Brand from './Brand'
+import Path from './Path'
 
 /** A contiguous Path with no cycles. */
-export type SimplePath = Path & Brand<'SimplePath'>
+type SimplePath = Path & Brand<'SimplePath'>
+
+export default SimplePath

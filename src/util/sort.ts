@@ -1,4 +1,6 @@
-import { ComparatorFunction } from '../@types'
+import ComparatorFunction from '../@types/ComparatorFunction'
 
 /** Pure sort. */
-export const sort = <T>(arr: T[], ...args: ComparatorFunction<T>[]) => [...arr].sort(...args) // eslint-disable-line fp/no-mutating-methods
+const sort = <T>(arr: T[], ...args: ComparatorFunction<T>[]) => [...arr].sort(...args) // eslint-disable-line fp/no-mutating-methods
+
+export default sort

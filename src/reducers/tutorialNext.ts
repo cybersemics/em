@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../constants'
-import { tutorial, tutorialStep as tutorialStepReducer } from '../reducers'
-import { getSetting } from '../selectors'
-import { State } from '../@types'
+import tutorial from '../reducers/tutorial'
+import tutorialStepReducer from '../reducers/tutorialStep'
+import getSetting from '../selectors/getSetting'
+import State from '../@types/State'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
 const tutorialNext = (state: State, { hint }: { hint?: boolean }) => {

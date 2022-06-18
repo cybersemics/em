@@ -1,5 +1,5 @@
-import { Shortcut } from '../@types'
-import { extractThought as extract } from '../action-creators'
+import Shortcut from '../@types/Shortcut'
+import extract from '../action-creators/extractThought'
 
 const extractThought: Shortcut = {
   id: 'extract',

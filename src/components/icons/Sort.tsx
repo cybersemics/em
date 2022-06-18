@@ -1,9 +1,11 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { HOME_PATH } from '../../constants'
-import { Icon as IconType, State } from '../../@types'
-import { simplifyPath, getSortPreference } from '../../selectors'
-import { head } from '../../util'
+import IconType from '../../@types/Icon'
+import State from '../../@types/State'
+import simplifyPath from '../../selectors/simplifyPath'
+import getSortPreference from '../../selectors/getSortPreference'
+import head from '../../util/head'
 
 /** Get sort direction of cursor. */
 const getCursorSortDirection = (state: State) => {

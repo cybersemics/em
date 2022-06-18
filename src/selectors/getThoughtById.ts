@@ -1,4 +1,5 @@
-import { ThoughtId, State } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import State from '../@types/State'
 
 /**
  * Gets a Thought by its ThoughtId.

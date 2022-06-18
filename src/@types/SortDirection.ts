@@ -1,1 +1,3 @@
-export type SortDirection = 'Asc' | 'Desc'
+type SortDirection = 'Asc' | 'Desc'
+
+export default SortDirection

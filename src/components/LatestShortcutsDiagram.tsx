@@ -2,7 +2,8 @@ import classNames from 'classnames'
 import React, { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import { GesturePath, State } from '../@types'
+import GesturePath from '../@types/GesturePath'
+import State from '../@types/State'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {

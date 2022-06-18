@@ -1,3 +1,5 @@
 /** Returns the publish mode query string. */
-export const publishMode = () =>
+const publishMode = () =>
   typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('publish') != null
+
+export default publishMode

@@ -1,4 +1,5 @@
-import { State, ThoughtId } from '../@types'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { getChildrenRanked } from './getChildren'
 
 /** Gets the next rank at the end of a list. */

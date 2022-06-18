@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { headValue } from '../util'
-import { State } from '../@types'
+import headValue from '../util/headValue'
+import State from '../@types/State'
 
 /** Sets state.noteFocus to true or false, indicating if the caret is on a note. Sets state.cursorOffset to the end of the thought when disabling note focus so the selection gets placed back correctly on the thought. */
 const setNoteFocus = (state: State, { value }: { value: boolean }): State => ({

@@ -1,6 +1,8 @@
-import { SortPreference, State, ThoughtId } from '../@types'
-import { parseSortDirection } from '../util'
-import { findDescendant } from '../selectors'
+import SortPreference from '../@types/SortPreference'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import parseSortDirection from '../util/parseSortDirection'
+import findDescendant from '../selectors/findDescendant'
 import getGlobalSortPreference from './getGlobalSortPreference'
 import { getAllChildrenAsThoughts } from './getChildren'
 

@@ -1,8 +1,12 @@
 import React from 'react'
-import { attributeEquals, simplifyPath } from '../selectors'
-import { head, pathToContext } from '../util'
-import { alert, toggleAttribute } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import attributeEquals from '../selectors/attributeEquals'
+import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import alert from '../action-creators/alert'
+import toggleAttribute from '../action-creators/toggleAttribute'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import { HOME_PATH } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

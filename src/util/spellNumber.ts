@@ -23,4 +23,6 @@ const NUMBERS = [
 ]
 
 /** Returns the name of a given number, 0-20. */
-export const spellNumber = (n: number) => NUMBERS[n] || n
+const spellNumber = (n: number) => NUMBERS[n] || n
+
+export default spellNumber

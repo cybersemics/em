@@ -5,28 +5,27 @@ import { and } from 'fp-and-or'
 import ClipboardJS from 'clipboard'
 import globals from '../globals'
 import { HOME_PATH } from '../constants'
-import {
-  ellipsize,
-  exportPhrase,
-  getPublishUrl,
-  head,
-  isDocumentEditable,
-  isAttribute,
-  isRoot,
-  pathToContext,
-  removeHome,
-  timestamp,
-} from '../util'
-import { alert, error, closeModal, pull } from '../action-creators'
-import {
-  contextToThoughtId,
-  exportContext,
-  findDescendant,
-  getDescendantThoughtIds,
-  getThoughtById,
-  simplifyPath,
-  theme,
-} from '../selectors'
+import ellipsize from '../util/ellipsize'
+import exportPhrase from '../util/exportPhrase'
+import getPublishUrl from '../util/getPublishUrl'
+import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import pathToContext from '../util/pathToContext'
+import removeHome from '../util/removeHome'
+import timestamp from '../util/timestamp'
+import alert from '../action-creators/alert'
+import error from '../action-creators/error'
+import closeModal from '../action-creators/closeModal'
+import pull from '../action-creators/pull'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import exportContext from '../selectors/exportContext'
+import findDescendant from '../selectors/findDescendant'
+import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
+import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
+import theme from '../selectors/theme'
 import Modal from './Modal'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -35,7 +34,13 @@ import { isTouch } from '../browser'
 import useOnClickOutside from 'use-onclickoutside'
 import download from '../device/download'
 import * as selection from '../device/selection'
-import { Context, ExportOption, Thought, Path, SimplePath, State, ThoughtsInterface } from '../@types'
+import Context from '../@types/Context'
+import ExportOption from '../@types/ExportOption'
+import Thought from '../@types/Thought'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Use a throttled callback. */

@@ -1,16 +1,17 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import {
-  exportContext,
-  getContexts,
-  getLexeme,
-  getRankAfter,
-  pathToThought,
-  contextToPath,
-  childIdsToThoughts,
-} from '../../selectors'
-import { importText, newSubthought, newThought } from '../../reducers'
-import { State } from '../../@types'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import exportContext from '../../selectors/exportContext'
+import getContexts from '../../selectors/getContexts'
+import getLexeme from '../../selectors/getLexeme'
+import getRankAfter from '../../selectors/getRankAfter'
+import pathToThought from '../../selectors/pathToThought'
+import contextToPath from '../../selectors/contextToPath'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import importText from '../../reducers/importText'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import State from '../../@types/State'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'

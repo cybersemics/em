@@ -1,7 +1,11 @@
 import { HOME_TOKEN } from '../constants'
-import { componentToThought, keyValueBy, owner } from '../util'
-import { Path, State } from '../@types'
-import { childIdsToThoughts, contextToThoughtId } from '../selectors'
+import componentToThought from '../util/componentToThought'
+import keyValueBy from '../util/keyValueBy'
+import owner from '../util/owner'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import contextToThoughtId from '../selectors/contextToThoughtId'
 
 interface Options {
   // if true, check that all thoughts in the path exist, otherwise return null

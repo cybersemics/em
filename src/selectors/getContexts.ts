@@ -1,6 +1,7 @@
-import { getLexeme } from '../selectors'
-import { isDivider } from '../util'
-import { State, ThoughtId } from '../@types'
+import getLexeme from '../selectors/getLexeme'
+import isDivider from '../util/isDivider'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 // static empty array reference
 const NO_CONTEXTS = [] as ThoughtId[]

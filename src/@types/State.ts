@@ -1,18 +1,18 @@
 import { DROP_TARGET } from '../constants'
-import { Alert } from './Alert'
-import { Context } from './Context'
-import { Index } from './IndexType'
-import { Patch } from './Patch'
-import { Path } from './Path'
-import { PushBatch } from './PushBatch'
-import { RecentlyEditedTree } from './RecentlyEditedTree'
-import { Shortcut } from './Shortcut'
-import { SimplePath } from './SimplePath'
-import { ThoughtsInterface } from './ThoughtsInterface'
-import { Timestamp } from './Timestamp'
+import Alert from './Alert'
+import Context from './Context'
+import Index from './IndexType'
+import Patch from './Patch'
+import Path from './Path'
+import PushBatch from './PushBatch'
+import RecentlyEditedTree from './RecentlyEditedTree'
+import Shortcut from './Shortcut'
+import SimplePath from './SimplePath'
+import ThoughtsInterface from './ThoughtsInterface'
+import Timestamp from './Timestamp'
 import { User } from './Firebase'
 
-export interface State {
+interface State {
   absoluteContextTime?: Timestamp
   alert?: Alert
   archived?: boolean
@@ -91,3 +91,5 @@ export interface State {
   undoPatches: Patch[]
   user?: User
 }
+
+export default State

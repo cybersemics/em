@@ -1,5 +1,5 @@
 /** Throttles a function by animation frame. */
-export const throttleByAnimationFrame = <T>(f: (...args: any) => void) => {
+const throttleByAnimationFrame = <T>(f: (...args: any) => void) => {
   let wait = false
   return (...args: T[]) => {
     if (wait) return
@@ -10,3 +10,5 @@ export const throttleByAnimationFrame = <T>(f: (...args: any) => void) => {
     f(...args)
   }
 }
+
+export default throttleByAnimationFrame

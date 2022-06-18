@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
-import { Dispatch } from '../../@types'
+import Dispatch from '../../@types/Dispatch'
 
-import { showModal } from '../../action-creators'
+import showModal from '../../action-creators/showModal'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 

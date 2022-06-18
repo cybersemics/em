@@ -1,6 +1,7 @@
-import { getSetting } from '../selectors'
-import { SortPreference, State } from '../@types'
-import { parseSortDirection } from '../util'
+import getSetting from '../selectors/getSetting'
+import SortPreference from '../@types/SortPreference'
+import State from '../@types/State'
+import parseSortDirection from '../util/parseSortDirection'
 
 /**
  * Get global sort preference.

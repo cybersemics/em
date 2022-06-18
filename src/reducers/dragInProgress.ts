@@ -1,5 +1,7 @@
 import _ from 'lodash'
-import { Path, SimplePath, State } from '../@types'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { DROP_TARGET } from '../constants'
 
 interface Payload {

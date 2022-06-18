@@ -1,1 +1,3 @@
-export type Direction = 'u' | 'd' | 'l' | 'r'
+type Direction = 'u' | 'd' | 'l' | 'r'
+
+export default Direction

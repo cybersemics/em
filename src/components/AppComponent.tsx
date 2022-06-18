@@ -5,9 +5,12 @@ import SplitPane from 'react-split-pane'
 import { isAndroid, isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import { inputHandlers, isGestureHint } from '../shortcuts'
-import { isDocumentEditable } from '../util'
-import { isTutorial, theme } from '../selectors'
-import { alert, toggleSidebar, updateSplitPosition } from '../action-creators'
+import isDocumentEditable from '../util/isDocumentEditable'
+import isTutorial from '../selectors/isTutorial'
+import theme from '../selectors/theme'
+import alert from '../action-creators/alert'
+import toggleSidebar from '../action-creators/toggleSidebar'
+import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { store } from '../store'
 import * as selection from '../device/selection'
 
@@ -31,8 +34,8 @@ import ModalAuth from './ModalAuth'
 import ModalSignup from './ModalSignup'
 import ModalInvites from './ModalInvites'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
-import { storage } from '../util/storage'
-import { State } from '../@types'
+import storage from '../util/storage'
+import State from '../@types/State'
 
 const Content = React.lazy(() => import('./Content'))
 
@@ -62,7 +65,7 @@ const SidebarGutter = () => {
     <div style={{ position: 'relative' }}>
       <div
         onClick={() => {
-          store.dispatch(toggleSidebar())
+          store.dispatch(toggleSidebar({}))
         }}
         style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
       ></div>

@@ -1,10 +1,15 @@
 /** Defines global keyboard shortcuts and gestures. */
 
 import Emitter from 'emitter20'
-import { keyValueBy } from './util/keyValueBy'
-import { Direction, GesturePath, Index, Shortcut, State } from './@types'
+import keyValueBy from './util/keyValueBy'
+import Direction from './@types/Direction'
+import GesturePath from './@types/GesturePath'
+import Index from './@types/IndexType'
+import Shortcut from './@types/Shortcut'
+import State from './@types/State'
 
-import { alert, showLatestShortcuts } from './action-creators'
+import alert from './action-creators/alert'
+import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import * as shortcutObject from './shortcuts/index'
 import { Store } from 'redux'
 import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'

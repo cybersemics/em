@@ -1,6 +1,9 @@
-import { getChildrenSorted, getSortPreference } from '../selectors'
-import { equalThoughtRanked, equalThoughtSorted } from '../util'
-import { State, ThoughtId } from '../@types'
+import { getChildrenSorted } from '../selectors/getChildren'
+import getSortPreference from '../selectors/getSortPreference'
+import equalThoughtRanked from '../util/equalThoughtRanked'
+import equalThoughtSorted from '../util/equalThoughtSorted'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 /** Gets the next sibling after a thought according to its parent's sort preference. */
 const nextSibling = (state: State, parentId: ThoughtId, value: string, rank: number) => {

@@ -1,10 +1,13 @@
-import { notNull } from './notNull'
-import { timestamp } from './timestamp'
-import { Lexeme, ThoughtContext, ThoughtId, Timestamp } from '../@types'
+import notNull from './notNull'
+import timestamp from './timestamp'
+import Lexeme from '../@types/Lexeme'
+import ThoughtContext from '../@types/ThoughtContext'
+import ThoughtId from '../@types/ThoughtId'
+import Timestamp from '../@types/Timestamp'
 import { getSessionId } from './sessionManager'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */
-export const addContext = (lexeme: Lexeme, rank: number, id: ThoughtId, archived: Timestamp): Lexeme => ({
+const addContext = (lexeme: Lexeme, rank: number, id: ThoughtId, archived: Timestamp): Lexeme => ({
   ...lexeme,
   ...notNull({
     contexts: (lexeme.contexts || []).filter((thought: ThoughtContext) => !(id === thought)).concat(id),
@@ -13,3 +16,5 @@ export const addContext = (lexeme: Lexeme, rank: number, id: ThoughtId, archived
     updatedBy: getSessionId(),
   }),
 })
+
+export default addContext

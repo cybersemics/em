@@ -1,6 +1,6 @@
 import { parse } from 'jex-block-parser'
-import { strip } from '../util'
-import { Block } from '../@types'
+import strip from '../util/strip'
+import Block from '../@types/Block'
 
 export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
 
@@ -111,7 +111,7 @@ const parseBodyContent = (html: string) => {
 }
 
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
-export const textToHtml = (text: string) => {
+const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
   const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
   const decodedInputText = unescape(text)
@@ -136,3 +136,5 @@ export const textToHtml = (text: string) => {
     : // if it's an entire HTML page, ignore everything outside the body tags
       parseBodyContent(text)
 }
+
+export default textToHtml

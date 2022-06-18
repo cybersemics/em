@@ -1,19 +1,23 @@
 import _ from 'lodash'
-import { moveThought, updateThoughts } from '.'
-import { Index, Lexeme, Path, State, Thought } from '../@types'
-import { getNextRank, getThoughtById } from '../selectors'
+import moveThought from './moveThought'
+import updateThoughts from './updateThoughts'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import getNextRank from '../selectors/getNextRank'
+import getThoughtById from '../selectors/getThoughtById'
 import { HOME_TOKEN } from '../constants'
-import {
-  appendToPath,
-  equalPath,
-  hashThought,
-  head,
-  keyValueBy,
-  normalizeThought,
-  parentOf,
-  reducerFlow,
-  timestamp,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
+import hashThought from '../util/hashThought'
+import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
+import normalizeThought from '../util/normalizeThought'
+import parentOf from '../util/parentOf'
+import reducerFlow from '../util/reducerFlow'
+import timestamp from '../util/timestamp'
 import { getSessionId } from '../util/sessionManager'
 
 /**

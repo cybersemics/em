@@ -1,21 +1,28 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { ellipsize, head, headValue, isDivider, isDocumentEditable, pathToContext } from '../util'
-import {
-  getChildren,
-  getThoughtBefore,
-  getChildrenRanked,
-  findDescendant,
-  isContextViewActive,
-  lastThoughtsFromContextChain,
-  rootedParentOf,
-  simplifyPath,
-  splitChain,
-} from '../selectors'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isDivider from '../util/isDivider'
+import isDocumentEditable from '../util/isDocumentEditable'
+import pathToContext from '../util/pathToContext'
+import getThoughtBefore from '../selectors/getThoughtBefore'
+import { getChildren, getChildrenRanked } from '../selectors/getChildren'
+import findDescendant from '../selectors/findDescendant'
+import isContextViewActive from '../selectors/isContextViewActive'
+import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import splitChain from '../selectors/splitChain'
 import { isTouch } from '../browser'
-import { deleteEmptyThought as deleteEmptyThoughtActionCreator, error, outdent } from '../action-creators'
+import deleteEmptyThoughtActionCreator from '../action-creators/deleteEmptyThought'
+import error from '../action-creators/error'
+import outdent from '../action-creators/outdent'
 import asyncFocus from '../device/asyncFocus'
-import { Icon as IconType, Shortcut, State, Thunk } from '../@types'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */

@@ -11,38 +11,39 @@ import { isTouch } from '../browser'
 import { store } from '../store'
 import { NOOP } from '../constants'
 import globals from '../globals'
-import { alert, dragHold, dragInProgress, error, moveThought, createThought } from '../action-creators'
+import alert from '../action-creators/alert'
+import dragHold from '../action-creators/dragHold'
+import dragInProgress from '../action-creators/dragInProgress'
+import error from '../action-creators/error'
+import moveThought from '../action-creators/moveThought'
+import createThought from '../action-creators/createThought'
 import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
 import * as selection from '../device/selection'
 
 // util
-import {
-  appendToPath,
-  ellipsize,
-  equalArrays,
-  equalPath,
-  head,
-  isDescendantPath,
-  isDocumentEditable,
-  isEM,
-  isRoot,
-  parentOf,
-  pathToContext,
-  unroot,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import ellipsize from '../util/ellipsize'
+import equalArrays from '../util/equalArrays'
+import equalPath from '../util/equalPath'
+import head from '../util/head'
+import isDescendantPath from '../util/isDescendantPath'
+import isDocumentEditable from '../util/isDocumentEditable'
+import isEM from '../util/isEM'
+import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import unroot from '../util/unroot'
 
 // selectors
-import {
-  getNextRank,
-  getRankBefore,
-  getSortPreference,
-  getThoughtById,
-  pathToThought,
-  findDescendant,
-  isBefore,
-  rootedParentOf,
-  visibleDistanceAboveCursor,
-} from '../selectors'
+import getNextRank from '../selectors/getNextRank'
+import getRankBefore from '../selectors/getRankBefore'
+import getSortPreference from '../selectors/getSortPreference'
+import getThoughtById from '../selectors/getThoughtById'
+import pathToThought from '../selectors/pathToThought'
+import findDescendant from '../selectors/findDescendant'
+import isBefore from '../selectors/isBefore'
+import rootedParentOf from '../selectors/rootedParentOf'
+import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 
 export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &

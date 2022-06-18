@@ -1,4 +1,4 @@
-import { mergeUpdates } from '../../util'
+import mergeUpdates from '../../util/mergeUpdates'
 
 it('merge', () => {
   expect(mergeUpdates({ a: 0, c: 1 }, { a: 1, b: 2 })).toEqual({

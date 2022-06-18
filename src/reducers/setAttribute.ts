@@ -1,8 +1,11 @@
 import _ from 'lodash'
-import { contextToThoughtId, getPrevRank } from '../selectors'
-import { createThought, setFirstSubthought } from '../reducers'
-import { reducerFlow } from '../util'
-import { Context, State } from '../@types'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import getPrevRank from '../selectors/getPrevRank'
+import createThought from '../reducers/createThought'
+import setFirstSubthought from '../reducers/setFirstSubthought'
+import reducerFlow from '../util/reducerFlow'
+import Context from '../@types/Context'
+import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets an attribute on the given context. */

@@ -1,7 +1,7 @@
 import { TextStyle } from 'react-native'
 
 /** Adjust font size -> helper function to manage text resize. */
-export const adjustFontSize = (factor: number, style: TextStyle, originalFontSize = 6) => {
+const adjustFontSize = (factor: number, style: TextStyle, originalFontSize = 6) => {
   const mergedStyle = Array.isArray(style)
     ? style.reduce(
         (acc, item) => ({
@@ -15,3 +15,5 @@ export const adjustFontSize = (factor: number, style: TextStyle, originalFontSiz
 
   return { ...mergedStyle, fontSize: currentFontSize + factor }
 }
+
+export default adjustFontSize

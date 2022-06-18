@@ -1,17 +1,17 @@
-import { initialState, pathToContext, reducerFlow } from '../../util'
-import { contextToPath } from '../../selectors'
-import { State } from '../../@types'
+import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
+import reducerFlow from '../../util/reducerFlow'
+import contextToPath from '../../selectors/contextToPath'
+import State from '../../@types/State'
 
 // reducers
-import {
-  cursorDown,
-  importText,
-  newSubthought,
-  newThought,
-  setCursor,
-  toggleAttribute,
-  toggleContextView,
-} from '../../reducers'
+import cursorDown from '../../reducers/cursorDown'
+import importText from '../../reducers/importText'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import setCursor from '../../reducers/setCursor'
+import toggleAttribute from '../../reducers/toggleAttribute'
+import toggleContextView from '../../reducers/toggleContextView'
 
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'

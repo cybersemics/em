@@ -2,8 +2,10 @@
 import React from 'react'
 import classNames from 'classnames'
 import { FADEOUT_DURATION } from '../constants'
-import { Connected } from '../@types'
-import { closeModal, modalComplete, tutorial } from '../action-creators'
+import Connected from '../@types/Connected'
+import closeModal from '../action-creators/closeModal'
+import modalComplete from '../action-creators/modalComplete'
+import tutorial from '../action-creators/tutorial'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void

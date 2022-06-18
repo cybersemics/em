@@ -1,7 +1,10 @@
-import { getUserRef } from '../util'
-import { authenticate, error, status } from '../action-creators'
-import { Firebase, Thunk } from '../@types'
-import { storage } from '../util/storage'
+import { getUserRef } from '../util/getUserRef'
+import authenticate from '../action-creators/authenticate'
+import error from '../action-creators/error'
+import status from '../action-creators/status'
+import * as Firebase from '../@types/Firebase'
+import Thunk from '../@types/Thunk'
+import storage from '../util/storage'
 
 /** Updates local state with newly authenticated user. */
 const userAuthenticated =

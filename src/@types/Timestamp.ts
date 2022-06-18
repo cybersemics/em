@@ -1,4 +1,6 @@
-import { Brand } from './Brand'
+import Brand from './Brand'
 
 /** A timestamp string. */
-export type Timestamp = string & Brand<'Timestamp'>
+type Timestamp = string & Brand<'Timestamp'>
+
+export default Timestamp

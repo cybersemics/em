@@ -1,5 +1,5 @@
 import { store } from '../../store'
-import { newThought } from '../../action-creators'
+import newThought from '../../action-creators/newThought'
 import testTimer from '../../test-helpers/testTimer'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { screen } from '@testing-library/dom'

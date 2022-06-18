@@ -1,5 +1,6 @@
-import { initialState, reducerFlow } from '../../util'
-import { importText } from '../../reducers'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import importText from '../../reducers/importText'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../exportContext'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'

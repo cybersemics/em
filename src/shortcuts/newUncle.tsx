@@ -1,8 +1,10 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { parentOf, isDocumentEditable } from '../util'
-import { newThought } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import parentOf from '../util/parentOf'
+import isDocumentEditable from '../util/isDocumentEditable'
+import newThought from '../action-creators/newThought'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

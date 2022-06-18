@@ -1,7 +1,8 @@
 import { Action } from 'redux'
 import * as reducers from './index'
-import { initialState } from '../util/initialState'
-import { Index, State } from '../@types'
+import initialState from '../util/initialState'
+import Index from '../@types/IndexType'
+import State from '../@types/State'
 
 /**
  * The main app reducer. Uses action.type to select the reducer with the same name. Otherwise throw an error with unknownAction.

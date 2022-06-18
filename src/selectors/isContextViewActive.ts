@@ -1,5 +1,7 @@
-import { head } from '../util'
-import { Path, State, ThoughtId } from '../@types'
+import head from '../util/head'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 /** Return true if the context view is active for the given key, including selected subthoughts. */
 const isContextViewActive = (state: State, path: Path | null) => {

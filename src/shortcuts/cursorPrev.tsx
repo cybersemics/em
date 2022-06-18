@@ -1,10 +1,11 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { cursorPrev } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import cursorPrev from '../action-creators/cursorPrev'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
-import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

@@ -1,13 +1,19 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import { EM_TOKEN } from '../constants'
-import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { decodeCharacterEntities, ellipsize, head, strip } from '../util'
+import search from '../action-creators/search'
+import searchContexts from '../action-creators/searchContexts'
+import setCursor from '../action-creators/setCursor'
+import toggleSidebar from '../action-creators/toggleSidebar'
+import decodeCharacterEntities from '../util/decodeCharacterEntities'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import strip from '../util/strip'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import { SimplePath } from '../@types'
+import SimplePath from '../@types/SimplePath'
 import { store } from '../store'
-import { getThoughtById } from '../selectors'
+import getThoughtById from '../selectors/getThoughtById'
 
 interface LinkProps {
   charLimit?: number

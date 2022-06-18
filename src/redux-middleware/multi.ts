@@ -1,5 +1,5 @@
 import { Dispatch, Middleware } from 'redux'
-import { State } from '../@types'
+import State from '../@types/State'
 
 type MultiMiddleware = Middleware<any, State, Dispatch>
 

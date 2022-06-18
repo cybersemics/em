@@ -1,4 +1,4 @@
-import { reducerFlow } from '../../util'
+import reducerFlow from '../../util/reducerFlow'
 
 it('compose reducers in order', () => {
   const initialState = { a: 0, b: 0 }

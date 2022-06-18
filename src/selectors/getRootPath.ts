@@ -1,5 +1,6 @@
 import { ABSOLUTE_PATH, ABSOLUTE_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
-import { SimplePath, State } from '../@types'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 const rootPathMap: Record<string, SimplePath> = {
   [HOME_TOKEN]: HOME_PATH,

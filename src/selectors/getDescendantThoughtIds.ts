@@ -1,6 +1,9 @@
 import _ from 'lodash'
-import { compareByRank, sort } from '../util'
-import { State, Thought, ThoughtId } from '../@types'
+import compareByRank from '../util/compareByRank'
+import sort from '../util/sort'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { getAllChildrenAsThoughts } from './getChildren'
 import getThoughtById from './getThoughtById'
 

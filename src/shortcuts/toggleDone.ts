@@ -1,5 +1,6 @@
-import { Shortcut } from '../@types'
-import { isDocumentEditable, pathToContext } from '../util'
+import Shortcut from '../@types/Shortcut'
+import isDocumentEditable from '../util/isDocumentEditable'
+import pathToContext from '../util/pathToContext'
 
 /** Toggle the built-in =done style to cross out an item. */
 const toggleDone: Shortcut = {

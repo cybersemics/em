@@ -1,4 +1,8 @@
-import { Index, Lexeme, Thought, ThoughtId, ThoughtWithChildren } from '../@types'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 
 /** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
 export interface DataProvider {

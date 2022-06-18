@@ -1,5 +1,8 @@
 import React from 'react'
-import { tutorial, tutorialChoice, tutorialNext, tutorialStep as setTutorialStep } from '../../action-creators'
+import tutorial from '../../action-creators/tutorial'
+import tutorialChoice from '../../action-creators/tutorialChoice'
+import tutorialNext from '../../action-creators/tutorialNext'
+import setTutorialStep from '../../action-creators/tutorialStep'
 
 import {
   TUTORIAL2_STEP_CHOOSE,
@@ -19,7 +22,7 @@ import { View } from 'moti'
 import { Text } from '../Text.native'
 import { TouchableOpacity, StyleSheet } from 'react-native'
 import { commonStyles } from '../../style/commonStyles'
-import { Dispatch } from '../../@types'
+import Dispatch from '../../@types/Dispatch'
 
 const { directionRow, justifyContentCenter, alignItemsCenter } = commonStyles
 

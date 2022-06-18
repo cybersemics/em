@@ -1,5 +1,7 @@
-import { Context, State } from '../@types'
-import { attribute, contextToThoughtId } from '../selectors'
+import Context from '../@types/Context'
+import State from '../@types/State'
+import attribute from '../selectors/attribute'
+import contextToThoughtId from '../selectors/contextToThoughtId'
 
 /** Gets the value of an attribute by Context. */
 const attributeByContext = (state: State, context: Context, attributeName: string) => {

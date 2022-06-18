@@ -1,4 +1,5 @@
-import { Firebase, InviteCode } from '../@types'
+import * as Firebase from '../@types/Firebase'
+import InviteCode from '../@types/InviteCode'
 
 /** Fetches the invite code by its id. */
 export const getInviteById = (inviteCode: string) =>

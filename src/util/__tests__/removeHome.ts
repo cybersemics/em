@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../../constants'
-import { removeHome } from '../removeHome'
+import removeHome from '../removeHome'
 
 it('remove home thought', () => {
   const exported = `- ${HOME_TOKEN}

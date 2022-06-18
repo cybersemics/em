@@ -1,8 +1,12 @@
 import _ from 'lodash'
-import { newThought } from '../reducers'
-import { findDescendant } from '../selectors'
-import { appendToPath, getPublishUrl, head, reducerFlow } from '../util'
-import { Path, State } from '../@types'
+import newThought from '../reducers/newThought'
+import findDescendant from '../selectors/findDescendant'
+import appendToPath from '../util/appendToPath'
+import getPublishUrl from '../util/getPublishUrl'
+import head from '../util/head'
+import reducerFlow from '../util/reducerFlow'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */

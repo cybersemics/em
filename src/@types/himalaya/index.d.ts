@@ -1,5 +1,5 @@
 declare module 'himalaya' {
-  import { Index } from '../../@types'
+  import Index from '../../@types/IndexType'
 
   export interface Node {
     type: string

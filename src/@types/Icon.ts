@@ -1,6 +1,6 @@
 import React from 'react'
 
-export interface Icon {
+interface Icon {
   dark?: boolean
   fill?: string
   height?: number
@@ -8,3 +8,5 @@ export interface Icon {
   style?: React.CSSProperties
   width?: number
 }
+
+export default Icon

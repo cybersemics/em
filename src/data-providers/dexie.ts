@@ -3,21 +3,20 @@ import _ from 'lodash'
 import Dexie, { Transaction } from 'dexie'
 import 'dexie-observable'
 import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
-import { hashThought, timestamp } from '../util'
+import hashThought from '../util/hashThought'
+import timestamp from '../util/timestamp'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
-import {
-  Context,
-  Index,
-  Lexeme,
-  Thought,
-  ThoughtWithChildren,
-  ThoughtWordsIndex,
-  ThoughtSubscriptionUpdates,
-  Timestamp,
-  ThoughtId,
-} from '../@types'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Thought from '../@types/Thought'
+import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import ThoughtWordsIndex from '../@types/ThoughtWordsIndex'
+import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
+import Timestamp from '../@types/Timestamp'
+import ThoughtId from '../@types/ThoughtId'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running

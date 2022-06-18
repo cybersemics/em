@@ -1,13 +1,16 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { getThoughtById, simplifyPath } from '../selectors'
+import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
 
 // components
 import Link from './Link'
 import Superscript from './Superscript'
 import { ContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
-import { head, parentOf } from '../util'
-import { Path, State } from '../@types'
+import head from '../util/head'
+import parentOf from '../util/parentOf'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import { View } from 'moti'
 import { commonStyles } from '../style/commonStyles'
 

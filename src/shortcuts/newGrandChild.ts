@@ -1,6 +1,6 @@
-import { isDocumentEditable } from '../util'
-import { newGrandChild } from '../action-creators'
-import { Shortcut } from '../@types'
+import isDocumentEditable from '../util/isDocumentEditable'
+import newGrandChild from '../action-creators/newGrandChild'
+import Shortcut from '../@types/Shortcut'
 
 const newGrandChildShortcut: Shortcut = {
   id: 'newGrandChild',

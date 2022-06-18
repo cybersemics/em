@@ -1,7 +1,9 @@
 import { HOME_TOKEN } from '../constants'
-import { getChildrenRanked } from '../selectors'
-import { equalThoughtValue, head } from '../util'
-import { SimplePath, State } from '../@types'
+import { getChildrenRanked } from '../selectors/getChildren'
+import equalThoughtValue from '../util/equalThoughtValue'
+import head from '../util/head'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
 

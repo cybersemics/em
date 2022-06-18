@@ -1,9 +1,12 @@
 import React, { Fragment } from 'react'
 import { useStore } from 'react-redux'
-import { Path, State } from '../../@types'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import { commonStyles } from '../../style/commonStyles'
-import { parentOf, ellipsize, headValue } from '../../util'
+import parentOf from '../../util/parentOf'
+import ellipsize from '../../util/ellipsize'
+import headValue from '../../util/headValue'
 import { Text } from '../Text.native'
 
 interface IComponentProps {

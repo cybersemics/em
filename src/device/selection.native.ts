@@ -1,6 +1,6 @@
 // TODO: Not implemented
 
-import { SplitResult } from '../@types'
+import SplitResult from '../@types/SplitResult'
 
 type SelectionOptionsType = {
   offset?: number

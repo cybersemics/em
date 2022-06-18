@@ -1,5 +1,9 @@
-import { isContextViewActive, getContexts, contextToPath } from '../selectors'
-import { Path, SimplePath, State } from '../@types'
+import isContextViewActive from '../selectors/isContextViewActive'
+import getContexts from '../selectors/getContexts'
+import contextToPath from '../selectors/contextToPath'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import thoughtToContext from './thoughtToContext'
 import childIdsToThoughts from './childIdsToThoughts'
 

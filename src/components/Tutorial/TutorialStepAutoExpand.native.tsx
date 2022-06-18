@@ -1,12 +1,17 @@
 import React, { Fragment } from 'react'
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
-import { parentOf, ellipsize, head, headValue, pathToContext } from '../../util'
-import { contextToThoughtId, getAllChildren } from '../../selectors'
+import parentOf from '../../util/parentOf'
+import ellipsize from '../../util/ellipsize'
+import head from '../../util/head'
+import headValue from '../../util/headValue'
+import pathToContext from '../../util/pathToContext'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
-import { Path, Thought } from '../../@types'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import Path from '../../@types/Path'
+import Thought from '../../@types/Thought'
+import { getAllChildren, getAllChildrenAsThoughts } from '../../selectors/getChildren'
 
 const { smallText, italic } = commonStyles
 

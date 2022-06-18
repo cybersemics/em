@@ -4,8 +4,9 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } 
 
 import TutorialHint from './TutorialHint'
 
-import { headValue } from '../../util'
-import { Path, State } from '../../@types'
+import headValue from '../../util/headValue'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
 import { useStore } from 'react-redux'

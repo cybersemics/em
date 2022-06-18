@@ -17,7 +17,7 @@ const emojiGroupRegex = new RegExp(`^(${EMOJI_REGEX.source}){1,}\u200D?\u200B?`)
  * If a string starts with an emoji or group of emojis followed by a non-whitespace, non-emoji character,
  * then insert a space between the emoji and the character.
  */
-export const addEmojiSpace = (text: string): string => {
+const addEmojiSpace = (text: string): string => {
   const match = text.match(emojiGroupRegex)
 
   if (match && match[0] && match[0].length < text.length) {
@@ -29,3 +29,5 @@ export const addEmojiSpace = (text: string): string => {
 
   return text
 }
+
+export default addEmojiSpace

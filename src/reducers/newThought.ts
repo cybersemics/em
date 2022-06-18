@@ -1,5 +1,8 @@
 import _ from 'lodash'
-import { Path, SimplePath, State, ThoughtId } from '../@types'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 // constants
 import {
@@ -19,40 +22,40 @@ import {
 } from '../constants'
 
 // util
-import {
-  appendToPath,
-  createId,
-  ellipsize,
-  head,
-  headValue,
-  isRoot,
-  once,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  unroot,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import createId from '../util/createId'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isRoot from '../util/isRoot'
+import once from '../util/once'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
 
 // selectors
-import {
-  getChildrenSorted,
-  getNextRank,
-  getPrevRank,
-  getRankAfter,
-  getRankBefore,
-  getRootPath,
-  getSetting,
-  getSortPreference,
-  getThoughtById,
-  findDescendant,
-  isContextViewActive,
-  rootedParentOf,
-  simplifyPath,
-} from '../selectors'
+import { getChildrenSorted } from '../selectors/getChildren'
+import getNextRank from '../selectors/getNextRank'
+import getPrevRank from '../selectors/getPrevRank'
+import getRankAfter from '../selectors/getRankAfter'
+import getRankBefore from '../selectors/getRankBefore'
+import getRootPath from '../selectors/getRootPath'
+import getSetting from '../selectors/getSetting'
+import getSortPreference from '../selectors/getSortPreference'
+import getThoughtById from '../selectors/getThoughtById'
+import findDescendant from '../selectors/findDescendant'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 
 // reducers
-import { alert, createThought, setCursor, tutorialNext, tutorialStep as tutorialStepReducer } from '../reducers'
-import { isMobile } from '../util/isMobile'
+import alert from '../reducers/alert'
+import createThought from '../reducers/createThought'
+import setCursor from '../reducers/setCursor'
+import tutorialNext from '../reducers/tutorialNext'
+import tutorialStepReducer from '../reducers/tutorialStep'
+import isMobile from '../util/isMobile'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 export interface NewThoughtPayload {

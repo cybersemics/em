@@ -1,4 +1,4 @@
-import { validateRoam } from '../validateRoam'
+import validateRoam from '../validateRoam'
 
 export const testData = [
   {

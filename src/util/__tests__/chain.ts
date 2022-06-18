@@ -1,4 +1,4 @@
-// import { initialState, pathToContext } from '../../util'
+// import initialState, pathToContext from '../../util/initialState, pathToContext'
 // import { chain } from '../../selectors'
 // import { SimplePath, Path } from '../../@types'
 

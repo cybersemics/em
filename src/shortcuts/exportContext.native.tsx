@@ -1,6 +1,7 @@
 import React from 'react'
-import { showModal } from '../action-creators'
-import { Icon as IconType, Shortcut } from '../@types'
+import showModal from '../action-creators/showModal'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 // import { isTouch } from '../browser'
 import Svg, { G, Path } from 'react-native-svg'
 

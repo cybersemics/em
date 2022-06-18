@@ -1,5 +1,7 @@
-import { Context, Index, State } from '../@types'
-import { getContextMap } from '../util'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import State from '../@types/State'
+import getContextMap from '../util/getContextMap'
 import * as db from '../data-providers/dexie'
 
 // @MIGRATION_TODO: Change this api to return ids instead of context.

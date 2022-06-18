@@ -1,4 +1,4 @@
-import { concatOne } from '../../util'
+import concatOne from '../../util/concatOne'
 
 it('concatenate', () => {
   expect(concatOne(['a', 'b', 'c'], 'd')).toEqual(['a', 'b', 'c', 'd'])

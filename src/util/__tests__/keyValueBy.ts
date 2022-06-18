@@ -1,4 +1,4 @@
-import { keyValueBy } from '../keyValueBy'
+import keyValueBy from '../keyValueBy'
 
 test('generate new object from array using keys', () => {
   const result = keyValueBy(['a', 'b'], item => ({ [item]: item + '!' }))

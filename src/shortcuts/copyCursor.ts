@@ -1,9 +1,17 @@
-import { exportPhrase, head, isDocumentEditable, pathToContext } from '../util'
-import { exportContext, getThoughtById, someDescendants, isPending, simplifyPath } from '../selectors'
-import { alert, pull } from '../action-creators'
+import exportPhrase from '../util/exportPhrase'
+import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
+import pathToContext from '../util/pathToContext'
+import exportContext from '../selectors/exportContext'
+import getThoughtById from '../selectors/getThoughtById'
+import someDescendants from '../selectors/someDescendants'
+import isPending from '../selectors/isPending'
+import simplifyPath from '../selectors/simplifyPath'
+import alert from '../action-creators/alert'
+import pull from '../action-creators/pull'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
-import { Shortcut } from '../@types'
+import Shortcut from '../@types/Shortcut'
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',

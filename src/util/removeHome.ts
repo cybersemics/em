@@ -1,9 +1,9 @@
-import { isHome } from './isHome'
+import isHome from './isHome'
 
 /**
  * Remove home token, de-indent (trim), and append newline.
  */
-export const removeHome = (exported: string) => {
+const removeHome = (exported: string) => {
   const firstLineBreakIndex = exported.indexOf('\n')
   const firstThought = exported.slice(0, firstLineBreakIndex).slice(1).trim()
 
@@ -15,3 +15,5 @@ export const removeHome = (exported: string) => {
         .join('\n') + '\n'
     : exported
 }
+
+export default removeHome

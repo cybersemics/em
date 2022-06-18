@@ -1,4 +1,6 @@
-import { Timestamp } from '../@types'
+import Timestamp from '../@types/Timestamp'
 
 /** Returns a timestamp of the current time. */
-export const timestamp = () => new Date().toISOString() as Timestamp
+const timestamp = () => new Date().toISOString() as Timestamp
+
+export default timestamp

@@ -1,11 +1,17 @@
 import _ from 'lodash'
-import { getAllChildren, getThoughtById, contextToPath } from '../selectors'
-import { head, normalizeThought, unroot } from '../util'
+import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import contextToPath from '../selectors/contextToPath'
+import head from '../util/head'
+import normalizeThought from '../util/normalizeThought'
+import unroot from '../util/unroot'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
-import { ThoughtId, SimplePath, State, ThoughtContext } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
 import parentOfThought from './parentOfThought'
 import thoughtToContext from './thoughtToContext'
-import { getAllChildrenAsThoughts } from './getChildren'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, childId: ThoughtId | ThoughtContext, simplePath: SimplePath, showContexts?: boolean) =>

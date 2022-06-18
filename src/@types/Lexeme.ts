@@ -1,8 +1,8 @@
-import { ThoughtId } from './ThoughtId'
-import { Timestamp } from './Timestamp'
+import ThoughtId from './ThoughtId'
+import Timestamp from './Timestamp'
 
 /** An object that contains a list of contexts where a lexeme appears in different word forms (plural, different cases, emojis, etc). All word forms hash to a given lexeme. */
-export interface Lexeme {
+interface Lexeme {
   id?: string // db only; not the same as Child id
   value: string
   contexts: ThoughtId[]
@@ -10,3 +10,5 @@ export interface Lexeme {
   lastUpdated: Timestamp
   updatedBy?: string
 }
+
+export default Lexeme

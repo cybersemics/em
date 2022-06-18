@@ -5,10 +5,20 @@ import classNames from 'classnames'
 import { store } from '../store'
 import globals from '../globals'
 import { isTouch } from '../browser'
-import { alert, dragHold, dragInProgress, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import alert from '../action-creators/alert'
+import dragHold from '../action-creators/dragHold'
+import dragInProgress from '../action-creators/dragInProgress'
+import setCursor from '../action-creators/setCursor'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import { compareReasonable } from '../util/compareThought'
-import { ThoughtId, Context, Index, Thought, Path, SimplePath, State } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Thought from '../@types/Thought'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 // components
 import Bullet from './Bullet'
@@ -24,38 +34,31 @@ import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
 
 // util
-import {
-  appendToPath,
-  equalPath,
-  hashPath,
-  head,
-  headId,
-  isDescendantPath,
-  isDivider,
-  isAttribute,
-  isRoot,
-  parentOf,
-  parseJsonSafe,
-  pathToContext,
-  publishMode,
-  safeRefMerge,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import headId from '../util/headId'
+import isDescendantPath from '../util/isDescendantPath'
+import isDivider from '../util/isDivider'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
+import parseJsonSafe from '../util/parseJsonSafe'
+import pathToContext from '../util/pathToContext'
+import publishMode from '../util/publishMode'
+import safeRefMerge from '../util/safeRefMerge'
 
 // selectors
-import {
-  attribute,
-  childIdsToThoughts,
-  findDescendant,
-  getChildren,
-  getChildrenRanked,
-  getSortPreference,
-  getStyle,
-  getThoughtById,
-  hasChildren,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import attribute from '../selectors/attribute'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import { getChildren, getChildrenRanked, getAllChildrenAsThoughts, hasChildren } from '../selectors/getChildren'
+import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 
 /**********************************************************************
  * Redux

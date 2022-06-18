@@ -1,6 +1,8 @@
-import { getThoughtById } from '../selectors'
-import { isRoot } from '../util'
-import { Context, State, ThoughtId } from '../@types'
+import getThoughtById from '../selectors/getThoughtById'
+import isRoot from '../util/isRoot'
+import Context from '../@types/Context'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { HOME_PATH } from '../constants'
 
 /**

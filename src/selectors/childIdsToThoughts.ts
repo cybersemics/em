@@ -1,5 +1,7 @@
-import { getThoughtById } from './index'
-import { Thought, ThoughtId, State } from '../@types'
+import getThoughtById from '../selectors/getThoughtById'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import State from '../@types/State'
 
 /** Converts a list of ThoughtIds to a list of Thoughts. May return a smaller list if any thoughts are missing. */
 const childIdsToThoughts = (state: State, childIds: ThoughtId[]): Thought[] => {

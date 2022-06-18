@@ -1,8 +1,8 @@
 import * as murmurHash3 from 'murmurhash3js'
 import _ from 'lodash'
 import globals from '../globals'
-import { ThoughtHash } from '../@types'
-import { normalizeThought } from './normalizeThought'
+import ThoughtHash from '../@types/ThoughtHash'
+import normalizeThought from './normalizeThought'
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /**
@@ -17,6 +17,8 @@ import { normalizeThought } from './normalizeThought'
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.
  */
-export const hashThought: (s: string) => ThoughtHash = _.memoize((value: string) =>
+const hashThought: (s: string) => ThoughtHash = _.memoize((value: string) =>
   _.flow([normalizeThought, ...(globals.debugIds ? [] : [murmurHash3.x64.hash128])])(value),
 )
+
+export default hashThought

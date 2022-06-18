@@ -1,4 +1,5 @@
-import { initialState, reducerFlow } from '../../util'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 // reducers
 import cursorBack from '../cursorBack'

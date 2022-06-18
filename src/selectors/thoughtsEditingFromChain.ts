@@ -1,7 +1,9 @@
 import { HOME_PATH } from '../constants'
-import { splitChain } from '../selectors'
-import { appendToPath, head } from '../util'
-import { Path, State } from '../@types'
+import splitChain from '../selectors/splitChain'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import Path from '../@types/Path'
+import State from '../@types/State'
 
 /** Gets the ranked thoughts that are being edited from a context chain. */
 const thoughtsEditingFromChain = (state: State, path: Path): Path => {

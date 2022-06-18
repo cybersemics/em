@@ -4,12 +4,13 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 
 import TutorialHint from './TutorialHint'
 import { Text } from '../Text.native'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 import { commonStyles } from '../../style/commonStyles'
-import { ThoughtId, Path } from '../../@types'
-import { doStringsMatch } from '../../util/doStringsMatch'
+import ThoughtId from '../../@types/ThoughtId'
+import Path from '../../@types/Path'
+import doStringsMatch from '../../util/doStringsMatch'
 import { useStore } from 'react-redux'
-import { childIdsToThoughts } from '../../selectors'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT
 

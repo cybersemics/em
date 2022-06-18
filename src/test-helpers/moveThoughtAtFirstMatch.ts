@@ -1,9 +1,13 @@
 import moveThought, { MoveThoughtPayload } from '../reducers/moveThought'
-import { moveThought as moveThoughtActionCreator } from '../action-creators'
+import moveThoughtActionCreator from '../action-creators/moveThought'
 import _ from 'lodash'
-import { contextToPath, rootedParentOf } from '../selectors'
-import { appendToPath, head } from '../util'
-import { Path, State, Thunk } from '../@types'
+import contextToPath from '../selectors/contextToPath'
+import rootedParentOf from '../selectors/rootedParentOf'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 
 type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & { from: string[]; to: string[] }
 

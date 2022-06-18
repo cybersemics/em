@@ -1,30 +1,36 @@
 import _ from 'lodash'
 import { unescape } from 'html-escaper'
-import {
-  htmlToJson,
-  createId,
-  head,
-  importJSON,
-  initialState,
-  isRoot,
-  parentOf,
-  pathToContext,
-  textToHtml,
-  reducerFlow,
-  roamJsonToBlocks,
-  strip,
-  unroot,
-  validateRoam,
-} from '../util'
-import { editThought, setCursor, updateThoughts, editingValue } from '../reducers'
-import { getAllChildren, simplifyPath, rootedParentOf, getThoughtById } from '../selectors'
-import { Path, SimplePath, State, Timestamp } from '../@types'
+import htmlToJson from '../util/htmlToJson'
+import createId from '../util/createId'
+import head from '../util/head'
+import importJSON from '../util/importJSON'
+import initialState from '../util/initialState'
+import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import textToHtml from '../util/textToHtml'
+import reducerFlow from '../util/reducerFlow'
+import roamJsonToBlocks from '../util/roamJsonToBlocks'
+import strip from '../util/strip'
+import unroot from '../util/unroot'
+import validateRoam from '../util/validateRoam'
+import editThought from '../reducers/editThought'
+import setCursor from '../reducers/setCursor'
+import updateThoughts from '../reducers/updateThoughts'
+import editingValue from '../reducers/editingValue'
+import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import simplifyPath from '../selectors/simplifyPath'
+import rootedParentOf from '../selectors/rootedParentOf'
+import getThoughtById from '../selectors/getThoughtById'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import Timestamp from '../@types/Timestamp'
 import newThought from './newThought'
 import collapseContext from './collapseContext'
 import sanitize from 'sanitize-html'
 import { getSessionId } from '../util/sessionManager'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 
 // a list item tag

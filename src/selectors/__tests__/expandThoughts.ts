@@ -1,9 +1,16 @@
 import _ from 'lodash'
 import { HOME_TOKEN } from '../../constants'
-import { hashPath, initialState, reducerFlow } from '../../util'
-import { expandThoughts, contextToPath } from '../../selectors'
-import { importText, newSubthought, newThought, setCursor } from '../../reducers'
-import { Context, State } from '../../@types'
+import hashPath from '../../util/hashPath'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import expandThoughts from '../../selectors/expandThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import importText from '../../reducers/importText'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import setCursor from '../../reducers/setCursor'
+import Context from '../../@types/Context'
+import State from '../../@types/State'
 
 /** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
 const setCursorFirstMatch = _.curryRight((state: State, pathUnranked: string[]) =>

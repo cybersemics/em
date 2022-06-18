@@ -1,23 +1,31 @@
 import _ from 'lodash'
-import { cursorBack, deleteThought, setCursor } from '../reducers'
+import cursorBack from '../reducers/cursorBack'
+import deleteThought from '../reducers/deleteThought'
+import setCursor from '../reducers/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import { Path, State } from '../@types'
+import Path from '../@types/Path'
+import State from '../@types/State'
 
 // util
-import { appendToPath, parentOf, head, headValue, pathToContext, once, reducerFlow, unroot } from '../util'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import pathToContext from '../util/pathToContext'
+import once from '../util/once'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
 
 // selectors
-import {
-  firstVisibleChild,
-  getContextsSortedAndRanked,
-  isContextViewActive,
-  rootedParentOf,
-  prevSibling,
-  simplifyPath,
-  thoughtsEditingFromChain,
-  parentOfThought,
-  getThoughtById,
-} from '../selectors'
+import { firstVisibleChild } from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import prevSibling from '../selectors/prevSibling'
+import simplifyPath from '../selectors/simplifyPath'
+import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
+import parentOfThought from '../selectors/parentOfThought'
+import getThoughtById from '../selectors/getThoughtById'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
@@ -102,7 +110,9 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
           : // Case II: set cursor on next thought
           next()
           ? [
-              unroot(showContexts ? appendToPath(parentOf(path), next().id) : appendToPath(parentOf(path), next().id)),
+              unroot(
+                showContexts ? appendToPath(parentOf(path), next()!.id) : appendToPath(parentOf(path), next()!.id),
+              ),
               { offset: 0 },
             ]
           : // Case III: delete last thought in context; set cursor on context

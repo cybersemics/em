@@ -1,10 +1,17 @@
 import { HOME_TOKEN } from '../../constants'
 
 // TODO: Why does util have to be imported before selectors and reducers?
-import { initialState, reducerFlow } from '../../util'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
-import { exportContext, getContexts } from '../../selectors'
-import { archiveThought, cursorUp, newSubthought, newThought, setCursor, toggleContextView } from '../../reducers'
+import exportContext from '../../selectors/exportContext'
+import getContexts from '../../selectors/getContexts'
+import archiveThought from '../../reducers/archiveThought'
+import cursorUp from '../../reducers/cursorUp'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import setCursor from '../../reducers/setCursor'
+import toggleContextView from '../../reducers/toggleContextView'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 

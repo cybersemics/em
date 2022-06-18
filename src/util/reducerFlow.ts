@@ -1,4 +1,4 @@
-import { State } from '../@types'
+import State from '../@types/State'
 
 type UnaryReducer<S> = (state: S) => Partial<S> | null
 
@@ -8,7 +8,7 @@ type UnaryReducer<S> = (state: S) => Partial<S> | null
  * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
-export const reducerFlow =
+const reducerFlow =
   <S = State>(reducers: (UnaryReducer<S> | null)[]) =>
   (initialState?: S) =>
     reducers.reduce((state, reducer) => {
@@ -22,3 +22,5 @@ export const reducerFlow =
             ...stateNew,
           }
     }, initialState as S)
+
+export default reducerFlow

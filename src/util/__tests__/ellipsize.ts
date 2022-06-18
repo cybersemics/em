@@ -1,4 +1,4 @@
-import { ellipsize } from '../../util'
+import ellipsize from '../../util/ellipsize'
 
 it('ellipsize', () => {
   expect(ellipsize('Lorem Ipsum is simply dummy text')).toEqual('Lorem Ipsum is...')

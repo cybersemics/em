@@ -1,4 +1,4 @@
-import { concatMany } from '../../util'
+import concatMany from '../../util/concatMany'
 
 it('concatenate', () => {
   expect(concatMany(['a', 'b', 'c'], ['d'])).toEqual(['a', 'b', 'c', 'd'])

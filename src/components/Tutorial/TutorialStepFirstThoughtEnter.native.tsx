@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
-import { Path } from '../../@types'
+import Path from '../../@types/Path'
 import { useStore } from 'react-redux'
 
 interface IComponentProps {

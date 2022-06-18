@@ -9,14 +9,18 @@ import {
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
 
-import { headValue } from '../../util'
-import { contextToThoughtId, findDescendant, getContexts, getChildrenRanked } from '../../selectors'
+import headValue from '../../util/headValue'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import findDescendant from '../../selectors/findDescendant'
+import getContexts from '../../selectors/getContexts'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import TutorialHint from './TutorialHint'
 import StaticSuperscript from '../StaticSuperscript'
 import { Text } from '../Text.native'
 import { commonStyles } from '../../style/commonStyles'
-import { doStringsMatch } from '../../util/doStringsMatch'
-import { ThoughtId, Path } from '../../@types'
+import doStringsMatch from '../../util/doStringsMatch'
+import ThoughtId from '../../@types/ThoughtId'
+import Path from '../../@types/Path'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT2_PARENT
 

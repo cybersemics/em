@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 // import { connect } from 'react-redux'
-// import { theme } from '../../selectors'
-import { Index } from '../../@types'
+// import theme from '../../selectors/theme'
+import Index from '../../@types/IndexType'
 // import { State } from '../../util/initialState'
 import Svg, { Path, Rect } from 'react-native-svg'
 

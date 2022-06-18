@@ -7,58 +7,64 @@ import { isTouch } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
 import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import { alert, error, dragInProgress } from '../action-creators'
+import alert from '../action-creators/alert'
+import error from '../action-creators/error'
+import dragInProgress from '../action-creators/dragInProgress'
 import Thought from './Thought'
 import GestureDiagram from './GestureDiagram'
-import { ThoughtId, GesturePath, Index, LazyEnv, Path, SimplePath, State } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import GesturePath from '../@types/GesturePath'
+import Index from '../@types/IndexType'
+import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 // util
-import {
-  appendToPath,
-  checkIfPathShareSubcontext,
-  ellipsize,
-  equalArrays,
-  equalPath,
-  hashPath,
-  head,
-  headValue,
-  isAbsolute,
-  isDescendant,
-  isDescendantPath,
-  isDivider,
-  isEM,
-  isAttribute,
-  isRoot,
-  once,
-  parentOf,
-  parseJsonSafe,
-  parseLet,
-  pathToContext,
-  safeRefMerge,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
+import ellipsize from '../util/ellipsize'
+import equalArrays from '../util/equalArrays'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isAbsolute from '../util/isAbsolute'
+import isDescendant from '../util/isDescendant'
+import isDescendantPath from '../util/isDescendantPath'
+import isDivider from '../util/isDivider'
+import isEM from '../util/isEM'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import once from '../util/once'
+import parentOf from '../util/parentOf'
+import parseJsonSafe from '../util/parseJsonSafe'
+import parseLet from '../util/parseLet'
+import pathToContext from '../util/pathToContext'
+import safeRefMerge from '../util/safeRefMerge'
 
 // selectors
+import appendChildPath from '../selectors/appendChildPath'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import {
-  appendChildPath,
-  attribute,
-  attributeEquals,
-  childIdsToThoughts,
   childrenFilterPredicate,
-  findDescendant,
-  getAllChildren,
-  getAllChildrenSorted,
-  getChildPath,
   getChildren,
+  getAllChildren,
   getChildrenRanked,
-  getContextsSortedAndRanked,
-  getNextRank,
-  getSortPreference,
-  getStyle,
-  getThoughtById,
-  isContextViewActive,
-  rootedParentOf,
-} from '../selectors'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+  getAllChildrenSorted,
+  getAllChildrenAsThoughts,
+} from '../selectors/getChildren'
+import findDescendant from '../selectors/findDescendant'
+import getChildPath from '../selectors/getChildPath'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getNextRank from '../selectors/getNextRank'
+import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {

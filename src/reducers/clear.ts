@@ -1,5 +1,5 @@
-import { initialState } from '../util/initialState'
-import { State } from '../@types'
+import initialState from '../util/initialState'
+import State from '../@types/State'
 
 interface Options {
   full?: boolean

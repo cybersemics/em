@@ -1,8 +1,10 @@
-import { MimeType } from './MimeType'
+import MimeType from './MimeType'
 
 /** An option that can selected to set the export format. */
-export interface ExportOption {
+interface ExportOption {
   type: MimeType
   label: string
   extension: string
 }
+
+export default ExportOption

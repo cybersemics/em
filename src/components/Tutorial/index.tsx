@@ -4,11 +4,14 @@ import { TransitionGroup } from 'react-transition-group'
 import { isTouch } from '../../browser'
 import WithCSSTransition from './WithCSSTransition'
 import { shortcutById } from '../../shortcuts'
-import { headValue, once } from '../../util'
-import { getSetting } from '../../selectors'
+import headValue from '../../util/headValue'
+import once from '../../util/once'
+import getSetting from '../../selectors/getSetting'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
-import { tutorial } from '../../action-creators'
-import { Connected, GesturePath, State } from '../../@types'
+import tutorial from '../../action-creators/tutorial'
+import Connected from '../../@types/Connected'
+import GesturePath from '../../@types/GesturePath'
+import State from '../../@types/State'
 
 // constants
 import {

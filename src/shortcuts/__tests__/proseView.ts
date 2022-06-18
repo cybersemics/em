@@ -1,6 +1,6 @@
 import { createTestStore } from '../../test-helpers/createTestStore'
 import proseViewShortcut from '../proseView'
-import { importText } from '../../action-creators'
+import importText from '../../action-creators/importText'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import attributeByContext from '../../test-helpers/attributeByContext'

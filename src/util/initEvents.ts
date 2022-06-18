@@ -2,16 +2,22 @@ import _ from 'lodash'
 import { Store } from 'redux'
 import { inputHandlers, isGestureHint } from '../shortcuts'
 import * as db from '../data-providers/dexie'
-import { isRoot, pathToContext } from '../util'
-import { decodeThoughtsUrl, pathExists } from '../selectors'
-import { alert, error, setCursor, toggleTopControlsAndBreadcrumbs } from '../action-creators'
+import isRoot from '../util/isRoot'
+import pathToContext from '../util/pathToContext'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import pathExists from '../selectors/pathExists'
+import alert from '../action-creators/alert'
+import error from '../action-creators/error'
+import setCursor from '../action-creators/setCursor'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import { Path, State } from '../@types'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import lifecycle from 'page-lifecycle'
 import { keepalive } from './sessionManager'
 import { getVisibilityChangeEventName, isTabHidden } from './visibilityApiHelpers'
-import { equalPath } from './equalPath'
+import equalPath from './equalPath'
 
 declare global {
   interface Window {
@@ -20,7 +26,7 @@ declare global {
 }
 
 /** Add window event handlers. */
-export const initEvents = (store: Store<State, any>) => {
+const initEvents = (store: Store<State, any>) => {
   let lastState: number // eslint-disable-line fp/no-let
   let lastPath: Path | null // eslint-disable-line fp/no-let
 
@@ -143,3 +149,5 @@ export const initEvents = (store: Store<State, any>) => {
   // return input handlers as another way to remove them on cleanup
   return { keyDown, keyUp, cleanup }
 }
+
+export default initEvents

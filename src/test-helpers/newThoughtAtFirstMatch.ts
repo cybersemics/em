@@ -1,9 +1,8 @@
-import { State } from '../@types'
-import { newThought } from '../reducers'
-import { contextToPath } from '../selectors'
+import State from '../@types/State'
+import contextToPath from '../selectors/contextToPath'
 import _ from 'lodash'
 
-import { NewThoughtPayload } from '../reducers/newThought'
+import newThought, { NewThoughtPayload } from '../reducers/newThought'
 /**
  * Creates new thought at the given unranked path first matched.
  */

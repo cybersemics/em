@@ -1,2 +1,4 @@
 /** Returns the publish mode query string. */
-export const publishMode = () => false
+const publishMode = () => false
+
+export default publishMode

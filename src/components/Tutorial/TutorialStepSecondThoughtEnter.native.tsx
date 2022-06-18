@@ -1,11 +1,12 @@
 import React, { Fragment } from 'react'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 import { shortcutById } from '../../shortcuts'
 
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
-import { GesturePath, Path } from '../../@types'
+import GesturePath from '../../@types/GesturePath'
+import Path from '../../@types/Path'
 import { useStore } from 'react-redux'
 
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')

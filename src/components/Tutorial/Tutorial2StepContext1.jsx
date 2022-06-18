@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 import { isMac, isTouch } from '../../browser'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 
 import {
   TUTORIAL_CONTEXT,

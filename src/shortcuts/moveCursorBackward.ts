@@ -1,8 +1,13 @@
 import { Key } from 'ts-key-enum'
-import { attributeEquals, rootedParentOf, simplifyPath } from '../selectors'
-import { head, parentOf, isDocumentEditable } from '../util'
-import { cursorBack, outdent } from '../action-creators'
-import { Shortcut } from '../@types'
+import attributeEquals from '../selectors/attributeEquals'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
+import parentOf from '../util/parentOf'
+import isDocumentEditable from '../util/isDocumentEditable'
+import cursorBack from '../action-creators/cursorBack'
+import outdent from '../action-creators/outdent'
+import Shortcut from '../@types/Shortcut'
 
 const moveCursorBackward: Shortcut = {
   id: 'moveCursorBackward',

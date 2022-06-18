@@ -1,20 +1,22 @@
 import _ from 'lodash'
 import { produce } from 'immer'
-import {
-  appendToPath,
-  parentOf,
-  equalArrays,
-  hashThought,
-  head,
-  isRoot,
-  pathToContext,
-  timeDifference,
-  timestamp,
-  isAttribute,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import equalArrays from '../util/equalArrays'
+import hashThought from '../util/hashThought'
+import head from '../util/head'
+import isRoot from '../util/isRoot'
+import pathToContext from '../util/pathToContext'
+import timeDifference from '../util/timeDifference'
+import timestamp from '../util/timestamp'
+import isAttribute from '../util/isAttribute'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import { Context, Index, Path, State, Timestamp } from '../@types'
-import { isEM } from './isEM'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import Timestamp from '../@types/Timestamp'
+import isEM from './isEM'
 
 // @MIGRATION_TODO: Fix recently edited logic.
 export interface Leaf {

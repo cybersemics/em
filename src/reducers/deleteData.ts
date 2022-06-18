@@ -1,7 +1,11 @@
 import _ from 'lodash'
-import { createChildrenMap, hashThought, normalizeThought, timestamp } from '../util'
-import { getLexeme, getThoughtById } from '../selectors'
-import { State } from '../@types'
+import createChildrenMap from '../util/createChildrenMap'
+import hashThought from '../util/hashThought'
+import normalizeThought from '../util/normalizeThought'
+import timestamp from '../util/timestamp'
+import getLexeme from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
+import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Deletes the value from the lexemeIndex. */

@@ -1,4 +1,4 @@
-import { ThoughtId } from '../../@types'
+import ThoughtId from '../../@types/ThoughtId'
 import { DataProvider } from '../DataProvider'
 
 /**

@@ -13,7 +13,9 @@
     right: '<b><i>italic</i></b>'
  }
 */
-export interface SplitResult {
+interface SplitResult {
   left: string
   right: string
 }
+
+export default SplitResult

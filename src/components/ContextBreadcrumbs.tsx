@@ -1,6 +1,10 @@
 import React, { FC } from 'react'
-import { ancestors, isRoot, strip } from '../util'
-import { Index, SimplePath, ThoughtId } from '../@types'
+import ancestors from '../util/ancestors'
+import isRoot from '../util/isRoot'
+import strip from '../util/strip'
+import Index from '../@types/IndexType'
+import SimplePath from '../@types/SimplePath'
+import ThoughtId from '../@types/ThoughtId'
 import classNames from 'classnames'
 
 // components
@@ -9,7 +13,7 @@ import Link from './Link'
 import Superscript from './Superscript'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { store } from '../store'
-import { parentOfThought } from '../selectors'
+import parentOfThought from '../selectors/parentOfThought'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean

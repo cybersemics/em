@@ -3,7 +3,8 @@ import { unescape } from 'html-escaper'
 import sanitize from 'sanitize-html'
 import { parse, HimalayaNode } from 'himalaya'
 import { ALLOWED_ATTRIBUTES, ALLOWED_FORMATTING_TAGS } from '../constants'
-import { formattingNodeToHtml, isFormattingTag } from '../util'
+import formattingNodeToHtml from './formattingNodeToHtml'
+import isFormattingTag from './isFormattingTag'
 
 const regexNbsp = /&nbsp;/gim
 const regexDecimalSpace = /&#32;/gim
@@ -15,7 +16,7 @@ const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gim
 const regexExpForEmptyFormattingTags = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
 /** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. */
-export const strip = (
+const strip = (
   html: string,
   { preserveFormatting = false, preventTrim = false, stripAttributes = true }: StripOptions = {},
 ) => {
@@ -53,3 +54,5 @@ export const strip = (
 
   return preventTrim ? finalHtml : finalHtml.trim()
 }
+
+export default strip

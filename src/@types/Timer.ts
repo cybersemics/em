@@ -1,1 +1,3 @@
-export type Timer = ReturnType<typeof setTimeout>
+type Timer = ReturnType<typeof setTimeout>
+
+export default Timer

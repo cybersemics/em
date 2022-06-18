@@ -1,29 +1,27 @@
 import { HOME_TOKEN } from '../constants'
-import {
-  appendToPath,
-  head,
-  headValue,
-  isDivider,
-  isThoughtArchived,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-} from '../util'
-import {
-  getNextRank,
-  getChildren,
-  getChildrenRanked,
-  isContextViewActive,
-  prevSibling,
-  simplifyPath,
-  rootedParentOf,
-  getThoughtById,
-} from '../selectors'
-import { deleteThoughtWithCursor, editThought, deleteThought, moveThought, setCursor } from '../reducers'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isDivider from '../util/isDivider'
+import isThoughtArchived from '../util/isThoughtArchived'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import getNextRank from '../selectors/getNextRank'
+import isContextViewActive from '../selectors/isContextViewActive'
+import prevSibling from '../selectors/prevSibling'
+import simplifyPath from '../selectors/simplifyPath'
+import rootedParentOf from '../selectors/rootedParentOf'
+import getThoughtById from '../selectors/getThoughtById'
+import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
+import editThought from '../reducers/editThought'
+import deleteThought from '../reducers/deleteThought'
+import moveThought from '../reducers/moveThought'
+import setCursor from '../reducers/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import { State } from '../@types'
+import State from '../@types/State'
 import archiveThought from './archiveThought'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildren, getChildrenRanked } from '../selectors/getChildren'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {

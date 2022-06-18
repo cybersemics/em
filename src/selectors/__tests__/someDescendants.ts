@@ -1,7 +1,7 @@
-import { initialState } from '../../util'
+import initialState from '../../util/initialState'
 import { HOME_TOKEN } from '../../constants'
-import { someDescendants } from '../../selectors'
-import { importText } from '../../reducers'
+import someDescendants from '../../selectors/someDescendants'
+import importText from '../../reducers/importText'
 
 it('return true if at least one descendant fulfills the predicate', () => {
   const text = `

@@ -1,7 +1,9 @@
-import { SortDirection } from './SortDirection'
+import SortDirection from './SortDirection'
 
 /** Sort Preferences with type and direction. */
-export interface SortPreference {
+interface SortPreference {
   type: string
   direction: SortDirection | null
 }
+
+export default SortPreference

@@ -1,4 +1,6 @@
-import { Thunk, Path, SimplePath } from '../@types'
+import Thunk from '../@types/Thunk'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { DROP_TARGET } from '../constants'
 import expandOnHoverTop from './expandOnHoverTop'
 import expandOnHoverBottom from './expandOnHoverBottom'

@@ -1,35 +1,36 @@
 import _ from 'lodash'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { childIdsToThoughts, getNextRank, getLexeme, getAllChildren, nextSibling, rootedParentOf } from '../selectors'
-import {
-  Block,
-  Context,
-  Index,
-  Lexeme,
-  Path,
-  SimplePath,
-  State,
-  Timestamp,
-  ThoughtIndices,
-  Thought,
-  ThoughtId,
-} from '../@types'
-import {
-  appendToPath,
-  createChildrenMap,
-  hashThought,
-  head,
-  isAttribute,
-  pathToContext,
-  removeContext,
-  timestamp,
-  headId,
-  unroot,
-} from '../util'
-import { createId } from './createId'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import getNextRank from '../selectors/getNextRank'
+import getLexeme from '../selectors/getLexeme'
+import { getAllChildren } from '../selectors/getChildren'
+import nextSibling from '../selectors/nextSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
+import Block from '../@types/Block'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import Timestamp from '../@types/Timestamp'
+import ThoughtIndices from '../@types/ThoughtIndices'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import appendToPath from '../util/appendToPath'
+import createChildrenMap from '../util/createChildrenMap'
+import hashThought from '../util/hashThought'
+import head from '../util/head'
+import isAttribute from '../util/isAttribute'
+import pathToContext from '../util/pathToContext'
+import removeContext from '../util/removeContext'
+import timestamp from '../util/timestamp'
+import headId from '../util/headId'
+import unroot from '../util/unroot'
+import createId from './createId'
 import { getSessionId } from './sessionManager'
-import { mergeThoughts } from './mergeThoughts'
-import { mergeUpdates } from './mergeUpdates'
+import mergeThoughts from './mergeThoughts'
+import mergeUpdates from './mergeUpdates'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -298,7 +299,7 @@ const getRankIncrement = (
 }
 
 /** Convert JSON blocks to thoughts update. */
-export const importJSON = (
+const importJSON = (
   state: State,
   simplePath: SimplePath,
   blocks: Block[],
@@ -367,3 +368,5 @@ export const importJSON = (
     lastImported,
   }
 }
+
+export default importJSON

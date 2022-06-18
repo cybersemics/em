@@ -2,7 +2,7 @@ import { NOOP } from '../../constants'
 import getFirebaseProvider from '../../data-providers/firebase'
 import { createMockStore } from '../../test-helpers/createMockStore'
 // import { Lexeme } from '../../@types'
-import { initialState } from '../../util'
+import initialState from '../../util/initialState'
 import initAlgoliaSearch, { getRemoteSearch } from '../algoliaSearch'
 
 jest.mock('../../util/getAlgoliaApiKey')

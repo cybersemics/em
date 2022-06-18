@@ -1,9 +1,16 @@
 import { isTouch, isSafari } from '../browser'
 import { TUTORIAL_STEP_START } from '../constants'
-import { getSetting, pathToThought, rootedParentOf, findDescendant, isContextViewActive } from '../selectors'
-import { ellipsize, head } from '../util'
+import getSetting from '../selectors/getSetting'
+import pathToThought from '../selectors/pathToThought'
+import rootedParentOf from '../selectors/rootedParentOf'
+import findDescendant from '../selectors/findDescendant'
+import isContextViewActive from '../selectors/isContextViewActive'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
 import asyncFocus from '../device/asyncFocus'
-import { Thunk, Path, SplitResult } from '../@types'
+import Thunk from '../@types/Thunk'
+import Path from '../@types/Path'
+import SplitResult from '../@types/SplitResult'
 
 /**
  * Creates a new thought.

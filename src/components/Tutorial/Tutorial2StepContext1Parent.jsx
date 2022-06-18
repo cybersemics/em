@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
 import TutorialHint from './TutorialHint'
 import { isTouch } from '../../browser'
-
-import { ellipsize, headValue, joinConjunction } from '../../util'
-
+import ellipsize from '../../util/ellipsize'
+import headValue from '../../util/headValue'
+import joinConjunction from '../../util/joinConjunction'
 import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
 import { useStore } from 'react-redux'
 

@@ -2,19 +2,29 @@ import React, { createContext, FC, useCallback, useContext, useEffect, useRef, u
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { and } from 'fp-and-or'
 import { HOME_PATH } from '../constants'
-import { exportPhrase, head, isAttribute, isRoot, pathToContext, removeHome } from '../util'
-import { alert, error, pull, modalComplete } from '../action-creators'
-import {
-  contextToThoughtId,
-  exportContext,
-  findDescendant,
-  getDescendantThoughtIds,
-  getThoughtById,
-  simplifyPath,
-} from '../selectors'
+import exportPhrase from '../util/exportPhrase'
+import head from '../util/head'
+import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
+import pathToContext from '../util/pathToContext'
+import removeHome from '../util/removeHome'
+import alert from '../action-creators/alert'
+import error from '../action-creators/error'
+import pull from '../action-creators/pull'
+import modalComplete from '../action-creators/modalComplete'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import exportContext from '../selectors/exportContext'
+import findDescendant from '../selectors/findDescendant'
+import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
+import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
 import Modal from './Modal'
 
-import { Context, ExportOption, Thought, State, ThoughtsInterface } from '../@types'
+import Context from '../@types/Context'
+import ExportOption from '../@types/ExportOption'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
 import { View, StyleSheet, TextInput, TouchableOpacity, Share } from 'react-native'
 import RNPickerSelect from 'react-native-picker-select'
 import { FontAwesome5 } from '@expo/vector-icons'

@@ -3,8 +3,9 @@ import globals from '../globals'
 
 // util
 import { escapeSelector } from './escapeSelector'
-import { Context, ContextHash } from '../@types'
-import { normalizeThought } from './normalizeThought'
+import Context from '../@types/Context'
+import ContextHash from '../@types/ContextHash'
+import normalizeThought from './normalizeThought'
 
 const SEPARATOR_TOKEN = '__SEP__'
 
@@ -31,4 +32,6 @@ const hashContextFunction = globals.debugIds ? encodePlainContext : encodeHashed
 //   maxSize: 10000,
 //   profileName: 'hashContext',
 // })
-export const hashContext = hashContextFunction
+const hashContext = hashContextFunction
+
+export default hashContext

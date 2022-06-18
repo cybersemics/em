@@ -1,4 +1,4 @@
-import { State } from '../@types'
+import State from '../@types/State'
 
 /**
  * Sets state.cursorCleared which controls a special state in which the cursor is rendered as an empty string. In this state the thought can be deleted or edited, but if the user navigates away the thought is restored to its previous value.

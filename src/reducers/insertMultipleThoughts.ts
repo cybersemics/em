@@ -1,7 +1,8 @@
-import { reducerFlow } from '../util/reducerFlow'
-import { strip } from '../util/strip'
+import reducerFlow from '../util/reducerFlow'
+import strip from '../util/strip'
 import newThought from '../reducers/newThought'
-import { SimplePath, State } from '../@types'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 /** Atomically insert multiple new thoughts. Removes empty lines. */
 const insertMultipleThoughts = (state: State, { simplePath, lines }: { simplePath: SimplePath; lines: string[] }) =>

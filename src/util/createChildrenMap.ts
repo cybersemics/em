@@ -1,6 +1,10 @@
-import { Index, State, Thought, ThoughtId } from '../@types'
-import { isAttribute, keyValueBy } from '../util'
-import { childIdsToThoughts } from '../selectors'
+import Index from '../@types/IndexType'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import isAttribute from '../util/isAttribute'
+import keyValueBy from '../util/keyValueBy'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
 
 /** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal or missing thoughts are keyed by id. */
 export const createChildrenMapFromThoughts = (children: Thought[]): Index<ThoughtId> =>

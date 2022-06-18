@@ -1,17 +1,21 @@
-import { alert, moveThought } from '../reducers'
-import { SimplePath, State } from '../@types'
-import { appendToPath, parentOf, ellipsize, head, headValue } from '../util'
-import {
-  getNextRank,
-  getRankBefore,
-  getThoughtBefore,
-  findDescendant,
-  rootedParentOf,
-  prevSibling,
-  simplifyPath,
-  getSortPreference,
-  getThoughtById,
-} from '../selectors'
+import alert from '../reducers/alert'
+import moveThought from '../reducers/moveThought'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import getNextRank from '../selectors/getNextRank'
+import getRankBefore from '../selectors/getRankBefore'
+import getThoughtBefore from '../selectors/getThoughtBefore'
+import findDescendant from '../selectors/findDescendant'
+import rootedParentOf from '../selectors/rootedParentOf'
+import prevSibling from '../selectors/prevSibling'
+import simplifyPath from '../selectors/simplifyPath'
+import getSortPreference from '../selectors/getSortPreference'
+import getThoughtById from '../selectors/getThoughtById'
 import * as selection from '../device/selection'
 
 /** Swaps the thought with its previous siblings. */

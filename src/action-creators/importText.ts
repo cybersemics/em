@@ -1,5 +1,5 @@
-import { importText } from '../reducers'
-import { Thunk } from '../@types'
+import importText from '../reducers/importText'
+import Thunk from '../@types/Thunk'
 
 /** A Thunk that dispatches an 'importText` action. */
 const importTextActionCreator =

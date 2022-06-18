@@ -1,7 +1,11 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { exportContext } from '../../selectors'
-import { bumpThoughtDown, cursorBack, newSubthought, newThought } from '../index'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import exportContext from '../../selectors/exportContext'
+import bumpThoughtDown from '../bumpThoughtDown'
+import cursorBack from '../cursorBack'
+import newSubthought from '../newSubthought'
+import newThought from '../newThought'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('bump leaf', () => {

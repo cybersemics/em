@@ -1,19 +1,22 @@
 import _ from 'lodash'
-import { getSortPreference } from '../selectors'
-import {
-  appendToPath,
-  compareByRank,
-  compareThought,
-  compareThoughtDescending,
-  isAbsolute,
-  isAttribute,
-  sort,
-  unroot,
-  isDescendantPath,
-  splice,
-  head,
-} from '../util'
-import { ThoughtId, ComparatorFunction, ThoughtContext, Thought, Path, State, SimplePath } from '../@types'
+import getSortPreference from '../selectors/getSortPreference'
+import appendToPath from '../util/appendToPath'
+import compareByRank from '../util/compareByRank'
+import { compareThought, compareThoughtDescending } from '../util/compareThought'
+import isAbsolute from '../util/isAbsolute'
+import isAttribute from '../util/isAttribute'
+import sort from '../util/sort'
+import unroot from '../util/unroot'
+import isDescendantPath from '../util/isDescendantPath'
+import splice from '../util/splice'
+import head from '../util/head'
+import ThoughtId from '../@types/ThoughtId'
+import ComparatorFunction from '../@types/ComparatorFunction'
+import ThoughtContext from '../@types/ThoughtContext'
+import Thought from '../@types/Thought'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import SimplePath from '../@types/SimplePath'
 import childIdsToThoughts from './childIdsToThoughts'
 import getThoughtById from './getThoughtById'
 
@@ -149,7 +152,7 @@ export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Th
 }
 
 /** Returns the first visible child of a context. */
-export const firstVisibleChild = (state: State, id: ThoughtId) => getChildrenSorted(state, id)[0]
+export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
 
 /** Returns the first visible child (with cursor check) of a context. */
 export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath) => {
@@ -201,3 +204,5 @@ export const childrenFilterPredicate = _.curry((state: State, parentPath: Simple
     (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child.id))
   )
 }, 3)
+
+export default getChildren

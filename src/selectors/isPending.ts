@@ -1,5 +1,6 @@
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import { Thought, State } from '../@types'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
 
 /** Returns true if the context has not been loaded from the remote yet, or if the children are not loaded. */
 const isPending = (state: State, thought: Thought | null): boolean => {

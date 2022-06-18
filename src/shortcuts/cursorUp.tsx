@@ -1,14 +1,16 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import { attributeEquals, rootedParentOf } from '../selectors'
-import { head } from '../util'
-import { cursorUp } from '../action-creators'
+import attributeEquals from '../selectors/attributeEquals'
+import rootedParentOf from '../selectors/rootedParentOf'
+import head from '../util/head'
+import cursorUp from '../action-creators/cursorUp'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import { Icon as IconType, Shortcut } from '../@types'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import * as selection from '../device/selection'
 
 // import directly since util/index is not loaded yet when shortcut is initialized
-import { throttleByAnimationFrame } from '../util/throttleByAnimationFrame'
+import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

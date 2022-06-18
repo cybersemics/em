@@ -1,5 +1,6 @@
-import { Context, State } from '../@types'
-import { isAttribute } from '../util'
+import Context from '../@types/Context'
+import State from '../@types/State'
+import isAttribute from '../util/isAttribute'
 import _ from 'lodash'
 
 /**

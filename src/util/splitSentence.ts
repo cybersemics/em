@@ -1,10 +1,10 @@
-import { once } from './once'
-import isAbbrev from './isAbbreviation'
+import once from './once'
+import isAbbreviation from './isAbbreviation'
 
 /**
  * Splits given value by special characters.
  */
-export const splitSentence = (value: string): string[] => {
+const splitSentence = (value: string): string[] => {
   // pattern1, single symbol: . ; ! ?
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
@@ -53,7 +53,7 @@ export const splitSentence = (value: string): string[] => {
      * Case1: ending with url address
      * Case2: ending with Mr., Dr., Apt., i.e., Ph.D..
      */
-    if (isAbbrev(prevSentence, s) || isUrl(prevSentence, s)) {
+    if (isAbbreviation(prevSentence, s) || isUrl(prevSentence, s)) {
       return newSentence + currSentence
     }
 
@@ -143,3 +143,5 @@ function isUrl(str1: string, s: string) {
 
   return urlPattern.test(combinedSentence)
 }
+
+export default splitSentence

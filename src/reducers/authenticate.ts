@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import { State, Firebase } from '../@types'
+import State from '../@types/State'
+import * as Firebase from '../@types/Firebase'
 
 interface Options {
   // used by the pullQueue to detect if the authenticated user is connected and thus able to pull

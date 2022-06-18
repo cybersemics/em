@@ -1,7 +1,9 @@
-import { head, isDocumentEditable } from '../util'
-import { findDescendant } from '../selectors'
-import { indent } from '../action-creators'
-import { Shortcut, State } from '../@types'
+import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
+import findDescendant from '../selectors/findDescendant'
+import indent from '../action-creators/indent'
+import Shortcut from '../@types/Shortcut'
+import State from '../@types/State'
 import * as selection from '../device/selection'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

@@ -1,15 +1,15 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { hashThought, removeHome } from '../../util'
-import { exportContext } from '../../selectors'
-import { initialState } from '../initialState'
-import { RoamBlock, RoamPage, roamJsonToBlocks } from '../roamJsonToBlocks'
-import { importJSON } from '../importJSON'
-import { SimplePath, State } from '../../@types'
-import { keyValueBy } from '../keyValueBy'
+import hashThought from '../../util/hashThought'
+import removeHome from '../../util/removeHome'
+import exportContext from '../../selectors/exportContext'
+import initialState from '../initialState'
+import roamJsonToBlocks, { RoamBlock, RoamPage } from '../roamJsonToBlocks'
+import importJSON from '../importJSON'
+import SimplePath from '../../@types/SimplePath'
+import State from '../../@types/State'
+import keyValueBy from '../keyValueBy'
 
-jest.mock('../timestamp', () => ({
-  timestamp: () => '2020-11-02T01:11:58.869Z',
-}))
+jest.mock('../timestamp', () => () => '2020-11-02T01:11:58.869Z')
 
 const testData = [
   {

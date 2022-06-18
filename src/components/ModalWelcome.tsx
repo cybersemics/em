@@ -3,7 +3,7 @@ import React from 'react'
 import Modal from './Modal'
 import { ActionButton } from './ActionButton'
 import { useDispatch } from 'react-redux'
-import { tutorial } from '../action-creators'
+import tutorial from '../action-creators/tutorial'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {

@@ -1,7 +1,10 @@
-import { Index, Thought, ThoughtId, Timestamp } from '../@types'
+import Index from '../@types/IndexType'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import Timestamp from '../@types/Timestamp'
 
 // a Thought stored with all its children for efficient read/write
-export interface ThoughtWithChildren {
+interface ThoughtWithChildren {
   id: ThoughtId
   value: string
   rank: number
@@ -11,3 +14,5 @@ export interface ThoughtWithChildren {
   archived?: Timestamp
   updatedBy: string
 }
+
+export default ThoughtWithChildren

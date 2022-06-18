@@ -1,3 +1,5 @@
-import { Brand } from './Brand'
+import Brand from './Brand'
 
-export type ContextHash = string & Brand<'ContextHash'>
+type ContextHash = string & Brand<'ContextHash'>
+
+export default ContextHash

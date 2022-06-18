@@ -1,4 +1,4 @@
-import { hashThought } from '../../util'
+import hashThought from '../../util/hashThought'
 import { DataProvider } from '../DataProvider'
 
 /** Gets the Lexeme object of a value. */

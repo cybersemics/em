@@ -3,7 +3,7 @@ import React from 'react'
 /* import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { Connected } from '../@types' */
-import { /* closeModal */ modalComplete /* tutorial */ } from '../action-creators'
+import modalComplete from '../action-creators/modalComplete'
 import { useDispatch } from 'react-redux'
 import { Modal, View, StyleSheet, ScrollView } from 'react-native'
 import { Text } from './Text.native'

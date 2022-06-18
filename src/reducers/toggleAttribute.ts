@@ -1,8 +1,16 @@
 import _ from 'lodash'
-import { deleteThought, createThought, setFirstSubthought } from '../reducers'
-import { attributeEquals, getPrevRank, findDescendant, contextToPath } from '../selectors'
-import { head, reducerFlow, unroot } from '../util'
-import { Context, State } from '../@types'
+import deleteThought from '../reducers/deleteThought'
+import createThought from '../reducers/createThought'
+import setFirstSubthought from '../reducers/setFirstSubthought'
+import attributeEquals from '../selectors/attributeEquals'
+import getPrevRank from '../selectors/getPrevRank'
+import findDescendant from '../selectors/findDescendant'
+import contextToPath from '../selectors/contextToPath'
+import head from '../util/head'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
+import Context from '../@types/Context'
+import State from '../@types/State'
 
 /** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, just toggles the attribute itself. */
 const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) => {

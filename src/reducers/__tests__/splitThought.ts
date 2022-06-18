@@ -1,7 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { childIdsToThoughts, exportContext, contextToPath } from '../../selectors'
-import { State } from '../../@types'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import exportContext from '../../selectors/exportContext'
+import contextToPath from '../../selectors/contextToPath'
+import State from '../../@types/State'
 
 // reducers
 import setCursor from '../setCursor'

@@ -1,4 +1,4 @@
-import { safeRefMerge } from '../../util'
+import safeRefMerge from '../../util/safeRefMerge'
 
 it('merges two objects', () => {
   const a = { a: 1, x: 1 }

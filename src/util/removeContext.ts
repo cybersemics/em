@@ -1,10 +1,12 @@
-import { timestamp } from './timestamp'
-import { notNull } from './notNull'
+import timestamp from './timestamp'
+import notNull from './notNull'
 import { getSessionId } from './sessionManager'
-import { State, Lexeme, Timestamp } from '../@types'
+import State from '../@types/State'
+import Lexeme from '../@types/Lexeme'
+import Timestamp from '../@types/Timestamp'
 
 /** Returns a new Lexeme without the given context. */
-export const removeContext = (
+const removeContext = (
   state: State,
   lexeme: Lexeme,
   thoughtId: string,
@@ -21,3 +23,5 @@ export const removeContext = (
     }),
   )
 }
+
+export default removeContext

@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
 import { isTouch } from '../../browser'
-import { headValue } from '../../util'
+import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 import { shortcutById } from '../../shortcuts'
 import { useStore } from 'react-redux'

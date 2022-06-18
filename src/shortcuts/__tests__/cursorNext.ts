@@ -1,8 +1,10 @@
-import { cursorNext, importText, setCursor } from '../../action-creators'
+import cursorNext from '../../action-creators/cursorNext'
+import importText from '../../action-creators/importText'
+import setCursor from '../../action-creators/setCursor'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import globals from '../../globals'
-import { childIdsToThoughts } from '../../selectors'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {

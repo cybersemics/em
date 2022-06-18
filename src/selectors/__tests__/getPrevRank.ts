@@ -1,6 +1,11 @@
-import { initialState, isAttribute, reducerFlow } from '../../util'
-import { contextToThoughtId, getAllChildrenSorted } from '../../selectors'
-import { importText, newSubthought, newThought } from '../../reducers'
+import initialState from '../../util/initialState'
+import isAttribute from '../../util/isAttribute'
+import reducerFlow from '../../util/reducerFlow'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import { getAllChildrenSorted } from '../../selectors/getChildren'
+import importText from '../../reducers/importText'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
 import getPrevRank from '../getPrevRank'
 
 it('get rank above all children', () => {

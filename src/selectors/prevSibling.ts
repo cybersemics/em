@@ -1,15 +1,13 @@
-import {
-  getContextsSortedAndRanked,
-  getChildrenRanked,
-  getChildrenSorted,
-  getThoughtById,
-  isChildVisible,
-  isContextViewActive,
-  isAncestorsVisible,
-  getSortPreference,
-} from '../selectors'
-import { head } from '../util'
-import { State, Path, Thought } from '../@types'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getThoughtById from '../selectors/getThoughtById'
+import { getChildrenRanked, getChildrenSorted, isChildVisible } from '../selectors/getChildren'
+import isContextViewActive from '../selectors/isContextViewActive'
+import isAncestorsVisible from '../selectors/isAncestorsVisible'
+import getSortPreference from '../selectors/getSortPreference'
+import head from '../util/head'
+import State from '../@types/State'
+import Path from '../@types/Path'
+import Thought from '../@types/Thought'
 import thoughtToContext from './thoughtToContext'
 
 /**

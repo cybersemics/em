@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import { theme } from '../selectors'
-import { State } from '../@types'
+import theme from '../selectors/theme'
+import State from '../@types/State'
 
 interface SearchIconProps {
   dark?: boolean

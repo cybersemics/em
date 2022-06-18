@@ -7,4 +7,6 @@ interface ExtendedOperation<T = any> extends GetOperation<T> {
   actions: string[]
 }
 
-export type Patch = ExtendedOperation[]
+type Patch = ExtendedOperation[]
+
+export default Patch

@@ -1,6 +1,8 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { newSubthought, newThought } from '../../reducers'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 
 it('get root children', () => {

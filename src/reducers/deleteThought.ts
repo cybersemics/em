@@ -1,20 +1,27 @@
 import _ from 'lodash'
-import { updateThoughts } from '../reducers'
+import updateThoughts from '../reducers/updateThoughts'
 // import { treeDelete } from '../util/recentlyEditedTree'
-import { getChildrenRanked, getLexeme, getThoughtById, hasLexeme, rootedParentOf, thoughtToPath } from '../selectors'
-import { ThoughtId, Context, Index, Lexeme, Thought, State } from '../@types'
+import getLexeme from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
+import hasLexeme from '../selectors/hasLexeme'
+import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
+import ThoughtId from '../@types/ThoughtId'
+import Context from '../@types/Context'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Thought from '../@types/Thought'
+import State from '../@types/State'
 import { getSessionId } from '../util/sessionManager'
-import {
-  equalArrays,
-  hashThought,
-  isDescendant,
-  keyValueBy,
-  reducerFlow,
-  removeContext,
-  timestamp,
-  unroot,
-} from '../util'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import equalArrays from '../util/equalArrays'
+import hashThought from '../util/hashThought'
+import isDescendant from '../util/isDescendant'
+import keyValueBy from '../util/keyValueBy'
+import reducerFlow from '../util/reducerFlow'
+import removeContext from '../util/removeContext'
+import timestamp from '../util/timestamp'
+import unroot from '../util/unroot'
+import { getChildrenRanked, getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Payload {
   context: Context

@@ -1,7 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
-import { initialState, reducerFlow } from '../../util'
-import { contextToPath, exportContext } from '../../selectors'
-import { State } from '../../@types'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import State from '../../@types/State'
 
 // reducers
 import deleteAttribute from '../deleteAttribute'

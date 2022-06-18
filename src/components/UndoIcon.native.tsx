@@ -1,7 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { theme } from '../selectors'
-import { Icon, State } from '../@types'
+import theme from '../selectors/theme'
+import Icon from '../@types/Icon'
+import State from '../@types/State'
 import Svg, { Path } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

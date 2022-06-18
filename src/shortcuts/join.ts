@@ -1,5 +1,5 @@
-import { Shortcut } from '../@types'
-import { join } from '../action-creators'
+import Shortcut from '../@types/Shortcut'
+import join from '../action-creators/join'
 
 const joinThoughts: Shortcut = {
   id: 'join',

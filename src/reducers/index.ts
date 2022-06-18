@@ -1,4 +1,4 @@
-/** Here's documentation for all reducers. */
+/** Re-export all reducers for app.ts. */
 
 export { default as addLatestShortcuts } from './addLatestShortcuts'
 export { default as alert } from './alert'

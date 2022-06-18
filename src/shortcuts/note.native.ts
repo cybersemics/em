@@ -1,9 +1,10 @@
-import { attribute, simplifyPath } from '../selectors'
+import attribute from '../selectors/attribute'
+import simplifyPath from '../selectors/simplifyPath'
 
 import PencilIcon from '../components/icons/PencilIcon'
-import { head } from '../util'
-import { toggleNote } from '../action-creators'
-import { Shortcut } from '../@types'
+import head from '../util/head'
+import toggleNote from '../action-creators/toggleNote'
+import Shortcut from '../@types/Shortcut'
 import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {

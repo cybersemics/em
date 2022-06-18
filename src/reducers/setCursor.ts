@@ -7,10 +7,23 @@ import {
   TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import { chain, expandThoughts, getSetting, getAllChildren, simplifyPath } from '../selectors'
-import { equalPath, hashPath, head, headValue, isDescendant, pathToContext } from '../util'
-import { settings } from '../reducers'
-import { Index, Path, SimplePath, State, TutorialChoice } from '../@types'
+import chain from '../selectors/chain'
+import expandThoughts from '../selectors/expandThoughts'
+import getSetting from '../selectors/getSetting'
+import { getAllChildren } from '../selectors/getChildren'
+import simplifyPath from '../selectors/simplifyPath'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isDescendant from '../util/isDescendant'
+import pathToContext from '../util/pathToContext'
+import settings from '../reducers/settings'
+import Index from '../@types/IndexType'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import TutorialChoice from '../@types/TutorialChoice'
 import globals from '../globals'
 
 /**

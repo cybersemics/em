@@ -7,7 +7,7 @@ import { findTreeDescendants } from '../util/recentlyEditedTree'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { View, StyleSheet } from 'react-native'
 import { Text } from './Text.native'
-import { State } from '../@types'
+import State from '../@types/State'
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {

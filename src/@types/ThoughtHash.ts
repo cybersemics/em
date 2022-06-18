@@ -1,3 +1,5 @@
-import { Brand } from './Brand'
+import Brand from './Brand'
 
-export type ThoughtHash = string & Brand<'ThoughtHash'>
+type ThoughtHash = string & Brand<'ThoughtHash'>
+
+export default ThoughtHash

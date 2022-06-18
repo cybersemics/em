@@ -1,12 +1,15 @@
 import { HOME_PATH } from '../constants'
-import { appendToPath, parentOf, head, once } from '../util'
-import {
-  nextSibling as thoughtNextSibling,
-  firstVisibleChildWithCursorCheck,
-  getThoughtById,
-  rootedParentOf,
-} from '../selectors'
-import { Path, SimplePath, State } from '../@types'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import head from '../util/head'
+import once from '../util/once'
+import thoughtNextSibling from '../selectors/nextSibling'
+import { firstVisibleChildWithCursorCheck } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 interface NextThoughtResult {
   nextThoughts: Path | null
@@ -251,7 +254,7 @@ const nextInThoughtView = (
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain. */
-export const nextThought = (state: State, path: Path = HOME_PATH) => {
+const nextThought = (state: State, path: Path = HOME_PATH) => {
   const thought = getThoughtById(state, head(path))
   const { value, rank } = thought
 
@@ -260,3 +263,5 @@ export const nextThought = (state: State, path: Path = HOME_PATH) => {
   // ? nextInContextView(state, value, rank, path, parentPath, contextChain)!
   return nextInThoughtView(state, value, rank, path)!
 }
+
+export default nextThought

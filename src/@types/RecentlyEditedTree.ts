@@ -1,4 +1,4 @@
-import { Index } from './IndexType'
+import Index from './IndexType'
 
 // Do not define RecentlyEditedTree type until recentlyEditedTree.ts is typed
 // interface RecentlyEditedLeaf {
@@ -9,4 +9,6 @@ import { Index } from './IndexType'
 // type RecentlyEditedTree = Index<RecentlyEditedTree> causes circular reference error
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 // export interface RecentlyEditedTree extends Index<RecentlyEditedTree> {}
-export type RecentlyEditedTree = Index
+type RecentlyEditedTree = Index
+
+export default RecentlyEditedTree

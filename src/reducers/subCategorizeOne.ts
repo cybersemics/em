@@ -1,18 +1,22 @@
-import { alert, moveThought, createThought, setCursor } from '../reducers'
-import { getRankBefore, findDescendant, rootedParentOf, simplifyPath } from '../selectors'
-import { State } from '../@types'
-import {
-  appendToPath,
-  parentOf,
-  ellipsize,
-  head,
-  headValue,
-  isEM,
-  pathToContext,
-  reducerFlow,
-  isRoot,
-  createId,
-} from '../util'
+import alert from '../reducers/alert'
+import moveThought from '../reducers/moveThought'
+import createThought from '../reducers/createThought'
+import setCursor from '../reducers/setCursor'
+import getRankBefore from '../selectors/getRankBefore'
+import findDescendant from '../selectors/findDescendant'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import State from '../@types/State'
+import appendToPath from '../util/appendToPath'
+import parentOf from '../util/parentOf'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isEM from '../util/isEM'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import isRoot from '../util/isRoot'
+import createId from '../util/createId'
 
 /** Inserts a new thought and adds the given thought as a subthought. */
 const subCategorizeOne = (state: State) => {

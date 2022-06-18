@@ -1,8 +1,10 @@
 import React from 'react'
 import { store } from '../store'
-import { pathToThought, rootedParentOf } from '../selectors'
-import { expandContextThought } from '../action-creators'
-import { isDivider, isDocumentEditable } from '../util'
+import pathToThought from '../selectors/pathToThought'
+import rootedParentOf from '../selectors/rootedParentOf'
+import expandContextThought from '../action-creators/expandContextThought'
+import isDivider from '../util/isDivider'
+import isDocumentEditable from '../util/isDocumentEditable'
 
 // components
 import ContextBreadcrumbs from './ContextBreadcrumbs'

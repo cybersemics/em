@@ -1,10 +1,12 @@
-import { Lexeme, State } from '../@types'
-import { getThoughtById } from '../selectors'
-import { concatOne, timestamp } from '../util'
+import Lexeme from '../@types/Lexeme'
+import State from '../@types/State'
+import getThoughtById from '../selectors/getThoughtById'
+import concatOne from '../util/concatOne'
+import timestamp from '../util/timestamp'
 import { getSessionId } from './sessionManager'
 
 /** Returns a new thought that has been moved either between contexts or within a context (i.e. Changed rank). Removes duplicates with the same { value, rank }. */
-export const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number, newRank: number, id: string) => ({
+const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number, newRank: number, id: string) => ({
   ...lexeme,
   contexts: concatOne(
     (lexeme.contexts || []).filter(child => {
@@ -23,3 +25,5 @@ export const moveLexemeThought = (state: State, lexeme: Lexeme, oldRank: number,
   lastUpdated: timestamp(),
   updatedBy: getSessionId(),
 })
+
+export default moveLexemeThought

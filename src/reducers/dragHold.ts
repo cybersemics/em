@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import { SimplePath, State } from '../@types'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 
 interface Payload {
   value: boolean

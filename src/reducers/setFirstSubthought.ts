@@ -1,8 +1,13 @@
 import _ from 'lodash'
-import { contextToThoughtId, getPrevRank, contextToPath } from '../selectors'
-import { head } from '../util'
-import { editThought, createThought } from '../reducers'
-import { Context, SimplePath, State } from '../@types'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import getPrevRank from '../selectors/getPrevRank'
+import contextToPath from '../selectors/contextToPath'
+import head from '../util/head'
+import editThought from '../reducers/editThought'
+import createThought from '../reducers/createThought'
+import Context from '../@types/Context'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets the value of the first subthought in the given context. */

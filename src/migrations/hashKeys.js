@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
-import { hashThought } from '../util'
+import hashThought from '../util/hashThought'
 import { SCHEMA_HASHKEYS, SCHEMA_ROOT } from '../constants'
 
 export const schemaVersionFrom = SCHEMA_ROOT

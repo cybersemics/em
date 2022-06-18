@@ -1,9 +1,9 @@
-import { Index } from './IndexType'
-import { ThoughtId } from './ThoughtId'
-import { Timestamp } from './Timestamp'
+import Index from './IndexType'
+import ThoughtId from './ThoughtId'
+import Timestamp from './Timestamp'
 
 /** An object that contains a list of children within a context. */
-export interface Thought {
+interface Thought {
   id: ThoughtId
   value: string
   rank: number
@@ -19,3 +19,5 @@ export interface Thought {
   // used to track if a space is required when merging two siblings/thoughts
   splitSource?: ThoughtId
 }
+
+export default Thought

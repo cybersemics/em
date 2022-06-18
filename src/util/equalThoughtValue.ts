@@ -1,4 +1,4 @@
-import { Thought } from '../@types'
+import Thought from '../@types/Thought'
 
 /** Makes a comparator with the given value to check a Child's value.
  *
@@ -6,4 +6,6 @@ import { Thought } from '../@types'
       // finds the thought with value 'test'
       path.map(equalThoughtValue('test')).
  */
-export const equalThoughtValue = (value: string) => (thought: Thought) => thought && thought.value === value
+const equalThoughtValue = (value: string) => (thought: Thought) => thought && thought.value === value
+
+export default equalThoughtValue

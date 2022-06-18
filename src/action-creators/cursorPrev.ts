@@ -1,9 +1,15 @@
 import { HOME_TOKEN } from '../constants'
-import { setCursor, suppressExpansion } from '../action-creators'
-import { getThoughtBefore, simplifyPath, getChildrenSorted, attributeEquals, rootedParentOf } from '../selectors'
-import { appendToPath, head } from '../util'
+import setCursor from '../action-creators/setCursor'
+import suppressExpansion from '../action-creators/suppressExpansion'
+import getThoughtBefore from '../selectors/getThoughtBefore'
+import simplifyPath from '../selectors/simplifyPath'
+import { getChildrenSorted } from '../selectors/getChildren'
+import attributeEquals from '../selectors/attributeEquals'
+import rootedParentOf from '../selectors/rootedParentOf'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import { Thunk } from '../@types'
+import Thunk from '../@types/Thunk'
 
 /** Moves the cursor to the previous sibling, ignoring descendants. */
 const cursorPrev = (): Thunk => (dispatch, getState) => {

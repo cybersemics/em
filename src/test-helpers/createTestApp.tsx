@@ -7,15 +7,15 @@ import { initialize } from '../initialize'
 import { Provider } from 'react-redux'
 import { store } from '../store'
 import * as db from '../data-providers/dexie'
-import { clear } from '../action-creators'
-import { Await } from '../@types'
+import clear from '../action-creators/clear'
+import Await from '../@types/Await'
 
 // components
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
 import testTimer from './testTimer'
-import { storage } from '../util/storage'
+import storage from '../util/storage'
 
 /**
  * Test App.

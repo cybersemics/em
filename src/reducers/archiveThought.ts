@@ -1,42 +1,45 @@
 import _ from 'lodash'
 import { HOME_PATH } from '../constants'
-import { ThoughtId, Path, SimplePath, State, ThoughtContext } from '../@types'
+import ThoughtId from '../@types/ThoughtId'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtContext from '../@types/ThoughtContext'
 
 // util
-import {
-  appendToPath,
-  ellipsize,
-  equalThoughtValue,
-  head,
-  headValue,
-  isDivider,
-  isThoughtArchived,
-  parentOf,
-  pathToContext,
-  reducerFlow,
-  unroot,
-} from '../util'
+import appendToPath from '../util/appendToPath'
+import ellipsize from '../util/ellipsize'
+import equalThoughtValue from '../util/equalThoughtValue'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import isDivider from '../util/isDivider'
+import isThoughtArchived from '../util/isThoughtArchived'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
 
 // selectors
-import {
-  getAllChildren,
-  getContextsSortedAndRanked,
-  findDescendant,
-  isContextViewActive,
-  lastThoughtsFromContextChain,
-  nextSibling,
-  rootedParentOf,
-  prevSibling,
-  splitChain,
-  thoughtsEditingFromChain,
-  parentOfThought,
-  getPrevRank,
-  getThoughtById,
-} from '../selectors'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import findDescendant from '../selectors/findDescendant'
+import isContextViewActive from '../selectors/isContextViewActive'
+import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
+import nextSibling from '../selectors/nextSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
+import prevSibling from '../selectors/prevSibling'
+import splitChain from '../selectors/splitChain'
+import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
+import parentOfThought from '../selectors/parentOfThought'
+import getPrevRank from '../selectors/getPrevRank'
+import getThoughtById from '../selectors/getThoughtById'
 
 // reducers
-import { alert, deleteThought, moveThought, newThought, setCursor } from '../reducers'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import alert from '../reducers/alert'
+import deleteThought from '../reducers/deleteThought'
+import moveThought from '../reducers/moveThought'
+import newThought from '../reducers/newThought'
+import setCursor from '../reducers/setCursor'
+import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Returns path to the archive of the given context. */
 export const pathAndRankToArchive = (

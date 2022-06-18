@@ -1,6 +1,6 @@
-import { isDocumentEditable } from '../util'
-import { cursorCleared } from '../action-creators'
-import { Shortcut } from '../@types'
+import isDocumentEditable from '../util/isDocumentEditable'
+import cursorCleared from '../action-creators/cursorCleared'
+import Shortcut from '../@types/Shortcut'
 
 const clearThoughtShortcut: Shortcut = {
   id: 'clearThought',

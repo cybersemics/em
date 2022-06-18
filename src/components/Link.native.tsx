@@ -1,14 +1,18 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import { search, searchContexts, setCursor, toggleSidebar } from '../action-creators'
-import { head, strip } from '../util'
+import search from '../action-creators/search'
+import searchContexts from '../action-creators/searchContexts'
+import setCursor from '../action-creators/setCursor'
+import toggleSidebar from '../action-creators/toggleSidebar'
+import head from '../util/head'
+import strip from '../util/strip'
 import { StyleSheet } from 'react-native'
 import { Text } from './Text.native'
 import { store } from '../store'
-import { getThoughtById } from '../selectors'
+import getThoughtById from '../selectors/getThoughtById'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import { SimplePath } from '../@types'
+import SimplePath from '../@types/SimplePath'
 
 interface LinkProps {
   charLimit?: number

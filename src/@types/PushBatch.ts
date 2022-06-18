@@ -1,12 +1,12 @@
-import { Context } from './Context'
-import { Index } from './IndexType'
-import { Lexeme } from './Lexeme'
-import { Thought } from './Thought'
-import { Path } from './Path'
-import { RecentlyEditedTree } from './RecentlyEditedTree'
+import Context from './Context'
+import Index from './IndexType'
+import Lexeme from './Lexeme'
+import Thought from './Thought'
+import Path from './Path'
+import RecentlyEditedTree from './RecentlyEditedTree'
 
 /** Defines a single batch of updates added to the push queue. */
-export interface PushBatch {
+interface PushBatch {
   lexemeIndexUpdates: Index<Lexeme | null>
   thoughtIndexUpdates: Index<Thought | null>
   local?: boolean
@@ -17,3 +17,5 @@ export interface PushBatch {
   updates?: Index<string>
   pendingLexemes?: Index<boolean>
 }
+
+export default PushBatch
