@@ -1,10 +1,11 @@
 import { HOME_TOKEN } from '../../constants'
 import { initialState, reducerFlow } from '../../util'
-import { getContexts, contextToThought, getThoughtById } from '../../selectors'
+import { getContexts, getThoughtById } from '../../selectors'
 import { newSubthought, newThought, deleteEmptyThought } from '../../reducers'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import contextToThought from '../../test-helpers/contextToThought'
 
 it('delete from root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]

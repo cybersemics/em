@@ -2,19 +2,13 @@ import 'react-native-get-random-values'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, EMPTY_SPACE } from '../../constants'
 import { hashThought, never, reducerFlow, timestamp, removeHome } from '../../util'
 import { initialState } from '../../util/initialState'
-import {
-  contextToThoughtId,
-  exportContext,
-  getLexeme,
-  contextToThought,
-  contextToPath,
-  getAllChildren,
-} from '../../selectors'
+import { contextToThoughtId, exportContext, getLexeme, contextToPath, getAllChildren } from '../../selectors'
+import { ImportTextPayload } from '../../reducers/importText'
 import { importText, newThought } from '../../reducers'
 import { State } from '../../@types'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
-import { ImportTextPayload } from '../../reducers/importText'
+import contextToThought from '../../test-helpers/contextToThought'
 import _ from 'lodash'
 
 /** Helper function that imports html and exports it as plaintext. */

@@ -1,7 +1,6 @@
 import { store } from '../../store'
 import { HOME_TOKEN } from '../../constants'
 import { clear, importText, newThought, setCursor } from '../../action-creators'
-import { contextToThought } from '../../selectors'
 import * as dexie from '../../data-providers/dexie'
 import getContext from '../../data-providers/data-helpers/getContext'
 import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
@@ -14,6 +13,7 @@ import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/delet
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import contextToThought from '../../test-helpers/contextToThought'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.

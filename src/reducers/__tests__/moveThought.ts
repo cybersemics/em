@@ -5,7 +5,6 @@ import {
   getContexts,
   getLexeme,
   getRankAfter,
-  contextToThought,
   pathToThought,
   contextToPath,
   childIdsToThoughts,
@@ -18,6 +17,7 @@ import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByCo
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 
 it('move within root', () => {
   const steps = [

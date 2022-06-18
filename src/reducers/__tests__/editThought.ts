@@ -5,7 +5,6 @@ import {
   exportContext,
   getContexts,
   getLexeme,
-  contextToThought,
   parentOfThought,
   childIdsToThoughts,
 } from '../../selectors'
@@ -17,6 +16,7 @@ import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
+import contextToThought from '../../test-helpers/contextToThought'
 
 it('edit a thought', () => {
   const steps = [

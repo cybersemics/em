@@ -5,7 +5,7 @@ import { Context, Index, Thought, State, ThoughtId } from '../@types'
 import { isRoot } from '../util'
 import { childIdsToThoughts, getThoughtById } from '../selectors'
 
-/** Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. */
+/** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
 const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
   if (isRoot(thoughts)) return thoughts[0] as ThoughtId
 
