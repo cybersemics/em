@@ -19,6 +19,8 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 import { getSessionId } from '../util/sessionManager'
+import { getLexeme } from '../selectors/getLexeme'
+import removeContext from '../util/removeContext'
 
 /**
  * Merges two given thoughts with the same value by moving all the children of the source thought to the end of the desination thought.
@@ -52,13 +54,45 @@ const mergeThoughts = (
         sourceThought.parentId
       } and head(parentof(sourceThoughtPath)) of ${head(parentOf(sourceThoughtPath))}. Aborting merge.`,
     )
-    console.warn('  sourceThought', sourceThought)
-    console.warn('  sourceThoughtPath', sourceThought.id)
+    console.info('  sourceThought', sourceThought)
+    console.info('  sourceThoughtPath', sourceThoughtPath)
     return state
   }
 
   if (sourceThought.id === targetThought.id) {
-    throw new Error('Cannot merge a thought to itself.')
+    if (sourceThoughtPath.length === targetThoughtPath.length) {
+      throw new Error('Cannot merge a thought to itself.')
+    } else {
+      console.warn(
+        'A thought with the same id was found to be in more than one context. This suggests a data integrity issue upstream. Deleting source thought and keeping destination thought for now.',
+      )
+      console.info('  sourceThought', sourceThought)
+      console.info('  sourceThoughtPath', sourceThoughtPath)
+      console.info('  targetThoughtPath', targetThoughtPath)
+      const sourceParentId = head(parentOf(sourceThoughtPath))
+      const sourceParent = getThoughtById(state, sourceParentId)
+      const lexeme = getLexeme(state, sourceThought.value)
+      const key = hashThought(sourceThought.value)
+      return reducerFlow([
+        // remove child from the source parent without deleting the Thought itself
+        updateThoughts({
+          thoughtIndexUpdates: {
+            [sourceParentId]: {
+              ...sourceParent,
+              childrenMap: keyValueBy(sourceParent.childrenMap, (key, id) =>
+                id !== sourceThought.id ? { [key]: id } : null,
+              ),
+            },
+          },
+          // update Lexeme
+          lexemeIndexUpdates: lexeme
+            ? {
+                [key]: removeContext(state, lexeme, sourceThought.id),
+              }
+            : {},
+        }),
+      ])(state)
+    }
   }
 
   if (normalizeThought(sourceThought.value) !== normalizeThought(targetThought.value)) {
