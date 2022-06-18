@@ -6,7 +6,6 @@ import unroot from '../util/unroot'
 import getRankBefore from '../selectors/getRankBefore'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import archiveThought from '../reducers/archiveThought'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
 import _ from 'lodash'
@@ -16,12 +15,11 @@ import State from '../@types/State'
 import { getChildren, isChildVisible, getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 interface Options {
-  deleteCursor?: boolean
   at?: Path | null
 }
 
 /** Collapses the active thought. */
-const collapseContext = (state: State, { deleteCursor, at }: Options) => {
+const collapseContext = (state: State, { at }: Options) => {
   const { cursor } = state
 
   const path = at || cursor
@@ -62,12 +60,10 @@ const collapseContext = (state: State, { deleteCursor, at }: Options) => {
                 newRank: getRankBefore(updatedState, simpleCursor),
               })
           }),
-          !deleteCursor
-            ? archiveThought({ path })
-            : deleteThought({
-                pathParent: parentOf(simpleCursor),
-                thoughtId: head(simpleCursor),
-              }),
+          deleteThought({
+            pathParent: parentOf(simpleCursor),
+            thoughtId: head(simpleCursor),
+          }),
           state =>
             setCursor(state, {
               path: getNewCursor(state),

@@ -31,8 +31,6 @@ it('collapse context with single child', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - =archive
-      - b
     - c`)
 
   matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
@@ -55,8 +53,6 @@ it('collapse context with multiple children', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - =archive
-      - b
     - k
     - c
     - d`)
@@ -82,8 +78,6 @@ it('merge children', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - =archive
-      - b
     - c
     - d
     - x`)
@@ -110,8 +104,6 @@ it.skip('merge duplicate children', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
-    - =archive
-      - b
     - c
     - d`)
 
