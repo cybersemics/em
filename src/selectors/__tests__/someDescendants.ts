@@ -15,12 +15,7 @@ it('return true if at least one descendant fulfills the predicate', () => {
           - h
   `
   const state = importText({ text })(initialState())
-  const isDeep = someDescendants(
-    state,
-    [HOME_TOKEN],
-    // context does not include child
-    (child, context) => context.length > 1,
-  )
+  const isDeep = someDescendants(state, HOME_TOKEN, thought => thought.value === 'c')
   expect(isDeep).toEqual(true)
 })
 
@@ -37,14 +32,13 @@ it('short circuit after the predicate is found', () => {
   `
   const state = importText({ text })(initialState())
   let touched = 0
-  someDescendants(state, [HOME_TOKEN], (child, context) => {
+  someDescendants(state, HOME_TOKEN, thought => {
     touched++
-    // context does not include child
-    return context.length > 1
+    return thought.value === 'c'
   })
 
   // short circuit
-  // g and h are never touched because c is found
+  // g and h are never touched when c is found
   expect(touched).toEqual(6)
 })
 
@@ -60,11 +54,6 @@ it('return false if no descendant fulfills the predicate', () => {
           - h
   `
   const state = importText({ text })(initialState())
-  const isDeep = someDescendants(
-    state,
-    [HOME_TOKEN],
-    // context does not include child
-    (child, context) => context.length > 99,
-  )
+  const isDeep = someDescendants(state, HOME_TOKEN, thought => false)
   expect(isDeep).toEqual(false)
 })
