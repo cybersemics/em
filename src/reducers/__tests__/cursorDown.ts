@@ -82,7 +82,8 @@ describe('normal view', () => {
       newSubthought('n'),
       newThought('m'),
       setCursorFirstMatch(['a']),
-      toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+      (state: State) =>
+        toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
       cursorDown,
     ]
 

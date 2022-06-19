@@ -2,7 +2,6 @@ import React from 'react'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
@@ -32,10 +31,9 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(state, cursor)
     dispatch(
       toggleAttribute({
-        context,
+        path: cursor,
         key: '=pin',
         value: 'true',
       }),

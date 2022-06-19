@@ -41,16 +41,16 @@ const bindContextShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const contextRanked = rootedParentOf(state, cursor)
+    const path = rootedParentOf(state, cursor)
 
-    if (!cursor || !isContextViewActive(state, contextRanked)) return
+    if (!cursor || !isContextViewActive(state, path)) return
 
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(state, lastThoughtsFromContextChain(state, contextChain))
 
     dispatch(
       toggleAttribute({
-        context: pathToContext(state, contextRanked),
+        path: path,
         key: '=bindContextShortcut',
         value: JSON.stringify(contextBound),
       }),

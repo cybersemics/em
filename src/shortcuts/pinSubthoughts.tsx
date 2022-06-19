@@ -2,7 +2,6 @@ import React from 'react'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import alert from '../action-creators/alert'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import IconType from '../@types/Icon'
@@ -45,7 +44,6 @@ const pinSubthoughtsShortcut: Shortcut = {
     if (!cursor) return
 
     const simplePath = simplifyPath(state, cursor)
-    const context = pathToContext(state, simplePath)
 
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
@@ -58,7 +56,7 @@ const pinSubthoughtsShortcut: Shortcut = {
 
     dispatch(
       toggleAttribute({
-        context,
+        path: simplePath,
         key: '=pinChildren',
         value: 'true',
       }),

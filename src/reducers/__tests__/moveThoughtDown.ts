@@ -13,6 +13,7 @@ import moveThoughtDown from '../moveThoughtDown'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import contextToPath from '../../selectors/contextToPath'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), moveThoughtDown]
@@ -72,7 +73,8 @@ it('move to next uncle', () => {
 it('move to next uncle in sorted list', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    (state: State) =>
+      toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
     newSubthought('a1'),
     newThought('a2'),
     newThoughtAtFirstMatch({
@@ -99,7 +101,8 @@ it('move to next uncle in sorted list', () => {
 it('prevent move in sorted list when there is no next uncle', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    (state: State) =>
+      toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
     newSubthought('a1'),
     newThought('a2'),
     setCursorFirstMatch(['a', 'a1']),

@@ -1,4 +1,4 @@
-import { EM_TOKEN, HOME_TOKEN } from '../../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import contextToPath from '../../selectors/contextToPath'
 import editThought from '../../action-creators/editThought'
@@ -262,7 +262,7 @@ describe('DOM', () => {
       setCursor({ path: null }),
 
       toggleAttribute({
-        context: ['__ROOT__'],
+        path: HOME_PATH,
         key: '=sort',
         value: 'Alphabetical',
       }),
@@ -285,11 +285,14 @@ describe('DOM', () => {
       newThought({ value: '2' }),
       setCursorFirstMatchActionCreator(['a']),
 
-      toggleAttribute({
-        context: ['a'],
-        key: '=sort',
-        value: 'Alphabetical',
-      }),
+      (dispatch, getState) =>
+        dispatch(
+          toggleAttribute({
+            path: contextToPath(getState(), ['a']),
+            key: '=sort',
+            value: 'Alphabetical',
+          }),
+        ),
     ])
 
     const thought = await findThoughtByText('a')
@@ -375,11 +378,14 @@ describe('DOM', () => {
             }),
           )) as Thunk,
 
-        toggleAttribute({
-          context: ['a'],
-          key: '=sort',
-          value: 'None',
-        }),
+        (dispatch, getState) =>
+          dispatch(
+            toggleAttribute({
+              path: contextToPath(getState(), ['a']),
+              key: '=sort',
+              value: 'None',
+            }),
+          ),
       ])
 
       const thought = await findThoughtByText('a')
@@ -403,7 +409,7 @@ describe('DOM', () => {
 
       store.dispatch([
         toggleAttribute({
-          context: ['__ROOT__'],
+          path: HOME_PATH,
           key: '=sort',
           value: 'Alphabetical',
         }),
@@ -435,11 +441,14 @@ describe('DOM', () => {
       ])
 
       store.dispatch([
-        toggleAttribute({
-          context: ['a'],
-          key: '=sort',
-          value: 'Alphabetical',
-        }),
+        (dispatch, getState) =>
+          dispatch(
+            toggleAttribute({
+              path: contextToPath(getState(), ['a']),
+              key: '=sort',
+              value: 'Alphabetical',
+            }),
+          ),
         (dispatch, getState) =>
           dispatch(
             setFirstSubthought({

@@ -2,7 +2,6 @@ import React from 'react'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
@@ -34,11 +33,10 @@ const pinSubthoughtsShortcut: Shortcut = {
     if (!cursor) return
 
     const simplePath = simplifyPath(state, cursor)
-    const context = pathToContext(state, simplePath)
 
     dispatch(
       toggleAttribute({
-        context,
+        path: simplePath,
         key: '=pinChildren',
         value: 'true',
       }),

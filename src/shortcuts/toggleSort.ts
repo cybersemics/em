@@ -6,11 +6,12 @@ import deleteAttribute from '../action-creators/deleteAttribute'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import Icon from '../components/icons/Sort'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
 import Shortcut from '../@types/Shortcut'
 import SortPreference from '../@types/SortPreference'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+import findDescendant from '../selectors/findDescendant'
+import Path from '../@types/Path'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']
@@ -48,7 +49,6 @@ const toggleSortShortcut: Shortcut = {
 
     const simplePath = cursor || HOME_PATH
     const id = head(simplePath)
-    const context = pathToContext(state, simplePath)
     const currentSortPreference = getSortPreference(state, id)
     const globalSortPreference = getGlobalSortPreference(state)
     const nextSortPreference = decideNextSortPreference(currentSortPreference)
@@ -78,36 +78,45 @@ const toggleSortShortcut: Shortcut = {
     // We need to have this control to not remove the sort type when switching between Alphabetical/Asc and Alphabetical/Desc
     else {
       // if next sort preference direction is null, toggle off sort direction
-      !nextSortPreference.direction &&
-        currentSortPreference.direction &&
+      if (!nextSortPreference.direction && currentSortPreference.direction) {
+        const sortId = findDescendant(state, id, '=sort')
+        const pathSort = unroot([...simplePath, sortId] as Path)
         dispatch(
           toggleAttribute({
-            context: unroot([...context, '=sort']),
+            path: pathSort!,
             key: currentSortPreference.type,
             value: currentSortPreference.direction,
           }),
         )
+      }
 
-      // If next sort preference type does not equal to current sort  then set =sort attribute.
-      ;(nextSortPreference.type !== currentSortPreference.type ||
-        nextSortPreference.type === globalSortPreference.type) &&
+      // If next sort preference type does not equal to current sort then set =sort attribute.
+      if (
+        nextSortPreference.type !== currentSortPreference.type ||
+        nextSortPreference.type === globalSortPreference.type
+      ) {
         dispatch(
           toggleAttribute({
-            context: context,
+            path: simplePath,
             key: '=sort',
             value: nextSortPreference.type,
           }),
         )
+      }
 
       // if next sort preference direction is not null, toggle direction
-      nextSortPreference.direction &&
+      if (nextSortPreference.direction) {
+        // use fresh state to pick up new =sort (if statement above)
+        const sortId = findDescendant(getState(), id, '=sort')
+        const pathSort = unroot([...simplePath, sortId] as Path)
         dispatch(
           toggleAttribute({
-            context: unroot([...context, '=sort']),
+            path: pathSort!,
             key: nextSortPreference.type,
             value: nextSortPreference.direction,
           }),
         )
+      }
     }
   },
   isActive: getState => {

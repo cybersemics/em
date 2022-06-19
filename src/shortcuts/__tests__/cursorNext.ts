@@ -5,6 +5,8 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import globals from '../../globals'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import toggleAttribute from '../../action-creators/toggleAttribute'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
@@ -82,12 +84,14 @@ describe('normal view', () => {
             - c
             - b`,
       }),
-      {
-        type: 'toggleAttribute',
-        context: ['SORT'],
-        key: '=sort',
-        value: 'Alphabetical',
-      },
+      (dispatch, getState) =>
+        dispatch(
+          toggleAttribute({
+            path: contextToPath(getState(), ['SORT']),
+            key: '=sort',
+            value: 'Alphabetical',
+          }),
+        ),
       setCursorFirstMatchActionCreator(['SORT', 'a']),
       cursorNext(),
     ])
