@@ -11,6 +11,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
 import HomeLink from './HomeLink'
+import Superscript from './Superscript'
 import { ConnectedThoughtProps } from './Thought'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
@@ -75,7 +76,7 @@ const StaticThought = ({
         />
       )}
 
-      {/* <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} /> */}
+      <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
     </div>
   )
 }

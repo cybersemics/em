@@ -26,7 +26,7 @@ import Byline from './Byline'
 import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts'
-// import ThoughtAnnotation from './ThoughtAnnotation'
+import ThoughtAnnotation from './ThoughtAnnotation'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 
 // hooks
@@ -477,7 +477,7 @@ const ThoughtContainer = ({
             }}
           ></span>
 
-          {/* <ThoughtAnnotation
+          <ThoughtAnnotation
             env={env}
             path={path}
             homeContext={homeContext}
@@ -486,7 +486,7 @@ const ThoughtContainer = ({
             showContexts={showContexts}
             style={styleNew || undefined}
             simplePath={simplePath}
-          /> */}
+          />
 
           <StaticThought
             path={path}
