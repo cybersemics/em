@@ -2,10 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { isTouch } from '../browser'
 import { store } from '../store'
-import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
@@ -22,6 +20,8 @@ import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { firstVisibleChild } from '../selectors/getChildren'
+import ThoughtId from '../@types/ThoughtId'
 
 interface NoteProps {
   path: Path
@@ -42,39 +42,42 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
   )
 }
 
+/** Gets the value of a thought's note. Returns null if the thought does not have a note. */
+const noteValue = (state: State, id: ThoughtId) => {
+  const noteId = findDescendant(state, id, '=note')
+  if (!noteId) return null
+  const noteThought = getThoughtById(state, noteId)
+  if (noteThought.pending) return null
+  return firstVisibleChild(state, noteId!)?.value ?? null
+}
+
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
 const Note = ({ path }: NoteProps) => {
-  const state = store.getState()
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
   const [justPasted, setJustPasted] = useState(false)
 
+  /** Gets state.noteFocus. */
+  const hasFocus = useSelector((state: State) => state.noteFocus && state.cursor && head(state.cursor) === head(path))
+
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
-    const state = store.getState()
     // cursor must be true if note is focused
-    if (state.noteFocus && state.cursor && head(state.cursor) === head(path)) {
+    if (hasFocus) {
       selection.set(noteRef.current!, { end: true })
     }
-  }, [state.noteFocus])
+  }, [hasFocus])
 
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-  const note: string | null = useSelector((state: State) => {
-    if (isContextViewActive(state, path)) return null
-    const noteId = findDescendant(state, thoughtId, '=note')
-    const noteThought = noteId ? getThoughtById(state, noteId) : null
-    if (noteThought?.pending) return null
-    return attribute(state, thoughtId, '=note')
-  })
+  const note = useSelector((state: State) => noteValue(state, thoughtId))
 
   if (note === null) return null
 
   /** Handles note keyboard shortcuts. */
   const onKeyDown = (e: React.KeyboardEvent) => {
     // delete empty note
-    // need to get updated note attribute (not the note in the outside scope)
-    const note = attribute(store.getState(), thoughtId, '=note')
+    const note = noteValue(store.getState(), thoughtId)
 
     // select thought
     if (e.key === 'Escape' || e.key === 'ArrowUp') {
@@ -101,6 +104,7 @@ const Note = ({ path }: NoteProps) => {
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
     // calculate pathToContext onChange not in render for performance
+    const state = store.getState()
     const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
