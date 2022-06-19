@@ -480,7 +480,7 @@ const Editable = ({
     // safari adds <br> to empty contenteditables after editing, so strip them out
     // make sure empty thoughts are truly empty'
     if (isEmpty && contentRef.current) {
-      contentRef!.current.innerHTML = newValue
+      contentRef.current.innerHTML = newValue
     }
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
@@ -571,9 +571,14 @@ const Editable = ({
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
-    // on blur remove error, remove invalid-option class, and reset editable html
-    if (invalidState) {
-      invalidStateError(null)
+    // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
+    // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
+    // oldValueRef.current is the latest value since throttledChangeRef was just flushed
+    if (contentRef.current?.innerHTML !== oldValueRef.current) {
+      // remove the invalid state error, remove invalid-option class, and reset editable html
+      if (invalidState) {
+        invalidStateError(null)
+      }
       contentRef.current!.innerHTML = oldValueRef.current
     }
 
