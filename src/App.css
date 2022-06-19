@@ -2749,6 +2749,7 @@ code,
   margin-left: -1em;
   color: #838283;
   content: '▸';
+  font-style: normal;
   vertical-align: middle;
 }
 
