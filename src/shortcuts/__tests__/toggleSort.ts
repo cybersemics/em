@@ -118,7 +118,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
     ((dispatch, getState) =>
       dispatch(
         setFirstSubthought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
+          path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'])!,
           value: 'Desc',
         }),
       )) as Thunk,
@@ -407,10 +407,13 @@ describe('DOM', () => {
           key: '=sort',
           value: 'Alphabetical',
         }),
-        setFirstSubthought({
-          context: ['=sort', 'Alphabetical'],
-          value: 'Desc',
-        }),
+        (dispatch, getState) =>
+          dispatch(
+            setFirstSubthought({
+              path: contextToPath(getState(), ['=sort', 'Alphabetical'])!,
+              value: 'Desc',
+            }),
+          ),
       ])
 
       const thought = await findThoughtByText('c')
@@ -437,10 +440,13 @@ describe('DOM', () => {
           key: '=sort',
           value: 'Alphabetical',
         }),
-        setFirstSubthought({
-          context: ['a', '=sort', 'Alphabetical'],
-          value: 'Desc',
-        }),
+        (dispatch, getState) =>
+          dispatch(
+            setFirstSubthought({
+              path: contextToPath(getState(), ['a', '=sort', 'Alphabetical'])!,
+              value: 'Desc',
+            }),
+          ),
       ])
 
       const thought = await findThoughtByText('a')

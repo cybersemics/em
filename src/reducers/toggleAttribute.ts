@@ -8,9 +8,10 @@ import findDescendant from '../selectors/findDescendant'
 import contextToPath from '../selectors/contextToPath'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
 import Context from '../@types/Context'
+import Path from '../@types/Path'
 import State from '../@types/State'
+import createId from '../util/createId'
 
 /** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, just toggles the attribute itself. */
 const toggleAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) => {
@@ -19,13 +20,16 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
   const isNullaryAttribute = value === undefined
 
   const path = contextToPath(state, context)
-  const attributePath = contextToPath(state, unroot([...context, key]))
 
   const exists = !isNullaryAttribute
     ? path && attributeEquals(state, head(path), key, value!)
     : !path || findDescendant(state, head(path), key)
 
-  return attributePath && exists
+  const idAttributeOld = path && findDescendant(state, head(path), key)
+  const idAttribute = idAttributeOld || createId()
+  const attributePath = [...path!, idAttribute] as unknown as Path
+
+  return exists
     ? // delete existing attribute
       deleteThought(state, {
         pathParent: path!,
@@ -34,9 +38,10 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
     : // create new attribute
       reducerFlow([
         // create attribute if it does not exist
-        !path || !findDescendant(state, head(path), key)
+        !idAttributeOld
           ? state =>
               createThought(state, {
+                id: idAttribute,
                 path: path!, // ???
                 value: key,
                 rank: path ? getPrevRank(state, head(path)) : 0,
@@ -45,10 +50,12 @@ const toggleAttribute = (state: State, { context, key, value }: { context: Conte
 
         // set attribute value
         !isNullaryAttribute
-          ? setFirstSubthought({
-              context: [...unroot(context), key],
-              value: value!,
-            })
+          ? (state: State) => {
+              return setFirstSubthought(state, {
+                path: attributePath,
+                value: value!,
+              })
+            }
           : null,
       ])(state)
 }
