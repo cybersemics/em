@@ -24,16 +24,18 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     } else if (findDescendant(state, head(cursor), '=readonly')) {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be deleted.` }))
     } else {
-      // undo alert
-      dispatch(
-        alert(`Deleted ${ellipsize(cursorThought.value)}`, {
-          showCloseLink: true,
-          clearDelay: 8000,
-        }),
-      )
-
       // delete the thought
       dispatch(deleteThoughtWithCursor({ path: cursor }))
+
+      // undo alert
+      if (cursorThought.value) {
+        dispatch(
+          alert(`Deleted ${ellipsize(cursorThought.value)}`, {
+            showCloseLink: true,
+            clearDelay: 8000,
+          }),
+        )
+      }
     }
   }
 }
