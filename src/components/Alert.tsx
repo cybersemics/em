@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { Dispatch } from 'redux'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import alert from '../action-creators/alert'
+import alertActive from '../action-creators/alertActive'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import Alert from '../@types/Alert'
 import State from '../@types/State'
@@ -44,7 +45,13 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
 
 /** The alert component itself. Separate so that a key property can be used to force a reset of useSwipeToDismissProps. */
 const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>; onClose: () => void }) => {
-  const useSwipeToDismissProps = useSwipeToDismiss({ onDismiss: onClose })
+  const dispatch = useDispatch()
+  const useSwipeToDismissProps = useSwipeToDismiss({
+    onDismiss: onClose,
+    onDismissEnd: () => {
+      dispatch(alertActive(false))
+    },
+  })
 
   return (
     <div className={alert.isInline ? 'alert alert-inline' : 'alert'} {...useSwipeToDismissProps}>

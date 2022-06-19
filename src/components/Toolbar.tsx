@@ -29,6 +29,17 @@ import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 import Shortcut from './Shortcut'
 
+interface ToolbarIconProps {
+  clearHoldTimer: () => void
+  disabled?: boolean
+  fg: string
+  fontSize: number
+  isPressing: boolean
+  setPressingToolbarId: (id: string) => void
+  shortcutId: string
+  startOverlayTimer: (id: string) => void
+}
+
 const ARROW_SCROLL_BUFFER = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -48,27 +59,18 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-interface ToolbarIconProps {
-  shortcutId: string
-  isPressing: boolean
-  startOverlayTimer: (id: string) => void
-  clearHoldTimer: () => void
-  setPressingToolbarId: (id: string) => void
-  fontSize: number
-  fg: string
-}
-
 /**
  * ToolbarIcon component.
  */
 const ToolbarIcon: FC<ToolbarIconProps> = ({
-  shortcutId,
-  isPressing,
-  startOverlayTimer,
   clearHoldTimer,
-  setPressingToolbarId,
-  fontSize,
+  disabled,
   fg,
+  fontSize,
+  isPressing,
+  setPressingToolbarId,
+  shortcutId,
+  startOverlayTimer,
 }) => {
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
@@ -110,7 +112,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       }}
       onClick={e => {
         e.preventDefault()
-        if (!isButtonExecutable) return
+        if (!isButtonExecutable || disabled) return
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
       }}
     >
@@ -158,6 +160,8 @@ const Toolbar = ({
       window.removeEventListener('resize', updateArrows)
     }
   }, [])
+
+  const alertActive = useSelector((state: State) => state.alertActive)
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
@@ -283,14 +287,15 @@ const Toolbar = ({
             {shortcutIds.map(id => {
               return (
                 <ToolbarIcon
-                  shortcutId={id}
-                  key={id}
-                  startOverlayTimer={startOverlayTimer}
-                  setPressingToolbarId={setPressingToolbarId}
+                  clearHoldTimer={clearHoldTimer}
+                  disabled={alertActive}
                   fg={fg}
                   fontSize={fontSize}
-                  clearHoldTimer={clearHoldTimer}
                   isPressing={pressingToolbarId === id}
+                  key={id}
+                  setPressingToolbarId={setPressingToolbarId}
+                  shortcutId={id}
+                  startOverlayTimer={startOverlayTimer}
                 />
               )
             })}

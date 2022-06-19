@@ -15,6 +15,9 @@ import { User } from './Firebase'
 interface State {
   absoluteContextTime?: Timestamp
   alert?: Alert
+  // tracks when an alert is visible until it is dismissed and its close animation has completed
+  // used by Toolbar to ensure that Toolbar buttons are not activated during swipe-to-dismiss
+  alertActive?: boolean
   archived?: boolean
   authenticated: boolean
   autologin: boolean
