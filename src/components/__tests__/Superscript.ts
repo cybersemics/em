@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
+import toggleHiddenThoughtsActionCreator from '../../action-creators/toggleHiddenThoughts'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
@@ -56,6 +57,7 @@ it('Superscript should not count for hashed version of metaprogramming attribute
       - b
         - Archive`,
     }),
+    toggleHiddenThoughtsActionCreator(),
   ])
 
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')

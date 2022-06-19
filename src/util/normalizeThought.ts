@@ -4,8 +4,11 @@ import { REGEXP_TAGS } from '../constants'
 import emojiStrip from 'emoji-strip'
 import isAttribute from './isAttribute'
 
-/** Trims a string. */
-export const trim = (s: string) => {
+/**
+ * Trims value for a thought (removes non-word character).
+ * Preserves metaprogramming attribute character `=` from trimming.
+ */
+export const trimThought = (s: string) => {
   const modifiedString = isAttribute(s) ? s.slice(1) : s
   const replaced = modifiedString.replace(
     modifiedString.length > 0 && modifiedString.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
@@ -46,7 +49,7 @@ const normalizeThought = _.memoize(
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
-    trim,
+    trimThought,
     stripEmojiFromText,
     singularize,
   ]),
