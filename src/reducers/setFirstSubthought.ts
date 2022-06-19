@@ -16,8 +16,12 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
   const oldFirstThoughtRanked = getAllChildrenAsThoughts(state, id)[0]
 
   const path = contextToPath(state, context)
+  if (!path) {
+    console.info({ context, value })
+    throw new Error('Cannot setFirstSubthoughts on non-existent Path')
+  }
 
-  return path && oldFirstThoughtRanked
+  return oldFirstThoughtRanked
     ? // context has a first and must be changed
       editThought(state, {
         context,
@@ -28,7 +32,7 @@ const setFirstSubthoughts = (state: State, { context, value }: { context: Contex
     : // context is empty and so first thought must be created
       // assume context exists
       createThought(state, {
-        context,
+        path,
         value,
         rank: path ? getPrevRank(state, head(path)) : 0,
       })

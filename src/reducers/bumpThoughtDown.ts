@@ -60,9 +60,8 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     // new thought
     state => {
       // the context of the new empty thought
-      const contextEmpty = pathToContext(state, simplePath as Path)
       return createThought(state, {
-        context: contextEmpty,
+        path: simplePath as Path,
         rank: getPrevRank(state, head(simplePath!)),
         value,
       })

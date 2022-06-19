@@ -31,7 +31,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
 
 // selectors
@@ -158,7 +157,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     props.showContexts
       ? createThought({
           value: toThought.value,
-          context: pathToContext(state, thoughtsFrom),
+          path: thoughtsFrom,
           rank: getNextRank(state, thoughtsFrom),
         })
       : moveThought({

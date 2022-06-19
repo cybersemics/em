@@ -30,7 +30,6 @@ import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
@@ -107,9 +106,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const simplePath = simplifyPath(state, path)
 
-  const thoughts = pathToContext(state, simplePath)
   const parentPath = rootedParentOf(state, simplePath)
-  const context = pathToContext(state, parentPath)
   const thoughtId = head(simplePath)
   const parentId = head(parentPath)
 
@@ -164,7 +161,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const reducers = [
     // createThought
     createThought({
-      context: insertNewSubthought ? thoughts : context,
+      path: insertNewSubthought ? path : parentPath,
       // inserting a new child into a context functions the same as in the normal thought view
       addAsContext: (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought),
       rank: newRank,

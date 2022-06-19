@@ -13,7 +13,6 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import isRoot from '../util/isRoot'
 import createId from '../util/createId'
@@ -58,7 +57,7 @@ const subCategorizeOne = (state: State) => {
 
   return reducerFlow([
     createThought({
-      context: pathToContext(state, rootedParentOf(state, simplePath)),
+      path: rootedParentOf(state, simplePath),
       value,
       rank: newRank,
       id: newThoughtId,
