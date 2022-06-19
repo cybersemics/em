@@ -443,8 +443,8 @@ it('move with hash matched descendant', () => {
   const text = `
   - a
   - b
-    - =note
-      - note`
+    - Note
+      - notes`
 
   const steps = [
     importText({ text }),
@@ -461,15 +461,15 @@ it('move with hash matched descendant', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
-      - =note
-        - note`)
+      - Note
+        - notes`)
 
-  const thoughtNoteFirst = contextToThought(stateNew, ['a', 'b', '=note'])!
-  const thoughtNoteSecond = contextToThought(stateNew, ['a', 'b', '=note', 'note'])!
+  const thoughtNoteFirst = contextToThought(stateNew, ['a', 'b', 'Note'])!
+  const thoughtNoteSecond = contextToThought(stateNew, ['a', 'b', 'Note', 'notes'])!
 
   expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst.id)
 
-  expect(getContexts(stateNew, 'note')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
+  expect(getContexts(stateNew, 'notes')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
 })
 
 it('move with nested duplicate thoughts', () => {
