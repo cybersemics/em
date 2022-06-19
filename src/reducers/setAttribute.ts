@@ -1,24 +1,19 @@
 import _ from 'lodash'
-import contextToThoughtId from '../selectors/contextToThoughtId'
 import getPrevRank from '../selectors/getPrevRank'
 import unroot from '../util/unroot'
-import thoughtToPath from '../selectors/thoughtToPath'
+import head from '../util/head'
+import thoughtToContext from '../selectors/thoughtToContext'
 import createThought from '../reducers/createThought'
 import setFirstSubthought from '../reducers/setFirstSubthought'
 import reducerFlow from '../util/reducerFlow'
-import Context from '../@types/Context'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Sets an attribute on the given context. */
-const setAttribute = (state: State, { context, key, value }: { context: Context; key: string; value?: string }) => {
-  const parentId = contextToThoughtId(state, context)
-  if (!parentId) {
-    console.error('')
-    return state
-  }
-
-  const path = thoughtToPath(state, parentId)
+const setAttribute = (state: State, { path, key, value }: { path: Path; key: string; value?: string }) => {
+  const parentId = head(path)
+  const context = thoughtToContext(state, parentId)
   return reducerFlow([
     !getAllChildrenAsThoughts(state, parentId).some(child => child.value === key)
       ? state =>

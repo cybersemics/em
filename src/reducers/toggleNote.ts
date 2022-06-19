@@ -4,13 +4,11 @@ import deleteAttribute from '../reducers/deleteAttribute'
 import setAttribute from '../reducers/setAttribute'
 import setNoteFocus from '../reducers/setNoteFocus'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import State from '../@types/State'
 
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State) => {
-  const context = pathToContext(state, state.cursor!)
   const thoughtId = head(state.cursor!)
   const hasNote = findDescendant(state, thoughtId, '=note')
 
@@ -18,7 +16,7 @@ const toggleNote = (state: State) => {
     // create an empty note if it doesn't exist
     !hasNote
       ? setAttribute({
-          context,
+          path: state.cursor!,
           key: '=note',
           value: '',
         })

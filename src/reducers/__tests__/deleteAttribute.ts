@@ -16,12 +16,12 @@ it('delete attribute', () => {
     newThought('a'),
 
     // set attribute
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'hello',
+      }),
     // delete attribute
     (state: State) =>
       deleteAttribute(state, {

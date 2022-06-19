@@ -13,7 +13,6 @@ import setCursor from '../action-creators/setCursor'
 import setNoteFocus from '../action-creators/setNoteFocus'
 import toggleNote from '../action-creators/toggleNote'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import strip from '../util/strip'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import asyncFocus from '../device/asyncFocus'
@@ -104,8 +103,6 @@ const Note = ({ path }: NoteProps) => {
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
     // calculate pathToContext onChange not in render for performance
-    const state = store.getState()
-    const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
         (setJustPasted(false), strip(e.target.value))
@@ -115,7 +112,7 @@ const Note = ({ path }: NoteProps) => {
 
     dispatch(
       setAttribute({
-        context,
+        path,
         key: '=note',
         value,
       }),
