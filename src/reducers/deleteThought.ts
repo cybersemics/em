@@ -51,9 +51,10 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
   const { value } = deletedThought
 
+  // guard against missing lexeme
+  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
   if (!hasLexeme(state, value)) {
-    console.error(`Lexeme not found for thought value: ${value}`)
-    return state
+    console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
 
   const key = hashThought(value)
@@ -65,12 +66,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   if (!orphaned && !parent) {
     console.error('Parent not found!')
     return state
-  }
-
-  // guard against missing lexeme
-  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
-  if (!lexeme) {
-    console.warn('Missing Lexeme:', value)
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
