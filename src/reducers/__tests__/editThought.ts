@@ -1,6 +1,7 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import compareThought from '../../util/compareThought'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
@@ -48,18 +49,21 @@ it('edit a thought', () => {
 
   expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
 
-  expect(getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN])).toMatchObject([
-    {
-      id: contextToThoughtId(stateNew, ['b'])!,
-      value: 'b',
-      parentId: HOME_TOKEN,
-      rank: 1,
-    },
+  // sort children for order-insensitive matching
+  // eslint-disable-next-line fp/no-mutating-methods
+  const childrenSorted = getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN]).sort(compareThought)
+  expect(childrenSorted).toMatchObject([
     {
       id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
       rank: 0,
+    },
+    {
+      id: contextToThoughtId(stateNew, ['b'])!,
+      value: 'b',
+      parentId: HOME_TOKEN,
+      rank: 1,
     },
   ])
 

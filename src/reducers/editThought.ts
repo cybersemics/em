@@ -52,6 +52,7 @@ const editThought = (
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
+  const childrenMapKeyChanged = isAttribute(oldValue) !== isAttribute(newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
@@ -138,10 +139,6 @@ const editThought = (
     }
   }
 
-  const childrenNew = getAllChildren(state, parentOfEditedThought.id)
-    .filter(child => child !== editedThought.id)
-    .concat(editedThoughtId)
-
   const lexemeIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
     [oldKey]: newOldLexeme,
@@ -165,14 +162,16 @@ const editThought = (
   }
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    [parentOfEditedThought.id]: {
-      ...parentOfEditedThought,
-      childrenMap: createChildrenMap(stateWithNewThought, childrenNew),
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
+    // only update parent if childrenMap key changed
+    ...(childrenMapKeyChanged
+      ? {
+          [parentOfEditedThought.id]: {
+            ...parentOfEditedThought,
+            childrenMap: createChildrenMap(stateWithNewThought, getAllChildren(state, parentOfEditedThought.id)),
+          },
+        }
+      : null),
     [editedThought.id]: thoughtNew,
-    // ...thoughtIndexDescendantUpdates,
   }
 
   // preserve contextViews
