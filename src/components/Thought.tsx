@@ -463,7 +463,7 @@ const ThoughtContainer = ({
                 }
               }}
               simplePath={simplePath}
-              thought={getThoughtById(state, thoughtId)}
+              thoughtId={thoughtId}
               hideBullet={hideBullet}
               publish={publish}
               isDragging={isDragging}

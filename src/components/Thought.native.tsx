@@ -377,7 +377,7 @@ const ThoughtContainer = ({
         {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
-            thought={getThoughtById(state, thoughtId)}
+            thoughtId={thoughtId}
             leaf={isLeaf}
             onClick={() => {
               if (!isEditing || children.length === 0) {
