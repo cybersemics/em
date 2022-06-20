@@ -25,11 +25,11 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Filter out the properties that should not be saved to thoughts in the database. */
 const thoughtToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
+  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
 
 /** Filter out the properties that should not be saved to thought.childrenMap in the database. */
 const childToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
+  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (

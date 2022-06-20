@@ -4,6 +4,7 @@ import hashThought from '../../util/hashThought'
 import hashPath from '../../util/hashPath'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
+import filterObject from '../../util/filterObject'
 import never from '../../util/never'
 // import { getSessionId } from '../../util/sessionManager'
 import Index from '../../@types/IndexType'
@@ -115,7 +116,12 @@ async function* getDescendantThoughts(
         }
         const result = await provider.getThoughtWithChildren(id)
         if (result) {
-          childrenCache = { ...childrenCache, ...result.children }
+          childrenCache = {
+            ...childrenCache,
+            // filter out pending children so that they are fetched normally
+            // See /src/@types/ThoughtWithChildren.ts
+            ...filterObject(result.children, (id, child) => !child.pending),
+          }
         }
         return result?.thought
       }),
