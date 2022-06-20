@@ -21,7 +21,6 @@ const alert = (state: State, { alertType, showCloseLink, value, isInline = false
           isInline,
         }
       : null,
-    ...(value ? { alertActive: true } : null),
   }
 }
 

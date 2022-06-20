@@ -12,7 +12,7 @@ import { produce } from 'immer'
 import getThoughtById from '../selectors/getThoughtById'
 
 /** These properties are ignored when generating state patches. */
-const statePropertiesToOmit = ['alert', 'alertActive', 'pushQueue', 'user']
+const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
