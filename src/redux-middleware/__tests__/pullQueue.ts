@@ -46,8 +46,8 @@ it('disable isLoading after initialize', async () => {
 })
 
 it('load thought', async () => {
-  const parentEntryRoot1 = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRoot1).toBeFalsy()
+  const root1 = await getContext(db, [HOME_TOKEN])
+  expect(root1).toBeFalsy()
 
   fakeTimer.useFakeTimer()
 
@@ -59,8 +59,8 @@ it('load thought', async () => {
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
-  const parentEntryRoot = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRoot).toMatchObject({
+  const root = await getContext(db, [HOME_TOKEN])
+  expect(root).toMatchObject({
     childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
@@ -76,8 +76,8 @@ it('load thought', async () => {
   // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 
   // confirm thought is still in local db after state has been cleared
-  const parentEntryRootAfterReload = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRootAfterReload).toMatchObject({
+  const rootAfterReload = await getContext(db, [HOME_TOKEN])
+  expect(rootAfterReload).toMatchObject({
     childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
@@ -102,8 +102,8 @@ it('do not repopulate deleted thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const parentEntryRoot = contextToThought(store.getState(), [HOME_TOKEN])
-  expect(parentEntryRoot).toMatchObject({
+  const root = contextToThought(store.getState(), [HOME_TOKEN])
+  expect(root).toMatchObject({
     childrenMap: {},
   })
 

@@ -18,10 +18,7 @@ const contextToThoughtId = (state: State, thoughts: Context, rank?: number): Tho
   const rootThought = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))
 
   if (!rootThought) {
-    console.error(
-      'hashContext: Parent entry for root context not found',
-      startsWithEM ? EM_TOKEN : state.rootContext[0],
-    )
+    console.error('hashContext: Thought for root context not found', startsWithEM ? EM_TOKEN : state.rootContext[0])
     return null
   }
 
@@ -56,7 +53,7 @@ const recursiveThoughtFinder = (
   const nextThought = getThoughtById(state, child.id)
 
   if (!nextThought) {
-    console.warn('Parent entry for the child not found!', child)
+    console.warn('Thought for child not found', child)
     return null
   }
 

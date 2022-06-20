@@ -83,7 +83,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const thought = getThoughtById(state, head(simplePath))
 
   if (!thought) {
-    console.error(`achiveThought: Parent entry not found for id${head(simplePath)}!`)
+    console.error(`achiveThought: Thought not found for id ${head(simplePath)}`)
   }
   const { value, rank } = thought
   const thoughts = pathToContext(state, simplePath)

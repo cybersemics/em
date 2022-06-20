@@ -64,9 +64,9 @@ describe('integration', () => {
     const thoughtAId = contextToThoughtId(store.getState(), ['a'])!
 
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+    const root = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
+    expect(root).toMatchObject({
       childrenMap: { [thoughtAId]: thoughtAId },
     })
   })
@@ -90,9 +90,9 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+    const root = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
+    expect(root).toMatchObject({
       childrenMap: { [thoughtAId]: thoughtAId },
     })
   })
