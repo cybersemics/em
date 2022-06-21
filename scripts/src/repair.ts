@@ -1,16 +1,26 @@
 /** Finds thought's children with parentId that do not match thought.id and repairs it. Also removes children that do not have a corresponding entry in thoughtIndex. */
 
-const fs = require('fs')
-const path = require('path')
-const normalizeThought = require('./lib/normalizeThought')
+import fs from 'fs'
+import path from 'path'
+import normalizeThought from '../lib/normalizeThought.js'
+import Index from '../../src/@types/IndexType'
+import ThoughtId from '../../src/@types/ThoughtId'
+import Thought from '../../src/@types/Thought'
+import Lexeme from '../../src/@types/Lexeme'
 
-const [, , file, ...context] = process.argv
+interface Database {
+  thoughtIndex: Index<Thought>
+  lexemeIndex: Index<Lexeme>
+  schemaVersion: number
+}
+
+const [, , file] = process.argv
 if (!file) {
-  console.error('Usage: node [SCRIPT] thoughtIndex.json')
+  console.error('Usage: npm run repair -- db.json')
   process.exit(1)
 }
 
-const filterChildrenMapBy = (childrenMap, predicate) =>
+const filterChildrenMapBy = (childrenMap: Index<ThoughtId>, predicate: (id: ThoughtId) => boolean) =>
   Object.entries(childrenMap || {}).reduce(
     (accum, [key, id]) => ({
       ...accum,
@@ -19,10 +29,18 @@ const filterChildrenMapBy = (childrenMap, predicate) =>
     {},
   )
 
-const db = JSON.parse(fs.readFileSync(file, 'utf8'))
+const db: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
+
+if (db.schemaVersion !== 6) {
+  const schemaDetect = db.schemaVersion
+    ? `Database has schema v${db.schemaVersion}.`
+    : 'Database is missing schemaVersion property.'
+  console.error(`${schemaDetect} This script only works on schema v6.`)
+  process.exit(1)
+}
 
 // track children to eliminate duplicates
-let childrenTouched = {}
+let childrenTouched: Index<true> = {}
 
 let childThoughtsMissing = 0
 let numRepaired = 0
@@ -38,7 +56,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
   // remove children which do not have a corresponding entry in thoughtIndex
   if (children.length < Object.keys(thought.childrenMap || {}).length) {
     childThoughtsMissing += Object.keys(thought.childrenMap || {}).length - children.length
-    thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => db.thoughtIndex[id])
+    thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => !!db.thoughtIndex[id])
   }
 
   children.forEach(child => {
