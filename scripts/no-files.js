@@ -3,8 +3,8 @@
 
 /** Fails with exit code 1 if any of the given files exists. */
 
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
 
 const files = process.argv.slice(2)
 files.forEach(file => {
