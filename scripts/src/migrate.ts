@@ -6,23 +6,31 @@ import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
 import keyValueBy from '../../src/util/keyValueBy.js'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
+import Database from './types/Database.js'
+import FirebaseThought from './types/FirebaseThought'
+import FirebaseLexeme from './types/FirebaseLexeme'
 
 const SCHEMA_LATEST = 7
 
-interface Database {
-  schemaVersion?: number
-}
+type FirebaseThought6 = Omit<Thought, 'childrenMap'> & { childrenMap?: Index<ThoughtId> }
+type FirebaseThought7 = Omit<ThoughtWithChildren, 'children'> & { children?: Index<Thought> }
 
 interface Database6 extends Database {
-  thoughtIndex: Index<Thought>
-  lexemeIndex: Index<Lexeme>
+  email: string
+  lastClientId: string
+  lastUpdated: string
+  lexemeIndex: Index<FirebaseLexeme>
   schemaVersion: 6
+  thoughtIndex: Index<FirebaseThought6>
 }
 
 interface Database7 extends Database {
-  thoughtIndex: Index<ThoughtWithChildren>
-  lexemeIndex: Index<Lexeme>
+  email: string
+  lastClientId: string
+  lastUpdated: string
+  lexemeIndex: Index<FirebaseLexeme>
   schemaVersion: 7
+  thoughtIndex: Index<FirebaseThought7>
 }
 
 type DatabaseLatest = Database7
@@ -58,18 +66,25 @@ const migrate = (db: Database): DatabaseLatest => {
 const migrateVersion: Record<number, (db: any) => Database> = {
   '6': (db6: Database6): Database7 => {
     const db7: Database7 = {
+      email: db6.email,
+      lastClientId: db6.lastClientId,
+      lastUpdated: db6.lastUpdated,
       thoughtIndex: {},
-      lexemeIndex: {},
+      lexemeIndex: db6.lexemeIndex,
       schemaVersion: 7,
     }
     Object.values(db6.thoughtIndex).forEach(thought => {
       const children = Object.values(thought.childrenMap || {}).map(id => db6.thoughtIndex[id])
       db7.thoughtIndex[thought.id] = {
         ..._.omit(thought, 'childrenMap'),
-        children: keyValueBy(children, (child: Thought) => ({
-          [child.id]: child,
-        })),
-      }
+        ...(children.length > 0
+          ? {
+              children: keyValueBy(children, (child: FirebaseThought6) => ({
+                [child.id]: child,
+              })),
+            }
+          : null),
+      } as FirebaseThought7
     })
 
     return db7

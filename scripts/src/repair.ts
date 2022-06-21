@@ -2,19 +2,13 @@
 
 import fs from 'fs'
 import path from 'path'
+import keyValueBy from '../../src/util/keyValueBy.js'
 import normalizeThought from '../lib/normalizeThought.js'
+import Database from './types/Database.js'
 import Index from '../../src/@types/IndexType'
 import Thought from '../../src/@types/Thought'
-import ThoughtId from '../../src/@types/ThoughtId'
-import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
 import migrate from './migrate.js'
-
-interface Database {
-  thoughtIndex: Index<ThoughtWithChildren>
-  lexemeIndex: Index<Lexeme>
-  schemaVersion: number
-}
 
 const [, , file] = process.argv
 if (!file) {
@@ -51,13 +45,13 @@ Object.values(db.thoughtIndex).forEach(thought => {
   // remove children which do not have a corresponding entry in thoughtIndex
   if (children.length < Object.keys(thought.children || {}).length) {
     childThoughtsMissing += Object.keys(thought.children || {}).length - children.length
-    thought.children = filterChildrenBy(thought.children, child => !!db.thoughtIndex[child.id])
+    thought.children = filterChildrenBy(thought.children || {}, child => !!db.thoughtIndex[child.id])
   }
 
   children.forEach(child => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (child.id in childrenTouched) {
-      thought.children = filterChildrenBy(thought.children, c => c.id !== child.id)
+      thought.children = filterChildrenBy(thought.children || {}, c => c.id !== child.id)
       numDuplicates++
     }
     // repair child.parentId
@@ -72,19 +66,19 @@ Object.values(db.thoughtIndex).forEach(thought => {
 // validate Lexeme contexts
 Object.values(db.lexemeIndex).forEach(lexeme => {
   if (!lexeme.contexts) return
-  lexeme.contexts.forEach(id => {
+  Object.values(lexeme.contexts).forEach(id => {
     const thought = db.thoughtIndex[id]
 
     // remove contexts with missing thought
     if (!thought) {
-      lexeme.contexts = lexeme.contexts.filter(_id => _id !== id)
+      lexeme.contexts = keyValueBy(lexeme.contexts!, (i, _id) => (_id !== id ? { [i]: _id } : null))
       numLexemeContextsMissing++
       return
     }
 
     // remove contexts with value that no longer matches Lexeme value
     if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
-      lexeme.contexts = lexeme.contexts.filter(_id => _id !== id)
+      lexeme.contexts = keyValueBy(lexeme.contexts!, (i, _id) => (_id !== id ? { [id]: _id } : null))
       numLexemeContextsInvalid++
       return
     }
