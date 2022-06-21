@@ -2,6 +2,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 import keyValueBy from '../../src/util/keyValueBy.js'
 import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
@@ -32,7 +33,7 @@ const db = migrate(dbRaw)
 let childrenTouched: Index<true> = {}
 
 let childThoughtsMissing = 0
-let numRepaired = 0
+let numParentIdRepaired = 0
 let numDuplicates = 0
 let numLexemeContextsMissing = 0
 let numLexemeContextsInvalid = 0
@@ -57,7 +58,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
     // repair child.parentId
     else if (child.parentId !== thought.id) {
       child.parentId = thought.id
-      numRepaired++
+      numParentIdRepaired++
     }
     childrenTouched[child.id] = true
   })
@@ -85,10 +86,17 @@ Object.values(db.lexemeIndex).forEach(lexeme => {
   })
 })
 
-console.info(`Missing child thoughts: ${childThoughtsMissing}`)
-console.info(`Repaired thoughts: ${numRepaired}`)
-console.info(`Thoughts in more than one parent: ${numDuplicates}`)
-console.info(`Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`)
-console.info(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`)
+/** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
+const color = (n: number) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red']
+
+console.info(color(childThoughtsMissing)(`✓ Children missing from thoughtIndex removed: ${childThoughtsMissing}`))
+console.info(color(numParentIdRepaired)(`✓ Child parentId repaired to actual parent thought: ${numParentIdRepaired}`))
+console.info(color(numDuplicates)(`✓ Thoughts removed from more than one parent: ${numDuplicates}`))
+console.info(
+  color(numLexemeContextsMissing)(`✓ Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`),
+)
+console.info(
+  color(numLexemeContextsInvalid)(`✓ Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
+)
 
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
