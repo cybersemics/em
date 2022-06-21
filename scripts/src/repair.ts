@@ -4,12 +4,14 @@ import fs from 'fs'
 import path from 'path'
 import normalizeThought from '../lib/normalizeThought.js'
 import Index from '../../src/@types/IndexType'
-import ThoughtId from '../../src/@types/ThoughtId'
 import Thought from '../../src/@types/Thought'
+import ThoughtId from '../../src/@types/ThoughtId'
+import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
+import migrate from './migrate.js'
 
 interface Database {
-  thoughtIndex: Index<Thought>
+  thoughtIndex: Index<ThoughtWithChildren>
   lexemeIndex: Index<Lexeme>
   schemaVersion: number
 }
@@ -20,8 +22,8 @@ if (!file) {
   process.exit(1)
 }
 
-const filterChildrenMapBy = (childrenMap: Index<ThoughtId>, predicate: (id: ThoughtId) => boolean) =>
-  Object.entries(childrenMap || {}).reduce(
+const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought) => boolean) =>
+  Object.entries(children || {}).reduce(
     (accum, [key, id]) => ({
       ...accum,
       ...(predicate(id) ? { [key]: id } : null),
@@ -29,15 +31,8 @@ const filterChildrenMapBy = (childrenMap: Index<ThoughtId>, predicate: (id: Thou
     {},
   )
 
-const db: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
-
-if (db.schemaVersion !== 6) {
-  const schemaDetect = db.schemaVersion
-    ? `Database has schema v${db.schemaVersion}.`
-    : 'Database is missing schemaVersion property.'
-  console.error(`${schemaDetect} This script only works on schema v6.`)
-  process.exit(1)
-}
+const dbRaw: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
+const db = migrate(dbRaw)
 
 // track children to eliminate duplicates
 let childrenTouched: Index<true> = {}
@@ -49,20 +44,20 @@ let numLexemeContextsMissing = 0
 let numLexemeContextsInvalid = 0
 
 Object.values(db.thoughtIndex).forEach(thought => {
-  const children = Object.values(thought.childrenMap || {})
-    .map(id => db.thoughtIndex[id])
+  const children = Object.values(thought.children || {})
+    .map(child => db.thoughtIndex[child.id])
     .filter(x => x)
 
   // remove children which do not have a corresponding entry in thoughtIndex
-  if (children.length < Object.keys(thought.childrenMap || {}).length) {
-    childThoughtsMissing += Object.keys(thought.childrenMap || {}).length - children.length
-    thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => !!db.thoughtIndex[id])
+  if (children.length < Object.keys(thought.children || {}).length) {
+    childThoughtsMissing += Object.keys(thought.children || {}).length - children.length
+    thought.children = filterChildrenBy(thought.children, child => !!db.thoughtIndex[child.id])
   }
 
   children.forEach(child => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (child.id in childrenTouched) {
-      thought.childrenMap = filterChildrenMapBy(thought.childrenMap, id => id !== child.id)
+      thought.children = filterChildrenBy(thought.children, c => c.id !== child.id)
       numDuplicates++
     }
     // repair child.parentId
