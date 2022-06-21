@@ -8,6 +8,7 @@ import timestamp from '../util/timestamp'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import { getSessionId } from '../util/sessionManager'
 import win from './win'
+import { SCHEMA_LATEST } from '../constants'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -42,10 +43,10 @@ class EM extends Dexie {
       super('Database')
     }
 
-    this.version(1).stores({
-      thoughtIndex: 'id, *children, lastUpdated, updatedBy',
-      lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
-      thoughtWordsIndex: 'id, *words',
+    this.version(SCHEMA_LATEST).stores({
+      thoughtIndex: '*id, children, lastUpdated, updatedBy',
+      lexemeIndex: '*id, value, *contexts, created, lastUpdated, updatedBy, *words',
+      thoughtWordsIndex: '*id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
     })
