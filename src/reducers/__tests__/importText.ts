@@ -2017,3 +2017,22 @@ it(`mixed html with whitespaces as a new line`, () => {
   - a
   - b`)
 })
+
+it('set cursor correctly after duplicate merge', () => {
+  const text = '- a\n  - b'
+
+  const stateNew = reducerFlow([
+    newThought('a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b`)
+})
