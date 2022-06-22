@@ -200,7 +200,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     ...(parent && {
       [parent.id]: {
         ...parent,
-        children: children.map(({ id }) => id),
         childrenMap,
         lastUpdated: timestamp(),
         updatedBy: getSessionId(),

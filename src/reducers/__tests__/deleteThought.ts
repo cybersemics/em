@@ -3,30 +3,24 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import getContexts from '../../selectors/getContexts'
 import getThoughtById from '../../selectors/getThoughtById'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import deleteEmptyThought from '../../reducers/deleteEmptyThought'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
-import contextToThought from '../../test-helpers/contextToThought'
 
 it('delete from root', () => {
-  const steps = [newThought('a'), newThought('b'), deleteThoughtAtFirstMatch(['b'])]
-
   // run steps through reducer flow and export as plaintext for readable test
-  const state = initialState()
-  const stateNew = reducerFlow(steps)(state)
+  const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
+  const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
+  const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
 
-  /** Gets the root Parent from a state's thoughtIndex. */
-  const thought = contextToThought(stateNew, [HOME_TOKEN])!
+  const stateNew = deleteThoughtAtFirstMatch(['b'])(state)
 
-  // thoughtIndex
-  matchChildIdsWithThoughts(stateNew, thought.children, [
-    {
-      value: 'a',
-    },
-  ])
+  const rootChildrenAfter = getAllChildrenByContext(stateNew, [HOME_TOKEN])
+  expect(rootChildrenAfter).toEqual([thoughtA.id])
 
   // lexemeIndex
   expect(getContexts(stateNew, 'b')).toEqual([])
