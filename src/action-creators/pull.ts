@@ -64,7 +64,9 @@ const pull =
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    const localThoughtsFetched = itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
+    // pull local before remote
+    // parallelizing may result in conficts since there is no conflict resolution mechanism currently
+    await itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLocalChunks.push(thoughtsChunk)
 
@@ -86,7 +88,6 @@ const pull =
 
     // get remote thoughts
     const status = getState().status
-    let remoteThoughtsFetched = Promise.resolve()
     if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(
         getFirebaseProvider(getState(), dispatch),
@@ -97,7 +98,7 @@ const pull =
         },
       )
 
-      remoteThoughtsFetched = itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
+      await itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsChunk)
         Object.values(thoughtsChunk.thoughtIndex).forEach(thought => {
@@ -119,10 +120,6 @@ const pull =
         onRemoteThoughts?.(thoughtsChunk)
       })
     }
-
-    // the state is updated directly with local and remote thoughts as they load, without conflict resolution
-    // TODO: Use a syncable database that handles conflicts
-    await Promise.all([localThoughtsFetched, remoteThoughtsFetched])
 
     // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
     const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
