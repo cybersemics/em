@@ -178,12 +178,23 @@ export const getLexemesByIds = (keys: string[]) => db.lexemeIndex.bulkGet(keys)
 export const updateThought = async (
   id: ThoughtId,
   { children, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
-) =>
-  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+) => {
+  const hasPendingChildren = Object.values(children).some(child => child.pending)
+  return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
     tx.source = getSessionId()
+    // do not save children if any are pending
+    // pending thoughts should never be persisted
+    // since this is an update rather than a put, the thought will retain any children it already has in the database
+    // this can occur when editing an un-expanded thought whose children are still pending
+    // TODO: Replace where + put with update
+    // More efficient, and hopefully removes the Dexie error: Transaction committed too early. See http://bit.ly/2kdckMn
+    children = hasPendingChildren
+      ? (await db.thoughtIndex.where('id').equals(id).first())?.children || ({} as Index<Thought>)
+      : children
     return db.thoughtIndex.put({
       id,
       value,
+      // ...(children && !hasPendingChildren ? { children } : null),
       children,
       lastUpdated,
       parentId,
@@ -192,6 +203,7 @@ export const updateThought = async (
       ...(archived ? { archived } : null),
     })
   })
+}
 
 /** Updates multiple thoughts in the thoughtIndex. */
 export const updateThoughtIndex = async (thoughtIndexMap: Index<ThoughtWithChildren | null>) =>

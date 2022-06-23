@@ -149,11 +149,16 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
 
   /** Updates a context in the thoughtIndex. */
   async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
+    const hasPendingChildren = Object.values(thoughtWithChildren.children).some(child => child.pending)
     return this.update({
       ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
         'id',
         'value',
-        'children',
+        // do not save children if any are pending
+        // pending thoughts should never be persisted
+        // since this is an update rather than a set, the thought will retain any children it already has in the database
+        // this can occur when editing an un-expanded thought whose children are still pending
+        ...(hasPendingChildren ? [] : ['children']),
         'lastUpdated',
         'parentId',
         'rank',

@@ -307,7 +307,7 @@ it('edit thought with buffered descendants', async () => {
   await refreshTestApp()
   fakeTimer.useFakeTimer()
 
-  // delete thought with buffered descendants
+  // edit thought with buffered descendants
   store.dispatch(
     editThoughtByContextActionCreator({
       at: ['a'],
