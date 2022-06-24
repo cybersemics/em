@@ -12,6 +12,9 @@ import Thought from '../../src/@types/Thought'
 import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
 import migrate from './migrate.js'
+import ThoughtId from '../../src/@types/ThoughtId'
+
+const HOME_TOKEN = '__ROOT__' as ThoughtId
 
 const [, , file] = process.argv
 if (!file) {
@@ -40,6 +43,7 @@ let numParentIdRepaired = 0
 let numDuplicates = 0
 let numLexemeContextsMissing = 0
 let numLexemeContextsInvalid = 0
+let numUnreachableThoughts = 0
 
 Object.values(db.thoughtIndex).forEach(thought => {
   const children = Object.values(thought.children || {})
@@ -112,6 +116,27 @@ Object.values(db.lexemeIndex).forEach(lexeme => {
   })
 })
 
+// traverse the tree
+const visited: Index<true> = {}
+let stack: ThoughtId[] = [HOME_TOKEN]
+while (stack.length > 0) {
+  stack = stack
+    .map(id => {
+      visited[id] = true
+      const thought = db.thoughtIndex[id]
+      if (!thought) return []
+      return (Object.keys(thought.children || {}) || []) as ThoughtId[]
+    })
+    .flat()
+}
+
+// reconstruct unreachable thoughts
+Object.keys(db.thoughtIndex).forEach(id => {
+  if (!visited[id]) {
+    numUnreachableThoughts++
+  }
+})
+
 /** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
 const color = (n: number) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red']
 
@@ -133,5 +158,6 @@ console.info(
 console.info(
   color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
 )
+console.info(color(numUnreachableThoughts)(`Unreachable thoughts: ${numUnreachableThoughts}`))
 
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
