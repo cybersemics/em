@@ -40,7 +40,8 @@ let childrenTouched: Index<true> = {}
 let childrenWithMissingThoughtRepaired = 0
 let childrenWithMissingThoughtGrandchildrenMissing = 0
 let numParentIdRepaired = 0
-let numDuplicates = 0
+let numChildrenInMultipleThoughts = 0
+let numDuplicateSiblingsMerged = 0
 let numLexemeContextsMissing = 0
 let numLexemeContextsInvalid = 0
 let numUnreachableThoughts = 0
@@ -65,7 +66,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
           ),
         } as ThoughtWithChildren
 
-        const numGrandchildrenIds = Object.keys(child.childrenMap).length
+        const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
         const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
         childrenWithMissingThoughtGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
         childrenWithMissingThoughtRepaired++
@@ -83,7 +84,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (child.id in childrenTouched) {
       thought.children = filterChildrenBy(thought.children || {}, c => c.id !== child.id)
-      numDuplicates++
+      numChildrenInMultipleThoughts++
     }
     // repair child.parentId
     else if (child.parentId !== thought.id) {
@@ -122,9 +123,37 @@ let stack: ThoughtId[] = [HOME_TOKEN]
 while (stack.length > 0) {
   stack = stack
     .map(id => {
+      // mark visited to detect unreachable thoughts
       visited[id] = true
+
       const thought = db.thoughtIndex[id]
       if (!thought) return []
+
+      // merge duplicate children
+      const childrenByValue: Index<Thought> = {}
+      Object.values(thought.children || {}).forEach(child => {
+        const original = childrenByValue[child.value]
+        // if a thought with the same value already exists, move children from the duplicate into the original and delete the duplicate
+        if (original) {
+          // delete duplicate
+          delete thought.children![child.id]
+          // merge children
+          original.childrenMap = {
+            ...original.childrenMap,
+            ...child.childrenMap,
+          }
+          // update children parentIds
+          Object.values(child.childrenMap || {}).forEach(childId => {
+            const childThought = db.thoughtIndex[childId]
+            childThought.parentId = original.id
+          })
+          numDuplicateSiblingsMerged++
+        } else {
+          childrenByValue[child.value] = child
+        }
+      })
+
+      // return children to be added to the stack
       return (Object.keys(thought.children || {}) || []) as ThoughtId[]
     })
     .flat()
@@ -151,7 +180,9 @@ console.info(
   ),
 )
 console.info(color(numParentIdRepaired)(`Child parentId repaired to actual parent thought: ${numParentIdRepaired}`))
-console.info(color(numDuplicates)(`Thoughts removed from more than one parent: ${numDuplicates}`))
+console.info(
+  color(numChildrenInMultipleThoughts)(`Thoughts removed from more than one parent: ${numChildrenInMultipleThoughts}`),
+)
 console.info(
   color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`),
 )
@@ -159,5 +190,6 @@ console.info(
   color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
 )
 console.info(color(numUnreachableThoughts)(`Unreachable thoughts: ${numUnreachableThoughts}`))
+console.info(color(numDuplicateSiblingsMerged)(`Duplicate siblings merged: ${numDuplicateSiblingsMerged}`))
 
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
