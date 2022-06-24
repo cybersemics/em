@@ -14,8 +14,13 @@ import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
 import migrate from './migrate.js'
 import ThoughtId from '../../src/@types/ThoughtId'
+import Path from '../../src/@types/Path'
+import Context from '../../src/@types/Context'
+import timestamp from '../../src/util/timestamp.js'
+import isAttribute from '../../src/util/isAttribute.js'
 
 const HOME_TOKEN = '__ROOT__' as ThoughtId
+const HOME_PATH = [HOME_TOKEN] as Path
 
 const [, , file] = process.argv
 if (!file) {
@@ -32,6 +37,31 @@ const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought
     {},
   )
 
+/** Returns true if the Thoughts or Path is the one of the root contexts. */
+const isRoot = (thoughts: (string | ThoughtId)[]): boolean => thoughts.length === 1 && thoughts[0] === HOME_TOKEN
+
+/**
+ * Generates the context of a thought by traversing upwards to the root thought.
+ */
+const thoughtToContext = (thoughtId: ThoughtId): Context => {
+  if (isRoot([thoughtId])) return HOME_PATH
+  const thought = db.thoughtIndex[thoughtId]
+  if (!thought) return []
+  return thought
+    ? isRoot([thought.parentId])
+      ? [thought.value]
+      : [...thoughtToContext(thought.parentId), thought.value]
+    : HOME_PATH
+}
+
+const contextToPath = (context: Context, startid: ThoughtId = HOME_TOKEN): Path => {
+  if (context.length === 0) return [] as unknown as Path
+  const thought = db.thoughtIndex[startid]
+  const child = Object.values(thought.children || {}).find(c => c.value === context[0])
+  if (!child) return [thought.id]
+  return [thought.id, ...contextToPath(context.slice(1), child.id)]
+}
+
 const dbRaw: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
 const db = migrate(dbRaw)
 const numThoughtsStart = Object.keys(db.thoughtIndex).length
@@ -47,15 +77,56 @@ let numChildrenInMultipleThoughts = 0
 let numDuplicateSiblingsMerged = 0
 let numLexemeContextsMissing = 0
 let numLexemeContextsInvalid = 0
+let numOrphans = 0
 let numUnreachableThoughts = 0
 
+// loop through all thoughts
 Object.values(db.thoughtIndex).forEach(thought => {
+  // move thoughts with missing parent into the orphanage
+  // based on 6/13/22 data set, we can assume the parent is not in any inline children, so we can't reconstruct it
+  const parent = db.thoughtIndex[thought.parentId]
+  if (!parent && !isRoot([thought.id])) {
+    // create orphanage if it doesn't exist
+    if (!db.thoughtIndex.orphanage) {
+      db.thoughtIndex.orphanage = {
+        id: 'orphanage' as ThoughtId,
+        value: 'ORPHANAGE',
+        rank: Math.random(),
+        children: {},
+        parentId: HOME_TOKEN,
+        lastUpdated: timestamp(),
+        updatedBy: '',
+      }
+      // add orphanage to root
+      db.thoughtIndex.__ROOT__.children!.orphanage = {
+        ..._.omit(db.thoughtIndex.orphanage, 'children'),
+        childrenMap: {},
+      } as Thought
+    }
+
+    // move thought to orphanage
+    const orphanage = db.thoughtIndex.orphanage
+    thought.parentId = orphanage.id
+    orphanage.children![thought.id] = {
+      ...thought,
+      childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
+        [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
+      })),
+    }
+    // TODO: Add Lexeme, or does it get reconstructed?
+
+    numOrphans++
+    return
+  }
+
+  // reconstruct unreachable thoughts
+  // loop through all children
   const children = Object.values(thought.children || {})
     .map(child => {
       const childThought = db.thoughtIndex[child.id]
       // child is missing from thoughtIndex
       if (!childThought) {
-        // we can reconstruct the child from inline children
+        // we can reconstruct the child thought from inline children
         // we may not be able to reconstruct the grandchildren unfortunately since we only have ids in childrenMap
         // however we can still use childrenMap to try to look up the grandchildren in thoughtIndex
         db.thoughtIndex[child.id] = {
@@ -130,31 +201,33 @@ while (stack.length > 0) {
       visited[id] = true
 
       const thought = db.thoughtIndex[id]
-      if (!thought) return []
+      if (!thought) {
+        throw new Error('Missing parent after parents should be reconstructed')
+      }
 
       // merge duplicate children
-      const childrenByValue: Index<Thought> = {}
-      Object.values(thought.children || {}).forEach(child => {
-        const original = childrenByValue[child.value]
-        // if a thought with the same value already exists, move children from the duplicate into the original and delete the duplicate
-        if (original) {
-          // delete duplicate
-          delete thought.children![child.id]
-          // merge children
-          original.childrenMap = {
-            ...original.childrenMap,
-            ...child.childrenMap,
-          }
-          // update children parentIds
-          Object.values(child.childrenMap || {}).forEach(childId => {
-            const childThought = db.thoughtIndex[childId]
-            childThought.parentId = original.id
-          })
-          numDuplicateSiblingsMerged++
-        } else {
-          childrenByValue[child.value] = child
-        }
-      })
+      // const childrenByValue: Index<Thought> = {}
+      // Object.values(thought.children || {}).forEach(child => {
+      //   const original = childrenByValue[child.value]
+      //   // if a thought with the same value already exists, move children from the duplicate into the original and delete the duplicate
+      //   if (original) {
+      //     // delete duplicate
+      //     delete thought.children![child.id]
+      //     // merge children
+      //     original.childrenMap = {
+      //       ...original.childrenMap,
+      //       ...child.childrenMap,
+      //     }
+      //     // update children parentIds
+      //     Object.values(child.childrenMap || {}).forEach(childId => {
+      //       const childThought = db.thoughtIndex[childId]
+      //       childThought.parentId = original.id
+      //     })
+      //     numDuplicateSiblingsMerged++
+      //   } else {
+      //     childrenByValue[child.value] = child
+      //   }
+      // })
 
       // return children to be added to the stack
       return Object.keys(thought.children || {}) as ThoughtId[]
@@ -162,10 +235,20 @@ while (stack.length > 0) {
     .flat()
 }
 
-// reconstruct unreachable thoughts
-Object.keys(db.thoughtIndex).forEach(id => {
-  if (!visited[id]) {
+// second pass through thoughts
+Object.values(db.thoughtIndex).forEach(thought => {
+  if (!visited[thought.id]) {
     numUnreachableThoughts++
+    const context = thoughtToContext(thought.id)
+    // TODO:
+    // console.log(context)
+    // const path = contextToPath(context)
+    // if (context.length !== path.length) {
+    //   console.log('context', context)
+    //   console.log('path', path)
+    //   console.error('STOP')
+    //   process.exit(1)
+    // }
   }
 })
 
@@ -208,24 +291,25 @@ const table = new Table({
       color(numMissingGrandchildrenMissing)(),
     ],
     [
-      'numParentIdRepaired',
-      color(numParentIdRepaired)(`Child parentId repaired to actual parent thought`),
-      color(numParentIdRepaired)(),
-    ],
-    [
       'numChildrenInMultipleThoughts',
       color(numChildrenInMultipleThoughts)(`Thoughts removed from more than one parent`),
       color(numChildrenInMultipleThoughts)(),
+    ],
+    [
+      'numLexemeContextsInvalid',
+      color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
+      color(numLexemeContextsInvalid)(),
     ],
     [
       'numLexemeContextsMissing',
       color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
       color(numLexemeContextsMissing)(),
     ],
+    ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
     [
-      'numLexemeContextsInvalid',
-      color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
-      color(numLexemeContextsInvalid)(),
+      'numParentIdRepaired',
+      color(numParentIdRepaired)(`Child parentId repaired to actual parent thought`),
+      color(numParentIdRepaired)(),
     ],
     ['numUnreachableThoughts', color(numUnreachableThoughts)(`Unreachable thoughts`), color(numUnreachableThoughts)()],
     [
@@ -238,4 +322,5 @@ const table = new Table({
 
 console.info(table.toString())
 
+// console.info('\nWrite disabled')
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
