@@ -34,6 +34,8 @@ const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought
 
 const dbRaw: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
 const db = migrate(dbRaw)
+const numThoughtsStart = Object.keys(db.thoughtIndex).length
+const numLexemesStart = Object.keys(db.lexemeIndex).length
 
 // track children to eliminate duplicates
 let childrenTouched: Index<true> = {}
@@ -155,7 +157,7 @@ while (stack.length > 0) {
       })
 
       // return children to be added to the stack
-      return (Object.keys(thought.children || {}) || []) as ThoughtId[]
+      return Object.keys(thought.children || {}) as ThoughtId[]
     })
     .flat()
 }
@@ -190,6 +192,11 @@ const table = new Table({
   },
   colAligns: ['right', 'left'],
   rows: [
+    ['Total Thoughts (before)', 'Total number of thoughts before any repairs', numThoughtsStart],
+    ['Total Thoughts (after)', 'Total number of thoughts after repairs', Object.keys(db.thoughtIndex).length],
+    ['Total Lexemes (before)', 'Total number of lexemes before any repairs', numLexemesStart],
+    ['Total Lexemes (after)', 'Total number of lexemes after repairs', Object.keys(db.lexemeIndex).length],
+    [],
     [
       'childrenWithMissingThoughtRepaired',
       color(childrenWithMissingThoughtRepaired)(`Children missing from thoughtIndex repaired`),
