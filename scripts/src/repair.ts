@@ -1,5 +1,6 @@
 /** Finds thought's children with parentId that do not match thought.id and repairs it. Also removes children that do not have a corresponding entry in thoughtIndex. */
 
+import _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
@@ -8,6 +9,7 @@ import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
 import Index from '../../src/@types/IndexType'
 import Thought from '../../src/@types/Thought'
+import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Lexeme from '../../src/@types/Lexeme'
 import migrate from './migrate.js'
 
@@ -32,7 +34,8 @@ const db = migrate(dbRaw)
 // track children to eliminate duplicates
 let childrenTouched: Index<true> = {}
 
-let childThoughtsMissing = 0
+let childrenWithMissingThoughtRepaired = 0
+let childrenWithMissingThoughtGrandchildrenMissing = 0
 let numParentIdRepaired = 0
 let numDuplicates = 0
 let numLexemeContextsMissing = 0
@@ -40,12 +43,35 @@ let numLexemeContextsInvalid = 0
 
 Object.values(db.thoughtIndex).forEach(thought => {
   const children = Object.values(thought.children || {})
-    .map(child => db.thoughtIndex[child.id])
+    .map(child => {
+      const childThought = db.thoughtIndex[child.id]
+      // child is missing from thoughtIndex
+      if (!childThought) {
+        // we can reconstruct the child from inline children
+        // we may not be able to reconstruct the grandchildren unfortunately since we only have ids in childrenMap
+        // however we can still use childrenMap to try to look up the grandchildren in thoughtIndex
+        db.thoughtIndex[child.id] = {
+          ..._.omit(child, 'childrenMap'),
+          children: keyValueBy(child.childrenMap, (key, id) =>
+            db.thoughtIndex[id]
+              ? {
+                  [id]: db.thoughtIndex[id],
+                }
+              : null,
+          ),
+        } as ThoughtWithChildren
+
+        const numGrandchildrenIds = Object.keys(child.childrenMap).length
+        const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
+        childrenWithMissingThoughtGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
+        childrenWithMissingThoughtRepaired++
+      }
+      return db.thoughtIndex[child.id]
+    })
     .filter(x => x)
 
   // remove children which do not have a corresponding entry in thoughtIndex
   if (children.length < Object.keys(thought.children || {}).length) {
-    childThoughtsMissing += Object.keys(thought.children || {}).length - children.length
     thought.children = filterChildrenBy(thought.children || {}, child => !!db.thoughtIndex[child.id])
   }
 
@@ -89,14 +115,23 @@ Object.values(db.lexemeIndex).forEach(lexeme => {
 /** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
 const color = (n: number) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red']
 
-console.info(color(childThoughtsMissing)(`✓ Children missing from thoughtIndex removed: ${childThoughtsMissing}`))
-console.info(color(numParentIdRepaired)(`✓ Child parentId repaired to actual parent thought: ${numParentIdRepaired}`))
-console.info(color(numDuplicates)(`✓ Thoughts removed from more than one parent: ${numDuplicates}`))
 console.info(
-  color(numLexemeContextsMissing)(`✓ Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`),
+  color(childrenWithMissingThoughtRepaired)(
+    `Children missing from thoughtIndex repaired: ${childrenWithMissingThoughtRepaired}`,
+  ),
 )
 console.info(
-  color(numLexemeContextsInvalid)(`✓ Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
+  color(childrenWithMissingThoughtGrandchildrenMissing)(
+    `Missing grandchildren from repaired children: ${childrenWithMissingThoughtGrandchildrenMissing}`,
+  ),
+)
+console.info(color(numParentIdRepaired)(`Child parentId repaired to actual parent thought: ${numParentIdRepaired}`))
+console.info(color(numDuplicates)(`Thoughts removed from more than one parent: ${numDuplicates}`))
+console.info(
+  color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`),
+)
+console.info(
+  color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
 )
 
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
