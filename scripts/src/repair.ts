@@ -4,6 +4,7 @@ import _ from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
+import Table from 'cli-table'
 import keyValueBy from '../../src/util/keyValueBy.js'
 import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
@@ -38,7 +39,7 @@ const db = migrate(dbRaw)
 let childrenTouched: Index<true> = {}
 
 let childrenWithMissingThoughtRepaired = 0
-let childrenWithMissingThoughtGrandchildrenMissing = 0
+let numMissingGrandchildrenMissing = 0
 let numParentIdRepaired = 0
 let numChildrenInMultipleThoughts = 0
 let numDuplicateSiblingsMerged = 0
@@ -68,7 +69,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
 
         const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
         const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
-        childrenWithMissingThoughtGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
+        numMissingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
         childrenWithMissingThoughtRepaired++
       }
       return db.thoughtIndex[child.id]
@@ -96,21 +97,21 @@ Object.values(db.thoughtIndex).forEach(thought => {
 })
 
 // validate Lexeme contexts
-Object.values(db.lexemeIndex).forEach(lexeme => {
+Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
   if (!lexeme.contexts) return
-  Object.values(lexeme.contexts).forEach(id => {
-    const thought = db.thoughtIndex[id]
+  lexeme.contexts.forEach(cxid => {
+    const thought = db.thoughtIndex[cxid]
 
     // remove contexts with missing thought
     if (!thought) {
-      lexeme.contexts = keyValueBy(lexeme.contexts!, (i, _id) => (_id !== id ? { [i]: _id } : null))
+      lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
       numLexemeContextsMissing++
       return
     }
 
     // remove contexts with value that no longer matches Lexeme value
     if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
-      lexeme.contexts = keyValueBy(lexeme.contexts!, (i, _id) => (_id !== id ? { [id]: _id } : null))
+      lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
       numLexemeContextsInvalid++
       return
     }
@@ -167,29 +168,67 @@ Object.keys(db.thoughtIndex).forEach(id => {
 })
 
 /** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
-const color = (n: number) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red']
+const color = (n: number) => (s?: string) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red'](s || n)
 
-console.info(
-  color(childrenWithMissingThoughtRepaired)(
-    `Children missing from thoughtIndex repaired: ${childrenWithMissingThoughtRepaired}`,
-  ),
-)
-console.info(
-  color(childrenWithMissingThoughtGrandchildrenMissing)(
-    `Missing grandchildren from repaired children: ${childrenWithMissingThoughtGrandchildrenMissing}`,
-  ),
-)
-console.info(color(numParentIdRepaired)(`Child parentId repaired to actual parent thought: ${numParentIdRepaired}`))
-console.info(
-  color(numChildrenInMultipleThoughts)(`Thoughts removed from more than one parent: ${numChildrenInMultipleThoughts}`),
-)
-console.info(
-  color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought: ${numLexemeContextsMissing}`),
-)
-console.info(
-  color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed: ${numLexemeContextsInvalid}`),
-)
-console.info(color(numUnreachableThoughts)(`Unreachable thoughts: ${numUnreachableThoughts}`))
-console.info(color(numDuplicateSiblingsMerged)(`Duplicate siblings merged: ${numDuplicateSiblingsMerged}`))
+const table = new Table({
+  chars: {
+    top: '',
+    'top-mid': '',
+    'top-left': '',
+    'top-right': '',
+    bottom: '',
+    'bottom-mid': '',
+    'bottom-left': '',
+    'bottom-right': '',
+    left: '',
+    'left-mid': '',
+    mid: '',
+    'mid-mid': '',
+    right: '',
+    'right-mid': '',
+    middle: '',
+  },
+  colAligns: ['right', 'left'],
+  rows: [
+    [
+      'childrenWithMissingThoughtRepaired',
+      color(childrenWithMissingThoughtRepaired)(`Children missing from thoughtIndex repaired`),
+      color(childrenWithMissingThoughtRepaired)(),
+    ],
+    [
+      'numMissingGrandchildrenMissing',
+      color(numMissingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
+      color(numMissingGrandchildrenMissing)(),
+    ],
+    [
+      'numParentIdRepaired',
+      color(numParentIdRepaired)(`Child parentId repaired to actual parent thought`),
+      color(numParentIdRepaired)(),
+    ],
+    [
+      'numChildrenInMultipleThoughts',
+      color(numChildrenInMultipleThoughts)(`Thoughts removed from more than one parent`),
+      color(numChildrenInMultipleThoughts)(),
+    ],
+    [
+      'numLexemeContextsMissing',
+      color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
+      color(numLexemeContextsMissing)(),
+    ],
+    [
+      'numLexemeContextsInvalid',
+      color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
+      color(numLexemeContextsInvalid)(),
+    ],
+    ['numUnreachableThoughts', color(numUnreachableThoughts)(`Unreachable thoughts`), color(numUnreachableThoughts)()],
+    [
+      'numDuplicateSiblingsMerged',
+      color(numDuplicateSiblingsMerged)(`Duplicate siblings merged`),
+      color(numDuplicateSiblingsMerged)(),
+    ],
+  ],
+} as any)
+
+console.info(table.toString())
 
 fs.writeFileSync(file, JSON.stringify(db, null, 2))

@@ -4,7 +4,6 @@ import Thought from '../../../src/@types/Thought'
 import ThoughtId from '../../../src/@types/ThoughtId'
 import ThoughtWithChildren from '../../../src/@types/ThoughtWithChildren'
 import FirebaseThought from './FirebaseThought'
-import FirebaseLexeme from './FirebaseLexeme'
 
 interface Database {
   email: string

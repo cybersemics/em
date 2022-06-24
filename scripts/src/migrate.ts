@@ -8,7 +8,6 @@ import keyValueBy from '../../src/util/keyValueBy.js'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
 import Database from './types/Database.js'
 import FirebaseThought from './types/FirebaseThought'
-import FirebaseLexeme from './types/FirebaseLexeme'
 
 const SCHEMA_LATEST = 7
 
@@ -19,7 +18,7 @@ interface Database6 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Index<FirebaseLexeme>
+  lexemeIndex: Lexeme
   schemaVersion: 6
   thoughtIndex: Index<FirebaseThought6>
 }
@@ -28,7 +27,7 @@ interface Database7 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Index<FirebaseLexeme>
+  lexemeIndex: Lexeme
   schemaVersion: 7
   thoughtIndex: Index<FirebaseThought7>
 }

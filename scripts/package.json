@@ -22,5 +22,9 @@
   },
   "dependencies": {
     "murmurhash3js": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/cli-table": "^0.3.0",
+    "cli-table": "^0.3.11"
   }
 }
