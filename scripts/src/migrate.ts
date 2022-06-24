@@ -74,14 +74,23 @@ const migrateVersion: Record<number, (db: any) => Database> = {
       schemaVersion: 7,
     }
     Object.values(db6.thoughtIndex).forEach(thought => {
-      const children = Object.values(thought.childrenMap || {}).map(id => db6.thoughtIndex[id])
+      // there may be missing children
+      // since they are in childrenMap, all we have are ids, so we cannot reconstruct the children
+      const children = Object.values(thought.childrenMap || {}).map(id => db6.thoughtIndex[id]) as (
+        | Thought
+        | undefined
+      )[]
       db7.thoughtIndex[thought.id] = {
         ..._.omit(thought, 'childrenMap'),
         ...(children.length > 0
           ? {
-              children: keyValueBy(children, (child: FirebaseThought6) => ({
-                [child.id]: child,
-              })),
+              children: keyValueBy(children, child =>
+                child
+                  ? {
+                      [child.id]: child,
+                    }
+                  : null,
+              ),
             }
           : null),
       } as FirebaseThought7
