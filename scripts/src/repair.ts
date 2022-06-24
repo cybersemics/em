@@ -121,43 +121,37 @@ Object.values(db.thoughtIndex).forEach(thought => {
 
   // reconstruct unreachable thoughts
   // loop through all children
-  const children = Object.values(thought.children || {})
-    .map(child => {
-      const childThought = db.thoughtIndex[child.id]
-      // child is missing from thoughtIndex
-      if (!childThought) {
-        // we can reconstruct the child thought from inline children
-        // we may not be able to reconstruct the grandchildren unfortunately since we only have ids in childrenMap
-        // however we can still use childrenMap to try to look up the grandchildren in thoughtIndex
-        db.thoughtIndex[child.id] = {
-          ..._.omit(child, 'childrenMap'),
-          children: keyValueBy(child.childrenMap, (key, id) =>
-            db.thoughtIndex[id]
-              ? {
-                  [id]: db.thoughtIndex[id],
-                }
-              : null,
-          ),
-        } as ThoughtWithChildren
+  const children = Object.values(thought.children || {}).map(child => {
+    const childThought = db.thoughtIndex[child.id]
+    // child is missing from thoughtIndex
+    if (!childThought) {
+      // we can reconstruct the child thought from inline children
+      // we may not be able to reconstruct the grandchildren unfortunately since we only have ids in childrenMap
+      // however we can still use childrenMap to try to look up the grandchildren in thoughtIndex
+      db.thoughtIndex[child.id] = {
+        ..._.omit(child, 'childrenMap'),
+        children: keyValueBy(child.childrenMap, (key, id) =>
+          db.thoughtIndex[id]
+            ? {
+                [id]: db.thoughtIndex[id],
+              }
+            : null,
+        ),
+      } as ThoughtWithChildren
+      // no need to update parent's inline children, since that is what we are reconstructing from
 
-        const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
-        const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
-        numMissingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
-        childrenWithMissingThoughtRepaired++
-      }
-      return db.thoughtIndex[child.id]
-    })
-    .filter(x => x)
-
-  // remove children which do not have a corresponding entry in thoughtIndex
-  if (children.length < Object.keys(thought.children || {}).length) {
-    thought.children = filterChildrenBy(thought.children || {}, child => !!db.thoughtIndex[child.id])
-  }
+      const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
+      const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
+      numMissingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
+      childrenWithMissingThoughtRepaired++
+    }
+    return db.thoughtIndex[child.id]
+  })
 
   children.forEach(child => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
-    if (child.id in childrenTouched) {
-      thought.children = filterChildrenBy(thought.children || {}, c => c.id !== child.id)
+    if (childrenTouched[child.id]) {
+      delete thought.children![child.id]
       numChildrenInMultipleThoughts++
     }
     // repair child.parentId
@@ -237,10 +231,13 @@ while (stack.length > 0) {
 
 // second pass through thoughts
 Object.values(db.thoughtIndex).forEach(thought => {
+  // reconstruct unreachable thoughts
   if (!visited[thought.id]) {
     numUnreachableThoughts++
     const context = thoughtToContext(thought.id)
-    // TODO:
+    // TODO: Add each thought in the context to its parent
+    // add to parent's inline children
+
     // console.log(context)
     // const path = contextToPath(context)
     // if (context.length !== path.length) {
