@@ -126,7 +126,9 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
     penultimateUndoPatch &&
     !!(
       (lastAction && NAVIGATION_ACTIONS[lastAction]) ||
-      (penultimateAction && (NAVIGATION_ACTIONS[penultimateAction] || penultimateAction === 'newThought'))
+      (penultimateAction &&
+        ((NAVIGATION_ACTIONS[penultimateAction] && NAVIGATION_ACTIONS[penultimateAction] !== 'setCursor') ||
+          penultimateAction === 'newThought'))
     )
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
