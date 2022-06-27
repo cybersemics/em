@@ -6,6 +6,7 @@ import path from 'path'
 import chalk from 'chalk'
 import Table from 'cli-table'
 import keyValueBy from '../../src/util/keyValueBy.js'
+import hashThought from '../lib/hashThought.js'
 import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
 import Index from '../../src/@types/IndexType'
@@ -62,6 +63,61 @@ const contextToPath = (context: Context, startid: ThoughtId = HOME_TOKEN): Path 
   return [thought.id, ...contextToPath(context.slice(1), child.id)]
 }
 
+/** Moves a thought to a new parent. */
+const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
+  // remove thought from old parent (if the parent exists)
+  const parentOld = db.thoughtIndex[thought.parentId]
+  if (parentOld?.children) {
+    delete parentOld.children[thought.id]
+  }
+
+  const parent = db.thoughtIndex[parentId]
+  if (!parent) {
+    console.error('thought', thought)
+    console.error('parentId', parentId)
+    throw new Error(`Cannot move thought to non-existent Parent: ${parentId}`)
+  }
+
+  // set thought's parent
+  thought.parentId = parentId
+
+  // add thought to parent's inline children
+  if (!parent.children) {
+    parent.children = {}
+  }
+  // convert thought to inline child
+  const child = {
+    ...thought,
+    childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
+      [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
+    })),
+  }
+  parent.children[thought.id] = child
+}
+
+const moveThoughtToOrphanage = (thought: ThoughtWithChildren) => {
+  // create orphanage if it doesn't exist
+  if (!db.thoughtIndex.orphanage) {
+    db.thoughtIndex.orphanage = {
+      id: 'orphanage' as ThoughtId,
+      value: 'ORPHANAGE',
+      rank: Math.random(),
+      children: {},
+      parentId: HOME_TOKEN,
+      lastUpdated: timestamp(),
+      updatedBy: '',
+    }
+    // add orphanage to root
+    db.thoughtIndex.__ROOT__.children!.orphanage = {
+      ..._.omit(db.thoughtIndex.orphanage, 'children'),
+      childrenMap: {},
+    }
+  }
+
+  moveThought(thought, 'orphanage' as ThoughtId)
+}
+
+console.info('Reading db')
 const dbRaw: Database = JSON.parse(fs.readFileSync(file, 'utf8'))
 const db = migrate(dbRaw)
 const numThoughtsStart = Object.keys(db.thoughtIndex).length
@@ -80,40 +136,15 @@ let numLexemeContextsInvalid = 0
 let numOrphans = 0
 let numUnreachableThoughts = 0
 
+console.info('Iterating thoughtIndex')
+
 // loop through all thoughts
 Object.values(db.thoughtIndex).forEach(thought => {
   // move thoughts with missing parent into the orphanage
   // based on 6/13/22 data set, we can assume the parent is not in any inline children, so we can't reconstruct it
   const parent = db.thoughtIndex[thought.parentId]
   if (!parent && !isRoot([thought.id])) {
-    // create orphanage if it doesn't exist
-    if (!db.thoughtIndex.orphanage) {
-      db.thoughtIndex.orphanage = {
-        id: 'orphanage' as ThoughtId,
-        value: 'ORPHANAGE',
-        rank: Math.random(),
-        children: {},
-        parentId: HOME_TOKEN,
-        lastUpdated: timestamp(),
-        updatedBy: '',
-      }
-      // add orphanage to root
-      db.thoughtIndex.__ROOT__.children!.orphanage = {
-        ..._.omit(db.thoughtIndex.orphanage, 'children'),
-        childrenMap: {},
-      } as Thought
-    }
-
-    // move thought to orphanage
-    const orphanage = db.thoughtIndex.orphanage
-    thought.parentId = orphanage.id
-    orphanage.children![thought.id] = {
-      ...thought,
-      childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
-        [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
-      })),
-    }
-    // TODO: Add Lexeme, or does it get reconstructed?
+    moveThoughtToOrphanage(thought as ThoughtWithChildren)
 
     numOrphans++
     return
@@ -185,6 +216,8 @@ Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
   })
 })
 
+console.info('Traversing tree')
+
 // traverse the tree
 const visited: Index<true> = {}
 let stack: ThoughtId[] = [HOME_TOKEN]
@@ -238,8 +271,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
     // TODO: Add each thought in the context to its parent
     // add to parent's inline children
 
-    // console.log(context)
-    // const path = contextToPath(context)
+    const path = contextToPath(context)
     // if (context.length !== path.length) {
     //   console.log('context', context)
     //   console.log('path', path)
@@ -317,7 +349,8 @@ const table = new Table({
   ],
 } as any)
 
-console.info(table.toString())
+console.info('\n' + table.toString())
 
 // console.info('\nWrite disabled')
+console.info('Writing db')
 fs.writeFileSync(file, JSON.stringify(db, null, 2))

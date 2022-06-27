@@ -18,7 +18,7 @@ interface Database6 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Lexeme
+  lexemeIndex: Index<Lexeme>
   schemaVersion: 6
   thoughtIndex: Index<FirebaseThought6>
 }
@@ -27,7 +27,7 @@ interface Database7 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Lexeme
+  lexemeIndex: Index<Lexeme>
   schemaVersion: 7
   thoughtIndex: Index<FirebaseThought7>
 }
@@ -57,6 +57,8 @@ const migrate = (db: Database): DatabaseLatest => {
   }
 
   // otherwise migrate one step and recurse
+
+  console.info(`Migrating db with schema v${db.schemaVersion}`)
   return migrate(migrateVersion[db.schemaVersion](db as Database6))
 }
 
