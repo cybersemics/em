@@ -44,9 +44,9 @@ class EM extends Dexie {
     }
 
     this.version(SCHEMA_LATEST).stores({
-      thoughtIndex: '*id, children, lastUpdated, updatedBy',
-      lexemeIndex: '*id, value, *contexts, created, lastUpdated, updatedBy, *words',
-      thoughtWordsIndex: '*id, *words',
+      thoughtIndex: 'id, children, lastUpdated, updatedBy',
+      lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
+      thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
     })
@@ -97,7 +97,7 @@ const initHelpers = async () => {
 /** Initializes the database tables. */
 const initDB = async () => {
   if (!db.isOpen()) {
-    await db.version(1).stores({
+    await db.version(SCHEMA_LATEST).stores({
       thoughtIndex: 'id, children, lastUpdated',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -186,16 +186,15 @@ export const updateThought = async (
     // pending thoughts should never be persisted
     // since this is an update rather than a put, the thought will retain any children it already has in the database
     // this can occur when editing an un-expanded thought whose children are still pending
-    // TODO: Replace where + put with update
     // More efficient, and hopefully removes the Dexie error: Transaction committed too early. See http://bit.ly/2kdckMn
-    children = hasPendingChildren
-      ? (await db.thoughtIndex.where('id').equals(id).first())?.children || ({} as Index<Thought>)
-      : children
-    return db.thoughtIndex.put({
+    const thought = await db.thoughtIndex.get(id)
+    /** Does a put if the thought does not exist, otherwise update. */
+    const putOrUpdate = (changes: Partial<Thought>) =>
+      thought ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
+    return putOrUpdate({
       id,
       value,
-      // ...(children && !hasPendingChildren ? { children } : null),
-      children,
+      ...(!hasPendingChildren ? { children } : null),
       lastUpdated,
       parentId,
       rank,

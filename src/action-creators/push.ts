@@ -134,12 +134,18 @@ const pushRemote =
     const prependedThoughtIndexUpdates = _.transform(
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
-        const thoughtWithChildren: ThoughtWithChildren | null = thoughtUpdate
+        const children = thoughtUpdate ? getAllChildrenAsThoughts(state, thoughtUpdate.id) : []
+        const hasPendingChildren = children.some(child => child.pending)
+        const thoughtWithChildren: Partial<ThoughtWithChildren> | null = thoughtUpdate
           ? {
               ...thoughtToDb(thoughtUpdate),
-              children: keyValueBy(getAllChildrenAsThoughts(state, thoughtUpdate.id), child => ({
-                [child.id]: childToDb(child),
-              })),
+              ...(!hasPendingChildren
+                ? {
+                    children: keyValueBy(children, child => ({
+                      [child.id]: childToDb(child),
+                    })),
+                  }
+                : null),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),
               ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
@@ -150,7 +156,7 @@ const pushRemote =
         accum[`thoughtIndex/${id}`] = thoughtWithChildren || null
         // accum[`thoughtIndex/${parentId}`] = parentWithChildren || null
       },
-      {} as Index<ThoughtWithChildren | null>,
+      {} as Index<Partial<ThoughtWithChildren> | null>,
     )
 
     logWithTime('pushRemote: prepend thoughtIndex key')

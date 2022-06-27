@@ -676,23 +676,29 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      const [thoughtZ, thoughtV] = await Promise.all([
+      const [thoughtZ, thoughtV, thoughtM1, thoughtM2] = await Promise.all([
         getContext(provider, ['x', 'y', 'z']),
         getContext(provider, ['t', 'u', 'v']),
+        getContext(provider, ['x', 'y', 'z', 'm']),
+        getContext(provider, ['t', 'u', 'v', 'm']),
       ])
 
       expect(thoughts.thoughtIndex).toEqual({
         ..._.pick(thoughtIndex, ...(await getThoughtIdsForContexts(provider, [['x'], ['x', 'y'], ['t'], ['t', 'u']]))),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM1!.id]: thoughtM1!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM2!.id]: thoughtM2!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
@@ -738,6 +744,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
+      const thoughtM = await getContext(provider, ['x', 'y', 'z', 'm'])
 
       const importedThoughtsWithoutPendingRoot = {
         ...thoughtIndex,
@@ -759,7 +766,9 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM!.id]: thoughtM!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
@@ -800,10 +809,10 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      const [thoughtZ, thoughtV] = await Promise.all([
-        getContext(provider, ['x', 'y', 'z']),
-        getContext(provider, ['t', 'u', 'v']),
-      ])
+      const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
+      const thoughtM1 = await getContext(provider, ['x', 'y', 'z', 'm'])
+      const thoughtV = await getContext(provider, ['t', 'u', 'v'])
+      const thoughtM2 = await getContext(provider, ['t', 'u', 'v', 'm'])
 
       expect(thoughts.thoughtIndex).toEqual({
         ..._.pick(
@@ -820,14 +829,18 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM1!.id]: thoughtM1!.id,
+          },
           lastUpdated: never(),
           pending: true,
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM2!.id]: thoughtM2!.id,
+          },
           lastUpdated: never(),
           pending: true,
           updatedBy: getSessionId(),

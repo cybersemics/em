@@ -179,7 +179,6 @@ async function* getDescendantThoughts(
         }
         return {
           ...thought,
-          childrenMap: {},
           lastUpdated: never(),
           updatedBy: getSessionId(),
           pending: true,
