@@ -25,9 +25,9 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
 // import ThoughtAnnotation from './ThoughtAnnotation'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import Subthoughts from './Subthoughts'
 
 // hooks
 import useIsChildHovering from '../hooks/useIsChildHovering'
@@ -300,7 +300,7 @@ const ThoughtContainer = ({
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
-  // See: <Subthoughts> render
+  // See: Subthoughts render
 
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
