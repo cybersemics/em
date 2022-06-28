@@ -362,7 +362,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
-  const thoughtsTo = props.simplePath
   const { cursor, expandHoverTopPath, thoughts } = store.getState()
 
   const { path } = props
@@ -371,13 +370,13 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const isExpandedTop = () =>
     path && expandHoverTopPath && path.length >= expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
 
-  const distance = cursor ? cursor.length - thoughtsTo.length : 0
+  const distance = cursor ? cursor.length - props.simplePath.length : 0
   const isHidden = distance >= 2 && !isExpandedTop()
 
   // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
+  const isDescendant = isDescendantPath(props.simplePath, thoughtsFrom)
 
-  const toThought = thoughts.thoughtIndex[head(thoughtsTo)]
+  const toThought = thoughts.thoughtIndex[head(props.simplePath)]
   const divider = isDivider(toThought.value)
 
   // do not drop on descendants or thoughts hidden by autofocus
@@ -392,24 +391,22 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
-  const thoughtsTo = props.simplePath
 
-  const newPath = appendToPath(thoughtsTo, head(thoughtsFrom))
+  const pathTo = appendToPath(props.simplePath, head(thoughtsFrom))
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const parentIdOld = head(rootedParentOf(state, thoughtsFrom))
-  const parentIdNew = head(rootedParentOf(state, newPath))
-  const sameContext = parentIdOld === parentIdNew
-
-  const toThought = getThoughtById(state, head(thoughtsTo))
-  const fromThought = getThoughtById(state, head(thoughtsFrom))
-  const dropTop = attribute(state, parentIdNew, '=drop') === 'top'
+  const thoughtTo = getThoughtById(state, head(props.simplePath))
+  const thoughtFrom = getThoughtById(state, head(thoughtsFrom))
+  const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
+  const parentIdTo = head(rootedParentOf(state, pathTo))
+  const sameContext = parentIdFrom === parentIdTo
+  const dropTop = attribute(state, parentIdTo, '=drop') === 'top'
 
   // cannot drop on itself
-  if (equalPath(thoughtsFrom, thoughtsTo)) return
+  if (equalPath(thoughtsFrom, props.simplePath)) return
 
   // cannot move root or em context or target is divider
-  if (isDivider(toThought.value) || (isRootOrEM && !sameContext)) {
+  if (isDivider(thoughtTo.value) || (isRootOrEM && !sameContext)) {
     store.dispatch(
       error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
     )
@@ -420,15 +417,15 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
     props.showContexts
       ? {
           type: 'createThought',
-          value: toThought.value,
+          value: thoughtTo.value,
           context: pathToContext(state, thoughtsFrom),
           rank: (dropTop ? getPrevRank : getNextRank)(state, head(thoughtsFrom)),
         }
       : {
           type: 'moveThought',
           oldPath: thoughtsFrom,
-          newPath,
-          newRank: (dropTop ? getPrevRank : getNextRank)(state, toThought.id),
+          newPath: pathTo,
+          newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
         },
   )
 
@@ -436,8 +433,8 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   if (!sameContext) {
     // wait until after MultiGesture has cleared the error so this alert does no get cleared
     setTimeout(() => {
-      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-      const alertTo = parentIdNew === HOME_TOKEN ? 'home' : '"' + ellipsize(toThought.value) + '"'
+      const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
+      const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
     }, 100)
