@@ -52,15 +52,18 @@ const thoughtToContext = (thoughtId: ThoughtId): Context => {
     ? isRoot([thought.parentId])
       ? [thought.value]
       : [...thoughtToContext(thought.parentId), thought.value]
-    : HOME_PATH
+    : [HOME_TOKEN]
 }
 
-const contextToPath = (context: Context, startid: ThoughtId = HOME_TOKEN): Path => {
-  if (context.length === 0) return [] as unknown as Path
-  const thought = db.thoughtIndex[startid]
-  const child = Object.values(thought.children || {}).find(c => c.value === context[0])
-  if (!child) return [thought.id]
-  return [thought.id, ...contextToPath(context.slice(1), child.id)]
+const thoughtToPath = (thoughtId: ThoughtId): Path => {
+  if (isRoot([thoughtId])) return HOME_PATH
+  const thought = db.thoughtIndex[thoughtId]
+  if (!thought) return [] as unknown as Path
+  return thought
+    ? isRoot([thought.parentId])
+      ? [thought.id]
+      : ([...thoughtToContext(thought.parentId), thought.id] as unknown as Path)
+    : HOME_PATH
 }
 
 /** Moves a thought to a new parent. */
@@ -86,7 +89,7 @@ const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
     parent.children = {}
   }
   // convert thought to inline child
-  const child = {
+  const child: Thought = {
     ...thought,
     childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
       [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
@@ -127,6 +130,7 @@ const numLexemesStart = Object.keys(db.lexemeIndex).length
 let childrenTouched: Index<true> = {}
 
 let childrenWithMissingThoughtRepaired = 0
+let thoughtMissingFromChildren = 0
 let numMissingGrandchildrenMissing = 0
 let numParentIdRepaired = 0
 let numChildrenInMultipleThoughts = 0
@@ -145,12 +149,27 @@ Object.values(db.thoughtIndex).forEach(thought => {
   const parent = db.thoughtIndex[thought.parentId]
   if (!parent && !isRoot([thought.id])) {
     moveThoughtToOrphanage(thought as ThoughtWithChildren)
-
     numOrphans++
     return
   }
 
-  // reconstruct unreachable thoughts
+  // reconstruct thoughts missing from parent's inline children
+  if (parent && !parent.children?.[thought.id]) {
+    if (!parent.children) {
+      parent.children = {}
+    }
+    // convert thought to inline child
+    const child: Thought = {
+      ...thought,
+      childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
+        [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
+      })),
+    }
+    parent.children[thought.id] = child
+    thoughtMissingFromChildren++
+  }
+
+  // reconstruct children missing from thoughtIndex
   // loop through all children
   const children = Object.values(thought.children || {}).map(child => {
     const childThought = db.thoughtIndex[child.id]
@@ -266,18 +285,19 @@ while (stack.length > 0) {
 Object.values(db.thoughtIndex).forEach(thought => {
   // reconstruct unreachable thoughts
   if (!visited[thought.id]) {
-    numUnreachableThoughts++
-    const context = thoughtToContext(thought.id)
-    // TODO: Add each thought in the context to its parent
-    // add to parent's inline children
+    const path = thoughtToPath(thought.id)
+    const oldestThought = db.thoughtIndex[path[0]]
 
-    const path = contextToPath(context)
-    // if (context.length !== path.length) {
-    //   console.log('context', context)
-    //   console.log('path', path)
-    //   console.error('STOP')
-    //   process.exit(1)
-    // }
+    if (oldestThought?.parentId === HOME_TOKEN) {
+      const context = thoughtToContext(thought.id)
+      console.error('context', context)
+      console.error('path', path)
+      throw new Error(
+        'NOT IMPLEMENTED: Orphaned Path does not start at ROOT. You probably want to verify the ancestor links and move the whole subtree to the orphanage.',
+      )
+    }
+
+    numUnreachableThoughts++
   }
 })
 
@@ -341,6 +361,11 @@ const table = new Table({
       color(numParentIdRepaired)(),
     ],
     ['numUnreachableThoughts', color(numUnreachableThoughts)(`Unreachable thoughts`), color(numUnreachableThoughts)()],
+    [
+      'thoughtMissingFromChildren',
+      color(thoughtMissingFromChildren)(`Thoughts missing from parent's inline children repaired`),
+      color(thoughtMissingFromChildren)(),
+    ],
     [
       'numDuplicateSiblingsMerged',
       color(numDuplicateSiblingsMerged)(`Duplicate siblings merged`),
