@@ -129,16 +129,16 @@ const numLexemesStart = Object.keys(db.lexemeIndex).length
 // track children to eliminate duplicates
 let childrenTouched: Index<true> = {}
 
+let childrenInMultipleThoughts = 0
 let childrenWithMissingThoughtRepaired = 0
-let thoughtMissingFromChildren = 0
-let numMissingGrandchildrenMissing = 0
-let numParentIdRepaired = 0
-let numChildrenInMultipleThoughts = 0
-let numDuplicateSiblingsMerged = 0
-let numLexemeContextsMissing = 0
-let numLexemeContextsInvalid = 0
+let duplicateSiblingsMerged = 0
+let lexemeContextsInvalid = 0
+let lexemeContextsMissing = 0
+let missingGrandchildrenMissing = 0
 let numOrphans = 0
-let numUnreachableThoughts = 0
+let parentIdRepaired = 0
+let thoughtMissingFromChildren = 0
+let unreachableThoughts = 0
 
 console.info('Iterating thoughtIndex')
 
@@ -192,7 +192,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
 
       const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
       const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
-      numMissingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
+      missingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
       childrenWithMissingThoughtRepaired++
     }
     return db.thoughtIndex[child.id]
@@ -202,12 +202,12 @@ Object.values(db.thoughtIndex).forEach(thought => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (childrenTouched[child.id]) {
       delete thought.children![child.id]
-      numChildrenInMultipleThoughts++
+      childrenInMultipleThoughts++
     }
     // repair child.parentId
     else if (child.parentId !== thought.id) {
       child.parentId = thought.id
-      numParentIdRepaired++
+      parentIdRepaired++
     }
     childrenTouched[child.id] = true
   })
@@ -222,14 +222,14 @@ Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
     // remove contexts with missing thought
     if (!thought) {
       lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
-      numLexemeContextsMissing++
+      lexemeContextsMissing++
       return
     }
 
     // remove contexts with value that no longer matches Lexeme value
     if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
       lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
-      numLexemeContextsInvalid++
+      lexemeContextsInvalid++
       return
     }
   })
@@ -269,7 +269,7 @@ while (stack.length > 0) {
       //       const childThought = db.thoughtIndex[childId]
       //       childThought.parentId = original.id
       //     })
-      //     numDuplicateSiblingsMerged++
+      //     duplicateSiblingsMerged++
       //   } else {
       //     childrenByValue[child.value] = child
       //   }
@@ -297,7 +297,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
       )
     }
 
-    numUnreachableThoughts++
+    unreachableThoughts++
   }
 })
 
@@ -335,41 +335,41 @@ const table = new Table({
       color(childrenWithMissingThoughtRepaired)(),
     ],
     [
-      'numMissingGrandchildrenMissing',
-      color(numMissingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
-      color(numMissingGrandchildrenMissing)(),
+      'childrenInMultipleThoughts',
+      color(childrenInMultipleThoughts)(`Thoughts removed from more than one parent`),
+      color(childrenInMultipleThoughts)(),
     ],
     [
-      'numChildrenInMultipleThoughts',
-      color(numChildrenInMultipleThoughts)(`Thoughts removed from more than one parent`),
-      color(numChildrenInMultipleThoughts)(),
+      'duplicateSiblingsMerged',
+      color(duplicateSiblingsMerged)(`Duplicate siblings merged`),
+      color(duplicateSiblingsMerged)(),
     ],
     [
-      'numLexemeContextsInvalid',
-      color(numLexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
-      color(numLexemeContextsInvalid)(),
+      'lexemeContextsInvalid',
+      color(lexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
+      color(lexemeContextsInvalid)(),
     ],
     [
-      'numLexemeContextsMissing',
-      color(numLexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
-      color(numLexemeContextsMissing)(),
+      'lexemeContextsMissing',
+      color(lexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
+      color(lexemeContextsMissing)(),
+    ],
+    [
+      'missingGrandchildrenMissing',
+      color(missingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
+      color(missingGrandchildrenMissing)(),
     ],
     ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
     [
-      'numParentIdRepaired',
-      color(numParentIdRepaired)(`Child parentId repaired to actual parent thought`),
-      color(numParentIdRepaired)(),
+      'parentIdRepaired',
+      color(parentIdRepaired)(`Child parentId repaired to actual parent thought`),
+      color(parentIdRepaired)(),
     ],
-    ['numUnreachableThoughts', color(numUnreachableThoughts)(`Unreachable thoughts`), color(numUnreachableThoughts)()],
+    ['unreachableThoughts', color(unreachableThoughts)(`Unreachable thoughts`), color(unreachableThoughts)()],
     [
       'thoughtMissingFromChildren',
       color(thoughtMissingFromChildren)(`Thoughts missing from parent's inline children repaired`),
       color(thoughtMissingFromChildren)(),
-    ],
-    [
-      'numDuplicateSiblingsMerged',
-      color(numDuplicateSiblingsMerged)(`Duplicate siblings merged`),
-      color(numDuplicateSiblingsMerged)(),
     ],
   ],
 } as any)
