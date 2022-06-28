@@ -6,7 +6,7 @@ import { store } from '../store'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import globals from '../globals'
-import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { DROP_TARGET, HOME_TOKEN, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import dragInProgress from '../action-creators/dragInProgress'
@@ -24,7 +24,6 @@ import State from '../@types/State'
 import appendToPath from '../util/appendToPath'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
 import ellipsize from '../util/ellipsize'
-import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -65,6 +64,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import getPrevRank from '../selectors/getPrevRank'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {
@@ -397,12 +397,13 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const newPath = appendToPath(thoughtsTo, head(thoughtsFrom))
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(state, pathToContext(state, thoughtsFrom))
-  const newContext = rootedParentOf(state, pathToContext(state, newPath))
-  const sameContext = equalArrays(oldContext, newContext)
+  const parentIdOld = head(rootedParentOf(state, thoughtsFrom))
+  const parentIdNew = head(rootedParentOf(state, newPath))
+  const sameContext = parentIdOld === parentIdNew
 
   const toThought = getThoughtById(state, head(thoughtsTo))
   const fromThought = getThoughtById(state, head(thoughtsFrom))
+  const dropTop = attribute(state, parentIdNew, '=drop') === 'top'
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, thoughtsTo)) return
@@ -421,13 +422,13 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
           type: 'createThought',
           value: toThought.value,
           context: pathToContext(state, thoughtsFrom),
-          rank: getNextRank(state, head(thoughtsFrom)),
+          rank: (dropTop ? getPrevRank : getNextRank)(state, head(thoughtsFrom)),
         }
       : {
           type: 'moveThought',
           oldPath: thoughtsFrom,
           newPath,
-          newRank: getNextRank(state, head(thoughtsTo)),
+          newRank: (dropTop ? getPrevRank : getNextRank)(state, toThought.id),
         },
   )
 
@@ -436,7 +437,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
     // wait until after MultiGesture has cleared the error so this alert does no get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(toThought.value) + '"'
+      const alertTo = parentIdNew === HOME_TOKEN ? 'home' : '"' + ellipsize(toThought.value) + '"'
 
       store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
     }, 100)
