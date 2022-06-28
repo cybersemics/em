@@ -179,11 +179,18 @@ Object.values(db.thoughtIndex).forEach(thought => {
       // we may not be able to reconstruct the grandchildren unfortunately since we only have ids in childrenMap
       // however we can still use childrenMap to try to look up the grandchildren in thoughtIndex
       db.thoughtIndex[child.id] = {
+        // convert childrenMap to children for thought
         ..._.omit(child, 'childrenMap'),
-        children: keyValueBy(child.childrenMap, (key, id) =>
-          db.thoughtIndex[id]
+        children: keyValueBy(child.childrenMap, (key, childId) =>
+          db.thoughtIndex[childId]
             ? {
-                [id]: db.thoughtIndex[id],
+                [childId]: {
+                  // convert children to childrenMap for inline child
+                  ..._.omit(db.thoughtIndex[childId], 'children'),
+                  childrenMap: keyValueBy(thought.children || {}, (grandChildId, child) => ({
+                    [isAttribute(child.value) ? child.value : grandChildId]: grandChildId as ThoughtId,
+                  })),
+                } as Thought,
               }
             : null,
         ),
@@ -213,6 +220,116 @@ Object.values(db.thoughtIndex).forEach(thought => {
   })
 })
 
+console.info('Merging duplicate siblings')
+
+// traverse the tree and merge duplicate siblings
+let stack: ThoughtId[] = [HOME_TOKEN]
+while (stack.length > 0) {
+  stack = stack
+    .map(id => {
+      const thought = db.thoughtIndex[id]
+      if (!thought) {
+        throw new Error('Missing parent after parents should be reconstructed')
+      }
+
+      // merge duplicate children
+      // create an index for O(1) lookup of a child by value
+      const childrenByValue: Index<Thought> = {}
+      Object.values(thought.children || {}).forEach(child => {
+        const existingChild = childrenByValue[child.value]
+        // if a thought with the same value already exists, move children from the into the original and delete originalChild
+        if (existingChild) {
+          const duplicateChild = child // for better readability
+          const duplicateThought = db.thoughtIndex[child.id]
+          const existingThought = db.thoughtIndex[existingChild.id]
+
+          // delete duplicate child and keep existing child
+          delete db.thoughtIndex[duplicateChild.id]
+          delete thought.children![duplicateChild.id]
+
+          // move children to existing thought
+          // duplicate children will be merged in the next iteration
+          existingThought.children = {
+            ...existingThought.children,
+            ...duplicateThought.children,
+          }
+
+          existingChild.childrenMap = {
+            ...existingChild.childrenMap,
+            ...duplicateChild.childrenMap,
+          }
+
+          // update children parentIds
+          Object.values(duplicateChild.childrenMap || {}).forEach(childId => {
+            const childThought = db.thoughtIndex[childId]
+            childThought.parentId = existingChild.id
+          })
+
+          // update Lexeme contexts
+          const lexemeKey = hashThought(duplicateThought.value)
+          const lexeme = db.lexemeIndex[lexemeKey]
+          // if Lexeme is missing, it will be reconstructed in the next step
+          if (lexeme) {
+            lexeme.contexts = lexeme.contexts.filter(cx => cx !== duplicateThought.id)
+          }
+
+          duplicateSiblingsMerged++
+        } else {
+          childrenByValue[child.value] = child
+        }
+      })
+
+      // return children to be added to the stack
+      return Object.keys(thought.children || {}) as ThoughtId[]
+    })
+    .flat()
+}
+
+console.info('Marking reachable thoughts')
+
+// traverse the tree and repair unreachable thoughts
+const visited: Index<true> = {}
+stack = [HOME_TOKEN]
+while (stack.length > 0) {
+  stack = stack
+    .map(id => {
+      visited[id] = true
+
+      const thought = db.thoughtIndex[id]
+      if (!thought) {
+        throw new Error('Missing parent after parents should be reconstructed')
+      }
+
+      // return children to be added to the stack
+      return Object.keys(thought.children || {}) as ThoughtId[]
+    })
+    .flat()
+}
+
+console.info('Repairing unreachable thoughts')
+
+// second pass through thoughts to repair unreachable
+Object.values(db.thoughtIndex).forEach(thought => {
+  // reconstruct unreachable thoughts
+  if (!visited[thought.id]) {
+    const path = thoughtToPath(thought.id)
+    const oldestThought = db.thoughtIndex[path[0]]
+
+    // if (oldestThought?.parentId === HOME_TOKEN) {
+    //   const context = thoughtToContext(thought.id)
+    //   console.error('context', context)
+    //   console.error('path', path)
+    //   throw new Error(
+    //     'NOT IMPLEMENTED: Orphaned Path does not start at ROOT. You probably want to verify the ancestor links and move the whole subtree to the orphanage.',
+    //   )
+    // }
+
+    unreachableThoughts++
+  }
+})
+
+console.info('Validating Lexemes')
+
 // validate Lexeme contexts
 Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
   if (!lexeme.contexts) return
@@ -233,72 +350,6 @@ Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
       return
     }
   })
-})
-
-console.info('Traversing tree')
-
-// traverse the tree
-const visited: Index<true> = {}
-let stack: ThoughtId[] = [HOME_TOKEN]
-while (stack.length > 0) {
-  stack = stack
-    .map(id => {
-      // mark visited to detect unreachable thoughts
-      visited[id] = true
-
-      const thought = db.thoughtIndex[id]
-      if (!thought) {
-        throw new Error('Missing parent after parents should be reconstructed')
-      }
-
-      // merge duplicate children
-      // const childrenByValue: Index<Thought> = {}
-      // Object.values(thought.children || {}).forEach(child => {
-      //   const original = childrenByValue[child.value]
-      //   // if a thought with the same value already exists, move children from the duplicate into the original and delete the duplicate
-      //   if (original) {
-      //     // delete duplicate
-      //     delete thought.children![child.id]
-      //     // merge children
-      //     original.childrenMap = {
-      //       ...original.childrenMap,
-      //       ...child.childrenMap,
-      //     }
-      //     // update children parentIds
-      //     Object.values(child.childrenMap || {}).forEach(childId => {
-      //       const childThought = db.thoughtIndex[childId]
-      //       childThought.parentId = original.id
-      //     })
-      //     duplicateSiblingsMerged++
-      //   } else {
-      //     childrenByValue[child.value] = child
-      //   }
-      // })
-
-      // return children to be added to the stack
-      return Object.keys(thought.children || {}) as ThoughtId[]
-    })
-    .flat()
-}
-
-// second pass through thoughts
-Object.values(db.thoughtIndex).forEach(thought => {
-  // reconstruct unreachable thoughts
-  if (!visited[thought.id]) {
-    const path = thoughtToPath(thought.id)
-    const oldestThought = db.thoughtIndex[path[0]]
-
-    if (oldestThought?.parentId === HOME_TOKEN) {
-      const context = thoughtToContext(thought.id)
-      console.error('context', context)
-      console.error('path', path)
-      throw new Error(
-        'NOT IMPLEMENTED: Orphaned Path does not start at ROOT. You probably want to verify the ancestor links and move the whole subtree to the orphanage.',
-      )
-    }
-
-    unreachableThoughts++
-  }
 })
 
 /** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
@@ -377,5 +428,5 @@ const table = new Table({
 console.info('\n' + table.toString())
 
 // console.info('\nWrite disabled')
-console.info('Writing db')
+console.info('\nWriting db')
 fs.writeFileSync(file, JSON.stringify(db, null, 2))
