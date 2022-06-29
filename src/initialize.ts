@@ -1,7 +1,6 @@
 import Context from './@types/Context'
 import * as Firebase from './@types/Firebase'
 import State from './@types/State'
-import ThoughtSubscriptionUpdates from './@types/ThoughtSubscriptionUpdates'
 import Thunk from './@types/Thunk'
 import './App.css'
 import _ from 'lodash'
@@ -27,16 +26,13 @@ import userAuthenticated from './action-creators/userAuthenticated'
 import loadFromUrl from './action-creators/loadFromUrl'
 import loadLocalState from './action-creators/loadLocalState'
 import preloadSources from './action-creators/preloadSources'
-import updateThoughtsFromSubscription from './action-creators/updateThoughtsFromSubscription'
 import pull from './action-creators/pull'
 import setCursor from './action-creators/setCursor'
 import importToContext from './test-helpers/importToContext'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
-import { SessionType } from './util/sessionManager'
 import * as sessionManager from './util/sessionManager'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import globals from './globals'
-import { subscribe } from './data-providers/firebase'
 import initAlgoliaSearch from './search/algoliaSearch'
 import * as selection from './device/selection'
 import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './selectors/getChildren'
@@ -58,14 +54,6 @@ export const initFirebase = async (): Promise<void> => {
       if (user) {
         const status = store.getState().status
         store.dispatch(userAuthenticated(user, { connected: status === 'loading' || status === 'loaded' }))
-
-        // disable Firebase subscription which is way too slow
-        // eslint-disable-next-line no-constant-condition
-        if (false) {
-          subscribe(user.uid, (updates: ThoughtSubscriptionUpdates) => {
-            store.dispatch(updateThoughtsFromSubscription(updates, SessionType.REMOTE))
-          })
-        }
 
         const { applicationId, index } = ALGOLIA_CONFIG
         const hasRemoteConfig = applicationId && index
@@ -153,14 +141,6 @@ export const initialize = async () => {
   // load local state unless loading a public context or source url
   await initDB()
 
-  db.subscribe((updates: ThoughtSubscriptionUpdates) => {
-    // only allow local subscriptions if not logged in
-    const { status } = store.getState()
-    if (status !== 'disconnected') return
-
-    store.dispatch(updateThoughtsFromSubscription(updates, SessionType.LOCAL))
-  })
-
   const src = urlDataSource()
   const thoughtsLocalPromise =
     owner() === '~'
@@ -204,7 +184,6 @@ const testHelpers = {
   importToContext: withDispatch(importToContext),
   getLexemeFromDB,
   getState: store.getState,
-  subscribe: store.subscribe,
   _: _,
   clearAll: db.clearAll,
 }
