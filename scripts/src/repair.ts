@@ -90,7 +90,7 @@ const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
   }
   // convert thought to inline child
   const child: Thought = {
-    ...thought,
+    ..._.omit(thought, 'children'),
     childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
       [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
     })),
@@ -160,7 +160,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
     }
     // convert thought to inline child
     const child: Thought = {
-      ...thought,
+      ..._.omit(thought, 'children'),
       childrenMap: keyValueBy(thought.children || {}, (id, child) => ({
         [isAttribute(child.value) ? child.value : id]: id as ThoughtId,
       })),
