@@ -89,6 +89,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
   /** Handle new thoughts pulled. */
   const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+    if (!isMounted.current) return
     // count the total number of new children pulled
     const numDescendantsNew = Object.values(thoughts.thoughtIndex).reduce((accum, thought) => {
       return accum + Object.keys(thought.childrenMap).length
@@ -184,9 +185,12 @@ const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportTho
   // updates with latest number of descendants
   const numDescendants = useDescendantsNumber()
 
-  const exportThoughtsPhrase = exportPhrase(state, context, numDescendantsFinal ?? numDescendants ?? 0, {
-    value: title,
-  })
+  const exportThoughtsPhrase =
+    numDescendantsFinal || numDescendants
+      ? exportPhrase(state, context, numDescendantsFinal ?? numDescendants, {
+          value: title,
+        })
+      : 'thoughts'
 
   return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
 }
