@@ -20,6 +20,9 @@ import Context from '../../src/@types/Context'
 import timestamp from '../../src/util/timestamp.js'
 import isAttribute from '../../src/util/isAttribute.js'
 
+const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
+const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
+const EM_TOKEN = '__EM__' as ThoughtId
 const HOME_TOKEN = '__ROOT__' as ThoughtId
 const HOME_PATH = [HOME_TOKEN] as Path
 
@@ -39,28 +42,28 @@ const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought
   )
 
 /** Returns true if the Thoughts or Path is the one of the root contexts. */
-const isRoot = (thoughts: (string | ThoughtId)[]): boolean => thoughts.length === 1 && thoughts[0] === HOME_TOKEN
+const isRoot = (id: ThoughtId): boolean => id === HOME_TOKEN || id === EM_TOKEN || id === ABSOLUTE_TOKEN
 
 /**
  * Generates the context of a thought by traversing upwards to the root thought.
  */
 const thoughtToContext = (thoughtId: ThoughtId): Context => {
-  if (isRoot([thoughtId])) return HOME_PATH
+  if (isRoot(thoughtId)) return [thoughtId]
   const thought = db.thoughtIndex[thoughtId]
   if (!thought) return []
   return thought
-    ? isRoot([thought.parentId])
+    ? isRoot(thought.parentId)
       ? [thought.value]
       : [...thoughtToContext(thought.parentId), thought.value]
     : [HOME_TOKEN]
 }
 
 const thoughtToPath = (thoughtId: ThoughtId): Path => {
-  if (isRoot([thoughtId])) return HOME_PATH
+  if (isRoot(thoughtId)) return [thoughtId]
   const thought = db.thoughtIndex[thoughtId]
   if (!thought) return [] as unknown as Path
   return thought
-    ? isRoot([thought.parentId])
+    ? isRoot(thought.parentId)
       ? [thought.id]
       : ([...thoughtToContext(thought.parentId), thought.id] as unknown as Path)
     : HOME_PATH
@@ -96,6 +99,15 @@ const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
     })),
   }
   parent.children[thought.id] = child
+
+  // add thought to inline parent's childrenMap within grandparent
+  const grandparent = db.thoughtIndex[parent.parentId]
+  if (grandparent) {
+    if (!grandparent.children) {
+      grandparent.children = {}
+    }
+    grandparent.children[parentId].childrenMap[thought.id] = thought.id
+  }
 }
 
 const moveThoughtToOrphanage = (thought: ThoughtWithChildren) => {
@@ -159,28 +171,32 @@ Object.values(db.thoughtIndex).forEach(thought => {
   // move thoughts with missing parent into the orphanage
   // based on 6/13/22 data set, we can assume the parent is not in any inline children, so we can't reconstruct it
   const parent = db.thoughtIndex[thought.parentId]
-  if (!parent && !isRoot([thought.id])) {
-    moveThoughtToOrphanage(thought as ThoughtWithChildren)
-    numOrphans++
+  if (!parent) {
+    if (!isRoot(thought.id)) {
+      moveThoughtToOrphanage(thought as ThoughtWithChildren)
+      numOrphans++
+    }
     return
   }
 
   // reconstruct missing Lexemes
-  const lexemeKey = hashThought(thought.value)
-  const lexeme = db.lexemeIndex[lexemeKey]
-  if (!lexeme) {
-    db.lexemeIndex[lexemeKey] = {
-      id: lexemeKey,
-      contexts: [thought.id],
-      value: normalizeThought(thought.value),
-      created: timestamp(),
-      lastUpdated: timestamp(),
+  if (!isRoot(thought.id)) {
+    const lexemeKey = hashThought(thought.value)
+    const lexeme = db.lexemeIndex[lexemeKey]
+    if (!lexeme) {
+      db.lexemeIndex[lexemeKey] = {
+        id: lexemeKey,
+        contexts: [thought.id],
+        value: normalizeThought(thought.value),
+        created: timestamp(),
+        lastUpdated: timestamp(),
+      }
+      lexemeMissing++
     }
-    lexemeMissing++
   }
 
   // reconstruct thoughts missing from parent's inline children
-  if (parent && !parent.children?.[thought.id]) {
+  if (!parent.children?.[thought.id]) {
     if (!parent.children) {
       parent.children = {}
     }
@@ -315,7 +331,7 @@ console.info('Marking reachable thoughts')
 
 // traverse the tree and repair unreachable thoughts
 const visited: Index<true> = {}
-stack = [HOME_TOKEN]
+stack = [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN]
 while (stack.length > 0) {
   stack = stack
     .map(id => {
@@ -337,7 +353,7 @@ console.info('Repairing unreachable thoughts')
 // second pass through thoughts to repair unreachable
 Object.values(db.thoughtIndex).forEach(thought => {
   // reconstruct unreachable thoughts
-  if (!visited[thought.id]) {
+  if (!visited[thought.id] && !isRoot(thought.id)) {
     const path = thoughtToPath(thought.id)
     const oldestThought = db.thoughtIndex[path[0]]
 
