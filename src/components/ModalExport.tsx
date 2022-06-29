@@ -113,7 +113,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     if (id) {
       dispatch(
         pull([id], {
-          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          onLocalThoughts: onThoughts,
           // TODO: onRemoteThoughts ??
           maxDepth: Infinity,
         }),

@@ -13,8 +13,10 @@ import ThoughtsInterface from '../@types/ThoughtsInterface'
 import ThoughtId from '../@types/ThoughtId'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
+import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 
 const BUFFER_DEPTH = 2
+
 export interface PullOptions {
   // force a pull from the remote
   force?: boolean
@@ -40,6 +42,24 @@ const filterPending = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
     return !thought || thought.pending
   })
 
+/** Returns a list of all pending descendants of the given thoughts (inclusive). */
+const filterPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
+  _.flatMap(thoughtIds, thoughtId => {
+    const thought = getThoughtById(state, thoughtId)
+
+    const isThoughtPending = !thought || thought.pending
+
+    return isThoughtPending
+      ? // return pending input thoughts as-is
+        // there are no non-pending descendants to traverse
+        [thoughtId]
+      : // otherwise traverse descendants for pending thoughts
+        getDescendantThoughtIds(state, thoughtId).filter(descendantThoughtId => {
+          const descendantThought = getThoughtById(state, descendantThoughtId)
+          return !descendantThought || descendantThought.pending
+        })
+  })
+
 /**
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
@@ -51,7 +71,11 @@ const pull =
   ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
-    const filteredThoughtIds = force ? thoughtIds : filterPending(getState(), thoughtIds)
+    const filteredThoughtIds = force
+      ? thoughtIds
+      : // if maxDepth is provided, find pending descendants (e.g. for exporting thoughts and their descendants)
+        // otherwise, just pull the specific thoughts given if they are pending
+        (Number(maxDepth) > 0 ? filterPendingDescendants : filterPending)(getState(), thoughtIds)
 
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []

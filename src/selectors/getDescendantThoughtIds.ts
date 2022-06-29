@@ -7,26 +7,27 @@ import ThoughtId from '../@types/ThoughtId'
 import { getAllChildrenAsThoughts } from './getChildren'
 import getThoughtById from './getThoughtById'
 
-interface OptionsPath {
+interface Options {
   filterFunction?: (thought: Thought) => boolean
+  // orders each level by rank in the return list
   ordered?: boolean
 }
 
 // use an internal flag to differentiate recursive calls
-interface OptionsPathInternal extends OptionsPath {
+interface OptionsInternal extends Options {
   recur?: boolean
 }
 
-/** Generates a flat list of all descendant Paths. If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
-const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: OptionsPath = {}): ThoughtId[] => {
-  const { filterFunction, ordered, recur } = options as OptionsPathInternal
+/** Generates a flat list of all descendant Paths (not including starting thought). If a filterFunction is provided, descendants of thoughts that are filtered out are not traversed. */
+const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: Options = {}): ThoughtId[] => {
+  const { filterFunction, ordered, recur } = options as OptionsInternal
   const thought = getThoughtById(state, thoughtId)
 
   if (!thought) return []
 
-  const thoughts = getAllChildrenAsThoughts(state, thoughtId)
+  const childrenRaw = getAllChildrenAsThoughts(state, thoughtId)
 
-  const children = ordered ? sort(thoughts, compareByRank) : thoughts
+  const children = ordered ? sort(childrenRaw, compareByRank) : childrenRaw
 
   if (!children) return []
 
@@ -38,7 +39,7 @@ const getDescendantThoughtIds = (state: State, thoughtId: ThoughtId, options: Op
         filterFunction,
         recur: true,
         ordered,
-      } as OptionsPath),
+      } as Options),
     ),
   )
 }

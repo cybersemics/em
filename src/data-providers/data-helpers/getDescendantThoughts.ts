@@ -37,6 +37,7 @@ const queue = <T>(initialValue: T[] = []) => {
       list = [...list, ...values]
       total += values.length
     },
+    list: () => [...list],
     /** Gets the full contents of the queue and clears it. */
     next: () => {
       const copy = [...list]
