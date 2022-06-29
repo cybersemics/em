@@ -110,10 +110,21 @@ const moveThoughtToOrphanage = (thought: ThoughtWithChildren) => {
       lastUpdated: timestamp(),
       updatedBy: '',
     }
-    // add orphanage to root
+
+    // add orphanage to root children
     db.thoughtIndex.__ROOT__.children!.orphanage = {
       ..._.omit(db.thoughtIndex.orphanage, 'children'),
       childrenMap: {},
+    }
+
+    // add orphanage Lexeme
+    const lexemeKey = hashThought('ORPHANAGE')
+    db.lexemeIndex[lexemeKey] = {
+      id: 'orphanage',
+      contexts: ['orphanage' as ThoughtId],
+      value: 'orphanage',
+      created: timestamp(),
+      lastUpdated: timestamp(),
     }
   }
 
@@ -134,6 +145,7 @@ let childrenWithMissingThoughtRepaired = 0
 let duplicateSiblingsMerged = 0
 let lexemeContextsInvalid = 0
 let lexemeContextsMissing = 0
+let lexemeMissing = 0
 let missingGrandchildrenMissing = 0
 let numOrphans = 0
 let parentIdRepaired = 0
@@ -151,6 +163,20 @@ Object.values(db.thoughtIndex).forEach(thought => {
     moveThoughtToOrphanage(thought as ThoughtWithChildren)
     numOrphans++
     return
+  }
+
+  // reconstruct missing Lexemes
+  const lexemeKey = hashThought(thought.value)
+  const lexeme = db.lexemeIndex[lexemeKey]
+  if (!lexeme) {
+    db.lexemeIndex[lexemeKey] = {
+      id: lexemeKey,
+      contexts: [thought.id],
+      value: normalizeThought(thought.value),
+      created: timestamp(),
+      lastUpdated: timestamp(),
+    }
+    lexemeMissing++
   }
 
   // reconstruct thoughts missing from parent's inline children
@@ -405,6 +431,7 @@ const table = new Table({
       color(lexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
       color(lexemeContextsMissing)(),
     ],
+    ['lexemeMissing', color(lexemeMissing)(`Missing Lexemes reconstructed`), color(lexemeMissing)()],
     [
       'missingGrandchildrenMissing',
       color(missingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
