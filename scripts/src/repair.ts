@@ -71,7 +71,7 @@ const thoughtToPath = (thoughtId: ThoughtId): Path => {
 
 /** Moves a thought to a new parent. */
 const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
-  // remove thought from old parent (if the parent exists)
+  // remove thought from old parent (if the parent exists).
   const parentOld = db.thoughtIndex[thought.parentId]
   if (parentOld?.children) {
     delete parentOld.children[thought.id]
@@ -106,7 +106,7 @@ const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
     if (!grandparent.children) {
       grandparent.children = {}
     }
-    grandparent.children[parentId].childrenMap[thought.id] = thought.id
+    grandparent.children[parentId].childrenMap[isAttribute(thought.value) ? thought.value : thought.id] = thought.id
   }
 }
 
@@ -164,7 +164,7 @@ let parentIdRepaired = 0
 let thoughtMissingFromChildren = 0
 let unreachableThoughts = 0
 
-console.info('Iterating thoughtIndex')
+console.info('Reconstructing orphans, missing children, and Lexemes')
 
 // loop through all thoughts
 Object.values(db.thoughtIndex).forEach(thought => {
@@ -208,6 +208,28 @@ Object.values(db.thoughtIndex).forEach(thought => {
       })),
     }
     parent.children[thought.id] = child
+
+    // add thought to parent's parent's childrenMap
+    const grandparent = db.thoughtIndex[parent.parentId]
+    if (grandparent) {
+      if (!grandparent.children) {
+        grandparent.children = {}
+      }
+      if (!grandparent.children[parent.id]) {
+        grandparent.children[parent.id] = {
+          ..._.omit(parent, 'children'),
+          childrenMap: keyValueBy(parent.children || {}, (grandChildId, parentChild) => ({
+            [isAttribute(parentChild.value) ? parentChild.value : grandChildId]: grandChildId as ThoughtId,
+          })),
+        }
+      }
+      const parentInlineChild = grandparent.children[parent.id]
+      if (!parentInlineChild.childrenMap) {
+        grandparent.children[parent.id].childrenMap = {}
+      }
+      parentInlineChild.childrenMap[isAttribute(thought.value) ? thought.value : thought.id] = thought.id
+    }
+
     thoughtMissingFromChildren++
   }
 
@@ -237,7 +259,12 @@ Object.values(db.thoughtIndex).forEach(thought => {
             : null,
         ),
       } as ThoughtWithChildren
-      // no need to update parent's inline children, since that is what we are reconstructing from
+
+      // make sure the child is in the thought's parent's inline children childrenMap
+      if (!parent.children) {
+        parent.children = {}
+      }
+      parent.children[thought.id].childrenMap[isAttribute(child.value) ? child.value : child.id] = child.id
 
       const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
       const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
@@ -246,11 +273,18 @@ Object.values(db.thoughtIndex).forEach(thought => {
     }
     return db.thoughtIndex[child.id]
   })
+})
 
+console.info('Removing children in more than one context and repair invalid childId')
+
+Object.values(db.thoughtIndex).forEach(thought => {
+  const parent = db.thoughtIndex[thought.parentId]
+  const children = Object.values(thought.children || {})
   children.forEach(child => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (childrenTouched[child.id]) {
       delete thought.children![child.id]
+      delete parent?.children?.[thought.id]?.childrenMap?.[isAttribute(child.value) ? child.value : child.id]
       childrenInMultipleThoughts++
     }
     // repair child.parentId
@@ -282,12 +316,18 @@ while (stack.length > 0) {
         // if a thought with the same value already exists, move children from the into the original and delete originalChild
         if (existingChild) {
           const duplicateChild = child // for better readability
-          const duplicateThought = db.thoughtIndex[child.id]
+          const duplicateThought = db.thoughtIndex[duplicateChild.id]
           const existingThought = db.thoughtIndex[existingChild.id]
 
           // delete duplicate child and keep existing child
           delete db.thoughtIndex[duplicateChild.id]
           delete thought.children![duplicateChild.id]
+
+          // delete from parent's inline children childrenMap
+          const parent = db.thoughtIndex[thought.parentId]
+          delete parent?.children?.[thought.id]?.childrenMap?.[
+            isAttribute(duplicateChild.value) ? duplicateChild.value : duplicateChild.id
+          ]
 
           // move children to existing thought
           // duplicate children will be merged in the next iteration
