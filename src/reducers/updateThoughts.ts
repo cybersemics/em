@@ -10,7 +10,6 @@ import mergeUpdates from '../util/mergeUpdates'
 import once from '../util/once'
 import textToHtml from '../util/textToHtml'
 import reducerFlow from '../util/reducerFlow'
-import fifoCache from '../util/fifoCache'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -35,9 +34,6 @@ export interface UpdateThoughtsOptions {
   remote?: boolean
   isLoading?: boolean
 }
-
-const contextCache = fifoCache<string>(10000)
-const lexemeCache = fifoCache<string>(10000)
 
 /**
  * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
@@ -91,28 +87,6 @@ const updateThoughts = (
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
-
-  // The thoughtIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
-  // The contextCache and thoughtCache are used as a queue that is parallel to the thoughtIndex and lexemeIndex.
-  // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
-  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from thoughtIndex and lexemeIndex
-
-  const thoughtIndexInvalidated = contextCache.addMany(Object.keys(thoughtIndexUpdates))
-  const lexemeIndexInvalidated = lexemeCache.addMany(Object.keys(lexemeIndexUpdates))
-
-  thoughtIndexInvalidated.forEach(key => {
-    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
-      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
-
-  lexemeIndexInvalidated.forEach(key => {
-    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().lexemeIndex[key] && !state.expanded[key]) {
-      delete lexemeIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
 
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
