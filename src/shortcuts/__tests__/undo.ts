@@ -6,6 +6,7 @@ import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import { getLexeme } from '../../selectors/getLexeme'
 import * as undoUtils from '../../selectors/isUndoEnabled'
 import { store as appStore } from '../../store'
 import { createMockStore } from '../../test-helpers/createMockStore'
@@ -65,13 +66,24 @@ it('undo thought change', () => {
     { type: 'undoAction' },
   ])
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  const stateNew = store.getState()
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b`
 
   expect(exported).toEqual(expectedOutput)
+
+  // TODO: This does not seem to properly test restorePushQueueFromPatches.
+  // It passes even when the Lexeme is set to null.
+  // It was only noticed because of the Lexeme data integrity check added to updateThoughts.
+  // See: undoRedoEnhancer commit on 7/2/22
+  const lexemeA = getLexeme(stateNew, 'a')
+  expect(lexemeA).toBeTruthy()
+
+  const lexemeAA = getLexeme(stateNew, 'aa')
+  expect(lexemeAA).toBeFalsy()
 })
 
 // @MIGRATION_TODO

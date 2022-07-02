@@ -6,9 +6,10 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
+import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import htmlToJson from '../util/htmlToJson'
 import importJSON from '../util/importJSON'
@@ -185,6 +186,20 @@ const updateThoughts = (
           throw new Error(
             'Thoughts in State should not have children property. Only the database should contain inline children.',
           )
+        }
+
+        // assert that a lexeme exists for the thought
+        const lexeme = getLexeme(state, thought.value)
+        if (!lexeme) {
+          console.error('thought', thought)
+          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing a corresponding Lexeme.`)
+        } else if (
+          ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
+          !lexeme.contexts.some(cx => cx === thought.id)
+        ) {
+          console.error('thought', thought)
+          console.error('lexeme', lexeme)
+          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
         }
       })
 
