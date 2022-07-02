@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import Table from 'cli-table'
 import fs from 'fs'
 import _ from 'lodash'
+import minimist from 'minimist'
 import path from 'path'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/IndexType'
@@ -25,10 +26,15 @@ const EM_TOKEN = '__EM__' as ThoughtId
 const HOME_TOKEN = '__ROOT__' as ThoughtId
 const HOME_PATH = [HOME_TOKEN] as Path
 
-const [, , file] = process.argv
+const args = minimist(process.argv.slice(2))
+const file = args._[0]
 if (!file) {
-  console.error('Usage: npm run repair -- db.json')
+  console.error('Usage: npm run repair -- db.json [--dry]')
   process.exit(1)
+}
+
+if (args.dry) {
+  console.info('Executing dry-run')
 }
 
 const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought) => boolean) =>
@@ -510,6 +516,9 @@ const table = new Table({
 
 console.info('\n' + table.toString())
 
-// console.info('\nWrite disabled')
-console.info('\nWriting db')
-fs.writeFileSync(file, JSON.stringify(db, null, 2))
+if (args.dry) {
+  console.info('\nWrite disabled')
+} else {
+  console.info('\nWriting db')
+  fs.writeFileSync(file, JSON.stringify(db, null, 2))
+}

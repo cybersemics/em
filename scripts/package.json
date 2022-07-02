@@ -21,10 +21,12 @@
     "repair": "node build/scripts/src/repair.js"
   },
   "dependencies": {
+    "cli-table": "^0.3.11",
+    "minimist": "^1.2.6",
     "murmurhash3js": "^3.0.1"
   },
   "devDependencies": {
     "@types/cli-table": "^0.3.0",
-    "cli-table": "^0.3.11"
+    "@types/minimist": "^1.2.2"
   }
 }
