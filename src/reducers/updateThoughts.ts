@@ -161,7 +161,7 @@ const updateThoughts = (
         if (!thought) return
 
         if ('children' in thought) {
-          console.info('thought', thought)
+          console.error('thought', thought)
           throw new Error(
             'Thoughts in State should not have children property. Only the database should contain inline children.',
           )
@@ -174,21 +174,18 @@ const updateThoughts = (
           .filter(Boolean)
         children.forEach(child => {
           if (child.parentId !== thought.id) {
-            console.info('child', child)
-            console.info('thought', thought)
+            console.error('child', child)
+            console.error('thought', thought)
             throw new Error('child.parentId !== thought.id')
-
-            // or warn instead of hard fail
-            // console.warn(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
-            // console.info('thought', thought)
-            // console.info('child', child)
-            // console.info('child parent', getThoughtById(state, child.parentId))
-            // if (thoughtIndexUpdates[child.id]) {
-            //   thoughtIndexUpdates[child.id]!.parentId = thought.id
-            //   console.info('repaired')
-            // }
           }
         })
+
+        if ('children' in thought) {
+          console.error('thought', thought)
+          throw new Error(
+            'Thoughts in State should not have children property. Only the database should contain inline children.',
+          )
+        }
       })
 
       return state
