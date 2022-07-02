@@ -1,8 +1,8 @@
-import getThoughtById from './getThoughtById'
 import Index from '../@types/IndexType'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import getThoughtById from './getThoughtById'
 
 /**
  * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.

@@ -1,9 +1,9 @@
-import { store } from '../../store'
+import Index from '../../@types/IndexType'
 import cursorBack from '../../action-creators/cursorBack'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import newThought from '../../action-creators/newThought'
+import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import Index from '../../@types/IndexType'
 
 // mock debounce and throttle so debounced updateUrlHistory will trigger
 // fake timers cause an infinite loop on _.debounce

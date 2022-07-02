@@ -16,7 +16,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
+    "downlevelIteration": true
   },
   "extends": "expo/tsconfig.base"
 }

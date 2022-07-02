@@ -1,6 +1,6 @@
 import { parse } from 'jex-block-parser'
-import strip from '../util/strip'
 import Block from '../@types/Block'
+import strip from '../util/strip'
 
 export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
 

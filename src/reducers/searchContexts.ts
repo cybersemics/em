@@ -1,5 +1,5 @@
-import Index from '../@types/IndexType'
 import Context from '../@types/Context'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
 
 /** Set search contexts map that needs to be picked up by pull queue middleware. */

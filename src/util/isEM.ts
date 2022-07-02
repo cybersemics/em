@@ -1,6 +1,6 @@
-import { EM_TOKEN } from '../constants'
 import Context from '../@types/Context'
 import Path from '../@types/Path'
+import { EM_TOKEN } from '../constants'
 import isPath from './isPath'
 
 /** Returns true if the Path is the EM_TOKEN. */

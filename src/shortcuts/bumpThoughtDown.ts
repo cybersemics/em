@@ -1,8 +1,8 @@
-import isDocumentEditable from '../util/isDocumentEditable'
+import Shortcut from '../@types/Shortcut'
 import bumpThoughtDown from '../action-creators/bumpThoughtDown'
 import asyncFocus from '../device/asyncFocus'
-import Shortcut from '../@types/Shortcut'
 import * as selection from '../device/selection'
+import isDocumentEditable from '../util/isDocumentEditable'
 
 const bumpThoughtDownShortcut: Shortcut = {
   id: 'bumpThought',

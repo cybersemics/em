@@ -1,5 +1,5 @@
-import setAttribute from '../reducers/setAttribute'
 import Thunk from '../@types/Thunk'
+import setAttribute from '../reducers/setAttribute'
 
 /** Action-creator for setAttribute. */
 const setAttributeActionCreator =

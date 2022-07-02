@@ -1,7 +1,7 @@
 import React from 'react'
+import { View } from 'react-native'
 import { commonStyles } from '../../style/commonStyles'
 import { ActionButton } from '../ActionButton'
-import { View } from 'react-native'
 
 interface IComponentProps {
   clickHandler: () => void

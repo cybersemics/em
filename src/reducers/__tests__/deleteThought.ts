@@ -1,15 +1,15 @@
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
-import getContexts from '../../selectors/getContexts'
-import getThoughtById from '../../selectors/getThoughtById'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import deleteEmptyThought from '../../reducers/deleteEmptyThought'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
-import deleteEmptyThought from '../../reducers/deleteEmptyThought'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import getContexts from '../../selectors/getContexts'
+import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 it('delete from root', () => {
   // run steps through reducer flow and export as plaintext for readable test

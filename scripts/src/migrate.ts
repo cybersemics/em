@@ -1,11 +1,11 @@
 import _ from 'lodash'
 import Index from '../../src/@types/IndexType'
+import Lexeme from '../../src/@types/Lexeme'
 import Thought from '../../src/@types/Thought'
 import ThoughtId from '../../src/@types/ThoughtId'
 import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
-import Lexeme from '../../src/@types/Lexeme'
-import keyValueBy from '../../src/util/keyValueBy.js'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
+import keyValueBy from '../../src/util/keyValueBy.js'
 import Database from './types/Database.js'
 import FirebaseThought from './types/FirebaseThought'
 

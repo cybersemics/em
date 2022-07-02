@@ -1,5 +1,5 @@
-import toggleSidebar from '../reducers/toggleSidebar'
 import Thunk from '../@types/Thunk'
+import toggleSidebar from '../reducers/toggleSidebar'
 
 /** Action-creator for toggleSidebar. */
 const toggleSidebarActionCreator =

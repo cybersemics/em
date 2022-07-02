@@ -1,5 +1,5 @@
-import _ from 'lodash'
 import { Element } from 'himalaya'
+import _ from 'lodash'
 import stripStyleAttribute from './stripStyleAttribute'
 
 /** Strip span and encode a <i> or <b> element as HTML. */

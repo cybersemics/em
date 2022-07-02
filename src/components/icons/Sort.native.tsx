@@ -1,11 +1,11 @@
 import React from 'react'
-import Svg, { Polygon, Rect, G } from 'react-native-svg'
+import Svg, { G, Polygon, Rect } from 'react-native-svg'
 import { useSelector } from 'react-redux'
-import { HOME_PATH } from '../../constants'
 import IconType from '../../@types/Icon'
 import State from '../../@types/State'
-import simplifyPath from '../../selectors/simplifyPath'
+import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
+import simplifyPath from '../../selectors/simplifyPath'
 import head from '../../util/head'
 
 /** Get sort direction of cursor. */

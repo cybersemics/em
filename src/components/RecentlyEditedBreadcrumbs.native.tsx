@@ -1,18 +1,17 @@
+import { View } from 'moti'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-
+import { commonStyles } from '../style/commonStyles'
+import head from '../util/head'
+import parentOf from '../util/parentOf'
+import { ContextBreadcrumbProps, ContextBreadcrumbs } from './ContextBreadcrumbs'
 // components
 import Link from './Link'
 import Superscript from './Superscript'
-import { ContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
-import head from '../util/head'
-import parentOf from '../util/parentOf'
-import Path from '../@types/Path'
-import State from '../@types/State'
-import { View } from 'moti'
-import { commonStyles } from '../style/commonStyles'
 
 /**
  * Varaint of ContextBreadcrumbs for recently edited with collapsing overflow.

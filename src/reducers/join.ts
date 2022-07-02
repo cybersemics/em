@@ -1,6 +1,7 @@
 import _ from 'lodash'
-import editThought from './editThought'
+import State from '../@types/State'
 import getChildPath from '../selectors/getChildPath'
+import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -9,10 +10,9 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
-import moveThought from './moveThought'
 import deleteThought from './deleteThought'
-import State from '../@types/State'
-import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import editThought from './editThought'
+import moveThought from './moveThought'
 
 /** Join two or more thoughts split by spaces. */
 const join = (state: State) => {

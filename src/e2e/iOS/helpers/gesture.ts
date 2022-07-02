@@ -1,6 +1,6 @@
+import { Browser, TouchAction } from 'webdriverio'
 import Direction from '../../../@types/Direction'
 import GesturePath from '../../../@types/GesturePath'
-import { Browser, TouchAction } from 'webdriverio'
 
 export interface GestureOptions {
   xStart?: number

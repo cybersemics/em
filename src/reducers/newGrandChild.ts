@@ -1,10 +1,10 @@
+import State from '../@types/State'
 import { TUTORIAL_STEP_START } from '../constants'
+import newThought from '../reducers/newThought'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
-import newThought from '../reducers/newThought'
-import State from '../@types/State'
 
 /**
  * Creates a new grand child at first visible subthought.

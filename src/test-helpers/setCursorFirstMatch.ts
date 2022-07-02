@@ -1,9 +1,9 @@
 import _ from 'lodash'
-import setCursor from '../reducers/setCursor'
-import contextToPath from '../selectors/contextToPath'
-import setCursorThunk from '../action-creators/setCursor'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import setCursorThunk from '../action-creators/setCursor'
+import setCursor from '../reducers/setCursor'
+import contextToPath from '../selectors/contextToPath'
 
 /** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
 const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>

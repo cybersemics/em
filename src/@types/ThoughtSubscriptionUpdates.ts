@@ -1,7 +1,7 @@
-import SubscriptionUpdate from './SubscriptionUpdate'
 import Index from './IndexType'
-import Thought from './Thought'
 import Lexeme from './Lexeme'
+import SubscriptionUpdate from './SubscriptionUpdate'
+import Thought from './Thought'
 
 interface ThoughtSubscriptionUpdates {
   thoughtIndex: Index<SubscriptionUpdate<Thought>>

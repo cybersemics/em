@@ -1,5 +1,5 @@
-import setFirstSubthought from '../reducers/setFirstSubthought'
 import Thunk from '../@types/Thunk'
+import setFirstSubthought from '../reducers/setFirstSubthought'
 
 /** Action-creator for setFirstSubthought. */
 const setFirstSubthoughtActionCreator =

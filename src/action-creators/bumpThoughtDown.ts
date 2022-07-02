@@ -1,5 +1,5 @@
-import bumpThoughtDown from '../reducers/bumpThoughtDown'
 import Thunk from '../@types/Thunk'
+import bumpThoughtDown from '../reducers/bumpThoughtDown'
 
 /** Action-creator for bumpThoughtDown. */
 const bumpThoughtDownActionCreator =

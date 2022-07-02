@@ -1,16 +1,14 @@
 import React, { Fragment } from 'react'
-
-import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-
-import TutorialHint from './TutorialHint'
-import { Text } from '../Text.native'
-import headValue from '../../util/headValue'
-import { commonStyles } from '../../style/commonStyles'
-import ThoughtId from '../../@types/ThoughtId'
-import Path from '../../@types/Path'
-import doStringsMatch from '../../util/doStringsMatch'
 import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import ThoughtId from '../../@types/ThoughtId'
+import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import { commonStyles } from '../../style/commonStyles'
+import doStringsMatch from '../../util/doStringsMatch'
+import headValue from '../../util/headValue'
+import { Text } from '../Text.native'
+import TutorialHint from './TutorialHint'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT
 

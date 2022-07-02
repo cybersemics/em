@@ -1,7 +1,7 @@
 import React from 'react'
-import toggleContextView from '../action-creators/toggleContextView'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import toggleContextView from '../action-creators/toggleContextView'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

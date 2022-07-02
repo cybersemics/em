@@ -1,10 +1,10 @@
-import head from '../util/head'
-import isDocumentEditable from '../util/isDocumentEditable'
-import findDescendant from '../selectors/findDescendant'
-import indent from '../action-creators/indent'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
+import indent from '../action-creators/indent'
 import * as selection from '../device/selection'
+import findDescendant from '../selectors/findDescendant'
+import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const canExecute = (getState: () => State) => {

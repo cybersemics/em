@@ -8,26 +8,24 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { shortcutById } from '../shortcuts'
-import { isTouch } from '../browser'
-import { store } from '../store'
+import Icon from '../@types/Icon'
+import State from '../@types/State'
+import Timer from '../@types/Timer'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
+import { isTouch } from '../browser'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import subtree from '../selectors/subtree'
 import theme from '../selectors/theme'
-import Icon from '../@types/Icon'
-import State from '../@types/State'
-import Timer from '../@types/Timer'
-
+import { shortcutById } from '../shortcuts'
+import { store } from '../store'
+import Shortcut from './Shortcut'
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
-import Shortcut from './Shortcut'
 
 interface ToolbarIconProps {
   clearHoldTimer: () => void

@@ -1,19 +1,17 @@
 import { HOME_TOKEN } from '../../constants'
-
-// TODO: Why does util have to be imported before selectors and reducers?
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
-
-import exportContext from '../../selectors/exportContext'
-import getContexts from '../../selectors/getContexts'
 import archiveThought from '../../reducers/archiveThought'
 import cursorUp from '../../reducers/cursorUp'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import setCursor from '../../reducers/setCursor'
 import toggleContextView from '../../reducers/toggleContextView'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import exportContext from '../../selectors/exportContext'
+import getContexts from '../../selectors/getContexts'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+// TODO: Why does util have to be imported before selectors and reducers?
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 it('archive a thought', () => {
   const steps = [newThought('a'), newThought('b'), archiveThought({})]

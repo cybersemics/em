@@ -1,7 +1,7 @@
+import { Element, HimalayaNode, Text, parse } from 'himalaya'
 import _ from 'lodash'
-import { Element, HimalayaNode, parse, Text } from 'himalaya'
-import { ALLOWED_FORMATTING_TAGS } from '../constants'
 import Block from '../@types/Block'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
 

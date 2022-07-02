@@ -1,12 +1,12 @@
 import React from 'react'
-import { store } from '../../store'
+import Path from '../../@types/Path'
+import ThoughtId from '../../@types/ThoughtId'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import { getAllChildren, getChildrenRanked } from '../../selectors/getChildren'
+import { store } from '../../store'
+import { commonStyles } from '../../style/commonStyles'
 import ellipsize from '../../util/ellipsize'
 import { Text } from '../Text.native'
-import { commonStyles } from '../../style/commonStyles'
-import ThoughtId from '../../@types/ThoughtId'
-import Path from '../../@types/Path'
 
 const { smallText, bold } = commonStyles
 

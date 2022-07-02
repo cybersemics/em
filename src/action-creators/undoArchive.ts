@@ -1,5 +1,5 @@
-import undoArchive from '../reducers/undoArchive'
 import Thunk from '../@types/Thunk'
+import undoArchive from '../reducers/undoArchive'
 
 /** Action-creator for undoArchive. */
 const undoArchiveActionCreator =

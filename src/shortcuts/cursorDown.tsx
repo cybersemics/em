@@ -1,16 +1,15 @@
 import React from 'react'
 import { Key } from 'ts-key-enum'
-import head from '../util/head'
-import headValue from '../util/headValue'
-import attributeEquals from '../selectors/attributeEquals'
-import rootedParentOf from '../selectors/rootedParentOf'
-import cursorDown from '../action-creators/cursorDown'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import * as selection from '../device/selection'
 import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-
+import cursorDown from '../action-creators/cursorDown'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import * as selection from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
+import rootedParentOf from '../selectors/rootedParentOf'
+import head from '../util/head'
+import headValue from '../util/headValue'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 

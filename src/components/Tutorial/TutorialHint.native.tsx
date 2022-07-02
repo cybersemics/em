@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import State from '../../@types/State'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import getSetting from '../../selectors/getSetting'
-
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 

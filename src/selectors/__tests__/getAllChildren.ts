@@ -1,9 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 it('get root children', () => {
   const steps = [newThought('a'), newThought('b')]

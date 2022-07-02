@@ -1,15 +1,15 @@
+import { View } from 'moti'
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-// import { isTouch } from '../browser'
-import { shortcutById } from '../shortcuts'
-import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
-import getSetting from '../selectors/getSetting'
-import GestureDiagram from './GestureDiagram'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
-import { View } from 'moti'
-import { Text } from './Text.native'
+import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
+import getSetting from '../selectors/getSetting'
+// import { isTouch } from '../browser'
+import { shortcutById } from '../shortcuts'
 import { commonStyles } from '../style/commonStyles'
+import GestureDiagram from './GestureDiagram'
+import { Text } from './Text.native'
 
 interface NewThoughtInstructionsProps {
   childrenLength: number

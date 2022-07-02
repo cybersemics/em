@@ -1,12 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import TutorialNavigationButton from './TutorialNavigationButton.native'
-import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
-import headValue from '../../util/headValue'
-import getSetting from '../../selectors/getSetting'
-import { getAllChildren } from '../../selectors/getChildren'
+import State from '../../@types/State'
 import tutorialNext from '../../action-creators/tutorialNext'
-
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
@@ -22,9 +17,13 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { Text } from '../Text.native'
+import { getAllChildren } from '../../selectors/getChildren'
+import getSetting from '../../selectors/getSetting'
 import { commonStyles } from '../../style/commonStyles'
-import State from '../../@types/State'
+import headValue from '../../util/headValue'
+import { Text } from '../Text.native'
+import TutorialNavigationButton from './TutorialNavigationButton.native'
+import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 
 const tutorialSteps = [
   TUTORIAL_STEP_START,

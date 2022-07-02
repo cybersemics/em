@@ -1,31 +1,29 @@
 import _ from 'lodash'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
 import setCursor from '../reducers/setCursor'
-import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import Path from '../@types/Path'
-import State from '../@types/State'
-
-// util
-import appendToPath from '../util/appendToPath'
-import parentOf from '../util/parentOf'
-import head from '../util/head'
-import headValue from '../util/headValue'
-import pathToContext from '../util/pathToContext'
-import once from '../util/once'
-import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
-
 // selectors
 import { firstVisibleChild } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
+import parentOfThought from '../selectors/parentOfThought'
 import prevSibling from '../selectors/prevSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
-import parentOfThought from '../selectors/parentOfThought'
-import getThoughtById from '../selectors/getThoughtById'
+// util
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import headValue from '../util/headValue'
+import once from '../util/once'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {

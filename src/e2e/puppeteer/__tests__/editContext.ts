@@ -1,9 +1,8 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-
-import helpers from '../helpers'
 import { JSHandle } from 'puppeteer'
+import helpers from '../helpers'
 
 /** Gets the first subthought of an editable. */
 const getFirstSubthought = (editable: JSHandle) =>

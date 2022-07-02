@@ -1,11 +1,11 @@
 import React, { Fragment } from 'react'
-import TutorialHint from './TutorialHint'
+import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
+import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
-import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
-import { useStore } from 'react-redux'
+import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootChildren }) => {

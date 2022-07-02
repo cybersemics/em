@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import newThought, { NewThoughtPayload } from '../reducers/newThought'
 import State from '../@types/State'
+import newThought, { NewThoughtPayload } from '../reducers/newThought'
 
 /** Alias for newThought with insertNewSubthought: true. */
 const newSubthought = (state: State, payload: NewThoughtPayload | string) => {

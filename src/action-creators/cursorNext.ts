@@ -1,17 +1,16 @@
-import { HOME_TOKEN } from '../constants'
+import Thunk from '../@types/Thunk'
 import setCursor from '../action-creators/setCursor'
 import suppressExpansion from '../action-creators/suppressExpansion'
+import { HOME_TOKEN } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import appendToPath from '../util/appendToPath'
-import head from '../util/head'
-import Thunk from '../@types/Thunk'
-
 // must be imported after util (???)
 import attributeEquals from '../selectors/attributeEquals'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getThoughtAfter from '../selectors/getThoughtAfter'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): Thunk => (dispatch, getState) => {

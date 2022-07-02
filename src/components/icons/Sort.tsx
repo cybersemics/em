@@ -1,10 +1,10 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { HOME_PATH } from '../../constants'
 import IconType from '../../@types/Icon'
 import State from '../../@types/State'
-import simplifyPath from '../../selectors/simplifyPath'
+import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
+import simplifyPath from '../../selectors/simplifyPath'
 import head from '../../util/head'
 
 /** Get sort direction of cursor. */

@@ -1,5 +1,5 @@
-import dragHold from '../reducers/dragHold'
 import Thunk from '../@types/Thunk'
+import dragHold from '../reducers/dragHold'
 
 /** Action-creator for dragHold. */
 const dragHoldActionCreator =

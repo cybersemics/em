@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
+
 /* eslint-disable no-global-assign */
+
 /* eslint-disable @typescript-eslint/ban-ts-comment */
+
 /* eslint-disable no-native-reassign */
 import isMobile from './isMobile'
 

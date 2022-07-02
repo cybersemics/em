@@ -1,14 +1,14 @@
 import _ from 'lodash'
-import getPrevRank from '../selectors/getPrevRank'
-import unroot from '../util/unroot'
-import head from '../util/head'
-import createThought from '../reducers/createThought'
-import setFirstSubthought from '../reducers/setFirstSubthought'
-import reducerFlow from '../util/reducerFlow'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import createThought from '../reducers/createThought'
+import setFirstSubthought from '../reducers/setFirstSubthought'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getPrevRank from '../selectors/getPrevRank'
 import createId from '../util/createId'
+import head from '../util/head'
+import reducerFlow from '../util/reducerFlow'
+import unroot from '../util/unroot'
 
 /** Sets an attribute on the given context. */
 const setAttribute = (state: State, { path, key, value }: { path: Path; key: string; value?: string }) => {

@@ -1,16 +1,15 @@
 import React from 'react'
 import { connect, useSelector } from 'react-redux'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-
+import head from '../util/head'
+import parentOf from '../util/parentOf'
+import { ContextBreadcrumbProps, ContextBreadcrumbs } from './ContextBreadcrumbs'
 // components
 import Link from './Link'
 import Superscript from './Superscript'
-import { ContextBreadcrumbs, ContextBreadcrumbProps } from './ContextBreadcrumbs'
-import head from '../util/head'
-import parentOf from '../util/parentOf'
-import Path from '../@types/Path'
-import State from '../@types/State'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: Omit<ContextBreadcrumbProps, 'simplePath'> & { path: Path }) => ({

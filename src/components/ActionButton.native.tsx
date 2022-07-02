@@ -1,5 +1,5 @@
 import React from 'react'
-import { ActivityIndicator, StyleProp, TouchableOpacity, ViewStyle, StyleSheet } from 'react-native'
+import { ActivityIndicator, StyleProp, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native'
 import { Text } from './Text.native'
 
 interface ActionButtonProps {

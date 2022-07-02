@@ -1,11 +1,10 @@
+import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-
+import cursorBack from '../cursorBack'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import cursorBack from '../cursorBack'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 
 it('move cursor to parent', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack]

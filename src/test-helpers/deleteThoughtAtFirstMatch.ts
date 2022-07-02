@@ -1,14 +1,14 @@
 import _ from 'lodash'
 import Context from '../@types/Context'
-import Thought from '../@types/Thought'
-import State from '../@types/State'
-import Thunk from '../@types/Thunk'
-import deleteThought from '../reducers/deleteThought'
-import deleteThoughtActionCreator from '../action-creators/deleteThought'
-import pathToThought from '../selectors/pathToThought'
-import contextToPath from '../selectors/contextToPath'
-import rootedParentOf from '../selectors/rootedParentOf'
 import Path from '../@types/Path'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import Thunk from '../@types/Thunk'
+import deleteThoughtActionCreator from '../action-creators/deleteThought'
+import deleteThought from '../reducers/deleteThought'
+import contextToPath from '../selectors/contextToPath'
+import pathToThought from '../selectors/pathToThought'
+import rootedParentOf from '../selectors/rootedParentOf'
 
 /**
  * Get thought and context for the given unranked path.

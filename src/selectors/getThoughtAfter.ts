@@ -1,10 +1,10 @@
-import equalThoughtValue from '../util/equalThoughtValue'
-import head from '../util/head'
-import { getChildrenSorted } from '../selectors/getChildren'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import rootedParentOf from './rootedParentOf'
+import { getChildrenSorted } from '../selectors/getChildren'
+import equalThoughtValue from '../util/equalThoughtValue'
+import head from '../util/head'
 import getThoughtById from './getThoughtById'
+import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getThoughtAfter = (state: State, simplePath: SimplePath) => {

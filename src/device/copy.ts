@@ -1,5 +1,5 @@
-import * as selection from './selection'
 import ClipboardJS from 'clipboard'
+import * as selection from './selection'
 
 /** Copies a string directly to the clipboard by simulating a button click with ClipboadJS. */
 const copy = (s: string): void => {

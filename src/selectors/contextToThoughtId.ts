@@ -1,14 +1,14 @@
 // import * as murmurHash3 from 'murmurhash3js'
 // import globals from '../globals'
-import { EM_TOKEN } from '../constants'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import isRoot from '../util/isRoot'
+import { EM_TOKEN } from '../constants'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import getThoughtById from '../selectors/getThoughtById'
+import isRoot from '../util/isRoot'
 
 /** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
 const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {

@@ -1,14 +1,14 @@
-import State from '../@types/State'
 import React from 'react'
+import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { connect } from 'react-redux'
-import getLexeme from '../selectors/getLexeme'
-import { hasChildren } from '../selectors/getChildren'
-import isPending from '../selectors/isPending'
-import { isContextViewActiveById } from '../selectors/isContextViewActive'
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
-import { commonStyles } from '../style/commonStyles'
+import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { hasChildren } from '../selectors/getChildren'
+import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import { isContextViewActiveById } from '../selectors/isContextViewActive'
+import isPending from '../selectors/isPending'
+import { commonStyles } from '../style/commonStyles'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥

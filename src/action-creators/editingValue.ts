@@ -1,5 +1,5 @@
-import editingValue from '../reducers/editingValue'
 import Thunk from '../@types/Thunk'
+import editingValue from '../reducers/editingValue'
 
 /** Action-creator for editingValue. */
 const editingValueActionCreator =

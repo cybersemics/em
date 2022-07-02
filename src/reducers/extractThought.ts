@@ -1,15 +1,15 @@
 import _ from 'lodash'
-import head from '../util/head'
-import pathToContext from '../util/pathToContext'
-import reducerFlow from '../util/reducerFlow'
-import editThought from './editThought'
-import newThought from './newThought'
+import State from '../@types/State'
+import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import head from '../util/head'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
-import State from '../@types/State'
-import * as selection from '../device/selection'
+import editThought from './editThought'
+import newThought from './newThought'
 
 /** Extract the selection as child thought. */
 const extractThought = (state: State) => {

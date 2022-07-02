@@ -1,16 +1,15 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
-
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import importText from '../importText'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import subCategorizeAll from '../subCategorizeAll'
 import setCursor from '../setCursor'
-import importText from '../importText'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import subCategorizeAll from '../subCategorizeAll'
 
 it('subcategorize multiple thoughts', () => {
   const steps = [newThought('a'), newSubthought('b'), newThought('c'), subCategorizeAll]

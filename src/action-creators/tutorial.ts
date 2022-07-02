@@ -1,7 +1,7 @@
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Creates a Promise resolver that delays by a logarithmically increasing amount of time. */
 const logarithmicDelayResolver = () => {

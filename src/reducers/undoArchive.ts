@@ -1,14 +1,14 @@
 import _ from 'lodash'
-import head from '../util/head'
-import reducerFlow from '../util/reducerFlow'
-import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
-import rootedParentOf from '../selectors/rootedParentOf'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import alert from '../reducers/alert'
 import deleteThought from '../reducers/deleteThought'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
-import Path from '../@types/Path'
-import State from '../@types/State'
+import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
+import rootedParentOf from '../selectors/rootedParentOf'
+import head from '../util/head'
+import reducerFlow from '../util/reducerFlow'
 
 /** Moves the archived thought back to its original location. */
 const undoArchive = (

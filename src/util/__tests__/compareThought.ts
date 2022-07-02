@@ -1,3 +1,5 @@
+import Thought from '../../@types/Thought'
+import ThoughtId from '../../@types/ThoughtId'
 import {
   compare,
   compareDateStrings,
@@ -7,11 +9,9 @@ import {
   comparePunctuationAndOther,
   compareReasonable,
   compareStringsWithEmoji,
-  makeOrderedComparator,
   compareThoughtDescending,
+  makeOrderedComparator,
 } from '../../util/compareThought'
-import Thought from '../../@types/Thought'
-import ThoughtId from '../../@types/ThoughtId'
 import timestamp from '../../util/timestamp'
 
 it('compareNumberAndOther', () => {

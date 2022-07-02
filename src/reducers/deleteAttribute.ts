@@ -1,10 +1,10 @@
 import _ from 'lodash'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import deleteThought from '../reducers/deleteThought'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import head from '../util/head'
-import Path from '../@types/Path'
-import State from '../@types/State'
 
 /** Deletes an attribute. */
 const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }) => {

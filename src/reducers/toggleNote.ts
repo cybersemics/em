@@ -1,11 +1,11 @@
-import attribute from '../selectors/attribute'
-import findDescendant from '../selectors/findDescendant'
+import State from '../@types/State'
 import deleteAttribute from '../reducers/deleteAttribute'
 import setAttribute from '../reducers/setAttribute'
 import setNoteFocus from '../reducers/setNoteFocus'
+import attribute from '../selectors/attribute'
+import findDescendant from '../selectors/findDescendant'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
-import State from '../@types/State'
 
 /** Toggle the caret between the cursor and its note. Set the selection to the end. If the note is empty, delete it. */
 const toggleNote = (state: State) => {

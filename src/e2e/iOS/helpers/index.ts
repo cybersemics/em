@@ -1,6 +1,5 @@
 import { Browser } from 'webdriverio'
 import partialWithRef from '../../../test-helpers/partialWithRef'
-
 // helpers
 import $ from './$'
 import clickThought from './clickThought'
@@ -10,18 +9,18 @@ import getEditable from './getEditable'
 import getEditingText from './getEditingText'
 import getElementRectByScreen from './getElementRectByScreen'
 import getNativeElementRect from './getNativeElementRect'
+import getSelection from './getSelection'
+import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
 import initSession from './initSession'
 import isKeyboardShown from './isKeyboardShown'
-import hideKeyboardByTappingDone from './hideKeyboardByTappingDone'
+import newThought from './newThought'
 import paste from './paste'
-import getSelection from './getSelection'
-import tapReturnKey from './tapReturnKey'
 import tap from './tap'
+import tapReturnKey from './tapReturnKey'
 import type from './type'
 import waitForEditable from './waitForEditable'
 import waitForElement from './waitForElement'
 import waitUntil from './waitUntil'
-import newThought from './newThought'
 
 async function pasteOverload(text: string): Promise<void>
 async function pasteOverload(pathUnranked: string[], text: string): Promise<void>

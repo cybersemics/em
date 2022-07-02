@@ -1,5 +1,5 @@
-import cursorBeforeSearch from '../reducers/cursorBeforeSearch'
 import Thunk from '../@types/Thunk'
+import cursorBeforeSearch from '../reducers/cursorBeforeSearch'
 
 /** Action-creator for cursorBeforeSearch. */
 const cursorBeforeSearchActionCreator =

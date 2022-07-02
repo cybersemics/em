@@ -1,16 +1,11 @@
+import { View } from 'moti'
 import React from 'react'
+import { StyleSheet } from 'react-native'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import WithCSSTransition from './WithCSSTransition'
-import { shortcutById } from '../../shortcuts'
-import headValue from '../../util/headValue'
-import once from '../../util/once'
-import getSetting from '../../selectors/getSetting'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
-import tutorial from '../../action-creators/tutorial'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
-import { StyleSheet } from 'react-native'
-
+import tutorial from '../../action-creators/tutorial'
 // constants
 import {
   HOME_TOKEN,
@@ -28,17 +23,20 @@ import {
   TUTORIAL_STEP_SECONDTHOUGHT_HINT,
   TUTORIAL_STEP_SUBTHOUGHT,
 } from '../../constants'
-
-// components
-import TutorialStepComponentMap from './TutorialStepComponentMap'
-import GestureDiagram from '../GestureDiagram'
-import TutorialNavigation from './TutorialNavigation.native'
-import { Text } from '../Text.native'
-import { View } from 'moti'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import getSetting from '../../selectors/getSetting'
+import { shortcutById } from '../../shortcuts'
 import { fadeIn } from '../../style/animations'
-import { TouchableOpacity } from 'react-native-gesture-handler'
 import { commonStyles } from '../../style/commonStyles'
 import doStringsMatch from '../../util/doStringsMatch'
+import headValue from '../../util/headValue'
+import once from '../../util/once'
+import GestureDiagram from '../GestureDiagram'
+import { Text } from '../Text.native'
+import TutorialNavigation from './TutorialNavigation.native'
+// components
+import TutorialStepComponentMap from './TutorialStepComponentMap'
+import WithCSSTransition from './WithCSSTransition'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')

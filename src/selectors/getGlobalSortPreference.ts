@@ -1,6 +1,6 @@
-import getSetting from '../selectors/getSetting'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
+import getSetting from '../selectors/getSetting'
 import parseSortDirection from '../util/parseSortDirection'
 
 /**

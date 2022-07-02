@@ -1,7 +1,7 @@
 import { ReactWrapper } from 'enzyme'
-import windowEvent from '../../test-helpers/windowEvent'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import testTimer from '../../test-helpers/testTimer'
+import windowEvent from '../../test-helpers/windowEvent'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 

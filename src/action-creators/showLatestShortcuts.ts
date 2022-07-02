@@ -1,9 +1,9 @@
-import clearLatestShortcuts from './clearLatestShortcuts'
-import addLatestShortcuts from './addLatestShortcuts'
 import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
+import addLatestShortcuts from './addLatestShortcuts'
+import clearLatestShortcuts from './clearLatestShortcuts'
 
 interface Options {
   clear?: number

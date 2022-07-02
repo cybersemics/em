@@ -1,5 +1,5 @@
-import setNoteFocus from '../reducers/setNoteFocus'
 import Thunk from '../@types/Thunk'
+import setNoteFocus from '../reducers/setNoteFocus'
 
 /** Action-creator for setNoteFocus. */
 const setNoteFocusActionCreator =

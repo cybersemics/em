@@ -1,10 +1,10 @@
-import { CSSProperties } from 'react'
 import _ from 'lodash'
-import keyValueBy from '../util/keyValueBy'
-import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { CSSProperties } from 'react'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import findDescendant from '../selectors/findDescendant'
+import keyValueBy from '../util/keyValueBy'
+import { getAllChildrenAsThoughts } from './getChildren'
 
 /** Parses the =style or =styleContainer attributes of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
 const getStyle = (

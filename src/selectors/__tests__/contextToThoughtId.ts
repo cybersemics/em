@@ -1,9 +1,9 @@
 import State from '../../@types/State'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import createId from '../../util/createId'
 import initialState from '../../util/initialState'
 import timestamp from '../../util/timestamp'
-import contextToThoughtId from '../../selectors/contextToThoughtId'
 
 it('contextToThoughtId', () => {
   const state = initialState()

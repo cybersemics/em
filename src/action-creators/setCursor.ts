@@ -1,5 +1,5 @@
-import setCursor from '../reducers/setCursor'
 import Thunk from '../@types/Thunk'
+import setCursor from '../reducers/setCursor'
 
 /** Action-creator for setCursor. */
 const setCursorActionCreator =

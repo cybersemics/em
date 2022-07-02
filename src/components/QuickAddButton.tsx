@@ -1,10 +1,10 @@
-import React from 'react'
-import AddIcon from './AddIcon'
-import { useDispatch, useSelector } from 'react-redux'
 import classNames from 'classnames'
+import React from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import State from '../@types/State'
 import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'
 import isAbsolute from '../util/isAbsolute'
-import State from '../@types/State'
+import AddIcon from './AddIcon'
 
 /**
  * Quick Add Button.

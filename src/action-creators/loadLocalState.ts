@@ -1,11 +1,11 @@
-import * as db from '../data-providers/dexie'
-import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
+import Thunk from '../@types/Thunk'
 import importText from '../action-creators/importText'
 import updateThoughts from '../action-creators/updateThoughts'
+import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
+import * as db from '../data-providers/dexie'
+import getThoughtById from '../selectors/getThoughtById'
 import never from '../util/never'
 import storage from '../util/storage'
-import Thunk from '../@types/Thunk'
-import getThoughtById from '../selectors/getThoughtById'
 
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) => {

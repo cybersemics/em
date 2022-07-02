@@ -1,17 +1,15 @@
 import React, { Fragment } from 'react'
-import TutorialHint from './TutorialHint'
-
+import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
+import Thought from '../../@types/Thought'
+import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { commonStyles } from '../../style/commonStyles'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
-
-import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
-import Thought from '../../@types/Thought'
-import Path from '../../@types/Path'
-import State from '../../@types/State'
 import { Text } from '../Text.native'
-import { commonStyles } from '../../style/commonStyles'
-import { useStore } from 'react-redux'
+import TutorialHint from './TutorialHint'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 

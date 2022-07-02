@@ -1,5 +1,5 @@
-import settings from '../reducers/settings'
 import Thunk from '../@types/Thunk'
+import settings from '../reducers/settings'
 
 /** Action-creator for settings. */
 const settingsActionCreator =

@@ -1,5 +1,5 @@
-import expandHoverTop from '../reducers/expandHoverTop'
 import Thunk from '../@types/Thunk'
+import expandHoverTop from '../reducers/expandHoverTop'
 
 /** Action-creator for expandHoverTop. */
 const expandHoverTopActionCreator =

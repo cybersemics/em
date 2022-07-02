@@ -1,32 +1,50 @@
-import React, { useEffect, useState } from 'react'
-import { connect, useSelector, useStore } from 'react-redux'
 import classNames from 'classnames'
+import React, { useEffect, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
-import { store } from '../store'
-import { isTouch } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
-import globals from '../globals'
-import { DROP_TARGET, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import dragInProgress from '../action-creators/dragInProgress'
-import Thought from './Thought'
-import GestureDiagram from './GestureDiagram'
-import ThoughtId from '../@types/ThoughtId'
+import { connect, useSelector, useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import dragInProgress from '../action-creators/dragInProgress'
+import { isTouch } from '../browser'
+import { DROP_TARGET, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import globals from '../globals'
+import appendChildPath from '../selectors/appendChildPath'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import getChildPath from '../selectors/getChildPath'
+import {
+  childrenFilterPredicate,
+  getAllChildren,
+  getAllChildrenAsThoughts,
+  getAllChildrenSorted,
+  getChildren,
+  getChildrenRanked,
+} from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { store } from '../store'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAbsolute from '../util/isAbsolute'
+import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
-import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -34,27 +52,9 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
-import appendChildPath from '../selectors/appendChildPath'
-import attribute from '../selectors/attribute'
-import attributeEquals from '../selectors/attributeEquals'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import {
-  childrenFilterPredicate,
-  getChildren,
-  getAllChildren,
-  getChildrenRanked,
-  getAllChildrenSorted,
-  getAllChildrenAsThoughts,
-} from '../selectors/getChildren'
-import findDescendant from '../selectors/findDescendant'
-import getChildPath from '../selectors/getChildPath'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getSortPreference from '../selectors/getSortPreference'
-import getStyle from '../selectors/getStyle'
-import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
+import GestureDiagram from './GestureDiagram'
+import Thought from './Thought'
 
 /** The type of the exported Subthoughts. */
 export interface SubthoughtsProps {

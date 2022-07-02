@@ -1,4 +1,4 @@
-import { isTouch, isSafari } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { NOOP } from '../constants'
 
 /**

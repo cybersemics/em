@@ -1,4 +1,4 @@
-import { screen, findAllByPlaceholderText } from '@testing-library/react'
+import { findAllByPlaceholderText, screen } from '@testing-library/react'
 import extractThought from '../../action-creators/extractThought'
 import newThought from '../../action-creators/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'

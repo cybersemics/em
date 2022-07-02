@@ -1,20 +1,20 @@
 /* eslint-disable fp/no-this */
-import _ from 'lodash'
 import Dexie, { Transaction } from 'dexie'
-import hashThought from '../util/hashThought'
-import timestamp from '../util/timestamp'
-import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
-import { getSessionId } from '../util/sessionManager'
-import win from './win'
-import { SCHEMA_LATEST } from '../constants'
+import _ from 'lodash'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import ThoughtWordsIndex from '../@types/ThoughtWordsIndex'
 import Timestamp from '../@types/Timestamp'
-import ThoughtId from '../@types/ThoughtId'
+import { SCHEMA_LATEST } from '../constants'
+import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
+import hashThought from '../util/hashThought'
+import { getSessionId } from '../util/sessionManager'
+import timestamp from '../util/timestamp'
+import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running

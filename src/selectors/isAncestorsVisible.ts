@@ -1,7 +1,7 @@
+import _ from 'lodash'
 import Context from '../@types/Context'
 import State from '../@types/State'
 import isAttribute from '../util/isAttribute'
-import _ from 'lodash'
 
 /**
  * Checks if all ancestors of a context is visible.

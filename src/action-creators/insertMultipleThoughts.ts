@@ -1,5 +1,5 @@
-import insertMultipleThoughts from '../reducers/insertMultipleThoughts'
 import Thunk from '../@types/Thunk'
+import insertMultipleThoughts from '../reducers/insertMultipleThoughts'
 
 /** Action-creator for insertMultipleThoughts. */
 const insertMultipleThoughtsActionCreator =

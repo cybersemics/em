@@ -1,10 +1,10 @@
-import Thunk from '../@types/Thunk'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import Thunk from '../@types/Thunk'
 import { DROP_TARGET } from '../constants'
-import expandOnHoverTop from './expandOnHoverTop'
-import expandOnHoverBottom from './expandOnHoverBottom'
 import globals from '../globals'
+import expandOnHoverBottom from './expandOnHoverBottom'
+import expandOnHoverTop from './expandOnHoverTop'
 
 interface Payload {
   value: boolean

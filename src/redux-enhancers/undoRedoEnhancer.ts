@@ -1,15 +1,15 @@
-import _ from 'lodash'
 import { Operation, applyPatch, compare } from 'fast-json-patch'
+import { produce } from 'immer'
+import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import Index from '../@types/IndexType'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import updateThoughts from '../reducers/updateThoughts'
-import reducerFlow from '../util/reducerFlow'
-import { produce } from 'immer'
 import getThoughtById from '../selectors/getThoughtById'
+import reducerFlow from '../util/reducerFlow'
 
 /** These properties are ignored when generating state patches. */
 const statePropertiesToOmit = ['alert', 'pushQueue', 'user']

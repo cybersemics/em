@@ -1,8 +1,8 @@
-import unroot from '../util/unroot'
-import contextToThoughtId from '../selectors/contextToThoughtId'
 import Context from '../@types/Context'
 import State from '../@types/State'
+import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import unroot from '../util/unroot'
 
 /** Get max depth of a visible context. */
 const getDepth = (state: State, context: Context): number => {

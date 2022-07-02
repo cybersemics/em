@@ -1,5 +1,5 @@
-import toggleSplitView from '../reducers/toggleSplitView'
 import Thunk from '../@types/Thunk'
+import toggleSplitView from '../reducers/toggleSplitView'
 
 /** Action-creator for toggleSplitView. */
 const toggleSplitViewActionCreator =

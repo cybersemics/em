@@ -1,5 +1,5 @@
-import error from '../reducers/error'
 import Thunk from '../@types/Thunk'
+import error from '../reducers/error'
 
 /** Action-creator for error. */
 const errorActionCreator =

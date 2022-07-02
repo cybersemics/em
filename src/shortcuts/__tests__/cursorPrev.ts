@@ -1,12 +1,12 @@
 import cursorPrev from '../../action-creators/cursorPrev'
 import importText from '../../action-creators/importText'
 import setCursor from '../../action-creators/setCursor'
-import { createTestStore } from '../../test-helpers/createTestStore'
-import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import toggleAttribute from '../../action-creators/toggleAttribute'
 import globals from '../../globals'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
-import toggleAttribute from '../../action-creators/toggleAttribute'
+import { createTestStore } from '../../test-helpers/createTestStore'
+import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {

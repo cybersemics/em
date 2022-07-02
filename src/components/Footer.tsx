@@ -1,13 +1,13 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
-import showModal from '../action-creators/showModal'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
-import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
+import showModal from '../action-creators/showModal'
+import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import scrollTo from '../device/scrollTo'
+import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 
 /** A footer component with some useful links. */
 const Footer = () => {

@@ -1,13 +1,14 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
+import { Modal, ScrollView, StyleSheet, View } from 'react-native'
+import { useDispatch } from 'react-redux'
+
 /* import classNames from 'classnames'
 import { FADEOUT_DURATION, MODAL_CLOSE_DURATION } from '../constants'
 import { Connected } from '../@types' */
 import modalComplete from '../action-creators/modalComplete'
-import { useDispatch } from 'react-redux'
-import { Modal, View, StyleSheet, ScrollView } from 'react-native'
-import { Text } from './Text.native'
 import { commonStyles } from '../style/commonStyles'
+import { Text } from './Text.native'
 
 const { title: titleStyle, flexOne, darkBackground, verticalPadding, horizontalPadding } = commonStyles
 

@@ -1,19 +1,17 @@
 import { ReactWrapper } from 'enzyme'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-
-import Thought from '../Thought'
-import Subthoughts from '../Subthoughts'
-
-import { HOME_TOKEN } from '../../constants'
-import equalArrays from '../../util/equalArrays'
-import pathToContext from '../../util/pathToContext'
-import exportContext from '../../selectors/exportContext'
-import importText from '../../action-creators/importText'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import Context from '../../@types/Context'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import importText from '../../action-creators/importText'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import equalArrays from '../../util/equalArrays'
+import pathToContext from '../../util/pathToContext'
+import Subthoughts from '../Subthoughts'
+import Thought from '../Thought'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {

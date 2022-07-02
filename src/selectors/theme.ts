@@ -1,9 +1,9 @@
 // import attribute, attributeEquals, getSetting, simplifyPath from '../selectors/attribute, attributeEquals, getSetting, simplifyPath'
 // import pathToContext, publishMode, unroot from '../util/pathToContext, publishMode, unroot'
-import getSetting from '../selectors/getSetting'
-import storage from '../util/storage'
-import publishMode from '../util/publishMode'
 import State from '../@types/State'
+import getSetting from '../selectors/getSetting'
+import publishMode from '../util/publishMode'
+import storage from '../util/storage'
 
 // eslint-disable-next-line no-mixed-operators
 const themeLocal = (typeof storage !== 'undefined' && storage.getItem('Settings/Theme')) || 'Dark'

@@ -1,8 +1,8 @@
 import React from 'react'
-import subCategorizeAll from '../action-creators/subCategorizeAll'
+import Svg, { Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import Svg, { Path } from 'react-native-svg'
+import subCategorizeAll from '../action-creators/subCategorizeAll'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

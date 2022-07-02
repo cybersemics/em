@@ -1,5 +1,5 @@
-import { offsetFromClosestParent } from '../selection'
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
+import { offsetFromClosestParent } from '../selection'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {

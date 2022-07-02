@@ -1,18 +1,16 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
-
+import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
+import ThoughtId from '../../@types/ThoughtId'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
-
-import ThoughtId from '../../@types/ThoughtId'
-import Path from '../../@types/Path'
-import State from '../../@types/State'
-import { Text } from '../Text.native'
+import { store } from '../../store'
 import { commonStyles } from '../../style/commonStyles'
 import doStringsMatch from '../../util/doStringsMatch'
-import { useStore } from 'react-redux'
+import { Text } from '../Text.native'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 

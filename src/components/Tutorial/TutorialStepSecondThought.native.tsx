@@ -1,8 +1,7 @@
 import React, { Fragment } from 'react'
-import TutorialHint from './TutorialHint'
-
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
+import TutorialHint from './TutorialHint'
 
 const { smallText } = commonStyles
 

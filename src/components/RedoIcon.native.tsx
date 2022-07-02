@@ -1,9 +1,9 @@
 import React from 'react'
+import Svg, { Path } from 'react-native-svg'
 import { connect } from 'react-redux'
-import theme from '../selectors/theme'
 import Icon from '../@types/Icon'
 import State from '../@types/State'
-import Svg, { Path } from 'react-native-svg'
+import theme from '../selectors/theme'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => ({

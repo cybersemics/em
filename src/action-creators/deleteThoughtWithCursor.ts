@@ -1,5 +1,5 @@
-import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
 import Thunk from '../@types/Thunk'
+import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
 
 /** Action-creator for deleteThoughtWithCursor. */
 const deleteThoughtWithCursorActionCreator =

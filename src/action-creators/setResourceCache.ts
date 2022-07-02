@@ -1,5 +1,5 @@
-import setResourceCache from '../reducers/setResourceCache'
 import Thunk from '../@types/Thunk'
+import setResourceCache from '../reducers/setResourceCache'
 
 /** Action-creator for setResourceCache. */
 const setResourceCacheActionCreator =

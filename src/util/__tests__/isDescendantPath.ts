@@ -1,5 +1,5 @@
-import isDescendantPath from '../../util/isDescendantPath'
 import Path from '../../@types/Path'
+import isDescendantPath from '../../util/isDescendantPath'
 
 /** Coerce an array of strings to a Path. */
 const asPath = (ids: string[]) => ids as any as Path

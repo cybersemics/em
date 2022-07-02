@@ -1,11 +1,11 @@
-import { HOME_TOKEN } from '../../constants'
-import exportContext from '../../selectors/exportContext'
-import contextToPath from '../../selectors/contextToPath'
 import importText from '../../action-creators/importText'
 import setCursor from '../../action-creators/setCursor'
+import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import indentOnSpace from '../indentOnSpace'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import indentOnSpace from '../indentOnSpace'
 
 it('indent on adding space at the beginning of the thought', () => {
   const store = createTestStore()

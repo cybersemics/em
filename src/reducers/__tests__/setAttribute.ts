@@ -1,13 +1,13 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
 import newSubthought from '../newSubthought'
-import contextToPath from '../../selectors/contextToPath'
 import newThought from '../newThought'
 import setAttribute from '../setAttribute'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import State from '../../@types/State'
 
 it('set', () => {
   const steps = [

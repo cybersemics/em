@@ -1,6 +1,4 @@
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import collapseContext from '../../reducers/collapseContext'
 import cursorBack from '../../reducers/cursorBack'
 import cursorUp from '../../reducers/cursorUp'
@@ -8,6 +6,8 @@ import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import exportContext from '../../selectors/exportContext'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 it('do nothing on leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), collapseContext({})]

@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
-import { Text } from '../Text.native'
+import { store } from '../../store'
 import { commonStyles } from '../../style/commonStyles'
+import { Text } from '../Text.native'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT
 

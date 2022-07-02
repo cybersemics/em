@@ -1,12 +1,13 @@
+import { View } from 'moti'
 import React from 'react'
-import { store } from '../store'
+import { Text } from 'react-native'
+import expandContextThought from '../action-creators/expandContextThought'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
-import expandContextThought from '../action-creators/expandContextThought'
+import { store } from '../store'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-
 // components
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
@@ -14,8 +15,6 @@ import Editable from './Editable'
 import HomeLink from './HomeLink'
 import Superscript from './Superscript'
 import { ConnectedThoughtProps } from './Thought'
-import { View } from 'moti'
-import { Text } from 'react-native'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({

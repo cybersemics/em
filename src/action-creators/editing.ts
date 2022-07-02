@@ -1,5 +1,5 @@
-import editing from '../reducers/editing'
 import Thunk from '../@types/Thunk'
+import editing from '../reducers/editing'
 
 /** Action-creator for editing. */
 const editingActionCreator =

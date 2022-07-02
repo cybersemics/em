@@ -1,7 +1,7 @@
 import React from 'react'
+import Svg, { G, Path } from 'react-native-svg'
 // import { connect } from 'react-redux'
 import Icon from '../../@types/Icon'
-import Svg, { G, Path } from 'react-native-svg'
 
 /** A pencil icon. */
 const PencilIcon = ({ size = 20, fill }: Icon) => (

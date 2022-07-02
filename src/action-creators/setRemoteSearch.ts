@@ -1,5 +1,5 @@
-import setRemoteSearch from '../reducers/setRemoteSearch'
 import Thunk from '../@types/Thunk'
+import setRemoteSearch from '../reducers/setRemoteSearch'
 
 /** Action-creator for setRemoteSearch. */
 const setRemoteSearchActionCreator =

@@ -1,11 +1,11 @@
-import isContextViewActive from '../selectors/isContextViewActive'
-import getContexts from '../selectors/getContexts'
-import contextToPath from '../selectors/contextToPath'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import thoughtToContext from './thoughtToContext'
+import contextToPath from '../selectors/contextToPath'
+import getContexts from '../selectors/getContexts'
+import isContextViewActive from '../selectors/isContextViewActive'
 import childIdsToThoughts from './childIdsToThoughts'
+import thoughtToContext from './thoughtToContext'
 
 /**
  * Splits a path into a contextChain based on contextViews.

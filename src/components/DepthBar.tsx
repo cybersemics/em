@@ -1,11 +1,10 @@
-import React from 'react'
 import classNames from 'classnames'
-import { store } from '../store'
-import getContexts from '../selectors/getContexts'
-import parentOf from '../util/parentOf'
-import head from '../util/head'
+import React from 'react'
 import Context from '../@types/Context'
-
+import getContexts from '../selectors/getContexts'
+import { store } from '../store'
+import head from '../util/head'
+import parentOf from '../util/parentOf'
 // components
 import Modal from './Modal'
 

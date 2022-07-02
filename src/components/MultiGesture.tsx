@@ -1,9 +1,9 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import React from 'react'
 import { noop } from 'lodash'
+import React from 'react'
+import { GestureResponderEvent } from 'react-native'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import { GestureResponderEvent } from 'react-native'
 
 // expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires

@@ -1,5 +1,5 @@
-import { HOME_TOKEN } from '../constants'
 import ThoughtId from '../@types/ThoughtId'
+import { HOME_TOKEN } from '../constants'
 
 /** Returns true if the Thoughts or Path is the home context. */
 const isHome = (thoughts: (string | ThoughtId)[]): boolean => {

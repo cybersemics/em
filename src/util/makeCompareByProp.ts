@@ -1,6 +1,6 @@
-import lower from './lower'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import Index from '../@types/IndexType'
+import lower from './lower'
 
 /** Returns true if the first object's key is greater than the second object's key. */
 export const isGreater = <T1 extends Index, T2 extends Index, K extends keyof T1 & keyof T2>(a: T1, b: T2, key: K) =>

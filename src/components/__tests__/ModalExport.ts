@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
-import showModal from '../../action-creators/showModal'
 import setCursor from '../../action-creators/setCursor'
+import showModal from '../../action-creators/showModal'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'

@@ -1,11 +1,11 @@
 import _ from 'lodash'
-import SimplePath from '../@types/SimplePath'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import parentOf from '../util/parentOf'
 import head from '../util/head'
-import unroot from '../util/unroot'
 import { resolveArray, resolvePath } from '../util/memoizeResolvers'
+import parentOf from '../util/parentOf'
+import unroot from '../util/unroot'
 import isContextViewActive from './isContextViewActive'
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */

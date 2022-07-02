@@ -1,6 +1,6 @@
-import expandThoughts from '../selectors/expandThoughts'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import expandThoughts from '../selectors/expandThoughts'
 import headId from '../util/headId'
 
 interface Options {

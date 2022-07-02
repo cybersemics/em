@@ -1,7 +1,6 @@
 /**
  * @jest-environment ./src/e2e/webdriverio-environment.js
  */
-
 import helpers from '../helpers'
 
 jest.setTimeout(90000)

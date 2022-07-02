@@ -1,8 +1,8 @@
 import React from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import isDocumentEditable from '../util/isDocumentEditable'
 import indent from '../action-creators/indent'
+import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

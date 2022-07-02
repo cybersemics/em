@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
 import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
-import parentOf from '../../util/parentOf'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
+import parentOf from '../../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThoughtEnter = ({ cursor }) => {

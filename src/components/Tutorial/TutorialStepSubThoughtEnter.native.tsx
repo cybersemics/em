@@ -4,9 +4,9 @@ import Path from '../../@types/Path'
 import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import { commonStyles } from '../../style/commonStyles'
-import parentOf from '../../util/parentOf'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
+import parentOf from '../../util/parentOf'
 import { Text } from '../Text.native'
 
 interface IComponentProps {

@@ -1,5 +1,5 @@
-import prependRevision from '../reducers/prependRevision'
 import Thunk from '../@types/Thunk'
+import prependRevision from '../reducers/prependRevision'
 
 /** Action-creator for prependRevision. */
 const prependRevisionActionCreator =

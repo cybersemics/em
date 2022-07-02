@@ -1,5 +1,5 @@
-import Thunk from '../@types/Thunk'
 import Path from '../@types/Path'
+import Thunk from '../@types/Thunk'
 
 /** Expands the inline breadcrumbs of a context in the context view. */
 const expandContextThought =

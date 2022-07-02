@@ -1,10 +1,10 @@
-import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import appendToPath from '../util/appendToPath'
-import isRoot from '../util/isRoot'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import getRootPath from './getRootPath'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import appendToPath from '../util/appendToPath'
+import isRoot from '../util/isRoot'
+import getRootPath from './getRootPath'
 
 /** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. It should be removed. */
 const contextToPath = (state: State, context: string[]): SimplePath | null => {

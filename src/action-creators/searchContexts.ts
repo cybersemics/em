@@ -1,5 +1,5 @@
-import searchContexts from '../reducers/searchContexts'
 import Thunk from '../@types/Thunk'
+import searchContexts from '../reducers/searchContexts'
 
 /** Action-creator for searchContexts. */
 const searchContextsActionCreator =

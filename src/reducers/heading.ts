@@ -1,11 +1,11 @@
+import State from '../@types/State'
 import deleteThought from '../reducers/deleteThought'
 import setAttribute from '../reducers/setAttribute'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
+import { HeadingLevel } from '../shortcuts/headings'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
-import { HeadingLevel } from '../shortcuts/headings'
-import State from '../@types/State'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Set or remove a heading on the cursor. */
 const heading = (state: State, { level }: { level: HeadingLevel }): State => {

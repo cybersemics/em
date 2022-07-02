@@ -1,8 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import equalPath from '../util/equalPath'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import equalPath from '../util/equalPath'
 import { Text } from './Text.native'
 
 interface BulletCursorOverlayProps {

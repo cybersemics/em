@@ -1,5 +1,4 @@
 // TODO: Not implemented
-
 import SplitResult from '../@types/SplitResult'
 
 type SelectionOptionsType = {

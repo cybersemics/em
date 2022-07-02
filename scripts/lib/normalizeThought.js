@@ -1,6 +1,6 @@
+import emojiStrip from 'emoji-strip'
 import _ from 'lodash'
 import pluralize from 'pluralize'
-import emojiStrip from 'emoji-strip'
 
 const REGEXP_TAGS = /(<([^>]+)>)/gi
 

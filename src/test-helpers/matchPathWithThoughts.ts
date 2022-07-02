@@ -1,5 +1,5 @@
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 

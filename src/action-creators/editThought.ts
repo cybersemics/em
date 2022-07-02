@@ -1,5 +1,5 @@
-import editThought from '../reducers/editThought'
 import Thunk from '../@types/Thunk'
+import editThought from '../reducers/editThought'
 
 /** Action-creator for editThought. */
 const editThoughtActionCreator =

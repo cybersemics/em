@@ -1,5 +1,5 @@
-import toggleAttribute from '../reducers/toggleAttribute'
 import Thunk from '../@types/Thunk'
+import toggleAttribute from '../reducers/toggleAttribute'
 
 /** Action-creator for toggleAttribute. */
 const toggleAttributeActionCreator =

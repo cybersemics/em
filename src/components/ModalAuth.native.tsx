@@ -1,16 +1,15 @@
 import React, { FC, useCallback, useEffect, useState } from 'react'
+import { NativeSyntheticEvent, TextInputFocusEventData, TouchableOpacity, View } from 'react-native'
+import { TextInput } from 'react-native-gesture-handler'
 import { useDispatch } from 'react-redux'
+import Index from '../@types/IndexType'
 import alert from '../action-creators/alert'
 import login from '../action-creators/login'
 import { FIREBASE_REDIRECT_URL } from '../constants'
-import { ActionButton } from './ActionButton'
-import Index from '../@types/IndexType'
-import Modal from './Modal'
-import { NativeSyntheticEvent, TextInputFocusEventData, TouchableOpacity, View } from 'react-native'
-import { Text } from './Text.native'
-import { TextInput } from 'react-native-gesture-handler'
-
 import { commonStyles } from '../style/commonStyles'
+import { ActionButton } from './ActionButton'
+import Modal from './Modal'
+import { Text } from './Text.native'
 
 const firebaseErrorsIndex = {
   'auth/weak-password': 'Password should be at least 6 characters',

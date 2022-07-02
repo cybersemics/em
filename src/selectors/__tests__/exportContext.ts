@@ -1,10 +1,10 @@
+import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
+import importText from '../../reducers/importText'
+import editThoughtByContext from '../../test-helpers/editThoughtByContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import importText from '../../reducers/importText'
-import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../exportContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 
 it('meta and archived thoughts are included', () => {
   const text = `- a

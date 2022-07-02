@@ -1,9 +1,9 @@
 import React, { Fragment } from 'react'
+import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
+import { shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
-import { shortcutById } from '../../shortcuts'
-import { useStore } from 'react-redux'
 
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
 

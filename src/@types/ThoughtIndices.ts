@@ -1,6 +1,6 @@
 import Index from './IndexType'
-import Thought from './Thought'
 import Lexeme from './Lexeme'
+import Thought from './Thought'
 
 interface ThoughtIndices {
   thoughtIndex: Index<Thought>

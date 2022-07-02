@@ -1,4 +1,6 @@
 import React from 'react'
+import { Alert } from 'react-native'
+import Svg, { G, Path } from 'react-native-svg'
 // import { Key } from 'ts-key-enum'
 // import { isTouch } from '../browser'
 // import findDescendant from '../selectors/findDescendant'
@@ -7,8 +9,7 @@ import React from 'react'
 // import * as selection from '../device/selection'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import Svg, { G, Path } from 'react-native-svg'
-import { Alert } from 'react-native'
+
 // import asyncFocus from '../device/asyncFocus'
 
 // let undoArchiveTimer: number // eslint-disable-line fp/no-let

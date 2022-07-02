@@ -1,10 +1,10 @@
+import classNames from 'classnames'
 import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import classNames from 'classnames'
-import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
-import setCursor from '../action-creators/setCursor'
-import headId from '../util/headId'
 import Path from '../@types/Path'
+import setCursor from '../action-creators/setCursor'
+import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import headId from '../util/headId'
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {

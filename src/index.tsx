@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import './index.css'
 import { App } from './components/App'
-import registerServiceWorker from './registerServiceWorker'
+import './index.css'
 import { initialize } from './initialize'
+import registerServiceWorker from './registerServiceWorker'
 
 initialize()
 

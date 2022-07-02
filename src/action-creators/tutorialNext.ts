@@ -1,5 +1,5 @@
-import tutorialNext from '../reducers/tutorialNext'
 import Thunk from '../@types/Thunk'
+import tutorialNext from '../reducers/tutorialNext'
 
 /** Action-creator for tutorialNext. */
 const tutorialNextActionCreator =

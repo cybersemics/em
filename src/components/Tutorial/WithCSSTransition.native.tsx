@@ -1,7 +1,7 @@
 import { View } from 'moti'
 import React from 'react'
-
 import { fadeIn } from '../../style/animations'
+
 const { from, animate } = fadeIn
 
 interface IComponentProps {

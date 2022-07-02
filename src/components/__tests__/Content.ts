@@ -1,10 +1,10 @@
 import { ReactWrapper } from 'enzyme'
-import { store } from '../../store'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import importText from '../../action-creators/importText'
+import contextToPath from '../../selectors/contextToPath'
+import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
-import contextToPath from '../../selectors/contextToPath'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 

@@ -1,5 +1,5 @@
-import splitThought from '../reducers/splitThought'
 import Thunk from '../@types/Thunk'
+import splitThought from '../reducers/splitThought'
 
 /** Action-creator for splitThought. */
 const splitThoughtActionCreator =

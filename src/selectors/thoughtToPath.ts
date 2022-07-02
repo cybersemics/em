@@ -1,9 +1,9 @@
-import getThoughtById from '../selectors/getThoughtById'
-import isRoot from '../util/isRoot'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_PATH } from '../constants'
+import getThoughtById from '../selectors/getThoughtById'
+import isRoot from '../util/isRoot'
 
 /**
  * Generates the Path for a Thought by traversing upwards to the root thought.

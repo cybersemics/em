@@ -1,12 +1,7 @@
+import { View } from 'moti'
 import React, { useEffect, useState } from 'react'
-import { connect, useStore, useSelector } from 'react-redux'
-import { store } from '../store'
-import { shortcutById } from '../shortcuts'
-import globals from '../globals'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
-import Thought from './Thought'
-import GestureDiagram from './GestureDiagram'
-import ThoughtId from '../@types/ThoughtId'
+import { TouchableOpacity } from 'react-native'
+import { connect, useSelector, useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -15,7 +10,31 @@ import SimplePath from '../@types/SimplePath'
 import SortDirection from '../@types/SortDirection'
 import State from '../@types/State'
 import ThoughtContext from '../@types/ThoughtContext'
-
+import ThoughtId from '../@types/ThoughtId'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
+import globals from '../globals'
+// selectors
+import appendChildPath from '../selectors/appendChildPath'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import getChildPath from '../selectors/getChildPath'
+import {
+  childrenFilterPredicate,
+  getAllChildren,
+  getAllChildrenAsThoughts,
+  getAllChildrenSorted,
+  getChildren,
+  getChildrenRanked,
+} from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import { shortcutById } from '../shortcuts'
+import { store } from '../store'
+import { commonStyles } from '../style/commonStyles'
 // util
 // appendToPath from '../util/// appendToPath'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
@@ -26,41 +45,20 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAbsolute from '../util/isAbsolute'
-import isDescendant from '../util/isDescendant'
-import isDescendantPath from '../util/isDescendantPath'
 // isDivider from '../util/// isDivider'
 // isEM from '../util/// isEM'
 import isAttribute from '../util/isAttribute'
+import isDescendant from '../util/isDescendant'
+import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
-
-// selectors
-import appendChildPath from '../selectors/appendChildPath'
-import attribute from '../selectors/attribute'
-import attributeEquals from '../selectors/attributeEquals'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import findDescendant from '../selectors/findDescendant'
-import getChildPath from '../selectors/getChildPath'
-import {
-  childrenFilterPredicate,
-  getAllChildrenAsThoughts,
-  getChildren,
-  getChildrenRanked,
-  getAllChildren,
-  getAllChildrenSorted,
-} from '../selectors/getChildren'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
-import { View } from 'moti'
+import GestureDiagram from './GestureDiagram'
 import { Text } from './Text.native'
-import { commonStyles } from '../style/commonStyles'
-import { TouchableOpacity } from 'react-native'
+import Thought from './Thought'
 
 /** The type of the exported Subthoughts. */
 interface SubthoughtsProps {

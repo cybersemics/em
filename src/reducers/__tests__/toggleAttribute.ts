@@ -1,15 +1,14 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
-
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleAttribute from '../toggleAttribute'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import State from '../../@types/State'
-import contextToPath from '../../selectors/contextToPath'
 
 it('toggle on', () => {
   const steps = [

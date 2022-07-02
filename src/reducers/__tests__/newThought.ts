@@ -1,11 +1,11 @@
+import { setCursor } from '..'
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
-import newThought from '../newThought'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import { setCursor } from '..'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+import newThought from '../newThought'
 
 it('new thought in root', () => {
   const stateNew = newThought(initialState(), { value: 'a' })

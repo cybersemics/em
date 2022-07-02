@@ -1,6 +1,6 @@
-import timestamp from './timestamp'
 import Block from '../@types/Block'
 import Timestamp from '../@types/Timestamp'
+import timestamp from './timestamp'
 
 export interface RoamBlock {
   uid: string

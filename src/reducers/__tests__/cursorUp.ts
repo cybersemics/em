@@ -1,6 +1,4 @@
-import initialState from '../../util/initialState'
-import pathToContext from '../../util/pathToContext'
-import reducerFlow from '../../util/reducerFlow'
+import State from '../../@types/State'
 import cursorUp from '../../reducers/cursorUp'
 import importText from '../../reducers/importText'
 import newSubthought from '../../reducers/newSubthought'
@@ -10,7 +8,9 @@ import toggleContextView from '../../reducers/toggleContextView'
 import toggleHiddenThoughts from '../../reducers/toggleHiddenThoughts'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
-import State from '../../@types/State'
+import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
+import reducerFlow from '../../util/reducerFlow'
 
 it('move cursor to previous sibling', () => {
   const steps = [newThought('a'), newThought('b'), cursorUp]

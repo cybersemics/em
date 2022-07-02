@@ -1,5 +1,5 @@
-import updateThoughts from '../reducers/updateThoughts'
 import Thunk from '../@types/Thunk'
+import updateThoughts from '../reducers/updateThoughts'
 
 /** Action-creator for updateThoughts. */
 const updateThoughtsActionCreator =
