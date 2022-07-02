@@ -149,7 +149,7 @@ const numThoughtsStart = Object.keys(db.thoughtIndex).length
 const numLexemesStart = Object.keys(db.lexemeIndex).length
 
 // track children to eliminate duplicates
-let childrenTouched: Index<true> = {}
+let childrenTouched: Index<Thought> = {}
 
 let childrenInMultipleThoughts = 0
 let childrenWithMissingThoughtRepaired = 0
@@ -282,6 +282,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
   children.forEach(child => {
     // if the child has already been touched, it means that it appears in more than one thought and should be removed
     if (childrenTouched[child.id]) {
+      db.thoughtIndex[child.id].parentId = childrenTouched[child.id].parentId
       delete thought.children![child.id]
       delete parent?.children?.[thought.id]?.childrenMap?.[isAttribute(child.value) ? child.value : child.id]
       childrenInMultipleThoughts++
@@ -291,7 +292,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
       child.parentId = thought.id
       parentIdRepaired++
     }
-    childrenTouched[child.id] = true
+    childrenTouched[child.id] = child
   })
 })
 
