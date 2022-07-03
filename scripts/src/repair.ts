@@ -305,7 +305,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
 console.info('Merging duplicate siblings')
 
 // traverse the tree and merge duplicate siblings
-let stack: ThoughtId[] = [HOME_TOKEN]
+let stack: ThoughtId[] = [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN]
 while (stack.length > 0) {
   stack = stack
     .map(id => {
@@ -319,7 +319,7 @@ while (stack.length > 0) {
       const childrenByValue: Index<Thought> = {}
       Object.values(thought.children || {}).forEach(child => {
         const existingChild = childrenByValue[child.value]
-        // if a thought with the same value already exists, move children from the into the original and delete originalChild
+        // if a thought with the same value already exists, move children from the duplicate into the original and delete originalChild
         if (existingChild) {
           const duplicateChild = child // for better readability
           const duplicateThought = db.thoughtIndex[duplicateChild.id]

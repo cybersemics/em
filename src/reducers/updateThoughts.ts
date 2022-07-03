@@ -197,6 +197,8 @@ const updateThoughts = (
           ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
           !lexeme.contexts.some(cx => cx === thought.id)
         ) {
+          console.error('lexemeIndexUpdates', lexemeIndexUpdates)
+          console.error('thoughtIndexUpdates', thoughtIndexUpdates)
           console.error('thought', thought)
           console.error('lexeme', lexeme)
           throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
