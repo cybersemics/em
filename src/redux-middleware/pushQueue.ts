@@ -4,7 +4,6 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import clearPushQueue from '../action-creators/clearPushQueue'
 import deleteThought from '../action-creators/deleteThought'
@@ -15,8 +14,8 @@ import updateThoughts from '../action-creators/updateThoughts'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
-import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
@@ -156,23 +155,28 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const pending: Record<ThoughtId, true> = keyValueBy(pendingDeletes, ({ pathParent, thought }) => ({
-        [head(pathParent)]: true,
-      }))
+      const ids = pendingDeletes.map(({ pathParent, thought }) => head(pathParent))
 
-      const toBePulledThoughts = Object.keys(pending) as ThoughtId[]
+      /*
+        In a 2-part delete:
+          Part I: All of in-memory descendants are deleted and pending descendants are pulled.
+          Part II: Pending descendants, now that they are in memory, are deleted.
 
-      // In a 2-part delete, all of the descendants that are in the Redux store are deleted in Part I, and pending descendants are pulled and then deleted in Part II. (See flushDeletes)
-      // With the old style pull, Part II pulled the pending descendants as expected. With the new style pull that only pulls pending thoughts, pull will short circuit in Part II since there is no Parent to be marked as pending (it was deleted in Part I).
-      // We cannot simply include missing Thoughts in pull addition to pending Thoughts though. Some Thoughts are missing when a context is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing Thoughts, we get data integrity issues when outdated local thoughts get pulled.
-      // Therefore, force the pull here to fetch all descendants to delete in Part II.
-      await dispatch(pull(toBePulledThoughts, { force: true, maxDepth: Infinity }))
+        deleteThought in Part I will not delete the pending thought since Part II needs a starting point
+
+        Note: Since the default pull that is called by pullQueue only pulls pending thoughts, we need to force pull.
+        The default pull would short circuit in Part II since there is no parent marked as pending (it was deleted in Part I).
+        What if we have pull include missing Thoughts in addition to pending Thoughts? This will not work either. Some thoughts are missing when a thought is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing thoughts, we get data integrity issues when outdated local thoughts get pulled.
+
+        Therefore, force the pull here to fetch all descendants to delete in Part II.
+      */
+      await dispatch(pull(ids, { force: true, maxDepth: Infinity }))
 
       pendingDeletes.forEach(({ pathParent, thought }) => {
         dispatch(
           deleteThought({
-            pathParent,
-            thoughtId: thought.id,
+            pathParent: rootedParentOf(getState(), pathParent),
+            thoughtId: head(pathParent),
             orphaned: true,
           }),
         )
