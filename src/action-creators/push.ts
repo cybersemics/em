@@ -4,7 +4,6 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Thunk from '../@types/Thunk'
 import error from '../action-creators/error'
@@ -18,7 +17,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import { getUserRef } from '../util/getUserRef'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
-import logWithTime from '../util/logWithTime'
 import { getSessionId } from '../util/sessionManager'
 import storage from '../util/storage'
 import timestamp from '../util/timestamp'
@@ -31,7 +29,7 @@ const thoughtToDb = (thought: Thought) =>
 const childToDb = (thought: Thought) =>
   _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
 
-/** Syncs thought updates to the local database. */
+/** Syncs thought updates to the local database. Caches updated localStorageSettingsContexts to local storage. */
 const pushLocal = (
   state: State,
   thoughtIndexUpdates: Index<Thought | null> = {},
@@ -40,65 +38,41 @@ const pushLocal = (
   updates: Index = {},
   localStorageSettingsContexts: Index<string>,
 ): Promise<any> => {
-  // lexemeIndex
-  const lexemeIndexPromises = [
-    ...Object.entries(lexemeIndexUpdates).map(([key, lexeme]) => {
-      if (lexeme != null) {
-        return db.updateLexeme(key, lexeme)
-      }
-      return db.deleteLexeme(key)
-    }),
-    db.updateLastUpdated(timestamp()),
-  ] as Promise<unknown>[]
-
-  logWithTime('sync: lexemeIndexPromises generated')
-
   const updatedThoughtIndex = {
     ...state.thoughts.thoughtIndex,
     ...thoughtIndexUpdates,
   }
-  // thoughtIndex
-  const thoughtIndexPromises = [
-    ...Object.keys(thoughtIndexUpdates).map(id => {
-      const thought = thoughtIndexUpdates[id]
-      const thoughtWithChildren = thought
-        ? {
-            ...thoughtToDb(thought),
-            children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), child => ({
-              [child.id]: childToDb(child),
-            })),
-          }
-        : null
+  const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
+    const thought = thoughtIndexUpdates[id]
+    const thoughtWithChildren = thought
+      ? ({
+          ...thoughtToDb(thought),
+          children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), child => ({
+            [child.id]: childToDb(child),
+          })),
+        } as ThoughtWithChildren)
+      : null
 
-      // some settings are propagated to localStorage for faster load on startup
-      const name = localStorageSettingsContexts[id]
-      if (name) {
-        const firstChild = Object.values(thought?.childrenMap || {}).find(childId => {
-          const thought = updatedThoughtIndex[childId]
-          return thought && !isAttribute(thought.value)
-        })
-        if (firstChild) {
-          const thought = updatedThoughtIndex[firstChild]
-          storage.setItem(`Settings/${name}`, thought!.value)
-        }
+    // some settings are propagated to localStorage for faster load on startup
+    const name = localStorageSettingsContexts[id]
+    if (name) {
+      const firstChild = Object.values(thought?.childrenMap || {}).find(childId => {
+        const thought = updatedThoughtIndex[childId]
+        return thought && !isAttribute(thought.value)
+      })
+      if (firstChild) {
+        const thought = updatedThoughtIndex[firstChild]
+        storage.setItem(`Settings/${name}`, thought!.value)
       }
+    }
 
-      return thoughtWithChildren ? db.updateThought(id as ThoughtId, thoughtWithChildren) : db.deleteThought(id)
-    }),
-    db.updateLastUpdated(timestamp()),
-  ]
-
-  logWithTime('sync: thoughtIndexPromises generated')
+    return { [id]: thoughtWithChildren }
+  })
 
   // recentlyEdited
-  const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
+  // const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
 
-  // schemaVersion
-  const schemaVersionPromise = updates && updates.schemaVersion ? db.updateSchemaVersion(updates.schemaVersion) : null
-
-  logWithTime('sync: localPromises generated')
-
-  return Promise.all([...lexemeIndexPromises, ...thoughtIndexPromises, recentlyEditedPromise, schemaVersionPromise])
+  return db.updateThoughts(thoughtUpdates, lexemeIndexUpdates, updates.schemaVersion)
 }
 
 /** Prepends lexemeIndex and thoughtIndex keys for syncing to Firebase. */
@@ -129,8 +103,6 @@ const pushRemote =
       {} as Index<Lexeme | null>,
     )
 
-    logWithTime('pushRemote: prepend lexemeIndex key')
-
     const prependedThoughtIndexUpdates = _.transform(
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
@@ -159,8 +131,6 @@ const pushRemote =
       {} as Index<Partial<ThoughtWithChildren> | null>,
     )
 
-    logWithTime('pushRemote: prepend thoughtIndex key')
-
     // add updates to queue appending clientId and timestamp
     const allUpdates = {
       // encode keys for firebase
@@ -182,8 +152,6 @@ const pushRemote =
           }
         : {}),
     }
-
-    logWithTime('pushRemote: allUpdates')
 
     if (Object.keys(allUpdates).length > 0) {
       return getFirebaseProvider(state, dispatch)

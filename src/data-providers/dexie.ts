@@ -11,6 +11,7 @@ import ThoughtWordsIndex from '../@types/ThoughtWordsIndex'
 import Timestamp from '../@types/Timestamp'
 import { SCHEMA_LATEST } from '../constants'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
+import groupObjectBy from '../util/groupObjectBy'
 import hashThought from '../util/hashThought'
 import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
@@ -299,5 +300,47 @@ export const fullTextSearch = async (value: string) => {
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
+
+/** Atomically updates the thoughtIndex and lexemeIndex. */
+export const updateThoughts = async (
+  thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
+  lexemeIndexUpdates: Index<Lexeme | null>,
+  schemaVersion: number,
+) => {
+  db.transaction(
+    'rw',
+    [db.thoughtIndex, db.thoughtWordsIndex, db.lexemeIndex, db.helpers],
+    async (tx: ObservableTransaction) => {
+      tx.source = getSessionId()
+
+      // group thought updates and deletes so that we can use the db bulk functions
+      const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
+        thought ? 'update' : 'delete',
+      ) as {
+        update?: Index<ThoughtWithChildren>
+        delete?: Index<null>
+      }
+
+      // group lexeme updates and deletes so that we can use the db bulk functions
+      const { update: lexemeUpdates, delete: lexemeDeletes } = groupObjectBy(lexemeIndexUpdates, (id, lexeme) =>
+        lexeme ? 'update' : 'delete',
+      ) as {
+        update?: Index<Lexeme>
+        delete?: Index<null>
+      }
+
+      return Promise.all([
+        thoughtDeletes ? db.thoughtIndex.bulkDelete(Object.keys(thoughtDeletes)) : null,
+        lexemeDeletes ? db.lexemeIndex.bulkDelete(Object.keys(lexemeDeletes)) : null,
+        ...(thoughtUpdates
+          ? Object.entries(thoughtUpdates).map(([id, thought]) => updateThought(id as ThoughtId, thought))
+          : []),
+        lexemeUpdates ? updateLexemeIndex(lexemeUpdates) : null,
+        updateLastUpdated(timestamp()),
+        updateSchemaVersion(schemaVersion),
+      ] as Promise<unknown>[])
+    },
+  )
+}
 
 export default initDB
