@@ -58,6 +58,68 @@ export const getWhitelistedThoughts = once(() => {
   }
 })
 
+/** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
+const dataIntegrityCheck =
+  (thoughtIndexUpdates: Index<Thought | null>, lexemeIndexUpdates: Index<Lexeme | null>) => (state: State) => {
+    Object.values(thoughtIndexUpdates).forEach(thought => {
+      if (!thought) return
+
+      // disallow children property
+      if ('children' in thought) {
+        console.error('thought', thought)
+        throw new Error(
+          'Thoughts in State should not have children property. Only the database should contain inline children.',
+        )
+      }
+
+      // make sure thought.parentId exists in thoughtIndex
+      if (
+        ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
+        !getThoughtById(state, thought.parentId) &&
+        // Unfortunately 2-part deletes produce false positives of invalid parentId.
+        // False positives occur in Part II, so we can't check pendingDeletes (it has already been flushed).
+        // Instead, check the undo patch and disable the check if the last action is deleteThought or deleteThoughtWithCursor.
+        // It's hacky, but it seems better than omitting the check completely.
+        // If we get more false positives or false negatives, we can adjust the condition.
+        !state.undoPatches[state.undoPatches.length - 1]?.[0].actions[0]?.startsWith('deleteThought')
+      ) {
+        console.error('thought', thought)
+        throw new Error(`Parent ${thought.parentId} of ${thought.value} (${thought.id}) does not exist`)
+      }
+
+      // make sure thought's children's parentId matches the thought's id.
+      const children = Object.values(thought.childrenMap || {})
+        .map(id => getThoughtById(state, id))
+        // the child may not exist in the thoughtIndex yet if it is pending
+        .filter(Boolean)
+      children.forEach(child => {
+        if (child.parentId !== thought.id) {
+          console.error('child', child)
+          console.error('thought', thought)
+          throw new Error('child.parentId !== thought.id')
+        }
+      })
+
+      // assert that a lexeme exists for the thought
+      const lexeme = getLexeme(state, thought.value)
+      if (!lexeme) {
+        console.error('thought', thought)
+        throw new Error(`Thought "${thought.value}" (${thought.id}) is missing a corresponding Lexeme.`)
+      } else if (
+        ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
+        !lexeme.contexts.some(cx => cx === thought.id)
+      ) {
+        console.error('lexemeIndexUpdates', lexemeIndexUpdates)
+        console.error('thoughtIndexUpdates', thoughtIndexUpdates)
+        console.error('thought', thought)
+        console.error('lexeme', lexeme)
+        throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
+      }
+    })
+
+    return state
+  }
+
 /** Returns true if a non-root context begins with HOME_TOKEN. Used as a data integrity check. */
 // const isInvalidContext = (state: State, cx: ThoughtContext) => {
 //   cx && cx.context && cx.context[0] === HOME_TOKEN && cx.context.length > 1
@@ -155,65 +217,11 @@ const updateThoughts = (
         })
       : null,
 
-    // Data Integrity Checks
-    // These can be removed after the upstream problem is identified.
+    // data integrity checks
+    // immediately throws if any data integity issues are found
+    // otherwise noop
     state => {
-      Object.values(thoughtIndexUpdates).forEach(thought => {
-        if (!thought) return
-
-        // disallow children property
-        if ('children' in thought) {
-          console.error('thought', thought)
-          throw new Error(
-            'Thoughts in State should not have children property. Only the database should contain inline children.',
-          )
-        }
-
-        // make sure thought.parentId exists in thoughtIndex
-        if (
-          ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
-          !getThoughtById(state, thought.parentId) &&
-          // Unfortunately 2-part deletes produce false positives of invalid parentId.
-          // False positives occur in Part II, so we can't check pendingDeletes (it has already been flushed).
-          // Instead, check the undo patch and disable the check if the last action is deleteThought or deleteThoughtWithCursor.
-          // It's hacky, but it seems better than omitting the check completely.
-          // If we get more false positives or false negatives, we can adjust the condition.
-          !state.undoPatches[state.undoPatches.length - 1]?.[0].actions[0]?.startsWith('deleteThought')
-        ) {
-          console.error('thought', thought)
-          throw new Error(`Parent ${thought.parentId} of ${thought.value} (${thought.id}) does not exist`)
-        }
-
-        // make sure thought's children's parentId matches the thought's id.
-        const children = Object.values(thought.childrenMap || {})
-          .map(id => getThoughtById(state, id))
-          // the child may not exist in the thoughtIndex yet if it is pending
-          .filter(Boolean)
-        children.forEach(child => {
-          if (child.parentId !== thought.id) {
-            console.error('child', child)
-            console.error('thought', thought)
-            throw new Error('child.parentId !== thought.id')
-          }
-        })
-
-        // assert that a lexeme exists for the thought
-        const lexeme = getLexeme(state, thought.value)
-        if (!lexeme) {
-          console.error('thought', thought)
-          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing a corresponding Lexeme.`)
-        } else if (
-          ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
-          !lexeme.contexts.some(cx => cx === thought.id)
-        ) {
-          console.error('lexemeIndexUpdates', lexemeIndexUpdates)
-          console.error('thoughtIndexUpdates', thoughtIndexUpdates)
-          console.error('thought', thought)
-          console.error('lexeme', lexeme)
-          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
-        }
-      })
-
+      dataIntegrityCheck(thoughtIndexUpdates, lexemeIndexUpdates)
       return state
     },
   ])(state)
