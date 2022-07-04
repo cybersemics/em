@@ -11,9 +11,7 @@ import expandThoughts from '../selectors/expandThoughts'
 import expandedWithAncestors from '../selectors/expandedWithAncestors'
 import { getChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
-import thoughtToPath from '../selectors/thoughtToPath'
 import equalArrays from '../util/equalArrays'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 
@@ -106,18 +104,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     pullQueuePulling[pullKey] = extendedPullQueueFiltered
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
-    const pendingThoughts = await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
-    const visiblePendingThoughts = pendingThoughts.filter(
-      thought => getState().expanded[hashPath(thoughtToPath(getState(), thought.parentId))],
-    )
+    await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
 
     // eslint-disable-next-line fp/no-delete
     delete pullQueuePulling[pullKey]
-
-    if (!Math && Object.keys(visiblePendingThoughts).length > 0) {
-      pullQueue = { ...pullQueue, ...keyValueBy(visiblePendingThoughts, (thought, i) => ({ [thought.id]: true })) }
-      updatePullQueue({ forceFlush: true, forceRemote })
-    }
   }
 
   /**
