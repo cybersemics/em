@@ -6,7 +6,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
-import { getAllChildrenAsThoughts, getChildrenRanked } from '../selectors/getChildren'
+import { getChildrenRanked } from '../selectors/getChildren'
 // import { treeDelete } from '../util/recentlyEditedTree'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
@@ -96,7 +96,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   const contextViewsNew = { ...state.contextViews }
   if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
 
-  const children = getAllChildrenAsThoughts(state, parent?.id || null).filter(child => child.id !== deletedThought.id)
   const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
     id !== deletedThought.id ? { [key]: id } : null,
   )
@@ -180,18 +179,11 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const hasDuplicateSiblings = children.some(child => hashThought(child.value || '') === key)
-  const descendantUpdatesResult = !hasDuplicateSiblings
-    ? recursiveDeletes(deletedThought)
-    : ({
-        lexemeIndex: {},
-        thoughtIndex: {},
-      } as ThoughtUpdates)
+  const descendantUpdatesResult = recursiveDeletes(deletedThought)
 
   const lexemeIndexUpdates = {
     [key]: newOldLexeme,
     ...descendantUpdatesResult.lexemeIndex,
-    // emptyContextDelete
   }
 
   const thoughtIndexUpdates = {
