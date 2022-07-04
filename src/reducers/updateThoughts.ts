@@ -26,7 +26,6 @@ export interface UpdateThoughtsOptions {
   recentlyEdited?: Index
   pendingDeletes?: { pathParent: Path; thought: Thought }[]
   pendingEdits?: editThoughtPayload[]
-  pendingPulls?: { path: Path }[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
   preventExpandThoughts?: boolean
   contextChain?: SimplePath[]
@@ -139,7 +138,6 @@ const updateThoughts = (
     recentlyEdited,
     updates,
     pendingDeletes,
-    pendingPulls,
     preventExpandThoughts,
     local = true,
     remote = true,
@@ -172,7 +170,6 @@ const updateThoughts = (
     recentlyEdited: recentlyEditedNew,
     updates,
     pendingDeletes,
-    pendingPulls,
     local,
     remote,
     pendingLexemes,
