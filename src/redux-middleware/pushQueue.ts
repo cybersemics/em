@@ -14,9 +14,9 @@ import updateThoughts from '../action-creators/updateThoughts'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
+import parentOf from '../util/parentOf'
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
@@ -155,7 +155,7 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const ids = pendingDeletes.map(({ pathParent, thought }) => head(pathParent))
+      const ids = pendingDeletes.map(path => head(parentOf(path)))
 
       /*
         In a 2-part delete:
@@ -172,11 +172,11 @@ const flushDeletes =
       */
       await dispatch(pull(ids, { force: true, maxDepth: Infinity }))
 
-      pendingDeletes.forEach(({ pathParent, thought }) => {
+      pendingDeletes.forEach(path => {
         dispatch(
           deleteThought({
-            pathParent: rootedParentOf(getState(), pathParent),
-            thoughtId: head(pathParent),
+            pathParent: parentOf(parentOf(path)),
+            thoughtId: head(parentOf(path)),
             orphaned: true,
           }),
         )

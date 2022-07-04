@@ -13,6 +13,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
+import appendToPath from '../util/appendToPath'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import isDescendant from '../util/isDescendant'
@@ -21,7 +22,6 @@ import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
-import unroot from '../util/unroot'
 
 interface Payload {
   pathParent: Path
@@ -33,7 +33,7 @@ interface Payload {
 interface ThoughtUpdates {
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
-  pendingDeletes?: { pathParent: Path; thought: Thought }[]
+  pendingDeletes?: Path[]
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
@@ -135,13 +135,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           const thoughtUpdate: ThoughtUpdates = {
             ...accum,
             // do not delete the pending thought yet since the second call to deleteThought needs a starting point
-            pendingDeletes: [
-              ...(accumRecursive.pendingDeletes || []),
-              {
-                pathParent: [...unroot(pathParent), thought.id],
-                thought: child,
-              },
-            ],
+            pendingDeletes: [...(accumRecursive.pendingDeletes || []), appendToPath(pathParent, thought.id, child.id)],
           }
 
           return thoughtUpdate

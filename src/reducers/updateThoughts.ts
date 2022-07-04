@@ -21,18 +21,18 @@ import reducerFlow from '../util/reducerFlow'
 import textToHtml from '../util/textToHtml'
 
 export interface UpdateThoughtsOptions {
+  contextChain?: SimplePath[]
+  isLoading?: boolean
   lexemeIndexUpdates: Index<Lexeme | null>
-  thoughtIndexUpdates: Index<Thought | null>
-  recentlyEdited?: Index
-  pendingDeletes?: { pathParent: Path; thought: Thought }[]
+  local?: boolean
+  pendingDeletes?: Path[]
   pendingEdits?: editThoughtPayload[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
   preventExpandThoughts?: boolean
-  contextChain?: SimplePath[]
-  updates?: Index<string>
-  local?: boolean
+  recentlyEdited?: Index
   remote?: boolean
-  isLoading?: boolean
+  thoughtIndexUpdates: Index<Thought | null>
+  updates?: Index<string>
 }
 
 /**
