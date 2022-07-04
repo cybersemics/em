@@ -7,10 +7,64 @@ import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import updateThoughts from '../reducers/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import reducerFlow from '../util/reducerFlow'
+
+// actions representing any cursor movements.
+// These need to be differentiated from the other actions because
+// any two or more such consecutive actions are merged together
+export const NAVIGATION_ACTIONS: Index<string> = {
+  cursorBack: 'cursorBack',
+  cursorBeforeSearch: 'cursorBeforeSearch',
+  cursorDown: 'cursorDown',
+  cursorForward: 'cursorForward',
+  cursorHistory: 'cursorHistory',
+  cursorUp: 'cursorUp',
+  setCursor: 'setCursor',
+}
+
+// a list of all undoable/reversible actions (stored as object for indexing)
+const UNDOABLE_ACTIONS: Index<true> = {
+  archiveThought: true,
+  bumpThoughtDown: true,
+  cursorBack: true,
+  cursorBeforeSearch: true,
+  cursorDown: true,
+  cursorForward: true,
+  cursorHistory: true,
+  cursorUp: true,
+  deleteAttribute: true,
+  deleteData: true,
+  deleteEmptyThought: true,
+  deleteThoughtWithCursor: true,
+  editThought: true,
+  deleteThought: true,
+  moveThought: true,
+  expandContextThought: true,
+  indent: true,
+  importText: true,
+  moveThoughtDown: true,
+  moveThoughtUp: true,
+  newThought: true,
+  createThought: true,
+  outdent: true,
+  searchLimit: true,
+  setAttribute: true,
+  setCursor: true,
+  setFirstSubthought: true,
+  settings: true,
+  splitThought: true,
+  splitSentences: true,
+  subCategorizeAll: true,
+  subCategorizeOne: true,
+  toggleAttribute: true,
+  toggleCodeView: true,
+  toggleContextView: true,
+  toggleHiddenThoughts: true,
+  toggleSplitView: true,
+  toolbarOverlay: true,
+}
 
 /** These properties are ignored when generating state patches. */
 const statePropertiesToOmit = ['alert', 'pushQueue', 'user']

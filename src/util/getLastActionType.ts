@@ -1,5 +1,5 @@
 import Patch from '../@types/Patch'
-import { NAVIGATION_ACTIONS } from '../constants'
+import { NAVIGATION_ACTIONS } from '../redux-enhancers/undoRedoEnhancer'
 
 /**
  * Recursively calculates last action type from patches/inversePatches history if it is one of the navigation actions and finally returns the action.
