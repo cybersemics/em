@@ -26,6 +26,19 @@ const EM_TOKEN = '__EM__' as ThoughtId
 const HOME_TOKEN = '__ROOT__' as ThoughtId
 const HOME_PATH = [HOME_TOKEN] as Path
 
+let childrenInMultipleThoughts = 0
+let childrenWithMissingThoughtRepaired = 0
+let duplicateSiblingsMerged = 0
+let lexemeContextsAdded = 0
+let lexemeContextsInvalid = 0
+let lexemeContextsMissing = 0
+let lexemeMissing = 0
+let missingGrandchildrenMissing = 0
+let numOrphans = 0
+let parentIdRepaired = 0
+let thoughtMissingFromChildren = 0
+let unreachableThoughts = 0
+
 const args = minimist(process.argv.slice(2))
 const file = args._[0]
 if (!file) {
@@ -156,18 +169,6 @@ const numLexemesStart = Object.keys(db.lexemeIndex).length
 
 // track children to eliminate duplicates
 let childrenTouched: Index<Thought> = {}
-
-let childrenInMultipleThoughts = 0
-let childrenWithMissingThoughtRepaired = 0
-let duplicateSiblingsMerged = 0
-let lexemeContextsInvalid = 0
-let lexemeContextsMissing = 0
-let lexemeMissing = 0
-let missingGrandchildrenMissing = 0
-let numOrphans = 0
-let parentIdRepaired = 0
-let thoughtMissingFromChildren = 0
-let unreachableThoughts = 0
 
 console.info('Reconstructing orphans, missing children, and Lexemes')
 
@@ -440,6 +441,21 @@ Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
   })
 })
 
+console.info('Adding missing Lexeme contexts')
+Object.values(db.thoughtIndex).forEach(thought => {
+  const parent = db.thoughtIndex[thought.parentId]
+  const children = Object.values(thought.children || {})
+  const lexemeKey = hashThought(thought.value)
+  const lexeme = db.lexemeIndex[lexemeKey]
+  if (!lexeme.contexts) {
+    lexeme.contexts = []
+  }
+  if (!lexeme.contexts.includes(thought.id)) {
+    lexeme.contexts.push(thought.id)
+    lexemeContextsAdded++
+  }
+})
+
 /** Returns a chalk color function that reflects the sevity of the dataintegrity issue for the given metric. */
 const color = (n: number) => (s?: string) => chalk[n === 0 ? 'green' : n < 1000 ? 'yellow' : 'red'](s || n)
 
@@ -483,6 +499,7 @@ const table = new Table({
       color(duplicateSiblingsMerged)(`Duplicate siblings merged`),
       color(duplicateSiblingsMerged)(),
     ],
+    ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
       'lexemeContextsInvalid',
       color(lexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
