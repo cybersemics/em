@@ -4,6 +4,7 @@ import importTextAction from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
+import { getLexeme } from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
 import { store as appStore } from '../../store'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -37,23 +38,33 @@ it('delete pending descendants', async () => {
   await timer.runAllAsync()
 
   const state = appStore.getState()
-  const thoughtA = contextToThought(state, ['a'])!
-  const thoughtB = contextToThought(state, ['a', 'b'])!
-  const thoughtC = contextToThought(state, ['a', 'b', 'c'])!
-  const thoughtD = contextToThought(state, ['a', 'b', 'c', 'd'])!
-  const thoughtE = contextToThought(state, ['a', 'b', 'c', 'd', 'e'])!
-  const thoughtOne = contextToThought(state, ['a', 'b', 'c', 'd', 'e', 'one'])!
-  const thoughtTwo = contextToThought(state, ['a', 'b', 'c', 'd', 'e', 'two'])!
-  const thoughtX = contextToThought(state, ['a', 'x'])!
 
-  expect(thoughtA).toBeTruthy()
-  expect(thoughtB).toBeTruthy()
-  expect(thoughtC).toBeTruthy()
-  expect(thoughtD).toBeTruthy()
-  expect(thoughtE).toBeTruthy()
-  expect(thoughtOne).toBeTruthy()
-  expect(thoughtTwo).toBeTruthy()
-  expect(thoughtX).toBeTruthy()
+  const thoughts = {
+    a: contextToThought(state, ['a'])!,
+    b: contextToThought(state, ['a', 'b'])!,
+    c: contextToThought(state, ['a', 'b', 'c'])!,
+    d: contextToThought(state, ['a', 'b', 'c', 'd'])!,
+    e: contextToThought(state, ['a', 'b', 'c', 'd', 'e'])!,
+    one: contextToThought(state, ['a', 'b', 'c', 'd', 'e', 'one'])!,
+    two: contextToThought(state, ['a', 'b', 'c', 'd', 'e', 'two'])!,
+    x: contextToThought(state, ['a', 'x'])!,
+  }
+
+  // Create a map of { [text]: !!thought } for readable test output
+  const thoughtsBeforeRefresh = keyValueBy(thoughts, (text, thought) => ({
+    [text]: !!getThoughtById(state, thought.id),
+  }))
+
+  expect(thoughtsBeforeRefresh).toEqual({
+    a: true,
+    b: true,
+    c: true,
+    d: true,
+    e: true,
+    one: true,
+    two: true,
+    x: true,
+  })
 
   timer.useFakeTimer()
 
@@ -69,14 +80,22 @@ it('delete pending descendants', async () => {
 
   const stateAfterRefresh = appStore.getState()
 
-  expect(getThoughtById(stateAfterRefresh, thoughtA.id)).toBeTruthy()
-  expect(getThoughtById(stateAfterRefresh, thoughtB.id)).toBeTruthy()
-  expect(getThoughtById(stateAfterRefresh, thoughtC.id)).toBeTruthy()
-  expect(getThoughtById(stateAfterRefresh, thoughtD.id)).toBeFalsy()
-  expect(getThoughtById(stateAfterRefresh, thoughtE.id)).toBeFalsy()
-  expect(getThoughtById(stateAfterRefresh, thoughtOne.id)).toBeFalsy()
-  expect(getThoughtById(stateAfterRefresh, thoughtTwo.id)).toBeFalsy()
-  expect(getThoughtById(stateAfterRefresh, thoughtX.id)).toBeTruthy()
+  // Create a map of { [text]: !!thought } for readable test output
+  const thoughtsAfterRefresh = keyValueBy(thoughts, (text, thought) => ({
+    [text]: !!getThoughtById(stateAfterRefresh, thought.id),
+  }))
+
+  expect(thoughtsAfterRefresh).toEqual({
+    a: true,
+    b: true,
+    c: true,
+    x: true,
+    // pending
+    d: false,
+    e: false,
+    one: false,
+    two: false,
+  })
 
   timer.useFakeTimer()
 
@@ -91,17 +110,38 @@ it('delete pending descendants', async () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
 
-  expect(getThoughtById(stateNew, thoughtA.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtB.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtC.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtD.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtE.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtOne.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtTwo.id)).toBeFalsy()
-  expect(getThoughtById(stateNew, thoughtX.id)).toBeFalsy()
+  // Create a map of { [text]: !!thought } for readable test output
+  const thoughtsAfterDelete = keyValueBy(thoughts, (text, thought) => ({
+    [text]: !!getThoughtById(stateNew, thought.id),
+  }))
+
+  // all descendants should be removed from the thoughtIndex
+  expect(thoughtsAfterDelete).toEqual({
+    a: false,
+    b: false,
+    c: false,
+    d: false,
+    e: false,
+    one: false,
+    two: false,
+    x: false,
+  })
+
+  const lexemes = keyValueBy(thoughts, (text, thought) => ({ [text]: !!getLexeme(stateNew, thought.value) }))
+
+  expect(lexemes).toEqual({
+    a: false,
+    b: false,
+    c: false,
+    d: false,
+    e: false,
+    one: false,
+    two: false,
+    x: false,
+  })
 })
 
-it('delete more pending descendants', async () => {
+it('delete many pending descendants', async () => {
   timer.useFakeTimer()
   initialize()
   await timer.runAllAsync()
@@ -154,36 +194,33 @@ it('delete more pending descendants', async () => {
   await timer.runAllAsync()
 
   const state = appStore.getState()
-  const thoughtCybersemics = contextToThought(state, ['Cybersemics'])!
-  const thoughtTeam = contextToThought(state, ['Cybersemics', 'Team'])!
-  const thoughtWork = contextToThought(state, ['Cybersemics', 'Team', 'Work'])!
-  const thoughtStructures = contextToThought(state, ['Cybersemics', 'Team', 'Structures'])!
-  const thoughtHowMuch = contextToThought(state, [
-    'Cybersemics',
-    'Team',
-    'Structures',
-    'How much should we work together and how much apart?',
-  ])!
-  const thoughtAgenda = contextToThought(state, ['Cybersemics', 'Team', 'Agenda'])!
-  const thought71719 = contextToThought(state, ['Cybersemics', 'Team', 'Agenda', '7/17/19'])!
-  const thoughtProductionViability = contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Production Viability'])!
-  const thoughtProductionPerformance = contextToThought(state, [
-    'Cybersemics',
-    'Team',
-    'Work',
-    'Production Viability',
-    'Production Performance',
-  ])!
-  const thoughtCommunity = contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Community Building'])!
-  const thoughtSocialMedia = contextToThought(state, [
-    'Cybersemics',
-    'Team',
-    'Work',
-    'Community Building',
-    'Social Media',
-  ])!
-  const thoughtAdoption = contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Adoption Infrastructure'])!
-  const thoughtImport = contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Adoption Infrastructure', 'Import'])!
+
+  const thoughts = {
+    Cybersemics: contextToThought(state, ['Cybersemics'])!,
+    Team: contextToThought(state, ['Cybersemics', 'Team'])!,
+    Work: contextToThought(state, ['Cybersemics', 'Team', 'Work'])!,
+    Structures: contextToThought(state, ['Cybersemics', 'Team', 'Structures'])!,
+    HowMuch: contextToThought(state, [
+      'Cybersemics',
+      'Team',
+      'Structures',
+      'How much should we work together and how much apart?',
+    ])!,
+    Agenda: contextToThought(state, ['Cybersemics', 'Team', 'Agenda'])!,
+    71719: contextToThought(state, ['Cybersemics', 'Team', 'Agenda', '7/17/19'])!,
+    ProductionViability: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Production Viability'])!,
+    ProductionPerformance: contextToThought(state, [
+      'Cybersemics',
+      'Team',
+      'Work',
+      'Production Viability',
+      'Production Performance',
+    ])!,
+    CommunityBuilding: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Community Building'])!,
+    SocialMedia: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Community Building', 'Social Media'])!,
+    AdoptionInfrastructure: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Adoption Infrastructure'])!,
+    Import: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Adoption Infrastructure', 'Import'])!,
+  }
 
   timer.useFakeTimer()
 
@@ -207,38 +244,43 @@ it('delete more pending descendants', async () => {
 
   const stateNew = appStore.getState()
 
-  const ids = {
-    Cybersemics: thoughtCybersemics.id,
-    Team: thoughtTeam.id,
-    Work: thoughtWork.id,
-    Structures: thoughtStructures.id,
-    HowMuch: thoughtHowMuch.id,
-    Agenda: thoughtAgenda.id,
-    '71719': thought71719.id,
-    'Production Viability': thoughtProductionViability.id,
-    'Production Performance': thoughtProductionPerformance.id,
-    'Community Building': thoughtCommunity.id,
-    'Social Media': thoughtSocialMedia.id,
-    'Adoption Infrastructure': thoughtAdoption.id,
-    Import: thoughtImport.id,
-  }
-
   // Create a map of { [text]: !!thought } for readable test output
-  const thoughts = keyValueBy(ids, (text, id) => ({ [text]: !!getThoughtById(stateNew, id) }))
+  const thoughtsAfterDelete = keyValueBy(thoughts, (text, thought) => ({
+    [text]: !!getThoughtById(stateNew, thought.id),
+  }))
 
-  expect(thoughts).toEqual({
+  // all descendants should be removed from the thoughtIndex
+  expect(thoughtsAfterDelete).toEqual({
     Cybersemics: false,
     Team: false,
     Work: false,
     Structures: false,
     HowMuch: false,
     Agenda: false,
-    '71719': false,
-    'Production Viability': false,
-    'Production Performance': false,
-    'Community Building': false,
-    'Social Media': false,
-    'Adoption Infrastructure': false,
+    71719: false,
+    ProductionViability: false,
+    ProductionPerformance: false,
+    CommunityBuilding: false,
+    SocialMedia: false,
+    AdoptionInfrastructure: false,
+    Import: false,
+  })
+
+  const lexemes = keyValueBy(thoughts, (text, thought) => ({ [text]: !!getLexeme(stateNew, thought.value) }))
+
+  expect(lexemes).toEqual({
+    Cybersemics: false,
+    Team: false,
+    Work: false,
+    Structures: false,
+    HowMuch: false,
+    Agenda: false,
+    71719: false,
+    ProductionViability: false,
+    ProductionPerformance: false,
+    CommunityBuilding: false,
+    SocialMedia: false,
+    AdoptionInfrastructure: false,
     Import: false,
   })
 })
