@@ -45,12 +45,15 @@ if (!newThoughtShortcut) {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
   const { contextViews, cursor } = state
+  const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
+  const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
   return {
     contextViews,
     cursor,
     rootChildren: getAllChildrenAsThoughts(state, HOME_TOKEN),
-    tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
-    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
+    // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
+    tutorialChoice: (isNaN(tutorialChoice) ? 0 : tutorialChoice) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
+    tutorialStep: isNaN(tutorialStep) ? 1 : tutorialStep,
   }
 }
 
