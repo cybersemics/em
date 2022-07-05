@@ -3,7 +3,7 @@ import Index from '../../@types/IndexType'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
-import ThoughtsInterface from '../../@types/ThoughtsInterface'
+import ThoughtIndices from '../../@types/ThoughtIndices'
 import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -86,7 +86,7 @@ async function* getDescendantThoughts(
   thoughtId: ThoughtId,
   getState: () => State,
   { maxDepth = MAX_DEPTH }: Options = {},
-): AsyncIterable<ThoughtsInterface> {
+): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
   const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
   const depth = counter() // eslint-disable-line fp/no-let

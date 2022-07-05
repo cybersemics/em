@@ -2,7 +2,7 @@ import Index from '../@types/IndexType'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtsInterface from '../@types/ThoughtsInterface'
+import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MODALS, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
@@ -20,8 +20,8 @@ const getLocal = (key: string) => {
   return localStorage.getItem(key)
 }
 
-/** Generates an initial ThoughtsInterface with the root and em contexts. */
-const initialThoughts = (created: Timestamp = timestamp()): ThoughtsInterface => {
+/** Generates an initial ThoughtIndices with the root and em contexts. */
+const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN

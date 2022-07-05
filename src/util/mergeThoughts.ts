@@ -1,7 +1,7 @@
-import ThoughtsInterface from '../@types/ThoughtsInterface'
+import ThoughtIndices from '../@types/ThoughtIndices'
 
 /** Merges multiple thought interfaces, preserving extraneous keys. */
-const mergeThoughts = (...thoughtsArgs: ThoughtsInterface[]): ThoughtsInterface =>
+const mergeThoughts = (...thoughtsArgs: ThoughtIndices[]): ThoughtIndices =>
   thoughtsArgs.length <= 1
     ? thoughtsArgs[0] || {}
     : mergeThoughts(

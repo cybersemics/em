@@ -9,7 +9,7 @@ import Context from '../@types/Context'
 import ExportOption from '../@types/ExportOption'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtsInterface from '../@types/ThoughtsInterface'
+import ThoughtIndices from '../@types/ThoughtIndices'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import modalComplete from '../action-creators/modalComplete'
@@ -77,7 +77,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const store = useStore()
 
   /** Handle new thoughts pulled. */
-  const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+  const onThoughts = useCallback((thoughts: ThoughtIndices) => {
     // count the total number of new children pulled
     const numDescendantsNew = Object.values(thoughts.thoughtIndex).reduce((accum, thought) => {
       return accum + Object.keys(thought.childrenMap).length
@@ -97,7 +97,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     if (id) {
       dispatch(
         pull([id], {
-          onLocalThoughts: (thoughts: ThoughtsInterface) => onThoughts(thoughts),
+          onLocalThoughts: (thoughts: ThoughtIndices) => onThoughts(thoughts),
           // TODO: onRemoteThoughts ??
           maxDepth: Infinity,
         }),

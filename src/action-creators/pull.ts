@@ -3,7 +3,6 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
-import ThoughtsInterface from '../@types/ThoughtsInterface'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
@@ -23,8 +22,8 @@ export interface PullOptions {
   // remote only
   remote?: boolean
   maxDepth?: number
-  onLocalThoughts?: (thoughts: ThoughtsInterface) => void
-  onRemoteThoughts?: (thoughts: ThoughtsInterface) => void
+  onLocalThoughts?: (thoughts: ThoughtIndices) => void
+  onRemoteThoughts?: (thoughts: ThoughtIndices) => void
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
@@ -80,8 +79,8 @@ const pull =
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []
 
-    const thoughtLocalChunks: ThoughtsInterface[] = []
-    const thoughtRemoteChunks: ThoughtsInterface[] = []
+    const thoughtLocalChunks: ThoughtIndices[] = []
+    const thoughtRemoteChunks: ThoughtIndices[] = []
 
     // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
     const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
@@ -90,7 +89,7 @@ const pull =
 
     // pull local before remote
     // parallelizing may result in conficts since there is no conflict resolution mechanism currently
-    await itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
+    await itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtIndices) => {
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLocalChunks.push(thoughtsChunk)
 
@@ -122,7 +121,7 @@ const pull =
         },
       )
 
-      await itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
+      await itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtIndices) => {
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsChunk)
         Object.values(thoughtsChunk.thoughtIndex).forEach(thought => {
@@ -145,13 +144,13 @@ const pull =
       })
     }
 
-    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtIndices is expected
     const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
       thoughtIndex: {},
       lexemeIndex: {},
     })
 
-    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
+    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtIndices is expected
     const thoughtsRemote = thoughtRemoteChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
       thoughtIndex: {},
       lexemeIndex: {},

@@ -10,7 +10,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtsInterface from '../@types/ThoughtsInterface'
+import ThoughtIndices from '../@types/ThoughtIndices'
 import alert from '../action-creators/alert'
 import closeModal from '../action-creators/closeModal'
 import error from '../action-creators/error'
@@ -88,7 +88,7 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const store = useStore()
 
   /** Handle new thoughts pulled. */
-  const onThoughts = useCallback((thoughts: ThoughtsInterface) => {
+  const onThoughts = useCallback((thoughts: ThoughtIndices) => {
     if (!isMounted.current) return
     // count the total number of new children pulled
     const numDescendantsNew = Object.values(thoughts.thoughtIndex).reduce((accum, thought) => {

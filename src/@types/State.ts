@@ -9,7 +9,7 @@ import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import Shortcut from './Shortcut'
 import SimplePath from './SimplePath'
-import ThoughtsInterface from './ThoughtsInterface'
+import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 
 interface State {
@@ -87,7 +87,7 @@ interface State {
       'offline'        Disconnected and working in offline mode.
     */
   status: string
-  thoughts: ThoughtsInterface
+  thoughts: ThoughtIndices
   toolbarOverlay?: string | null
   transientFocus?: boolean
   tutorialStep?: number
