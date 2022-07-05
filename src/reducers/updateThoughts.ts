@@ -6,19 +6,14 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
-import htmlToJson from '../util/htmlToJson'
-import importJSON from '../util/importJSON'
-import initialState from '../util/initialState'
 import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
-import once from '../util/once'
 import reducerFlow from '../util/reducerFlow'
-import textToHtml from '../util/textToHtml'
 
 export interface UpdateThoughtsOptions {
   contextChain?: SimplePath[]
@@ -34,28 +29,6 @@ export interface UpdateThoughtsOptions {
   thoughtIndexUpdates: Index<Thought | null>
   updates?: Index<string>
 }
-
-/**
- * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
- */
-export const getWhitelistedThoughts = once(() => {
-  const state = initialState()
-
-  const htmlSettings = textToHtml(INITIAL_SETTINGS)
-  const jsonSettings = htmlToJson(htmlSettings)
-  const settingsImported = importJSON(state, [EM_TOKEN] as SimplePath, jsonSettings)
-
-  return {
-    thoughtIndex: {
-      ...state.thoughts.thoughtIndex,
-      ...settingsImported.thoughtIndexUpdates,
-    },
-    lexemeIndex: {
-      ...state.thoughts.lexemeIndex,
-      ...settingsImported.lexemeIndexUpdates,
-    },
-  }
-})
 
 /** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
 const dataIntegrityCheck =
