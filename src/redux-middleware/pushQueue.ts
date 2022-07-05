@@ -14,7 +14,6 @@ import updateThoughts from '../action-creators/updateThoughts'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getThoughtById from '../selectors/getThoughtById'
-import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 
@@ -155,7 +154,7 @@ const flushDeletes =
     // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
     if (pendingDeletes?.length) {
-      const ids = pendingDeletes.map(path => head(parentOf(path)))
+      const ids = _.uniq(pendingDeletes.map(({ siblingIds }) => siblingIds).flat())
 
       /*
         In a 2-part delete:
@@ -172,13 +171,22 @@ const flushDeletes =
       */
       await dispatch(pull(ids, { force: true, maxDepth: Infinity }))
 
-      pendingDeletes.forEach(path => {
-        dispatch(
-          deleteThought({
-            pathParent: parentOf(parentOf(path)),
-            thoughtId: head(parentOf(path)),
-            orphaned: true,
-          }),
+      pendingDeletes.forEach(({ path, siblingIds }) => {
+        // instead of deleting just the pending thought, we have to delete any remaining siblingIds because they can be resurrected by pull
+        dispatch((dispatch, getState) =>
+          siblingIds
+            // only delete siblings that still exist
+            .filter(siblingId => getThoughtById(getState(), siblingId))
+            // dispatch deleteThought for each existing sibling (including the pending thought)
+            .map(siblingId =>
+              dispatch(
+                deleteThought({
+                  pathParent: parentOf(path),
+                  thoughtId: siblingId,
+                  orphaned: true,
+                }),
+              ),
+            ),
         )
       })
     }

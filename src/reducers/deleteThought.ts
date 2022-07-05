@@ -2,13 +2,14 @@ import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
+import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import { getLexeme } from '../selectors/getLexeme'
 // import { treeDelete } from '../util/recentlyEditedTree'
-import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -33,7 +34,7 @@ interface Payload {
 interface ThoughtUpdates {
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
-  pendingDeletes?: Path[]
+  pendingDeletes?: PushBatch['pendingDeletes']
 }
 
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
@@ -82,12 +83,12 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   // }
 
   // the old Lexeme less the context
-  const newOldLexeme =
+  const lexemeNew =
     lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
 
   // update state so that we do not have to wait for firebase
-  if (newOldLexeme) {
-    lexemeIndexNew[key] = newOldLexeme
+  if (lexemeNew) {
+    lexemeIndexNew[key] = lexemeNew
   } else {
     delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
   }
@@ -102,7 +103,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
   /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    // modify the state to use the lexemeIndex with newOldLexeme
+    // modify the state to use the lexemeIndex with lexemeNew
     // this ensures that contexts are calculated correctly for descendants with duplicate values
     const stateNew: State = {
       ...state,
@@ -112,20 +113,21 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
       },
     }
 
-    return getChildrenRanked(stateNew, thought.id).reduce(
+    const children = getChildrenRanked(stateNew, thought.id)
+    return children.reduce(
       (accum, child) => {
         const hashedKey = hashThought(child.value)
-        const lexeme = getLexeme(stateNew, child.value)
-        const childNew =
-          lexeme && lexeme.contexts && lexeme.contexts.length > 1
+        const lexemeChild = getLexeme(stateNew, child.value)
+        const lexemeChildNew =
+          lexemeChild?.contexts && lexemeChild.contexts.length > 1
             ? // update child with deleted context removed
-              removeContext(state, lexeme, child.id)
+              removeContext(state, lexemeChild, child.id)
             : // if this was the only context of the child, delete the child
               null
 
         // update local lexemeIndex so that we do not have to wait for firebase
-        if (childNew) {
-          lexemeIndexNew[hashedKey] = childNew
+        if (lexemeChildNew) {
+          lexemeIndexNew[hashedKey] = lexemeChildNew
         } else {
           delete lexemeIndexNew[hashedKey] // eslint-disable-line fp/no-delete
         }
@@ -135,7 +137,10 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           const thoughtUpdate: ThoughtUpdates = {
             ...accum,
             // do not delete the pending thought yet since the second call to deleteThought needs a starting point
-            pendingDeletes: [...(accumRecursive.pendingDeletes || []), appendToPath(pathParent, thought.id, child.id)],
+            pendingDeletes: [
+              ...(accumRecursive.pendingDeletes || []),
+              { path: appendToPath(pathParent, thought.id, child.id), siblingIds: children.map(child => child.id) },
+            ],
           }
 
           return thoughtUpdate
@@ -154,7 +159,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           lexemeIndex: {
             ...accum.lexemeIndex,
             ...recursiveResults.lexemeIndex,
-            [hashedKey]: childNew,
+            [hashedKey]: lexemeChildNew,
           },
           thoughtIndex: {
             ...accum.thoughtIndex,
@@ -176,13 +181,13 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   const descendantUpdatesResult = recursiveDeletes(deletedThought)
 
   const lexemeIndexUpdates = {
-    [key]: newOldLexeme,
+    [key]: lexemeNew,
     ...descendantUpdatesResult.lexemeIndex,
   }
 
   const thoughtIndexUpdates = {
     // Deleted thought's parent
-    // Note: Thoughts in pending deletes won't have it's parent in the state. So orphaned thoughts doesn't need to care about its parent update.
+    // Note: Thoughts in pending deletes won't have their parent in the state. So orphaned thoughts doesn't need to care about its parent update.
     ...(parent && {
       [parent.id]: {
         ...parent,

@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -15,19 +14,12 @@ import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
-export interface UpdateThoughtsOptions {
+export type UpdateThoughtsOptions = Omit<PushBatch, 'pendingLexemes' | 'pendingPulls'> & {
   contextChain?: SimplePath[]
   isLoading?: boolean
-  lexemeIndexUpdates: Index<Lexeme | null>
-  local?: boolean
-  pendingDeletes?: Path[]
   pendingEdits?: editThoughtPayload[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
   preventExpandThoughts?: boolean
-  recentlyEdited?: Index
-  remote?: boolean
-  thoughtIndexUpdates: Index<Thought | null>
-  updates?: Index<string>
 }
 
 /** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
