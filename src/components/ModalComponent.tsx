@@ -19,6 +19,7 @@ export interface ModalProps {
   className?: string
   hideModalActions?: boolean
   id: string
+  onClose?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   opaque?: boolean
   show?: boolean
@@ -72,7 +73,10 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     }
   }
 
-  close = () => this.animateAndClose!()
+  close = () => {
+    this.animateAndClose!()
+    this.props.onClose?.()
+  }
 
   componentWillUnmount() {
     window.removeEventListener('keydown', this.escapeListener!, true)

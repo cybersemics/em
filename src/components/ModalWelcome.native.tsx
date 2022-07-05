@@ -105,14 +105,15 @@ const ModalWelcome = () => {
   }
 
   /**
-   * End tutorial.
+   * End the tutorial.
    */
-  const endTutorial = () =>
+  const endTutorial = () => {
     dispatch(
       tutorial({
         value: false,
       }),
     )
+  }
 
   return (
     <Modal
@@ -120,7 +121,8 @@ const ModalWelcome = () => {
       title='Welcome to em'
       hideModalActions={!invited}
       center
-      preventCloseOnEscape={true}
+      // the modal is closed by ModalComponent when Escape is hit, so make sure to end the tutorial
+      onClose={endTutorial}
       actions={({ close }) => (
         <View style={styles.alignItemsCentre}>
           <ActionButton title='START TUTORIAL' onClick={() => close()} />

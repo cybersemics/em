@@ -20,6 +20,7 @@ interface ModalActionHelpers {
 export interface ModalProps {
   hideModalActions?: boolean
   id: string
+  onClose?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   show?: boolean
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
@@ -35,7 +36,10 @@ const ModalComponent: React.FC<ModalProps> = props => {
   // const remindMeLater = () => dispatch(closeModal({ id: props.id }))
 
   /** Dispatches a modalComplete action for the modal. */
-  const close = () => dispatch(modalComplete(props.id))
+  const close = () => {
+    dispatch(modalComplete(props.id))
+    props.onClose?.()
+  }
 
   /** Dispatches a tutorial action that ends the tutorial. */
   // const endTutorial = () => dispatch(tutorial({ value: false }))

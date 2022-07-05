@@ -47,12 +47,13 @@ const ModalWelcome = () => {
   const dispatch = useDispatch()
 
   /** End the tutorial. */
-  const endTutorial = () =>
+  const endTutorial = () => {
     dispatch(
       tutorial({
         value: false,
       }),
     )
+  }
 
   return (
     <div ref={onRef}>
@@ -62,7 +63,8 @@ const ModalWelcome = () => {
         className='popup'
         hideModalActions={false}
         center
-        preventCloseOnEscape={true}
+        // the modal is closed by ModalComponent when Escape is hit, so make sure to end the tutorial
+        onClose={endTutorial}
         actions={({ complete }) => (
           <div>
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
