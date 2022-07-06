@@ -119,14 +119,18 @@ const updateThoughts = (
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 
-  //  lexemes from the updates that are not available in the state yet.
-  const pendingLexemes = Object.keys(lexemeIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
-    const lexemeInState = state.thoughts.lexemeIndex[thoughtId]
-    return {
-      ...acc,
-      ...(lexemeInState ? {} : { [thoughtId]: true }),
-    }
-  }, {})
+  // lexemes from the updates that are not available in the state yet
+  // pull pending Lexemes when updates are being saved to local and remote, i.e. user edits, not updates from pull
+  const pendingLexemes =
+    local && remote
+      ? Object.keys(lexemeIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
+          const lexemeInState = state.thoughts.lexemeIndex[thoughtId]
+          return {
+            ...acc,
+            ...(lexemeInState ? {} : { [thoughtId]: true }),
+          }
+        }, {})
+      : {}
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {

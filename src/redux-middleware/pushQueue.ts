@@ -87,6 +87,17 @@ const mergeConflictingLexemeIndexUpdates = (
 
 /**
  * Fetches lexemes from local and remote and merges them into a PushBatch. When there is a synchronous edit in state, the Lexeme may already exist in the local or remote. This function ensures that the local/remote Lexeme gets merged with the edited Lexeme in Redux state. It updates Redux state only (like pull) and returns LexemeIndexUpdates so that they can be merged into the existing batch and sent in one push.
+ *
+ * TODO: There seems to be a concurrency issue which can cause a remote Lexeme to be deleted unintentionally. This will hopefully be fixed once a CRDT is used during syncing. Luckily, Lexemes can be recreated from thoughts, so no data is permanently lost. Run the repair script to restore deleted Lexemes.
+ *
+ * Unable to identify exact steps since it is a timing issue, but here is a possible sequennce:
+ * - User types “Discussion”.
+ * - Throttled edits are flushed at “Discuss”.
+ * - New Lexeme for "Discuss" is created.
+ * - “Discuss” is added to pendingLexemes.
+ * - Before pendingLexemes can be pulled, the throttled edit for "Discussion" is flushed.
+ * - "Discuss" is deleted.
+ * - The "Discuss" Lexeme is deleted from the remote.
  */
 const pullPendingLexemes =
   (batch: PushBatch): Thunk<Promise<Index<Lexeme>>> =>
