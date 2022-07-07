@@ -4,8 +4,18 @@ import pluralize from 'pluralize'
 
 const REGEXP_TAGS = /(<([^>]+)>)/gi
 
-/** Removes whitespace from a string. Allows "racecar" to match "race car". */
-const removeWhitespace = s => s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')
+/**
+ * Removes whitespace from a value (removes non-word character).
+ * Preserves metaprogramming attribute character `=`.
+ */
+export const removeWhitespace = s => {
+  const modifiedString = s[0] === '=' ? s.slice(1) : s
+  const replaced = modifiedString.replace(
+    modifiedString.length > 0 && modifiedString.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
+    '',
+  )
+  return s !== modifiedString ? '=' + replaced : replaced
+}
 
 /** Strips emoji from text. Preserves emoji on its own. */
 const stripEmojiFromText = s => {

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { nanoid } from 'nanoid'
 import Index from '../../src/@types/IndexType'
 import Lexeme from '../../src/@types/Lexeme'
 import Thought from '../../src/@types/Thought'
@@ -7,6 +8,7 @@ import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Timestamp from '../../src/@types/Timestamp'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
 import keyValueBy from '../../src/util/keyValueBy.js'
+import hashThought from '../lib/hashThought.js'
 import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
 import FirebaseThought from './types/FirebaseThought'
@@ -153,6 +155,17 @@ const migrateVersion: Record<number, (db: Database) => Database> = {
       lexemeIndex: keyValueBy(db7.lexemeIndex, convertLexemeIndex),
       schemaVersion: 8,
     }
+
+    // rehash lexemeIndex, then let the repair script put the Lexeme contexts into the correct Lexeme
+    Object.entries(db7.lexemeIndex).forEach(([key, lexemeOld]) => {
+      const lexemeNew = db8.lexemeIndex[key]
+      const keyNew = hashThought(lexemeOld.value)
+      if (keyNew !== key) {
+        delete db8.lexemeIndex[key]
+        db8.lexemeIndex[keyNew] = lexemeNew
+      }
+    })
+
     return db8
   },
 } as Record<number, (db: Database) => Database>

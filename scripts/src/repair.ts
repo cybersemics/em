@@ -4,6 +4,7 @@ import Table from 'cli-table'
 import fs from 'fs'
 import _ from 'lodash'
 import minimist from 'minimist'
+import { nanoid } from 'nanoid'
 import path from 'path'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/IndexType'
@@ -33,6 +34,7 @@ let duplicateSiblingsMerged = 0
 let lexemeContextsAdded = 0
 let lexemeContextsInvalid = 0
 let lexemeContextsMissing = 0
+let lexemeContextsMoved = 0
 let lexemeMissing = 0
 let missingGrandchildrenMissing = 0
 let numOrphans = 0
@@ -418,12 +420,11 @@ Object.values(db.thoughtIndex).forEach(thought => {
   }
 })
 
-console.info('Validating Lexemes')
+console.info('Removing contexts with no thought')
 
 // validate Lexeme contexts
 Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
-  if (!lexeme.contexts) return
-  ;(Object.keys(lexeme.contexts) as ThoughtId[]).forEach(cxid => {
+  Object.keys(lexeme.contexts || {}).forEach(cxid => {
     const thought = db.thoughtIndex[cxid]
 
     // remove contexts with missing thought
@@ -432,12 +433,56 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
       lexemeContextsMissing++
       return
     }
+  })
+})
 
-    // remove contexts with value that no longer matches Lexeme value
+// assign thoughts to new Lexemes if their normalized value has changed with the new hash function
+Object.entries(db.lexemeIndex).forEach(([lexemeOldKey, lexemeOld]) => {
+  const ids = Object.keys(lexemeOld.contexts || {})
+  ids.forEach(cxid => {
+    const thought = db.thoughtIndex[cxid]
+
+    // check if LexemeOld has changed with the new hash function
+    const lemmaNew = normalizeThought(thought.value)
+    if (lemmaNew !== lexemeOld.lemma) {
+      const lexemeNewKey = hashThought(thought.value)
+
+      // if the new Lexeme already exists in the lexemeIndex, use it
+      // otherwise create a blank Lexeme
+      const lexemeNew: LexemeDb = db.lexemeIndex[lexemeNewKey] || {
+        id: nanoid(),
+        lemma: lemmaNew,
+        contexts: {},
+        created: lexemeOld.created,
+        lastUpdated: lexemeOld.lastUpdated,
+        updatedBy: lexemeOld.updatedBy,
+      }
+
+      db.lexemeIndex[lexemeNewKey] = lexemeNew
+
+      if (!lexemeNew.contexts) {
+        lexemeNew.contexts = {}
+      }
+
+      // assign the thought to the new Lexeme
+      ;(lexemeNew.contexts as any)[cxid] = true
+
+      // delete the context from the old Lexeme
+      delete (lexemeOld.contexts as any)[cxid]
+
+      lexemeContextsMoved++
+    }
+  })
+})
+
+Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
+  Object.keys(lexeme.contexts || {}).forEach(cxid => {
+    const thought = db.thoughtIndex[cxid]
+
+    // remove contexts with normalized value that no longer matches Lexeme lemma
     if (normalizeThought(thought.value) !== lexeme.lemma) {
       ;(delete lexeme.contexts as any)?.[cxid]
       lexemeContextsInvalid++
-      return
     }
   })
 })
@@ -452,9 +497,6 @@ Object.values(db.thoughtIndex).forEach(thought => {
     lexeme.contexts = {}
   }
   if (!(thought.id in lexeme.contexts)) {
-    // console.log('thought', thought)
-    // console.log('lexeme', lexeme)
-    // throw new Error('STOP')
     ;(lexeme.contexts as any)[thought.id] = true
     lexemeContextsAdded++
   }
@@ -502,6 +544,11 @@ const table = new Table({
       'duplicateSiblingsMerged',
       color(duplicateSiblingsMerged)(`Duplicate siblings merged`),
       color(duplicateSiblingsMerged)(),
+    ],
+    [
+      'lexemeContextsMoved',
+      color(lexemeContextsMoved)(`Lexeme contexts moved to the correct Lexeme`),
+      color(lexemeContextsMoved)(),
     ],
     ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
