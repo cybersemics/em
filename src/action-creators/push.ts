@@ -1,5 +1,6 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
+import DatabaseUpdates from '../@types/DatabaseUpdates'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
@@ -81,7 +82,7 @@ const pushRemote =
     thoughtIndexUpdates: Index<Thought | null> = {},
     lexemeIndexUpdates: Index<Lexeme | null> = {},
     recentlyEdited: Index | undefined,
-    updates: Index = {},
+    updates: DatabaseUpdates = {},
   ): Thunk<Promise<unknown>> =>
   async (dispatch, getState) => {
     const state = getState()

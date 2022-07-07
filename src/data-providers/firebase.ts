@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { Dispatch } from 'react'
+import DatabaseUpdates from '../@types/DatabaseUpdates'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -124,7 +125,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Updates Firebase data. */
-  async update(updates: Index<any>) {
+  async update(updates: DatabaseUpdates) {
     const userRef = getUserRef(state)
     return new Promise((resolve, reject) => {
       userRef!.update(updates, (err: Error | null, ...args: any[]) => {
