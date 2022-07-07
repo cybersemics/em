@@ -1,10 +1,10 @@
+import importText from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
-import importText from '../../action-creators/importText'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 
 it('redo thought change', () => {
   const store = createTestStore()

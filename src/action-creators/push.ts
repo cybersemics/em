@@ -1,26 +1,35 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import Thunk from '../@types/Thunk'
+import error from '../action-creators/error'
+import { clientId } from '../browser'
+import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import { clientId } from '../browser'
-import { EM_TOKEN, EMPTY_TOKEN } from '../constants'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
 import { getUserRef } from '../util/getUserRef'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 import logWithTime from '../util/logWithTime'
-import timestamp from '../util/timestamp'
 import { getSessionId } from '../util/sessionManager'
-import error from '../action-creators/error'
-import Thunk from '../@types/Thunk'
-import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
-import ThoughtWithChildren from '../@types/ThoughtWithChildren'
-import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import storage from '../util/storage'
-import contextToThoughtId from '../selectors/contextToThoughtId'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import timestamp from '../util/timestamp'
+
+/** Filter out the properties that should not be saved to thoughts in the database. */
+const thoughtToDb = (thought: Thought) =>
+  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
+
+/** Filter out the properties that should not be saved to thought.childrenMap in the database. */
+const childToDb = (thought: Thought) =>
+  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
 
 /** Syncs thought updates to the local database. */
 const pushLocal = (
@@ -54,9 +63,9 @@ const pushLocal = (
       const thought = thoughtIndexUpdates[id]
       const thoughtWithChildren = thought
         ? {
-            ..._.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
-            children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), thought => ({
-              [thought.id]: thought,
+            ...thoughtToDb(thought),
+            children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), child => ({
+              [child.id]: childToDb(child),
             })),
           }
         : null
@@ -125,22 +134,29 @@ const pushRemote =
     const prependedThoughtIndexUpdates = _.transform(
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
-        const thoughtWithChildren: ThoughtWithChildren | null = thoughtUpdate
+        const children = thoughtUpdate ? getAllChildrenAsThoughts(state, thoughtUpdate.id) : []
+        const hasPendingChildren = children.some(child => child.pending)
+        const thoughtWithChildren: Partial<ThoughtWithChildren> | null = thoughtUpdate
           ? {
-              // whitelist properties for persistence
-              ..._.pick(thoughtUpdate, ['id', 'value', 'parentId', 'rank']),
-              children: keyValueBy(getAllChildrenAsThoughts(state, thoughtUpdate.id), thought => ({
-                [thought.id]: thought,
-              })),
+              ...thoughtToDb(thoughtUpdate),
+              ...(!hasPendingChildren
+                ? {
+                    children: keyValueBy(children, child => ({
+                      [child.id]: childToDb(child),
+                    })),
+                  }
+                : null),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),
               ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
             }
           : null
+        // const parentWithChildren
 
-        accum['thoughtIndex/' + id] = thoughtWithChildren || null
+        accum[`thoughtIndex/${id}`] = thoughtWithChildren || null
+        // accum[`thoughtIndex/${parentId}`] = parentWithChildren || null
       },
-      {} as Index<ThoughtWithChildren | null>,
+      {} as Index<Partial<ThoughtWithChildren> | null>,
     )
 
     logWithTime('pushRemote: prepend thoughtIndex key')
@@ -200,6 +216,28 @@ const push =
     // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
     const thoughtIndexUpdatesNotPending = _.pickBy(thoughtIndexUpdates, thought => !thought?.pending)
 
+    // update the inline children of each thought's parents
+    // TODO: This can be done more efficiently if it is only updated if the parent children have changed
+    // we can tell if a thought is deleted, but unfortunately we cannot tell if a thought has been added vs edited since state is already updated
+    // may need to do a deep comparison of parent's old and new children
+    const thoughtIndexUpdatesWithParents = keyValueBy(thoughtIndexUpdatesNotPending, (id, thoughtUpdate) => {
+      // update inline children if a thought is added or deleted
+      const parentThought = thoughtUpdate && getThoughtById(state, thoughtUpdate.parentId)
+      return {
+        ...(parentThought
+          ? {
+              [parentThought.id]: {
+                ...parentThought,
+                children: keyValueBy(getAllChildrenAsThoughts(state, parentThought.id), child => ({
+                  [child.id]: childToDb(child),
+                })),
+              },
+            }
+          : null),
+        [id]: thoughtUpdate,
+      }
+    })
+
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup
     // e.g. {
@@ -223,7 +261,7 @@ const push =
       local &&
         pushLocal(
           getState(),
-          thoughtIndexUpdatesNotPending,
+          thoughtIndexUpdatesWithParents,
           lexemeIndexUpdates,
           recentlyEdited,
           updates,
@@ -234,7 +272,7 @@ const push =
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(thoughtIndexUpdatesNotPending, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(thoughtIndexUpdatesWithParents, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
     ])
   }
 

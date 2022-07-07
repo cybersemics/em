@@ -1,6 +1,6 @@
-import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../constants'
 import isHome from '../util/isHome'
 import timestamp from '../util/timestamp'
 

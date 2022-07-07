@@ -1,13 +1,13 @@
 /* eslint-disable no-unmodified-loop-condition */
-import React, { useState } from 'react'
 import * as murmurHash3 from 'murmurhash3js'
-import Modal from './Modal'
-import { BETA_HASH } from '../constants'
-import { ActionButton } from './ActionButton'
+import React, { useState } from 'react'
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
 import { useDispatch } from 'react-redux'
 import tutorial from '../action-creators/tutorial'
+import { BETA_HASH } from '../constants'
 import storage from '../util/storage'
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import { ActionButton } from './ActionButton'
+import Modal from './Modal'
 import { Text } from './Text.native'
 
 const isLocalNetwork = Boolean(__DEV__)

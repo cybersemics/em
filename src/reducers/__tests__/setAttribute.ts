@@ -1,22 +1,23 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
-
-// reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setAttribute from '../setAttribute'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('set', () => {
   const steps = [
     newThought('a'),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'hello',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -32,16 +33,18 @@ it('set', () => {
 it('different value should override existing value', () => {
   const steps = [
     newThought('a'),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'goodbye',
-    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'hello',
+      }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'goodbye',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -59,16 +62,18 @@ it('add attribute if key has already been created', () => {
     newThought('a'),
     newSubthought('=test'),
     setCursorFirstMatch(['a']),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'goodbye',
-    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'hello',
+      }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'goodbye',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -84,10 +89,11 @@ it('add attribute if key has already been created', () => {
 it('omit value to set only attribute', () => {
   const steps = [
     newThought('a'),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -102,11 +108,12 @@ it('omit value to set only attribute', () => {
 it('set empty attribute', () => {
   const steps = [
     newThought('a'),
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: '',
-    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: '',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

@@ -1,5 +1,5 @@
-import tutorialStep from '../reducers/tutorialStep'
 import Thunk from '../@types/Thunk'
+import tutorialStep from '../reducers/tutorialStep'
 
 /** Action-creator for tutorialStep. */
 const tutorialStepActionCreator =

@@ -1,28 +1,27 @@
-import _ from 'lodash'
 import all from 'it-all'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
-import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import getContext from '../data-providers/data-helpers/getContext'
-import getLexeme from '../data-providers/data-helpers/getLexeme'
-import getThoughtById from '../data-providers/data-helpers/getThoughtById'
-
-import hashThought from '../util/hashThought'
-import keyValueBy from '../util/keyValueBy'
-import mergeThoughts from '../util/mergeThoughts'
-import never from '../util/never'
-import reducerFlow from '../util/reducerFlow'
-import timestamp from '../util/timestamp'
-import { DataProvider } from '../data-providers/DataProvider'
-import importText from '../reducers/importText'
-import initialState from '../util/initialState'
-import { getSessionId } from '../util/sessionManager'
+import _ from 'lodash'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
+import { DataProvider } from '../data-providers/DataProvider'
+import getContext from '../data-providers/data-helpers/getContext'
+import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
+import getLexeme from '../data-providers/data-helpers/getLexeme'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
+import getThoughtById from '../data-providers/data-helpers/getThoughtById'
+import importText from '../reducers/importText'
+import hashThought from '../util/hashThought'
+import initialState from '../util/initialState'
+import keyValueBy from '../util/keyValueBy'
+import mergeThoughts from '../util/mergeThoughts'
+import never from '../util/never'
+import reducerFlow from '../util/reducerFlow'
+import { getSessionId } from '../util/sessionManager'
+import timestamp from '../util/timestamp'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -676,23 +675,29 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      const [thoughtZ, thoughtV] = await Promise.all([
+      const [thoughtZ, thoughtV, thoughtM1, thoughtM2] = await Promise.all([
         getContext(provider, ['x', 'y', 'z']),
         getContext(provider, ['t', 'u', 'v']),
+        getContext(provider, ['x', 'y', 'z', 'm']),
+        getContext(provider, ['t', 'u', 'v', 'm']),
       ])
 
       expect(thoughts.thoughtIndex).toEqual({
         ..._.pick(thoughtIndex, ...(await getThoughtIdsForContexts(provider, [['x'], ['x', 'y'], ['t'], ['t', 'u']]))),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM1!.id]: thoughtM1!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM2!.id]: thoughtM2!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
@@ -738,6 +743,7 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
+      const thoughtM = await getContext(provider, ['x', 'y', 'z', 'm'])
 
       const importedThoughtsWithoutPendingRoot = {
         ...thoughtIndex,
@@ -759,7 +765,9 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM!.id]: thoughtM!.id,
+          },
           pending: true,
           lastUpdated: never(),
           updatedBy: getSessionId(),
@@ -800,10 +808,10 @@ const dataProviderTest = (provider: DataProvider) => {
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
-      const [thoughtZ, thoughtV] = await Promise.all([
-        getContext(provider, ['x', 'y', 'z']),
-        getContext(provider, ['t', 'u', 'v']),
-      ])
+      const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
+      const thoughtM1 = await getContext(provider, ['x', 'y', 'z', 'm'])
+      const thoughtV = await getContext(provider, ['t', 'u', 'v'])
+      const thoughtM2 = await getContext(provider, ['t', 'u', 'v', 'm'])
 
       expect(thoughts.thoughtIndex).toEqual({
         ..._.pick(
@@ -820,14 +828,18 @@ const dataProviderTest = (provider: DataProvider) => {
         ),
         [thoughtZ!.id]: {
           ...thoughtIndex[thoughtZ!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM1!.id]: thoughtM1!.id,
+          },
           lastUpdated: never(),
           pending: true,
           updatedBy: getSessionId(),
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
-          childrenMap: {},
+          childrenMap: {
+            [thoughtM2!.id]: thoughtM2!.id,
+          },
           lastUpdated: never(),
           pending: true,
           updatedBy: getSessionId(),

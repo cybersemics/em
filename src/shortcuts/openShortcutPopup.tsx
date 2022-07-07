@@ -1,8 +1,8 @@
 import React from 'react'
-import { isTouch } from '../browser'
-import showModal from '../action-creators/showModal'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import showModal from '../action-creators/showModal'
+import { isTouch } from '../browser'
 import scrollTo from '../device/scrollTo'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

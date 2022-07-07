@@ -1,21 +1,19 @@
+import { ReactWrapper, mount } from 'enzyme'
 import React, { createRef } from 'react'
-import { act } from 'react-dom/test-utils'
-import { mount, ReactWrapper } from 'enzyme'
 import { wrapInTestContext } from 'react-dnd-test-utils'
-
-import { initialize } from '../initialize'
+import { act } from 'react-dom/test-utils'
 import { Provider } from 'react-redux'
-import { store } from '../store'
-import * as db from '../data-providers/dexie'
-import clear from '../action-creators/clear'
 import Await from '../@types/Await'
-
+import clear from '../action-creators/clear'
 // components
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
-import testTimer from './testTimer'
+import * as db from '../data-providers/dexie'
+import { initialize } from '../initialize'
+import { store } from '../store'
 import storage from '../util/storage'
+import testTimer from './testTimer'
 
 /**
  * Test App.

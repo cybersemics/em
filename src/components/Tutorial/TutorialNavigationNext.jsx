@@ -1,11 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import TutorialNavigationButton from './TutorialNavigationButton'
-import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
-import headValue from '../../util/headValue'
-import getSetting from '../../selectors/getSetting'
 import tutorialNext from '../../action-creators/tutorialNext'
-
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
@@ -22,6 +17,10 @@ import {
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import getSetting from '../../selectors/getSetting'
+import headValue from '../../util/headValue'
+import TutorialNavigationButton from './TutorialNavigationButton'
+import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => {

@@ -1,19 +1,17 @@
 import { ReactWrapper } from 'enzyme'
-import { store } from '../../store'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-
-import Thought from '../Thought'
-import Subthoughts from '../Subthoughts'
-
-import { HOME_TOKEN } from '../../constants'
-import equalArrays from '../../util/equalArrays'
-import pathToContext from '../../util/pathToContext'
-import exportContext from '../../selectors/exportContext'
-import importText from '../../action-creators/importText'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import Context from '../../@types/Context'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import importText from '../../action-creators/importText'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import equalArrays from '../../util/equalArrays'
+import pathToContext from '../../util/pathToContext'
+import Subthoughts from '../Subthoughts'
+import Thought from '../Thought'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
 interface ComponentWithSimplePath {
@@ -182,7 +180,7 @@ it('prevent drop into descendants', () => {
   expect(exported).toEqual(expectedExport)
 })
 
-it("drop a thought into it's own context drop-end", () => {
+it('drop a thought into its own context drop-end', () => {
   store.dispatch(
     importText({
       text: `
@@ -205,6 +203,72 @@ it("drop a thought into it's own context drop-end", () => {
 
   const expectedExport = `- ${HOME_TOKEN}
   - a
+    - c
+    - b`
+
+  expect(exported).toEqual(expectedExport)
+})
+
+it('drop as child (Drop end)', () => {
+  store.dispatch(
+    importText({
+      text: `
+      - a
+      - b
+      - c
+      - d
+   `,
+    }),
+  )
+
+  wrapper.update()
+
+  simulateDragAndDrop({
+    state: store.getState(),
+    source: ['b'],
+    drop: ['a'],
+    type: 'child',
+  })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedExport = `- ${HOME_TOKEN}
+  - a
+    - b
+  - c
+  - d`
+
+  expect(exported).toEqual(expectedExport)
+})
+
+it('drop to beginning of context with =drop/Top', () => {
+  store.dispatch(
+    importText({
+      text: `
+      - a
+        - =drop
+          - top
+        - b
+      - c
+   `,
+    }),
+  )
+
+  wrapper.update()
+
+  simulateDragAndDrop({
+    state: store.getState(),
+    source: ['c'],
+    drop: ['a'],
+    type: 'child',
+  })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  const expectedExport = `- ${HOME_TOKEN}
+  - a
+    - =drop
+      - top
     - c
     - b`
 

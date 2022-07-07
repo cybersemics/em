@@ -1,5 +1,5 @@
-import isPushing from '../reducers/isPushing'
 import Thunk from '../@types/Thunk'
+import isPushing from '../reducers/isPushing'
 
 /** Action-creator for isPushing. */
 const isPushingActionCreator =

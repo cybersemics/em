@@ -1,12 +1,12 @@
+import { noop } from 'lodash'
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
-import { noop } from 'lodash'
-import isTutorial from '../selectors/isTutorial'
-import toggleSidebar from '../action-creators/toggleSidebar'
 import { CSSTransition } from 'react-transition-group'
-import storage from '../util/storage'
 import State from '../@types/State'
+import toggleSidebar from '../action-creators/toggleSidebar'
+import isTutorial from '../selectors/isTutorial'
+import storage from '../util/storage'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') !== 'Off'
 

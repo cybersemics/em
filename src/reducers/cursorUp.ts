@@ -1,14 +1,14 @@
+import State from '../@types/State'
 import { HOME_PATH } from '../constants'
 import setCursor from '../reducers/setCursor'
-import rootedParentOf from '../selectors/rootedParentOf'
-import prevSibling from '../selectors/prevSibling'
 import getThoughtById from '../selectors/getThoughtById'
+import prevSibling from '../selectors/prevSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
-import parentOf from '../util/parentOf'
 import head from '../util/head'
-import unroot from '../util/unroot'
 import isRoot from '../util/isRoot'
-import State from '../@types/State'
+import parentOf from '../util/parentOf'
+import unroot from '../util/unroot'
 
 /** Moves the cursor to the previous sibling. */
 const cursorUp = (state: State) => {

@@ -8,26 +8,35 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { shortcutById } from '../shortcuts'
-import { isTouch } from '../browser'
-import { store } from '../store'
+import Icon from '../@types/Icon'
+import State from '../@types/State'
+import Timer from '../@types/Timer'
 import { overlayHide, overlayReveal, scrollPrioritize } from '../action-creators/toolbar'
+import { isTouch } from '../browser'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import subtree from '../selectors/subtree'
 import theme from '../selectors/theme'
-import Icon from '../@types/Icon'
-import State from '../@types/State'
-import Timer from '../@types/Timer'
-
+import { shortcutById } from '../shortcuts'
+import { store } from '../store'
+import Shortcut from './Shortcut'
 // components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
-import Shortcut from './Shortcut'
+
+interface ToolbarIconProps {
+  clearHoldTimer: () => void
+  disabled?: boolean
+  fg: string
+  fontSize: number
+  isPressing: boolean
+  setPressingToolbarId: (id: string) => void
+  shortcutId: string
+  startOverlayTimer: (id: string) => void
+}
 
 const ARROW_SCROLL_BUFFER = 20
 
@@ -48,27 +57,18 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-interface ToolbarIconProps {
-  shortcutId: string
-  isPressing: boolean
-  startOverlayTimer: (id: string) => void
-  clearHoldTimer: () => void
-  setPressingToolbarId: (id: string) => void
-  fontSize: number
-  fg: string
-}
-
 /**
  * ToolbarIcon component.
  */
 const ToolbarIcon: FC<ToolbarIconProps> = ({
-  shortcutId,
-  isPressing,
-  startOverlayTimer,
   clearHoldTimer,
-  setPressingToolbarId,
-  fontSize,
+  disabled,
   fg,
+  fontSize,
+  isPressing,
+  setPressingToolbarId,
+  shortcutId,
+  startOverlayTimer,
 }) => {
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
@@ -110,7 +110,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       }}
       onClick={e => {
         e.preventDefault()
-        if (!isButtonExecutable) return
+        if (!isButtonExecutable || disabled) return
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
       }}
     >
@@ -158,6 +158,8 @@ const Toolbar = ({
       window.removeEventListener('resize', updateArrows)
     }
   }, [])
+
+  const alert = useSelector((state: State) => state.alert)
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
@@ -283,14 +285,16 @@ const Toolbar = ({
             {shortcutIds.map(id => {
               return (
                 <ToolbarIcon
-                  shortcutId={id}
-                  key={id}
-                  startOverlayTimer={startOverlayTimer}
-                  setPressingToolbarId={setPressingToolbarId}
+                  clearHoldTimer={clearHoldTimer}
+                  // disable click while alert is active or still being dismissed
+                  disabled={!!alert}
                   fg={fg}
                   fontSize={fontSize}
-                  clearHoldTimer={clearHoldTimer}
                   isPressing={pressingToolbarId === id}
+                  key={id}
+                  setPressingToolbarId={setPressingToolbarId}
+                  shortcutId={id}
+                  startOverlayTimer={startOverlayTimer}
                 />
               )
             })}

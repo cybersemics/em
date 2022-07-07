@@ -1,6 +1,6 @@
 import Context from '../@types/Context'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
 

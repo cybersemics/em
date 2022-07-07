@@ -1,4 +1,5 @@
 import React, { Fragment } from 'react'
+import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -7,13 +8,11 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import headValue from '../../util/headValue'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../../selectors/getChildren'
-
+import headValue from '../../util/headValue'
 import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
-import { useStore } from 'react-redux'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }) => {

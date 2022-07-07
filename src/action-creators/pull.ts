@@ -1,20 +1,22 @@
 import _ from 'lodash'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import ThoughtIndices from '../@types/ThoughtIndices'
+import ThoughtsInterface from '../@types/ThoughtsInterface'
+import Thunk from '../@types/Thunk'
+import updateThoughts from '../action-creators/updateThoughts'
+import { HOME_TOKEN } from '../constants'
+import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import { HOME_TOKEN } from '../constants'
-import mergeThoughts from '../util/mergeThoughts'
-import updateThoughts from '../action-creators/updateThoughts'
+import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
-import State from '../@types/State'
-import Thunk from '../@types/Thunk'
-import ThoughtsInterface from '../@types/ThoughtsInterface'
-import ThoughtId from '../@types/ThoughtId'
-import Thought from '../@types/Thought'
-import ThoughtIndices from '../@types/ThoughtIndices'
+import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
+
 export interface PullOptions {
   // force a pull from the remote
   force?: boolean
@@ -40,6 +42,24 @@ const filterPending = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
     return !thought || thought.pending
   })
 
+/** Returns a list of all pending descendants of the given thoughts (inclusive). */
+const filterPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
+  _.flatMap(thoughtIds, thoughtId => {
+    const thought = getThoughtById(state, thoughtId)
+
+    const isThoughtPending = !thought || thought.pending
+
+    return isThoughtPending
+      ? // return pending input thoughts as-is
+        // there are no non-pending descendants to traverse
+        [thoughtId]
+      : // otherwise traverse descendants for pending thoughts
+        getDescendantThoughtIds(state, thoughtId).filter(descendantThoughtId => {
+          const descendantThought = getThoughtById(state, descendantThoughtId)
+          return !descendantThought || descendantThought.pending
+        })
+  })
+
 /**
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
@@ -51,7 +71,11 @@ const pull =
   ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
-    const filteredThoughtIds = force ? thoughtIds : filterPending(getState(), thoughtIds)
+    const filteredThoughtIds = force
+      ? thoughtIds
+      : // if maxDepth is provided, find pending descendants (e.g. for exporting thoughts and their descendants)
+        // otherwise, just pull the specific thoughts given if they are pending
+        (Number(maxDepth) > 0 ? filterPendingDescendants : filterPending)(getState(), thoughtIds)
 
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []
@@ -64,7 +88,9 @@ const pull =
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    const localThoughtsFetched = itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
+    // pull local before remote
+    // parallelizing may result in conficts since there is no conflict resolution mechanism currently
+    await itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtsInterface) => {
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLocalChunks.push(thoughtsChunk)
 
@@ -86,7 +112,6 @@ const pull =
 
     // get remote thoughts
     const status = getState().status
-    let remoteThoughtsFetched = Promise.resolve()
     if (status === 'loading' || status === 'loaded') {
       const thoughtsRemoteIterable = getManyDescendants(
         getFirebaseProvider(getState(), dispatch),
@@ -97,7 +122,7 @@ const pull =
         },
       )
 
-      remoteThoughtsFetched = itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
+      await itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtsInterface) => {
         // eslint-disable-next-line fp/no-mutating-methods
         thoughtRemoteChunks.push(thoughtsChunk)
         Object.values(thoughtsChunk.thoughtIndex).forEach(thought => {
@@ -119,10 +144,6 @@ const pull =
         onRemoteThoughts?.(thoughtsChunk)
       })
     }
-
-    // the state is updated directly with local and remote thoughts as they load, without conflict resolution
-    // TODO: Use a syncable database that handles conflicts
-    await Promise.all([localThoughtsFetched, remoteThoughtsFetched])
 
     // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtsInterface is expected
     const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {

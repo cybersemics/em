@@ -1,8 +1,8 @@
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isAttribute from '../util/isAttribute'
-import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 
 /** Calls getThoughtById with a nullable ThoughtId. Returns null if id is null. */
 const getThoughtByIdGuarded = (state: State, id?: ThoughtId | null) => id && getThoughtById(state, id)

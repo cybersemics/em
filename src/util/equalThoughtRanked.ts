@@ -1,5 +1,5 @@
-import Thought from '../@types/Thought'
 import PropertyRequired from '../@types/PropertyRequired'
+import Thought from '../@types/Thought'
 
 /** Compares two thought objects using { value, rank } as identity and ignoring other properties. */
 const equalThoughtRanked = (

@@ -1,10 +1,9 @@
 import React, { Fragment } from 'react'
-import headValue from '../../util/headValue'
-
-import { commonStyles } from '../../style/commonStyles'
-import { Text } from '../Text.native'
-import Path from '../../@types/Path'
 import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import { commonStyles } from '../../style/commonStyles'
+import headValue from '../../util/headValue'
+import { Text } from '../Text.native'
 
 interface IComponentProps {
   cursor: Path

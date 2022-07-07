@@ -1,9 +1,9 @@
 /* eslint-disable no-unmodified-loop-condition */
 import React from 'react'
-import Modal from './Modal'
-import { ActionButton } from './ActionButton'
 import { useDispatch } from 'react-redux'
 import tutorial from '../action-creators/tutorial'
+import { ActionButton } from './ActionButton'
+import Modal from './Modal'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {

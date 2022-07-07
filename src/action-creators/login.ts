@@ -1,6 +1,6 @@
+import Thunk from '../@types/Thunk'
 import alert from '../action-creators/alert'
 import status from '../action-creators/status'
-import Thunk from '../@types/Thunk'
 import storage from '../util/storage'
 
 /** Redirects the user to the Firebase login page. */

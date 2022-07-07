@@ -1,22 +1,20 @@
 /* eslint-disable fp/no-this */
-import _ from 'lodash'
 import Dexie, { Transaction } from 'dexie'
-import 'dexie-observable'
-import { ICreateChange, IDatabaseChange, IDeleteChange, IUpdateChange } from 'dexie-observable/api'
-import hashThought from '../util/hashThought'
-import timestamp from '../util/timestamp'
-import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
-import { getSessionId } from '../util/sessionManager'
-import win from './win'
+import _ from 'lodash'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import ThoughtWordsIndex from '../@types/ThoughtWordsIndex'
-import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
 import Timestamp from '../@types/Timestamp'
-import ThoughtId from '../@types/ThoughtId'
+import { SCHEMA_LATEST } from '../constants'
+import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
+import hashThought from '../util/hashThought'
+import { getSessionId } from '../util/sessionManager'
+import timestamp from '../util/timestamp'
+import win from './win'
 
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
@@ -42,8 +40,8 @@ class EM extends Dexie {
       super('Database')
     }
 
-    this.version(1).stores({
-      thoughtIndex: 'id, *children, lastUpdated, updatedBy',
+    this.version(SCHEMA_LATEST).stores({
+      thoughtIndex: 'id, children, lastUpdated, updatedBy',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -82,9 +80,6 @@ interface ObservableTransaction extends Transaction {
 
 export const db = new Dexie('EM') as EM
 
-// store a singleton subscription handler for unsubscribing
-let subscriber: ((changes: IDatabaseChange[]) => void) | null
-
 /** Initializes the EM record where helpers are stored. */
 const initHelpers = async () => {
   const staticHelpersExist = await db.helpers.get({ id: 'EM' })
@@ -96,7 +91,7 @@ const initHelpers = async () => {
 /** Initializes the database tables. */
 const initDB = async () => {
   if (!db.isOpen()) {
-    await db.version(1).stores({
+    await db.version(SCHEMA_LATEST).stores({
       thoughtIndex: 'id, children, lastUpdated',
       lexemeIndex: 'id, value, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
@@ -177,13 +172,23 @@ export const getLexemesByIds = (keys: string[]) => db.lexemeIndex.bulkGet(keys)
 export const updateThought = async (
   id: ThoughtId,
   { children, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
-) =>
-  db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
+) => {
+  const hasPendingChildren = Object.values(children).some(child => child.pending)
+  return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.thoughtIndex.put({
+    // do not save children if any are pending
+    // pending thoughts should never be persisted
+    // since this is an update rather than a put, the thought will retain any children it already has in the database
+    // this can occur when editing an un-expanded thought whose children are still pending
+    // More efficient, and hopefully removes the Dexie error: Transaction committed too early. See http://bit.ly/2kdckMn
+    const thought = await db.thoughtIndex.get(id)
+    /** Does a put if the thought does not exist, otherwise update. */
+    const putOrUpdate = (changes: Partial<Thought>) =>
+      thought ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
+    return putOrUpdate({
       id,
       value,
-      children,
+      ...(!hasPendingChildren ? { children } : null),
       lastUpdated,
       parentId,
       rank,
@@ -191,6 +196,7 @@ export const updateThought = async (
       ...(archived ? { archived } : null),
     })
   })
+}
 
 /** Updates multiple thoughts in the thoughtIndex. */
 export const updateThoughtIndex = async (thoughtIndexMap: Index<ThoughtWithChildren | null>) =>
@@ -293,112 +299,5 @@ export const fullTextSearch = async (value: string) => {
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
-
-// Maps to dexie-observable's DatabaseChangeType which cannot be imported.
-// See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
-const DatabaseChangeType = {
-  Created: 1,
-  Updated: 2,
-  Deleted: 3,
-}
-
-/** Parse a Created or Updated change event and return updates as normalized Updates. */
-const createdOrUpdatedChangeUpdates = (change: ICreateChange | IUpdateChange) => {
-  // source is set on the transaction object
-  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
-  const { source, table } = change as IUpdateChange
-  const key = change.key as ThoughtId
-  const obj = change.obj as ThoughtWithChildren | Lexeme
-  return {
-    thoughtIndexUpdates:
-      table === 'thoughtIndex'
-        ? {
-            [key]: {
-              updatedBy: source,
-              value: {
-                ..._.omit(obj as ThoughtWithChildren, ['children']),
-                childrenMap: createChildrenMapFromThoughts(Object.values((obj as ThoughtWithChildren).children)),
-              } as Thought,
-            },
-          }
-        : {},
-    lexemeIndexUpdates:
-      table === 'lexemeIndex'
-        ? {
-            [key]: {
-              updatedBy: source,
-              value: obj as Lexeme,
-            },
-          }
-        : {},
-  }
-}
-
-/** Parse a Delete change event and return updates as normalized Updates.  */
-const deletedChangeUpdates = (change: IDeleteChange) => {
-  // source is set on the transaction object
-  // See: https://dexie.org/docs/Observable/Dexie.Observable.DatabaseChange
-  const { key, oldObj, source, table } = change
-  return {
-    thoughtIndexUpdates:
-      table === 'thoughtIndex' && oldObj?.id
-        ? {
-            [key]: {
-              updatedBy: source,
-              value: null,
-            },
-          }
-        : {},
-    lexemeIndexUpdates: table === 'lexemeIndex' && oldObj?.id ? { [key]: { updatedBy: source, value: null } } : {},
-  }
-}
-
-/** Subscribe to dexie updates. NOOP if aleady subscribed. */
-export const subscribe = (onUpdate: (updates: ThoughtSubscriptionUpdates) => void): void => {
-  if (!Object.prototype.hasOwnProperty.call(db, 'observable')) return
-
-  // NOOP if already subscribed
-  if (subscriber) return
-
-  /** Changes subscriber that converts Dexie updates to ThoughtSubscriptionUpdates and calls onUpdate. */
-  const onChanges = (changes: IDatabaseChange[]) => {
-    changes.forEach(async change => {
-      const updates =
-        change.type === DatabaseChangeType.Created
-          ? createdOrUpdatedChangeUpdates(change as ICreateChange)
-          : change.type === DatabaseChangeType.Updated
-          ? createdOrUpdatedChangeUpdates(change as IUpdateChange)
-          : change.type === DatabaseChangeType.Deleted
-          ? deletedChangeUpdates(change as IDeleteChange)
-          : null
-      const thoughtSubscriptionUpdates = {
-        thoughtIndex: updates?.thoughtIndexUpdates || {},
-        lexemeIndex: updates?.lexemeIndexUpdates || {},
-      }
-      if (
-        Object.keys(thoughtSubscriptionUpdates.thoughtIndex).length === 0 &&
-        Object.keys(thoughtSubscriptionUpdates.lexemeIndex).length === 0
-      )
-        return
-      onUpdate(thoughtSubscriptionUpdates)
-    })
-  }
-
-  db.on('changes', onChanges)
-
-  // store subscriber in singleton to be accessed by unsubscribe
-  subscriber = onChanges
-}
-
-/** Unsubscribes from dexie updates. NOOP if already unsubscribed. */
-export const unsubscribe = (): void => {
-  // NOOP if already unsubscribed
-  if (!subscriber) return
-
-  db.on('changes').unsubscribe(subscriber)
-
-  // clear subscriber so that subscribe can detect if already subscribed
-  subscriber = null
-}
 
 export default initDB

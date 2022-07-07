@@ -1,9 +1,9 @@
-import { HOME_TOKEN } from '../constants'
-import keyValueBy from '../util/keyValueBy'
-import head from '../util/head'
 import Index from '../@types/IndexType'
-import State from '../@types/State'
 import Path from '../@types/Path'
+import State from '../@types/State'
+import { HOME_TOKEN } from '../constants'
+import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
 
 /** Generates a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId. */
 const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path> => {

@@ -1,13 +1,12 @@
 import React from 'react'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import alert from '../action-creators/alert'
+import toggleAttribute from '../action-creators/toggleAttribute'
+import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
-import alert from '../action-creators/alert'
-import toggleAttribute from '../action-creators/toggleAttribute'
-import IconType from '../@types/Icon'
-import Shortcut from '../@types/Shortcut'
-import { HOME_PATH } from '../constants'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, style }: IconType) => (
@@ -40,8 +39,6 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(state, cursor)
-
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
@@ -51,7 +48,7 @@ const pinOpenShortcut: Shortcut = {
 
     dispatch(
       toggleAttribute({
-        context,
+        path: cursor,
         key: '=pin',
         value: 'true',
       }),

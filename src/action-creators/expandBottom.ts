@@ -1,5 +1,5 @@
-import expandBottom from '../reducers/expandBottom'
 import Thunk from '../@types/Thunk'
+import expandBottom from '../reducers/expandBottom'
 
 /** Action-creator for expandBottom. */
 const expandBottomActionCreator =

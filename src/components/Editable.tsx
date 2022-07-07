@@ -1,34 +1,27 @@
-import _ from 'lodash'
-import React, { useEffect, useRef, useState, FocusEventHandler } from 'react'
-import { connect } from 'react-redux'
-import { unescape } from 'html-escaper'
 import classNames from 'classnames'
-import cursorBack from '../action-creators/cursorBack'
-import cursorCleared from '../action-creators/cursorCleared'
-import error from '../action-creators/error'
-import editThought from '../action-creators/editThought'
-import importText from '../action-creators/importText'
-import insertMultipleThoughts from '../action-creators/insertMultipleThoughts'
-import setCursor from '../action-creators/setCursor'
-import setEditingValue from '../action-creators/setEditingValue'
-import setInvalidState from '../action-creators/setInvalidState'
-import tutorialNext from '../action-creators/tutorialNext'
-import newThought from '../action-creators/newThought'
-import editingAction from '../action-creators/editing'
-import { isTouch, isSafari } from '../browser'
-import globals from '../globals'
-import { store } from '../store'
-import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import { shortcutEmitter } from '../shortcuts'
-import asyncFocus from '../device/asyncFocus'
-import * as selection from '../device/selection'
+import { unescape } from 'html-escaper'
+import _ from 'lodash'
+import React, { FocusEventHandler, useEffect, useRef, useState } from 'react'
+import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
 import Context from '../@types/Context'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import TutorialChoice from '../@types/TutorialChoice'
-
+import cursorBack from '../action-creators/cursorBack'
+import cursorCleared from '../action-creators/cursorCleared'
+import editThought from '../action-creators/editThought'
+import editingAction from '../action-creators/editing'
+import error from '../action-creators/error'
+import importText from '../action-creators/importText'
+import insertMultipleThoughts from '../action-creators/insertMultipleThoughts'
+import newThought from '../action-creators/newThought'
+import setCursor from '../action-creators/setCursor'
+import setEditingValue from '../action-creators/setEditingValue'
+import setInvalidState from '../action-creators/setInvalidState'
+import tutorialNext from '../action-creators/tutorialNext'
+import { isSafari, isTouch } from '../browser'
 // constants
 import {
   EDIT_THROTTLE,
@@ -41,34 +34,37 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-
+import asyncFocus from '../device/asyncFocus'
+import * as selection from '../device/selection'
+import globals from '../globals'
+// selectors
+import attributeEquals from '../selectors/attributeEquals'
+import findDescendant from '../selectors/findDescendant'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getContexts from '../selectors/getContexts'
+import getLexeme from '../selectors/getLexeme'
+import getSetting from '../selectors/getSetting'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import { shortcutEmitter } from '../shortcuts'
+import { store } from '../store'
 // util
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
-import parentOf from '../util/parentOf'
 import ellipsize from '../util/ellipsize'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headId from '../util/headId'
 import isDivider from '../util/isDivider'
 import isHTML from '../util/isHTML'
 import isURL from '../util/isURL'
+import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import strip from '../util/strip'
-import headId from '../util/headId'
-
-// selectors
-import attributeEquals from '../selectors/attributeEquals'
-import findDescendant from '../selectors/findDescendant'
-import getContexts from '../selectors/getContexts'
-import getSetting from '../selectors/getSetting'
-import getLexeme from '../selectors/getLexeme'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
-import getThoughtById from '../selectors/getThoughtById'
-
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
+import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
@@ -480,7 +476,7 @@ const Editable = ({
     // safari adds <br> to empty contenteditables after editing, so strip them out
     // make sure empty thoughts are truly empty'
     if (isEmpty && contentRef.current) {
-      contentRef!.current.innerHTML = newValue
+      contentRef.current.innerHTML = newValue
     }
 
     // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
@@ -571,9 +567,14 @@ const Editable = ({
     const { invalidState } = state
     throttledChangeRef.current.flush()
 
-    // on blur remove error, remove invalid-option class, and reset editable html
-    if (invalidState) {
-      invalidStateError(null)
+    // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
+    // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
+    // oldValueRef.current is the latest value since throttledChangeRef was just flushed
+    if (contentRef.current?.innerHTML !== oldValueRef.current) {
+      // remove the invalid state error, remove invalid-option class, and reset editable html
+      if (invalidState) {
+        invalidStateError(null)
+      }
       contentRef.current!.innerHTML = oldValueRef.current
     }
 

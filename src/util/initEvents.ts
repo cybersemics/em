@@ -1,23 +1,23 @@
 import _ from 'lodash'
+import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
-import { inputHandlers, isGestureHint } from '../shortcuts'
-import * as db from '../data-providers/dexie'
-import isRoot from '../util/isRoot'
-import pathToContext from '../util/pathToContext'
-import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import pathExists from '../selectors/pathExists'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
+import * as db from '../data-providers/dexie'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import Path from '../@types/Path'
-import State from '../@types/State'
-import lifecycle from 'page-lifecycle'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import pathExists from '../selectors/pathExists'
+import { inputHandlers, isGestureHint } from '../shortcuts'
+import isRoot from '../util/isRoot'
+import pathToContext from '../util/pathToContext'
+import equalPath from './equalPath'
 import { keepalive } from './sessionManager'
 import { getVisibilityChangeEventName, isTabHidden } from './visibilityApiHelpers'
-import equalPath from './equalPath'
 
 declare global {
   interface Window {
@@ -85,13 +85,7 @@ const initEvents = (store: Store<State, any>) => {
   const onError = (e: { message: string; error: Error }) => {
     // ignore generic script error caused by a firebase disconnect (cross-site error)
     // https://blog.sentry.io/2016/05/17/what-is-script-error
-    if (
-      e.message === 'Script error.' ||
-      // onError now picks up on errors that originate from developers typing into the console
-      e.message.startsWith('Uncaught EvalError') ||
-      e.message.includes('at <anonymous>:')
-    )
-      return
+    if (e.message === 'Script error.') return
 
     console.error(e.error.stack)
     db.log({ message: e.message, stack: e.error.stack })

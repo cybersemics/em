@@ -1,11 +1,11 @@
 import React from 'react'
 import Gravatar from 'react-gravatar'
-import { store } from '../store'
+import Context from '../@types/Context'
 import attribute from '../selectors/attribute'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import Context from '../@types/Context'
+import { store } from '../store'
 
 /** An author byline to a published article. */
 const Byline = ({ context }: { context: Context }) => {

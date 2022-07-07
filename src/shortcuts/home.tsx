@@ -1,8 +1,7 @@
 import React, { Dispatch } from 'react'
-import Thunk from '../@types/Thunk'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-
+import Thunk from '../@types/Thunk'
 // action-creators
 import home from '../action-creators/home'
 

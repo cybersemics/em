@@ -1,10 +1,10 @@
 import React from 'react'
-import showModal from '../action-creators/showModal'
-import { getAllChildren } from '../selectors/getChildren'
-import { HOME_TOKEN } from '../constants'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import showModal from '../action-creators/showModal'
 import { isTouch } from '../browser'
+import { HOME_TOKEN } from '../constants'
+import { getAllChildren } from '../selectors/getChildren'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (

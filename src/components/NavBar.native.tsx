@@ -1,15 +1,15 @@
 import React from 'react'
+import { StyleSheet, View } from 'react-native'
 import { connect } from 'react-redux'
-import { store } from '../store'
-import publishMode from '../util/publishMode'
-import simplifyPath from '../selectors/simplifyPath'
-import HomeLink from './HomeLink'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import simplifyPath from '../selectors/simplifyPath'
+import { store } from '../store'
+import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import QuickAddButton from './QuickAddButton'
 import FeedbackButton from './FeedbackButton'
-import { View, StyleSheet } from 'react-native'
+import HomeLink from './HomeLink'
+import QuickAddButton from './QuickAddButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {

@@ -1,8 +1,8 @@
-import timestamp from './timestamp'
-import getLexeme from '../selectors/getLexeme'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import getLexeme from '../selectors/getLexeme'
+import timestamp from './timestamp'
 
 /** Create a new thought to a lexeme, merging collisions. */
 const addThought = (state: State, value: string, rank: number, lastUpdated = timestamp(), id: ThoughtId): Lexeme => {

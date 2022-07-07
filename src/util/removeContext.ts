@@ -1,9 +1,9 @@
-import timestamp from './timestamp'
+import Lexeme from '../@types/Lexeme'
+import State from '../@types/State'
+import Timestamp from '../@types/Timestamp'
 import notNull from './notNull'
 import { getSessionId } from './sessionManager'
-import State from '../@types/State'
-import Lexeme from '../@types/Lexeme'
-import Timestamp from '../@types/Timestamp'
+import timestamp from './timestamp'
 
 /** Returns a new Lexeme without the given context. */
 const removeContext = (

@@ -1,11 +1,11 @@
 import React, { Fragment } from 'react'
 import { isTouch } from '../../browser'
-import { store } from '../../store'
 import { TUTORIAL_CONTEXT } from '../../constants'
-import headValue from '../../util/headValue'
-import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
+import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
+import { store } from '../../store'
+import headValue from '../../util/headValue'
 
 /** Returns true if the current tutorialStep is a hint. */
 const isHint = () => {

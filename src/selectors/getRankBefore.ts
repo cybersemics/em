@@ -1,10 +1,10 @@
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { getChildrenRanked } from '../selectors/getChildren'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
-import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
+import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank before the given thought in a list but after the previous thought. */
 const getRankBefore = (state: State, simplePath: SimplePath) => {

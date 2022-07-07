@@ -1,5 +1,5 @@
-import ThoughtId from '../@types/ThoughtId'
 import Index from '../@types/IndexType'
+import ThoughtId from '../@types/ThoughtId'
 
 /** A memoize resolver that encodes an array of objects based on their toString values. */
 export const resolveArray = (items: any[]): string => items.join('__RESOLVE__')

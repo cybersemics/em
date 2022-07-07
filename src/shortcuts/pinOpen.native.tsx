@@ -1,13 +1,12 @@
 import React from 'react'
+import Svg, { G, Path } from 'react-native-svg'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import toggleAttribute from '../action-creators/toggleAttribute'
+import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
-import toggleAttribute from '../action-creators/toggleAttribute'
-import IconType from '../@types/Icon'
-import Shortcut from '../@types/Shortcut'
-import { HOME_PATH } from '../constants'
-import Svg, { Path, G } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20, fill }: IconType) => (
@@ -32,10 +31,9 @@ const pinOpenShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const context = pathToContext(state, cursor)
     dispatch(
       toggleAttribute({
-        context,
+        path: cursor,
         key: '=pin',
         value: 'true',
       }),

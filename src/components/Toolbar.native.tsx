@@ -8,17 +8,16 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-
-import React, { useCallback, FC } from 'react'
-import { shortcutById } from '../shortcuts'
-import { FlatList, ListRenderItem, TouchableOpacity, View, StyleSheet, GestureResponderEvent } from 'react-native'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import Icon from '../@types/Icon'
-import State from '../@types/State'
-import HamburgerMenu from './HamburgerMenu'
-import { store } from '../store'
+import React, { FC, useCallback } from 'react'
+import { FlatList, GestureResponderEvent, ListRenderItem, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useSelector } from 'react-redux'
 import { createSelector } from 'reselect'
+import Icon from '../@types/Icon'
+import State from '../@types/State'
+import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { shortcutById } from '../shortcuts'
+import { store } from '../store'
+import HamburgerMenu from './HamburgerMenu'
 
 /**
  * Selects thoughts from the state.

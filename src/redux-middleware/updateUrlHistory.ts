@@ -1,15 +1,15 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import { HOME_PATH, HOME_TOKEN } from '../constants'
-import equalArrays from '../util/equalArrays'
-import equalPath from '../util/equalPath'
-import headId from '../util/headId'
-import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import hashPathURL from '../selectors/hashPathURL'
-import { deleteCursor, updateCursor } from '../data-providers/dexie'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
+import { deleteCursor, updateCursor } from '../data-providers/dexie'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import hashPathURL from '../selectors/hashPathURL'
+import equalArrays from '../util/equalArrays'
+import equalPath from '../util/equalPath'
+import headId from '../util/headId'
 
 interface Options {
   // if true, replaces the last history state; otherwise pushes history state

@@ -1,5 +1,5 @@
-import authenticate from '../reducers/authenticate'
 import Thunk from '../@types/Thunk'
+import authenticate from '../reducers/authenticate'
 
 /** Action-creator for authenticate. */
 const authenticateActionCreator =

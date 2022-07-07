@@ -1,14 +1,13 @@
 import React from 'react'
+import Svg, { G, Path } from 'react-native-svg'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import toggleAttribute from '../action-creators/toggleAttribute'
+import { HOME_PATH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
-import pathToContext from '../util/pathToContext'
-import toggleAttribute from '../action-creators/toggleAttribute'
-import IconType from '../@types/Icon'
-import Shortcut from '../@types/Shortcut'
-import { HOME_PATH } from '../constants'
-import Svg, { Path, G } from 'react-native-svg'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -37,11 +36,10 @@ const proseViewShortcut: Shortcut = {
     if (!cursor) return
 
     const simplePath = simplifyPath(state, cursor)
-    const context = pathToContext(state, simplePath)
 
     dispatch(
       toggleAttribute({
-        context,
+        path: simplePath,
         key: '=view',
         value: 'Prose',
       }),

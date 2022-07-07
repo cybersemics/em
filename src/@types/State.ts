@@ -1,6 +1,7 @@
 import { DROP_TARGET } from '../constants'
 import Alert from './Alert'
 import Context from './Context'
+import { User } from './Firebase'
 import Index from './IndexType'
 import Patch from './Patch'
 import Path from './Path'
@@ -10,7 +11,6 @@ import Shortcut from './Shortcut'
 import SimplePath from './SimplePath'
 import ThoughtsInterface from './ThoughtsInterface'
 import Timestamp from './Timestamp'
-import { User } from './Firebase'
 
 interface State {
   absoluteContextTime?: Timestamp
@@ -36,6 +36,9 @@ interface State {
   draggingThought?: SimplePath
   dragHold?: boolean
   dragInProgress: boolean
+  // forces content editable to update inner html if html has not changed
+  // TODO: Do we really need to re-render all ContentEditables?
+  //   Is there a state value we can subscribe to re-render only thoughts that are needed?
   editableNonce: number
   editing: boolean | null
   editingValue: string | null

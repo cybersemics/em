@@ -1,5 +1,5 @@
-import status from '../reducers/status'
 import Thunk from '../@types/Thunk'
+import status from '../reducers/status'
 
 /** Action-creator for status. */
 const statusActionCreator =

@@ -1,8 +1,8 @@
 import Index from './IndexType'
 import Lexeme from './Lexeme'
-import Thought from './Thought'
 import Path from './Path'
 import RecentlyEditedTree from './RecentlyEditedTree'
+import Thought from './Thought'
 
 /** Defines a single batch of updates added to the push queue. */
 interface PushBatch {

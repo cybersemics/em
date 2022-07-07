@@ -1,5 +1,5 @@
-import clear from '../reducers/clear'
 import Thunk from '../@types/Thunk'
+import clear from '../reducers/clear'
 
 /** Action-creator for clear. */
 const clearActionCreator =

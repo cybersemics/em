@@ -1,10 +1,10 @@
-import { EM_TOKEN } from '../constants'
-import isAttribute from '../util/isAttribute'
-import keyValueBy from '../util/keyValueBy'
-import contextToThoughtId from '../selectors/contextToThoughtId'
-import { getChildrenRanked } from '../selectors/getChildren'
 import Context from '../@types/Context'
 import State from '../@types/State'
+import { EM_TOKEN } from '../constants'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import { getChildrenRanked } from '../selectors/getChildren'
+import isAttribute from '../util/isAttribute'
+import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 
 /** Cache localStorage settings. */

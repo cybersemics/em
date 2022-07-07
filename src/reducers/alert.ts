@@ -10,6 +10,7 @@ interface Options {
 
 /** Set an alert with an optional close link. */
 const alert = (state: State, { alertType, showCloseLink, value, isInline = false }: Options) => {
+  if (value === state.alert?.value) return state
   return {
     ...state,
     alert: value

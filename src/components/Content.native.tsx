@@ -1,23 +1,21 @@
 import React, { FC } from 'react'
+import { ScrollView } from 'react-native'
 import { connect } from 'react-redux'
-
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { ABSOLUTE_PATH, HOME_PATH } from '../constants'
+import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
+import { commonStyles } from '../style/commonStyles'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
-
+import storage from '../util/storage'
+import Editable from './Editable'
 // components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'
-import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
-import Editable from './Editable'
-import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
-import storage from '../util/storage'
-import { ScrollView } from 'react-native'
-import { commonStyles } from '../style/commonStyles'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)

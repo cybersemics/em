@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { store } from '../store'
-import attribute from '../selectors/attribute'
-import findDescendant from '../selectors/findDescendant'
-import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import simplifyPath from '../selectors/simplifyPath'
+import Path from '../@types/Path'
+import State from '../@types/State'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
@@ -13,12 +9,15 @@ import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
 import setNoteFocus from '../action-creators/setNoteFocus'
 import toggleNote from '../action-creators/toggleNote'
+import attribute from '../selectors/attribute'
+import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import simplifyPath from '../selectors/simplifyPath'
+import { store } from '../store'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import strip from '../util/strip'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
-import Path from '../@types/Path'
-import State from '../@types/State'
 
 interface NoteProps {
   path: Path
@@ -90,8 +89,6 @@ const Note = ({ path }: NoteProps) => {
 
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
-    // calculate pathToContext onChange not in render for performance
-    const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
         (setJustPasted(false), strip(e))
@@ -101,7 +98,7 @@ const Note = ({ path }: NoteProps) => {
 
     dispatch(
       setAttribute({
-        context,
+        path,
         key: '=note',
         value,
       }),

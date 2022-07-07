@@ -1,17 +1,17 @@
-import { store } from '../../store'
+import clear from '../../action-creators/clear'
+import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getLexeme from '../../selectors/getLexeme'
-import clear from '../../action-creators/clear'
-import newThought from '../../action-creators/newThought'
-import initDB, * as db from '../dexie'
+import { store } from '../../store'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
-import getContext from '../data-helpers/getContext'
-import dbGetThought from '../data-helpers/getLexeme'
+import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import testTimer from '../../test-helpers/testTimer'
 import storage from '../../util/storage'
-import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
+import getContext from '../data-helpers/getContext'
+import dbGetThought from '../data-helpers/getLexeme'
+import initDB, * as db from '../dexie'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -64,9 +64,9 @@ describe('integration', () => {
     const thoughtAId = contextToThoughtId(store.getState(), ['a'])!
 
     // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+    const root = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
+    expect(root).toMatchObject({
       childrenMap: { [thoughtAId]: thoughtAId },
     })
   })
@@ -90,9 +90,9 @@ describe('integration', () => {
 
     fakeTimer.useRealTimer()
 
-    const parentEntryRoot = await getContext(db, [HOME_TOKEN])
+    const root = await getContext(db, [HOME_TOKEN])
 
-    expect(parentEntryRoot).toMatchObject({
+    expect(root).toMatchObject({
       childrenMap: { [thoughtAId]: thoughtAId },
     })
   })

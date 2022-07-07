@@ -1,27 +1,27 @@
 /* eslint-disable */
 import _ from 'lodash'
-import editThought from '../reducers/editThought'
-import moveThought from '../reducers/moveThought'
-import createThought from '../reducers/createThought'
-import setCursor from '../reducers/setCursor'
-import subCategorizeOne from '../reducers/subCategorizeOne'
-import editableRender from '../reducers/editableRender'
-import getPrevRank from '../selectors/getPrevRank'
-import getRankBefore from '../selectors/getRankBefore'
-import { getAllChildren } from '../selectors/getChildren'
-import simplifyPath from '../selectors/simplifyPath'
-import rootedParentOf from '../selectors/rootedParentOf'
-import getThoughtById from '../selectors/getThoughtById'
-import appendToPath from '../util/appendToPath'
-import parentOf from '../util/parentOf'
-import headValue from '../util/headValue'
-import pathToContext from '../util/pathToContext'
-import reducerFlow from '../util/reducerFlow'
-import headId from '../util/headId'
-import head from '../util/head'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import createThought from '../reducers/createThought'
+import editThought from '../reducers/editThought'
+import editableRender from '../reducers/editableRender'
+import moveThought from '../reducers/moveThought'
+import setCursor from '../reducers/setCursor'
+import subCategorizeOne from '../reducers/subCategorizeOne'
+import { getAllChildren } from '../selectors/getChildren'
+import getPrevRank from '../selectors/getPrevRank'
+import getRankBefore from '../selectors/getRankBefore'
+import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
+import head from '../util/head'
+import headId from '../util/headId'
+import headValue from '../util/headValue'
+import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
+import reducerFlow from '../util/reducerFlow'
 
 /** Clears a thought's text, moving it to its first child. */
 const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath }): State => {
@@ -60,9 +60,8 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     // new thought
     state => {
       // the context of the new empty thought
-      const contextEmpty = pathToContext(state, simplePath as Path)
       return createThought(state, {
-        context: contextEmpty,
+        path: simplePath as Path,
         rank: getPrevRank(state, head(simplePath!)),
         value,
       })

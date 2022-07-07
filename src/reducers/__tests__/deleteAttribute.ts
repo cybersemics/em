@@ -1,10 +1,9 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
-import State from '../../@types/State'
-
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 // reducers
 import deleteAttribute from '../deleteAttribute'
 import newThought from '../newThought'
@@ -16,12 +15,12 @@ it('delete attribute', () => {
     newThought('a'),
 
     // set attribute
-    setAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        key: '=test',
+        value: 'hello',
+      }),
     // delete attribute
     (state: State) =>
       deleteAttribute(state, {

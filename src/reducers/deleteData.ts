@@ -1,12 +1,12 @@
 import _ from 'lodash'
+import State from '../@types/State'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getLexeme from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import normalizeThought from '../util/normalizeThought'
 import timestamp from '../util/timestamp'
-import getLexeme from '../selectors/getLexeme'
-import getThoughtById from '../selectors/getThoughtById'
-import State from '../@types/State'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 
 /** Deletes the value from the lexemeIndex. */
 const deleteData = (state: State, { value }: { value: string }) => {

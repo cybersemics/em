@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useEffect, useRef, useState } from 'react'
-import { View, ViewStyle, StyleSheet } from 'react-native'
-import { WebView } from 'react-native-webview'
-
-import { commonStyles } from '../style/commonStyles'
 import { useDimensions } from '@react-native-community/hooks'
-import { createWebHTML, WEBVIEW_POST_EVENTS } from '../device/createWebHTML.native'
+import React, { useEffect, useRef, useState } from 'react'
+import { StyleSheet, View, ViewStyle } from 'react-native'
+import { WebView } from 'react-native-webview'
+import { WEBVIEW_POST_EVENTS, createWebHTML } from '../device/createWebHTML.native'
+import { commonStyles } from '../style/commonStyles'
 
 interface ContentEditableProps {
   style?: ViewStyle

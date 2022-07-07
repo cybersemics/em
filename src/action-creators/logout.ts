@@ -1,11 +1,11 @@
-import { clearAll } from '../data-providers/dexie'
-import never from '../util/never'
+import Thunk from '../@types/Thunk'
 import clear from '../action-creators/clear'
 import importText from '../action-creators/importText'
 import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
-import Thunk from '../@types/Thunk'
-import storage from '../util/storage'
+import { clearAll } from '../data-providers/dexie'
 import scrollTo from '../device/scrollTo'
+import never from '../util/never'
+import storage from '../util/storage'
 
 /** Logs the user out of Firebase and clears the state. */
 const logout = (): Thunk => (dispatch, getState) => {

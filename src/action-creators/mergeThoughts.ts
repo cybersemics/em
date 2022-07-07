@@ -1,5 +1,5 @@
-import mergeThoughts from '../reducers/mergeThoughts'
 import Thunk from '../@types/Thunk'
+import mergeThoughts from '../reducers/mergeThoughts'
 
 /** Action-creator for mergeThoughts. */
 const mergeThoughtsActionCreator =

@@ -1,9 +1,11 @@
+import { View } from 'moti'
 import React from 'react'
+import { StyleSheet, TouchableOpacity } from 'react-native'
+import Dispatch from '../../@types/Dispatch'
 import tutorial from '../../action-creators/tutorial'
 import tutorialChoice from '../../action-creators/tutorialChoice'
 import tutorialNext from '../../action-creators/tutorialNext'
 import setTutorialStep from '../../action-creators/tutorialStep'
-
 import {
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_START,
@@ -14,15 +16,11 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-
-import TutorialNavigationPrev from './TutorialNavigationPrev'
-import TutorialNavigationNext from './TutorialNavigationNext'
-import TutorialNavigationButton from './TutorialNavigationButton.native'
-import { View } from 'moti'
-import { Text } from '../Text.native'
-import { TouchableOpacity, StyleSheet } from 'react-native'
 import { commonStyles } from '../../style/commonStyles'
-import Dispatch from '../../@types/Dispatch'
+import { Text } from '../Text.native'
+import TutorialNavigationButton from './TutorialNavigationButton.native'
+import TutorialNavigationNext from './TutorialNavigationNext'
+import TutorialNavigationPrev from './TutorialNavigationPrev'
 
 const { directionRow, justifyContentCenter, alignItemsCenter } = commonStyles
 

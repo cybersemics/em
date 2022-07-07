@@ -1,11 +1,11 @@
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import { HOME_TOKEN } from '../constants'
 import { getChildrenRanked } from '../selectors/getChildren'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
-import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
-import rootedParentOf from './rootedParentOf'
 import getThoughtById from './getThoughtById'
+import rootedParentOf from './rootedParentOf'
 
 /** Gets a new rank after the given thought in a list but before the following thought. */
 const getRankAfter = (state: State, simplePath: SimplePath) => {

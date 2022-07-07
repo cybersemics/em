@@ -1,20 +1,20 @@
-// mock browser globals for page-lifecycle
-global.addEventListener = () => {}
-global.self = {} as any
-global.document = { hasFocus: () => false } as any
-
 import fs from 'fs'
 import _ from 'lodash'
-import { HOME_TOKEN } from '../../src/constants'
-import hashContext from '../../src/util/hashContext'
-import hashThought from '../../src/util/hashThought'
-import head from '../../src/util/head'
-import unroot from '../../src/util/unroot'
-import { State } from '../../src/util/initialState'
 import Child from '../../src/@types/Child'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/Index'
 import Parent from '../../src/@types/Parent'
+import { HOME_TOKEN } from '../../src/constants'
+import hashContext from '../../src/util/hashContext'
+import hashThought from '../../src/util/hashThought'
+import head from '../../src/util/head'
+import { State } from '../../src/util/initialState'
+import unroot from '../../src/util/unroot'
+
+// mock browser globals for page-lifecycle
+global.addEventListener = () => {}
+global.self = {} as any
+global.document = { hasFocus: () => false } as any
 
 const userId = 'm9S244ovF7fVrwpAoqoWxcz08s52'
 

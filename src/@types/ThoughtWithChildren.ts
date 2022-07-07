@@ -9,7 +9,10 @@ interface ThoughtWithChildren {
   value: string
   rank: number
   parentId: ThoughtId
-  children: Index<Thought> // key and value are of type ThoughtId
+  // stores children inline for read/write efficiency
+  // key and value are of type ThoughtId
+  // May include pending thoughts. This is necessary because if we omit children or filter them out, then children will be out of sync. This can fixed by saving individual children rather than the entire children object. Until we have a more elegant solution, take care to filter out pending children in getDescendantThoughts to force them to be fetched.
+  children: Index<Thought>
   lastUpdated: Timestamp
   archived?: Timestamp
   updatedBy: string

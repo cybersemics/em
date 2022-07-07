@@ -1,7 +1,7 @@
+import emojiStrip from 'emoji-strip'
 import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
-import emojiStrip from 'emoji-strip'
 import isAttribute from './isAttribute'
 
 /**

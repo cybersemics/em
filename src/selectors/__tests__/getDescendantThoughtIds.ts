@@ -1,13 +1,13 @@
+import SimplePath from '../../@types/SimplePath'
+import { HOME_TOKEN } from '../../constants'
+import importText from '../../reducers/importText'
+import newThought from '../../reducers/newThought'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import { HOME_TOKEN } from '../../constants'
-import getDescendantThoughtIds from '../getDescendantThoughtIds'
-import importText from '../../reducers/importText'
-import newThought from '../../reducers/newThought'
-import SimplePath from '../../@types/SimplePath'
-import contextToPath from '../contextToPath'
 import childIdsToThoughts from '../childIdsToThoughts'
+import contextToPath from '../contextToPath'
+import getDescendantThoughtIds from '../getDescendantThoughtIds'
 
 it('get descendants', () => {
   const text = `

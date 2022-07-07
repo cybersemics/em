@@ -1,6 +1,6 @@
-import isDocumentEditable from '../util/isDocumentEditable'
-import heading from '../action-creators/heading'
 import Shortcut from '../@types/Shortcut'
+import heading from '../action-creators/heading'
+import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {
   1: 'large',

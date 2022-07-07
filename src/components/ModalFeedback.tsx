@@ -1,11 +1,11 @@
+import { AxiosError } from 'axios'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import State from '../@types/State'
+import alert from '../action-creators/alert'
 import submitFeedback from '../util/submitFeedback'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
-import alert from '../action-creators/alert'
-import { AxiosError } from 'axios'
-import State from '../@types/State'
 
 const FEEDBACK_MIN_LENGTH = 10
 

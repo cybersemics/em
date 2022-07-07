@@ -1,8 +1,9 @@
 import React, { Fragment } from 'react'
-import TutorialHint from './TutorialHint'
+import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import State from '../../@types/State'
+import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
-import headValue from '../../util/headValue'
-
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT1_PARENT,
@@ -10,13 +11,11 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import Thought from '../../@types/Thought'
-import Path from '../../@types/Path'
-import State from '../../@types/State'
 import { commonStyles } from '../../style/commonStyles'
-import { Text } from '../Text.native'
 import doStringsMatch from '../../util/doStringsMatch'
-import { useStore } from 'react-redux'
+import headValue from '../../util/headValue'
+import { Text } from '../Text.native'
+import TutorialHint from './TutorialHint'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 

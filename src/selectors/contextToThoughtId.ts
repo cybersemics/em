@@ -1,14 +1,14 @@
 // import * as murmurHash3 from 'murmurhash3js'
 // import globals from '../globals'
-import { EM_TOKEN } from '../constants'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import isRoot from '../util/isRoot'
+import { EM_TOKEN } from '../constants'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import getThoughtById from '../selectors/getThoughtById'
+import isRoot from '../util/isRoot'
 
 /** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
 const contextToThoughtId = (state: State, thoughts: Context, rank?: number): ThoughtId | null => {
@@ -18,10 +18,7 @@ const contextToThoughtId = (state: State, thoughts: Context, rank?: number): Tho
   const rootThought = getThoughtById(state, startsWithEM ? EM_TOKEN : (state.rootContext[0] as ThoughtId))
 
   if (!rootThought) {
-    console.error(
-      'hashContext: Parent entry for root context not found',
-      startsWithEM ? EM_TOKEN : state.rootContext[0],
-    )
+    console.error('hashContext: Thought for root context not found', startsWithEM ? EM_TOKEN : state.rootContext[0])
     return null
   }
 
@@ -56,7 +53,7 @@ const recursiveThoughtFinder = (
   const nextThought = getThoughtById(state, child.id)
 
   if (!nextThought) {
-    console.warn('Parent entry for the child not found!', child)
+    console.warn('Thought for child not found', child)
     return null
   }
 

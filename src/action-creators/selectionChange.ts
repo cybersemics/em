@@ -1,5 +1,5 @@
-import selectionChange from '../reducers/selectionChange'
 import Thunk from '../@types/Thunk'
+import selectionChange from '../reducers/selectionChange'
 
 /** Action-creator for selectionChange. */
 const selectionChangeActionCreator =

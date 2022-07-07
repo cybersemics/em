@@ -4,7 +4,6 @@ import Shortcut from '../@types/Shortcut'
 import cursorBack from '../action-creators/cursorBack'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 

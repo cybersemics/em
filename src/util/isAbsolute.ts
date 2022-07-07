@@ -1,6 +1,6 @@
-import { ABSOLUTE_TOKEN } from '../constants'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtContext from '../@types/ThoughtContext'
+import ThoughtId from '../@types/ThoughtId'
+import { ABSOLUTE_TOKEN } from '../constants'
 
 /** Returns true if the thoughts or path is the absolute context. */
 const isAbsolute = (thoughts: (string | ThoughtId | ThoughtContext)[]): boolean => {

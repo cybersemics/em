@@ -3,18 +3,17 @@
  * NOTE: Exporting the store is not compatible with server-side rendering.
  *
  */
-
 import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
-import multi from './redux-middleware/multi'
-import pushQueue from './redux-middleware/pushQueue'
-import pullQueue from './redux-middleware/pullQueue'
-import updateUrlHistory from './redux-middleware/updateUrlHistory'
-import sessionManager from './redux-middleware/sessionManager'
 import appReducer from './reducers/app'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
 import undoRedoEnhancer from './redux-enhancers/undoRedoEnhancer'
+import multi from './redux-middleware/multi'
+import pullQueue from './redux-middleware/pullQueue'
+import pushQueue from './redux-middleware/pushQueue'
+import sessionManager from './redux-middleware/sessionManager'
+import updateUrlHistory from './redux-middleware/updateUrlHistory'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
 

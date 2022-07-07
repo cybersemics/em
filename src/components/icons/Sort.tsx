@@ -1,10 +1,10 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { HOME_PATH } from '../../constants'
 import IconType from '../../@types/Icon'
 import State from '../../@types/State'
-import simplifyPath from '../../selectors/simplifyPath'
+import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
+import simplifyPath from '../../selectors/simplifyPath'
 import head from '../../util/head'
 
 /** Get sort direction of cursor. */
@@ -50,7 +50,7 @@ const IconDesc = ({ size = 20, style }: IconType) => (
     enableBackground='new 0 0 24 24'
   >
     <g style={{ transform: 'translateY(4px)' }}>
-      <polygon points='5,14.2 5,0 3,0 3,14.2 1.4,12.6 0,14 4,18 8,14 6.6,12.6' />
+      <polygon points='5 3.8 5 18 3 18 3 3.8 1.4 5.4 0 4 4 0 8 4 6.6 5.4' />
       <rect x='10' y='16' width='3' height='2' />
       <rect x='10' y='12' width='5' height='2' />
       <rect x='10' y='8' width='7' height='2' />

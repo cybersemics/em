@@ -1,32 +1,23 @@
 import React, { useState } from 'react'
-import { Dispatch } from 'redux'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import alert from '../action-creators/alert'
-import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import Alert from '../@types/Alert'
 import State from '../@types/State'
+import alertActionCreator from '../action-creators/alert'
+import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ alert }: State) => ({ alert })
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  close: () => {
-    dispatch(alert(null))
-  },
-})
-
-type AlertComponentProps = ReturnType<typeof mapStateToProps> & ReturnType<typeof mapDispatchToProps>
-
 /** An alert component with an optional closeLink that fades in and out. */
-const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
+const AlertWithTransition = ({ alert }: ReturnType<typeof mapStateToProps>) => {
   const [isDismissed, setDismiss] = useState(false)
+  const dispatch = useDispatch()
 
-  /** Handle alert close. */
-  const handleClose = () => {
+  /** Dismiss the alert on close. */
+  const onClose = () => {
     setDismiss(true)
-    close()
+    dispatch(alertActionCreator(null))
   }
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
@@ -35,7 +26,7 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
       {alert ? (
         <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
-          <AlertComponent alert={alert} onClose={handleClose} key={alert.value} />
+          <AlertComponent alert={alert} onClose={onClose} key={alert.value} />
         </CSSTransition>
       ) : null}
     </TransitionGroup>
@@ -44,7 +35,13 @@ const AlertWithTransition = ({ alert, close }: AlertComponentProps) => {
 
 /** The alert component itself. Separate so that a key property can be used to force a reset of useSwipeToDismissProps. */
 const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>; onClose: () => void }) => {
-  const useSwipeToDismissProps = useSwipeToDismiss({ onDismiss: onClose })
+  const dispatch = useDispatch()
+  const useSwipeToDismissProps = useSwipeToDismiss({
+    // dismiss after animation is complete to avoid touch events going to the Toolbar
+    onDismissEnd: () => {
+      dispatch(alertActionCreator(null))
+    },
+  })
 
   return (
     <div className={alert.isInline ? 'alert alert-inline' : 'alert'} {...useSwipeToDismissProps}>
@@ -58,4 +55,4 @@ const AlertComponent = ({ alert, onClose }: { alert: NonNullable<Alert>; onClose
   )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AlertWithTransition)
+export default connect(mapStateToProps)(AlertWithTransition)

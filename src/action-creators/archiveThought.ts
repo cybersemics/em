@@ -1,5 +1,5 @@
-import archiveThought from '../reducers/archiveThought'
 import Thunk from '../@types/Thunk'
+import archiveThought from '../reducers/archiveThought'
 
 /** Action-creator for archiveThought. */
 const archiveThoughtActionCreator =

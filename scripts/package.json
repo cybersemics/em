@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "em-scripts",
+  "description": "CLI tools for migrating and repairing em database backups.",
   "version": "0.0.0",
   "author": {
     "name": "Raine Revere",
@@ -8,13 +8,25 @@
   },
   "bugs": "",
   "engines": {
-    "node": ">=10.17"
+    "node": ">=14"
   },
   "keywords": [],
   "homepage": "",
   "license": "ISC",
   "repository": "",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "repair": "node build/scripts/src/repair.js"
+  },
   "dependencies": {
+    "cli-table": "^0.3.11",
+    "minimist": "^1.2.6",
     "murmurhash3js": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/cli-table": "^0.3.0",
+    "@types/minimist": "^1.2.2"
   }
 }

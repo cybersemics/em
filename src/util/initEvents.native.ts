@@ -1,19 +1,23 @@
 import _ from 'lodash'
 import { Store } from 'redux'
-import { inputHandlers /* isGestureHint */ } from '../shortcuts'
-import * as db from '../data-providers/dexie'
-import isRoot from './isRoot'
-import pathToContext from './pathToContext'
-import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
-import pathExists from '../selectors/pathExists'
-import setCursor from '../action-creators/setCursor'
-import errorActionCreator from '../action-creators/error'
-import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import equalPath from './equalPath'
-import * as selection from '../device/selection'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import errorActionCreator from '../action-creators/error'
+import setCursor from '../action-creators/setCursor'
+import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
+import * as db from '../data-providers/dexie'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import * as selection from '../device/selection'
+import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import pathExists from '../selectors/pathExists'
+import {
+  inputHandlers,
+  /* isGestureHint */
+} from '../shortcuts'
+import equalPath from './equalPath'
+import isRoot from './isRoot'
+import pathToContext from './pathToContext'
+
 // import lifecycle from 'page-lifecycle'
 
 declare global {

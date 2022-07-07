@@ -1,23 +1,24 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+import importText from '../../reducers/importText'
+import newSubthought from '../../reducers/newSubthought'
+import newThought from '../../reducers/newThought'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import parentOfThought from '../../selectors/parentOfThought'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import newThought from '../../reducers/newThought'
-import importText from '../../reducers/importText'
-import newSubthought from '../../reducers/newSubthought'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
+import contextToThought from '../../test-helpers/contextToThought'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
-import contextToThought from '../../test-helpers/contextToThought'
+import compareThought from '../../util/compareThought'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 it('edit a thought', () => {
   const steps = [
@@ -48,18 +49,21 @@ it('edit a thought', () => {
 
   expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
 
-  expect(getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN])).toMatchObject([
-    {
-      id: contextToThoughtId(stateNew, ['b'])!,
-      value: 'b',
-      parentId: HOME_TOKEN,
-      rank: 1,
-    },
+  // sort children for order-insensitive matching
+  // eslint-disable-next-line fp/no-mutating-methods
+  const childrenSorted = getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN]).sort(compareThought)
+  expect(childrenSorted).toMatchObject([
     {
       id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
       rank: 0,
+    },
+    {
+      id: contextToThoughtId(stateNew, ['b'])!,
+      value: 'b',
+      parentId: HOME_TOKEN,
+      rank: 1,
     },
   ])
 

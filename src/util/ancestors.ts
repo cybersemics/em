@@ -1,5 +1,5 @@
-import ThoughtId from '../@types/ThoughtId'
 import Path from '../@types/Path'
+import ThoughtId from '../@types/ThoughtId'
 
 /** Returns a subpath of ancestor children up to the given thought (inclusive). */
 const ancestors = (path: Path, child: ThoughtId): Path | null => {

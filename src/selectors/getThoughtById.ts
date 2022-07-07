@@ -1,5 +1,5 @@
-import ThoughtId from '../@types/ThoughtId'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 
 /**
  * Gets a Thought by its ThoughtId.

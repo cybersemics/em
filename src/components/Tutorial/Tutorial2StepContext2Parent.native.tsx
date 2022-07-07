@@ -1,15 +1,12 @@
 import React, { Fragment } from 'react'
-
-import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
-
-import TutorialHint from './TutorialHint'
-
-import headValue from '../../util/headValue'
+import { useStore } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
-import { Text } from '../Text.native'
+import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import { commonStyles } from '../../style/commonStyles'
-import { useStore } from 'react-redux'
+import headValue from '../../util/headValue'
+import { Text } from '../Text.native'
+import TutorialHint from './TutorialHint'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT1_PARENT
 

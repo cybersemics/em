@@ -1,8 +1,8 @@
+import Context from '../@types/Context'
+import State from '../@types/State'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import Context from '../@types/Context'
-import State from '../@types/State'
 
 interface Options {
   // override the name of the root thought being exported

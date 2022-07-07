@@ -1,8 +1,8 @@
-import { store } from '../../store'
-import newThought from '../../action-creators/newThought'
-import testTimer from '../../test-helpers/testTimer'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { screen } from '@testing-library/dom'
+import newThought from '../../action-creators/newThought'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import testTimer from '../../test-helpers/testTimer'
 
 const fakeTimer = testTimer()
 

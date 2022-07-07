@@ -1,12 +1,12 @@
+import { HOME_TOKEN } from '../../constants'
+import join from '../../reducers/join'
+import exportContext from '../../selectors/exportContext'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
-import join from '../../reducers/join'
-import { HOME_TOKEN } from '../../constants'
 import importText from '../importText'
-import exportContext from '../../selectors/exportContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 
 it('joins two simple thoughts', () => {
   const text = `- a

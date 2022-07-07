@@ -1,7 +1,7 @@
-import { getChildrenRanked } from '../selectors/getChildren'
-import isAttribute from '../util/isAttribute'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { getChildrenRanked } from '../selectors/getChildren'
+import isAttribute from '../util/isAttribute'
 
 /** Gets a rank that comes before all visible thoughts in a context. */
 // TODO: Take context not path

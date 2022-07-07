@@ -1,10 +1,10 @@
 import React from 'react'
+import Svg, { Defs, Marker, Path } from 'react-native-svg'
 import { connect } from 'react-redux'
-import theme from '../selectors/theme'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
-import Svg, { Defs, Marker, Path } from 'react-native-svg'
+import theme from '../selectors/theme'
 
 interface GestureDiagramProps {
   arrowSize?: number

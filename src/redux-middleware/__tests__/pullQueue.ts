@@ -1,23 +1,23 @@
-import { store } from '../../store'
-import { HOME_TOKEN } from '../../constants'
+import Context from '../../@types/Context'
+import Thought from '../../@types/Thought'
 import clear from '../../action-creators/clear'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import setCursor from '../../action-creators/setCursor'
-import * as dexie from '../../data-providers/dexie'
+import { HOME_TOKEN } from '../../constants'
+import { DataProvider } from '../../data-providers/DataProvider'
 import getContext from '../../data-providers/data-helpers/getContext'
 import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
-import { DataProvider } from '../../data-providers/DataProvider'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import Context from '../../@types/Context'
-import Thought from '../../@types/Thought'
-import testTimer from '../../test-helpers/testTimer'
+import * as dexie from '../../data-providers/dexie'
+import { store } from '../../store'
+import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
-import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
-import contextToThought from '../../test-helpers/contextToThought'
+import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
+import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import testTimer from '../../test-helpers/testTimer'
 
 /*
   Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
@@ -46,8 +46,8 @@ it('disable isLoading after initialize', async () => {
 })
 
 it('load thought', async () => {
-  const parentEntryRoot1 = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRoot1).toBeFalsy()
+  const root1 = await getContext(db, [HOME_TOKEN])
+  expect(root1).toBeFalsy()
 
   fakeTimer.useFakeTimer()
 
@@ -59,8 +59,8 @@ it('load thought', async () => {
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
-  const parentEntryRoot = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRoot).toMatchObject({
+  const root = await getContext(db, [HOME_TOKEN])
+  expect(root).toMatchObject({
     childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
@@ -76,8 +76,8 @@ it('load thought', async () => {
   // Note: Always use real timer before awaiting db calls. https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 
   // confirm thought is still in local db after state has been cleared
-  const parentEntryRootAfterReload = await getContext(db, [HOME_TOKEN])
-  expect(parentEntryRootAfterReload).toMatchObject({
+  const rootAfterReload = await getContext(db, [HOME_TOKEN])
+  expect(rootAfterReload).toMatchObject({
     childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
@@ -102,8 +102,8 @@ it('do not repopulate deleted thought', async () => {
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const parentEntryRoot = contextToThought(store.getState(), [HOME_TOKEN])
-  expect(parentEntryRoot).toMatchObject({
+  const root = contextToThought(store.getState(), [HOME_TOKEN])
+  expect(root).toMatchObject({
     childrenMap: {},
   })
 
@@ -307,7 +307,7 @@ it('edit thought with buffered descendants', async () => {
   await refreshTestApp()
   fakeTimer.useFakeTimer()
 
-  // delete thought with buffered descendants
+  // edit thought with buffered descendants
   store.dispatch(
     editThoughtByContextActionCreator({
       at: ['a'],
@@ -332,53 +332,4 @@ it('edit thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['k!', 'b', 'c'], [{ value: 'd' }])
   await matchContextsChildren(db, ['k!', 'b', 'c', 'd'], [{ value: 'e' }])
   await matchContextsChildren(db, ['k!', 'b', 'c', 'd', 'e'], [])
-})
-
-it('export thought with buffered descendants', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch([
-    importText({
-      text: `
-        - x
-        - a
-          - b
-            - c
-              - d
-                - e
-    `,
-    }),
-    setCursorFirstMatchActionCreator(['x']),
-  ])
-
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
-
-  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
-  await matchContextsChildren(db, ['a'], [{ value: 'b' }])
-  await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
-  await matchContextsChildren(db, ['a', 'b', 'c'], [{ value: 'd' }])
-  await matchContextsChildren(db, ['a', 'b', 'c', 'd'], [{ value: 'e' }])
-  await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
-
-  await refreshTestApp()
-  fakeTimer.useFakeTimer()
-
-  // delete thought with buffered descendants
-  store.dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
-
-  await fakeTimer.runAllAsync()
-
-  // wait until thoughts are buffered in and then deleted in a separate deleteThought call
-  // deleteThought -> pushQueue -> thoughtCache -> deleteThought
-
-  fakeTimer.useRealTimer()
-
-  await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
-  expect(await getContext(db, ['a'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd'])).toBeFalsy()
-  expect(await getContext(db, ['a', 'b', 'c', 'd', 'e'])).toBeFalsy()
 })

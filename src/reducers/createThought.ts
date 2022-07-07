@@ -1,37 +1,36 @@
 import _ from 'lodash'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
-import getNextRank from '../selectors/getNextRank'
-import getLexeme from '../selectors/getLexeme'
 import { getAllChildren } from '../selectors/getChildren'
-import contextToThoughtId from '../selectors/contextToThoughtId'
+import getLexeme from '../selectors/getLexeme'
+import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import createChildrenMap from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
-import timestamp from '../util/timestamp'
-import Context from '../@types/Context'
-import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
-import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import { getSessionId } from '../util/sessionManager'
+import timestamp from '../util/timestamp'
 
 interface Payload {
-  context: Context
-  value: string
-  rank: number
-  id?: ThoughtId
   addAsContext?: boolean
+  id?: ThoughtId
+  path: Path
+  rank: number
   splitSource?: ThoughtId
+  value: string
 }
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const createThought = (state: State, { context, value, rank, addAsContext, id, splitSource }: Payload) => {
+const createThought = (state: State, { path, value, rank, addAsContext, id, splitSource }: Payload) => {
   // create thought if non-existent
   const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
@@ -45,18 +44,20 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
 
   id = id || createId()
 
-  const contextActual = addAsContext ? [value] : context
+  // const contextActual = addAsContext ? [value] : context
 
   // store children indexed by the encoded context for O(1) lookup of children
   // @MIGRATION_NOTE: getThought cannot find paths with context views.
-  const parentId = contextToThoughtId(state, contextActual)
-
-  if (!parentId) return state
+  // const parentId = contextToThoughtId(state, contextActual)
+  const parentId = head(path)
+  const parent = getThoughtById(state, parentId)
 
   const thoughtIndexUpdates: Index<Thought> = {}
 
-  if (context.length > 0) {
-    const newValue = addAsContext ? head(context) : value
+  if (path.length > 0) {
+    // @MIGRATION_NOTE: Context View
+    // const newValue = addAsContext ? head(context) : value
+    const newValue = value
 
     const children = getAllChildren(state, parentId)
       .filter(child => child !== id)
@@ -81,7 +82,6 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
       thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [id]: thoughtNew } },
     }
 
-    const parent = getThoughtById(state, parentId)
     thoughtIndexUpdates[parentId] = {
       ...parent,
       id: parentId,
@@ -94,7 +94,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
   // if adding as the context of an existing thought
   let lexemeNew: Lexeme | undefined // eslint-disable-line fp/no-let
   if (addAsContext) {
-    const lexemeOld = getLexeme(state, head(context))
+    const lexemeOld = getLexeme(state, parent.value)
     lexemeNew = {
       ...lexemeOld!,
       contexts: (lexemeOld?.contexts || []).concat(id),
@@ -106,7 +106,7 @@ const createThought = (state: State, { context, value, rank, addAsContext, id, s
     lexeme.contexts = !lexeme.contexts
       ? []
       : // floating thought (no context)
-      context.length > 0
+      path.length > 0
       ? [...lexeme.contexts, id]
       : lexeme.contexts
   }

@@ -1,6 +1,5 @@
 import React, { Fragment } from 'react'
 import Dispatch from '../../@types/Dispatch'
-
 import showModal from '../../action-creators/showModal'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'

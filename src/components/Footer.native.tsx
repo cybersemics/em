@@ -1,15 +1,14 @@
 import React, { useEffect, useRef } from 'react'
+import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-import logout from '../action-creators/logout'
-import showModal from '../action-creators/showModal'
 import alert from '../action-creators/alert'
+import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
-
-import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import { Text } from './Text.native'
+import showModal from '../action-creators/showModal'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import { commonStyles } from '../style/commonStyles'
+import { Text } from './Text.native'
 
 const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContentEnd, flexItemsEndRow } = commonStyles
 

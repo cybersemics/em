@@ -1,5 +1,5 @@
-import getNativeElementRect from './getNativeElementRect'
 import { Browser, Element } from 'webdriverio'
+import getNativeElementRect from './getNativeElementRect'
 
 /**
  * Get element's rect by device screen.

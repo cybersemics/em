@@ -1,8 +1,9 @@
-import hashThought from '../util/hashThought'
 import Index from '../@types/IndexType'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import { ROOT_PARENT_ID } from '../constants'
+import hashThought from '../util/hashThought'
+
 /**
  * Recurively get all the thought ids that are not available in the thoughtIndex.
  */

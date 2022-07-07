@@ -1,3 +1,4 @@
+import importText from '../action-creators/importText'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
@@ -6,7 +7,6 @@ import {
 } from '../constants'
 import { store } from '../store'
 import push from '../util/push'
-import importText from '../action-creators/importText'
 import storage from '../util/storage'
 
 export const schemaVersionFrom = SCHEMA_FROM

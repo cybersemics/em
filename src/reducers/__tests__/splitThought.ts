@@ -1,15 +1,14 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import exportContext from '../../selectors/exportContext'
-import contextToPath from '../../selectors/contextToPath'
-import State from '../../@types/State'
-
-// reducers
-import setCursor from '../setCursor'
 import importText from '../importText'
 import newThought from '../newThought'
+// reducers
+import setCursor from '../setCursor'
 import splitThought from '../splitThought'
 
 /** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */

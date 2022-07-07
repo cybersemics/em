@@ -1,8 +1,8 @@
 import { Browser } from 'webdriverio'
-import waitForEditable from './waitForEditable'
-import gesture from './gesture'
 import { gestures } from '../../../test-helpers/constants'
 import editThought from './editThought'
+import gesture from './gesture'
+import waitForEditable from './waitForEditable'
 
 interface Options {
   insertNewSubthought?: boolean

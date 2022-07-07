@@ -1,5 +1,5 @@
-import searchLimit from '../reducers/searchLimit'
 import Thunk from '../@types/Thunk'
+import searchLimit from '../reducers/searchLimit'
 
 /** Action-creator for searchLimit. */
 const searchLimitActionCreator =

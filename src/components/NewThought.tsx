@@ -2,27 +2,26 @@
  *
  * @param type {button|bullet} Default: bullet.
  */
-import React from 'react'
-import { Dispatch } from 'redux'
-import { connect } from 'react-redux'
 import classNames from 'classnames'
-import { store } from '../store'
-import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import appendToPath from '../util/appendToPath'
-import createId from '../util/createId'
-import head from '../util/head'
-import pathToContext from '../util/pathToContext'
-import unroot from '../util/unroot'
-import getNextRank from '../selectors/getNextRank'
-import { getChildrenRanked } from '../selectors/getChildren'
-import cursorBack from '../action-creators/cursorBack'
-import createThought from '../action-creators/createThought'
-import setCursor from '../action-creators/setCursor'
-import asyncFocus from '../device/asyncFocus'
-import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import React from 'react'
+import { connect } from 'react-redux'
+import { Dispatch } from 'redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import createThought from '../action-creators/createThought'
+import cursorBack from '../action-creators/cursorBack'
+import setCursor from '../action-creators/setCursor'
+import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import asyncFocus from '../device/asyncFocus'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getNextRank from '../selectors/getNextRank'
+import { store } from '../store'
+import appendToPath from '../util/appendToPath'
+import createId from '../util/createId'
+import head from '../util/head'
+import unroot from '../util/unroot'
 
 interface NewThoughtProps {
   show?: boolean
@@ -68,14 +67,13 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
       return
     }
 
-    const context = pathToContext(state, path)
     const newRank = getNextRank(state, head(path))
 
     const newThoughtId = createId()
 
     dispatch(
       createThought({
-        context,
+        path,
         addAsContext: showContexts,
         rank: newRank,
         value,
@@ -105,8 +103,7 @@ const NewThought = ({
   value = '',
   type = 'bullet',
 }: NewThoughtProps & NewThoughtDispatchProps) => {
-  const context = pathToContext(store.getState(), path)
-  const depth = unroot(context).length
+  const depth = unroot(path).length
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
 
   return show ? (

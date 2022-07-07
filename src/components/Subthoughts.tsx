@@ -1,40 +1,50 @@
-import React, { useEffect, useState } from 'react'
-import { connect, useSelector, useStore } from 'react-redux'
 import classNames from 'classnames'
-import { ConnectDropTarget, DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
-import { store } from '../store'
-import { isTouch } from '../browser'
-import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
-import globals from '../globals'
-import { DROP_TARGET, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import alert from '../action-creators/alert'
-import error from '../action-creators/error'
-import dragInProgress from '../action-creators/dragInProgress'
-import Thought from './Thought'
-import GestureDiagram from './GestureDiagram'
-import ThoughtId from '../@types/ThoughtId'
+import React, { useEffect, useState } from 'react'
+import { ConnectDropTarget } from 'react-dnd'
+import { connect, useSelector, useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-
-// util
-import appendToPath from '../util/appendToPath'
+import ThoughtId from '../@types/ThoughtId'
+import dragInProgress from '../action-creators/dragInProgress'
+import { isTouch } from '../browser'
+import { DROP_TARGET, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import globals from '../globals'
+import appendChildPath from '../selectors/appendChildPath'
+import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import findDescendant from '../selectors/findDescendant'
+import getChildPath from '../selectors/getChildPath'
+import {
+  childrenFilterPredicate,
+  getAllChildren,
+  getAllChildrenAsThoughts,
+  getAllChildrenSorted,
+  getChildren,
+  getChildrenRanked,
+} from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
+import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
+import { store } from '../store'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
-import ellipsize from '../util/ellipsize'
-import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAbsolute from '../util/isAbsolute'
+import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
-import isEM from '../util/isEM'
-import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -42,32 +52,12 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
-
-// selectors
-import appendChildPath from '../selectors/appendChildPath'
-import attribute from '../selectors/attribute'
-import attributeEquals from '../selectors/attributeEquals'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import {
-  childrenFilterPredicate,
-  getChildren,
-  getAllChildren,
-  getChildrenRanked,
-  getAllChildrenSorted,
-  getAllChildrenAsThoughts,
-} from '../selectors/getChildren'
-import findDescendant from '../selectors/findDescendant'
-import getChildPath from '../selectors/getChildPath'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getNextRank from '../selectors/getNextRank'
-import getSortPreference from '../selectors/getSortPreference'
-import getStyle from '../selectors/getStyle'
-import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
+import DragAndDropSubthoughts from './DragAndDropSubthoughts'
+import GestureDiagram from './GestureDiagram'
+import Thought from './Thought'
 
 /** The type of the exported Subthoughts. */
-interface SubthoughtsProps {
+export interface SubthoughtsProps {
   allowSingleContext?: boolean
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
@@ -79,6 +69,15 @@ interface SubthoughtsProps {
   showContexts?: boolean
   simplePath: SimplePath
   path?: Path
+}
+
+export type ConnectedSubthoughtsProps = SubthoughtsProps & ReturnType<typeof mapStateToProps>
+
+/** Props needed for drag-and-drop behavior. Must match the return type of dropCollect in DragAndDropSubthoughts. (We cannot import the type directly since it creates a circular import). */
+interface SubthoughtsDropCollect {
+  dropTarget?: ConnectDropTarget
+  isDragInProgress?: boolean
+  isHovering?: boolean
 }
 
 // assert shortcuts at load time
@@ -356,101 +355,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 }
 
 /********************************************************************
- * Drag and Drop
- ********************************************************************/
-
-/** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
-const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
-  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
-  const thoughtsTo = props.simplePath
-  const { cursor, expandHoverTopPath, thoughts } = store.getState()
-
-  const { path } = props
-
-  /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
-  const isExpandedTop = () =>
-    path && expandHoverTopPath && path.length >= expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
-
-  const distance = cursor ? cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= 2 && !isExpandedTop()
-
-  // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
-
-  const toThought = thoughts.thoughtIndex[head(thoughtsTo)]
-  const divider = isDivider(toThought.value)
-
-  // do not drop on descendants or thoughts hidden by autofocus
-  return !isHidden && !isDescendant && !divider
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
-  const state = store.getState()
-
-  // no bubbling
-  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
-
-  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
-  const thoughtsTo = props.simplePath
-
-  const newPath = appendToPath(thoughtsTo, head(thoughtsFrom))
-
-  const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(state, pathToContext(state, thoughtsFrom))
-  const newContext = rootedParentOf(state, pathToContext(state, newPath))
-  const sameContext = equalArrays(oldContext, newContext)
-
-  const toThought = getThoughtById(state, head(thoughtsTo))
-  const fromThought = getThoughtById(state, head(thoughtsFrom))
-
-  // cannot drop on itself
-  if (equalPath(thoughtsFrom, thoughtsTo)) return
-
-  // cannot move root or em context or target is divider
-  if (isDivider(toThought.value) || (isRootOrEM && !sameContext)) {
-    store.dispatch(
-      error({ value: `Cannot move the ${isEM(thoughtsFrom) ? 'em' : 'home'} context to another context.` }),
-    )
-    return
-  }
-
-  store.dispatch(
-    props.showContexts
-      ? {
-          type: 'createThought',
-          value: toThought.value,
-          context: pathToContext(state, thoughtsFrom),
-          rank: getNextRank(state, head(thoughtsFrom)),
-        }
-      : {
-          type: 'moveThought',
-          oldPath: thoughtsFrom,
-          newPath,
-          newRank: getNextRank(state, head(thoughtsTo)),
-        },
-  )
-
-  // alert user of move to another context
-  if (!sameContext) {
-    // wait until after MultiGesture has cleared the error so this alert does no get cleared
-    setTimeout(() => {
-      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(toThought.value) + '"'
-
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
-    }, 100)
-  }
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
-  isDragInProgress: monitor.getItem() as boolean,
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-})
-
-/********************************************************************
  * Component
  ********************************************************************/
 
@@ -583,7 +487,7 @@ export const SubthoughtsComponent = ({
   simplePath,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
-}: SubthoughtsProps & ReturnType<typeof dropCollect> & ReturnType<typeof mapStateToProps>) => {
+}: SubthoughtsProps & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
@@ -926,7 +830,7 @@ export const SubthoughtsComponent = ({
               />
             ) : null
           })}
-          {dropTarget(
+          {(dropTarget || ID)(
             <li
               className={classNames({
                 child: true,
@@ -945,13 +849,15 @@ export const SubthoughtsComponent = ({
           )}
         </ul>
       ) : (
-        <EmptyChildrenDropTarget
-          isThoughtDivider={isDivider(value)}
-          depth={depth}
-          dropTarget={dropTarget}
-          isDragInProgress={isDragInProgress}
-          isHovering={isHovering}
-        />
+        dropTarget && (
+          <EmptyChildrenDropTarget
+            isThoughtDivider={isDivider(value)}
+            depth={depth}
+            dropTarget={dropTarget}
+            isDragInProgress={isDragInProgress}
+            isHovering={isHovering}
+          />
+        )
       )}
       {isPaginated && distance !== 2 && (
         <a className='indent text-note' onClick={() => setPage(page + 1)}>
@@ -962,10 +868,8 @@ export const SubthoughtsComponent = ({
   )
 }
 
-SubthoughtsComponent.displayName = 'SubthoughtComponent'
+SubthoughtsComponent.displayName = 'SubthoughtsComponent'
 
-const Subthoughts = connect(mapStateToProps)(
-  DropTarget('thought', { canDrop, drop }, dropCollect)(SubthoughtsComponent),
-)
+const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))
 
 export default Subthoughts

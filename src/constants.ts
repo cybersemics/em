@@ -1,8 +1,8 @@
 /** Defines app-wide constants. */
-import { emojiRegex } from './emojiRegex'
 import Index from './@types/IndexType'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
+import { emojiRegex } from './emojiRegex'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
@@ -98,8 +98,8 @@ export const TUTORIAL_CONTEXT2_PARENT = {
 }
 
 // constants for different schema versions
-// export const SCHEMA_INITIAL = 0 // DEPRECATED
-// export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
+export const SCHEMA_INITIAL = 0 // DEPRECATED
+export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
 export const SCHEMA_ROOT = 2 // change root → __ROOT__
 export const SCHEMA_HASHKEYS = 3 // hash lexemeIndex keys
 export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming

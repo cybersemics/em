@@ -1,10 +1,10 @@
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import parseSortDirection from '../util/parseSortDirection'
 import findDescendant from '../selectors/findDescendant'
-import getGlobalSortPreference from './getGlobalSortPreference'
+import parseSortDirection from '../util/parseSortDirection'
 import { getAllChildrenAsThoughts } from './getChildren'
+import getGlobalSortPreference from './getGlobalSortPreference'
 
 /**
  * Get sort direction if given sort type is not 'None'.

@@ -1,24 +1,24 @@
 import _ from 'lodash'
-import initialState from '../util/initialState'
-import getThoughtById from '../selectors/getThoughtById'
-import expandThoughts from '../selectors/expandThoughts'
-import { editThoughtPayload } from '../reducers/editThought'
-import htmlToJson from '../util/htmlToJson'
-import importJSON from '../util/importJSON'
-import logWithTime from '../util/logWithTime'
-import mergeUpdates from '../util/mergeUpdates'
-import once from '../util/once'
-import textToHtml from '../util/textToHtml'
-import reducerFlow from '../util/reducerFlow'
-import fifoCache from '../util/fifoCache'
-import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { editThoughtPayload } from '../reducers/editThought'
+import expandThoughts from '../selectors/expandThoughts'
+import { getLexeme } from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
+import htmlToJson from '../util/htmlToJson'
+import importJSON from '../util/importJSON'
+import initialState from '../util/initialState'
+import logWithTime from '../util/logWithTime'
+import mergeUpdates from '../util/mergeUpdates'
+import once from '../util/once'
+import reducerFlow from '../util/reducerFlow'
+import textToHtml from '../util/textToHtml'
 
 export interface UpdateThoughtsOptions {
   lexemeIndexUpdates: Index<Lexeme | null>
@@ -35,9 +35,6 @@ export interface UpdateThoughtsOptions {
   remote?: boolean
   isLoading?: boolean
 }
-
-const contextCache = fifoCache<string>(10000)
-const lexemeCache = fifoCache<string>(10000)
 
 /**
  * Gets a list of whitelisted thoughts which are initialized only once. Whitelist the ROOT, EM, and EM descendants so they are never deleted from the thought cache when not present on the remote data source.
@@ -91,28 +88,6 @@ const updateThoughts = (
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
-
-  // The thoughtIndex and lexemeIndex can consume more and more memory as thoughts are pulled from the db.
-  // The contextCache and thoughtCache are used as a queue that is parallel to the thoughtIndex and lexemeIndex.
-  // When thoughts are updated, they are prepended to the existing cache. (Duplicates are allowed.)
-  // if the new contextCache and thoughtCache exceed the maximum cache size, dequeue the excess and delete them from thoughtIndex and lexemeIndex
-
-  const thoughtIndexInvalidated = contextCache.addMany(Object.keys(thoughtIndexUpdates))
-  const lexemeIndexInvalidated = lexemeCache.addMany(Object.keys(lexemeIndexUpdates))
-
-  thoughtIndexInvalidated.forEach(key => {
-    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().thoughtIndex[key] && !state.expanded[key]) {
-      delete thoughtIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
-
-  lexemeIndexInvalidated.forEach(key => {
-    // @MIGRATION_TODO:  Fix this. state.expanded now uses hash of the path instead of hash of context.
-    if (!getWhitelistedThoughts().lexemeIndex[key] && !state.expanded[key]) {
-      delete lexemeIndexOld[key] // eslint-disable-line fp/no-delete
-    }
-  })
 
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
@@ -186,6 +161,13 @@ const updateThoughts = (
       Object.values(thoughtIndexUpdates).forEach(thought => {
         if (!thought) return
 
+        if ('children' in thought) {
+          console.error('thought', thought)
+          throw new Error(
+            'Thoughts in State should not have children property. Only the database should contain inline children.',
+          )
+        }
+
         // Check if any thought's children's parentId does not match the thought's id.
         const children = Object.values(thought.childrenMap || {})
           .map(id => getThoughtById(state, id))
@@ -193,17 +175,32 @@ const updateThoughts = (
           .filter(Boolean)
         children.forEach(child => {
           if (child.parentId !== thought.id) {
-            // Temporarily disable warning until I can repair the data in Firebase
-            // console.warn(`child.parentId of ${child.parentId} does not match thought.id of ${thought.id}`)
-            // console.info('thought', thought)
-            // console.info('child', child)
-            // console.info('child parent', getThoughtById(state, child.parentId))
-            if (thoughtIndexUpdates[child.id]) {
-              thoughtIndexUpdates[child.id]!.parentId = thought.id
-              // console.info('repaired')
-            }
+            console.error('child', child)
+            console.error('thought', thought)
+            throw new Error('child.parentId !== thought.id')
           }
         })
+
+        if ('children' in thought) {
+          console.error('thought', thought)
+          throw new Error(
+            'Thoughts in State should not have children property. Only the database should contain inline children.',
+          )
+        }
+
+        // assert that a lexeme exists for the thought
+        const lexeme = getLexeme(state, thought.value)
+        if (!lexeme) {
+          console.error('thought', thought)
+          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing a corresponding Lexeme.`)
+        } else if (
+          ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
+          !lexeme.contexts.some(cx => cx === thought.id)
+        ) {
+          console.error('thought', thought)
+          console.error('lexeme', lexeme)
+          throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
+        }
       })
 
       return state

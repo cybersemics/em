@@ -1,5 +1,5 @@
-import deleteAttribute from '../reducers/deleteAttribute'
 import Thunk from '../@types/Thunk'
+import deleteAttribute from '../reducers/deleteAttribute'
 
 /** Action-creator for deleteAttribute. */
 const deleteAttributeActionCreator =

@@ -1,6 +1,6 @@
-const murmurHash3 = require('murmurhash3js')
-const normalizeThought = require('./normalizeThought')
+import murmurHash3 from 'murmurhash3js'
+import normalizeThought from './normalizeThought.js'
 
 const hashThought = value => murmurHash3.x64.hash128(normalizeThought(value))
 
-module.exports = hashThought
+export default hashThought

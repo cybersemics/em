@@ -1,14 +1,14 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { isTouch } from '../../browser'
 import { HOME_TOKEN } from '../../constants'
-import parentOf from '../../util/parentOf'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import { getAllChildren } from '../../selectors/getChildren'
+import { store } from '../../store'
 import ellipsize from '../../util/ellipsize'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
+import parentOf from '../../util/parentOf'
 import pathToContext from '../../util/pathToContext'
-import contextToThoughtId from '../../selectors/contextToThoughtId'
-import { getAllChildren } from '../../selectors/getChildren'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpand = ({ cursor } = {}) => {

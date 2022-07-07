@@ -1,9 +1,8 @@
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
-import contextToPath from '../../selectors/contextToPath'
-
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'

@@ -1,10 +1,10 @@
-import updateThoughts from '../action-creators/updateThoughts'
 import State from '../@types/State'
 import SubscriptionUpdate from '../@types/SubscriptionUpdate'
 import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
 import Thunk from '../@types/Thunk'
-import { SessionType, getSessionId, getSessionType } from '../util/sessionManager'
+import updateThoughts from '../action-creators/updateThoughts'
 import keyValueBy from '../util/keyValueBy'
+import { SessionType, getSessionId, getSessionType } from '../util/sessionManager'
 
 interface Updateable {
   // used to look up the object in the Redux state when only receiving updated fields

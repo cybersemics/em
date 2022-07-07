@@ -1,5 +1,5 @@
-import deleteThought from '../reducers/deleteThought'
 import Thunk from '../@types/Thunk'
+import deleteThought from '../reducers/deleteThought'
 
 /** Action-creator for deleteThought. */
 const deleteThoughtActionCreator =

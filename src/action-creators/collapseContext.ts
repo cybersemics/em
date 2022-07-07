@@ -1,5 +1,5 @@
-import collapseContext from '../reducers/collapseContext'
 import Thunk from '../@types/Thunk'
+import collapseContext from '../reducers/collapseContext'
 
 /** Action-creator for collapseContext. */
 const collapseContextActionCreator =

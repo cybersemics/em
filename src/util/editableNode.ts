@@ -1,5 +1,5 @@
-import head from './head'
 import Path from '../@types/Path'
+import head from './head'
 import isMobile from './isMobile'
 
 /** Returns the editable DOM node of the given thoughts. */

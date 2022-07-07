@@ -2,8 +2,8 @@ import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
-import thoughtToContext from '../selectors/thoughtToContext'
 import getThoughtById from '../selectors/getThoughtById'
+import thoughtToContext from '../selectors/thoughtToContext'
 import unroot from './unroot'
 
 /**

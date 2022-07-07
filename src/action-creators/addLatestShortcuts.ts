@@ -1,5 +1,5 @@
-import addLatestShortcuts from '../reducers/addLatestShortcuts'
 import Thunk from '../@types/Thunk'
+import addLatestShortcuts from '../reducers/addLatestShortcuts'
 
 /** Action-creator for addLatestShortcuts. */
 const addLatestShortcutsActionCreator =

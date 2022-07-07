@@ -1,20 +1,21 @@
+// import { getSessionId } from '../../util/sessionManager'
+import Index from '../../@types/IndexType'
+import State from '../../@types/State'
+import Thought from '../../@types/Thought'
+import ThoughtId from '../../@types/ThoughtId'
+import ThoughtsInterface from '../../@types/ThoughtsInterface'
 import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
-import { DataProvider } from '../DataProvider'
-import hashThought from '../../util/hashThought'
+import { getAncestorBy } from '../../selectors/getAncestorByValue'
+import getThoughtById from '../../selectors/getThoughtById'
+import thoughtToPath from '../../selectors/thoughtToPath'
+import filterObject from '../../util/filterObject'
 import hashPath from '../../util/hashPath'
+import hashThought from '../../util/hashThought'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
-// import { getSessionId } from '../../util/sessionManager'
-import Index from '../../@types/IndexType'
-import Thought from '../../@types/Thought'
-import State from '../../@types/State'
-import ThoughtId from '../../@types/ThoughtId'
-import ThoughtsInterface from '../../@types/ThoughtsInterface'
-import getThoughtById from '../../selectors/getThoughtById'
-import thoughtToPath from '../../selectors/thoughtToPath'
-import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import { getSessionId } from '../../util/sessionManager'
+import { DataProvider } from '../DataProvider'
 
 const MAX_DEPTH = 100
 const MAX_THOUGHTS_QUEUED = 100
@@ -36,6 +37,7 @@ const queue = <T>(initialValue: T[] = []) => {
       list = [...list, ...values]
       total += values.length
     },
+    list: () => [...list],
     /** Gets the full contents of the queue and clears it. */
     next: () => {
       const copy = [...list]
@@ -115,7 +117,12 @@ async function* getDescendantThoughts(
         }
         const result = await provider.getThoughtWithChildren(id)
         if (result) {
-          childrenCache = { ...childrenCache, ...result.children }
+          childrenCache = {
+            ...childrenCache,
+            // filter out pending children so that they are fetched normally
+            // See /src/@types/ThoughtWithChildren.ts
+            ...filterObject(result.children, (id, child) => !child.pending),
+          }
         }
         return result?.thought
       }),
@@ -173,7 +180,6 @@ async function* getDescendantThoughts(
         }
         return {
           ...thought,
-          childrenMap: {},
           lastUpdated: never(),
           updatedBy: getSessionId(),
           pending: true,

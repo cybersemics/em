@@ -1,15 +1,16 @@
-import _ from 'lodash'
 import { Operation, applyPatch, compare } from 'fast-json-patch'
+import { produce } from 'immer'
+import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
-import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { NAVIGATION_ACTIONS, UNDOABLE_ACTIONS } from '../constants'
 import updateThoughts from '../reducers/updateThoughts'
-import reducerFlow from '../util/reducerFlow'
-import { produce } from 'immer'
 import getThoughtById from '../selectors/getThoughtById'
+import reducerFlow from '../util/reducerFlow'
 
 /** These properties are ignored when generating state patches. */
 const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
@@ -18,27 +19,25 @@ const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
  * Manually recreate the pushQueue for thought and thought index updates from patches.
  */
 const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch) => {
-  const lexemeIndexPath = '/thoughts/lexemeIndex/'
-  const thoughtIndexPath = '/thoughts/thoughtIndex/'
-  const lexemeIndexChanges = patch.filter(p => p?.path.indexOf(lexemeIndexPath) === 0)
-  const thoughtIndexChanges = patch.filter(p => p?.path.indexOf(thoughtIndexPath) === 0)
+  const lexemeIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
+  const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
 
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce((acc, { path }) => {
-    const [thoughtId] = path.slice(lexemeIndexPath.length).split('/')
+  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, op) => {
+    const lexemeKey = op.path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
     return {
       ...acc,
-      [thoughtId]: getThoughtById(state, thoughtId as ThoughtId) || null,
+      [lexemeKey]: op.value || null,
     }
   }, {})
   const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
-    const [contextId] = path.slice(thoughtIndexPath.length).split('/')
+    const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
       ...acc,
-      [contextId]: getThoughtById(state, contextId as ThoughtId) || null,
+      [id]: getThoughtById(state, id as ThoughtId) || null,
     }
   }, {})
 
-  /* 
+  /*
     Note: Computed thoughtIndexUpdates and contextIndexUpdates will take store to the identical state
     after patches are applied by undo or redo handler. This is done to create push batches using updateThoughts generates.
 
@@ -132,8 +131,8 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
   return reducerFlow([
-    undoTwice ? undoOneReducer : null,
     undoOneReducer,
+    undoTwice ? undoOneReducer : null,
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
   ])(state)
 }

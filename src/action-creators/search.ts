@@ -1,5 +1,5 @@
-import search from '../reducers/search'
 import Thunk from '../@types/Thunk'
+import search from '../reducers/search'
 
 /** Action-creator for search. */
 const searchActionCreator =

@@ -1,5 +1,5 @@
-import cursorHistory from '../reducers/cursorHistory'
 import Thunk from '../@types/Thunk'
+import cursorHistory from '../reducers/cursorHistory'
 
 /** Action-creator for cursorHistory. */
 const cursorHistoryActionCreator =

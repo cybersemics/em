@@ -1,19 +1,18 @@
+import classNames from 'classnames'
 import React, { FC } from 'react'
-import ancestors from '../util/ancestors'
-import isRoot from '../util/isRoot'
-import strip from '../util/strip'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import classNames from 'classnames'
-
+import parentOfThought from '../selectors/parentOfThought'
+import { store } from '../store'
+import ancestors from '../util/ancestors'
+import isRoot from '../util/isRoot'
+import strip from '../util/strip'
 // components
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { store } from '../store'
-import parentOfThought from '../selectors/parentOfThought'
 
 export interface ContextBreadcrumbProps {
   homeContext?: boolean

@@ -1,17 +1,16 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import exportContext from '../../selectors/exportContext'
-import contextToPath from '../../selectors/contextToPath'
-import State from '../../@types/State'
-
+import importText from '../importText'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import importText from '../importText'
-import subCategorizeOne from '../subCategorizeOne'
 import setCursor from '../setCursor'
+import subCategorizeOne from '../subCategorizeOne'
 
 it('subcategorize a thought', () => {
   const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]

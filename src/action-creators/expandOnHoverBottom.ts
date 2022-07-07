@@ -1,13 +1,13 @@
-import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
-import head from '../util/head'
-import headId from '../util/headId'
-import pathToContext from '../util/pathToContext'
-import { getChildren } from '../selectors/getChildren'
-import clearExpandBottom from './clearExpandBottom'
-import expandBottom from './expandBottom'
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
+import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
+import { getChildren } from '../selectors/getChildren'
+import head from '../util/head'
+import headId from '../util/headId'
+import pathToContext from '../util/pathToContext'
+import clearExpandBottom from './clearExpandBottom'
+import expandBottom from './expandBottom'
 
 // eslint-disable-next-line prefer-const
 let expandBottomTimer: Timer | null = null

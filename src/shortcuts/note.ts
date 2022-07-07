@@ -1,11 +1,11 @@
+import Shortcut from '../@types/Shortcut'
+import toggleNote from '../action-creators/toggleNote'
+import PencilIcon from '../components/icons/PencilIcon'
+import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import simplifyPath from '../selectors/simplifyPath'
-import PencilIcon from '../components/icons/PencilIcon'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
-import toggleNote from '../action-creators/toggleNote'
-import Shortcut from '../@types/Shortcut'
-import { HOME_PATH } from '../constants'
 
 const noteShortcut: Shortcut = {
   id: 'note',

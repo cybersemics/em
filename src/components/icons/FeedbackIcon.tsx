@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
 import { connect } from 'react-redux'
-import theme from '../../selectors/theme'
 import Index from '../../@types/IndexType'
 import State from '../../@types/State'
+import theme from '../../selectors/theme'
 
 interface ChatIconProps {
   dark?: boolean

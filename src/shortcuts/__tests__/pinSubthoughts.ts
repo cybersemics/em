@@ -1,9 +1,9 @@
-import { createTestStore } from '../../test-helpers/createTestStore'
 import importText from '../../action-creators/importText'
-import pinSubthoughtsShortcut from '../pinSubthoughts'
+import attributeByContext from '../../test-helpers/attributeByContext'
+import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
-import attributeByContext from '../../test-helpers/attributeByContext'
+import pinSubthoughtsShortcut from '../pinSubthoughts'
 
 it('toggle on when there is no =pinChildren', () => {
   const store = createTestStore()

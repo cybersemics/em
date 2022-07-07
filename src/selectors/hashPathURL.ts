@@ -1,7 +1,7 @@
-import isRoot from '../util/isRoot'
-import isContextViewActive from '../selectors/isContextViewActive'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import isContextViewActive from '../selectors/isContextViewActive'
+import isRoot from '../util/isRoot'
 
 /** Encodes context array into a URL. */
 const hashPathURL = (state: State, path: Path) => {

@@ -1,27 +1,27 @@
 import _ from 'lodash'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
+import { getAllChildrenAsThoughts, getChildrenRanked } from '../selectors/getChildren'
 // import { treeDelete } from '../util/recentlyEditedTree'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
-import ThoughtId from '../@types/ThoughtId'
-import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
-import State from '../@types/State'
-import { getSessionId } from '../util/sessionManager'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
+import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 import unroot from '../util/unroot'
-import { getChildrenRanked, getAllChildrenAsThoughts } from '../selectors/getChildren'
-import Path from '../@types/Path'
 
 interface Payload {
   pathParent: Path
@@ -51,9 +51,10 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
   const { value } = deletedThought
 
+  // guard against missing lexeme
+  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
   if (!hasLexeme(state, value)) {
-    console.error(`Lexeme not found for thought value: ${value}`)
-    return state
+    console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
 
   const key = hashThought(value)
@@ -65,12 +66,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   if (!orphaned && !parent) {
     console.error('Parent not found!')
     return state
-  }
-
-  // guard against missing lexeme
-  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
-  if (!lexeme) {
-    console.warn('Missing Lexeme:', value)
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
@@ -205,7 +200,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     ...(parent && {
       [parent.id]: {
         ...parent,
-        children: children.map(({ id }) => id),
         childrenMap,
         lastUpdated: timestamp(),
         updatedBy: getSessionId(),

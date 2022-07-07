@@ -1,10 +1,10 @@
-import parentOf from '../util/parentOf'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import { getChildrenRanked } from '../selectors/getChildren'
 import head from '../util/head'
 import headRank from '../util/headRank'
 import headValue from '../util/headValue'
-import { getChildrenRanked } from '../selectors/getChildren'
-import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
+import parentOf from '../util/parentOf'
 
 /** Returns true if thoughtsA comes immediately before thoughtsB.
  * Assumes they have the same context.

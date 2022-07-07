@@ -1,13 +1,13 @@
+import { View } from 'moti'
 import React from 'react'
+// import { useDispatch, useSelector } from 'react-redux'
+import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { connect } from 'react-redux'
-import error from '../action-creators/error'
 import Connected from '../@types/Connected'
 import State from '../@types/State'
-// import { useDispatch, useSelector } from 'react-redux'
-import { TouchableOpacity, Text, StyleSheet } from 'react-native'
-import { View } from 'moti'
-import { commonStyles } from '../style/commonStyles'
+import error from '../action-creators/error'
 import { fadeIn } from '../style/animations'
+import { commonStyles } from '../style/commonStyles'
 
 const { flexEnd, whiteText, centerText, redBackground } = commonStyles
 const { from, animate } = fadeIn

@@ -1,7 +1,7 @@
-import contextToPath from '../selectors/contextToPath'
-import importText from '../action-creators/importText'
 import Thunk from '../@types/Thunk'
+import importText from '../action-creators/importText'
 import { HOME_TOKEN } from '../constants'
+import contextToPath from '../selectors/contextToPath'
 
 function importToContext(text: string): Thunk
 function importToContext(pathUnranked: string[], text: string): Thunk

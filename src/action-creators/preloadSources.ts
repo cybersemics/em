@@ -1,10 +1,10 @@
-import unroot from '../util/unroot'
+import Thunk from '../@types/Thunk'
 import loadResource from '../action-creators/loadResource'
-import thoughtToContext from '../selectors/thoughtToContext'
+import contextToPath from '../selectors/contextToPath'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
-import contextToPath from '../selectors/contextToPath'
-import Thunk from '../@types/Thunk'
+import thoughtToContext from '../selectors/thoughtToContext'
+import unroot from '../util/unroot'
 
 /** Fetch and import all =src attributes with =preload. */
 const preloadSources = (): Thunk => (dispatch, getState) => {

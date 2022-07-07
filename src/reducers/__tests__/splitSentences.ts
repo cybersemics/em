@@ -1,11 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
-
 import newThought from '../../reducers/newThought'
 import splitSentences from '../../reducers/splitSentences'
+import exportContext from '../../selectors/exportContext'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
 
 describe('split by comma', () => {
   it('split single thought on comma when there are no periods', () => {

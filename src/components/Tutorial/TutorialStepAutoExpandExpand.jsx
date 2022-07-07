@@ -1,7 +1,7 @@
 import React from 'react'
-import { store } from '../../store'
 import { isTouch } from '../../browser'
 import { getAllChildren, getChildrenRanked } from '../../selectors/getChildren'
+import { store } from '../../store'
 import ellipsize from '../../util/ellipsize'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

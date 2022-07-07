@@ -1,17 +1,18 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import exportContext from '../../selectors/exportContext'
-
+import moveThoughtUp from '../moveThoughtUp'
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import moveThoughtUp from '../moveThoughtUp'
 import setCursor from '../setCursor'
 import toggleAttribute from '../toggleAttribute'
-import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -69,7 +70,8 @@ it('move to prev uncle in sorted list', () => {
       value: 'b',
       at: ['a'],
     }),
-    toggleAttribute({ context: ['b'], key: '=sort', value: 'Alphabetical' }),
+    (state: State) =>
+      toggleAttribute(state, { path: contextToPath(state, ['b']), key: '=sort', value: 'Alphabetical' }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -90,7 +92,8 @@ it('move to prev uncle in sorted list', () => {
 it('prevent move in sorted list when there is no previous uncle', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({ context: ['a'], key: '=sort', value: 'Alphabetical' }),
+    (state: State) =>
+      toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
     newSubthought('a1'),
     newThought('a2'),
     moveThoughtUp,

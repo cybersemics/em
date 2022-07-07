@@ -1,7 +1,7 @@
 import editingValue from '../../action-creators/editingValue'
 import newThought from '../../action-creators/newThought'
-import exportContext from '../../selectors/exportContext'
 import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 
 it('Split formatted thought', async () => {

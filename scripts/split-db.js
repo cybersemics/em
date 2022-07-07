@@ -1,7 +1,7 @@
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
 
-/** Splits the thoughtIndex and lexemeIndex of a large db into two files. */
+/** Splits the thoughtIndex and lexemeIndex of a large db into two minified files. */
 const file = process.argv[2]
 if (!file) {
   console.error('Usage: node split-db.js db.json')

@@ -1,6 +1,6 @@
-import isRoot from './isRoot'
 import Context from '../@types/Context'
 import Path from '../@types/Path'
+import isRoot from './isRoot'
 
 /** Removes the root token from the beginning of a Context or Path. */
 const unroot = <T extends Context | Path>(thoughts: T): T =>

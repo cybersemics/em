@@ -1,5 +1,5 @@
-import tutorialChoice from '../reducers/tutorialChoice'
 import Thunk from '../@types/Thunk'
+import tutorialChoice from '../reducers/tutorialChoice'
 
 /** Action-creator for tutorialChoice. */
 const tutorialChoiceActionCreator =

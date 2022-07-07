@@ -1,8 +1,8 @@
-import UndoIcon from '../components/UndoIcon'
-import Shortcut from '../@types/Shortcut'
-import { isUndoEnabled } from '../selectors/isUndoEnabled'
-import alertAction from '../action-creators/alert'
 import { startCase } from 'lodash'
+import Shortcut from '../@types/Shortcut'
+import alertAction from '../action-creators/alert'
+import UndoIcon from '../components/UndoIcon'
+import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
 const undoShortcut: Shortcut = {

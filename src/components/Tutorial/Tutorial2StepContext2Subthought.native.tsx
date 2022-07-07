@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
-
+import Path from '../../@types/Path'
+import ThoughtId from '../../@types/ThoughtId'
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT2_PARENT,
@@ -8,19 +8,17 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-
-import headValue from '../../util/headValue'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import findDescendant from '../../selectors/findDescendant'
-import getContexts from '../../selectors/getContexts'
 import { getChildrenRanked } from '../../selectors/getChildren'
-import TutorialHint from './TutorialHint'
-import StaticSuperscript from '../StaticSuperscript'
-import { Text } from '../Text.native'
+import getContexts from '../../selectors/getContexts'
+import { store } from '../../store'
 import { commonStyles } from '../../style/commonStyles'
 import doStringsMatch from '../../util/doStringsMatch'
-import ThoughtId from '../../@types/ThoughtId'
-import Path from '../../@types/Path'
+import headValue from '../../util/headValue'
+import StaticSuperscript from '../StaticSuperscript'
+import { Text } from '../Text.native'
+import TutorialHint from './TutorialHint'
 
 type TutorialChoice = typeof TUTORIAL_CONTEXT2_PARENT
 

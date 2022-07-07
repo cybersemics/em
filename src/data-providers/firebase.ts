@@ -1,19 +1,19 @@
 import _ from 'lodash'
 import { Dispatch } from 'react'
-import hashThought from '../util/hashThought'
-import keyValueBy from '../util/keyValueBy'
-import { getUserRef } from '../util/getUserRef'
-import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
-import error from '../action-creators/error'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import error from '../action-creators/error'
+import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
+import { getUserRef } from '../util/getUserRef'
+import hashThought from '../util/hashThought'
+import keyValueBy from '../util/keyValueBy'
 
 export enum FirebaseChangeTypes {
   Create = 'child_added',
@@ -149,11 +149,16 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
 
   /** Updates a context in the thoughtIndex. */
   async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
+    const hasPendingChildren = Object.values(thoughtWithChildren.children).some(child => child.pending)
     return this.update({
       ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
         'id',
         'value',
-        'children',
+        // do not save children if any are pending
+        // pending thoughts should never be persisted
+        // since this is an update rather than a set, the thought will retain any children it already has in the database
+        // this can occur when editing an un-expanded thought whose children are still pending
+        ...(hasPendingChildren ? [] : ['children']),
         'lastUpdated',
         'parentId',
         'rank',

@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
+import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
-import { isTouch } from '../browser'
-import { store } from '../store'
-import findDescendant from '../selectors/findDescendant'
-import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
+import Path from '../@types/Path'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
@@ -12,16 +11,16 @@ import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
 import setNoteFocus from '../action-creators/setNoteFocus'
 import toggleNote from '../action-creators/toggleNote'
-import head from '../util/head'
-import pathToContext from '../util/pathToContext'
-import strip from '../util/strip'
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
+import { isTouch } from '../browser'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
-import Path from '../@types/Path'
-import State from '../@types/State'
+import findDescendant from '../selectors/findDescendant'
 import { firstVisibleChild } from '../selectors/getChildren'
-import ThoughtId from '../@types/ThoughtId'
+import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
+import { store } from '../store'
+import head from '../util/head'
+import strip from '../util/strip'
 
 interface NoteProps {
   path: Path
@@ -104,8 +103,6 @@ const Note = ({ path }: NoteProps) => {
   /** Updates the =note attribute when the note text is edited. */
   const onChange = (e: ContentEditableEvent) => {
     // calculate pathToContext onChange not in render for performance
-    const state = store.getState()
-    const context = pathToContext(state, path)
     const value = justPasted
       ? // if just pasted, strip all HTML from value
         (setJustPasted(false), strip(e.target.value))
@@ -115,7 +112,7 @@ const Note = ({ path }: NoteProps) => {
 
     dispatch(
       setAttribute({
-        context,
+        path,
         key: '=note',
         value,
       }),

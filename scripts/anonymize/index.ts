@@ -1,11 +1,11 @@
-// mock browser globals for page-lifecycle
-global.addEventListener = () => {}
-global.self = {} as any
-global.document = { hasFocus: () => false } as any
-
 import fs from 'fs'
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
+import Child from '../../src/@types/Child'
+import Context from '../../src/@types/Context'
+import Index from '../../src/@types/Index'
+import Lexeme from '../../src/@types/Lexeme'
+import Parent from '../../src/@types/Parent'
 import { EM_TOKEN, HOME_TOKEN } from '../../src/constants'
 import hashContext from '../../src/util/hashContext'
 import hashThought from '../../src/util/hashThought'
@@ -13,11 +13,11 @@ import isEM from '../../src/util/isEM'
 import isRoot from '../../src/util/isRoot'
 import normalizeThought from '../../src/util/normalizeThought'
 import timestamp from '../../src/util/timestamp'
-import Child from '../../src/@types/Child'
-import Context from '../../src/@types/Context'
-import Index from '../../src/@types/Index'
-import Lexeme from '../../src/@types/Lexeme'
-import Parent from '../../src/@types/Parent'
+
+// mock browser globals for page-lifecycle
+global.addEventListener = () => {}
+global.self = {} as any
+global.document = { hasFocus: () => false } as any
 
 // arrays are stored as objects with a numeric index in Firebase
 // so we have to override array types

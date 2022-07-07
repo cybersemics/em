@@ -1,18 +1,11 @@
 import React from 'react'
 import { connect, useStore } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
-import { isTouch } from '../../browser'
-import WithCSSTransition from './WithCSSTransition'
-import { shortcutById } from '../../shortcuts'
-import headValue from '../../util/headValue'
-import once from '../../util/once'
-import getSetting from '../../selectors/getSetting'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
-import tutorial from '../../action-creators/tutorial'
 import Connected from '../../@types/Connected'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
-
+import tutorial from '../../action-creators/tutorial'
+import { isTouch } from '../../browser'
 // constants
 import {
   HOME_TOKEN,
@@ -32,11 +25,16 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-
-// components
-import TutorialStepComponentMap from './TutorialStepComponentMap'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import getSetting from '../../selectors/getSetting'
+import { shortcutById } from '../../shortcuts'
+import headValue from '../../util/headValue'
+import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
+// components
+import TutorialStepComponentMap from './TutorialStepComponentMap'
+import WithCSSTransition from './WithCSSTransition'
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThoughtOrOutdent')

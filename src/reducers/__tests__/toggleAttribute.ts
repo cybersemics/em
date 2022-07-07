@@ -1,22 +1,24 @@
+import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-import exportContext from '../../selectors/exportContext'
-
 // reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleAttribute from '../toggleAttribute'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 
 it('toggle on', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'hello',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -32,16 +34,18 @@ it('toggle on', () => {
 it('toggle off', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'hello',
+      }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'hello',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -55,16 +59,18 @@ it('toggle off', () => {
 it('different value should override existing value', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'goodbye',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'hello',
+      }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'goodbye',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -82,11 +88,12 @@ it('add attribute if key has already been created', () => {
     newThought('a'),
     newSubthought('=test'),
     setCursorFirstMatch(['a']),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-      value: 'hello',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+        value: 'hello',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -102,10 +109,11 @@ it('add attribute if key has already been created', () => {
 it('toggle nullary attribute on', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -120,14 +128,16 @@ it('toggle nullary attribute on', () => {
 it('toggle nullary attribute off', () => {
   const steps = [
     newThought('a'),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-    }),
-    toggleAttribute({
-      context: ['a'],
-      key: '=test',
-    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+      }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        key: '=test',
+      }),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

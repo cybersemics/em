@@ -1,8 +1,9 @@
 import React from 'react'
-import toggleHiddenThoughts from '../action-creators/toggleHiddenThoughts'
+import Svg, { G, Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import Svg, { G, Path } from 'react-native-svg'
+import toggleHiddenThoughts from '../action-creators/toggleHiddenThoughts'
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (
   <Svg width={size} height={size} fill={fill} viewBox='0 0 100 100'>

@@ -1,13 +1,13 @@
 import React from 'react'
-import isDocumentEditable from '../util/isDocumentEditable'
-import pathToContext from '../util/pathToContext'
+import IconType from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
+import toggleAttribute from '../action-creators/toggleAttribute'
 import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import rootedParentOf from '../selectors/rootedParentOf'
 import splitChain from '../selectors/splitChain'
-import toggleAttribute from '../action-creators/toggleAttribute'
-import IconType from '../@types/Icon'
-import Shortcut from '../@types/Shortcut'
+import isDocumentEditable from '../util/isDocumentEditable'
+import pathToContext from '../util/pathToContext'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -41,16 +41,16 @@ const bindContextShortcut: Shortcut = {
     const { cursor } = state
     if (!cursor) return
 
-    const contextRanked = rootedParentOf(state, cursor)
+    const path = rootedParentOf(state, cursor)
 
-    if (!cursor || !isContextViewActive(state, contextRanked)) return
+    if (!cursor || !isContextViewActive(state, path)) return
 
     const contextChain = splitChain(state, cursor)
     const contextBound = pathToContext(state, lastThoughtsFromContextChain(state, contextChain))
 
     dispatch(
       toggleAttribute({
-        context: pathToContext(state, contextRanked),
+        path: path,
         key: '=bindContextShortcut',
         value: JSON.stringify(contextBound),
       }),

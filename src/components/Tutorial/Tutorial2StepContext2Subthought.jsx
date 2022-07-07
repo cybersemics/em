@@ -1,7 +1,5 @@
 import React, { Fragment } from 'react'
-import { store } from '../../store'
 import { isMac, isTouch } from '../../browser'
-
 import {
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT2_PARENT,
@@ -9,17 +7,17 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-
-import headValue from '../../util/headValue'
-import isRoot from '../../util/isRoot'
-import joinConjunction from '../../util/joinConjunction'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import findDescendant from '../../selectors/findDescendant'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
-import contextToThoughtId from '../../selectors/contextToThoughtId'
-import TutorialHint from './TutorialHint'
-import StaticSuperscript from '../StaticSuperscript'
 import parentOfThought from '../../selectors/parentOfThought'
+import { store } from '../../store'
+import headValue from '../../util/headValue'
+import isRoot from '../../util/isRoot'
+import joinConjunction from '../../util/joinConjunction'
+import StaticSuperscript from '../StaticSuperscript'
+import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {

@@ -2,8 +2,8 @@
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
 import { devices } from 'puppeteer'
-import helpers from '../helpers'
 import { WindowEm } from '../../../initialize'
+import helpers from '../helpers'
 
 jest.setTimeout(20000)
 

@@ -1,15 +1,15 @@
 import React from 'react'
+import Svg, { G, Path } from 'react-native-svg'
 import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { isTouch } from '../browser'
-import headValue from '../util/headValue'
-import isDocumentEditable from '../util/isDocumentEditable'
 import newThought from '../action-creators/newThought'
 import outdent from '../action-creators/outdent'
+import { isTouch } from '../browser'
 import isLastVisibleChild from '../selectors/isLastVisibleChild'
 import simplifyPath from '../selectors/simplifyPath'
-import Svg, { G, Path } from 'react-native-svg'
+import headValue from '../util/headValue'
+import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20 }: IconType) => (

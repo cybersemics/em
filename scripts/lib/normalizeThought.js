@@ -1,6 +1,7 @@
-const _ = require('lodash')
-const pluralize = require('pluralize')
-const emojiStrip = require('emoji-strip')
+import emojiStrip from 'emoji-strip'
+import _ from 'lodash'
+import pluralize from 'pluralize'
+
 const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 /** Trims a string. */
@@ -44,4 +45,4 @@ const normalizeThought = _.memoize(
   ]),
 )
 
-module.exports = normalizeThought
+export default normalizeThought

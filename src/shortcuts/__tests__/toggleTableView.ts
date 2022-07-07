@@ -1,9 +1,9 @@
-import { createTestStore } from '../../test-helpers/createTestStore'
-import attributeByContext from '../../test-helpers/attributeByContext'
 import importText from '../../action-creators/importText'
-import toggleTableViewShortcut from '../toggleTableView'
+import attributeByContext from '../../test-helpers/attributeByContext'
+import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import toggleTableViewShortcut from '../toggleTableView'
 
 it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
   const store = createTestStore()

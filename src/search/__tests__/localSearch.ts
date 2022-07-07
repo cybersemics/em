@@ -1,6 +1,6 @@
+import { Context } from '../../@types'
 import initDB, * as db from '../../data-providers/dexie'
 import importText from '../../reducers/importText'
-import { Context } from '../../@types'
 import initialState from '../../util/initialState'
 import { getLocalSearch } from '../localSearch'
 

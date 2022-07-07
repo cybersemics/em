@@ -1,11 +1,4 @@
 import _ from 'lodash'
-// import { treeChange } from '../util/recentlyEditedTree'
-import getLexeme from '../selectors/getLexeme'
-import { getAllChildren } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
-import thoughtToPath from '../selectors/thoughtToPath'
-import findDescendant from '../selectors/findDescendant'
-import updateThoughts from './updateThoughts'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -14,20 +7,27 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'
+import findDescendant from '../selectors/findDescendant'
+import { getAllChildren } from '../selectors/getChildren'
+// import { treeChange } from '../util/recentlyEditedTree'
+import getLexeme from '../selectors/getLexeme'
+import getThoughtById from '../selectors/getThoughtById'
+import thoughtToPath from '../selectors/thoughtToPath'
 import addContext from '../util/addContext'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import headId from '../util/headId'
-import isDivider from '../util/isDivider'
 import isAttribute from '../util/isAttribute'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
-import timestamp from '../util/timestamp'
 import { getSessionId } from '../util/sessionManager'
+import timestamp from '../util/timestamp'
 import deleteThought from './deleteThought'
 import setCursor from './setCursor'
+import updateThoughts from './updateThoughts'
 
 export interface editThoughtPayload {
   oldValue: string
@@ -52,6 +52,7 @@ const editThought = (
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
+  const childrenMapKeyChanged = isAttribute(oldValue) !== isAttribute(newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
@@ -138,10 +139,6 @@ const editThought = (
     }
   }
 
-  const childrenNew = getAllChildren(state, parentOfEditedThought.id)
-    .filter(child => child !== editedThought.id)
-    .concat(editedThoughtId)
-
   const lexemeIndexUpdates = {
     // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
     [oldKey]: newOldLexeme,
@@ -165,14 +162,16 @@ const editThought = (
   }
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    [parentOfEditedThought.id]: {
-      ...parentOfEditedThought,
-      childrenMap: createChildrenMap(stateWithNewThought, childrenNew),
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    },
+    // only update parent if childrenMap key changed
+    ...(childrenMapKeyChanged
+      ? {
+          [parentOfEditedThought.id]: {
+            ...parentOfEditedThought,
+            childrenMap: createChildrenMap(stateWithNewThought, getAllChildren(state, parentOfEditedThought.id)),
+          },
+        }
+      : null),
     [editedThought.id]: thoughtNew,
-    // ...thoughtIndexDescendantUpdates,
   }
 
   // preserve contextViews

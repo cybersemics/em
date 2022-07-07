@@ -1,7 +1,7 @@
-import isRoot from '../util/isRoot'
-import ThoughtId from '../@types/ThoughtId'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import ThoughtId from '../@types/ThoughtId'
+import isRoot from '../util/isRoot'
 
 /** Appends one or more Child nodes to a Path or SimplePath. Ensures ROOT is removed. */
 const appendToPath = <T extends Path | SimplePath>(path: T | null, ...children: ThoughtId[]): T =>

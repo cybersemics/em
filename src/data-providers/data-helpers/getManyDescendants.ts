@@ -1,10 +1,10 @@
-import { DataProvider } from '../DataProvider'
-import yieldAll from '../../util/yieldAll'
-import { EM_TOKEN } from '../../constants'
-import getDescendantThoughts from './getDescendantThoughts'
 import State from '../../@types/State'
-import ThoughtsInterface from '../../@types/ThoughtsInterface'
 import ThoughtId from '../../@types/ThoughtId'
+import ThoughtsInterface from '../../@types/ThoughtsInterface'
+import { EM_TOKEN } from '../../constants'
+import yieldAll from '../../util/yieldAll'
+import { DataProvider } from '../DataProvider'
+import getDescendantThoughts from './getDescendantThoughts'
 
 // hash the EM context once on load
 const emContextEncoded = EM_TOKEN
