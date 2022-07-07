@@ -5,10 +5,10 @@ import { REGEXP_TAGS } from '../constants'
 import isAttribute from './isAttribute'
 
 /**
- * Trims value for a thought (removes non-word character).
- * Preserves metaprogramming attribute character `=` from trimming.
+ * Removes whitespace from a value (removes non-word character).
+ * Preserves metaprogramming attribute character `=`.
  */
-export const trimThought = (s: string) => {
+export const removeWhitespace = (s: string) => {
   const modifiedString = isAttribute(s) ? s.slice(1) : s
   const replaced = modifiedString.replace(
     modifiedString.length > 0 && modifiedString.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
@@ -37,7 +37,7 @@ export const singularize = (s: string) => (s !== 's' ? pluralize.singular(s) : s
 const lower = (s: string) => s.toLowerCase()
 
 /**
- * Tranformations for thought value:
+ * Converts a thought value into a canonical form that is stored in Lexeme.lemma. Not idempotent (singularize may return a different string after whitespace is removed).
  *
  * - case-insensitive
  * - ignore punctuation & whitespace (when there is other text)
@@ -49,10 +49,10 @@ const normalizeThought = _.memoize(
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
-    trimThought,
+    removeWhitespace,
     stripEmojiFromText,
     singularize,
-  ]),
+  ]) as (s: string) => string,
 )
 
 export default normalizeThought

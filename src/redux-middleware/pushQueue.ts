@@ -65,7 +65,7 @@ const mergeConflictingLexemeIndexUpdates = (
     // See: https://github.com/cybersemics/em/issues/1559
     const lexemeAContextsFiltered = lexemeA.contexts.filter(id => {
       const thought = getThoughtById(state, id)
-      return !thought || normalizeThought(thought.value) === normalizeThought(lexemeA.value)
+      return !thought || normalizeThought(thought.value) === lexemeA.lemma
     })
 
     // get the Lexeme's contexts in the pulled state without the lexemeA contexts

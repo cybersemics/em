@@ -18,7 +18,7 @@ let fixThoughtIndex = (max = 100000) => {
         if (!cx.context)
           return // subcontexts
           // Note: Concat lexeme value too else it won't check for it's ancestor io thoughtIndex
-        ;[...cx.context, lexeme.value].forEach((value, i) => {
+        ;[...cx.context, lexeme.lemma].forEach((value, i) => {
           // don't check root
           if (i === 0) return
 

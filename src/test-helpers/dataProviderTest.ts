@@ -147,7 +147,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const lexeme = {
       id: '12345',
-      value: 'x',
+      lemma: 'x',
       rank: 0,
       contexts: [],
       created: timestamp(),
@@ -157,8 +157,8 @@ const dataProviderTest = (provider: DataProvider) => {
 
     await provider.updateLexeme('12345', lexeme)
 
-    const dbThought = await provider.getLexemeById('12345')
-    expect(dbThought).toEqual(lexeme)
+    const dbLexeme = await provider.getLexemeById('12345')
+    expect(dbLexeme).toEqual(lexeme)
   })
 
   test('getLexemesByIds', async () => {
@@ -172,9 +172,9 @@ const dataProviderTest = (provider: DataProvider) => {
     await provider.updateLexeme(hashThought('x'), thoughtX)
     await provider.updateLexeme(hashThought('y'), thoughtY)
 
-    const dbThoughts = await provider.getLexemesByIds([hashThought('x'), hashThought('y')])
+    const dbLexemes = await provider.getLexemesByIds([hashThought('x'), hashThought('y')])
 
-    expect(dbThoughts).toMatchObject([thoughtX, thoughtY])
+    expect(dbLexemes).toMatchObject([thoughtX, thoughtY])
   })
 
   test('updateLexeme', async () => {
@@ -183,7 +183,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
     const lexeme: Lexeme = {
       id: hashThought('x'),
-      value: 'x',
+      lemma: 'x',
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
@@ -256,20 +256,18 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('updateLexemeIndex', async () => {
-    const thoughtX = {
+    const lexemeX: Lexeme = {
       id: hashThought('x'),
-      value: 'x',
-      rank: 0,
+      lemma: 'x',
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     }
 
-    const thoughtY = {
+    const lexemeY: Lexeme = {
       id: hashThought('y'),
-      value: 'y',
-      rank: 0,
+      lemma: 'y',
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
@@ -277,15 +275,15 @@ const dataProviderTest = (provider: DataProvider) => {
     }
 
     await provider.updateLexemeIndex({
-      [hashThought(thoughtX.value)]: thoughtX,
-      [hashThought(thoughtY.value)]: thoughtY,
+      [hashThought(lexemeX.lemma)]: lexemeX,
+      [hashThought(lexemeY.lemma)]: lexemeY,
     })
 
-    const dbThought1 = await getLexeme(provider, thoughtX.value)
-    expect(dbThought1).toEqual(thoughtX)
+    const dbLexeme1 = await getLexeme(provider, lexemeX.lemma)
+    expect(dbLexeme1).toEqual(lexemeX)
 
-    const dbThought2 = await getLexeme(provider, thoughtY.value)
-    expect(dbThought2).toEqual(thoughtY)
+    const dbLexeme2 = await getLexeme(provider, lexemeY.lemma)
+    expect(dbLexeme2).toEqual(lexemeY)
   })
 
   test('updateThoughtIndex', async () => {

@@ -22,7 +22,7 @@ export const loadState = async (dispatch: Dispatch, newState: State, oldState: S
     Object.keys(oldState.thoughts.lexemeIndex).forEach(key => {
       if (!(key in newState.thoughts.lexemeIndex)) {
         // do not force render here, but after all values have been deleted
-        dispatch(deleteData(oldState.thoughts.lexemeIndex[key].value))
+        dispatch(deleteData(oldState.thoughts.lexemeIndex[key].lemma))
       }
     })
   }

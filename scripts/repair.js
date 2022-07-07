@@ -170,7 +170,7 @@ let repair = (maxDepth = 100) => {
         // if any of the contexts within the lexeme have changed, update the lexeme
         if (shouldUpdate) {
           lexemeIndexUpdates[thoughtEncoded] = {
-            value: lexeme.value || child.value,
+            value: lexeme.lemma || child.value,
             created: parentEntry.lastUpdated,
             lastUpdated: timestamp(),
             contexts: contextsNew,

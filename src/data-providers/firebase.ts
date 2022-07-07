@@ -240,7 +240,7 @@ const lexemeSubscriptionHandler =
     const updates = {
       thoughtIndex: {},
       lexemeIndex: {
-        [hashThought(lexemePartial.value)]: {
+        [hashThought(lexemePartial.lemma)]: {
           // snapshot contains updatedBy of deleted thought
           updatedBy: lexemePartial.updatedBy,
           value:

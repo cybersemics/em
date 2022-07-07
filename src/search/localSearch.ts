@@ -6,9 +6,9 @@ import getContextMap from '../util/getContextMap'
 
 // @MIGRATION_TODO: Change this api to return ids instead of context.
 /**
- *
+ * Do a full text search on the local db.
  */
-export const getLocalSearch = (state: State) => {
+const localSearch = (state: State) => {
   /**
    * Search by value and return context map.
    */
@@ -21,3 +21,5 @@ export const getLocalSearch = (state: State) => {
     searchAndGenerateContextMap,
   }
 }
+
+export default localSearch

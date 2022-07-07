@@ -8,7 +8,6 @@ import LexemeDb, { fromLexemeDb, toLexemeDb } from '../@types/LexemeDb'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
-import ThoughtWordsIndex from '../@types/ThoughtWordsIndex'
 import Timestamp from '../@types/Timestamp'
 import { SCHEMA_LATEST } from '../constants'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
@@ -44,7 +43,7 @@ class EM extends Dexie {
 
     this.version(SCHEMA_LATEST).stores({
       thoughtIndex: 'id, children, lastUpdated, updatedBy',
-      lexemeIndex: 'id, value, *contexts, created, lastUpdated, updatedBy, *words',
+      lexemeIndex: 'id, lemma, *contexts, created, lastUpdated, updatedBy, *words',
       thoughtWordsIndex: 'id, *words',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       logs: '++id, created, message, stack',
@@ -60,7 +59,7 @@ class EM extends Dexie {
 
 export interface Helper {
   id: string
-  value?: string
+  lemma?: string
   contexts?: Context[]
   cursor?: string | null
   created?: Timestamp
@@ -80,6 +79,11 @@ interface ObservableTransaction extends Transaction {
   source?: any
 }
 
+interface ThoughtWordsIndex {
+  id: string
+  words: string[]
+}
+
 export const db = new Dexie('EM') as EM
 
 /** Initializes the EM record where helpers are stored. */
@@ -95,7 +99,7 @@ const initDB = async () => {
   if (!db.isOpen()) {
     await db.version(SCHEMA_LATEST).stores({
       thoughtIndex: 'id, children, lastUpdated',
-      lexemeIndex: 'id, value, *contexts, created, lastUpdated',
+      lexemeIndex: 'id, lemma, *contexts, created, lastUpdated',
       helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
       thoughtWordsIndex: 'id, *words',
       logs: '++id, created, message, stack',
@@ -107,8 +111,8 @@ const initDB = async () => {
     db.lexemeIndex.hook('creating', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         db.thoughtWordsIndex.put({
-          id: hashThought(lexeme.value),
-          words: _.uniq(lexeme.value.split(' ')),
+          id: hashThought(lexeme.lemma),
+          words: _.uniq(lexeme.lemma.split(' ')),
         })
       })
     })
@@ -117,8 +121,8 @@ const initDB = async () => {
       transaction.on('complete', () => {
         // eslint-disable-next-line no-prototype-builtins
         if (modificationObject.hasOwnProperty('value')) {
-          db.thoughtWordsIndex.update(hashThought(lexeme.value), {
-            words: lexeme.value.trim().length > 0 ? _.uniq(lexeme.value.trim().split(' ')) : [],
+          db.thoughtWordsIndex.update(hashThought(lexeme.lemma), {
+            words: lexeme.lemma.trim().length > 0 ? _.uniq(lexeme.lemma.trim().split(' ')) : [],
           })
         }
       })
@@ -127,7 +131,7 @@ const initDB = async () => {
     db.lexemeIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         // Sometimes lexeme is undefined ??
-        if (lexeme) db.thoughtWordsIndex.delete(hashThought(lexeme.value))
+        if (lexeme) db.thoughtWordsIndex.delete(hashThought(lexeme.lemma))
       })
     })
   }
@@ -297,7 +301,8 @@ export const fullTextSearch = async (value: string) => {
       words.map(word => db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()),
     )
     const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
-    return db.lexemeIndex.bulkGet(intersectionKeys).then(lexemes => lexemes.map(fromLexemeDb))
+    const lexemesInner = await db.lexemeIndex.bulkGet(intersectionKeys)
+    return lexemesInner.map(fromLexemeDb)
   })
 
   return lexemes

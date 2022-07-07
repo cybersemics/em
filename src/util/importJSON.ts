@@ -30,6 +30,7 @@ import unroot from '../util/unroot'
 import createId from './createId'
 import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
+import normalizeThought from './normalizeThought'
 import { getSessionId } from './sessionManager'
 
 export interface ImportJSONOptions {
@@ -75,9 +76,9 @@ const insertThought = (
 
   const newThoughtId = createId()
 
-  const lexemeNew = {
+  const lexemeNew: Lexeme = {
     ...lexemeOld,
-    value,
+    lemma: normalizeThought(value),
     contexts: [...(lexemeOld?.contexts || []), newThoughtId],
     created: lexemeOld?.created ?? created,
     lastUpdated,

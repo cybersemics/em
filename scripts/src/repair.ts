@@ -152,8 +152,8 @@ const moveThoughtToOrphanage = (thought: ThoughtWithChildren) => {
     const lexemeKey = hashThought('ORPHANAGE')
     db.lexemeIndex[lexemeKey] = {
       id: 'orphanage',
-      contexts: ['orphanage' as ThoughtId],
-      value: 'orphanage',
+      contexts: { ['orphanage' as ThoughtId]: true },
+      lemma: 'orphanage',
       created: timestamp(),
       lastUpdated: timestamp(),
     }
@@ -193,8 +193,8 @@ Object.values(db.thoughtIndex).forEach(thought => {
     if (!lexeme) {
       db.lexemeIndex[lexemeKey] = {
         id: lexemeKey,
-        contexts: [thought.id],
-        value: normalizeThought(thought.value),
+        contexts: { [thought.id]: true },
+        lemma: normalizeThought(thought.value),
         created: timestamp(),
         lastUpdated: timestamp(),
       }
@@ -434,7 +434,7 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
     }
 
     // remove contexts with value that no longer matches Lexeme value
-    if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
+    if (normalizeThought(thought.value) !== lexeme.lemma) {
       ;(delete lexeme.contexts as any)?.[cxid]
       lexemeContextsInvalid++
       return
@@ -452,6 +452,9 @@ Object.values(db.thoughtIndex).forEach(thought => {
     lexeme.contexts = {}
   }
   if (!(thought.id in lexeme.contexts)) {
+    // console.log('thought', thought)
+    // console.log('lexeme', lexeme)
+    // throw new Error('STOP')
     ;(lexeme.contexts as any)[thought.id] = true
     lexemeContextsAdded++
   }

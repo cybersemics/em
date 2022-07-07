@@ -29,7 +29,7 @@ interface NextThoughtResult {
 //         const contextToMatch = contextInfo.context.slice(0, index + 1)
 //         // const filterRoot = context => context.filter(item => item !== HOME_TOKEN)
 //         return lexeme.contexts.find(thoughtContext =>
-//           equalArrays([...unroot(thoughtContext.context), lexeme.value], contextToMatch),
+//           equalArrays([...unroot(thoughtContext.context), lexeme.lemma], contextToMatch),
 //         )!
 //       }
 //       // the root thought doesn't have a rank

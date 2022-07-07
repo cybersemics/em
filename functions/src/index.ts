@@ -91,7 +91,7 @@ export const addIndexOnCreateLexemeIndex = functions.database
         {
           thoughtHash,
           userId,
-          value: lexeme.value,
+          value: lexeme.lemma,
         },
         {
           autoGenerateObjectIDIfNotExist: true,

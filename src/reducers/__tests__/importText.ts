@@ -90,30 +90,30 @@ it('basic import with proper thought structure', () => {
 
   expect(lexemeIndex).toMatchObject({
     [hashThought(HOME_TOKEN)]: {
-      value: HOME_TOKEN,
+      lemma: HOME_TOKEN,
       contexts: [],
       created: now,
       lastUpdated: never(),
     },
     [hashThought(EM_TOKEN)]: {
-      value: EM_TOKEN,
+      lemma: EM_TOKEN,
       contexts: [],
       created: now,
       lastUpdated: never(),
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
-      value: ABSOLUTE_TOKEN,
+      lemma: ABSOLUTE_TOKEN,
       contexts: [],
       created: now,
       lastUpdated: never(),
     },
     [hashThought('a')]: {
-      value: 'a',
+      lemma: 'a',
       contexts: [childAId],
       created: now,
     },
     [hashThought('b')]: {
-      value: 'b',
+      lemma: 'b',
       contexts: [childBId],
       created: now,
     },
@@ -283,7 +283,7 @@ it('duplicate thoughts', () => {
   const childBId = lexeme.contexts[1]
 
   expect(lexeme).toMatchObject({
-    value: 'm',
+    lemma: 'm',
     contexts: [childAId, childBId],
     created: now,
   })

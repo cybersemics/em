@@ -108,8 +108,8 @@ const anonymize = {
         process.exit(1)
       }
 
-      const lexemeIsRoot = isRoot([lexeme.value]) || isEM([lexeme.value])
-      lexeme.value = anonymizeValue(lexeme.value)
+      const lexemeIsRoot = isRoot([lexeme.lemma]) || isEM([lexeme.lemma])
+      lexeme.lemma = anonymizeValue(lexeme.lemma)
       lexeme.contexts = Object.values(lexeme.contexts || {}).map(cx => ({
         ...cx,
         context: anonymizeContext(cx.context),
@@ -120,7 +120,7 @@ const anonymize = {
       //   One and Ones have the same hash.
       //   After being anonymized, they do not.
       if (!lexemeIsRoot) {
-        const idNew = hashThought(lexeme.value)
+        const idNew = hashThought(lexeme.lemma)
         lexemeIndex[idNew] = lexeme
         delete lexemeIndex[id]
       }

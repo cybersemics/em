@@ -63,16 +63,16 @@ const smudge = () => Math.floor(Math.random() * 1000) / 1000000
 // repair functions (mutates state)
 const repair = {
   missingLexemeContext: (state: UserState, lexeme: FirebaseLexeme, options: Options = {}) => {
-    if (lexeme.value === HOME_TOKEN) return
+    if (lexeme.lemma === HOME_TOKEN) return
 
     missingLexemeContexts++
 
     if (options.verbose) {
-      console.error(`Missing lexeme.contexts in "${lexeme.value}" (deleting)`)
+      console.error(`Missing lexeme.contexts in "${lexeme.lemma}" (deleting)`)
     }
 
     // delete lexeme since there are no contexts to restore it to
-    delete state.lexemeIndex[hashThought(lexeme.value)]
+    delete state.lexemeIndex[hashThought(lexeme.lemma)]
   },
 
   missingThoughtContext: (
@@ -82,12 +82,12 @@ const repair = {
     options: Options = {},
   ) => {
     // HOME and EM are expected to not have thought contexts
-    if (lexeme.value === HOME_TOKEN || lexeme.value === EM_TOKEN) return
+    if (lexeme.lemma === HOME_TOKEN || lexeme.lemma === EM_TOKEN) return
 
     missingThoughtContexts++
 
     if (options.verbose) {
-      console.error(`Missing cx.context "${lexeme.value}" (removing from lexeme)`)
+      console.error(`Missing cx.context "${lexeme.lemma}" (removing from lexeme)`)
     }
 
     // remove ThoughtContext from lexeme since there is no context to restore it to
@@ -105,7 +105,7 @@ const repair = {
     const rankNew = cx.rank + smudge()
     const childNew: Child = {
       ...(cx.id ? { id: cx.id } : null),
-      value: lexeme.value, // use Lexeme value since we the in-context value is lost
+      value: lexeme.lemma, // use Lexeme value since we the in-context value is lost
       rank: rankNew,
       lastUpdated: timestamp(),
     }
@@ -120,7 +120,7 @@ const repair = {
     cx.rank = rankNew
 
     if (options.verbose) {
-      const msg = `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
+      const msg = `{ value: "${lexeme.lemma}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but no Parent exists.`
       console.error(msg)
       console.error('parentNew', parentNew)
     }
@@ -138,7 +138,7 @@ const repair = {
     // print before parent has been mutated
     if (options.verbose) {
       console.error(
-        `{ value: "${lexeme.value}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but is not found in the corresponding Parent's children.`,
+        `{ value: "${lexeme.lemma}", rank: ${cx.rank} } appears in ThoughtContext "${cx.context}" but is not found in the corresponding Parent's children.`,
       )
       console.error('parentOld', parent)
     }
@@ -149,7 +149,7 @@ const repair = {
     const rankNew = cx.rank + smudge()
     const childNew: Child = {
       ...(cx.id ? { id: cx.id } : null),
-      value: lexeme.value, // use Lexeme value since we the in-context value is lost
+      value: lexeme.lemma, // use Lexeme value since we the in-context value is lost
       rank: rankNew,
       lastUpdated: timestamp(),
     }
@@ -191,7 +191,7 @@ const restoreChildren = (state: UserState, options: Options = {}) => {
         throw new Error('Missing parent.childen. This was unexpected. A repair function has not been implemented.')
       }
       const childInParent = Object.values(parent.children).find(
-        child => normalizeThought(child.value) === normalizeThought(lexeme.value),
+        child => normalizeThought(child.value) === normalizeThought(lexeme.lemma),
       )
       if (!childInParent) {
         repair.missingChildInParent(state, lexeme, cx, parent, options)

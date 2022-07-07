@@ -20,6 +20,7 @@ import head from '../util/head'
 import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
+import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
@@ -116,7 +117,7 @@ const editThought = (
     created: timestamp(),
     lastUpdated: timestamp(),
     updatedBy: getSessionId(),
-    value: newValue,
+    lemma: normalizeThought(newValue),
   }
 
   // the old thought less the context

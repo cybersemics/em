@@ -12,7 +12,7 @@ import setSearchLimit from '../action-creators/searchLimit'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import getFirebaseProvider from '../data-providers/firebase'
 import { getRemoteSearch } from '../search/algoliaSearch'
-import { getLocalSearch } from '../search/localSearch'
+import localSearch from '../search/localSearch'
 import hasLexeme from '../selectors/hasLexeme'
 import { store } from '../store'
 import escapeRegExp from '../util/escapeRegExp'
@@ -60,7 +60,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   const searchThoughts = async (value: string) => {
     const searchRemote = getRemoteSearch(store.getState(), getFirebaseProvider(store.getState(), store.dispatch))
 
-    const searchLocal = getLocalSearch(store.getState())
+    const searchLocal = localSearch(store.getState())
 
     const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
     setLoadingState(true)
@@ -114,13 +114,13 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
           .filter(
             lexeme =>
               (archived || !isArchived(store.getState(), lexeme)) &&
-              lexeme.value !== HOME_TOKEN &&
-              lexeme.value !== EM_TOKEN &&
-              searchRegexp.test(lexeme.value),
+              lexeme.lemma !== HOME_TOKEN &&
+              lexeme.lemma !== EM_TOKEN &&
+              searchRegexp.test(lexeme.lemma),
           )
           .map<{ id: ThoughtId; value: string; rank: number }>(
             // TODO: Should lexeme.id be explictly typed as ThoughtId
-            (lexeme, i) => ({ id: lexeme.contexts[0], value: lexeme.value, rank: i }),
+            (lexeme, i) => ({ id: lexeme.contexts[0], value: lexeme.lemma, rank: i }),
             // cannot group cases by return value because conditionals must be checked in order of precedence
             comparator,
           ),

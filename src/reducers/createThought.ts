@@ -14,6 +14,7 @@ import createChildrenMap from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import normalizeThought from '../util/normalizeThought'
 import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 
@@ -34,7 +35,7 @@ const createThought = (state: State, { path, value, rank, addAsContext, id, spli
   // create thought if non-existent
   const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
-      value,
+      lemma: normalizeThought(value),
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
@@ -112,10 +113,10 @@ const createThought = (state: State, { path, value, rank, addAsContext, id, spli
   }
 
   const lexemeIndexUpdates = {
-    [hashThought(lexeme.value)]: lexeme,
+    [hashThought(lexeme.lemma)]: lexeme,
     ...(lexemeNew
       ? {
-          [hashThought(lexemeNew.value)]: lexemeNew,
+          [hashThought(lexemeNew.lemma)]: lexemeNew,
         }
       : null),
   }

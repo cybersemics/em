@@ -4,8 +4,8 @@ import pluralize from 'pluralize'
 
 const REGEXP_TAGS = /(<([^>]+)>)/gi
 
-/** Trims a string. */
-const trim = s => s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')
+/** Removes whitespace from a string. Allows "racecar" to match "race car". */
+const removeWhitespace = s => s.replace(s.length > 0 && s.replace(/\W/g, '').length > 0 ? /\W/g : /s/g, '')
 
 /** Strips emoji from text. Preserves emoji on its own. */
 const stripEmojiFromText = s => {
@@ -27,7 +27,7 @@ const singularize = s => (s !== 's' ? pluralize.singular(s) : s)
 const lower = s => s.toLowerCase()
 
 /**
- * Tranformations for thought value:
+ * Converts a thought value into a canonical form that is stored in Lexeme.lemma. Not idempotent (singularize may return a different string after whitespace is removed).
  *
  * - case-insensitive
  * - ignore punctuation & whitespace (when there is other text)
@@ -39,7 +39,7 @@ const normalizeThought = _.memoize(
     // placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
-    trim,
+    removeWhitespace,
     stripEmojiFromText,
     singularize,
   ]),

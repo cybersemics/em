@@ -36,7 +36,7 @@ const chain = (state: State, contextChain: SimplePath[], simplePath: SimplePath)
   const append = simplePathThoughts.slice(i - 1)
   const contexts = getContextsSortedAndRanked(state, pivot.value)
   const appendedThoughtInContext = contexts.find(
-    child => normalizeThought(parentOfThought(state, child.id)?.value) === normalizeThought(append[0].value),
+    child => normalizeThought(parentOfThought(state, child.id)?.value || '') === normalizeThought(append[0].value),
   )
 
   // keep the first segment intact

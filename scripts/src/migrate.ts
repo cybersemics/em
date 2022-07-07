@@ -7,6 +7,7 @@ import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Timestamp from '../../src/@types/Timestamp'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
 import keyValueBy from '../../src/util/keyValueBy.js'
+import normalizeThought from '../lib/normalizeThought.js'
 import Database from './types/Database.js'
 import FirebaseThought from './types/FirebaseThought'
 
@@ -27,7 +28,7 @@ type FirebaseLexeme6 = {
 type FirebaseLexeme7 = FirebaseLexeme6
 type FirebaseLexeme8 = {
   id?: string
-  value: string
+  lemma: string
   contexts?: Record<ThoughtId, true>
   created: Timestamp
   lastUpdated: Timestamp
@@ -134,9 +135,17 @@ const migrateVersion: Record<number, (db: Database) => Database> = {
     const convertContexts = (contexts?: ThoughtId[]): Record<ThoughtId, true> =>
       keyValueBy(contexts || [], id => ({ [id]: true }))
 
+    const convertLexeme = (lexeme7: FirebaseLexeme7) => ({
+      // rename value to lemma
+      ..._.omit(lexeme7, 'value'),
+      lemma: normalizeThought(lexeme7.value),
+      // convert contexts from an array to object
+      contexts: convertContexts(lexeme7.contexts),
+    })
+
     /** Converts a Db7 lexemeIndex to a Db8 lexemeIndex. */
     const convertLexemeIndex = (key: string, lexeme7: FirebaseLexeme7) => ({
-      [key]: { ...lexeme7, contexts: convertContexts(lexeme7.contexts) },
+      [key]: convertLexeme(lexeme7),
     })
 
     const db8: Database8 = {
