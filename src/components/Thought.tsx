@@ -17,10 +17,8 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import { isTouch } from '../browser'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import globals from '../globals'
-// hooks
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
-// selectors
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
@@ -31,7 +29,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
-// util
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
@@ -47,14 +44,13 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import pathToContext from '../util/pathToContext'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
-// components
 import Bullet from './Bullet'
 import Byline from './Byline'
-// import ThoughtAnnotation from './ThoughtAnnotation'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts'
+import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
  * Redux
@@ -473,7 +469,7 @@ const ThoughtContainer = ({
             }}
           ></span>
 
-          {/* <ThoughtAnnotation
+          <ThoughtAnnotation
             env={env}
             path={path}
             homeContext={homeContext}
@@ -482,7 +478,7 @@ const ThoughtContainer = ({
             showContexts={showContexts}
             style={styleNew || undefined}
             simplePath={simplePath}
-          /> */}
+          />
 
           <StaticThought
             path={path}

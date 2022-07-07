@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
+import toggleHiddenThoughtsActionCreator from '../../action-creators/toggleHiddenThoughts'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
@@ -45,4 +46,19 @@ it.skip('Superscript should not count archived contexts', async () => {
 
   const element = screen.getByText('2')
   expect(element.nodeName).toBe('SUP')
+})
+
+it('Superscript should not count for hashed version of metaprogramming attributes like =archive | archive', async () => {
+  store.dispatch([
+    importText({
+      text: `
+      - a
+        - =archive
+      - b
+        - Archive`,
+    }),
+    toggleHiddenThoughtsActionCreator(),
+  ])
+
+  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
