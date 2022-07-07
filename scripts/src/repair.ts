@@ -8,6 +8,7 @@ import path from 'path'
 import Context from '../../src/@types/Context'
 import Index from '../../src/@types/IndexType'
 import Lexeme from '../../src/@types/Lexeme'
+import LexemeDb from '../../src/@types/LexemeDb'
 import Path from '../../src/@types/Path'
 import Thought from '../../src/@types/Thought'
 import ThoughtId from '../../src/@types/ThoughtId'
@@ -358,8 +359,8 @@ while (stack.length > 0) {
           const lexemeKey = hashThought(duplicateThought.value)
           const lexeme = db.lexemeIndex[lexemeKey]
           // if Lexeme is missing, it will be reconstructed in the next step
-          if (lexeme) {
-            lexeme.contexts = lexeme.contexts.filter(cx => cx !== duplicateThought.id)
+          if (lexeme?.contexts) {
+            delete (lexeme.contexts as any)[duplicateThought.id]
           }
 
           duplicateSiblingsMerged++
@@ -420,21 +421,21 @@ Object.values(db.thoughtIndex).forEach(thought => {
 console.info('Validating Lexemes')
 
 // validate Lexeme contexts
-Object.values(db.lexemeIndex).forEach((lexeme: Lexeme) => {
+Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
   if (!lexeme.contexts) return
-  lexeme.contexts.forEach(cxid => {
+  ;(Object.keys(lexeme.contexts) as ThoughtId[]).forEach(cxid => {
     const thought = db.thoughtIndex[cxid]
 
     // remove contexts with missing thought
     if (!thought) {
-      lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
+      ;(delete lexeme.contexts as any)?.[cxid]
       lexemeContextsMissing++
       return
     }
 
     // remove contexts with value that no longer matches Lexeme value
     if (normalizeThought(thought.value) !== normalizeThought(lexeme.value)) {
-      lexeme.contexts = lexeme.contexts!.filter((id: ThoughtId) => id !== cxid)
+      ;(delete lexeme.contexts as any)?.[cxid]
       lexemeContextsInvalid++
       return
     }
@@ -448,10 +449,10 @@ Object.values(db.thoughtIndex).forEach(thought => {
   const lexemeKey = hashThought(thought.value)
   const lexeme = db.lexemeIndex[lexemeKey]
   if (!lexeme.contexts) {
-    lexeme.contexts = []
+    lexeme.contexts = {}
   }
-  if (!lexeme.contexts.includes(thought.id)) {
-    lexeme.contexts.push(thought.id)
+  if (!(thought.id in lexeme.contexts)) {
+    ;(lexeme.contexts as any)[thought.id] = true
     lexemeContextsAdded++
   }
 })

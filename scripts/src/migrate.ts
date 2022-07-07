@@ -4,21 +4,41 @@ import Lexeme from '../../src/@types/Lexeme'
 import Thought from '../../src/@types/Thought'
 import ThoughtId from '../../src/@types/ThoughtId'
 import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
+import Timestamp from '../../src/@types/Timestamp'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
 import keyValueBy from '../../src/util/keyValueBy.js'
 import Database from './types/Database.js'
 import FirebaseThought from './types/FirebaseThought'
 
-const SCHEMA_LATEST = 7
+const SCHEMA_LATEST = 8
 
 type FirebaseThought6 = Omit<Thought, 'childrenMap'> & { childrenMap?: Index<ThoughtId> }
 type FirebaseThought7 = Omit<ThoughtWithChildren, 'children'> & { children?: Index<Thought> }
+type FirebaseThought8 = FirebaseThought7
+
+type FirebaseLexeme6 = {
+  id?: string
+  value: string
+  contexts?: ThoughtId[]
+  created: Timestamp
+  lastUpdated: Timestamp
+  updatedBy?: string
+}
+type FirebaseLexeme7 = FirebaseLexeme6
+type FirebaseLexeme8 = {
+  id?: string
+  value: string
+  contexts?: Record<ThoughtId, true>
+  created: Timestamp
+  lastUpdated: Timestamp
+  updatedBy?: string
+}
 
 interface Database6 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Index<Lexeme>
+  lexemeIndex: Index<FirebaseLexeme6>
   schemaVersion: 6
   thoughtIndex: Index<FirebaseThought6>
 }
@@ -27,12 +47,21 @@ interface Database7 extends Database {
   email: string
   lastClientId: string
   lastUpdated: string
-  lexemeIndex: Index<Lexeme>
+  lexemeIndex: Index<FirebaseLexeme7>
   schemaVersion: 7
   thoughtIndex: Index<FirebaseThought7>
 }
 
-type DatabaseLatest = Database7
+interface Database8 extends Database {
+  email: string
+  lastClientId: string
+  lastUpdated: string
+  lexemeIndex: Index<FirebaseLexeme8>
+  schemaVersion: 8
+  thoughtIndex: Index<FirebaseThought8>
+}
+
+type DatabaseLatest = Database8
 
 /** Migrates a database with an unknown schema to the latest schema. Exits with an error message if migration is not possible. */
 const migrate = (db: Database): DatabaseLatest => {
@@ -64,14 +93,11 @@ const migrate = (db: Database): DatabaseLatest => {
 
 /** A Record of migration functions. Each migrates a single version step, e.g. 6 -> 7. */
 // TODO: Why can't we type db as Database here?
-const migrateVersion: Record<number, (db: any) => Database> = {
-  '6': (db6: Database6): Database7 => {
+const migrateVersion: Record<number, (db: Database) => Database> = {
+  // childrenMap converted to inline children
+  6: (db6: Database6): Database7 => {
     const db7: Database7 = {
-      email: db6.email,
-      lastClientId: db6.lastClientId,
-      lastUpdated: db6.lastUpdated,
-      thoughtIndex: {},
-      lexemeIndex: db6.lexemeIndex,
+      ...db6,
       schemaVersion: 7,
     }
     Object.values(db6.thoughtIndex).forEach(thought => {
@@ -99,6 +125,27 @@ const migrateVersion: Record<number, (db: any) => Database> = {
 
     return db7
   },
-}
+
+  // 1. Lexeme.value renamed to Lexeme.lemma
+  // 2. Lexeme.contexts changed from array to object
+  // 3. lexemeIndex re-keyed with new hashing function to differentiate =archive and =archive
+  7: (db7: Database7): Database8 => {
+    /** Converts FirebaseLexeme7 contexts to FirebaseLexeme8 contexts. */
+    const convertContexts = (contexts?: ThoughtId[]): Record<ThoughtId, true> =>
+      keyValueBy(contexts || [], id => ({ [id]: true }))
+
+    /** Converts a Db7 lexemeIndex to a Db8 lexemeIndex. */
+    const convertLexemeIndex = (key: string, lexeme7: FirebaseLexeme7) => ({
+      [key]: { ...lexeme7, contexts: convertContexts(lexeme7.contexts) },
+    })
+
+    const db8: Database8 = {
+      ...db7,
+      lexemeIndex: keyValueBy(db7.lexemeIndex, convertLexemeIndex),
+      schemaVersion: 8,
+    }
+    return db8
+  },
+} as Record<number, (db: Database) => Database>
 
 export default migrate
