@@ -106,7 +106,11 @@ export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via 
 export const SCHEMA_UNIQUE_IDS = 5 // add unique ids to thoughts for independent editing (#1495)
 export const SCHEMA_CHILDREN_MAP = 6 // convert children array to childrenMap object (#1587)
 export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thought Object to allow O(1) lookup (#1592)
-export const SCHEMA_LATEST = 7
+// 1. Lexeme.value renamed to Lexeme.lemma
+// 2. Lexeme.contexts changed from array to object
+// 3. lexemeIndex re-keyed with new hashing function to differentiate =archive and =archive
+export const SCHEMA_LEMMA = 8
+export const SCHEMA_LATEST = 8
 
 // store the empty string as a non-empty token in firebase since firebase does not allow empty child records
 // See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase

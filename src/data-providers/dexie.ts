@@ -4,6 +4,7 @@ import _ from 'lodash'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import LexemeDb, { fromLexemeDb, toLexemeDb } from '../@types/LexemeDb'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
@@ -26,7 +27,7 @@ import win from './win'
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
   thoughtIndex: Dexie.Table<ThoughtWithChildren, string>
-  lexemeIndex: Dexie.Table<Lexeme, string>
+  lexemeIndex: Dexie.Table<LexemeDb, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
   logs: Dexie.Table<Log, number>
@@ -137,22 +138,25 @@ const initDB = async () => {
 /** Clears all thoughts and contexts from the indices. */
 export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.thoughtIndex.clear(), db.helpers.clear()])
 
-/** Updates a single thought in the lexemeIndex. */
-export const updateLexeme = async (id: string, thought: Lexeme) =>
+/** Updates a single lexeme in the lexemeIndex. */
+export const updateLexeme = async (id: string, lexeme: Lexeme) =>
   db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    return db.lexemeIndex.put({ id, ...thought, updatedBy: getSessionId() })
+    return db.lexemeIndex.put({ id, ...toLexemeDb(lexeme), updatedBy: getSessionId() })
   })
 
-/** Updates multiple thoughts in the lexemeIndex. */
-export const updateLexemeIndex = async (lexemeIndexMap: Index<Lexeme | null>) =>
+/** Updates multiple lexemes in the lexemeIndex. */
+export const updateLexemeIndex = async (lexemeIndexMap: Index<Lexeme>) =>
   db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    const thoughtsArray = Object.keys(lexemeIndexMap).map(key => ({
-      ...(lexemeIndexMap[key] as Lexeme),
-      updatedBy: getSessionId(),
-      id: key,
-    }))
+    const thoughtsArray = Object.keys(lexemeIndexMap).map(
+      key =>
+        ({
+          ...toLexemeDb(lexemeIndexMap[key]),
+          updatedBy: getSessionId(),
+          id: key,
+        } as LexemeDb),
+    )
     return db.lexemeIndex.bulkPut(thoughtsArray)
   })
 
@@ -164,10 +168,12 @@ export const deleteLexeme = (id: string) =>
   })
 
 /** Gets a single thought from the lexemeIndex by its id. */
-export const getLexemeById = (key: string) => db.lexemeIndex.get(key)
+export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
+  db.lexemeIndex.get(key).then(fromLexemeDb)
 
 /** Gets multiple thoughts from the lexemeIndex by ids. */
-export const getLexemesByIds = (keys: string[]) => db.lexemeIndex.bulkGet(keys)
+export const getLexemesByIds = (keys: string[]) =>
+  db.lexemeIndex.bulkGet(keys).then(lexemes => lexemes.map(fromLexemeDb))
 
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (
@@ -291,7 +297,7 @@ export const fullTextSearch = async (value: string) => {
       words.map(word => db.thoughtWordsIndex.where('words').startsWithIgnoreCase(word).primaryKeys()),
     )
     const intersectionKeys = matchedKeysArray.reduce((acc, keys) => acc.filter(key => keys.includes(key)))
-    return db.lexemeIndex.bulkGet(intersectionKeys)
+    return db.lexemeIndex.bulkGet(intersectionKeys).then(lexemes => lexemes.map(fromLexemeDb))
   })
 
   return lexemes

@@ -3,6 +3,7 @@ import { Dispatch } from 'react'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import LexemeDb, { fromLexemeDb, toLexemeDb } from '../@types/LexemeDb'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -35,16 +36,7 @@ export interface FirebaseChangeHandlers {
 }
 
 // Firebase omits empty arrays and objects, so account for that in the type.
-type FirebaseLexeme = Omit<Lexeme, 'contexts'> & { contexts?: ThoughtId[] }
 type FirebaseThought = Omit<ThoughtWithChildren, 'children'> & { children?: Index<Thought> }
-
-/** Converts a FirebaseLexeme to a proper Lexeme by ensuring contexts is defined. Firebase omits empty arrays. */
-const lexemeFromFirebase = (firebaseLexeme?: FirebaseLexeme): Lexeme | undefined =>
-  firebaseLexeme?.contexts
-    ? (firebaseLexeme as Lexeme)
-    : firebaseLexeme
-    ? { ...firebaseLexeme, contexts: [] }
-    : undefined
 
 /** Converts a FirebaseThought to a proper Thought by ensuring childrenMap is defined. Firebase omits empty objects. */
 const thoughtFromFirebase = (firebaseThought?: FirebaseThought): Thought | undefined =>
@@ -69,11 +61,11 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Gets the Lexeme object by id. */
   async getLexemeById(key: string): Promise<Lexeme | undefined> {
     const userRef = getUserRef(state)
-    const ref = userRef!.child('lexemeIndex').child<FirebaseLexeme>(key)
+    const ref = userRef!.child('lexemeIndex').child<LexemeDb>(key)
     return new Promise(resolve =>
-      ref.once('value', (snapshot: Firebase.Snapshot<FirebaseLexeme>) => {
+      ref.once('value', (snapshot: Firebase.Snapshot<LexemeDb>) => {
         const val = snapshot.val()
-        resolve(lexemeFromFirebase(val))
+        resolve(fromLexemeDb(val))
       }),
     )
   },
@@ -81,9 +73,9 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   async getLexemesByIds(keys: string[]): Promise<(Lexeme | undefined)[]> {
     const userRef = getUserRef(state)
     const snapshots = await Promise.all(
-      keys.map(key => userRef?.child('lexemeIndex').child<FirebaseLexeme>(key).once('value')),
+      keys.map(key => userRef?.child('lexemeIndex').child<LexemeDb>(key).once('value')),
     )
-    return snapshots.map(snapshot => lexemeFromFirebase(snapshot?.val()))
+    return snapshots.map(snapshot => fromLexemeDb(snapshot?.val()))
   },
 
   /**
@@ -171,7 +163,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Updates a Lexeme in the lexemeIndex. */
   async updateLexeme(id: string, lexeme: Lexeme): Promise<unknown> {
     return this.update({
-      ['lexemeIndex/' + id]: lexeme,
+      ['lexemeIndex/' + id]: toLexemeDb(lexeme),
     })
   },
 
@@ -198,7 +190,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   async updateLexemeIndex(lexemeIndex: Index<Lexeme>): Promise<unknown> {
     return this.update(
       keyValueBy(Object.entries(lexemeIndex), ([key, lexeme]) => ({
-        ['lexemeIndex/' + key]: lexeme,
+        ['lexemeIndex/' + key]: toLexemeDb(lexeme),
       })),
     )
   },
