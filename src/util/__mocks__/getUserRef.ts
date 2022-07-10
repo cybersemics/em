@@ -17,15 +17,18 @@ global.clearMockFirebaseStore = () => {
 }
 
 /** Mock ref that uses the mock firebase store. */
-const ref = (path: string) => ({
-  child: (key: string) => ref(`${path}/${key}`),
+const ref = (refPath: string) => ({
+  child: (key: string) => ref(`${refPath}/${key}`),
   once: (name: string, cb?: (snapshot: Firebase.Snapshot) => void) => {
-    const result = wrapSnapshot(_.get(firebaseStore, path))
+    const result = wrapSnapshot(_.get(firebaseStore, refPath.split('/')))
     return Promise.resolve(cb ? cb(result) : result) as Promise<Firebase.Snapshot<any>>
   },
   update: (updates: Index<any>, cb: (err: Error | null, ...args: any[]) => void) => {
     Object.entries(updates).forEach(([key, value]) => {
-      _.set(firebaseStore, `${path}/${key}`, value)
+      // split path on '/' since lodash get/set does not support the '/' delimiter (dot notation would also work)
+      // join the key since it may also contain path segments
+      const path = `${refPath}/${key}`.split('/')
+      _.set(firebaseStore, path, value)
     })
     cb(null)
   },
@@ -35,4 +38,5 @@ const ref = (path: string) => ({
 /**
  * Mock getUserRef.
  */
-export const getUserRef = () => ref('users/12345')
+// NOTE: Mock user id must not start with a number, as lodash will try to create an array instead of an object
+export const getUserRef = () => ref('users/abcde')

@@ -47,6 +47,10 @@ const thoughtFromFirebase = (firebaseThought?: FirebaseThought): Thought | undef
       } as Thought)
     : undefined
 
+/** Generate separate update keys for each property on an object. Allows diff update instead of effectively a put. */
+const flattenUpdate = <T>(key: string, obj: Index<T>): Index<T> =>
+  keyValueBy(obj, (prop, value) => ({ [`${key}/${prop}`]: value }))
+
 /**
  * Get all firebase related functions as an object.
  */
@@ -129,10 +133,20 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
     // if children property is missing from any thoughtIndex update, break up the update into a separate key for each thought property
     // otherwise remote thought will be overwritten with no children
     const updatesWithOptionalChildren = keyValueBy(updates, (key, update) =>
-      key.startsWith('thoughtIndex/') && !update.children
-        ? keyValueBy(update, (thoughtKey, thoughtValue) => ({ [`${key}/${thoughtKey}`]: thoughtValue }))
-        : { [key]: update },
+      // thoughtIndex updates
+      key.startsWith('thoughtIndex/')
+        ? // flatten children updates
+          update.children
+          ? {
+              [key]: _.omit(update, 'children'),
+              ...flattenUpdate(`${key}/children`, update.children),
+            }
+          : // or flatten update itself if children are missing completely (otherwise remote children will be deleted)
+            flattenUpdate(key, update)
+        : // all other updates
+          { [key]: update },
     )
+
     return new Promise((resolve, reject) => {
       userRef!.update(updatesWithOptionalChildren, (err: Error | null, ...args: any[]) => {
         if (err) {

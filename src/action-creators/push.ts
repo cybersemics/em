@@ -183,7 +183,8 @@ const push =
     // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
     const thoughtIndexUpdatesNotPending = _.pickBy(thoughtIndexUpdates, thought => !thought?.pending)
 
-    // update the inline children of each thought's parents
+    // include the parents of the updated thoughts, since their inline children will be updated
+    // converting childrenMap to children occurs in pushLocal and pushRemote
     // TODO: This can be done more efficiently if it is only updated if the parent children have changed
     // we can tell if a thought is deleted, but unfortunately we cannot tell if a thought has been added vs edited since state is already updated
     // may need to do a deep comparison of parent's old and new children
@@ -191,18 +192,9 @@ const push =
       thoughtIndexUpdatesNotPending,
       (id, thoughtUpdate) => {
         // update inline children if a thought is added or deleted
-        const parentThought = thoughtUpdate && getThoughtById(state, thoughtUpdate.parentId)
+        const parentThought = thoughtUpdate ? getThoughtById(state, thoughtUpdate.parentId) : null
         return {
-          ...(parentThought
-            ? {
-                [parentThought.id]: {
-                  ...parentThought,
-                  children: keyValueBy(getAllChildrenAsThoughts(state, parentThought.id), child => ({
-                    [child.id]: childToDb(child),
-                  })),
-                },
-              }
-            : null),
+          ...(parentThought ? { [parentThought.id]: parentThought } : null),
           [id]: thoughtUpdate,
         }
       },
