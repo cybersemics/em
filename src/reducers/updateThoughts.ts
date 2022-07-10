@@ -148,7 +148,7 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
-    const rootThought = thoughtIndex[HOME_TOKEN] as Thought | null
+    const rootThought = thoughtIndexUpdates[HOME_TOKEN] || (thoughtIndex[HOME_TOKEN] as Thought | null)
     const thoughtsLoaded =
       rootThought &&
       !rootThought.pending &&

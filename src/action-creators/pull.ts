@@ -94,15 +94,22 @@ const pull =
       thoughtLocalChunks.push(thoughtsChunk)
 
       // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
+      const { autologin, isLoading, status } = getState()
       dispatch(
         updateThoughts({
           thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
           lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
           local: false,
           remote: false,
-          // if the root is in the pathMap, force isLoading: false
-          // otherwise isLoading will not be automatically unset by updateThoughts if the root context is empty
-          ...(HOME_TOKEN in filteredThoughtIds ? { isLoading: false } : null),
+          // If the app is loading and the root is successfully pulled, set isLoading: false.
+          // Otherwise isLoading will not be automatically unset by updateThoughts if the root thought has no children.
+          // However, if Firebase is disconnected and the root thought does not exist in IndexedDB, we need to wait for Firebase to load.
+          // If the root does not exist in IndexedDB or Firebase (i.e. neither of these blocks get called to set isLoading: false), the final updateThoughts at the end of pull will set isLoading: false.
+          ...(isLoading &&
+          !(autologin && (status === 'disconnected' || status === 'connecting')) &&
+          filteredThoughtIds.includes(HOME_TOKEN)
+            ? { isLoading: false }
+            : null),
         }),
       )
 
@@ -167,9 +174,10 @@ const pull =
 
     const homeThought = getThoughtById(stateNew, HOME_TOKEN)
     if (
-      thoughtIds.includes(HOME_TOKEN) &&
       Object.keys(pendingThoughts).length === 0 &&
-      isPending(stateNew, homeThought)
+      isPending(stateNew, homeThought) &&
+      !(stateNew.autologin && (status === 'disconnected' || status === 'connecting')) &&
+      thoughtIds.includes(HOME_TOKEN)
     ) {
       dispatch(
         updateThoughts({

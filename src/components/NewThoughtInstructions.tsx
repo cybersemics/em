@@ -21,12 +21,27 @@ if (!newThoughtShortcut) {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
+const mapStateToProps = (state: State, props: NewThoughtInstructionsProps) => {
   const { isLoading, status } = state
 
   return {
-    localLoading: isLoading,
-    status,
+    /*
+      Determining when to show the loader is nontrivial due to many loading states of local and remote, Firebase connection and authentication status, and pending thoughts.
+
+      Some cases:
+      - Load from empty local and empty remote
+      ✗ Load from empty local and full remote (first time login)
+      - Load from empty local and full remote (cleared local)
+      - Load from full local and full remote
+
+      Currently first time login is the only case that is broken. NewThoughtInstructions is incorrectly shown while loading after login.
+      state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and NewThoughtInstructions.
+
+      Related:
+      - https://github.com/cybersemics/em/issues/1344
+      - https://github.com/cybersemics/em/pull/1345
+    */
+    showLoader: props.childrenLength === 0 && (isLoading || status === 'connecting' || status === 'loading'),
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 0),
   }
 }
@@ -45,18 +60,15 @@ const CenteredLoadingEllipsis = () => (
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
   childrenLength,
-  localLoading,
+  showLoader,
   isTutorial,
-  status,
   tutorialStep,
 }) => {
-  const remoteLoading = status === 'connecting' || status === 'loading'
-
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
   return (
     <div className='new-thought-instructions'>
-      {(localLoading || remoteLoading) && childrenLength === 0 ? (
+      {showLoader ? (
         // show loading ellipsis when loading
         <CenteredLoadingEllipsis />
       ) : // tutorial no children
