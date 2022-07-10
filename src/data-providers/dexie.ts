@@ -86,14 +86,6 @@ interface ThoughtWordsIndex {
 
 export const db = new Dexie('EM') as EM
 
-/** Initializes the EM record where helpers are stored. */
-const initHelpers = async () => {
-  const staticHelpersExist = await db.helpers.get({ id: 'EM' })
-  if (!staticHelpersExist) {
-    await db.helpers.add({ id: 'EM' })
-  }
-}
-
 /** Initializes the database tables. */
 const initDB = async () => {
   if (!db.isOpen()) {
@@ -136,7 +128,22 @@ const initDB = async () => {
     })
   }
 
-  await initHelpers()
+  // sometimes IndexedDB becomes frozen and all database queries hang
+  // db.helpers.get is the first query to IndexedDB
+  // detect the frozen state and throw
+  const timeout = new Promise((resolve, reject) =>
+    setTimeout(() => {
+      reject(
+        new Error(
+          'IndexedDB is not responding. Try refreshing the app. If that does not work, try clearing local storage and restarting your browser.',
+        ),
+      )
+    }, 2000),
+  )
+  const staticHelpersExist = await Promise.race([timeout, db.helpers.get({ id: 'EM' })])
+  if (!staticHelpersExist) {
+    await db.helpers.add({ id: 'EM' })
+  }
 }
 
 /** Clears all thoughts and contexts from the indices. */
