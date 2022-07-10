@@ -530,6 +530,14 @@ const table = new Table({
     ['Total Lexemes (before)', 'Total number of lexemes before any repairs', numLexemesStart],
     ['Total Lexemes (after)', 'Total number of lexemes after repairs', Object.keys(db.lexemeIndex).length],
     [],
+    // repair metrics are given in the order that they are executed
+    ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
+    ['lexemeMissing', color(lexemeMissing)(`Missing Lexemes reconstructed`), color(lexemeMissing)()],
+    [
+      'thoughtMissingFromChildren',
+      color(thoughtMissingFromChildren)(`Thoughts missing from parent's inline children repaired`),
+      color(thoughtMissingFromChildren)(),
+    ],
     [
       'childrenWithMissingThoughtRepaired',
       color(childrenWithMissingThoughtRepaired)(`Children missing from thoughtIndex repaired`),
@@ -541,43 +549,36 @@ const table = new Table({
       color(childrenInMultipleThoughts)(),
     ],
     [
+      'parentIdRepaired',
+      color(parentIdRepaired)(`Child parentId repaired to actual parent thought`),
+      color(parentIdRepaired)(),
+    ],
+    [
       'duplicateSiblingsMerged',
       color(duplicateSiblingsMerged)(`Duplicate siblings merged`),
       color(duplicateSiblingsMerged)(),
+    ],
+    ['unreachableThoughts', color(unreachableThoughts)(`Unreachable thoughts`), color(unreachableThoughts)()],
+    [
+      'lexemeContextsMissing',
+      color(lexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
+      color(lexemeContextsMissing)(),
     ],
     [
       'lexemeContextsMoved',
       color(lexemeContextsMoved)(`Lexeme contexts moved to the correct Lexeme`),
       color(lexemeContextsMoved)(),
     ],
-    ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
       'lexemeContextsInvalid',
       color(lexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
       color(lexemeContextsInvalid)(),
     ],
-    [
-      'lexemeContextsMissing',
-      color(lexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
-      color(lexemeContextsMissing)(),
-    ],
-    ['lexemeMissing', color(lexemeMissing)(`Missing Lexemes reconstructed`), color(lexemeMissing)()],
+    ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
       'missingGrandchildrenMissing',
       color(missingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
       color(missingGrandchildrenMissing)(),
-    ],
-    ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
-    [
-      'parentIdRepaired',
-      color(parentIdRepaired)(`Child parentId repaired to actual parent thought`),
-      color(parentIdRepaired)(),
-    ],
-    ['unreachableThoughts', color(unreachableThoughts)(`Unreachable thoughts`), color(unreachableThoughts)()],
-    [
-      'thoughtMissingFromChildren',
-      color(thoughtMissingFromChildren)(`Thoughts missing from parent's inline children repaired`),
-      color(thoughtMissingFromChildren)(),
     ],
   ],
 } as any)
