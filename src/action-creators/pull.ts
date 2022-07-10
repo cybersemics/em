@@ -182,7 +182,6 @@ const pull =
       dispatch(
         updateThoughts({
           thoughtIndexUpdates: {
-            ...stateNew.thoughts.thoughtIndex,
             [HOME_TOKEN]: {
               ...stateNew.thoughts.thoughtIndex[HOME_TOKEN],
               pending: false,
