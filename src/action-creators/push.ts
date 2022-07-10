@@ -133,26 +133,24 @@ const pushRemote =
     )
 
     // add updates to queue appending clientId and timestamp
-    const allUpdates = {
-      // encode keys for firebase
-      ...(hasUpdates
-        ? {
-            ...updates,
-            ...prependedDataUpdates,
-            ...prependedThoughtIndexUpdates,
-            ...(recentlyEdited ? { recentlyEdited } : null),
-            // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
-            // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
-            // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-            ...(Object.keys(lexemeIndexUpdates).length > 0
-              ? {
-                  lastClientId: clientId,
-                  lastUpdated: timestamp(),
-                }
-              : null),
-          }
-        : {}),
-    }
+    // type of Index<any> because updates are flat, e.g. thoughtIndex/qlr99ebU6zau5s8JVZIam/children, so the type of the value depends on the type at that key
+    const allUpdates: Index<any> = hasUpdates
+      ? {
+          ...updates,
+          ...prependedDataUpdates,
+          ...prependedThoughtIndexUpdates,
+          ...(recentlyEdited ? { recentlyEdited } : null),
+          // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
+          // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
+          // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
+          ...(Object.keys(lexemeIndexUpdates).length > 0
+            ? {
+                lastClientId: clientId,
+                lastUpdated: timestamp(),
+              }
+            : null),
+        }
+      : {}
 
     if (Object.keys(allUpdates).length > 0) {
       return getFirebaseProvider(state, dispatch)
@@ -189,23 +187,26 @@ const push =
     // TODO: This can be done more efficiently if it is only updated if the parent children have changed
     // we can tell if a thought is deleted, but unfortunately we cannot tell if a thought has been added vs edited since state is already updated
     // may need to do a deep comparison of parent's old and new children
-    const thoughtIndexUpdatesWithParents = keyValueBy(thoughtIndexUpdatesNotPending, (id, thoughtUpdate) => {
-      // update inline children if a thought is added or deleted
-      const parentThought = thoughtUpdate && getThoughtById(state, thoughtUpdate.parentId)
-      return {
-        ...(parentThought
-          ? {
-              [parentThought.id]: {
-                ...parentThought,
-                children: keyValueBy(getAllChildrenAsThoughts(state, parentThought.id), child => ({
-                  [child.id]: childToDb(child),
-                })),
-              },
-            }
-          : null),
-        [id]: thoughtUpdate,
-      }
-    })
+    const thoughtIndexUpdatesWithParents = keyValueBy<Thought | null, Thought | null>(
+      thoughtIndexUpdatesNotPending,
+      (id, thoughtUpdate) => {
+        // update inline children if a thought is added or deleted
+        const parentThought = thoughtUpdate && getThoughtById(state, thoughtUpdate.parentId)
+        return {
+          ...(parentThought
+            ? {
+                [parentThought.id]: {
+                  ...parentThought,
+                  children: keyValueBy(getAllChildrenAsThoughts(state, parentThought.id), child => ({
+                    [child.id]: childToDb(child),
+                  })),
+                },
+              }
+            : null),
+          [id]: thoughtUpdate,
+        }
+      },
+    )
 
     // store the hashes of the localStorage Settings contexts for quick lookup
     // settings that are propagated to localStorage for faster load on startup

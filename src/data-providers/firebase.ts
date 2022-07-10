@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { Dispatch } from 'react'
-import DatabaseUpdates from '../@types/DatabaseUpdates'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -125,13 +124,20 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Updates Firebase data. */
-  async update(updates: DatabaseUpdates) {
+  async update(updates: Index<any>) {
     const userRef = getUserRef(state)
+    // if children property is missing from any thoughtIndex update, break up the update into a separate key for each thought property
+    // otherwise remote thought will be overwritten with no children
+    const updatesWithOptionalChildren = keyValueBy(updates, (key, update) =>
+      key.startsWith('thoughtIndex/') && !update.children
+        ? keyValueBy(update, (thoughtKey, thoughtValue) => ({ [`${key}/${thoughtKey}`]: thoughtValue }))
+        : { [key]: update },
+    )
     return new Promise((resolve, reject) => {
-      userRef!.update(updates, (err: Error | null, ...args: any[]) => {
+      userRef!.update(updatesWithOptionalChildren, (err: Error | null, ...args: any[]) => {
         if (err) {
           dispatch(error({ value: err.message }))
-          console.error(err, updates)
+          console.error(err, updatesWithOptionalChildren)
           reject(err)
         } else {
           resolve(args)
@@ -147,6 +153,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
       ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
         'id',
         'value',
+        // TODO: This won't work as written. You need to separate out each thought property into a separate key in the updates object
         // do not save children if any are pending
         // pending thoughts should never be persisted
         // since this is an update rather than a set, the thought will retain any children it already has in the database
