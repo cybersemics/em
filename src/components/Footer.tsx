@@ -79,13 +79,7 @@ const Footer = () => {
             <span className='dim'>Status: </span>
             <span
               className={
-                status === 'offline'
-                  ? 'dim'
-                  : !isPushQueueEmpty && !isPushing
-                  ? 'error'
-                  : status === 'loaded'
-                  ? 'online'
-                  : undefined
+                status === 'offline' ? 'dim' : status === 'loading' || status === 'loaded' ? 'online' : undefined
               }
             >
               {
