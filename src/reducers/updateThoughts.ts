@@ -5,6 +5,7 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
@@ -133,17 +134,19 @@ const updateThoughts = (
         }, {})
       : {}
 
-  // When a thought is moved, it needs to be removed from its old parent's inline children.
-  // TODO: Wouldn't we need to do the same thing for grandparent's inline children's childrenMap?
+  // When a thought is deleted or moved, it needs to be removed from its old parent's inline children.
   // Unfortunately, neither push nor firebase have access to the old parent, so we need to construct the updates here.
-  // This causes inline children to leak into updateThoughts, which is not ideal.
+  // This causes inline children to leak into updateThoughts, which is not ideal architecturally.
   // Consider this a provisional solution that should be replaced. If it is not replaced entirely by a 3rd party sync-capable db, then we may need PushBatch to contain diffs and update types (move, edit, delete) rather than just synchronic updates.
   const inlineChildrenDeletes = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
-    if (!thoughtUpdate) return null
-    const thoughtOld = getThoughtById(state, thoughtUpdate.id)
-    return thoughtOld &&
-      thoughtOld.parentId !== thoughtUpdate.parentId &&
-      state.thoughts.thoughtIndex[thoughtOld.parentId]
+    const thoughtOld = getThoughtById(state, id as ThoughtId)
+    const parentOld = thoughtOld ? getThoughtById(state, thoughtOld.parentId) : null
+    const parentNew = thoughtOld ? thoughtIndex[thoughtOld.parentId] : null
+
+    // on delete or move, delete the thought from its parent's inline children
+    const isDelete = !thoughtUpdate
+    const isMove = thoughtOld && parentOld && thoughtOld.parentId !== thoughtUpdate?.parentId
+    return parentNew && (isDelete || isMove)
       ? {
           [`thoughtIndex/${thoughtOld.parentId}/children/${id}`]: null,
         }
