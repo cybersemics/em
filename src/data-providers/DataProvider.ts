@@ -13,6 +13,14 @@ export interface DataProvider {
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
   getThoughtWithChildren: (id: ThoughtId) => Promise<{ thought: Thought; children: Index<Thought> } | undefined>
+  update?: (updates: Index<any>) => Promise<unknown>
+  updateThoughts?: (
+    thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
+    lexemeIndexUpdates: Index<Lexeme | null>,
+    schemaVersion: number,
+  ) => Promise<unknown>
+
+  // testing only
   updateLexeme: (id: string, thought: Lexeme) => Promise<unknown>
   updateThought: (id: ThoughtId, thoughtWithChildren: ThoughtWithChildren) => Promise<unknown>
   updateLexemeIndex: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
