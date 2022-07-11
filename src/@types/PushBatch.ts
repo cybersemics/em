@@ -16,7 +16,8 @@ interface PushBatch {
   recentlyEdited?: RecentlyEditedTree
   remote?: boolean
   thoughtIndexUpdates: Index<Thought | null>
-  updates?: Index<string>
+  // arbitrary updates: use with caution!
+  updates?: Index<any>
 }
 
 export default PushBatch

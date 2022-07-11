@@ -38,7 +38,7 @@ const pushLocal = (
   recentlyEdited: Index,
   updates: Index = {},
   localStorageSettingsContexts: Index<string>,
-): Promise<any> => {
+): Promise<unknown> => {
   const updatedThoughtIndex = {
     ...state.thoughts.thoughtIndex,
     ...thoughtIndexUpdates,
@@ -93,7 +93,7 @@ const pushRemote =
       Object.keys(updates).length > 0
 
     // prepend lexemeIndex/ and encode key
-    const prependedDataUpdates = _.transform(
+    const prependedLexemeUpdates = _.transform(
       lexemeIndexUpdates,
       (accum, lexemeUpdate, key) => {
         if (!key) {
@@ -108,26 +108,23 @@ const pushRemote =
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
         const children = thoughtUpdate ? getAllChildrenAsThoughts(state, thoughtUpdate.id) : []
-        const hasPendingChildren = children.some(child => child.pending)
+        const nonPendingChildren = children.filter(child => !child.pending)
         const thoughtWithChildren: Partial<ThoughtWithChildren> | null = thoughtUpdate
           ? {
               ...thoughtToDb(thoughtUpdate),
-              ...(!hasPendingChildren
-                ? {
-                    children: keyValueBy(children, child => ({
-                      [child.id]: childToDb(child),
-                    })),
-                  }
-                : null),
+              // only update non-pending children
+              // firebaseProvider.update will flatten the children updates to avoid overwriting existing children
+              // this can be made more efficient by only updating the children have changed
+              children: keyValueBy(nonPendingChildren, child => ({
+                [child.id]: childToDb(child),
+              })),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
               updatedBy: thoughtUpdate.updatedBy || getSessionId(),
               ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
             }
           : null
-        // const parentWithChildren
 
         accum[`thoughtIndex/${id}`] = thoughtWithChildren || null
-        // accum[`thoughtIndex/${parentId}`] = parentWithChildren || null
       },
       {} as Index<Partial<ThoughtWithChildren> | null>,
     )
@@ -137,7 +134,7 @@ const pushRemote =
     const allUpdates: Index<any> = hasUpdates
       ? {
           ...updates,
-          ...prependedDataUpdates,
+          ...prependedLexemeUpdates,
           ...prependedThoughtIndexUpdates,
           ...(recentlyEdited ? { recentlyEdited } : null),
           // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)

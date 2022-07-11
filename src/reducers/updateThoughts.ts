@@ -10,6 +10,7 @@ import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import keyValueBy from '../util/keyValueBy'
 import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
@@ -132,16 +133,36 @@ const updateThoughts = (
         }, {})
       : {}
 
+  // When a thought is moved, it needs to be removed from its old parent's inline children.
+  // TODO: Wouldn't we need to do the same thing for grandparent's inline children's childrenMap?
+  // Unfortunately, neither push nor firebase have access to the old parent, so we need to construct the updates here.
+  // This causes inline children to leak into updateThoughts, which is not ideal.
+  // Consider this a provisional solution that should be replaced. If it is not replaced entirely by a 3rd party sync-capable db, then we may need PushBatch to contain diffs and update types (move, edit, delete) rather than just synchronic updates.
+  const inlineChildrenDeletes = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
+    if (!thoughtUpdate) return null
+    const thoughtOld = getThoughtById(state, thoughtUpdate.id)
+    return thoughtOld &&
+      thoughtOld.parentId !== thoughtUpdate.parentId &&
+      state.thoughts.thoughtIndex[thoughtOld.parentId]
+      ? {
+          [`thoughtIndex/${thoughtOld.parentId}/children/${id}`]: null,
+        }
+      : null
+  })
+
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
     lexemeIndexUpdates,
-    thoughtIndexUpdates,
-    recentlyEdited: recentlyEditedNew,
-    updates,
-    pendingDeletes,
     local,
-    remote,
+    pendingDeletes,
     pendingLexemes,
+    recentlyEdited: recentlyEditedNew,
+    remote,
+    thoughtIndexUpdates: thoughtIndexUpdates,
+    updates: {
+      ...updates,
+      ...inlineChildrenDeletes,
+    },
   }
 
   logWithTime('updateThoughts: merge pushQueue')

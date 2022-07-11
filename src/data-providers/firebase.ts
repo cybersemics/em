@@ -12,6 +12,7 @@ import ThoughtSubscriptionUpdates from '../@types/ThoughtSubscriptionUpdates'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import error from '../action-creators/error'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
+import filterObject from '../util/filterObject'
 import { getUserRef } from '../util/getUserRef'
 import hashThought from '../util/hashThought'
 import keyValueBy from '../util/keyValueBy'
@@ -130,19 +131,16 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /** Updates Firebase data. */
   async update(updates: Index<any>) {
     const userRef = getUserRef(state)
-    // if children property is missing from any thoughtIndex update, break up the update into a separate key for each thought property
-    // otherwise remote thought will be overwritten with no children
     const updatesWithOptionalChildren = keyValueBy(updates, (key, update) =>
-      // thoughtIndex updates
-      key.startsWith('thoughtIndex/')
-        ? // flatten children updates
-          update.children
-          ? {
-              [key]: _.omit(update, 'children'),
-              ...flattenUpdate(`${key}/children`, update.children),
-            }
-          : // or flatten update itself if children are missing completely (otherwise remote children will be deleted)
-            flattenUpdate(key, update)
+      // thoughtIndex updates and inlineChildrenDeletes (See: updateThoughts)
+      key.startsWith('thoughtIndex/') && update
+        ? {
+            // Flatten the thought children updates. This will break them up into a separate key for each thought property to avoid overwriting existing children.
+            // Flatten the thought update to avoid a Firebase error. Technically _.omit(update, 'children') ensures that there is no conflict, but Firebase does not recognize this and throws the error anyway.
+            // ERROR: Reference.update failed: First argument contains a path /thoughtIndex/__ROOT__ that is ancestor of another path /thoughtIndex/__ROOT__/children/-0ipw-Iw3ydTX5tPDu2wg
+            ...flattenUpdate(key, _.omit(update, 'children')),
+            ...flattenUpdate(`${key}/children`, update.children),
+          }
         : // all other updates
           { [key]: update },
     )
@@ -162,23 +160,16 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
 
   /** Updates a context in the thoughtIndex. */
   async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
-    const hasPendingChildren = Object.values(thoughtWithChildren.children).some(child => child.pending)
+    const nonPendingChildren = filterObject(thoughtWithChildren.children, (id, child) => !child.pending)
+    // pending thoughts should never be persisted
+    // since this is an update rather than a set, the thought will retain any children it already has in the database
+    // this can occur when editing an un-expanded thought whose children are still pending
+    // update will flatten the children into separate updates
     return this.update({
-      ['thoughtIndex/' + id]: _.pick(thoughtWithChildren, [
-        'id',
-        'value',
-        // TODO: This won't work as written. You need to separate out each thought property into a separate key in the updates object
-        // do not save children if any are pending
-        // pending thoughts should never be persisted
-        // since this is an update rather than a set, the thought will retain any children it already has in the database
-        // this can occur when editing an un-expanded thought whose children are still pending
-        ...(hasPendingChildren ? [] : ['children']),
-        'lastUpdated',
-        'parentId',
-        'rank',
-        'updatedBy',
-        'archived',
-      ]),
+      [`thoughtIndex/${id}`]: {
+        ...thoughtWithChildren,
+        children: nonPendingChildren,
+      },
     })
   },
 
