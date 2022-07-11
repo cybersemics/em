@@ -141,6 +141,8 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
             ...flattenUpdate(key, _.omit(update, 'children')),
             ...flattenUpdate(`${key}/children`, update.children),
           }
+        : key.startsWith('lexemeIndex/') && update
+        ? { [key]: toLexemeDb(update) }
         : // all other updates
           { [key]: update },
     )
