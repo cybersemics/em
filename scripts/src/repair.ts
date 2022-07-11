@@ -45,11 +45,11 @@ let unreachableThoughts = 0
 const args = minimist(process.argv.slice(2))
 const file = args._[0]
 if (!file) {
-  console.error('Usage: npm run repair -- db.json [--dry]')
+  console.error('Usage: npm run repair -- db.json [-w]')
   process.exit(1)
 }
 
-if (args.dry) {
+if (!args.w) {
   console.info('Executing dry-run')
 }
 
@@ -489,8 +489,6 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
 
 console.info('Adding missing Lexeme contexts')
 Object.values(db.thoughtIndex).forEach(thought => {
-  const parent = db.thoughtIndex[thought.parentId]
-  const children = Object.values(thought.children || {})
   const lexemeKey = hashThought(thought.value)
   const lexeme = db.lexemeIndex[lexemeKey]
   if (!lexeme.contexts) {
@@ -585,9 +583,9 @@ const table = new Table({
 
 console.info('\n' + table.toString())
 
-if (args.dry) {
-  console.info('\nWrite disabled')
-} else {
+if (args.w) {
   console.info('\nWriting db')
   fs.writeFileSync(file, JSON.stringify(db, null, 2))
+} else {
+  console.info('\nWrite disabled. Add -w to overwrite db.')
 }
