@@ -1,10 +1,11 @@
 import _ from 'lodash'
 import keyValueBy from '../util/keyValueBy'
+import Index from './IndexType'
 import Lexeme from './Lexeme'
 import ThoughtId from './ThoughtId'
 
 /** A Lexeme database type that defines contexts as an object to allow individual updates. */
-type LexemeDb = Omit<Lexeme, 'contexts'> & { contexts?: Record<ThoughtId, true> }
+type LexemeDb = Omit<Lexeme, 'contexts'> & { contexts?: Index<true> }
 
 /** Converts a Lexeme to a LexemeDb. */
 export const toLexemeDb = (lexeme: Lexeme): LexemeDb =>

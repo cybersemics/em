@@ -294,7 +294,10 @@ Object.values(db.thoughtIndex).forEach(thought => {
     if (childrenTouched[child.id]) {
       db.thoughtIndex[child.id].parentId = childrenTouched[child.id].parentId
       delete thought.children![child.id]
-      delete parent?.children?.[thought.id]?.childrenMap?.[isAttribute(child.value) ? child.value : child.id]
+      const inlineChildrenMap = parent?.children?.[thought.id]?.childrenMap
+      if (inlineChildrenMap) {
+        delete inlineChildrenMap[isAttribute(child.value) ? child.value : child.id]
+      }
       childrenInMultipleThoughts++
     }
     // repair child.parentId
@@ -334,10 +337,10 @@ while (stack.length > 0) {
           delete thought.children![duplicateChild.id]
 
           // delete from parent's inline children childrenMap
-          const parent = db.thoughtIndex[thought.parentId]
-          delete parent?.children?.[thought.id]?.childrenMap?.[
-            isAttribute(duplicateChild.value) ? duplicateChild.value : duplicateChild.id
-          ]
+          const inlineChildrenMap = db.thoughtIndex[thought.parentId]?.children?.[thought.id]?.childrenMap
+          if (inlineChildrenMap) {
+            delete inlineChildrenMap[isAttribute(duplicateChild.value) ? duplicateChild.value : duplicateChild.id]
+          }
 
           // move children to existing thought
           // duplicate children will be merged in the next iteration
@@ -359,10 +362,10 @@ while (stack.length > 0) {
 
           // update Lexeme contexts
           const lexemeKey = hashThought(duplicateThought.value)
-          const lexeme = db.lexemeIndex[lexemeKey]
+          const lexeme = db.lexemeIndex[lexemeKey] as LexemeDb
           // if Lexeme is missing, it will be reconstructed in the next step
           if (lexeme?.contexts) {
-            delete (lexeme.contexts as any)[duplicateThought.id]
+            delete lexeme.contexts[duplicateThought.id]
           }
 
           duplicateSiblingsMerged++
@@ -429,7 +432,7 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
 
     // remove contexts with missing thought
     if (!thought) {
-      ;(delete lexeme.contexts as any)?.[cxid]
+      delete lexeme.contexts![cxid]
       lexemeContextsMissing++
       return
     }
@@ -438,7 +441,7 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
 
 // assign thoughts to new Lexemes if their normalized value has changed with the new hash function
 Object.entries(db.lexemeIndex).forEach(([lexemeOldKey, lexemeOld]) => {
-  const ids = Object.keys(lexemeOld.contexts || {})
+  const ids = Object.keys(lexemeOld.contexts || {}) as ThoughtId[]
   ids.forEach(cxid => {
     const thought = db.thoughtIndex[cxid]
 
@@ -465,10 +468,12 @@ Object.entries(db.lexemeIndex).forEach(([lexemeOldKey, lexemeOld]) => {
       }
 
       // assign the thought to the new Lexeme
-      ;(lexemeNew.contexts as any)[cxid] = true
+      lexemeNew.contexts[cxid] = true
 
       // delete the context from the old Lexeme
-      delete (lexemeOld.contexts as any)[cxid]
+      if (lexemeOld.contexts) {
+        delete lexemeOld.contexts[cxid]
+      }
 
       lexemeContextsMoved++
     }
@@ -476,12 +481,13 @@ Object.entries(db.lexemeIndex).forEach(([lexemeOldKey, lexemeOld]) => {
 })
 
 Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
-  Object.keys(lexeme.contexts || {}).forEach(cxid => {
+  const contexts = Object.keys(lexeme.contexts || {})
+  contexts.forEach(cxid => {
     const thought = db.thoughtIndex[cxid]
 
     // remove contexts with normalized value that no longer matches Lexeme lemma
     if (normalizeThought(thought.value) !== lexeme.lemma) {
-      ;(delete lexeme.contexts as any)?.[cxid]
+      delete lexeme.contexts![cxid]
       lexemeContextsInvalid++
     }
   })
@@ -495,7 +501,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
     lexeme.contexts = {}
   }
   if (!(thought.id in lexeme.contexts)) {
-    ;(lexeme.contexts as any)[thought.id] = true
+    lexeme.contexts[thought.id] = true
     lexemeContextsAdded++
   }
 })

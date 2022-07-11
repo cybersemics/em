@@ -31,7 +31,7 @@ type FirebaseLexeme7 = FirebaseLexeme6
 type FirebaseLexeme8 = {
   id?: string
   lemma: string
-  contexts?: Record<ThoughtId, true>
+  contexts?: Index<true> // key is of type ThoughtId; Record type does not allow indexing.
   created: Timestamp
   lastUpdated: Timestamp
   updatedBy?: string
