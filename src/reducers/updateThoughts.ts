@@ -143,7 +143,8 @@ const updateThoughts = (
     const parentOld = thoughtOld ? getThoughtById(state, thoughtOld.parentId) : null
     const parentNew = thoughtOld ? thoughtIndex[thoughtOld.parentId] : null
 
-    // on delete or move, delete the thought from its parent's inline children
+    // On delete or move, delete the thought from its parent's inline children.
+    // If parentOld is deleted in another batch, it is possible to get a deletion update for a thought and a deletion update for its inline child at the same time, which will throw an error in firebase. This is handled downstream by the firebase provider, since we only have access to a single batch here.
     const isDelete = !thoughtUpdate
     const isMove = thoughtOld && parentOld && thoughtOld.parentId !== thoughtUpdate?.parentId
     return parentNew && (isDelete || isMove)

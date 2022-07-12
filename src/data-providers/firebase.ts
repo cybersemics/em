@@ -146,8 +146,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
           }
         : key.startsWith('lexemeIndex/') && update
         ? { [key]: toLexemeDb(update) }
-        : // all other updates
-          { [key]: update },
+        : { [key]: update },
     )
 
     return new Promise((resolve, reject) => {

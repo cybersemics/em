@@ -15,6 +15,7 @@ import getFirebaseProvider from '../data-providers/firebase'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import filterObject from '../util/filterObject'
 import { getUserRef } from '../util/getUserRef'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
@@ -218,6 +219,15 @@ const push =
       }
     }, {})
 
+    // inlineChildrenDeletes are passed from updateThoughts to here, but they are not not completely safe for firebase.
+    // If parentOld is deleted in another batch, it is possible to get a deletion update for a thought and a deletion update for its inline child at the same time, which will throw an error in firebase.
+    // This occur when collapseContext leads to merged duplicate ancestors.
+    // Remove inline children updates whose parents no longer exist
+    const updatesValidated = filterObject(updates, (key, value) => {
+      const idChildUpdate = key.match(/^thoughtIndex\/(.*)\/children/)?.[1]
+      return !idChildUpdate || !!thoughtIndexUpdates[idChildUpdate]
+    })
+
     return Promise.all([
       // push local
       local &&
@@ -226,7 +236,7 @@ const push =
           thoughtIndexUpdatesWithParents,
           lexemeIndexUpdates,
           recentlyEdited,
-          updates,
+          updatesValidated,
           localStorageSettingsContexts,
         ),
 
@@ -234,7 +244,12 @@ const push =
       remote &&
         authenticated &&
         userRef &&
-        pushRemote(thoughtIndexUpdatesWithParents, lexemeIndexUpdates, recentlyEdited, updates)(dispatch, getState),
+        pushRemote(
+          thoughtIndexUpdatesWithParents,
+          lexemeIndexUpdates,
+          recentlyEdited,
+          updatesValidated,
+        )(dispatch, getState),
     ])
   }
 
