@@ -12,7 +12,7 @@ export interface DataProvider {
   getLexemesByIds: (ids: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
-  getThoughtWithChildren: (id: ThoughtId) => Promise<{ thought: Thought; children: Index<Thought> } | undefined>
+  getThoughtWithChildren: (id: ThoughtId) => Promise<ThoughtWithChildren | undefined>
   update?: (updates: Index<any>) => Promise<unknown>
   updateThoughts?: (
     thoughtIndexUpdates: Index<ThoughtWithChildren | null>,

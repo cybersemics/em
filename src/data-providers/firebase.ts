@@ -99,23 +99,26 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   /**
    * Gets a Thought with its children. O(1).
    */
-  async getThoughtWithChildren(id: string): Promise<{ thought: Thought; children: Index<Thought> } | undefined> {
+  async getThoughtWithChildren(id: string): Promise<ThoughtWithChildren | undefined> {
     const userRef = getUserRef(state)
     const ref = userRef!.child('thoughtIndex').child<ThoughtWithChildren>(id)
     return new Promise(resolve =>
       ref.once('value', (snapshot: Firebase.Snapshot<ThoughtWithChildren | undefined>) => {
         const thoughtWithChildren = snapshot.val()
-        const children = keyValueBy(thoughtWithChildren?.children || {}, (key, child) => ({
-          // explicitly set childrenMap: {} because firebase does not store empty objects
-          [key]: child.childrenMap ? child : { ...child, childrenMap: {} },
-        }))
         resolve(
           thoughtWithChildren
-            ? {
-                thought: thoughtFromFirebase(thoughtWithChildren)!,
-                children,
+            ? // explicitly set children because firebase does not store empty objects
+              {
+                ...thoughtWithChildren,
+                children: keyValueBy(thoughtWithChildren.children || {}, (key, child) => ({
+                  [key]: {
+                    ...child,
+                    // explicitly set childrenMap because firebase does not store empty objects
+                    childrenMap: child.childrenMap || {},
+                  },
+                })),
               }
-            : undefined,
+            : thoughtWithChildren,
         )
       }),
     )

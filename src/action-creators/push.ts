@@ -45,12 +45,17 @@ const pushLocal = (
   }
   const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
     const thought = thoughtIndexUpdates[id]
+    const children = thought && getAllChildrenAsThoughts(state, thought.id)
     const thoughtWithChildren = thought
       ? ({
           ...thoughtToDb(thought),
-          children: keyValueBy(getAllChildrenAsThoughts(state, thought.id), child => ({
-            [child.id]: childToDb(child),
-          })),
+          ...(children
+            ? {
+                children: keyValueBy(children, child => ({
+                  [child.id]: childToDb(child),
+                })),
+              }
+            : null),
         } as ThoughtWithChildren)
       : null
 

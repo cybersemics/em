@@ -200,6 +200,15 @@ export const updateThought = async (
     // this can occur when editing an un-expanded thought whose children are still pending
     // More efficient, and hopefully removes the Dexie error: Transaction committed too early. See http://bit.ly/2kdckMn
     const thought = await db.thoughtIndex.get(id)
+    //   id,
+    //   value,
+    //   ...(!hasPendingChildren ? { children } : null),
+    //   lastUpdated,
+    //   parentId,
+    //   rank,
+    //   updatedBy: getSessionId(),
+    //   ...(archived ? { archived } : null),
+    // })
     /** Does a put if the thought does not exist, otherwise update. */
     const putOrUpdate = (changes: Partial<Thought>) =>
       thought ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
@@ -247,20 +256,8 @@ export const getThoughtById = async (id: string): Promise<Thought | undefined> =
 }
 
 /** Get a thought and its children. O(1). */
-export const getThoughtWithChildren = async (
-  id: string,
-): Promise<{ thought: Thought; children: Index<Thought> } | undefined> => {
-  const thoughtWithChildren: ThoughtWithChildren | undefined = await db.thoughtIndex.get(id)
-  return thoughtWithChildren
-    ? {
-        thought: {
-          ..._.omit(thoughtWithChildren, ['children']),
-          childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-        } as Thought,
-        children: thoughtWithChildren.children || {},
-      }
-    : undefined
-}
+export const getThoughtWithChildren = async (id: string): Promise<ThoughtWithChildren | undefined> =>
+  db.thoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => {

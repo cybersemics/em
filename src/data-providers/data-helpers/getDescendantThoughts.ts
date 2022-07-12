@@ -1,13 +1,16 @@
 // import { getSessionId } from '../../util/sessionManager'
+import _ from 'lodash'
 import Index from '../../@types/IndexType'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import ThoughtIndices from '../../@types/ThoughtIndices'
+import ThoughtWithChildren from '../../@types/ThoughtWithChildren'
 import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
+import { createChildrenMapFromThoughts } from '../../util/createChildrenMap'
 import filterObject from '../../util/filterObject'
 import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
@@ -74,6 +77,12 @@ const isMetaDescendant = (state: State, thought: Thought) =>
 const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
   !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
+/** Convert a ThoughtWithChildren to a Thought. */
+const toThought = (thoughtWithChildren: ThoughtWithChildren): Thought => ({
+  ..._.omit(thoughtWithChildren, 'children'),
+  childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+})
+
 /**
  * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.
  *
@@ -109,28 +118,32 @@ async function* getDescendantThoughts(
     // get thoughts from the cache or the database
     // if database, use the efficient getThoughtWithChildren and cache the thought's children for efficiency
     // see childrenCache above for more information
-    const providerThoughtsRaw: (Thought | undefined)[] = await Promise.all(
+    const providerThoughtsRaw: (Thought | ThoughtWithChildren | undefined)[] = await Promise.all(
       // eslint-disable-next-line no-loop-func
       ids.map(async id => {
         if (childrenCache[id]) {
           return childrenCache[id]
         }
-        const result = await provider.getThoughtWithChildren(id)
-        if (result) {
+        const thoughtWithChildren = await provider.getThoughtWithChildren(id)
+        if (thoughtWithChildren) {
           childrenCache = {
             ...childrenCache,
             // filter out pending children so that they are fetched normally
             // See /src/@types/ThoughtWithChildren.ts
-            ...filterObject(result.children, (id, child) => !child.pending),
+            ...filterObject(thoughtWithChildren.children, (id, child) => !child.pending),
           }
         }
-        return result?.thought
+        return thoughtWithChildren
       }),
     )
 
-    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
+    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as (Thought | ThoughtWithChildren)[]
     const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
-    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: providerThoughtsValidated[i] }))
+    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({
+      [id]: (providerThoughtsValidated[i] as ThoughtWithChildren).children
+        ? toThought(providerThoughtsValidated[i] as ThoughtWithChildren)
+        : (providerThoughtsValidated[i] as Thought),
+    }))
 
     accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pulledThoughtIndex }
 
@@ -142,7 +155,11 @@ async function* getDescendantThoughts(
       },
     }
 
-    const thoughts = providerThoughtsValidated.map(thought => {
+    const thoughts = providerThoughtsValidated.map(thoughtWithChildren => {
+      const isWithChildren = (thoughtWithChildren as ThoughtWithChildren).children
+      const thought = isWithChildren
+        ? toThought(thoughtWithChildren as ThoughtWithChildren)
+        : (thoughtWithChildren as Thought)
       const childrenIds = Object.values(thought.childrenMap)
       const isEmDescendant = thoughtId === EM_TOKEN
       const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
