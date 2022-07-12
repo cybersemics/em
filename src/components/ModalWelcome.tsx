@@ -62,6 +62,7 @@ const ModalWelcome = () => {
         title='Welcome to em'
         className='popup'
         hideModalActions={false}
+        hideClose={true}
         center
         // the modal is closed by ModalComponent when Escape is hit, so make sure to end the tutorial
         onClose={endTutorial}

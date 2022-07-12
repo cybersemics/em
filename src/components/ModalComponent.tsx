@@ -17,6 +17,7 @@ export interface ModalProps {
   center?: boolean
   children?: React.ReactNode
   className?: string
+  hideClose?: boolean
   hideModalActions?: boolean
   id: string
   onClose?: () => void
@@ -89,8 +90,21 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   endTutorial = () => this.props.dispatch(tutorial({ value: false }))
 
   render() {
-    const { show, id, title, arrow, center, opaque, className, style, actions, hideModalActions, top, children } =
-      this.props
+    const {
+      actions,
+      arrow,
+      center,
+      children,
+      className,
+      hideClose,
+      hideModalActions,
+      id,
+      opaque,
+      show,
+      style,
+      title,
+      top,
+    } = this.props
 
     if (!show) return null
 
@@ -118,7 +132,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           })
         }
       >
-        {!this.props.preventCloseOnEscape && (
+        {!this.props.preventCloseOnEscape && !hideClose && (
           <a className='upper-right popup-close-x text-small' onClick={this.close}>
             ✕
           </a>
@@ -139,9 +153,11 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
               })}
             </div>
           )}
-          <a className='modal-close' onClick={() => this.close()}>
-            <span>✕</span>
-          </a>
+          {!hideClose && (
+            <a className='modal-close' onClick={() => this.close()}>
+              <span>✕</span>
+            </a>
+          )}
         </div>
       </div>
     )
