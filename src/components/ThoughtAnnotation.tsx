@@ -196,7 +196,7 @@ const ThoughtAnnotation = ({
           }
           {REGEXP_PUNCTUATIONS.test(value) ? null : minContexts === 0 || // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             numContexts > 1 ? (
-            <StaticSuperscript n={numContexts} />
+            <StaticSuperscript n={numContexts} style={style} />
           ) : null}
         </div>
       )}
