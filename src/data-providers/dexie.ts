@@ -17,6 +17,14 @@ import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 import win from './win'
 
+const schema = {
+  thoughtIndex: 'id, archived, children, childrenMap, lastUpdated, parentId, updatedBy, rank, value',
+  lexemeIndex: 'id, lemma, *contexts, created, lastUpdated, updatedBy, *words',
+  thoughtWordsIndex: 'id, *words',
+  helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
+  logs: '++id, created, message, stack',
+}
+
 // TODO: Why doesn't this work? Fix IndexedDB during tests.
 // mock IndexedDB if tests are running
 // NOTE: Could not get this to work in setupTests.js
@@ -41,13 +49,7 @@ class EM extends Dexie {
       super('Database')
     }
 
-    this.version(SCHEMA_LATEST).stores({
-      thoughtIndex: 'id, children, lastUpdated, updatedBy',
-      lexemeIndex: 'id, lemma, *contexts, created, lastUpdated, updatedBy, *words',
-      thoughtWordsIndex: 'id, *words',
-      helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
-      logs: '++id, created, message, stack',
-    })
+    this.version(SCHEMA_LATEST).stores(schema)
 
     this.thoughtIndex = this.table('thoughtIndex')
     this.lexemeIndex = this.table('lexemeIndex')
@@ -89,13 +91,7 @@ export const db = new Dexie('EM') as EM
 /** Initializes the database tables. */
 const initDB = async () => {
   if (!db.isOpen()) {
-    await db.version(SCHEMA_LATEST).stores({
-      thoughtIndex: 'id, children, lastUpdated',
-      lexemeIndex: 'id, lemma, *contexts, created, lastUpdated',
-      helpers: 'id, cursor, lastUpdated, recentlyEdited, schemaVersion',
-      thoughtWordsIndex: 'id, *words',
-      logs: '++id, created, message, stack',
-    })
+    await db.version(SCHEMA_LATEST).stores(schema)
 
     // Hooks to add full text index
     // Related resource: https://github.com/dfahlander/Dexie.js/blob/master/samples/full-text-search/FullTextSearch.js
@@ -189,33 +185,32 @@ export const getLexemesByIds = (keys: string[]) =>
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (
   id: ThoughtId,
-  { children, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
+  { children, childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
 ) => {
-  const hasPendingChildren = Object.values(children).some(child => child.pending)
   return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    // do not save children if any are pending
-    // pending thoughts should never be persisted
-    // since this is an update rather than a put, the thought will retain any children it already has in the database
-    // this can occur when editing an un-expanded thought whose children are still pending
-    // More efficient, and hopefully removes the Dexie error: Transaction committed too early. See http://bit.ly/2kdckMn
+    // Do not save children if any are pending.
+    // Pending thoughts should never be persisted.
+    // Since this is an update rather than a put, the thought will retain any children it already has in the database.
+    // This can occur when editing an un-expanded thought whose children are still pending.
+    // When replicating from remote, we need to persist childrenMap, otherwise children of buffered local thoughts will never be saved and thus incorrectly return empty children on pull.
+    const hasPendingChildren =
+      Object.values(children).some(child => child.pending) ||
+      Object.keys(children).length < Object.keys(childrenMap || {}).length
+
     const thought = await db.thoughtIndex.get(id)
-    //   id,
-    //   value,
-    //   ...(!hasPendingChildren ? { children } : null),
-    //   lastUpdated,
-    //   parentId,
-    //   rank,
-    //   updatedBy: getSessionId(),
-    //   ...(archived ? { archived } : null),
-    // })
+
     /** Does a put if the thought does not exist, otherwise update. */
-    const putOrUpdate = (changes: Partial<Thought>) =>
+    const putOrUpdate = (changes: Partial<ThoughtWithChildren>) =>
       thought ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
+
     return putOrUpdate({
       id,
       value,
-      ...(!hasPendingChildren ? { children } : null),
+      ...(hasPendingChildren
+        ? { childrenMap: childrenMap || thought?.childrenMap || {} }
+        : // when no children are pending, we can safely delete childrenMap
+          { children, childrenMap: {} }),
       lastUpdated,
       parentId,
       rank,
@@ -250,7 +245,10 @@ export const getThoughtById = async (id: string): Promise<Thought | undefined> =
   return thoughtWithChildren
     ? ({
         ..._.omit(thoughtWithChildren, ['children']),
-        childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+        childrenMap: {
+          ...thoughtWithChildren.childrenMap,
+          ...createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
+        },
       } as Thought)
     : undefined
 }

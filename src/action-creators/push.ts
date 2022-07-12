@@ -43,28 +43,26 @@ const pushLocal = (
     ...state.thoughts.thoughtIndex,
     ...thoughtIndexUpdates,
   }
-  const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
-    const thought = thoughtIndexUpdates[id]
-    const children = thought && getAllChildrenAsThoughts(state, thought.id)
-    const thoughtWithChildren = thought
-      ? ({
-          ...thoughtToDb(thought),
-          ...(children
-            ? {
-                children: keyValueBy(children, child => ({
-                  [child.id]: childToDb(child),
-                })),
-              }
-            : null),
-        } as ThoughtWithChildren)
-      : null
+  const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thought) => {
+    if (!thought) return { [id]: null }
+    const children = getAllChildrenAsThoughts(state, thought.id)
+    const hasPendingChildren = children.length < Object.keys(thought.childrenMap).length
+    const thoughtWithChildren: ThoughtWithChildren = {
+      ...thoughtToDb(thought),
+      children: keyValueBy(children, child => ({
+        [child.id]: childToDb(child),
+      })),
+      // if any inline children are pending, persist childrenMap instead of children
+      // otherwise empty children are persisted to local when replicating from remote
+      ...(hasPendingChildren ? { childrenMap: thought.childrenMap } : null),
+    }
 
     // some settings are propagated to localStorage for faster load on startup
     const name = localStorageSettingsContexts[id]
     if (name) {
-      const firstChild = Object.values(thought?.childrenMap || {}).find(childId => {
-        const thought = updatedThoughtIndex[childId]
-        return thought && !isAttribute(thought.value)
+      const firstChild = Object.values(thought.childrenMap || {}).find(childId => {
+        const child = updatedThoughtIndex[childId]
+        return child && !isAttribute(child.value)
       })
       if (firstChild) {
         const thought = updatedThoughtIndex[firstChild]
