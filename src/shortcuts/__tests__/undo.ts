@@ -386,3 +386,50 @@ it('undo redo importText action', () => {
 
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })
+
+it('cursor should restore to same thought if the thought has been edited after undo', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    setCursorFirstMatchActionCreator(['a']),
+    editThoughtByContextActionCreator({ newValue: 'aa', oldValue: 'a', at: ['a'] }),
+    { type: 'undoAction' },
+  ])
+
+  const expectedCursor = [{ value: 'a', rank: 0 }]
+
+  const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
+
+  expect(cursorThoughts).toMatchObject(expectedCursor)
+})
+
+it('cursor should restore correctly after undo archive', async () => {
+  timer.useFakeTimer()
+  initialize()
+  await timer.runAllAsync()
+
+  appStore.dispatch([newThought({ value: 'a' }), setCursor({ path: null })])
+  await timer.runAllAsync()
+
+  timer.useFakeTimer()
+  // clear and call initialize again to reload from local db (simulating page refresh)
+  appStore.dispatch(clear())
+  await timer.runAllAsync()
+
+  initialize()
+
+  await timer.runAllAsync()
+
+  appStore.dispatch([setCursorFirstMatchActionCreator(['a']), { type: 'archiveThought' }, { type: 'undoAction' }])
+  await timer.runAllAsync()
+
+  timer.useRealTimer()
+
+  const expectedCursor = [{ value: 'a', rank: 0 }]
+
+  const cursorThoughts = childIdsToThoughts(appStore.getState(), appStore.getState().cursor!)
+
+  expect(cursorThoughts).toMatchObject(expectedCursor)
+})
