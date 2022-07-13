@@ -176,8 +176,8 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
   if (!undoPatches.length) return state
 
   const undoTwice = NAVIGATION_ACTIONS[lastAction]
-    ? penultimateUndoPatch && (penultimateAction ? UNDOABLE_ACTIONS[penultimateAction] : false)
-    : penultimateUndoPatch && penultimateAction === 'newThought'
+    ? UNDOABLE_ACTIONS[penultimateAction]
+    : penultimateAction === 'newThought'
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 

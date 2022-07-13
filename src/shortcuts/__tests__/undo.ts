@@ -391,8 +391,12 @@ it('cursor should restore to same thought if the thought has been edited after u
   const store = createTestStore()
 
   store.dispatch([
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
+    newThought({}),
+    setCursorFirstMatchActionCreator(['']),
+    editThoughtByContextActionCreator({ newValue: 'a', oldValue: '', at: [''] }),
+    newThought({}),
+    setCursorFirstMatchActionCreator(['']),
+    editThoughtByContextActionCreator({ newValue: 'b', oldValue: '', at: [''] }),
     setCursorFirstMatchActionCreator(['a']),
     editThoughtByContextActionCreator({ newValue: 'aa', oldValue: 'a', at: ['a'] }),
     { type: 'undoAction' },
