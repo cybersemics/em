@@ -16,7 +16,7 @@ import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
-export type UpdateThoughtsOptions = Omit<PushBatch, 'pendingLexemes' | 'pendingPulls'> & {
+export type UpdateThoughtsOptions = Omit<PushBatch, 'pendingLexemes'> & {
   contextChain?: SimplePath[]
   isLoading?: boolean
   pendingEdits?: editThoughtPayload[]
