@@ -6,15 +6,16 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import alert from '../reducers/alert'
 import updateThoughts from '../reducers/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import { getLexeme } from '../selectors/getLexeme'
 // import { treeDelete } from '../util/recentlyEditedTree'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
-import appendToPath from '../util/appendToPath'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import isDescendant from '../util/isDescendant'
@@ -37,17 +38,51 @@ interface ThoughtUpdates {
   pendingDeletes?: PushBatch['pendingDeletes']
 }
 
-// @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directlty. Find a better way to handle this.
+/** Returns a list of all pending descendants of the given thoughts (inclusive). */
+const filterPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
+  _.flatMap(thoughtIds, thoughtId => {
+    const thought = getThoughtById(state, thoughtId)
+
+    const isThoughtPending = !thought || thought.pending
+
+    return isThoughtPending
+      ? // return pending input thoughts as-is
+        // there are no non-pending descendants to traverse
+        [thoughtId]
+      : // otherwise traverse descendants for pending thoughts
+        getDescendantThoughtIds(state, thoughtId).filter(descendantThoughtId => {
+          const descendantThought = getThoughtById(state, descendantThoughtId)
+          return !descendantThought || descendantThought.pending
+        })
+  })
+
 /** Removes a thought from a context. If it was the last thought in that context, removes it completely from the lexemeIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
- *
- * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
-const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payload) => {
+const deleteThought = (state: State, { pathParent, thoughtId }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId)
+  const path = thoughtToPath(state, deletedThought.id)
 
   if (!deletedThought) {
     console.error(`deleteThought: Thought not found for id ${thoughtId}`)
     return state
+  }
+
+  // All pending descendants must be pulled before deleteThought can be executed.
+  // 2-part deletes can leave the state in an invalid intermediate state that is vulnerable to concurrency issues.
+  const pending = filterPendingDescendants(state, [deletedThought.id])
+  if (pending.length > 0) {
+    return reducerFlow([
+      updateThoughts({
+        // include a NOOP thought update, otherwise updateThoughts will short circuit
+        // TODO: Don't short circuit if there are pendingDeletes
+        thoughtIndexUpdates: {
+          [deletedThought.id]: deletedThought,
+        },
+        lexemeIndexUpdates: {},
+        pendingDeletes: [path],
+      }),
+      alert({ value: 'Loading subthoughts for deletion...' }),
+    ])(state)
   }
 
   const { value } = deletedThought
@@ -61,16 +96,15 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   const key = hashThought(value)
   const lexeme = getLexeme(state, value)
 
-  const parent = orphaned ? null : getThoughtById(state, deletedThought.parentId)
+  const parent = getThoughtById(state, deletedThought.parentId)
 
   // Note: When a thought is deleted and there are pending deletes, then on flushing the deletes, the parent won't be available in the tree. So for orphaned thoughts deletion we use special orphaned param
-  if (!orphaned && !parent) {
+  if (!parent) {
     console.error('Parent not found!')
     return state
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  const path = thoughtToPath(state, deletedThought.id)
 
   // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -132,18 +166,10 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           delete lexemeIndexNew[hashedKey] // eslint-disable-line fp/no-delete
         }
 
-        // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
         if (child.pending) {
-          const thoughtUpdate: ThoughtUpdates = {
-            ...accum,
-            // do not delete the pending thought yet since the second call to deleteThought needs a starting point
-            pendingDeletes: [
-              ...(accumRecursive.pendingDeletes || []),
-              { path: appendToPath(pathParent, thought.id, child.id), siblingIds: children.map(child => child.id) },
-            ],
-          }
-
-          return thoughtUpdate
+          throw new Error(
+            'All pending descendants must be pulled before deleteThought can be executed. 2-part deletes can leave the state in an invalid intermediate state that is vulnerable to concurrency issues.',
+          )
         }
 
         // RECURSION
@@ -151,11 +177,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
         return {
           ...accum,
-          pendingDeletes: _.uniq([
-            ...(accum.pendingDeletes || []),
-            ...(accumRecursive.pendingDeletes || []),
-            ...(recursiveResults.pendingDeletes || []),
-          ]),
           lexemeIndex: {
             ...accum.lexemeIndex,
             ...recursiveResults.lexemeIndex,
@@ -219,7 +240,6 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
       thoughtIndexUpdates,
       lexemeIndexUpdates,
       // recentlyEdited,
-      pendingDeletes: descendantUpdatesResult.pendingDeletes,
     }),
   ])(state)
 }
