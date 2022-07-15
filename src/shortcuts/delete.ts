@@ -27,8 +27,11 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       // delete the thought
       dispatch(deleteThoughtWithCursor({ path: cursor }))
 
-      // undo alert
-      if (cursorThought.value) {
+      const hasPendingDeletes = getState().pushQueue.some(batch => (batch.pendingDeletes || []).length > 0)
+
+      // alert
+      // do not alert if there are pending deletes; it has its own alert in deleteThought and flushDeletes upon completion
+      if (cursorThought.value && !hasPendingDeletes) {
         dispatch(
           alert(`Deleted ${ellipsize(cursorThought.value)}`, {
             showCloseLink: true,
