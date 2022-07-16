@@ -6,7 +6,6 @@ import setAttribute from '../action-creators/setAttribute'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -71,7 +70,7 @@ const pinSubthoughtsShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return findDescendant(state, head(path), ['=children', '=pin', 'true'])
+    return !!findDescendant(state, head(path), ['=children', '=pin', 'true'])
   },
 }
 

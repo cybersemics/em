@@ -273,7 +273,7 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
 
-  it('thoughts with =pin/false is not expanded even if ancestor has =children/=pin/true', () => {
+  it('thoughts with =pin/false are not expanded even if ancestor has =children/=pin/true', () => {
     const text = `
     - a
       - =children
@@ -367,6 +367,26 @@ describe('=children/=pin', () => {
 
     const stateNew2 = setCursorFirstMatch(stateNew, ['a', 'd', 'e'])
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
+  })
+
+  it('=children/=pin/false overrides expand only child', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+            - false
+        - b
+          - c
+    `
+
+    const stateNew = importText(initialState(), { text })
+
+    // not expanded when only child
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+
+    // expanded with cursor
+    const stateNew1 = setCursorFirstMatch(stateNew, ['a', 'b'])
+    expect(isContextExpanded(stateNew1, ['a', 'b'])).toBeTruthy()
   })
 })
 

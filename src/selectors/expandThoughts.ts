@@ -35,8 +35,11 @@ const childValue = (state: State, child: ThoughtId | ThoughtContext, showContext
 /** Returns true if the context is in table view. */
 const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=view', 'Table')
 
-/** Returns true if all children of the context should be pinned open. */
-const pinChildren = (state: State, id: ThoughtId) => findDescendant(state, id, ['=children', '=pin', 'true'])
+/** Returns the value of =children/=pin. */
+const pinChildren = (state: State, id: ThoughtId) => {
+  const childrenAttributeId = findDescendant(state, id, '=children')
+  return childrenAttributeId ? attribute(state, childrenAttributeId, '=pin') : null
+}
 
 /** Returns true if the context is the first column in a table view. */
 const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head(parentOf(path)), '=view', 'Table')
@@ -118,15 +121,6 @@ function expandThoughtsRecursive(
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
 
-  /** Returns true if the child should be pinned open. */
-  const isPinned = (child: ThoughtId | ThoughtContext) => {
-    const path = appendToPath(simplePath, child)
-    return attribute(state, head(path), '=pin')
-  }
-
-  /** Returns true if the child should be pinned closed. */
-  const isPinClosed = (child: ThoughtId | ThoughtContext) => isPinned(child) === 'false'
-
   const context = pathToContext(state, path)
 
   const showContexts = isContextViewActive(state, path)
@@ -154,26 +148,24 @@ function expandThoughtsRecursive(
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return (!isAttribute(value) && !isPinClosed(child.id)) || isExpansionBasePath() || isAncestor()
+        return (
+          (!isAttribute(value) && attribute(state, child.id, '=pin') !== 'false') ||
+          isExpansionBasePath() ||
+          isAncestor()
+        )
       })
 
   // expand if child is only child and its child is not url
-  const firstChild = visibleChildren[0]
-
-  const grandchildren =
-    visibleChildren.length === 1 && firstChild.value != null && isPinned(firstChild.id) !== 'false'
-      ? getAllChildren(state, firstChild.id)
-      : null
-
+  const firstGrandchildren = visibleChildren.length > 0 ? getAllChildren(state, visibleChildren[0].id) : []
   const isOnlyChildNoUrl =
-    grandchildren &&
+    visibleChildren.length === 1 &&
     !isTableColumn1(state, simplePath) &&
-    (grandchildren.length >= 1 || !isURL(childValue(state, grandchildren[0], showContexts)))
+    (firstGrandchildren.length >= 1 || !isURL(childValue(state, firstGrandchildren[0], showContexts)))
 
   const childrenPinned =
-    isOnlyChildNoUrl ||
     isTable(state, thoughtId) ||
-    pinChildren(state, thoughtId) ||
+    (isOnlyChildNoUrl && pinChildren(state, thoughtId) !== 'false') ||
+    pinChildren(state, thoughtId) === 'true' ||
     publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
@@ -187,7 +179,7 @@ function expandThoughtsRecursive(
           /** Check if the path is equal to the expansion path. */
           const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-          const isChildPinned = isPinned(child.id) === 'true'
+          const isChildPinned = attribute(state, child.id, '=pin') === 'true'
 
           /**
             Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
