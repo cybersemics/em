@@ -5,14 +5,18 @@ import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
 import { getAllChildrenAsThoughts, getChildren, isChildVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
+import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import createId from '../util/createId'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import deleteThought from './deleteThought'
+import editThought from './editThought'
 
 interface Options {
   at?: Path | null
@@ -36,7 +40,8 @@ const collapseContext = (state: State, { at }: Options) => {
       state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
     )[0]
 
-    const childrenOfMovedContext = getChildren(updatedState, head(rootedParentOf(updatedState, simpleCursor)))
+    const parentId = head(rootedParentOf(updatedState, simpleCursor))
+    const childrenOfMovedContext = getChildren(updatedState, parentId)
 
     if (!firstVisibleChildOfPrevCursor) return unroot([...parentOf(path)])
 
@@ -49,21 +54,34 @@ const collapseContext = (state: State, { at }: Options) => {
     return unroot([...parentOf(path), newChild.id])
   }
 
+  const thought = getThoughtById(state, head(simpleCursor))
+
   return reducerFlow(
     children.length > 0
       ? [
-          ...children.map(child => {
-            return (updatedState: State) =>
+          // first edit the collapsing thought to a unique value
+          // otherwise, it could get merged when children are outdented in the next step
+          editThought({
+            oldValue: thought.value,
+            newValue: createId(), // unique value
+            context: pathToContext(state, simpleCursor),
+            path: simpleCursor,
+          }),
+          // outdent each child
+          ...children.map(
+            child => (updatedState: State) =>
               moveThought(updatedState, {
                 oldPath: unroot([...path, child.id]),
                 newPath: unroot([...parentOf(path), child.id]),
                 newRank: getRankBefore(updatedState, simpleCursor),
-              })
-          }),
+              }),
+          ),
+          // delete the original cursor
           deleteThought({
             pathParent: parentOf(simpleCursor),
             thoughtId: head(simpleCursor),
           }),
+          // set the new cursor
           state =>
             setCursor(state, {
               path: getNewCursor(state),

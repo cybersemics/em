@@ -1,7 +1,9 @@
 import { HOME_TOKEN } from '../../constants'
 import collapseContext from '../../reducers/collapseContext'
 import cursorBack from '../../reducers/cursorBack'
+import cursorDown from '../../reducers/cursorDown'
 import cursorUp from '../../reducers/cursorUp'
+import importText from '../../reducers/importText'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import exportContext from '../../selectors/exportContext'
@@ -85,8 +87,7 @@ it('merge children', () => {
   matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
 })
 
-// @MIGRATION_TODO: Fix this after duplicate merge is fixed
-it.skip('merge duplicate children', () => {
+it('merge duplicate children', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
@@ -133,4 +134,30 @@ it('after collapse context set cursor to the parent if there are no visible chil
   const stateNew = reducerFlow(steps)(initialState())
 
   matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }])
+})
+
+it('collapse empty thought with empty child', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - ${''}
+          - ${''}
+            - b
+    `,
+    }),
+    cursorDown,
+    collapseContext({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - ${''}
+      - b`)
+
+  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: '' }])
 })
