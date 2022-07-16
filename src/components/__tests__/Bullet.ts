@@ -1,31 +1,54 @@
-import { ReactWrapper } from 'enzyme'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import testTimer from '../../test-helpers/testTimer'
-import windowEvent from '../../test-helpers/windowEvent'
+import importText from '../../action-creators/importText'
+import { store } from '../../store'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
-let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
-
-beforeEach(async () => {
-  wrapper = await createTestApp()
-})
-
+beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-const fakeTimer = testTimer()
+it('render a bullet next to each thought', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+      `,
+    }),
+  ])
 
-it('bullet should not fade on edit, should only fade i.e color to gray when thought is missing', async () => {
-  // create thought
+  const bullets = document.querySelectorAll('.bullet')
+  expect(bullets.length).toBe(3)
+})
 
-  fakeTimer.useFakeTimer()
+it('do not render a bullet with =bullet/None', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =bullet
+            - None
+      `,
+    }),
+  ])
 
-  windowEvent('keydown', { key: 'Enter' })
-  wrapper.update()
-  const editable = wrapper.find('div.editable')
-  await editable.simulate('change', { target: { value: 'a' } })
+  const bullets = document.querySelectorAll('.bullet')
+  expect(bullets.length).toBe(0)
+})
 
-  await fakeTimer.runAllAsync()
-  await fakeTimer.useRealTimer()
-  wrapper.update()
-  const bulletEllipsis = document.querySelector('.bullet .glyph .glyph-fg.gray')
-  expect(bulletEllipsis).toBeNull()
+it('do not render children bullets on a thought with =children/=bullet/None', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =children
+            - =bullet
+              - None
+          - b
+          - c
+      `,
+    }),
+  ])
+
+  const bullets = document.querySelectorAll('.bullet')
+  expect(bullets.length).toBe(1)
 })
