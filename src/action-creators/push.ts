@@ -25,11 +25,11 @@ import timestamp from '../util/timestamp'
 
 /** Filter out the properties that should not be saved to thoughts in the database. */
 const thoughtToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
+  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
 
 /** Filter out the properties that should not be saved to thought.childrenMap in the database. */
 const childToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'pending', 'rank', 'updatedBy', 'value'])
+  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
 
 /** Syncs thought updates to the local database. Caches updated localStorageSettingsContexts to local storage. */
 const pushLocal = (
@@ -112,14 +112,12 @@ const pushRemote =
       thoughtIndexUpdates,
       (accum, thoughtUpdate, id) => {
         const children = thoughtUpdate ? getAllChildrenAsThoughts(state, thoughtUpdate.id) : []
-        const nonPendingChildren = children.filter(child => !child.pending)
         const thoughtWithChildren: Partial<ThoughtWithChildren> | null = thoughtUpdate
           ? {
               ...thoughtToDb(thoughtUpdate),
-              // only update non-pending children
               // firebaseProvider.update will flatten the children updates to avoid overwriting existing children
               // this can be made more efficient by only updating the children have changed
-              children: keyValueBy(nonPendingChildren, child => ({
+              children: keyValueBy(children, child => ({
                 [child.id]: childToDb(child),
               })),
               lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
@@ -180,17 +178,13 @@ const push =
     const authenticated = { state }
     const userRef = getUserRef(state)
 
-    // Filter out pending Thoughts so they are not persisted.
-    // Why not filter them out upstream in updateThoughts? Pending Thoughts sometimes need to be saved to Redux state, such as during a 2-part move where the pending descendant in the source is still pending in the destination. So updateThoughts needs to be able to save pending thoughts. We could filter them out before adding them to the push batch, however that still leaves the chance that pull is called from somewhere else with pending thoughts. Filtering them out here is the safest choice.
-    const thoughtIndexUpdatesNotPending = _.pickBy(thoughtIndexUpdates, thought => !thought?.pending)
-
     // include the parents of the updated thoughts, since their inline children will be updated
     // converting childrenMap to children occurs in pushLocal and pushRemote
     // TODO: This can be done more efficiently if it is only updated if the parent children have changed
     // we can tell if a thought is deleted, but unfortunately we cannot tell if a thought has been added vs edited since state is already updated
     // may need to do a deep comparison of parent's old and new children
     const thoughtIndexUpdatesWithParents = keyValueBy<Thought | null, Thought | null>(
-      thoughtIndexUpdatesNotPending,
+      thoughtIndexUpdates,
       (id, thoughtUpdate) => {
         // update inline children if a thought is added or deleted
         const parentThought = thoughtUpdate ? getThoughtById(state, thoughtUpdate.parentId) : null
@@ -228,29 +222,22 @@ const push =
       return !idChildUpdate || !!thoughtIndexUpdates[idChildUpdate]
     })
 
-    return Promise.all([
-      // push local
-      local &&
-        pushLocal(
+    // temporarily disable local push when logged in
+    return remote && authenticated && userRef
+      ? pushRemote(
+          thoughtIndexUpdatesWithParents,
+          lexemeIndexUpdates,
+          recentlyEdited,
+          updatesValidated,
+        )(dispatch, getState)
+      : pushLocal(
           getState(),
           thoughtIndexUpdatesWithParents,
           lexemeIndexUpdates,
           recentlyEdited,
           updatesValidated,
           localStorageSettingsContexts,
-        ),
-
-      // push remote
-      remote &&
-        authenticated &&
-        userRef &&
-        pushRemote(
-          thoughtIndexUpdatesWithParents,
-          lexemeIndexUpdates,
-          recentlyEdited,
-          updatesValidated,
-        )(dispatch, getState),
-    ])
+        )
   }
 
 export default push

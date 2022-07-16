@@ -142,7 +142,8 @@ const pull =
           updateThoughts({
             thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
             lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
-            local: true,
+            // temporarily disable local replication when logged in
+            local: false,
             remote: false,
           }),
         )
