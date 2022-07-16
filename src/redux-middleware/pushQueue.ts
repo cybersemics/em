@@ -5,7 +5,6 @@ import Lexeme from '../@types/Lexeme'
 import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import alert from '../action-creators/alert'
 import clearPushQueue from '../action-creators/clearPushQueue'
 import deleteThought from '../action-creators/deleteThought'
 import isPushing from '../action-creators/isPushing'
@@ -15,8 +14,6 @@ import updateThoughts from '../action-creators/updateThoughts'
 import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
 import getThoughtById from '../selectors/getThoughtById'
-import ellipsize from '../util/ellipsize'
-import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 
@@ -161,37 +158,48 @@ const pushBatch = (batch: PushBatch) => {
   })
 }
 
-/** Pull all descendants of pending deletes and re-dispatch deleteThought to fully delete. */
+/** Pull all descendants of pending deletes and dispatch deleteThought to fully delete. */
 const flushDeletes =
   (pushQueue: PushBatch[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
-    // get a flat list of all pending thoughts to be deleted
+    // if there are pending thoughts that need to be deleted, dispatch an action to be picked up by the pullQueue middleware which can load pending thoughts before dispatching another deleteThought
     const pendingDeletes = pushQueue.map(batch => batch.pendingDeletes || []).flat()
-    const ids = _.uniq(pendingDeletes.flat())
-    const labels = ids.map(id => ellipsize(getThoughtById(getState(), id)?.value || ''))
+    if (pendingDeletes?.length) {
+      const ids = _.uniq(pendingDeletes.map(({ siblingIds }) => siblingIds).flat())
 
-    if (ids?.length) {
-      // pull all descendants
-      // this causes an undesirable delay for the user, but 2-part deletes can leave the state in an invalid intermediate state that is vulnerable to concurrency issues.
-      // TODO: Optimistic client-side delete
+      /*
+        In a 2-part delete:
+          Part I: All of in-memory descendants are deleted and pending descendants are pulled.
+          Part II: Pending descendants, now that they are in memory, are deleted.
+
+        deleteThought in Part I will not delete the pending thought since Part II needs a starting point
+
+        Note: Since the default pull that is called by pullQueue only pulls pending thoughts, we need to force pull.
+        The default pull would short circuit in Part II since there is no parent marked as pending (it was deleted in Part I).
+        What if we have pull include missing Thoughts in addition to pending Thoughts? This will not work either. Some thoughts are missing when a thought is edited after it was added to the pullQueue but before the pullQueue was flushed. If pull includes missing thoughts, we get data integrity issues when outdated local thoughts get pulled.
+
+        Therefore, force the pull here to fetch all descendants to delete in Part II.
+      */
       await dispatch(pull(ids, { force: true, maxDepth: Infinity }))
 
-      // re-dispatch deleteThought
-      dispatch([
-        // delete each pending thought
-        // TODO: Is there ever more than one?
-        ...pendingDeletes.map(path =>
-          deleteThought({
-            pathParent: parentOf(path),
-            thoughtId: head(path),
-          }),
-        ),
-        // alert a summary of the thoughts that were deleted
-        alert(`Deleted ${labels.join(', ')}`, {
-          showCloseLink: true,
-          clearDelay: 8000,
-        }),
-      ])
+      pendingDeletes.forEach(({ path, siblingIds }) => {
+        // instead of deleting just the pending thought, we have to delete any remaining siblingIds because they can be resurrected by pull
+        dispatch((dispatch, getState) =>
+          siblingIds
+            // only delete siblings that still exist
+            .filter(siblingId => getThoughtById(getState(), siblingId))
+            // dispatch deleteThought for each existing sibling (including the pending thought)
+            .map(siblingId =>
+              dispatch(
+                deleteThought({
+                  pathParent: parentOf(path),
+                  thoughtId: siblingId,
+                  orphaned: true,
+                }),
+              ),
+            ),
+        )
+      })
     }
   }
 

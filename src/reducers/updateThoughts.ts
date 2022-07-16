@@ -39,7 +39,16 @@ const dataIntegrityCheck =
       }
 
       // make sure thought.parentId exists in thoughtIndex
-      if (![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) && !getThoughtById(state, thought.parentId)) {
+      if (
+        ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
+        !getThoughtById(state, thought.parentId) &&
+        // Unfortunately 2-part deletes produce false positives of invalid parentId.
+        // False positives occur in Part II, so we can't check pendingDeletes (it has already been flushed).
+        // Instead, check the undo patch and disable the check if the last action is deleteThought or deleteThoughtWithCursor.
+        // It's hacky, but it seems better than omitting the check completely.
+        // If we get more false positives or false negatives, we can adjust the condition.
+        !state.undoPatches[state.undoPatches.length - 1]?.[0].actions[0]?.startsWith('deleteThought')
+      ) {
         console.error('thought', thought)
         throw new Error(`Parent ${thought.parentId} of ${thought.value} (${thought.id}) does not exist`)
       }

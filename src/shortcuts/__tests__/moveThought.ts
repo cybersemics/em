@@ -14,8 +14,7 @@ const timer = testTimer()
 // Note: Since we are using intialize for these tests, we need to make sure to cleanup dbs, storage and window location.
 afterEach(async () => await cleanupTestApp())
 
-// 2-part deletes disabled due to concurrency issues
-it.skip('merge up to pending destination descendant', async () => {
+it('merge up to pending destination descendant', async () => {
   timer.useFakeTimer()
   initialize()
   await timer.runAllAsync()
