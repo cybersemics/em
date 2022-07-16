@@ -36,7 +36,8 @@ let lexemeContextsInvalid = 0
 let lexemeContextsMissing = 0
 let lexemeContextsMoved = 0
 let lexemeMissing = 0
-let missingGrandchildrenMissing = 0
+let missingGrandchildren = 0
+let missingParent = 0
 let numOrphans = 0
 let parentIdRepaired = 0
 let thoughtMissingFromChildren = 0
@@ -273,11 +274,14 @@ Object.values(db.thoughtIndex).forEach(thought => {
       if (!parent.children) {
         parent.children = {}
       }
+      if (!parent.children[thought.id].childrenMap) {
+        parent.children[thought.id].childrenMap = {}
+      }
       parent.children[thought.id].childrenMap[isAttribute(child.value) ? child.value : child.id] = child.id
 
       const numGrandchildrenIds = Object.keys(child.childrenMap || {}).length
       const numGrandchildren = Object.keys(db.thoughtIndex[child.id].children || {}).length
-      missingGrandchildrenMissing += numGrandchildrenIds - numGrandchildren
+      missingGrandchildren += numGrandchildrenIds - numGrandchildren
       childrenWithMissingThoughtRepaired++
     }
     return db.thoughtIndex[child.id]
@@ -318,7 +322,8 @@ while (stack.length > 0) {
     .map(id => {
       const thought = db.thoughtIndex[id]
       if (!thought) {
-        throw new Error('Missing parent after parents should be reconstructed')
+        missingParent++
+        return []
       }
 
       // merge duplicate children
@@ -394,7 +399,8 @@ while (stack.length > 0) {
 
       const thought = db.thoughtIndex[id]
       if (!thought) {
-        throw new Error('Missing parent after parents should be reconstructed')
+        missingParent++
+        return []
       }
 
       // return children to be added to the stack
@@ -537,7 +543,7 @@ const table = new Table({
     ['Total Lexemes (after)', 'Total number of lexemes after repairs', Object.keys(db.lexemeIndex).length],
     [],
     // repair metrics are given in the order that they are executed
-    ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
+    ['numOrphans', color(numOrphans)(`✗ Thoughts with missing parent added to orphanage`), color(numOrphans)()],
     ['lexemeMissing', color(lexemeMissing)(`Missing Lexemes reconstructed`), color(lexemeMissing)()],
     [
       'thoughtMissingFromChildren',
@@ -564,10 +570,11 @@ const table = new Table({
       color(duplicateSiblingsMerged)(`Duplicate siblings merged`),
       color(duplicateSiblingsMerged)(),
     ],
+    ['missingParent', color(missingParent)(`✗ Missing parents not repaired`), color(missingParent)()],
     ['unreachableThoughts', color(unreachableThoughts)(`Unreachable thoughts`), color(unreachableThoughts)()],
     [
       'lexemeContextsMissing',
-      color(lexemeContextsMissing)(`Lexeme contexts removed due to missing thought`),
+      color(lexemeContextsMissing)(`✗ Lexeme contexts removed due to missing thought`),
       color(lexemeContextsMissing)(),
     ],
     [
@@ -582,9 +589,9 @@ const table = new Table({
     ],
     ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
-      'missingGrandchildrenMissing',
-      color(missingGrandchildrenMissing)(`Missing grandchildren from repaired children`),
-      color(missingGrandchildrenMissing)(),
+      'missingGrandchildren',
+      color(missingGrandchildren)(`✗ Missing grandchildren from repaired children`),
+      color(missingGrandchildren)(),
     ],
   ],
 } as any)
