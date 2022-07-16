@@ -142,6 +142,13 @@ const ModalHelp = ({
         Hide the bullets of a context. For a less bullety look.
       </p>
 
+      <code>=children</code>
+      <p>
+        Options: =bullet, =pin, =style
+        <br />
+        Applies a meta attribute to all children of a thought.
+      </p>
+
       <code>=drop</code>
       <p>
         Options: top, bottom
@@ -177,13 +184,6 @@ const ModalHelp = ({
 
       <code>=pin</code>
       <p>Keep a thought expanded, forever. Or at least until you unpin it.</p>
-
-      <code>=pinChildren</code>
-      <p>
-        Options: true, false
-        <br />
-        Keep all of a thought's subthoughts expanded. A lot of pins.
-      </p>
 
       <code>=publish</code>
       <p>Specify meta data for publishing the context as an article.</p>

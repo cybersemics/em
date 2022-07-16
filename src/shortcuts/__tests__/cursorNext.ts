@@ -177,8 +177,9 @@ describe('global suppress expansion', () => {
   it('do not activate suppress expansion on cursorNext if new cursor parent has pinned children', async () => {
     const text = `
     - a
-      - =pinChildren
-        - true
+      - =children
+        - =pin
+          - true
       - d
         - k
       - c

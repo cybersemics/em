@@ -1,11 +1,12 @@
 import importText from '../../action-creators/importText'
-import attributeByContext from '../../test-helpers/attributeByContext'
+import { HOME_TOKEN } from '../../constants'
+import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pinSubthoughtsShortcut from '../pinSubthoughts'
 
-it('toggle on when there is no =pinChildren', () => {
+it('toggle on when there is no =children attribute', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -21,16 +22,26 @@ it('toggle on when there is no =pinChildren', () => {
             - g
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
 
-  // parent of cursor should have =pinChildren set to true
-  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe('true')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - =children
+      - =pin
+        - true
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g`)
 })
 
-it('toggle on when =pinChildren is false', () => {
+it('toggle on when =children/=pin is false', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -38,8 +49,9 @@ it('toggle on when =pinChildren is false', () => {
     importText({
       text: `
         - a
-          - =pinChildren
-            - false
+          - =children
+            - =pin
+              - false
           - b
             - c
             - d
@@ -48,16 +60,26 @@ it('toggle on when =pinChildren is false', () => {
             - g
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
 
-  // parent of cursor should have =pinChildren set to true
-  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe('true')
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - =children
+      - =pin
+        - true
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g`)
 })
 
-it('remove =pinChildren when toggling off from true', () => {
+it('remove =children when toggling off from true', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -65,8 +87,9 @@ it('remove =pinChildren when toggling off from true', () => {
     importText({
       text: `
         - a
-          - =pinChildren
-            - true
+          - =children
+            - =pin
+              - true
           - b
             - c
             - d
@@ -75,11 +98,18 @@ it('remove =pinChildren when toggling off from true', () => {
             - g
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(pinSubthoughtsShortcut, { store })
 
-  // parent of cursor should not have =pinChildren set to true
-  expect(attributeByContext(store.getState(), ['a'], '=pinChildren')).toBe(null)
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g`)
 })

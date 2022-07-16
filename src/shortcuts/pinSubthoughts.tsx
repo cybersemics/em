@@ -2,10 +2,13 @@ import React from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
+import setAttribute from '../action-creators/setAttribute'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { HOME_PATH } from '../constants'
-import attributeEquals from '../selectors/attributeEquals'
+import attribute from '../selectors/attribute'
+import findDescendant from '../selectors/findDescendant'
 import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -48,25 +51,46 @@ const pinSubthoughtsShortcut: Shortcut = {
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction
     // since the user won't have the visual feedbavk from the toolbar due to the toolbar hiding logic
     if (type === 'keyboard') {
-      const pinned = attributeEquals(state, head(simplePath), '=pinChildren', 'true')
+      const pinned = findDescendant(state, head(simplePath), ['=children', '=pin', 'true'])
       dispatch(
         alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', { clearDelay: 2000, showCloseLink: false }),
       )
     }
 
-    dispatch(
-      toggleAttribute({
-        path: simplePath,
-        key: '=pinChildren',
-        value: 'true',
-      }),
-    )
+    const childrenAttributeId = findDescendant(getState(), head(simplePath), '=children')
+    const value = attribute(getState(), childrenAttributeId, '=pin')
+
+    dispatch([
+      // if =children/=pin/true, toggle =children off
+      // if =children/=pin/false, do nothing
+      // otherwise toggle =children on
+      ...(value !== 'false'
+        ? [
+            toggleAttribute({
+              path: simplePath,
+              key: '=children',
+              value: '=pin',
+            }),
+          ]
+        : []),
+      // assume that =children exists
+      (dispatch, getState) => {
+        const childrenAttributeIdNew = findDescendant(getState(), head(simplePath), '=children')
+        dispatch(
+          setAttribute({
+            path: appendToPath(simplePath, childrenAttributeIdNew!),
+            key: '=pin',
+            value: 'true',
+          }),
+        )
+      },
+    ])
   },
   isActive: getState => {
     const state = getState()
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return attributeEquals(state, head(path), '=pinChildren', 'true')
+    return !!findDescendant(state, head(path), ['=children', '=pin', 'true'])
   },
 }
 

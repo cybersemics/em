@@ -273,11 +273,12 @@ describe('=pin', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
 
-  it('thoughts with =pin/false is not expanded even if ancestor has =pinChildren/true', () => {
+  it('thoughts with =pin/false is not expanded even if ancestor has =children/=pin/true', () => {
     const text = `
     - a
-      - =pinChildren
-        - true
+      - =children
+        - =pin
+          - true
       - b
         - =pin
           - false
@@ -311,11 +312,12 @@ it('children of cursor should always be visible, it should take precedence over 
   expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 })
 
-describe('=pinChildren', () => {
+describe('=children/=pin', () => {
   it('pinned children are expanded when cursor is on parent', () => {
     const text = `- a
-  - =pinChildren
-    - true
+  - =children
+    - =pin
+      - true
   - b
     - c
   - d
@@ -331,8 +333,9 @@ describe('=pinChildren', () => {
 
   it('pinned children are expanded when cursor is on sibling', () => {
     const text = `- a
-  - =pinChildren
-    - true
+  - =children
+    - =pin
+      - true
   - b
     - c
   - d
@@ -349,8 +352,9 @@ describe('=pinChildren', () => {
 
   it('pinned children are expanded when cursor is on niece', () => {
     const text = `- a
-  - =pinChildren
-    - true
+  - =children
+    - =pin
+      - true
   - b
     - c
   - d

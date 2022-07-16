@@ -85,8 +85,9 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
 it('descendants of hidden ancestor must be hidden too', () => {
   const text = `
   - a
-    - =pinChildren
-      - true
+    - =children
+      - =pin
+        - true
     - b
       - c
         - d

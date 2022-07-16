@@ -326,10 +326,6 @@ export const META_PROGRAMMING_HELP = [
     description: 'Keep a thought expanded, forever. Or at least until you unpin it.',
   },
   {
-    code: 'pinChildren',
-    description: "Options: true, false\nKeep all of a thought's subthoughts expanded. A lot of pins.",
-  },
-  {
     code: 'publish',
     description: 'Specify meta data for publishing the context as an article.',
     hasChildren: true,

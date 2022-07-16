@@ -2,10 +2,14 @@ import React from 'react'
 import Svg, { G, Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import setAttribute from '../action-creators/setAttribute'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { HOME_PATH } from '../constants'
+import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
+import findDescendant from '../selectors/findDescendant'
 import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -34,19 +38,40 @@ const pinSubthoughtsShortcut: Shortcut = {
 
     const simplePath = simplifyPath(state, cursor)
 
-    dispatch(
-      toggleAttribute({
-        path: simplePath,
-        key: '=pinChildren',
-        value: 'true',
-      }),
-    )
+    const childrenAttributeId = findDescendant(getState(), head(simplePath), '=children')
+    const value = attribute(getState(), childrenAttributeId, '=pin')
+
+    dispatch([
+      // if =children/=pin/true, toggle =children off
+      // if =children/=pin/false, do nothing
+      // otherwise toggle =children on
+      ...(value !== 'false'
+        ? [
+            toggleAttribute({
+              path: simplePath,
+              key: '=children',
+              value: '=pin',
+            }),
+          ]
+        : []),
+      // assume that =children exists
+      (dispatch, getState) => {
+        const childrenAttributeIdNew = findDescendant(getState(), head(simplePath), '=children')
+        dispatch(
+          setAttribute({
+            path: appendToPath(simplePath, childrenAttributeIdNew!),
+            key: '=pin',
+            value: 'true',
+          }),
+        )
+      },
+    ])
   },
   isActive: getState => {
     const state = getState()
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return attributeEquals(state, head(path), '=pinChildren', 'true')
+    return findDescendant(state, head(path), ['=children', '=pin', 'true'])
   },
 }
 

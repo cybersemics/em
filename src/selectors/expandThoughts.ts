@@ -8,6 +8,7 @@ import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, M
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import contextToThoughtId from '../selectors/contextToThoughtId'
+import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -35,18 +36,18 @@ const childValue = (state: State, child: ThoughtId | ThoughtContext, showContext
 const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=view', 'Table')
 
 /** Returns true if all children of the context should be pinned open. */
-const pinChildren = (state: State, id: ThoughtId) => attributeEquals(state, id, '=pinChildren', 'true')
+const pinChildren = (state: State, id: ThoughtId) => findDescendant(state, id, ['=children', '=pin', 'true'])
 
 /** Returns true if the context is the first column in a table view. */
 const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head(parentOf(path)), '=view', 'Table')
 
 /**
- * Check for =publish/=attributes/pinChildren in publish mode.
+ * Check for =publish/=attributes/=children/=pin in publish mode.
  * Note: Use 'pinChildren' so it is not interpreted in editing mode.
  */
 const publishPinChildren = (state: State, context: Context) => {
   const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
-  return id && publishMode() && attributeEquals(state, id, 'pinChildren', 'true')
+  return id && publishMode() && findDescendant(state, id, ['=children', '=pin', 'true'])
 }
 
 function expandThoughts(state: State, path: Path | null): Index<Path>

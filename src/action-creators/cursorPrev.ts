@@ -4,6 +4,7 @@ import suppressExpansion from '../action-creators/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
+import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getThoughtBefore from '../selectors/getThoughtBefore'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -29,9 +30,10 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   if (!prev) return
 
   const path = appendToPath(rootedParentOf(state, cursor), prev.id)
-  const parentId = head(rootedParentOf(state, path))
+  const pathParent = rootedParentOf(state, path)
+  const parentId = head(pathParent)
   const isCursorPinned =
-    attributeEquals(state, head(path), '=pin', 'true') || attributeEquals(state, parentId, '=pinChildren', 'true')
+    attributeEquals(state, head(path), '=pin', 'true') || findDescendant(state, parentId, ['=children', '=pin', 'true'])
   const isTable = attributeEquals(state, parentId, '=view', 'Table')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
