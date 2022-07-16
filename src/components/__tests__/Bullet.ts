@@ -52,3 +52,24 @@ it('do not render children bullets on a thought with =children/=bullet/None', ()
   const bullets = document.querySelectorAll('.bullet')
   expect(bullets.length).toBe(1)
 })
+
+it('do not render children bullets on a thought with =grandchildren/=bullet/None', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =grandchildren
+            - =bullet
+              - None
+          - b
+            - c
+            - d
+            - e
+            - f
+      `,
+    }),
+  ])
+
+  const bullets = document.querySelectorAll('.bullet')
+  expect(bullets.length).toBe(2)
+})

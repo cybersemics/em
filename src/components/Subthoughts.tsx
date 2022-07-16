@@ -616,7 +616,7 @@ export const SubthoughtsComponent = ({
   })
 
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
-  const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
+  const grandchildrenAttributeId = findDescendant(state, thought.parentId, ['=grandchildren'])
   const styleChildren = getStyle(state, childrenAttributeId)
   const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
   const styleContainerChildren = getStyle(state, childrenAttributeId, { container: true })

@@ -73,3 +73,32 @@ it('do not apply =children/=style to =children itself', async () => {
 
   expect(await findThoughtByText('=children')).not.toHaveStyle({ color: 'pink' })
 })
+
+it('apply =grandchildren/=style to all grandchildren', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =grandchildren
+            - =style
+              - color
+                - pink
+          - b
+            - c
+              - d
+      `,
+    }),
+  ])
+
+  // do not apply to thought itself
+  expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'pink' })
+
+  // do not apply to children
+  expect(await findThoughtByText('b')).not.toHaveStyle({ color: 'pink' })
+
+  // apply to grandchildren (must be pinned open to find elemetns)
+  expect(await findThoughtByText('c')).toHaveStyle({ color: 'pink' })
+
+  // do not apply to great grandchildren
+  expect(await findThoughtByText('d')).not.toHaveStyle({ color: 'pink' })
+})
