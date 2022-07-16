@@ -53,7 +53,6 @@ const editThought = (
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)
   const thoughtCollision = getLexeme(state, newValue)
-  const childrenMapKeyChanged = isAttribute(oldValue) !== isAttribute(newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
@@ -163,8 +162,7 @@ const editThought = (
   }
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    // only update parent if childrenMap key changed
-    ...(childrenMapKeyChanged
+    ...(isAttribute(newValue)
       ? {
           [parentOfEditedThought.id]: {
             ...parentOfEditedThought,

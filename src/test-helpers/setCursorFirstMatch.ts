@@ -13,11 +13,11 @@ const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
 
 /** A Thunk that sets the cursor to the given unranked path. */
 export const setCursorFirstMatchActionCreator =
-  (pathUnranked: string[]): Thunk =>
+  (pathUnranked: string[] | null): Thunk =>
   (dispatch, getState) =>
     dispatch(
       setCursorThunk({
-        path: contextToPath(getState(), pathUnranked),
+        path: pathUnranked ? contextToPath(getState(), pathUnranked) : null,
       }),
     )
 
