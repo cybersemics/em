@@ -16,26 +16,28 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   const state = getState()
   const { cursor } = state
 
-  if (cursor) {
-    const cursorThought = getThoughtById(state, head(cursor))
+  // NOOP but default browser behavior is still prevented
+  // otherwise Chrome/Brave will open "Clear browsing data"
+  if (!cursor) return
 
-    if (isEM(cursor) || isRoot(cursor)) {
-      dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
-    } else if (findDescendant(state, head(cursor), '=readonly')) {
-      dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be deleted.` }))
-    } else {
-      // delete the thought
-      dispatch(deleteThoughtWithCursor({ path: cursor }))
+  const cursorThought = getThoughtById(state, head(cursor))
 
-      // undo alert
-      if (cursorThought.value) {
-        dispatch(
-          alert(`Deleted ${ellipsize(cursorThought.value)}`, {
-            showCloseLink: true,
-            clearDelay: 8000,
-          }),
-        )
-      }
+  if (isEM(cursor) || isRoot(cursor)) {
+    dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
+  } else if (findDescendant(state, head(cursor), '=readonly')) {
+    dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be deleted.` }))
+  } else {
+    // delete the thought
+    dispatch(deleteThoughtWithCursor({ path: cursor }))
+
+    // undo alert
+    if (cursorThought.value) {
+      dispatch(
+        alert(`Deleted ${ellipsize(cursorThought.value)}`, {
+          showCloseLink: true,
+          clearDelay: 8000,
+        }),
+      )
     }
   }
 }
@@ -46,7 +48,7 @@ const deleteShortcut: Shortcut = {
   description: 'Permanently delete the current thought.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
+  canExecute: getState => isDocumentEditable(),
   exec,
 }
 
