@@ -771,7 +771,7 @@ export const SubthoughtsComponent = ({
 
             const style = {
               ...styleGrandchildren,
-              ...styleChildren,
+              ...(child.value !== '=children' ? styleChildren : null),
               ...(isEditingChildPath()
                 ? {
                     ...styleZoom(),

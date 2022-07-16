@@ -53,7 +53,7 @@ it('=let/x/=style is not applied to siblings and sibling descendants', async () 
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
 })
 
-it('=let/x/=style is applied to x as a preview', async () => {
+it('=let/=test/=style is not applied to =test within the =let definition', async () => {
   store.dispatch([
     importText({
       text: `
@@ -66,8 +66,8 @@ it('=let/x/=style is applied to x as a preview', async () => {
     }),
   ])
 
-  const thoughtNuzzle = await findThoughtByText('=dazzle')
-  expect(thoughtNuzzle).toHaveStyle({ color: 'pink' })
+  const thoughtDazzle = await findThoughtByText('=dazzle')
+  expect(thoughtDazzle).not.toHaveStyle({ color: 'pink' })
 })
 
 it('=let/x/=style is not applied to =let itself', async () => {
@@ -83,8 +83,8 @@ it('=let/x/=style is not applied to =let itself', async () => {
     }),
   ])
 
-  const thoughtNuzzle = await findThoughtByText('=let')
-  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+  const thoughtLet = await findThoughtByText('=let')
+  expect(thoughtLet).not.toHaveStyle({ color: 'pink' })
 })
 
 it('=let/x/=style is available to all descendants', async () => {

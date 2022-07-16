@@ -367,7 +367,13 @@ const ThoughtContainer = ({
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
-  const styleSelf = useSelector((state: State) => getStyle(state, thoughtId))
+  const styleSelf = useSelector((state: State) => {
+    const parent = getThoughtById(state, parentId)
+    return value !== '=children' && value !== '=grandchildren' && parent.value !== '=let'
+      ? getStyle(state, thoughtId)
+      : null
+  })
+
   const styleContainerSelf = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
