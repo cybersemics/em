@@ -357,7 +357,9 @@ while (stack.length > 0) {
           // update children parentIds
           Object.values(duplicateChild.childrenMap || {}).forEach(childId => {
             const childThought = db.thoughtIndex[childId]
-            childThought.parentId = existingChild.id
+            if (childThought) {
+              childThought.parentId = existingChild.id
+            }
           })
 
           // update Lexeme contexts
