@@ -615,8 +615,14 @@ export const SubthoughtsComponent = ({
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  const childrenAttributeId = findDescendant(state, thoughtId, '=children')
-  const grandchildrenAttributeId = findDescendant(state, thought.parentId, ['=grandchildren'])
+  const childrenAttributeId =
+    (value !== '=children' &&
+      getAllChildrenAsThoughts(state, thought.id).find(child => child.value === '=children')?.id) ||
+    null
+  const grandchildrenAttributeId =
+    (value !== '=grandchildren' &&
+      getAllChildrenAsThoughts(state, thought.parentId).find(child => child.value === '=grandchildren')?.id) ||
+    null
   const styleChildren = getStyle(state, childrenAttributeId)
   const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
   const styleContainerChildren = getStyle(state, childrenAttributeId, { container: true })
@@ -783,7 +789,8 @@ export const SubthoughtsComponent = ({
             const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
 
             /** Returns true if the bullet should be hidden. */
-            const hideBullet = () => attribute(state, head(childPath), '=bullet') === 'None'
+            const hideBullet = () =>
+              child.value !== '=grandchildren' && attribute(state, head(childPath), '=bullet') === 'None'
 
             /** Returns true if the bullet should be hidden if zoomed. */
             const hideBulletZoom = (): boolean => {

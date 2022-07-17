@@ -56,7 +56,7 @@ it('apply =children/=style to all children', async () => {
   expect(await findThoughtByText('c')).not.toHaveStyle({ color: 'pink' })
 })
 
-it('do not apply =children/=style to =children itself', async () => {
+it('as an exception, do not apply =children/=style to =children itself', async () => {
   store.dispatch([
     importText({
       text: `
@@ -101,4 +101,22 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
 
   // do not apply to great grandchildren
   expect(await findThoughtByText('d')).not.toHaveStyle({ color: 'pink' })
+})
+
+it('as an exception, do not apply =grandchildren/=style to =grandchildren itself', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =grandchildren
+            - =style
+              - color
+                - pink
+          - b
+      `,
+    }),
+    toggleHiddenThoughts(),
+  ])
+
+  expect(await findThoughtByText('=grandchildren')).not.toHaveStyle({ color: 'pink' })
 })
