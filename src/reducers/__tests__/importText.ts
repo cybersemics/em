@@ -2036,3 +2036,35 @@ it('set cursor correctly after duplicate merge', () => {
   - a
     - b`)
 })
+
+it(`import bold thoughts with bold descendants`, () => {
+  const text = `
+  - a
+  - c
+    - d
+      - **d1**
+        - e
+          - f
+            - **g**
+      - d2
+      - d3
+    - h
+  - i
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - c
+    - d
+      - **d1**
+        - e
+          - f
+            - **g**
+      - d2
+      - d3
+    - h
+  - i`)
+})

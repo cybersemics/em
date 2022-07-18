@@ -17,13 +17,13 @@ const regexStartsWithClosedTag = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
 
-// Text content enclosed in double asterisks '**' representing markdown bold.
+// Text content enclosed in double asterisks '**' representing markdown bold (non-greedy).
 // Example: **markdown bold**
-const regexpMarkdownBold = /\*\*(.+)\*\*/g
+const regexpMarkdownBold = /\*\*(.+?)\*\*/g
 
-// Text content enclosed in single asterisks '*' representing markdown italics.
+// Text content enclosed in single asterisks '*' representing markdown italics (non-greedy).
 // Example: *markdown italics*
-const regexpMarkdownItalics = /\*(.+)\*/g
+const regexpMarkdownItalics = /\*(.+?)\*/g
 
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
 const bodyContent = (html: string) => {
