@@ -31,6 +31,7 @@ const HOME_PATH = [HOME_TOKEN] as Path
 let childrenInMultipleThoughts = 0
 let childrenWithMissingThoughtRepaired = 0
 let duplicateSiblingsMerged = 0
+let lexemeArrayRepaired = 0
 let lexemeContextsAdded = 0
 let lexemeContextsInvalid = 0
 let lexemeContextsMissing = 0
@@ -369,7 +370,7 @@ while (stack.length > 0) {
 
           // update Lexeme contexts
           const lexemeKey = hashThought(duplicateThought.value)
-          const lexeme = db.lexemeIndex[lexemeKey] as LexemeDb
+          const lexeme = db.lexemeIndex[lexemeKey]
           // if Lexeme is missing, it will be reconstructed in the next step
           if (lexeme?.contexts) {
             delete lexeme.contexts[duplicateThought.id]
@@ -504,6 +505,20 @@ Object.values(db.lexemeIndex).forEach((lexeme: LexemeDb) => {
 console.info('Adding missing Lexeme contexts')
 Object.values(db.thoughtIndex).forEach(thought => {
   const lexemeKey = hashThought(thought.value)
+  if (Array.from(db.lexemeIndex[lexemeKey] as any).length === 21) {
+    db.lexemeIndex[lexemeKey] = {
+      id: nanoid(),
+      lemma: normalizeThought(thought.value),
+      contexts: {
+        [thought.id]: true,
+      },
+      created: thought.lastUpdated,
+      lastUpdated: thought.lastUpdated,
+      updatedBy: thought.updatedBy,
+    }
+    lexemeArrayRepaired++
+    return
+  }
   const lexeme = db.lexemeIndex[lexemeKey]
   if (!lexeme.contexts) {
     lexeme.contexts = {}
@@ -587,6 +602,7 @@ const table = new Table({
       color(lexemeContextsInvalid)(`Lexeme contexts with invalid values removed`),
       color(lexemeContextsInvalid)(),
     ],
+    ['lexemeArrayRepaired', color(lexemeArrayRepaired)(`Lexeme array repaired`), color(lexemeArrayRepaired)()],
     ['lexemeContextsAdded', color(lexemeContextsAdded)(`Lexeme contexts added`), color(lexemeContextsAdded)()],
     [
       'missingGrandchildren',
