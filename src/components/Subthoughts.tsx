@@ -71,7 +71,8 @@ export interface SubthoughtsProps {
   path?: Path
 }
 
-export type ConnectedSubthoughtsProps = SubthoughtsProps & ReturnType<typeof mapStateToProps>
+// omit env since it is stringified in mapStateeToProps
+export type ConnectedSubthoughtsProps = Omit<SubthoughtsProps, 'env'> & ReturnType<typeof mapStateToProps>
 
 /** Props needed for drag-and-drop behavior. Must match the return type of dropCollect in DragAndDropSubthoughts. (We cannot import the type directly since it creates a circular import). */
 interface SubthoughtsDropCollect {
@@ -222,7 +223,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const firstChilId = allChildren[0]
 
-  const hasChildrenLoaded = firstChilId && getThoughtById(state, firstChilId)
+  const hasChildrenLoaded = !!(firstChilId && getThoughtById(state, firstChilId))
 
   const cursorSubthoughtIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
@@ -326,7 +327,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     contextBinding,
     distance,
     actualDistance,
-    env,
+    // stringify for deep equals comparison
+    env: JSON.stringify(env),
     isAbsoluteContext,
     isEditing,
     isEditingPath,
@@ -340,10 +342,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     // passing sortPreference directly would re-render the component each time, since the preference object reference changes
     sortType: sortPreference.type,
     sortDirection: sortPreference.direction,
-    // Re-render if children change and when children Thought entry in thoughtIndex is available.
-    // Uses getAllChildren for efficient change detection. Probably does not work in context view.
-    // Not used by render function, which uses a more complex calculation of children that supports context view.
-    __allChildren: hasChildrenLoaded ? allChildren : null,
+    // Re-render when children have been loaded into the thoughtIndex and when any child's value or rank changes
+    __hasChildrenLoaded: hasChildrenLoaded,
     __allChildrenValuesAndRanks: hasChildrenLoaded ? allChildrenValuesAndRanks : null,
     // We need to re-render when actualDistance changes, but it is complicated and expensive.
     // Until actualDistance gets refactored and optimized, we can provide a quick fix for any observed rendering issues.
@@ -487,7 +487,8 @@ export const SubthoughtsComponent = ({
   simplePath,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
-}: SubthoughtsProps & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) => {
+}: // omit env since it is stringified
+Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
@@ -496,11 +497,12 @@ export const SubthoughtsComponent = ({
   const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
+  const envParsed = JSON.parse(env || '{}')
 
   const isEditingAncestor = isEditingPath && !isEditing
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
-  const { zoom, zoomCursor, zoomParent } = useZoom({ env, isEditing, isEditingPath, simplePath })
+  const { zoom, zoomCursor, zoomParent } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
 
   useEffect(() => {
     if (isHovering) {
@@ -684,7 +686,9 @@ export const SubthoughtsComponent = ({
                   // TODO: childPath should be unrooted, but if we change it it breaks
                   // figure out what is incorrectly depending on childPath being rooted
                   const childPath = getChildPath(state, child.id, simplePath, showContexts)
-                  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
+                  const childEnvZoomId = once(() =>
+                    findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }),
+                  )
 
                   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
                   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
@@ -724,7 +728,7 @@ export const SubthoughtsComponent = ({
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
-                        env={env}
+                        env={envParsed}
                         hideBullet={true}
                         rank={child.rank}
                         isVisible={
@@ -764,7 +768,7 @@ export const SubthoughtsComponent = ({
             // TODO: childPath should be unrooted, but if we change it it breaks
             // figure out what is incorrectly depending on childPath being rooted
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
+            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
 
             /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
             const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
@@ -817,7 +821,7 @@ export const SubthoughtsComponent = ({
               <Thought
                 allowSingleContext={allowSingleContextParent}
                 depth={depth + 1}
-                env={env}
+                env={envParsed}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
                 key={`${child.id}-${child.rank}`}
                 rank={child.rank}
