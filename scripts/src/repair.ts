@@ -42,6 +42,7 @@ let missingParent = 0
 let numOrphans = 0
 let parentIdRepaired = 0
 let thoughtMissingFromChildren = 0
+let undefinedThoughtValue = 0
 let unreachableThoughts = 0
 
 const args = minimist(process.argv.slice(2))
@@ -174,6 +175,21 @@ const numLexemesStart = Object.keys(db.lexemeIndex).length
 
 // track children to eliminate duplicates
 let childrenTouched: Index<Thought> = {}
+
+console.info('Deleting thoughts with missing value')
+
+Object.entries(db.thoughtIndex).forEach(([id, thought]) => {
+  if (thought.value == null) {
+    if (id === 'null') {
+      delete db.thoughtIndex[id]
+      undefinedThoughtValue++
+    } else {
+      console.error('id', id)
+      console.error('thought', thought)
+      throw new Error('Missing thought value')
+    }
+  }
+})
 
 console.info('Reconstructing orphans, missing children, and Lexemes')
 
@@ -558,7 +574,12 @@ const table = new Table({
     ['Total Lexemes (after)', 'Total number of lexemes after repairs', Object.keys(db.lexemeIndex).length],
     [],
     // repair metrics are given in the order that they are executed
-    ['numOrphans', color(numOrphans)(`✗ Thoughts with missing parent added to orphanage`), color(numOrphans)()],
+    [
+      'undefinedThoughtValue',
+      color(undefinedThoughtValue)(`✗ Thoughts with missing value deleted`),
+      color(undefinedThoughtValue)(),
+    ],
+    ['numOrphans', color(numOrphans)(`Thoughts with missing parent added to orphanage`), color(numOrphans)()],
     ['lexemeMissing', color(lexemeMissing)(`Missing Lexemes reconstructed`), color(lexemeMissing)()],
     [
       'thoughtMissingFromChildren',

@@ -155,57 +155,64 @@ async function* getDescendantThoughts(
       },
     }
 
-    const thoughts = providerThoughtsValidated.map(thoughtWithChildren => {
-      const isWithChildren = (thoughtWithChildren as ThoughtWithChildren).children
-      const thought = isWithChildren
-        ? toThought(thoughtWithChildren as ThoughtWithChildren)
-        : (thoughtWithChildren as Thought)
-      const childrenIds = Object.values(thought.childrenMap)
-      const isEmDescendant = thoughtId === EM_TOKEN
-      const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
-      const isMaxDepthReached = depth.get() >= maxDepth
-      const isMaxThoughtsReached = thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED
-      const isExpanded = isThoughtExpanded(updatedState, thought.id)
-      const parent = getThoughtById(updatedState, thought.parentId)
-      const isVisible =
-        // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
-        // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare
-        // we need to determine if this thought should be buffered now, and cannot wait for the =pin child to load
-        isExpanded ||
-        !!isThoughtExpanded(updatedState, thought.parentId) ||
-        !!parent?.childrenMap?.['=pin'] ||
-        parent?.value.endsWith(EXPAND_THOUGHT_CHAR)
-
-      // if either the max depth or the max number of thoughts are reached, mark the thought as pending and do not add enqueue children (i.e. buffering)
-      // do not buffer leaves, visible thoughts, EM and its descendants, or meta attributes (excluding =archive) and their descendants
-      // buffer if max thoughts are reached and the thought is not visible
-      const isPending =
-        (isMaxDepthReached || isMaxThoughtsReached) &&
-        hasChildren &&
-        !isVisible &&
-        !isEmDescendant &&
-        !isMetaDescendant(updatedState, thought)
-
-      // once the buffer limit has been reached, set thoughts with children as pending
-      // do not buffer descendants of EM
-      // do not buffer descendants of functions (except =archive)
-      if (isPending) {
-        // enqueue =pin even if the thought is buffered
-        // when =pin/true is loaded, then this thought will be marked as expanded and its children can be loaded
-        if (thought.childrenMap?.['=pin']) {
-          thoughtIdQueue.add([thought.childrenMap?.['=pin']])
+    const thoughts = providerThoughtsValidated
+      .map(thoughtWithChildren => {
+        if (thoughtWithChildren.value == null) {
+          console.warn('Undefined thought value.', provider.name, thoughtWithChildren)
+          return null
         }
-        return {
-          ...thought,
-          lastUpdated: never(),
-          updatedBy: getSessionId(),
-          pending: true,
+
+        const isWithChildren = (thoughtWithChildren as ThoughtWithChildren).children
+        const thought = isWithChildren
+          ? toThought(thoughtWithChildren as ThoughtWithChildren)
+          : (thoughtWithChildren as Thought)
+        const childrenIds = Object.values(thought.childrenMap)
+        const isEmDescendant = thoughtId === EM_TOKEN
+        const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
+        const isMaxDepthReached = depth.get() >= maxDepth
+        const isMaxThoughtsReached = thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED
+        const isExpanded = isThoughtExpanded(updatedState, thought.id)
+        const parent = getThoughtById(updatedState, thought.parentId)
+        const isVisible =
+          // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
+          // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare
+          // we need to determine if this thought should be buffered now, and cannot wait for the =pin child to load
+          isExpanded ||
+          !!isThoughtExpanded(updatedState, thought.parentId) ||
+          !!parent?.childrenMap?.['=pin'] ||
+          parent?.value.endsWith(EXPAND_THOUGHT_CHAR)
+
+        // if either the max depth or the max number of thoughts are reached, mark the thought as pending and do not add enqueue children (i.e. buffering)
+        // do not buffer leaves, visible thoughts, EM and its descendants, or meta attributes (excluding =archive) and their descendants
+        // buffer if max thoughts are reached and the thought is not visible
+        const isPending =
+          (isMaxDepthReached || isMaxThoughtsReached) &&
+          hasChildren &&
+          !isVisible &&
+          !isEmDescendant &&
+          !isMetaDescendant(updatedState, thought)
+
+        // once the buffer limit has been reached, set thoughts with children as pending
+        // do not buffer descendants of EM
+        // do not buffer descendants of functions (except =archive)
+        if (isPending) {
+          // enqueue =pin even if the thought is buffered
+          // when =pin/true is loaded, then this thought will be marked as expanded and its children can be loaded
+          if (thought.childrenMap?.['=pin']) {
+            thoughtIdQueue.add([thought.childrenMap?.['=pin']])
+          }
+          return {
+            ...thought,
+            lastUpdated: never(),
+            updatedBy: getSessionId(),
+            pending: true,
+          }
+        } else {
+          thoughtIdQueue.add(childrenIds)
+          return thought
         }
-      } else {
-        thoughtIdQueue.add(childrenIds)
-        return thought
-      }
-    })
+      })
+      .filter(Boolean) as Thought[]
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))

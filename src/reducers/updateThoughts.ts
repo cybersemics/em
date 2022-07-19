@@ -27,6 +27,16 @@ export type UpdateThoughtsOptions = Omit<PushBatch, 'pendingLexemes'> & {
 /** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
 const dataIntegrityCheck =
   (thoughtIndexUpdates: Index<Thought | null>, lexemeIndexUpdates: Index<Lexeme | null>) => (state: State) => {
+    // undefined thought value
+    Object.entries(thoughtIndexUpdates).forEach(([id, thought]) => {
+      if (!thought) return
+      if (thought.value == null) {
+        console.error('id', id)
+        console.error('thought', thought)
+        throw new Error('Missing thought value')
+      }
+    })
+
     Object.values(thoughtIndexUpdates).forEach(thought => {
       if (!thought) return
 
