@@ -287,7 +287,8 @@ const Toolbar = ({
                 <ToolbarIcon
                   clearHoldTimer={clearHoldTimer}
                   // disable click while alert is active or still being dismissed
-                  disabled={!!alert}
+                  // except inline alerts, which do not obscure the toolbar
+                  disabled={!!alert && !alert.isInline}
                   fg={fg}
                   fontSize={fontSize}
                   isPressing={pressingToolbarId === id}
