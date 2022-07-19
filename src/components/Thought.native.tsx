@@ -330,7 +330,7 @@ const ThoughtContainer = ({
 
   const draggingThoughtValue = state.draggingThought ? head(pathToContext(state, state.draggingThought)) : null
 
-  const isAnyChildHovering = useIsChildHovering(thoughts, isHovering, isDeepHovering)
+  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
 
   /** Checks if any descendents of the direct siblings is being hovered. */
   const isAnySiblingDescendantHovering = () =>

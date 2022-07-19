@@ -29,7 +29,6 @@ const dragInProgress =
     })
 
     dispatch(expandOnHoverTop())
-
     dispatch(expandOnHoverBottom())
   }
 
