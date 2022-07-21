@@ -116,8 +116,8 @@ interface EditableProps {
   disabled?: boolean
   isEditing?: boolean
   isVisible?: boolean
-  rank: number
   showContexts?: boolean
+  rank?: number
   style?: React.CSSProperties
   simplePath: SimplePath
   /* If transient is true:
@@ -137,11 +137,12 @@ let blurring = false
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
   // TODO: This is neede to rerender when value changes. Refactor is needed here.
-  const thought = getThoughtById(state, head(props.simplePath))
+  const thought = getThoughtById(state, head(props.showContexts ? parentOf(props.simplePath) : props.simplePath))
   const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
   return {
     isCursorCleared: props.isEditing && state.cursorCleared,
-    thought,
+    value: thought.value,
+    rank: thought.rank,
     // re-render when noteFocus changes in order to set the selection
     hasNoteFocus,
   }
@@ -162,17 +163,16 @@ const Editable = ({
   hasNoteFocus,
   showContexts,
   rank,
+  value,
   style,
   onEdit,
   dispatch,
   transient,
   editing,
-  thought,
 }: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
-  const value = thought.value || ''
   const parentId = head(rootedParentOf(state, simplePath))
   const readonly = findDescendant(state, thoughtId, '=readonly')
   const uneditable = findDescendant(state, thoughtId, '=uneditable')
@@ -260,12 +260,7 @@ const Editable = ({
    */
   const thoughtChangeHandler = (
     newValue: string,
-    {
-      context,
-      showContexts,
-      rank,
-      simplePath,
-    }: { context: Context; showContexts?: boolean; rank: number; simplePath: SimplePath },
+    { showContexts, rank, simplePath }: { showContexts?: boolean; rank: number; simplePath: SimplePath },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -483,8 +478,8 @@ const Editable = ({
     if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
-    } else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath })
+      thoughtChangeHandler(newValue, { showContexts, rank, simplePath })
+    } else throttledChangeRef.current(newValue, { showContexts, rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */

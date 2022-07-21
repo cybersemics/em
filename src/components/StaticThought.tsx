@@ -59,7 +59,6 @@ const StaticThought = ({
       ) : isDivider(value) ? (
         <Divider path={simplePath} />
       ) : (
-        // cannot use simplePathLive here else Editable gets re-rendered during editing
         <Editable
           path={path}
           cursorOffset={cursorOffset}

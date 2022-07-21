@@ -39,6 +39,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getLexeme from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
+import getThoughtById from '../selectors/getThoughtById'
 // isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
@@ -90,8 +91,11 @@ let blurring = false
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
+  const thought = getThoughtById(state, head(props.showContexts ? parentOf(props.simplePath) : props.simplePath))
   return {
     isCursorCleared: props.isEditing && state.cursorCleared,
+    value: thought.value,
+    rank: thought.rank,
   }
 }
 
@@ -108,6 +112,7 @@ const Editable = ({
   cursorOffset,
   showContexts,
   rank,
+  value,
   style,
   onEdit,
   dispatch,
@@ -116,7 +121,6 @@ const Editable = ({
   const state = store.getState()
   const thoughtId = head(simplePath)
   const thoughts = pathToContext(state, simplePath)
-  const value = head(showContexts ? parentOf(thoughts) : thoughts) || ''
   const parentId = head(rootedParentOf(state, simplePath))
 
   const readonly = findDescendant(state, thoughtId, '=readonly')
@@ -197,12 +201,7 @@ const Editable = ({
    */
   const thoughtChangeHandler = (
     newValue: string,
-    {
-      context,
-      showContexts,
-      rank,
-      simplePath,
-    }: { context: Context; showContexts?: boolean; rank: number; simplePath: Path },
+    { showContexts, rank, simplePath }: { showContexts?: boolean; rank: number; simplePath: Path },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -372,8 +371,8 @@ const Editable = ({
     if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { context, showContexts, rank, simplePath })
-    } else throttledChangeRef.current(newValue, { context, showContexts, rank, simplePath })
+      thoughtChangeHandler(newValue, { showContexts, rank, simplePath })
+    } else throttledChangeRef.current(newValue, { showContexts, rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */
