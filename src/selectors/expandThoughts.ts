@@ -158,6 +158,7 @@ function expandThoughtsRecursive(
   // expand if child is only child and its child is not url
   const firstGrandchildren = visibleChildren.length > 0 ? getAllChildren(state, visibleChildren[0].id) : []
   const isOnlyChildNoUrl =
+    firstGrandchildren.length > 0 &&
     visibleChildren.length === 1 &&
     !isTableColumn1(state, simplePath) &&
     (firstGrandchildren.length >= 1 || !isURL(childValue(state, firstGrandchildren[0], showContexts)))
