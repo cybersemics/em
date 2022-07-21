@@ -40,7 +40,6 @@ import head from '../util/head'
 import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
-import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
@@ -91,7 +90,6 @@ interface ThoughtProps {
   cursorOffset?: number | null
   env?: Index<Context>
   hideBullet?: boolean
-  homeContext?: boolean
   isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
@@ -275,9 +273,6 @@ const ThoughtContainer = ({
 
   if (!thought) return null
 
-  // if rendering as a context and the thought is the root, render home icon instead of Editable
-  const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
-
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
@@ -401,7 +396,6 @@ const ThoughtContainer = ({
         <ThoughtAnnotation
           env={env}
           path={path}
-          homeContext={homeContext}
           minContexts={allowSingleContext ? 0 : 2}
           showContextBreadcrumbs={showContextBreadcrumbs}
           showContexts={showContexts}
@@ -412,7 +406,6 @@ const ThoughtContainer = ({
         <StaticThought
           path={path}
           cursorOffset={cursorOffset}
-          homeContext={homeContext}
           isVisible={isVisible}
           isPublishChild={isPublishChild}
           isEditing={isEditing}

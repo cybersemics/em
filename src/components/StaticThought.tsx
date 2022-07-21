@@ -2,10 +2,11 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
 import expandContextThought from '../action-creators/expandContextThought'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
+import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -18,7 +19,6 @@ import { ConnectedThoughtProps } from './Thought'
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   cursorOffset,
-  homeContext,
   isEditing,
   isVisible,
   path,
@@ -34,7 +34,8 @@ const StaticThought = ({
   const state = store.getState()
 
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
-  const { value } = pathToThought(state, simplePath)
+  const homeContext = showContexts && isRoot
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   return (
     <div aria-label='thought' className='thought'>
