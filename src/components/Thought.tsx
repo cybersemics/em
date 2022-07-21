@@ -410,6 +410,7 @@ const ThoughtContainer = ({
   return dropTarget(
     dragSource(
       <li
+        aria-label='thought-container'
         style={{
           ...styleContainerNew,
           ...styleContainerZoom,

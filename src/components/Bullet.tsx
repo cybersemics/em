@@ -119,6 +119,7 @@ const Bullet = ({
 
     return leaf ? (
       <ellipse
+        aria-label='bullet-glyph'
         className={classNames({
           'glyph-fg': true,
           ...style,
@@ -141,6 +142,7 @@ const Bullet = ({
 
   return (
     <span
+      aria-label='bullet'
       className={classNames({
         bullet: true,
         'show-contexts': showContexts,

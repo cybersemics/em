@@ -661,6 +661,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
       {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? (
         <ul
+          aria-label='subthoughts'
           // lexemeIndex-thoughts={showContexts ? hashContext(unroot(pathToContext(simplePath))) : null}
           className={classNames({
             children: true,

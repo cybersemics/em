@@ -35,7 +35,7 @@ const StaticThought = ({
   const { value } = pathToThought(state, simplePath)
 
   return (
-    <div className='thought'>
+    <div aria-label='thought' className='thought'>
       {showContextBreadcrumbs && !isRoot ? (
         <ContextBreadcrumbs
           simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}

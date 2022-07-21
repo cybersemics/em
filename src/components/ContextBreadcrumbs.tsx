@@ -111,6 +111,7 @@ export const ContextBreadcrumbs = ({
 
   return (
     <div
+      aria-label='context-breadcrumbs'
       className={classNames({
         'breadcrumbs context-breadcrumbs': true,
         ...classNamesObject,
