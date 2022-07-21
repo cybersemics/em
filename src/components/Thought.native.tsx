@@ -2,7 +2,7 @@
 import { View } from 'moti'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
@@ -259,8 +259,21 @@ const ThoughtContainer = ({
     }
   }
 
+  // temporarily disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+
+  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
+
+  const styleSelf = useSelector((state: State) => {
+    if (!thought) return null
+    const parent = getThoughtById(state, parentId)
+    return thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
+      ? getStyle(state, thoughtId)
+      : null
+  })
+
+  if (!thought) return null
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
@@ -318,7 +331,6 @@ const ThoughtContainer = ({
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
-  const styleSelf = getStyle(state, thoughtId)
   const styleContainer = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
@@ -328,8 +340,6 @@ const ThoughtContainer = ({
   const draggingThoughtValue = state.draggingThought
     ? getThoughtById(state, headId(state.draggingThought))?.value
     : null
-
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
 
   /** Checks if any descendents of the direct siblings is being hovered. */
   const isAnySiblingDescendantHovering = () =>

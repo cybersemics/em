@@ -4,12 +4,11 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import parentOfThought from '../selectors/parentOfThought'
+import getThoughtById from '../selectors/getThoughtById'
 import { store } from '../store'
 import ancestors from '../util/ancestors'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
-// components
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -49,14 +48,22 @@ export const ContextBreadcrumbs = ({
   const overflow = simplePath.length > thoughtsLimit! ? simplePath.length - thoughtsLimit! + 1 : 0
 
   // if charLimit is exceeded then replace the remaining characters by ellipsis
-  const charLimitedArray: OverflowPath = simplePath.map(child => ({
-    value: parentOfThought(state, child)!.value,
-    // subtract 2 so that additional '...' is still within the char limit
-    id: child,
-    ...(ellipsize
-      ? { label: strip(child.length > charLimit! - 2 ? child.substr(0, charLimit! - 2) + '...' : child) }
-      : {}),
-  }))
+  const charLimitedArray: OverflowPath = simplePath.map(id => {
+    const thought = getThoughtById(state, id)
+    return {
+      value: thought.value,
+      id,
+      // add ellipsized label
+      ...(ellipsize
+        ? {
+            label: strip(
+              // subtract 2 so that additional '...' is still within the char limit
+              thought.value.length > charLimit! - 2 ? thought.value.substr(0, charLimit! - 2) + '...' : thought.value,
+            ),
+          }
+        : {}),
+    }
+  })
 
   // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
   const overflowArray: OverflowPath =

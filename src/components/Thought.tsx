@@ -240,9 +240,8 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
-  const thought = getThoughtById(state, head(simplePath))
   const thoughtId = head(simplePath)
-  const value = thought.value
+  const thought = getThoughtById(state, thoughtId)
   const parentId = head(rootedParentOf(state, simplePath))
 
   useEffect(() => {
@@ -275,8 +274,23 @@ const ThoughtContainer = ({
     }
   }
 
+  // temporarily disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+
+  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
+
+  const styleSelf = useSelector((state: State) => {
+    if (!thought) return null
+    const parent = getThoughtById(state, parentId)
+    return thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
+      ? getStyle(state, thoughtId)
+      : null
+  })
+
+  if (!thought) return null
+
+  const value = thought.value
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
@@ -358,13 +372,6 @@ const ThoughtContainer = ({
 
   const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
-  const styleSelf = useSelector((state: State) => {
-    const parent = getThoughtById(state, parentId)
-    return value !== '=children' && value !== '=grandchildren' && parent.value !== '=let'
-      ? getStyle(state, thoughtId)
-      : null
-  })
-
   const styleContainerSelf = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
@@ -374,8 +381,6 @@ const ThoughtContainer = ({
   const draggingThoughtValue = state.draggingThought
     ? getThoughtById(state, headId(state.draggingThought))?.value
     : null
-
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
 
   /** Checks if any descendents of the direct siblings is being hovered. */
   const isAnySiblingDescendantHovering = () =>
