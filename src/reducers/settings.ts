@@ -31,7 +31,6 @@ const settings = (state: State, { key, value }: { key: string; value: string }) 
   const simplePath = appendToPath(contextToPath(state, context) as SimplePath, firstChild.id)
 
   return editThought(state, {
-    context,
     oldValue: firstChild.value,
     newValue,
     path: simplePath,

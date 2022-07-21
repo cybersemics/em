@@ -2,7 +2,6 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
-import { HOME_TOKEN } from '../constants'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
 import moveThought from '../reducers/moveThought'
@@ -13,7 +12,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import strip from '../util/strip'
 
@@ -26,9 +24,6 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
   path = path || (state.cursor as Path)
 
   const simplePath = simplifyPath(state, path)
-
-  const thoughts = pathToContext(state, simplePath)
-  const context = thoughts.length > 1 ? parentOf(thoughts) : [HOME_TOKEN]
 
   const headThought = getThoughtById(state, head(simplePath))
   // split the value into left and right parts
@@ -44,7 +39,6 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     editThought({
       oldValue: value,
       newValue: valueLeft,
-      context,
       path: simplePath,
     }),
 

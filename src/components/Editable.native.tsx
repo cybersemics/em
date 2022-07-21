@@ -226,7 +226,6 @@ const Editable = ({
     if (lexeme) {
       dispatch(
         editThought({
-          context,
           showContexts,
           oldValue,
           newValue,

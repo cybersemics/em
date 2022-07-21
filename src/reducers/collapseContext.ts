@@ -12,7 +12,6 @@ import createId from '../util/createId'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import deleteThought from './deleteThought'
@@ -64,7 +63,6 @@ const collapseContext = (state: State, { at }: Options) => {
           editThought({
             oldValue: thought.value,
             newValue: createId(), // unique value
-            context: pathToContext(state, simpleCursor),
             path: simpleCursor,
           }),
           // outdent each child

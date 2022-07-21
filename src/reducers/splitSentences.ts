@@ -7,10 +7,8 @@ import editingValue from '../reducers/editingValue'
 import newThought from '../reducers/newThought'
 import setCursor from '../reducers/setCursor'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 
@@ -18,8 +16,6 @@ import splitSentence from '../util/splitSentence'
 const splitSentences = (state: State) => {
   const { cursor } = state
   if (!cursor) return state
-  const thoughts = pathToContext(state, cursor)
-  const cursorContext = rootedParentOf(state, thoughts)
   const cursorThought = getThoughtById(state, head(cursor))
   const { value, rank } = cursorThought
 
@@ -36,7 +32,6 @@ const splitSentences = (state: State) => {
     editThought({
       oldValue: value,
       newValue: firstSentence,
-      context: cursorContext,
       path: simplifyPath(state, cursor),
       rankInContext: rank,
     }),

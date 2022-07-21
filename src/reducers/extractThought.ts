@@ -2,10 +2,8 @@ import _ from 'lodash'
 import State from '../@types/State'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import editThought from './editThought'
@@ -37,14 +35,10 @@ const extractThought = (state: State) => {
   const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
   const childValue = value.slice(selectionStart, selectionEnd)
 
-  const thoughts = pathToContext(state, cursor)
-  const cursorContext = rootedParentOf(state, thoughts)
-
   const reducers = [
     editThought({
       oldValue: value,
       newValue,
-      context: cursorContext,
       path: simplifyPath(state, cursor),
       rankInContext: rank,
     }),

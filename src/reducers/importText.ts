@@ -23,7 +23,6 @@ import importJSON from '../util/importJSON'
 import initialState from '../util/initialState'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks from '../util/roamJsonToBlocks'
 import { getSessionId } from '../util/sessionManager'
@@ -131,7 +130,6 @@ const importText = (
       editThought({
         oldValue: destValue,
         newValue,
-        context: rootedParentOf(state, pathToContext(state, path)),
         path: simplePath,
       }),
 

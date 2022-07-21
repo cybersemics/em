@@ -1,5 +1,4 @@
 import State from '../@types/State'
-import { HOME_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import deleteThought from '../reducers/deleteThought'
 import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
@@ -19,7 +18,6 @@ import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import archiveThought from './archiveThought'
 
@@ -34,7 +32,6 @@ const deleteEmptyThought = (state: State): State => {
 
   const offset = state.cursorOffset ?? 0
   const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
-  const context = pathToContext(state, cursor)
   const simplePath = simplifyPath(state, cursor)
   const allChildren = getChildrenRanked(state, head(cursor))
   const visibleChildren = getChildren(state, head(cursor))
@@ -80,7 +77,6 @@ const deleteEmptyThought = (state: State): State => {
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && !showContexts) {
     const { value, rank, splitSource } = cursorThought
-    const parentContext = context.length > 1 ? parentOf(context) : [HOME_TOKEN]
     const prev = prevSibling(state, value, rootedParentOf(state, cursor), rank)
 
     // only if there is a previous sibling
@@ -94,7 +90,6 @@ const deleteEmptyThought = (state: State): State => {
         editThought({
           oldValue: prev.value,
           newValue: valueNew,
-          context: parentContext,
           path: pathPrevNew,
         }),
 

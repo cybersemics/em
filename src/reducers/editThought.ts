@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
@@ -33,17 +32,13 @@ import updateThoughts from './updateThoughts'
 export interface editThoughtPayload {
   oldValue: string
   newValue: string
-  context: Context
   showContexts?: boolean
   path: SimplePath
   rankInContext?: number
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (
-  state: State,
-  { oldValue, newValue, context, showContexts, path, rankInContext }: editThoughtPayload,
-) => {
+const editThought = (state: State, { oldValue, newValue, showContexts, path, rankInContext }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value

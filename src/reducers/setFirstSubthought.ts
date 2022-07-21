@@ -6,14 +6,12 @@ import createThought from '../reducers/createThought'
 import editThought from '../reducers/editThought'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
-import thoughtToContext from '../selectors/thoughtToContext'
 import head from '../util/head'
 
 /** Sets the value of the first subthought in the given context. */
 const setFirstSubthoughts = (state: State, { path, value }: { path: Path; value: string }) => {
   const id = head(path)
   const firstThoughtOld = getAllChildrenAsThoughts(state, id)[0]
-  const context = thoughtToContext(state, id)
 
   if (!path) {
     console.info({ context, value })
@@ -23,7 +21,6 @@ const setFirstSubthoughts = (state: State, { path, value }: { path: Path; value:
   return firstThoughtOld
     ? // context has a first and must be changed
       editThought(state, {
-        context,
         oldValue: firstThoughtOld.value,
         newValue: value,
         path: path.concat(firstThoughtOld.id) as SimplePath,

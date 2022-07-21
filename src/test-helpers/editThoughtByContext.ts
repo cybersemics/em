@@ -2,10 +2,8 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import editThoughtThunk from '../action-creators/editThought'
-import { HOME_TOKEN } from '../constants'
 import editThought, { editThoughtPayload } from '../reducers/editThought'
 import contextToPath from '../selectors/contextToPath'
-import parentOf from '../util/parentOf'
 
 /**
  * Edit thought at the given Context.
@@ -18,11 +16,8 @@ const editThoughtByContext = _.curryRight(
     const path = contextToPath(state, payload.at)
     if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
 
-    const context = payload.at.length > 1 ? parentOf(payload.at) : [HOME_TOKEN]
-
     return editThought(state, {
       ...payload,
-      context,
       path,
     })
   },
@@ -40,12 +35,9 @@ export const editThoughtByContextActionCreator = (
     const path = contextToPath(getState(), payload.at)
     if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
 
-    const context = payload.at.length > 1 ? parentOf(payload.at) : [HOME_TOKEN]
-
     dispatch(
       editThoughtThunk({
         ...payload,
-        context,
         path,
       }),
     )

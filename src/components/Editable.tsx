@@ -282,7 +282,6 @@ const Editable = ({
 
     dispatch(
       editThought({
-        context,
         showContexts,
         oldValue,
         newValue,
@@ -594,7 +593,6 @@ const Editable = ({
       // edit original thought to first line
       dispatch([
         editThought({
-          context,
           showContexts,
           oldValue: value,
           newValue: lines[0],

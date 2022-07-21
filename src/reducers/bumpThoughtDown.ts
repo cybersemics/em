@@ -71,7 +71,6 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     editThought({
       oldValue: value,
       newValue: '',
-      context: rootedParentOf(state, context),
       path: simplePathWithNewRank,
     }),
 
