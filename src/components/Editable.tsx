@@ -4,7 +4,6 @@ import _ from 'lodash'
 import React, { FocusEventHandler, useEffect, useRef, useState } from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
-import Context from '../@types/Context'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -45,7 +44,6 @@ import getContexts from '../selectors/getContexts'
 import getLexeme from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import { store } from '../store'
@@ -61,7 +59,6 @@ import isDivider from '../util/isDivider'
 import isHTML from '../util/isHTML'
 import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -116,7 +113,6 @@ interface EditableProps {
   disabled?: boolean
   isEditing?: boolean
   isVisible?: boolean
-  showContexts?: boolean
   rank?: number
   style?: React.CSSProperties
   simplePath: SimplePath
@@ -125,7 +121,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onEdit?: (args: { context: Context; path: Path; oldValue: string; newValue: string }) => void
+  onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
   editing?: boolean | null
 }
 
@@ -136,8 +132,7 @@ let blurring = false
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
-  // TODO: This is neede to rerender when value changes. Refactor is needed here.
-  const thought = getThoughtById(state, head(props.showContexts ? parentOf(props.simplePath) : props.simplePath))
+  const thought = getThoughtById(state, head(props.simplePath))
   const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
   return {
     isCursorCleared: props.isEditing && state.cursorCleared,
@@ -161,7 +156,6 @@ const Editable = ({
   path,
   cursorOffset,
   hasNoteFocus,
-  showContexts,
   rank,
   value,
   style,
@@ -172,16 +166,9 @@ const Editable = ({
 }: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughtId = head(simplePath)
-  const thoughts = pathToContext(state, simplePath)
   const parentId = head(rootedParentOf(state, simplePath))
   const readonly = findDescendant(state, thoughtId, '=readonly')
   const uneditable = findDescendant(state, thoughtId, '=uneditable')
-  const context =
-    showContexts && thoughts.length > 2
-      ? parentOf(parentOf(thoughts))
-      : !showContexts && thoughts.length > 1
-      ? parentOf(thoughts)
-      : state.rootContext
   const optionsId = findDescendant(state, parentId, '=options')
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
@@ -237,8 +224,7 @@ const Editable = ({
 
     const isEditing = equalPath(cursor, path)
 
-    const pathLive =
-      cursor && isEditing ? appendToPath(parentOf(path), head(showContexts ? parentOf(cursor) : cursor)) : path
+    const pathLive = cursor && isEditing ? appendToPath(parentOf(path), head(cursor)) : path
 
     dispatch(
       setCursor({
@@ -258,10 +244,7 @@ const Editable = ({
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (
-    newValue: string,
-    { showContexts, rank, simplePath }: { showContexts?: boolean; rank: number; simplePath: SimplePath },
-  ) => {
+  const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: SimplePath }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -282,7 +265,6 @@ const Editable = ({
 
     dispatch(
       editThought({
-        showContexts,
         oldValue,
         newValue,
         rankInContext: rank,
@@ -313,7 +295,7 @@ const Editable = ({
       dispatch(tutorialNext({}))
     }
 
-    onEdit?.({ context, path, oldValue, newValue })
+    onEdit?.({ path, oldValue, newValue })
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
@@ -477,8 +459,8 @@ const Editable = ({
     if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { showContexts, rank, simplePath })
-    } else throttledChangeRef.current(newValue, { showContexts, rank, simplePath })
+      thoughtChangeHandler(newValue, { rank, simplePath })
+    } else throttledChangeRef.current(newValue, { rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */
@@ -593,7 +575,6 @@ const Editable = ({
       // edit original thought to first line
       dispatch([
         editThought({
-          showContexts,
           oldValue: value,
           newValue: lines[0],
           rankInContext: rank,
@@ -666,8 +647,6 @@ const Editable = ({
     }
 
     const state = store.getState()
-
-    showContexts = showContexts || isContextViewActive(state, path)
 
     const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 

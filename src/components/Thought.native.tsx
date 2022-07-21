@@ -419,7 +419,6 @@ const ThoughtContainer = ({
           onEdit={onEdit}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
-          showContexts={showContexts}
           style={styleNew}
           simplePath={simplePath}
           view={view}

@@ -51,7 +51,6 @@ interface ThoughtAnnotationProps {
   minContexts?: number
   path: Path
   showContextBreadcrumbs?: boolean
-  showContexts?: boolean
   showHiddenThoughts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
@@ -103,9 +102,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   const { cursor, invalidState, editingValue, showHiddenThoughts } = state
 
   const isEditing = equalPath(cursor, props.path)
-  const simplePathLive = isEditing
-    ? (parentOf(props.simplePath).concat(head(props.showContexts ? parentOf(cursor!) : cursor!)) as SimplePath)
-    : props.simplePath
+  const simplePathLive = isEditing ? (parentOf(props.simplePath).concat(head(cursor!)) as SimplePath) : props.simplePath
 
   return {
     dark: theme(state) !== 'Light',
@@ -122,7 +119,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
   simplePath,
-  showContexts,
   showContextBreadcrumbs,
   homeContext,
   isEditing,
@@ -138,7 +134,7 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = headValue(state, showContexts ? parentOf(simplePath) : simplePath)
+  const value = headValue(state, simplePath)
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
 

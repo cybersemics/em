@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import React, { useEffect } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -182,7 +181,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
   // when the thought is edited, hide the top controls and breadcrumbs for distraction-free typing
-  onEdit: ({ context, oldValue, newValue }: { context: Context; oldValue: string; newValue: string }) => {
+  onEdit: ({ oldValue, newValue }: { oldValue: string; newValue: string }) => {
     // only hide when typing, not when deleting
     if (newValue.length > oldValue.length) {
       dispatch(toggleTopControlsAndBreadcrumbs(false))
@@ -478,7 +477,6 @@ const ThoughtContainer = ({
             homeContext={homeContext}
             minContexts={allowSingleContext ? 0 : 2}
             showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
             style={styleNew || undefined}
             simplePath={simplePath}
           />

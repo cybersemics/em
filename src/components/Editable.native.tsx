@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ViewStyle } from 'react-native'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
-import Context from '../@types/Context'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -73,7 +72,6 @@ interface EditableProps {
   disabled?: boolean
   isEditing?: boolean
   rank: number
-  showContexts?: boolean
   style?: ViewStyle
   simplePath: SimplePath
   /* If transient is true:
@@ -81,7 +79,7 @@ interface EditableProps {
     2. It also sets focus to itself on render.
   */
   transient?: boolean
-  onEdit?: (args: { context: Context; path: Path; oldValue: string; newValue: string }) => void
+  onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
 // track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
@@ -91,7 +89,7 @@ let blurring = false
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: EditableProps) => {
-  const thought = getThoughtById(state, head(props.showContexts ? parentOf(props.simplePath) : props.simplePath))
+  const thought = getThoughtById(state, head(props.simplePath))
   return {
     isCursorCleared: props.isEditing && state.cursorCleared,
     value: thought.value,
@@ -110,7 +108,6 @@ const Editable = ({
   simplePath,
   path,
   cursorOffset,
-  showContexts,
   rank,
   value,
   style,
@@ -120,17 +117,10 @@ const Editable = ({
 }: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
   const state = store.getState()
   const thoughtId = head(simplePath)
-  const thoughts = pathToContext(state, simplePath)
   const parentId = head(rootedParentOf(state, simplePath))
 
   const readonly = findDescendant(state, thoughtId, '=readonly')
   const uneditable = findDescendant(state, thoughtId, '=uneditable')
-  const context =
-    showContexts && thoughts.length > 2
-      ? parentOf(parentOf(thoughts))
-      : !showContexts && thoughts.length > 1
-      ? parentOf(thoughts)
-      : state.rootContext
   const optionsId = findDescendant(state, parentId, '=options')
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
@@ -178,8 +168,7 @@ const Editable = ({
 
     const isEditing = equalPath(cursor, path)
 
-    const pathLive =
-      cursor && isEditing ? appendToPath(parentOf(path), head(showContexts ? parentOf(cursor) : cursor)) : path
+    const pathLive = cursor && isEditing ? appendToPath(parentOf(path), head(cursor)) : path
 
     dispatch(
       setCursor({
@@ -199,10 +188,7 @@ const Editable = ({
    * Debounced from onChangeHandler.
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
-  const thoughtChangeHandler = (
-    newValue: string,
-    { showContexts, rank, simplePath }: { showContexts?: boolean; rank: number; simplePath: Path },
-  ) => {
+  const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: Path }) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
     invalidStateError(null)
 
@@ -226,7 +212,6 @@ const Editable = ({
     if (lexeme) {
       dispatch(
         editThought({
-          showContexts,
           oldValue,
           newValue,
           rankInContext: rank,
@@ -258,7 +243,7 @@ const Editable = ({
       }
     }
 
-    onEdit?.({ context, path, oldValue, newValue })
+    onEdit?.({ path, oldValue, newValue })
   }
 
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
@@ -370,8 +355,8 @@ const Editable = ({
     if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
       // update new supercript value and url boolean
       throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { showContexts, rank, simplePath })
-    } else throttledChangeRef.current(newValue, { showContexts, rank, simplePath })
+      thoughtChangeHandler(newValue, { rank, simplePath })
+    } else throttledChangeRef.current(newValue, { rank, simplePath })
   }
 
   /** Imports text that is pasted onto the thought. */

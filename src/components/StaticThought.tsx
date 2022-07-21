@@ -1,11 +1,13 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
+import State from '../@types/State'
 import expandContextThought from '../action-creators/expandContextThought'
+import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-// components
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
@@ -22,7 +24,6 @@ const StaticThought = ({
   path,
   rank,
   showContextBreadcrumbs,
-  showContexts,
   style,
   simplePath,
   onEdit,
@@ -32,6 +33,7 @@ const StaticThought = ({
 
   const state = store.getState()
 
+  const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const { value } = pathToThought(state, simplePath)
 
   return (
@@ -67,14 +69,13 @@ const StaticThought = ({
           isEditing={isEditing}
           isVisible={isVisible}
           rank={rank}
-          showContexts={showContexts}
           style={style}
-          simplePath={simplePath}
+          simplePath={showContexts ? rootedParentOf(state, simplePath) : simplePath}
           onEdit={onEdit}
         />
       )}
 
-      <Superscript simplePath={simplePath} showContexts={showContexts} superscript={false} />
+      <Superscript simplePath={simplePath} superscript={false} />
     </div>
   )
 }
