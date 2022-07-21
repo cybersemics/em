@@ -15,7 +15,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import globals from '../globals'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
@@ -41,7 +41,6 @@ import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
-import pathToContext from '../util/pathToContext'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
@@ -241,15 +240,9 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
+  const thought = getThoughtById(state, head(simplePath))
   const thoughtId = head(simplePath)
-  let thoughts: Context
-  try {
-    thoughts = pathToContext(state, simplePath)
-  } catch (e) {
-    console.error(e)
-    thoughts = [HOME_TOKEN]
-  }
-  const context = parentOf(thoughts)
+  const value = thought.value
   const parentId = head(rootedParentOf(state, simplePath))
 
   useEffect(() => {
@@ -284,8 +277,6 @@ const ThoughtContainer = ({
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
-
-  const value = head(thoughts)
 
   // if rendering as a context and the thought is the root, render home icon instead of Editable
   const homeContext = showContexts && isRoot([head(rootedParentOf(state, simplePath))])
@@ -450,7 +441,7 @@ const ThoughtContainer = ({
         // { ...longPressHandlerProps }
       >
         <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
-          {!(publish && context.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+          {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isEditing={isEditing}
               leaf={isLeaf}
@@ -506,7 +497,7 @@ const ThoughtContainer = ({
           <Note path={simplePath} />
         </div>
 
-        {publish && context.length === 0 && <Byline context={thoughts} />}
+        {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 
         {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row. */}
         {isMultiColumnTable ? (
