@@ -1,4 +1,5 @@
 import { findAllByLabelText, findByLabelText, screen } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import toggleContextView from '../../action-creators/toggleContextView'
 import { store } from '../../store'
@@ -12,80 +13,81 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('activate toggleContextView', async () => {
-  store.dispatch([
-    importText({
-      text: `
+describe('render', () => {
+  it('activate toggleContextView', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - m
         - b
           - m
       `,
-    }),
-    setCursor(['a', 'm']),
-    toggleContextView(),
-  ])
-})
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+  })
 
-it('show all the contexts in which a thought exists', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('show all the contexts in which a thought exists', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - m
         - b
           - m
       `,
-    }),
-    setCursor(['a', 'm']),
-    toggleContextView(),
-  ])
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
 
-  const thoughtM = await findThoughtByText('m')
-  const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+    const thoughtM = await findThoughtByText('m')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
 
-  const thoughtsA = await findAllThoughtsByText('a', thoughtContainerM)
-  expect(thoughtsA.length).toBe(1)
+    const thoughtsA = await findAllThoughtsByText('a', thoughtContainerM)
+    expect(thoughtsA.length).toBe(1)
 
-  const thoughtsB = await findAllThoughtsByText('b', thoughtContainerM)
-  expect(thoughtsB.length).toBe(1)
-})
+    const thoughtsB = await findAllThoughtsByText('b', thoughtContainerM)
+    expect(thoughtsB.length).toBe(1)
+  })
 
-it('show instructions when thought exists in not found in any other contexts', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('show instructions when thought exists in not found in any other contexts', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
       `,
-    }),
-    setCursor(['a']),
-    toggleContextView(),
-  ])
+      }),
+      setCursor(['a']),
+      toggleContextView(),
+    ])
 
-  // only search for first part of text since the whole text consists of several text nodes
-  const instructions = await screen.findAllByText('This thought is not found in any other contexts', { exact: false })
-  expect(instructions.length).toBe(1)
-})
+    // only search for first part of text since the whole text consists of several text nodes
+    const instructions = await screen.findAllByText('This thought is not found in any other contexts', { exact: false })
+    expect(instructions.length).toBe(1)
+  })
 
-it('change bullet to no fill', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('change bullet to no fill', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
       `,
-    }),
-    setCursor(['a']),
-    toggleContextView(),
-  ])
+      }),
+      setCursor(['a']),
+      toggleContextView(),
+    ])
 
-  const bulletGlyph = await screen.findByLabelText('bullet-glyph')
-  expect(bulletGlyph).toHaveAttribute('fill', 'none')
-})
+    const bulletGlyph = await screen.findByLabelText('bullet-glyph')
+    expect(bulletGlyph).toHaveAttribute('fill', 'none')
+  })
 
-it('show breadcrumbs for each thought context', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('show breadcrumbs for each thought context', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - b
             - m
@@ -96,41 +98,80 @@ it('show breadcrumbs for each thought context', async () => {
               - m
                 - y
       `,
-    }),
-    setCursor(['a', 'b', 'm']),
-    toggleContextView(),
-  ])
+      }),
+      setCursor(['a', 'b', 'm']),
+      toggleContextView(),
+    ])
 
-  const subthoughts = await findSubthoughts('m')
+    const subthoughts = await findSubthoughts('m')
 
-  const breadcrumbsAB = await findAllByLabelText(subthoughts[0], 'context-breadcrumbs')
-  expect(breadcrumbsAB[0]).toHaveTextContent('a')
+    const breadcrumbsAB = await findAllByLabelText(subthoughts[0], 'context-breadcrumbs')
+    expect(breadcrumbsAB[0]).toHaveTextContent('a')
 
-  const breadcrumbsCDE = await findAllByLabelText(subthoughts[1], 'context-breadcrumbs')
-  expect(breadcrumbsCDE[0]).toHaveTextContent('c • d')
-})
+    const breadcrumbsCDE = await findAllByLabelText(subthoughts[1], 'context-breadcrumbs')
+    expect(breadcrumbsCDE[0]).toHaveTextContent('c • d')
+  })
 
-it('show home icon as breadcrumbs for each thought in the home context', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('show home icon as breadcrumbs for each thought in the home context', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - m
         - b
           - m
       `,
-    }),
-    setCursor(['a', 'm']),
-    toggleContextView(),
-  ])
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
 
-  const subthoughts = await findSubthoughts('m')
+    const subthoughts = await findSubthoughts('m')
 
-  const thoughtA = await findByLabelText(subthoughts[0], 'thought')
-  const homeIconA = await findAllByLabelText(thoughtA, 'home')
-  expect(homeIconA).toHaveLength(1)
+    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
+    const homeIconA = await findAllByLabelText(thoughtA, 'home')
+    expect(homeIconA).toHaveLength(1)
 
-  const thoughtB = await findByLabelText(subthoughts[1], 'thought')
-  const homeIconB = await findAllByLabelText(thoughtB, 'home')
-  expect(homeIconB).toHaveLength(1)
+    const thoughtB = await findByLabelText(subthoughts[1], 'thought')
+    const homeIconB = await findAllByLabelText(thoughtB, 'home')
+    expect(homeIconB).toHaveLength(1)
+  })
+})
+
+describe('editing', () => {
+  // contenteditable is not supported in user-event@v13
+  // TODO: user-event@v14 has some peer dependency conflicts
+  it.skip('edit a context', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughts = await findSubthoughts('m')
+
+    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
+    userEvent.click(thoughtA)
+
+    userEvent.type(thoughtA, 'z')
+
+    userEvent.type(thoughtA, '{esc}')
+    store.dispatch(toggleContextView())
+
+    const thoughtA2 = await findAllThoughtsByText('a')
+    expect(thoughtA2).toHaveLength(0)
+
+    const thoughtAZ = await findAllThoughtsByText('az')
+    expect(thoughtAZ).toHaveLength(1)
+
+    const thoughtB = await findAllThoughtsByText('b')
+    expect(thoughtB).toHaveLength(1)
+  })
 })
