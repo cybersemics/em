@@ -119,7 +119,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'n'])
   })
 
-  it.skip("move cursor to context's first child, if present", () => {
+  it("move cursor to context's first child", () => {
     const text = `
       - a
         - m
@@ -140,10 +140,10 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject(['a', 'm', 'a', 'x'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
   })
 
-  it.skip("move cursor from a context to its sibling, if there aren't any children", () => {
+  it("move cursor from a context to its sibling, if there aren't any children", () => {
     const text = `
       - a
         - m
