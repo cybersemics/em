@@ -8,6 +8,7 @@ import { findAllThoughtsByText } from '../../test-helpers/queries/findAllThought
 import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
 import { findThoughtByText } from '../../test-helpers/queries/findThoughtByText'
 import { getClosestByLabel } from '../../test-helpers/queries/getClosestByLabel'
+import { queryThoughtByText } from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -51,6 +52,32 @@ describe('render', () => {
 
     const thoughtsB = await findAllThoughtsByText('b', thoughtContainerM)
     expect(thoughtsB.length).toBe(1)
+  })
+
+  it('do not expand contexts when cursor is on the context view', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    const thoughtM = await findThoughtByText('m')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+
+    const thoughtX = await queryThoughtByText('x', thoughtContainerM)
+    expect(thoughtX).toBeNull()
+
+    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
+    expect(thoughtsY).toBeNull()
   })
 
   it('show instructions when thought exists in not found in any other contexts', async () => {

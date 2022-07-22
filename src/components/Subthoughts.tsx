@@ -501,8 +501,11 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   const resolvedPath = path ?? simplePath
   const envParsed = JSON.parse(env || '{}')
 
-  const isEditingAncestor = isEditingPath && !isEditing
-  const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
+  const show = useSelector((state: State) => {
+    /** Returns true if the cursor is on an ancestor of the path. Editing a context in the context view does not count as editing an ancestor. */
+    const isEditingAncestor = () => isEditingPath && !isEditing && !(path && isContextViewActive(state, parentOf(path)))
+    return depth < MAX_DEPTH && (isExpanded || isEditingAncestor())
+  })
 
   const { zoom, zoomCursor, zoomParent } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
 
