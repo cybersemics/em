@@ -33,6 +33,11 @@ const nextThoughtInContextView = (state: State, path: Path) => {
 const firstThoughtInContextView = (state: State, path: Path): Path | null => {
   const thought = getThoughtById(state, head(path))
   const contextIds = getContexts(state, thought.value)
+
+  // if context view is empty, move to the next thought
+  if (contextIds.length <= 1) {
+    return nextThought(state, path, { ignoreChildren: true })
+  }
   // we can assume that there is at least one context since the context view is activated
   const firstContext = getThoughtById(state, contextIds[0])
   return appendToPath(path, firstContext.parentId)

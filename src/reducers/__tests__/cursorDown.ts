@@ -105,7 +105,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
-  it.skip('move cursor from context view to next thought if there are no contexts', () => {
+  it('move cursor from context view to next thought if there are no contexts', () => {
     const text = `
       - a
         - m
