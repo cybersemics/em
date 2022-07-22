@@ -1,4 +1,4 @@
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import cursorBack from '../cursorBack'
@@ -12,7 +12,7 @@ it('move cursor to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
 })
 
 it('remove cursor from root thought', () => {

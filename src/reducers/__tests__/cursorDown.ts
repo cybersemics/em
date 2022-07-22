@@ -8,7 +8,7 @@ import setCursor from '../../reducers/setCursor'
 import toggleAttribute from '../../reducers/toggleAttribute'
 import toggleContextView from '../../reducers/toggleContextView'
 import contextToPath from '../../selectors/contextToPath'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
@@ -21,7 +21,7 @@ describe('normal view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
+    expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('move cursor from parent first child', () => {
@@ -29,7 +29,7 @@ describe('normal view', () => {
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    expectPathToEqual(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'b', rank: 0 },
     ])
@@ -40,7 +40,7 @@ describe('normal view', () => {
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+    expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
   })
 
   it('do nothing when there are no thoughts', () => {
@@ -55,7 +55,7 @@ describe('normal view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
+    expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('move cursor to nearest uncle', () => {
@@ -71,7 +71,7 @@ describe('normal view', () => {
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
+    expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'b', rank: 1 }])
   })
 
   it('work for sorted thoughts', () => {
@@ -87,7 +87,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'm' }])
+    expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'm' }])
   })
 })
 
@@ -113,7 +113,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    expectPathToEqual(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 0 },
       { value: 'a', rank: 0 },
@@ -130,7 +130,7 @@ describe('context view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    expectPathToEqual(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'n', rank: 1 },
     ])
@@ -183,7 +183,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    expectPathToEqual(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 1 },
       { value: 'b', rank: 1 },
@@ -209,7 +209,7 @@ describe('context view', () => {
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+    expectPathToEqual(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
       { value: 'm', rank: 0 },
       { value: 'b', rank: 1 },

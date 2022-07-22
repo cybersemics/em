@@ -1,4 +1,4 @@
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -14,7 +14,7 @@ it('reverse cursorBack', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
   ])
@@ -25,7 +25,7 @@ it('move to first child if there is no history', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: 'b', rank: 0 },
   ])
@@ -36,5 +36,5 @@ it('move to first child if there is no cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
 })

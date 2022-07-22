@@ -11,12 +11,12 @@ import parentOfThought from '../../selectors/parentOfThought'
 import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
-import compareThought from '../../util/compareThought'
+import { compareThought } from '../../util/compareThought'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -320,7 +320,7 @@ it('edit a child with the same value as its parent', () => {
   ])
 
   // cursor should be /a/ab
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor!, [
     {
       value: 'a',
     },

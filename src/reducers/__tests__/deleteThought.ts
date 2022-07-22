@@ -6,8 +6,8 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import getContexts from '../../selectors/getContexts'
 import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -63,7 +63,7 @@ it('update cursor after thought deletion', () => {
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor!, [
     {
       value: 'a',
     },
@@ -74,7 +74,7 @@ it('update cursor after thought deletion', () => {
 
   const stateAfterDeletion = reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])])(stateNew)
 
-  matchChildIdsWithThoughts(stateAfterDeletion, stateAfterDeletion.cursor!, [
+  expectPathToEqual(stateAfterDeletion, stateAfterDeletion.cursor!, [
     {
       value: 'a',
     },

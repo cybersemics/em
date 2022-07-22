@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import matchChildIdsWithThoughts from '../../test-helpers/matchPathWithThoughts'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import bumpThoughtDown from '../bumpThoughtDown'
@@ -27,7 +27,7 @@ it('cursor should stay in empty thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor!, [
     { value: 'a', rank: 0 },
     { value: '', rank: -1 },
   ])
