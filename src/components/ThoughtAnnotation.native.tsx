@@ -1,7 +1,7 @@
 import { View } from 'moti'
 import React from 'react'
 import { TouchableOpacity } from 'react-native'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
@@ -17,6 +17,7 @@ import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import { store } from '../store'
@@ -27,6 +28,7 @@ import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -120,7 +122,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 const ThoughtAnnotation = ({
   simplePath,
   showContextBreadcrumbs,
-  homeContext,
   isEditing,
   minContexts = 2,
   dispatch,
@@ -137,6 +138,12 @@ const ThoughtAnnotation = ({
   const value = headValue(state, simplePath)
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
+
+  const homeContext = useSelector((state: State) => {
+    const pathParent = rootedParentOf(state, simplePath)
+    const showContexts = isContextViewActive(state, simplePath)
+    return showContexts && isRoot(pathParent)
+  })
 
   // no contexts if thought is empty
   const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []

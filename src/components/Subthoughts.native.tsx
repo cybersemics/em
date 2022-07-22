@@ -562,14 +562,16 @@ export const SubthoughtsComponent = ({
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
-    /** First visible thought at the top. */
-    const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path | undefined
+    // first visible thought at the top
+    const firstVisiblePath = cursor && cursor.length > maxDistance ? (cursor?.slice(0, -maxDistance) as Path) : null
 
-    const isDescendantOfFirstVisiblePath = isDescendant(
-      // TODO: Add support for [ROOT] to isDescendant
-      pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
-      pathToContext(state, resolvedPath),
-    )
+    const isDescendantOfFirstVisiblePath =
+      !firstVisiblePath ||
+      isDescendant(
+        // TODO: Add support for [ROOT] to isDescendant
+        pathToContext(state, firstVisiblePath),
+        pathToContext(state, resolvedPath),
+      )
 
     const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 

@@ -47,8 +47,7 @@ const StaticThought = ({
       ) : showContexts && simplePath.length > 2 ? (
         <Text>
           <Text
-            // tabIndex={-1}
-            /* TODO: Add setting to enable tabIndex for accessibility */ onMagicTap={() => {
+            onMagicTap={() => {
               store.dispatch(expandContextThought(path))
             }}
           >

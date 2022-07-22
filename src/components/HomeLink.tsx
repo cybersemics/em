@@ -7,6 +7,7 @@ import modalComplete from '../action-creators/modalComplete'
 import { MODAL_CLOSE_DURATION } from '../constants'
 import theme from '../selectors/theme'
 import Modal from './Modal'
+import HomeIcon from './icons/HomeIcon'
 
 interface HomeLinkProps {
   color?: string
@@ -34,20 +35,7 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
           dispatch(home())
         }}
       >
-        <span role='img' aria-label='home' className='logo-wrapper'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            width={size || 24}
-            height={size || 24}
-            viewBox='0 0 24 24'
-            className='logo'
-            fill={color || (dark ? '#FFF' : '#000')}
-            style={style}
-          >
-            <path d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z' />
-            <path d='M0 0h24v24H0z' fill='none' />
-          </svg>
-        </span>
+        <HomeIcon color={color} dark={dark} size={size} style={style} />
       </a>
       {showModal === 'home' ? (
         <Modal

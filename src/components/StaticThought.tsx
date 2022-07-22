@@ -12,9 +12,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
-import HomeLink from './HomeLink'
 import Superscript from './Superscript'
 import { ConnectedThoughtProps } from './Thought'
+import HomeIcon from './icons/HomeIcon'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
@@ -48,7 +48,7 @@ const StaticThought = ({
         <span className='ellipsis'>
           <a
             tabIndex={-1}
-            /* TODO: Add setting to enable tabIndex for accessibility */ onClick={() => {
+            onClick={() => {
               store.dispatch(expandContextThought(path))
             }}
           >
@@ -58,7 +58,7 @@ const StaticThought = ({
       ) : null}
 
       {homeContext ? (
-        <HomeLink />
+        <HomeIcon />
       ) : isDivider(value) ? (
         <Divider path={simplePath} />
       ) : (

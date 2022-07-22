@@ -231,8 +231,6 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && cursor?.length > resolvedPath.length
 
   const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
-  /** First visible thought at the top. */
-  const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path
 
   const isDescendantOfCursor =
     cursor && cursor.length === cursorSubthoughtIndex + 1 && resolvedPath.length > cursor?.length
@@ -240,14 +238,18 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isCursor = cursor && resolvedPath.length === cursorSubthoughtIndex + 1 && resolvedPath.length === cursor?.length
   const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
 
-  const isDescendantOfFirstVisiblePath = isDescendant(
-    // TODO: Add support for [ROOT] to isDescendant
-    pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
-    pathToContext(state, resolvedPath),
-  )
-  /*
-    The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
-  */
+  // first visible thought at the top
+  const firstVisiblePath = cursor && cursor.length > maxDistance ? (cursor?.slice(0, -maxDistance) as Path) : null
+
+  const isDescendantOfFirstVisiblePath =
+    !firstVisiblePath ||
+    isDescendant(
+      // TODO: Add support for [ROOT] to isDescendant
+      pathToContext(state, firstVisiblePath),
+      pathToContext(state, resolvedPath),
+    )
+
+  // The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
   const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
 
   /*
@@ -577,14 +579,16 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
-    /** First visible thought at the top. */
-    const firstVisiblePath = cursor?.slice(0, -maxDistance) as Path | undefined
+    // first visible thought at the top
+    const firstVisiblePath = cursor && cursor.length - maxDistance > 0 ? (cursor.slice(0, -maxDistance) as Path) : null
 
-    const isDescendantOfFirstVisiblePath = isDescendant(
-      // TODO: Add support for [ROOT] to isDescendant
-      pathToContext(state, firstVisiblePath || ([] as unknown as Path)),
-      pathToContext(state, resolvedPath),
-    )
+    const isDescendantOfFirstVisiblePath =
+      !firstVisiblePath ||
+      isDescendant(
+        // TODO: Add support for [ROOT] to isDescendant
+        pathToContext(state, firstVisiblePath),
+        pathToContext(state, resolvedPath),
+      )
 
     const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 
@@ -809,6 +813,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
             const appendedChildPath = appendChildPath(state, childPath, path)
             const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
+
             /*
             simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
             The main problem is that when a new Thought is added it will get key (index) of the previous thought,

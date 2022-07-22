@@ -36,7 +36,11 @@ const appendChildPath = _.memoize((state: State, childPath: SimplePath, parentTh
   if (!parentThoughtsResolved) return childPath as Path
 
   const isParentContextViewActive = isContextViewActive(state, parentThoughtsResolved)
-  return unroot([...parentThoughtsResolved, head(isParentContextViewActive ? parentOf(childPath) : childPath)])
+  return unroot([
+    ...parentThoughtsResolved,
+    // childPath === 1 when a context thought is in the root
+    head(isParentContextViewActive && childPath.length > 1 ? parentOf(childPath) : childPath),
+  ])
 }, resolve)
 
 export default appendChildPath

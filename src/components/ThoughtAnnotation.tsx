@@ -15,6 +15,7 @@ import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import { store } from '../store'
@@ -23,12 +24,12 @@ import equalPath from '../util/equalPath'
 import hashContext from '../util/hashContext'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-// components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
@@ -115,7 +116,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 const ThoughtAnnotation = ({
   simplePath,
   showContextBreadcrumbs,
-  homeContext,
   isEditing,
   minContexts = 2,
   dispatch,
@@ -133,6 +133,11 @@ const ThoughtAnnotation = ({
   const isExpanded = !!state.expanded[hashContext(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
+  const homeContext = useSelector((state: State) => {
+    const pathParent = rootedParentOf(state, simplePath)
+    const showContexts = isContextViewActive(state, simplePath)
+    return showContexts && isRoot(pathParent)
+  })
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.

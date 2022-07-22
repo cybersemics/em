@@ -1,4 +1,4 @@
-import { findAllByLabelText, findByLabelText, screen } from '@testing-library/dom'
+import { findAllByLabelText, findByLabelText, queryByLabelText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import toggleContextView from '../../action-creators/toggleContextView'
@@ -112,7 +112,7 @@ describe('render', () => {
     expect(breadcrumbsCDE[0]).toHaveTextContent('c • d')
   })
 
-  it('show home icon as breadcrumbs for each thought in the home context', async () => {
+  it('render home icon as breadcrumbs for each thought whose parent is the home context', async () => {
     store.dispatch([
       importText({
         text: `
@@ -132,6 +132,33 @@ describe('render', () => {
     const homeIconA = await findAllByLabelText(thoughtA, 'home')
     expect(homeIconA).toHaveLength(1)
 
+    const thoughtB = await findByLabelText(subthoughts[1], 'thought')
+    const homeIconB = await findAllByLabelText(thoughtB, 'home')
+    expect(homeIconB).toHaveLength(1)
+  })
+
+  it('render home icon as thought for each thought in the home context', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - b
+            - m
+        - m
+      `,
+      }),
+      setCursor(['a', 'b', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughts = await findSubthoughts('m')
+
+    // first context a/b should not render home icon
+    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
+    const homeIconA = await queryByLabelText(thoughtA, 'home')
+    expect(homeIconA).toBeNull()
+
+    // second context should render home icon
     const thoughtB = await findByLabelText(subthoughts[1], 'thought')
     const homeIconB = await findAllByLabelText(thoughtB, 'home')
     expect(homeIconB).toHaveLength(1)
