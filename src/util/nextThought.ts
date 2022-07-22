@@ -11,6 +11,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
+import once from './once'
 
 /** Gets the next thought in a context view. */
 const nextContext = (state: State, path: Path) => {
@@ -28,8 +29,8 @@ const nextContext = (state: State, path: Path) => {
     : nextThought(state, rootedParentOf(state, path), { ignoreChildren: true })
 }
 
-/** Gets the first thought in a context view. */
-const firstThoughtInContextView = (state: State, path: Path): Path | null => {
+/** Gets the first context in a context view. */
+const firstContext = (state: State, path: Path): Path | null => {
   const thought = getThoughtById(state, head(path))
   const contextIds = getContexts(state, thought.value)
 
@@ -38,6 +39,24 @@ const firstThoughtInContextView = (state: State, path: Path): Path | null => {
   return contextIds.length > 1
     ? appendToPath(path, firstContext.parentId)
     : nextThought(state, path, { ignoreChildren: true })
+}
+
+/** Returns the next uncle. */
+const nextUncle = (state: State, path: Path) => {
+  const pathParent = rootedParentOf(state, path)
+  const parent = getThoughtById(state, head(pathParent))
+
+  return parent
+    ? nextThought(state, pathParent, { ignoreChildren: true })
+    : // reached root thought
+      null
+}
+
+/** Gets the next sibling after the path. */
+const nextSibling = (state: State, path: Path) => {
+  const thought = getThoughtById(state, head(path))
+  const pathParent = rootedParentOf(state, path)
+  return getNextSibling(state, head(pathParent), thought.value, thought.rank)
 }
 
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain.
@@ -49,47 +68,33 @@ const nextThought = (
   path: Path = HOME_PATH,
   { ignoreChildren }: { ignoreChildren?: boolean } = {},
 ): Path | null => {
-  const thought = getThoughtById(state, head(path))
   const pathParent = rootedParentOf(state, path)
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, pathParent)
-
-  // cursor is on the context view thought
-  if (showContexts && !ignoreChildren) {
-    return firstThoughtInContextView(state, path)
-  }
 
   const firstChild = !ignoreChildren
     ? firstVisibleChildWithCursorCheck(state, (showContextsParent ? pathParent : path) as SimplePath)
     : null
 
-  /** Returns the next uncle. */
-  const nextUncle = () => {
-    const parentThought = getThoughtById(state, head(pathParent))
-
-    return parentThought
-      ? nextThought(state, pathParent, { ignoreChildren: true })
-      : // reached root thought
-        null
-  }
-
-  /** Gets the next sibling after the path. */
-  const nextSibling = () => getNextSibling(state, head(pathParent), thought.value, thought.rank)
-
+  const onContextView = showContexts && !ignoreChildren
   const isEmptyContext = showContextsParent && !firstChild
+  const sibling = once(() => nextSibling(state, path))
 
   const next =
-    // in normal view, move to the first child
-    firstChild
+    // on a thought with the context view activated, move to the first context
+    onContextView
+      ? firstContext(state, path)
+      : // in normal view, move to the first child
+      firstChild
       ? appendToPath(path, firstChild.id)
       : // in the context view, move to the next context
       isEmptyContext
       ? nextContext(state, path)
-      : // in normal view, move to the next thought
-      nextSibling()
-      ? appendToPath(parentOf(path), nextSibling().id)
+      : // in normal view, move to the next sibling
+      sibling()
+      ? appendToPath(parentOf(path), sibling().id)
       : // otherwise, move to the next uncle
-        nextUncle()
+        nextUncle(state, path)
 
   return next
 }
