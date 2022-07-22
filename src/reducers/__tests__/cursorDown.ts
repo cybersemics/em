@@ -91,8 +91,7 @@ describe('normal view', () => {
   })
 })
 
-// @MIGRATION_TODO: context view is not working yet.
-describe.skip('context view', () => {
+describe('context view', () => {
   it('move cursor from context view to first context', () => {
     const text = `- a
   - m
@@ -116,12 +115,13 @@ describe.skip('context view', () => {
 
     matchChildIdsWithThoughts(stateNew, stateNew.cursor!, [
       { value: 'a', rank: 0 },
-      { value: 'm', rank: 1 },
+      { value: 'm', rank: 0 },
       { value: 'a', rank: 0 },
     ])
   })
 
-  it('move cursor from context view to next thought if there are no children', () => {
+  // @MIGRATION_TODO
+  it.skip('move cursor from context view to next thought if there are no children', () => {
     const text = `- a
     - m
     - n`
@@ -136,7 +136,7 @@ describe.skip('context view', () => {
     ])
   })
 
-  it("move cursor to context's first child, if present", () => {
+  it.skip("move cursor to context's first child, if present", () => {
     const text = `- a
   - m
     - x
@@ -163,7 +163,7 @@ describe.skip('context view', () => {
     ])
   })
 
-  it("move cursor from a context to its sibling, if there aren't any children", () => {
+  it.skip("move cursor from a context to its sibling, if there aren't any children", () => {
     const text = `- a
   - m
 - b
@@ -190,7 +190,7 @@ describe.skip('context view', () => {
     ])
   })
 
-  it("move cursor from context's last child to next uncle thought", () => {
+  it.skip("move cursor from context's last child to next uncle thought", () => {
     const text = `- a
   - m
     - x
@@ -216,7 +216,7 @@ describe.skip('context view', () => {
     ])
   })
 
-  it("move cursor from context's one child to its sibling", () => {
+  it.skip("move cursor from context's one child to its sibling", () => {
     const text = `- a
   - m
     - x
@@ -240,7 +240,7 @@ describe.skip('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'b', 'z'])
   })
 
-  it("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
+  it.skip("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
     const text = `- a
   - m
     - x
@@ -263,7 +263,7 @@ describe.skip('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])
   })
 
-  it('move cursor to circular path', () => {
+  it.skip('move cursor to circular path', () => {
     const text = `
     - a
       - m
@@ -290,7 +290,7 @@ describe.skip('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'a', 'y'])
   })
 
-  it('should not move cursor if the cursor on last thought', () => {
+  it.skip('should not move cursor if the cursor on last thought', () => {
     const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), cursorDown]
 
     // run steps through reducer flow
