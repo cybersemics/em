@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, Fragment } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import * as db from '../data-providers/dexie'
 
@@ -20,10 +20,13 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
 const onError = (error: Error, componentStack?: any) => db.log({ message: error.message, stack: componentStack })
 
 /** A higher-order component that catches errors of all descendant components. When an error is caught, a fallback component will be rendered. */
-const ErrorBoundaryContainer: FC = ({ children }) => (
-  <ErrorBoundary FallbackComponent={ErrorFallback} onError={onError}>
-    {children}
-  </ErrorBoundary>
-)
+const ErrorBoundaryContainer: FC = ({ children }) =>
+  process.env.NODE_ENV === 'production' ? (
+    <ErrorBoundary FallbackComponent={ErrorFallback} onError={onError}>
+      {children}
+    </ErrorBoundary>
+  ) : (
+    <Fragment>{children}</Fragment>
+  )
 
 export default ErrorBoundaryContainer
