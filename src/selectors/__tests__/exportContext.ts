@@ -7,12 +7,14 @@ import reducerFlow from '../../util/reducerFlow'
 import exportContext from '../exportContext'
 
 it('meta and archived thoughts are included', () => {
-  const text = `- a
-  - =archive
-    - c
-  - =pin
-    - true
-  - b`
+  const text = `
+    - a
+      - =archive
+        - c
+      - =pin
+        - true
+      - b
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -30,12 +32,14 @@ it('meta and archived thoughts are included', () => {
 })
 
 it('meta is included but archived thoughts are excluded', () => {
-  const text = `- a
-  - =archive
-    - c
-  - =pin
-    - true
-  - b`
+  const text = `
+    - a
+      - =archive
+        - c
+      - =pin
+        - true
+      - b
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -51,12 +55,14 @@ it('meta is included but archived thoughts are excluded', () => {
 })
 
 it('meta is excluded', () => {
-  const text = `- a
-  - =archive
-    - c
-  - =pin
-    - true
-  - b`
+  const text = `
+    - a
+      - =archive
+        - c
+      - =pin
+        - true
+      - b
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -73,12 +79,14 @@ it('meta is excluded', () => {
 })
 
 it('meta is excluded but archived is included', () => {
-  const text = `- a
-  - =archive
-    - c
-  - =pin
-    - true
-  - b`
+  const text = `
+    - a
+      - =archive
+        - c
+      - =pin
+        - true
+      - b
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -92,8 +100,10 @@ it('meta is excluded but archived is included', () => {
 })
 
 it('exported as plain text with no formatting', () => {
-  const text = `- a
-  - Hello <b>world</b>`
+  const text = `
+    - a
+      - Hello <b>world</b>
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -107,8 +117,10 @@ it('exported as plain text with no formatting', () => {
 })
 
 it('exported as html', () => {
-  const text = `- a
-  - Hello <b>world</b>`
+  const text = `
+    - a
+      - Hello <b>world</b>
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -129,9 +141,11 @@ it('exported as html', () => {
 // This should never happen (newlines are converted to new thoughts on import) but guard against newlines just in case.
 // Otherwise re-importing is disastrous (text after the newline are moved to the root)
 it('export multi-line thoughts as separate thoughts', () => {
-  const text = `- a
-  - b
-    - Hello`
+  const text = `
+    - a
+      - b
+        - Hello
+  `
 
   const steps = [
     importText({ text }),
@@ -163,8 +177,10 @@ it('export as markdown', () => {
 })
 
 it('export as markdown without escaping metaprogramming attributes', () => {
-  const text = `- Hello <b>wor<i>ld</i></b>
-  - =readonly`
+  const text = `
+    - Hello <b>wor<i>ld</i></b>
+      - =readonly
+  `
 
   const steps = [importText({ text }), setCursorFirstMatch([text])]
 
@@ -177,11 +193,11 @@ it('export as markdown without escaping metaprogramming attributes', () => {
 
 it('export as plain and markdown text replacing html tags only from thoughts and not from the whole exported content.', () => {
   const text = `
-  - a
-  - <
-  - b
-  - />
-  - c
+    - a
+    - <
+    - b
+    - />
+    - c
   `
 
   const steps = [importText({ text }), setCursorFirstMatch([text])]

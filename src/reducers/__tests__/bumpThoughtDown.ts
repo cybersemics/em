@@ -27,7 +27,7 @@ it('cursor should stay in empty thought', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor, [
     { value: 'a', rank: 0 },
     { value: '', rank: -1 },
   ])

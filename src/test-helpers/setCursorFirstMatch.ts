@@ -6,9 +6,9 @@ import setCursor from '../reducers/setCursor'
 import contextToPath from '../selectors/contextToPath'
 
 /** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
-const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
+const setCursorFirstMatch = (state: State, pathUnranked: string[] | null): State =>
   setCursor(state, {
-    path: contextToPath(state, pathUnranked),
+    path: pathUnranked ? contextToPath(state, pathUnranked) : null,
   })
 
 /** A Thunk that sets the cursor to the given unranked path. */

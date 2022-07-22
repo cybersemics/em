@@ -35,7 +35,7 @@ it('collapse context with single child', () => {
   - a
     - c`)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('collapse context with multiple children', () => {
@@ -59,7 +59,7 @@ it('collapse context with multiple children', () => {
     - c
     - d`)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('merge children', () => {
@@ -84,7 +84,7 @@ it('merge children', () => {
     - d
     - x`)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('merge duplicate children', () => {
@@ -108,7 +108,7 @@ it('merge duplicate children', () => {
     - c
     - d`)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('after collapse context set cursor to the first visible children.', () => {
@@ -124,7 +124,7 @@ it('after collapse context set cursor to the first visible children.', () => {
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: 'c' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
 })
 
 it('after collapse context set cursor to the parent if there are no visible children.', () => {
@@ -133,7 +133,7 @@ it('after collapse context set cursor to the parent if there are no visible chil
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }])
 })
 
 it('collapse empty thought with empty child', () => {
@@ -159,5 +159,5 @@ it('collapse empty thought with empty child', () => {
     - ${''}
       - b`)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a' }, { value: '' }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: '' }])
 })

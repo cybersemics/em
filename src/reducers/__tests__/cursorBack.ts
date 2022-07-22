@@ -12,7 +12,7 @@ it('move cursor to parent', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
 
 it('remove cursor from root thought', () => {

@@ -14,10 +14,7 @@ it('reverse cursorBack', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-  ])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 })
 
 it('move to first child if there is no history', () => {
@@ -25,10 +22,7 @@ it('move to first child if there is no history', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-  ])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 })
 
 it('move to first child if there is no cursor', () => {
@@ -36,5 +30,5 @@ it('move to first child if there is no cursor', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })

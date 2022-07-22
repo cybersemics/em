@@ -320,7 +320,7 @@ it('edit a child with the same value as its parent', () => {
   ])
 
   // cursor should be /a/ab
-  expectPathToEqual(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor, [
     {
       value: 'a',
     },

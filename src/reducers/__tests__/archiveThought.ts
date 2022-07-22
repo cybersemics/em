@@ -141,7 +141,7 @@ it('cursor should move to prev sibling', () => {
 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
-  expectPathToEqual(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor, [
     { value: 'a', rank: 0 },
     { value: 'a1', rank: 0 },
   ])
@@ -161,7 +161,7 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor, [
     { value: 'a', rank: 0 },
     { value: 'a2', rank: 1 },
   ])
@@ -173,7 +173,7 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
   // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [{ value: 'a', rank: 0 }])
+  expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a', rank: 0 }])
 })
 
 it('cursor should be removed if the last thought is deleted', () => {

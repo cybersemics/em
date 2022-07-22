@@ -63,7 +63,7 @@ it('update cursor after thought deletion', () => {
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
 
-  expectPathToEqual(stateNew, stateNew.cursor!, [
+  expectPathToEqual(stateNew, stateNew.cursor, [
     {
       value: 'a',
     },

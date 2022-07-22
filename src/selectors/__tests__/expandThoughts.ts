@@ -53,10 +53,11 @@ describe('normal view', () => {
 
   it('grandchildren are not expanded', () => {
     const text = `
-    - a
-      - b
-      - c
-        - d`
+      - a
+        - b
+        - c
+          - d
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -66,10 +67,12 @@ describe('normal view', () => {
   })
 
   it('nieces are not expanded', () => {
-    const text = `- a
-  - b
-  - c
-    - d`
+    const text = `
+      - a
+        - b
+        - c
+          - d
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a', 'b'])]
 
@@ -79,13 +82,15 @@ describe('normal view', () => {
   })
 
   it('only-child descendants are expanded', () => {
-    const text = `- a
-  - b
-    - c
-      - d
-        - e1
-        - e2
-          - f`
+    const text = `
+      - a
+        - b
+          - c
+            - d
+              - e1
+              - e2
+                - f
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -103,13 +108,15 @@ describe('normal view', () => {
 
 describe('table view', () => {
   it('column 1 is expanded when cursor is on table context', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+        - d
+          - e
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -120,13 +127,15 @@ describe('table view', () => {
   })
 
   it('nieces are expanded when cursor is in column 1', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -140,13 +149,15 @@ describe('table view', () => {
   })
 
   it('cousins are expanded when cursor is in column 2', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -160,14 +171,16 @@ describe('table view', () => {
   })
 
   it('children of column 2 are not expanded when cursor is on table context', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-      - x
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+            - x
+        - d
+          - e
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -177,14 +190,16 @@ describe('table view', () => {
   })
 
   it('children of column 2 are not expanded when cursor is in column 1', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-      - x
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+            - x
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -198,14 +213,16 @@ describe('table view', () => {
   })
 
   it('children of column 2 are expanded when cursor is in column 2 in the same row', () => {
-    const text = `- a
-  - =view
-    - Table
-  - b
-    - c
-      - x
-  - d
-    - e`
+    const text = `
+      - a
+        - =view
+          - Table
+        - b
+          - c
+            - x
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -221,13 +238,15 @@ describe('table view', () => {
 
 describe('=pin', () => {
   it('pinned thoughts are expanded when cursor is on parent', () => {
-    const text = `- a
-  - b
-    - =pin
-      - true
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - b
+          - =pin
+            - true
+          - c
+        - d
+          - e
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -240,13 +259,15 @@ describe('=pin', () => {
   })
 
   it('pinned thoughts are expanded when cursor is on sibling', () => {
-    const text = `- a
-  - b
-    - =pin
-      - true
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - b
+          - =pin
+            - true
+          - c
+        - d
+          - e
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a', 'd'])]
 
@@ -314,14 +335,16 @@ it('children of cursor should always be visible, it should take precedence over 
 
 describe('=children/=pin', () => {
   it('pinned children are expanded when cursor is on parent', () => {
-    const text = `- a
-  - =children
-    - =pin
-      - true
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - c
+        - d
+          - e
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -332,14 +355,16 @@ describe('=children/=pin', () => {
   })
 
   it('pinned children are expanded when cursor is on sibling', () => {
-    const text = `- a
-  - =children
-    - =pin
-      - true
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - c
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -351,14 +376,16 @@ describe('=children/=pin', () => {
   })
 
   it('pinned children are expanded when cursor is on niece', () => {
-    const text = `- a
-  - =children
-    - =pin
-      - true
-  - b
-    - c
-  - d
-    - e`
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - c
+        - d
+          - e
+    `
 
     const stateNew = importText(initialState(), { text })
 
@@ -393,15 +420,16 @@ describe('=children/=pin', () => {
 describe('expand with : char', () => {
   it('thoughts end with ":" are expanded', () => {
     const text = `
-    - a
+      - a
+        - x
+        - y
+      - b:
+        - c
+        - d
       - x
-      - y
-    - b:
-      - c
-      - d
-    - x
-      - 1
-      - 2`
+        - 1
+        - 2
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -415,14 +443,15 @@ describe('expand with : char', () => {
 
   it('subthoughts end with ":" are expanded', () => {
     const text = `
-    - a
-      - x
-    - b:
-      - c:
+      - a
         - x
-          - a
-        - y
-      - d`
+      - b:
+        - c:
+          - x
+            - a
+          - y
+        - d
+    `
 
     const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
@@ -456,9 +485,10 @@ describe('expand with : char', () => {
 // Related issue: https://github.com/cybersemics/em/issues/1238
 it('thought with html value should be expanded', () => {
   const text = `
-  - <i>a</i>
-    - b
-  - c`
+    - <i>a</i>
+      - b
+    - c
+  `
 
   const stateNew = importText(initialState(), { text })
 

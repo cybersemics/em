@@ -10,7 +10,6 @@ import { findThoughtByText } from '../../test-helpers/queries/findThoughtByText'
 import { getClosestByLabel } from '../../test-helpers/queries/getClosestByLabel'
 import { queryThoughtByText } from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

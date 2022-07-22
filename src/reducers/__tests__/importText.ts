@@ -43,8 +43,9 @@ const importTextAtFirstMatch = _.curryRight(
 )
 it('basic import with proper thought structure', () => {
   const text = `
-  - a
-    - b`
+    - a
+      - b
+  `
 
   const now = timestamp()
 
@@ -197,16 +198,17 @@ it('initialSettings', () => {
 
 it('increment duplicates', () => {
   const text = `
-  - a
-    - b
-      - c
-      - c
-      - d
-    - b
-  - a
-    - b
-      - d
-      - e`
+    - a
+      - b
+        - c
+        - c
+        - d
+      - b
+    - a
+      - b
+        - d
+        - e
+    `
 
   const expectedExport = `
 - a
@@ -238,7 +240,8 @@ it('skip root token', () => {
   - a
     - b
   - c
-    - d`
+    - d
+  `
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -255,7 +258,8 @@ it('skip em token', () => {
   - a
     - b
   - c
-    - d`
+    - d
+  `
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -269,10 +273,10 @@ it('skip em token', () => {
 
 it('duplicate thoughts', () => {
   const text = `
-  - a
-    - m
-  - b
-    - m
+    - a
+      - m
+    - b
+      - m
   `
 
   const now = timestamp()
@@ -380,7 +384,8 @@ it('imports Roam json', () => {
 it('replace empty cursor', () => {
   const text = `- ${HOME_TOKEN}
   - a
-    - b`
+    - b
+  `
 
   const paste = `
   - x
@@ -413,7 +418,8 @@ it('replace empty cursor without affecting siblings', () => {
   - a
     - b
     - c
-    - d`
+    - d
+  `
 
   const paste = `
   - x
@@ -448,8 +454,8 @@ it('replace empty cursor without affecting siblings', () => {
 
 it('import as subthoughts of non-empty cursor', () => {
   const paste = `
-  - x
-  - y
+    - x
+    - y
   `
 
   const stateNew = reducerFlow([
@@ -472,8 +478,8 @@ it('import as subthoughts of non-empty cursor', () => {
 
 it('decode HTML entities', () => {
   const paste = `
-  - one &amp; two
-  - three &lt; four
+    - one &amp; two
+    - three &lt; four
   `
 
   const stateNew = importText({ text: paste })(initialState())
@@ -507,7 +513,8 @@ it('do not parse as html when value has tags inside indented text', () => {
 it('single-line nested html tags', () => {
   const text = `- ${HOME_TOKEN}
   - a
-    - b`
+    - b
+  `
 
   const paste = '<b><i>A</i></b>'
 
@@ -565,9 +572,10 @@ it('multi-line nested html tags', () => {
 it('export note as a normal thought if lossless not selected', () => {
   const text = `- ${HOME_TOKEN}
   - a
-   - =note
-     - b
-   - c`
+    - =note
+      - b
+    - c
+  `
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
@@ -580,9 +588,10 @@ it('export note as a normal thought if lossless not selected', () => {
 
 it('text that contains em tag', () => {
   const text = `
-  - a
-    - b
-    - <em>c</em>`
+    - a
+      - b
+      - <em>c</em>
+  `
   const exported = importExport(text)
   expect(exported.trim()).toBe(
     `<ul>
@@ -602,10 +611,10 @@ it('text that contains em tag', () => {
 
 it('text that contains non closed span tag', () => {
   const paste = `
-- a
-- b
-- <span>c
-- d
+    - a
+    - b
+    - <span>c
+    - d
   `
   const actual = importExport(paste, false)
   expect(actual).toBe(
@@ -620,9 +629,10 @@ it('text that contains non closed span tag', () => {
 
 it('text that contains br tag that does not have children', () => {
   const text = `
-  - a
-  - b
-  - c<br>`
+    - a
+    - b
+    - c<br>
+  `
   const exported = importExport(text, false)
   expect(exported.trim()).toBe(
     `- a
@@ -633,9 +643,10 @@ it('text that contains br tag that does not have children', () => {
 
 it('text that contains br tag that has note children', () => {
   const text = `
-  - a
-  - b
-  - c<br><span class="note">This is c!</span>`
+    - a
+    - b
+    - c<br><span class="note">This is c!</span>
+  `
   const exported = importExport(text, false)
   expect(exported.trim()).toBe(
     `- a
@@ -648,10 +659,10 @@ it('text that contains br tag that has note children', () => {
 
 it('text that contains one or more than one not allowed formattting tags', () => {
   const text = `
-- a
-- b <sup>c</sup>
-- c (<sub>d</sub>)
-  - d <pre>123</pre>
+    - a
+    - b <sup>c</sup>
+    - c (<sub>d</sub>)
+      - d <pre>123</pre>
   `
   const exported = importExport(text, false)
   const expected = `
@@ -1052,10 +1063,11 @@ it('import single thought with invalid markdown into the home context', () => {
 
 it('import multiple thoughts to empty home context', () => {
   const text = `
-  - a
-    - b
-  - c
-    - d`
+    - a
+      - b
+    - c
+      - d
+  `
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -1069,10 +1081,11 @@ it('import multiple thoughts to empty home context', () => {
 
 it('import multiple thoughts to end of home context with other thoughts', () => {
   const text = `
-  - a
-    - b
-  - c
-    - d`
+    - a
+      - b
+    - c
+      - d
+  `
 
   const stateNew = reducerFlow([importText({ text }), importText({ text: 'e' })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -1901,11 +1914,12 @@ it.skip('import raw state', () => {
 
 it('properly add lexeme entries for multiple thoughts with same value on import', () => {
   const text = `
-  - a
+    - a
+      - m
+        - x
     - m
-      - x
-  - m
-   - y`
+     - y
+  `
 
   const stateNew = reducerFlow([importText({ text })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -1976,11 +1990,13 @@ it(`import HTML with untrimmed "${HOME_TOKEN}  "`, () => {
 })
 
 it(`remove nested HOME token but keep descendants`, () => {
-  const text = `- a
-  - b
-    - c
-  - ${HOME_TOKEN}
-    - d`
+  const text = `
+  - a
+    - b
+      - c
+    - ${HOME_TOKEN}
+      - d
+  `
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -1992,12 +2008,14 @@ it(`remove nested HOME token but keep descendants`, () => {
 })
 
 it(`import sibling empty thoughts`, () => {
-  const text = `<ul>
-  <li>a</li>
-  <li></li>
-  <li></li>
-  <li>b</li>
-</ul>`
+  const text = `
+    <ul>
+      <li>a</li>
+      <li></li>
+      <li></li>
+      <li>b</li>
+    </ul>
+  `
 
   const stateNew = importText(initialState(), { text })
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -2039,17 +2057,17 @@ it('set cursor correctly after duplicate merge', () => {
 
 it(`import bold thoughts with bold descendants`, () => {
   const text = `
-  - a
-  - c
-    - d
-      - **d1**
-        - e
-          - f
-            - **g**
-      - d2
-      - d3
-    - h
-  - i
+    - a
+    - c
+      - d
+        - **d1**
+          - e
+            - f
+              - **g**
+        - d2
+        - d3
+      - h
+    - i
   `
 
   const stateNew = importText(initialState(), { text })

@@ -69,12 +69,14 @@ it('do nothing when there are no thoughts', () => {
 // @MIGRATION_TODO: Context view is not working yet.
 describe.skip('context view', () => {
   it("move cursor from context's first child to parent", () => {
-    const text = `- a
-      - m
-        - x
-    - b
-      - m
-        - y`
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
 
     const steps = [
       importText({ text }),

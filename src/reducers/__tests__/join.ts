@@ -9,10 +9,12 @@ import removeHome from '../../util/removeHome'
 import importText from '../importText'
 
 it('joins two simple thoughts', () => {
-  const text = `- a
-  - m
-  - n
-- b`
+  const text = `
+    - a
+      - m
+      - n
+    - b
+  `
   const steps = [importText({ text }), setCursorFirstMatch(['a', 'm']), join()]
 
   const newState = reducerFlow(steps)(initialState())
@@ -26,18 +28,20 @@ it('joins two simple thoughts', () => {
 })
 
 it('joins two thoughts and merges their children', () => {
-  const text = `- a
-  - m
+  const text = `
     - a
+      - m
+        - a
+        - b
+      - n
+        - c
+      - o
+        - d
+      - p
+        - e
+        - f
     - b
-  - n
-    - c
-  - o
-    - d
-  - p
-    - e
-    - f
-- b`
+  `
   const steps = [importText({ text }), setCursorFirstMatch(['a', 'o']), join()]
 
   const newState = reducerFlow(steps)(initialState())
@@ -58,15 +62,17 @@ it('joins two thoughts and merges their children', () => {
 })
 
 it('generates unique & non-conflicting ranks', () => {
-  const text = `- a
-  - m
+  const text = `
     - a
+      - m
+        - a
+        - b
+      - n
+        - c
+      - o
+        - d
     - b
-  - n
-    - c
-  - o
-    - d
-- b`
+  `
   const steps = [importText({ text }), setCursorFirstMatch(['a', 'n']), join()]
 
   const newState = reducerFlow(steps)(initialState())
