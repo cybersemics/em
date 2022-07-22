@@ -17,7 +17,7 @@ export const setCursorFirstMatchActionCreator =
   (dispatch, getState) =>
     dispatch(
       setCursorThunk({
-        path: pathUnranked ? contextToPath(getState(), pathUnranked) : null,
+        path: pathUnranked ? contextToPath(getState(), pathUnranked!) : null,
       }),
     )
 

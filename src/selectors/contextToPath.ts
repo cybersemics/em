@@ -1,12 +1,16 @@
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import appendToPath from '../util/appendToPath'
 import isRoot from '../util/isRoot'
+import getContexts from './getContexts'
 import getRootPath from './getRootPath'
+import getThoughtById from './getThoughtById'
+import isContextViewActive from './isContextViewActive'
 
-/** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. It should be removed. */
+/** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. Works with cyclic Paths. Should be converted to a test-helper only. */
 const contextToPath = (state: State, context: string[]): SimplePath | null => {
   if (isRoot(context)) return getRootPath(state)
 
@@ -22,15 +26,21 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
 
   try {
     return contextUnrooted.reduce<SimplePath>((acc, value, i) => {
-      const prevParentId = acc[acc.length - 1] || startingThoughtId
-      const children = getAllChildrenAsThoughts(state, prevParentId)
-      const firstChild = children.find(child => child.value === value)
+      const prevParentId: ThoughtId = acc[acc.length - 1] || startingThoughtId
+      const showContexts = prevParentId && isContextViewActive(state, acc)
+      const prevParent = showContexts && prevParentId ? getThoughtById(state, prevParentId) : null
+      const children = prevParent
+        ? getContexts(state, prevParent.value).map(cxid => getThoughtById(state, cxid))
+        : getAllChildrenAsThoughts(state, prevParentId)
+      const firstChild = children.find(
+        child => (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value,
+      )
 
       if (!firstChild) throw Error('Thought not found')
 
       const isEm = i === 0 && value === EM_TOKEN
 
-      return appendToPath(acc, isEm ? EM_TOKEN : firstChild.id)
+      return appendToPath(acc, isEm ? EM_TOKEN : showContexts ? firstChild.parentId : firstChild.id)
     }, [] as any as SimplePath)
   } catch (err) {
     return null

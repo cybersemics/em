@@ -25,7 +25,9 @@ import pathToContext from '../util/pathToContext'
 import publishMode from '../util/publishMode'
 import strip from '../util/strip'
 import unroot from '../util/unroot'
+import childIdsToThoughts from './childIdsToThoughts'
 import { getAllChildren, getAllChildrenAsThoughts } from './getChildren'
+import getContexts from './getContexts'
 import parentOfThought from './parentOfThought'
 
 /** Get the value of the Child | ThoughtContext. */
@@ -120,12 +122,12 @@ function expandThoughtsRecursive(
 
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
-
+  const thought = getThoughtById(state, thoughtId)
   const context = pathToContext(state, path)
-
   const showContexts = isContextViewActive(state, path)
-
-  const childrenUnfiltered = getAllChildrenAsThoughts(state, head(simplePath))
+  const childrenUnfiltered = showContexts
+    ? childIdsToThoughts(state, getContexts(state, thought.value))
+    : getAllChildrenAsThoughts(state, thoughtId)
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
@@ -170,9 +172,7 @@ function expandThoughtsRecursive(
     publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
-          const value = child.value
-
-          const childPath = path ? appendToPath(path, child.id) : ([child.id] as Path)
+          const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
 
           /** Check of the path is the ancestor of the expansion path. */
           const isAncestor = () => isDescendant(childPath, expansionBasePath)
@@ -187,9 +187,9 @@ function expandThoughtsRecursive(
             If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
             So this predicate prevents from recalculating isAncestor or isexpansionBasePath again by checking if those calculations are already done in visibleChildren logic.
            */
-          const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isAttribute(value)
+          const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isAttribute(child.value)
 
-          const strippedValue = strip(value)
+          const strippedValue = strip(child.value)
 
           return (
             strippedValue[strippedValue.length - 1] === EXPAND_THOUGHT_CHAR ||
@@ -200,21 +200,15 @@ function expandThoughtsRecursive(
           )
         })
 
-  // Note: Since a thought can have duplicate valued children in some cases like pending merges, we need to make expanded key based on the hash of the path instead.
-  const pathEncoded = hashPath(path)
-
   const initialExpanded = {
     // expand current thought
-    [pathEncoded]: returnContexts ? context : path,
+    [hashPath(path)]: returnContexts ? context : path,
   }
 
   return keyValueBy(
     childrenPinned,
     childOrContext => {
-      // @MIGRATION_TODO: Check if this new path is correct
-      const newPath = unroot([...(path || []), childOrContext.id])
-      // RECURSIVE
-      // passing contextChain here creates an infinite loop
+      const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
       return expandThoughtsRecursive(state, expansionBasePath, newPath, { returnContexts })
     },
     initialExpanded,

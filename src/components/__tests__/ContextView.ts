@@ -10,6 +10,7 @@ import { findThoughtByText } from '../../test-helpers/queries/findThoughtByText'
 import { getClosestByLabel } from '../../test-helpers/queries/getClosestByLabel'
 import { queryThoughtByText } from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import testTimer from '../../test-helpers/testTimer'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -78,6 +79,62 @@ describe('render', () => {
 
     const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
     expect(thoughtsY).toBeNull()
+  })
+
+  it('expand cursor on a cyclic context (the context on which the context view is activated)', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+      }),
+      setCursor(['a']),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+      setCursor(['a', 'm', 'a']),
+    ])
+
+    const thoughtM = await findThoughtByText('m')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+
+    const thoughtX = await findThoughtByText('x', thoughtContainerM)
+    expect(thoughtX).toBeTruthy()
+
+    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
+    expect(thoughtsY).toBeNull()
+  })
+
+  it('expand cursor on a tangential context (from a different part of the hierarchy)', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+      }),
+      setCursor(['a']),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+      setCursor(['a', 'm', 'b']),
+    ])
+
+    const thoughtM = await findThoughtByText('m')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+
+    const thoughtX = await queryThoughtByText('x', thoughtContainerM)
+    expect(thoughtX).toBeNull()
+
+    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
+    expect(thoughtsY).toBeTruthy()
   })
 
   it('show instructions when thought exists in not found in any other contexts', async () => {
