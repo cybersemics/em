@@ -119,7 +119,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'n'])
   })
 
-  it("move cursor to context's first child", () => {
+  it("move cursor to cyclic context's first child", () => {
     const text = `
       - a
         - m
@@ -143,6 +143,30 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
   })
 
+  it("move cursor to tangential context's first child", () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['b', 'm']),
+      toggleContextView,
+      setCursor(['b', 'm', 'a']),
+      cursorDown,
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'a', 'x'])
+  })
+
   it("move cursor from a context to its sibling, if there aren't any children", () => {
     const text = `
       - a
@@ -156,30 +180,6 @@ describe('context view', () => {
       setCursor(['a', 'm']),
       toggleContextView,
       setCursor(['a', 'm', 'a']),
-      cursorDown,
-    ]
-
-    // run steps through reducer flow
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
-  })
-
-  it.skip("move cursor from context's last child to next uncle thought", () => {
-    const text = `
-      - a
-        - m
-          - x
-      - b
-        - m
-          - y
-    `
-
-    const steps = [
-      importText({ text }),
-      setCursor(['a', 'm']),
-      toggleContextView,
-      setCursor(['a', 'm', 'a', 'x']),
       cursorDown,
     ]
 
@@ -214,6 +214,30 @@ describe('context view', () => {
 
     expect(stateNew.cursor).toBeDefined()
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'b', 'z'])
+  })
+
+  it.skip("move cursor from context's last child to uncle context", () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x']),
+      cursorDown,
+    ]
+
+    // run steps through reducer flow
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
   it.skip("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {

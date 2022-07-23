@@ -1,13 +1,13 @@
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { HOME_PATH } from '../constants'
-import { firstVisibleChildWithCursorCheck } from '../selectors/getChildren'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import getNextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -72,9 +72,7 @@ const nextThought = (
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, pathParent)
 
-  const firstChild = !ignoreChildren
-    ? firstVisibleChildWithCursorCheck(state, (showContextsParent ? pathParent : path) as SimplePath)
-    : null
+  const firstChild = !ignoreChildren ? firstVisibleChild(state, head(simplifyPath(state, path))) : null
 
   const onContextView = showContexts && !ignoreChildren
   const isEmptyContext = showContextsParent && !firstChild
