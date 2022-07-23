@@ -1,14 +1,17 @@
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import appendToPath from '../util/appendToPath'
+import head from '../util/head'
 import isRoot from '../util/isRoot'
 import getContexts from './getContexts'
 import getRootPath from './getRootPath'
 import getThoughtById from './getThoughtById'
 import isContextViewActive from './isContextViewActive'
+import simplifyPath from './simplifyPath'
 
 /** DEPRECATED: Converts a Context to a Path. This is a lossy function! If there is a duplicate thought in the same context, it takes the first. Works with cyclic Paths. Should be converted to a test-helper only. */
 const contextToPath = (state: State, context: string[]): SimplePath | null => {
@@ -25,8 +28,9 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
   const contextUnrooted = context.slice(isEmContext ? 1 : 0)
 
   try {
-    return contextUnrooted.reduce<SimplePath>((acc, value, i) => {
-      const prevParentId: ThoughtId = acc[acc.length - 1] || startingThoughtId
+    const path = contextUnrooted.reduce<Path>((acc, value, i) => {
+      const simplePathAccum = simplifyPath(state, acc)
+      const prevParentId: ThoughtId = head(simplePathAccum) || startingThoughtId
       const showContexts = prevParentId && isContextViewActive(state, acc)
       const prevParent = showContexts && prevParentId ? getThoughtById(state, prevParentId) : null
       const children = prevParent
@@ -41,8 +45,11 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
       const isEm = i === 0 && value === EM_TOKEN
 
       return appendToPath(acc, isEm ? EM_TOKEN : showContexts ? firstChild.parentId : firstChild.id)
-    }, [] as any as SimplePath)
-  } catch (err) {
+    }, [] as any as Path)
+    // TODO: return Path
+    return path as SimplePath
+  } catch (e) {
+    console.warn(e)
     return null
   }
 }
