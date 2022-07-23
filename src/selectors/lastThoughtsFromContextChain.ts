@@ -1,33 +1,54 @@
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtContext from '../@types/ThoughtContext'
-import contextToPath from '../selectors/contextToPath'
 import getLexeme from '../selectors/getLexeme'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import parentOf from '../util/parentOf'
-import splice from '../util/splice'
-import thoughtToContext from './thoughtToContext'
+import getThoughtById from './getThoughtById'
+import thoughtToPath from './thoughtToPath'
 
 /** Generates path from the last segment of a context chain. */
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
-  const penult = contextChain[contextChain.length - 2]
-  const lexeme = getLexeme(state, headValue(state, penult))
 
-  // guard against missing lexeme (although this should never happen)
+  // the last path in the context chain is a context within a context view
+  const path = contextChain[contextChain.length - 1]
+
+  // the second-to-last path in the context chain is the closest context view
+  const pathContextView = contextChain[contextChain.length - 2]
+
+  // get the contexts in the context view via the Lexeme
+  const lexeme = getLexeme(state, headValue(state, pathContextView))
+
   if (!lexeme) {
-    console.error('Lexeme not found', penult)
+    console.error('Lexeme not found', pathContextView)
     return contextChain[0]
   }
 
-  const ult = contextChain[contextChain.length - 1]
-  const thought = lexeme.contexts.find(thought => thought === ult[0]) as ThoughtContext
-  // MIGRATION_TODO: Write a function that returns path given the thought id.
-  const path = contextToPath(state, thoughtToContext(state, thought)!)
-  if (!path) throw new Error(`Path not found for thought id: ${thought}`)
-  const pathPrepend = parentOf(path)
-  return pathPrepend.concat(splice(ult, 1, 0, head(penult))) as SimplePath
+  // find the context whose parent matches path
+  /*
+    e.g.
+
+    - a
+      - m(1)
+        - x
+    - b
+      - m(2)
+        - y
+
+    Context view is activated on /b/m
+    Cursor is on /b/m/a
+    contextChain is [['b', m'], ['a']]
+    contexts of /b/m are [m(1), m(2)]
+
+    This will find m(1) since its parent matches the cursor 'a'
+
+  */
+  const id = lexeme.contexts.find(cxid => getThoughtById(state, cxid).parentId === head(path))!
+  const simplePath = thoughtToPath(state, id)
+
+  if (!simplePath) throw new Error(`simplePath not found for thought: ${id}`)
+
+  return simplePath
 }
 
 export default lastThoughtsFromContextChain
