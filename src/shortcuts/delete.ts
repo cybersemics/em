@@ -5,6 +5,7 @@ import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -20,20 +21,20 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   // otherwise Chrome/Brave will open "Clear browsing data"
   if (!cursor) return
 
-  const cursorThought = getThoughtById(state, head(cursor))
+  const value = getThoughtById(state, head(simplifyPath(state, cursor))).value
 
   if (isEM(cursor) || isRoot(cursor)) {
     dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be deleted.` }))
   } else if (findDescendant(state, head(cursor), '=readonly')) {
-    dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be deleted.` }))
+    dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
     // delete the thought
     dispatch(deleteThoughtWithCursor({ path: cursor }))
 
     // undo alert
-    if (cursorThought.value) {
+    if (value) {
       dispatch(
-        alert(`Deleted ${ellipsize(cursorThought.value)}`, {
+        alert(`Deleted ${ellipsize(value)}`, {
           showCloseLink: true,
           clearDelay: 8000,
         }),

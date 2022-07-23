@@ -164,3 +164,59 @@ it('delete thought from within cyclic context', () => {
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
 })
+
+it('delete empty tangential context with no children', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    setCursor(['a', 'm', 'b']),
+    deleteThoughtWithCursor({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+  - b`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+})
+
+it.skip('delete empty cyclic context with no children', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    setCursor(['a', 'm', 'a']),
+    deleteThoughtWithCursor({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - m`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})

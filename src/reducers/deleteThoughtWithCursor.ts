@@ -13,6 +13,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import parentOfThought from '../selectors/parentOfThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 // util
@@ -46,7 +47,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     //   path = contextToPath(state, [...context, thoughtInContextView.value])
     // }
   }
-  const simplePath = thoughtToPath(state, head(path))
+  const simplePath = showContexts ? simplifyPath(state, path) : thoughtToPath(state, head(path))
   const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
@@ -55,6 +56,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const { value, rank } = thought
 
   /** Calculates the previous context within a context view. */
+  // TODO: Refactor into prevThought (cf nextThought)
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
     const prevContext = once(() => {
@@ -92,11 +94,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
     // move cursor
     state => {
-      const next = once(() =>
-        showContexts
-          ? getContextsSortedAndRanked(state, headValue(state, parentOf(simplePath)))[0]
-          : firstVisibleChild(state, parentId),
-      )
+      // TODO: Refactor into nextThought/prevThought
+      const next = once(() => (showContexts ? null : firstVisibleChild(state, parentId)))
 
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
