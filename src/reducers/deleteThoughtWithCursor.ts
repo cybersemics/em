@@ -87,7 +87,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     // delete thought
     deleteThought({
       pathParent: parentOf(simplePath),
-      showContexts,
       thoughtId: head(simplePath),
     }),
 

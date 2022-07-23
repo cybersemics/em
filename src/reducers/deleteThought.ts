@@ -28,7 +28,6 @@ interface Payload {
   pathParent: Path
   thoughtId: ThoughtId
   orphaned?: boolean
-  showContexts?: boolean
 }
 
 interface ThoughtUpdates {

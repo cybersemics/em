@@ -32,13 +32,12 @@ import updateThoughts from './updateThoughts'
 export interface editThoughtPayload {
   oldValue: string
   newValue: string
-  showContexts?: boolean
   path: SimplePath
   rankInContext?: number
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (state: State, { oldValue, newValue, showContexts, path, rankInContext }: editThoughtPayload) => {
+const editThought = (state: State, { oldValue, newValue, path, rankInContext }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value

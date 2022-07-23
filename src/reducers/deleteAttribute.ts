@@ -16,7 +16,6 @@ const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }
   return pathAttribute && findDescendant(state, head(path), key)
     ? deleteThought(state, {
         pathParent: path,
-        showContexts: false,
         thoughtId: head(pathAttribute),
       })
     : state
