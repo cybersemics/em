@@ -1,15 +1,17 @@
+import { importText } from '..'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-// reducers
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
 import deleteThoughtWithCursor from '../deleteThoughtWithCursor'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
+import toggleContextView from '../toggleContextView'
 
 it('delete thought within root', () => {
   const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor({})]
@@ -23,7 +25,7 @@ it('delete thought within root', () => {
 })
 
 it('delete thought with no cursor should do nothing ', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), deleteThoughtWithCursor({})]
+  const steps = [newThought('a'), newThought('b'), setCursor(null), deleteThoughtWithCursor({})]
 
   // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
@@ -97,4 +99,68 @@ it('cursor should be removed if the last thought is deleted', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
+})
+
+it('delete thought from within tangential context', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    setCursor(['a', 'm', 'b', 'y']),
+    deleteThoughtWithCursor({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+})
+
+it('delete thought from within cyclic context', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    setCursor(['a', 'm', 'a', 'x']),
+    deleteThoughtWithCursor({}),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+  - b
+    - m
+      - y`)
+
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
 })

@@ -1,7 +1,6 @@
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import getLexeme from '../selectors/getLexeme'
-import head from '../util/head'
 import headValue from '../util/headValue'
 import getThoughtById from './getThoughtById'
 import thoughtToPath from './thoughtToPath'
@@ -43,7 +42,7 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
     This will find m(1) since its parent matches the cursor 'a'
 
   */
-  const id = lexeme.contexts.find(cxid => getThoughtById(state, cxid).parentId === head(path))!
+  const id = lexeme.contexts.find(cxid => getThoughtById(state, cxid).parentId === path[0])!
   const simplePath = thoughtToPath(state, id)
 
   if (!simplePath) throw new Error(`simplePath not found for thought: ${id}`)

@@ -13,7 +13,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import parentOfThought from '../selectors/parentOfThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
+import thoughtToPath from '../selectors/thoughtToPath'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 // util
 import appendToPath from '../util/appendToPath'
@@ -46,7 +46,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     //   path = contextToPath(state, [...context, thoughtInContextView.value])
     // }
   }
-  const simplePath = simplifyPath(state, path)
+  const simplePath = thoughtToPath(state, head(path))
   const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
