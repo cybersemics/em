@@ -1093,7 +1093,7 @@ h1 .num-contexts {
 /* In context view, make room for breadcrumbs. */
 .child.show-contexts > .thought-container .bullet {
   position: relative;
-  top: 1.6em;
+  top: 1.4em;
 }
 
 .child > .thought-container > .bullet .glyph {

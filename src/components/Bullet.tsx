@@ -50,6 +50,7 @@ const Bullet = ({
   fontSize,
   hideBullet,
   invalid,
+  isContextPending,
   isDragging,
   leaf,
   missing,

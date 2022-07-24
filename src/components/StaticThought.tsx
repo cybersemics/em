@@ -32,12 +32,12 @@ const StaticThought = ({
   simplePath,
   style,
 }: ConnectedThoughtProps) => {
-  const isRoot = simplePath.length === 1
+  const isParentRoot = simplePath.length === 1
 
   const state = store.getState()
 
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
-  const homeContext = showContexts && isRoot && !isContextPending
+  const homeContext = showContexts && isParentRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
@@ -49,7 +49,7 @@ const StaticThought = ({
 
   return (
     <div aria-label='thought' className='thought'>
-      {showContextBreadcrumbs && !isRoot ? (
+      {showContextBreadcrumbs && !isParentRoot ? (
         <ContextBreadcrumbs
           simplePath={rootedParentOf(state, rootedParentOf(state, simplePathLive))}
           homeContext={homeContext}
@@ -73,6 +73,8 @@ const StaticThought = ({
           <HomeIcon />
         ) : isDivider(value) ? (
           <Divider path={simplePathLive} />
+        ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
+          <div style={{ paddingTop: '2.8em' }}></div>
         ) : (
           <Editable
             path={path}
