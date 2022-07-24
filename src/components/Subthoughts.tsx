@@ -544,7 +544,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           return cursor[depth] && cursorThoughtArray[depth].rank === child.rank
         })
       : 0
-
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   const proposedPageSize = PAGINATION_SIZE * page
