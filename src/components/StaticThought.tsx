@@ -19,22 +19,24 @@ import HomeIcon from './icons/HomeIcon'
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   cursorOffset,
+  editing,
+  // See: ThoughtProps['isContextPending']
+  isContextPending,
   isEditing,
   isVisible,
+  onEdit,
   path,
   rank,
   showContextBreadcrumbs,
-  style,
   simplePath,
-  onEdit,
-  editing,
+  style,
 }: ConnectedThoughtProps) => {
   const isRoot = simplePath.length === 1
 
   const state = store.getState()
 
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
-  const homeContext = showContexts && isRoot
+  const homeContext = showContexts && isRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   return (
@@ -57,24 +59,27 @@ const StaticThought = ({
         </span>
       ) : null}
 
-      {homeContext ? (
-        <HomeIcon />
-      ) : isDivider(value) ? (
-        <Divider path={simplePath} />
-      ) : (
-        <Editable
-          path={path}
-          cursorOffset={cursorOffset}
-          editing={editing}
-          disabled={!isDocumentEditable()}
-          isEditing={isEditing}
-          isVisible={isVisible}
-          rank={rank}
-          style={style}
-          simplePath={showContexts ? rootedParentOf(state, simplePath) : simplePath}
-          onEdit={onEdit}
-        />
-      )}
+      {
+        // render nothing if it is a pending context since we have no value
+        isContextPending ? null : homeContext ? (
+          <HomeIcon />
+        ) : isDivider(value) ? (
+          <Divider path={simplePath} />
+        ) : (
+          <Editable
+            path={path}
+            cursorOffset={cursorOffset}
+            editing={editing}
+            disabled={!isDocumentEditable()}
+            isEditing={isEditing}
+            isVisible={isVisible}
+            rank={rank}
+            style={style}
+            simplePath={showContexts ? rootedParentOf(state, simplePath) : simplePath}
+            onEdit={onEdit}
+          />
+        )
+      }
 
       <Superscript simplePath={simplePath} superscript={false} />
     </div>

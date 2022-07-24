@@ -223,7 +223,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const firstChilId = allChildren[0]
 
-  const hasChildrenLoaded = !!(firstChilId && getThoughtById(state, firstChilId))
+  const hasChildrenLoaded = showContexts
+    ? !getContextsSortedAndRanked(state, headValue(state, simplePath)).some(thought => thought.pending)
+    : !!(firstChilId && getThoughtById(state, firstChilId))
 
   const cursorSubthoughtIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
 
@@ -813,18 +815,20 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               )
             }
 
+            // TODO: ROOT gets appended when isContextPending
+            // What should appendedChildPath be?
             const appendedChildPath = appendChildPath(state, childPath, path)
             const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
 
             /*
-            simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
-            The main problem is that when a new Thought is added it will get key (index) of the previous thought,
-            causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
+              simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+              The main problem is that when a new Thought is added it will get key (index) of the previous thought,
+              causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
 
-            By using child's rank we have unique key for every new thought.
-            Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
-            re-renders.
-          */
+              By using child's rank we have unique key for every new thought.
+              Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+              re-renders.
+            */
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
@@ -839,6 +843,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 }
                 showContexts={showContexts}
                 prevChild={filteredChildren[i - 1]}
+                isContextPending={child.value === '__PENDING__'}
                 isParentHovering={isParentHovering}
                 style={Object.keys(style).length > 0 ? style : undefined}
                 styleContainer={styleContainer || undefined}

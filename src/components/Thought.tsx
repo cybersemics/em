@@ -57,16 +57,16 @@ export interface ThoughtContainerProps {
   allowSingleContext?: boolean
   childrenForced?: ThoughtId[]
   contextBinding?: Path
-  path: Path
   cursor?: Path | null
   depth?: number
   env?: Index<ThoughtId>
   expandedContextThought?: Path
   hideBullet?: boolean
-  isDeepHovering?: boolean
-  isPublishChild?: boolean
+  // See: ThoughtProps['isContextPending']
+  isContextPending?: boolean
   isCursorGrandparent?: boolean
   isCursorParent?: boolean
+  isDeepHovering?: boolean
   isDragging?: boolean
   isEditing?: boolean
   isEditingPath?: boolean
@@ -75,23 +75,30 @@ export interface ThoughtContainerProps {
   isHovering?: boolean
   isMultiColumnTable?: boolean
   isParentHovering?: boolean
-  // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
-  // currently this does not control visibility, but merely tracks it
+  isPublishChild?: boolean
+  // See: ThoughtProps['isVisible']
   isVisible?: boolean
+  path: Path
   prevChild?: Thought
   publish?: boolean
   rank: number
   showContexts?: boolean
+  simplePath: SimplePath
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
-  simplePath: SimplePath
   view?: string | null
 }
 
 interface ThoughtProps {
   cursorOffset?: number | null
-  isPublishChild?: boolean
+  editing?: boolean | null
+  // When context view is activated, some contexts may be pending
+  // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
+  // getContexts will return ids that do not exist in the thoughtIndex
+  // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
+  isContextPending?: boolean
   isEditing?: boolean
+  isPublishChild?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
@@ -99,11 +106,10 @@ interface ThoughtProps {
   rank: number
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
+  simplePath: SimplePath
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
-  simplePath: SimplePath
   view?: string | null
-  editing?: boolean | null
 }
 
 export type ConnectedThoughtProps = ThoughtProps & Partial<ReturnType<typeof mapDispatchToProps>>
@@ -222,6 +228,7 @@ const ThoughtContainer = ({
   isLeaf,
   isMultiColumnTable,
   isParentHovering,
+  isContextPending,
   isPublishChild,
   isVisible,
   onEdit,
@@ -443,6 +450,7 @@ const ThoughtContainer = ({
         <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
+              isContextPending={isContextPending}
               isEditing={isEditing}
               leaf={isLeaf}
               onClick={(e: React.MouseEvent) => {
@@ -478,12 +486,12 @@ const ThoughtContainer = ({
           <StaticThought
             path={path}
             cursorOffset={cursorOffset}
+            isContextPending={isContextPending}
             isPublishChild={isPublishChild}
             isEditing={isEditing}
             isVisible={isVisible}
             rank={rank}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            showContexts={showContexts}
+            showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             style={styleNew || undefined}
             simplePath={simplePath}
             onEdit={!isTouch ? onEdit : undefined}

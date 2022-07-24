@@ -15,15 +15,17 @@ import theme from '../selectors/theme'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
+  hideBullet?: boolean
+  // See: ThoughtProps['isContextPending']
+  isContextPending?: boolean
+  isDragging?: boolean
   isEditing?: boolean
   leaf?: boolean
   onClick: (event: React.MouseEvent) => void
-  showContexts?: boolean
-  thoughtId: ThoughtId
   publish?: boolean
+  showContexts?: boolean
   simplePath: SimplePath
-  hideBullet?: boolean
-  isDragging?: boolean
+  thoughtId: ThoughtId
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -36,7 +38,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     invalid: !!props.isEditing && invalidState,
     missing: !lexeme,
     fontSize: state.fontSize,
-    pending: isPending(state, thought),
+    pending: props.isContextPending || isPending(state, thought),
     showContexts: isContextViewActiveById(state, thought.id),
     dark: theme(state) !== 'Light',
   }
@@ -44,18 +46,18 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
-  showContexts,
+  dark,
+  fontSize,
+  hideBullet,
   invalid,
+  isDragging,
   leaf,
   missing,
   onClick,
   pending,
-  simplePath,
   publish,
-  hideBullet,
-  isDragging,
-  dark,
-  fontSize,
+  showContexts,
+  simplePath,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
@@ -103,7 +105,7 @@ const Bullet = ({
       }
 
   /** Return circle or triangle for the bullet. */
-  const foregroundShape = (style = {}) => {
+  const foregroundShape = (classes = {}) => {
     const foregroundShapeProps = showContexts
       ? {
           strokeWidth: '30',
@@ -122,7 +124,7 @@ const Bullet = ({
         aria-label='bullet-glyph'
         className={classNames({
           'glyph-fg': true,
-          ...style,
+          ...classes,
         })}
         ry={ellipseRadius}
         rx={ellipseRadius}
@@ -132,7 +134,7 @@ const Bullet = ({
       />
     ) : (
       <path
-        className={classNames('glyph-fg', 'triangle')}
+        className={classNames({ 'glyph-fg': true, triangle: true, ...classes })}
         style={{ transformOrigin: calculateTransformOrigin() }}
         d={path}
         {...foregroundShapeProps}
@@ -165,7 +167,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
+          {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && !pending && (
             <ellipse
               className='bullet-cursor-overlay'
               fillOpacity='0'

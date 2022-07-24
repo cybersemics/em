@@ -10,7 +10,9 @@ import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import expandedWithAncestors from '../selectors/expandedWithAncestors'
 import { getChildren } from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import equalArrays from '../util/equalArrays'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
@@ -40,8 +42,10 @@ const appendVisiblePaths = (
       const thought = getThoughtById(state, thoughtId)
       if (!thought) return null
 
+      const showContexts = isContextViewActive(state, path)
+
       // get visible children
-      const children = getChildren(state, thoughtId)
+      const children = showContexts ? getContextsSortedAndRanked(state, thought.value) : getChildren(state, thoughtId)
       return {
         ...(thought.pending ? { [thoughtId]: true } : null),
         ...keyValueBy(children, child => (!child || child.pending ? { [child.id]: true } : null)),
@@ -61,13 +65,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // use isLoaded to ignore throttling on first load
   let isLoaded = false // eslint-disable-line fp/no-let
 
-  // track when expanded changes
+  // track changed state to short circuit flushPullQueue when no visible thoughts have changed
   let lastExpanded: Index<Context> = {} // eslint-disable-line fp/no-let
-
-  // track when expanded paths change
+  let lastContextViews: State['contextViews'] = {} // eslint-disable-line fp/no-let
   let lastExpandedPaths: Index<Path> = {} // eslint-disable-line fp/no-let
-
-  // track when search contexts change
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
 
   // enqueue thoughts be pulled from the data source
@@ -134,10 +135,12 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const expanded = expandThoughts(state, state.cursor)
 
-    // return if expanded is the same, unless force is specified or expanded is empty
+    // Return if expanded is the same, unless force is specified or expanded is empty.
+    // If context view is activated and all of its contexts are collapsed, then expanded will not change. In this case we need to compare lastContextViews to prevent short circuiting, otherwise pending contexts will not load.
     if (
       !forceFlush &&
       !forceRemote &&
+      state.contextViews === lastContextViews &&
       Object.keys(state.expanded).length > 0 &&
       equalArrays(Object.keys(expanded), Object.keys(lastExpanded)) &&
       isSearchSame
@@ -153,6 +156,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     if (
       !forceFlush &&
       !forceRemote &&
+      state.contextViews === lastContextViews &&
       equalArrays(Object.keys(expandedPaths), Object.keys(lastExpandedPaths)) &&
       isSearchSame
     )
@@ -162,6 +166,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // update last searchContexts
     lastSearchContexts = state.searchContexts
+    lastContextViews = state.contextViews
 
     // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
