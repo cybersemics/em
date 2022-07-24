@@ -180,7 +180,7 @@ const flushDeletes =
 
         Therefore, force the pull here to fetch all descendants to delete in Part II.
       */
-      await dispatch(pull(ids, { force: true, maxDepth: Infinity }))
+      await dispatch(pull(ids, { force: true, maxDepth: Infinity, preventLoadingAncestors: true }))
 
       pendingDeletes.forEach(({ path, siblingIds }) => {
         // instead of deleting just the pending thought, we have to delete any remaining siblingIds because they can be resurrected by pull

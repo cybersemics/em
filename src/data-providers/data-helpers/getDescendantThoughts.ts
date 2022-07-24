@@ -25,6 +25,9 @@ const MAX_THOUGHTS_QUEUED = 100
 
 interface Options {
   maxDepth?: number
+  // if true, missing ancestors are not loaded
+  // must be set when deleting pending descendants
+  preventLoadingAncestors?: boolean
 }
 
 /** A very simple queue. */
@@ -94,7 +97,7 @@ async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
   getState: () => State,
-  { maxDepth = MAX_DEPTH }: Options = {},
+  { maxDepth = MAX_DEPTH, preventLoadingAncestors }: Options = {},
 ): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
   const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
@@ -175,7 +178,7 @@ async function* getDescendantThoughts(
         const parent = getThoughtById(updatedState, thought.parentId)
 
         // load ancestors of tangential contexts
-        if (!parent) {
+        if (!parent && !preventLoadingAncestors) {
           thoughtIdQueue.add([thought.parentId])
         }
 

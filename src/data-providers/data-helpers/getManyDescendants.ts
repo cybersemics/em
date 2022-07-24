@@ -17,7 +17,7 @@ const getManyDescendants = async function* getManyDescendants(
   provider: DataProvider,
   thoughtIds: ThoughtId[],
   getState: () => State,
-  { maxDepth = 100 } = {},
+  { maxDepth = 100, preventLoadingAncestors = false } = {},
 ): AsyncIterable<ThoughtIndices> {
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
@@ -25,6 +25,7 @@ const getManyDescendants = async function* getManyDescendants(
       getDescendantThoughts(provider, key, getState, {
         // do not limit the depth of the em context
         maxDepth: key === emContextEncoded ? Infinity : maxDepth,
+        preventLoadingAncestors,
       }),
     ),
   )
