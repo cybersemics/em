@@ -61,7 +61,7 @@ const StaticThought = ({
 
       {
         // render nothing if it is a pending context since we have no value
-        isContextPending ? null : homeContext ? (
+        homeContext ? (
           <HomeIcon />
         ) : isDivider(value) ? (
           <Divider path={simplePath} />

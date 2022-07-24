@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -8,7 +7,6 @@ import ThoughtId from '../@types/ThoughtId'
 import pull from '../action-creators/pull'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
-import expandedWithAncestors from '../selectors/expandedWithAncestors'
 import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
@@ -29,6 +27,22 @@ const initialPullQueue = (): Record<ThoughtId, true> => ({
   [HOME_TOKEN]: true,
 })
 
+/** Generates a map of all visible paths, including the cursor, all its ancestors, and the expanded paths. Keyed by ThoughtId. */
+const expandedWithAncestors = (state: State, expanded: Index<Path>): Index<Path> => {
+  const { cursor } = state
+  const path = cursor || [HOME_TOKEN]
+
+  return {
+    ...expanded,
+    // generate the cursor and all its ancestors
+    // i.e. ['a', b', 'c'], ['a', 'b'], ['a']
+    ...keyValueBy(path, (value, i) => {
+      const pathAncestor = path.slice(0, path.length - i) as Path
+      return pathAncestor.length > 0 ? { [head(pathAncestor)]: pathAncestor } : null
+    }),
+  }
+}
+
 /** Appends all visible paths and their visible children to the pullQueue. */
 const appendVisiblePaths = (
   state: State,
@@ -46,9 +60,15 @@ const appendVisiblePaths = (
 
       // get visible children
       const children = showContexts ? getContextsSortedAndRanked(state, thought.value) : getChildren(state, thoughtId)
+
       return {
+        // pending thought
         ...(thought.pending ? { [thoughtId]: true } : null),
-        ...keyValueBy(children, child => (!child || child.pending ? { [child.id]: true } : null)),
+        // children
+        ...keyValueBy(children, child => {
+          // pending child
+          return !child || child.pending ? { [child.id]: true } : null
+        }),
       }
     },
     pullQueue,
@@ -66,7 +86,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let isLoaded = false // eslint-disable-line fp/no-let
 
   // track changed state to short circuit flushPullQueue when no visible thoughts have changed
-  let lastExpanded: Index<Context> = {} // eslint-disable-line fp/no-let
   let lastContextViews: State['contextViews'] = {} // eslint-disable-line fp/no-let
   let lastExpandedPaths: Index<Path> = {} // eslint-disable-line fp/no-let
   let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
@@ -134,23 +153,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
     const expanded = expandThoughts(state, state.cursor)
-
-    // Return if expanded is the same, unless force is specified or expanded is empty.
-    // If context view is activated and all of its contexts are collapsed, then expanded will not change. In this case we need to compare lastContextViews to prevent short circuiting, otherwise pending contexts will not load.
-    if (
-      !forceFlush &&
-      !forceRemote &&
-      state.contextViews === lastContextViews &&
-      Object.keys(state.expanded).length > 0 &&
-      equalArrays(Object.keys(expanded), Object.keys(lastExpanded)) &&
-      isSearchSame
-    )
-      return
-    // TODO: Can we use only lastExpanded and get rid of lastVisibleContexts?
-    // if (!force && equalArrays(Object.keys(state.expanded), Object.keys(lastExpanded))) return
-
-    lastExpanded = expanded
-
     const expandedPaths = expandedWithAncestors(state, expanded)
 
     if (
@@ -161,10 +163,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       isSearchSame
     )
       return
-    // update last lastExpandedPaths
-    lastExpandedPaths = expandedPaths
 
-    // update last searchContexts
+    // update last states
+    lastExpandedPaths = expandedPaths
     lastSearchContexts = state.searchContexts
     lastContextViews = state.contextViews
 
@@ -186,8 +187,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // reset internal state variables when clear action is dispatched
     if (action.type === 'clear') {
-      lastExpanded = {}
+      lastContextViews = {}
       lastExpandedPaths = {}
+      lastSearchContexts = {}
       pullQueue = initialPullQueue()
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.

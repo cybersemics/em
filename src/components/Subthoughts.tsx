@@ -224,7 +224,9 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const firstChilId = allChildren[0]
 
   const hasChildrenLoaded = showContexts
-    ? !getContextsSortedAndRanked(state, headValue(state, simplePath)).some(thought => thought.pending)
+    ? !getContextsSortedAndRanked(state, headValue(state, simplePath)).some(
+        thought => thought.pending || !getThoughtById(state, thought.parentId),
+      )
     : !!(firstChilId && getThoughtById(state, firstChilId))
 
   const cursorSubthoughtIndex = cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1
@@ -774,8 +776,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               return null
             }
 
-            // TODO: childPath should be unrooted, but if we change it it breaks
-            // figure out what is incorrectly depending on childPath being rooted
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
             const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
 

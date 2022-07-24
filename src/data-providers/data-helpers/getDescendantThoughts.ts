@@ -173,6 +173,12 @@ async function* getDescendantThoughts(
         const isMaxThoughtsReached = thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED
         const isExpanded = isThoughtExpanded(updatedState, thought.id)
         const parent = getThoughtById(updatedState, thought.parentId)
+
+        // load ancestors of tangential contexts
+        if (!parent) {
+          thoughtIdQueue.add([thought.parentId])
+        }
+
         const isVisible =
           // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
           // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare

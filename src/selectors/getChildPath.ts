@@ -11,9 +11,6 @@ const getChildPath = (
   child: ThoughtId | ThoughtContext,
   simplePath: SimplePath,
   showContexts?: boolean,
-): SimplePath =>
-  showContexts
-    ? (thoughtToPath(state, child) as SimplePath)
-    : (appendToPath(simplePath, child as ThoughtId) as SimplePath)
+): SimplePath => (showContexts ? thoughtToPath(state, child) : appendToPath(simplePath, child as ThoughtId))
 
 export default getChildPath

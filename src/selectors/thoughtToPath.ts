@@ -5,17 +5,14 @@ import { HOME_PATH } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 
-/**
- * Generates the SimplePath for a Thought by traversing upwards to the root thought.
- */
+/** Generates the SimplePath for a Thought by traversing upwards to the root thought. Return null if any ancestors are missing, e.g. pending context. */
 const thoughtToPath = (state: State, thoughtId: ThoughtId): SimplePath => {
   if (isRoot([thoughtId])) return HOME_PATH
   const thought = getThoughtById(state, thoughtId)
-  return thought
-    ? isRoot([thought.parentId])
-      ? ([thoughtId] as SimplePath)
-      : ([...thoughtToPath(state, thought.parentId), thoughtId] as unknown as SimplePath)
-    : HOME_PATH
+  if (!thought) return HOME_PATH
+  if (isRoot([thought.parentId])) return [thoughtId] as SimplePath
+  const pathSegment = thoughtToPath(state, thought.parentId)
+  return [...pathSegment, thoughtId] as unknown as SimplePath
 }
 
 export default thoughtToPath
