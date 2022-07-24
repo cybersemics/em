@@ -9,6 +9,7 @@ import Context from '../@types/Context'
 import ExportOption from '../@types/ExportOption'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
@@ -126,21 +127,21 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
  *****************************************************************************/
 
 interface ExportThoughtsPhraseOptions {
-  context: Context
+  id: ThoughtId
   // the final number of descendants
   numDescendantsFinal: number | null
   title: string
 }
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
-const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
+const ExportThoughtsPhrase = ({ id, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
   const store = useStore()
   const state = store.getState()
 
   // updates with latest number of descendants
   const numDescendants = useDescendantsNumber()
 
-  const exportThoughtsPhrase = exportPhrase(state, context, numDescendantsFinal ?? numDescendants ?? 0, {
+  const exportThoughtsPhrase = exportPhrase(state, id, numDescendantsFinal ?? numDescendants ?? 0, {
     value: title,
   })
 
@@ -168,8 +169,9 @@ const ModalExport = () => {
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
   const simplePath = simplifyPath(state, cursor)
+  const id = head(simplePath)
   const context = pathToContext(state, simplePath)
-  const titleId = findDescendant(state, head(simplePath), ['=publish', 'Title'])
+  const titleId = findDescendant(state, id, ['=publish', 'Title'])
   const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
@@ -187,7 +189,7 @@ const ModalExport = () => {
 
   const numDescendants =
     selected?.type === 'text/plain' && exportContent ? exportContent.split('\n').length - 1 : numDescendantsInState!
-  const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
+  const exportThoughtsPhrase = exportPhrase(state, id, numDescendants, {
     value: title,
   })
 
@@ -213,7 +215,7 @@ const ModalExport = () => {
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected?.type === 'text/html') {
       setNumDescendantsInState(
-        getDescendantThoughtIds(state, head(simplePath), {
+        getDescendantThoughtIds(state, id, {
           filterFunction: and(
             shouldIncludeMetaAttributes || ((child: Thought) => !isAttribute(child.value)),
             shouldIncludeArchived || ((child: Thought) => child.value !== '=archive'),
@@ -323,7 +325,7 @@ const ModalExport = () => {
     <Modal id='export' title='Export' className='popup'>
       <View style={styles.exportContentContainer}>
         <Text style={styles.white}>
-          {exportWord} <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
+          {exportWord} <ExportThoughtsPhrase id={id} numDescendantsFinal={numDescendants} title={title} />
           <RNPickerSelect
             onValueChange={(value: number) => {
               setSelectedOptionIndex(value)

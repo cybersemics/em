@@ -11,7 +11,6 @@ import someDescendants from '../selectors/someDescendants'
 import exportPhrase from '../util/exportPhrase'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
-import pathToContext from '../util/pathToContext'
 
 const copyCursorShortcut: Shortcut = {
   id: 'copyCursor',
@@ -23,9 +22,7 @@ const copyCursorShortcut: Shortcut = {
     selection.isCollapsed() && !!getState().cursor && isDocumentEditable(),
   exec: async (dispatch, getState) => {
     const state = getState()
-    const { cursor } = state
-    const simplePath = simplifyPath(state, cursor!)
-    const context = pathToContext(state, simplePath)
+    const simplePath = simplifyPath(state, state.cursor!)
 
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
@@ -41,7 +38,7 @@ const copyCursorShortcut: Shortcut = {
     copy(exported)
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
-    const phrase = exportPhrase(stateAfterPull, context, numDescendants)
+    const phrase = exportPhrase(stateAfterPull, head(simplePath), numDescendants)
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {

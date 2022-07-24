@@ -10,6 +10,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import alert from '../action-creators/alert'
 import closeModal from '../action-creators/closeModal'
@@ -171,14 +172,14 @@ const exportOptions: ExportOption[] = [
  *****************************************************************************/
 
 interface ExportThoughtsPhraseOptions {
-  context: Context
+  id: ThoughtId
   // the final number of descendants
   numDescendantsFinal: number | null
   title: string
 }
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
-const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
+const ExportThoughtsPhrase = ({ id, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
   const store = useStore()
   const state = store.getState()
 
@@ -187,7 +188,7 @@ const ExportThoughtsPhrase = ({ context, numDescendantsFinal, title }: ExportTho
 
   const exportThoughtsPhrase =
     numDescendantsFinal || numDescendants
-      ? exportPhrase(state, context, numDescendantsFinal ?? numDescendants, {
+      ? exportPhrase(state, id, numDescendantsFinal ?? numDescendants, {
           value: title,
         })
       : 'thoughts'
@@ -261,7 +262,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const dispatch = useDispatch()
   const state = store.getState()
   const context = pathToContext(state, simplePath)
-  const titleId = findDescendant(state, head(simplePath), ['=publish', 'Title'])
+  const id = head(simplePath)
+  const titleId = findDescendant(state, id, ['=publish', 'Title'])
   const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
@@ -293,7 +295,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       ? exportContent.split('\n').length - 1
       : numDescendantsInState ?? 0
     : null
-  const exportThoughtsPhrase = exportPhrase(state, context, numDescendants, {
+  const exportThoughtsPhrase = exportPhrase(state, id, numDescendants, {
     value: title,
   })
 
@@ -324,7 +326,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected.type === 'text/html') {
       setNumDescendantsInState(
-        getDescendantThoughtIds(state, head(simplePath), {
+        getDescendantThoughtIds(state, id, {
           filterFunction: and(
             shouldIncludeMetaAttributes || ((thought: Thought) => !isAttribute(thought.value)),
             shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
@@ -484,7 +486,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
               selected.type === 'application/json' ? (
                 'state'
               ) : (
-                <ExportThoughtsPhrase context={context} numDescendantsFinal={numDescendants} title={title} />
+                <ExportThoughtsPhrase id={id} numDescendantsFinal={numDescendants} title={title} />
               )
             }
             <span>
