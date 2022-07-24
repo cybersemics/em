@@ -19,11 +19,11 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-        - b
-          - m
-      `,
+          - a
+            - m
+          - b
+            - m
+        `,
       }),
       setCursor(['a', 'm']),
       toggleContextView(),
@@ -34,11 +34,11 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-        - b
-          - m
-      `,
+          - a
+            - m
+          - b
+            - m
+        `,
       }),
       setCursor(['a', 'm']),
       toggleContextView(),
@@ -48,23 +48,23 @@ describe('render', () => {
     const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
 
     const thoughtsA = await findAllThoughtsByText('a', thoughtContainerM)
-    expect(thoughtsA.length).toBe(1)
+    expect(thoughtsA).toHaveLength(1)
 
     const thoughtsB = await findAllThoughtsByText('b', thoughtContainerM)
-    expect(thoughtsB.length).toBe(1)
+    expect(thoughtsB).toHaveLength(1)
   })
 
   it('do not expand contexts when cursor is on the context view', async () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-            - x
-        - b
-          - m
-            - y
-      `,
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+        `,
       }),
       setCursor(['a', 'm']),
       toggleContextView(),
@@ -84,13 +84,13 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-            - x
-        - b
-          - m
-            - y
-      `,
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+        `,
       }),
       setCursor(['a']),
       setCursor(['a', 'm']),
@@ -112,13 +112,13 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-            - x
-        - b
-          - m
-            - y
-      `,
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+        `,
       }),
       setCursor(['a']),
       setCursor(['a', 'm']),
@@ -140,8 +140,8 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-      `,
+          - a
+        `,
       }),
       setCursor(['a']),
       toggleContextView(),
@@ -149,15 +149,15 @@ describe('render', () => {
 
     // only search for first part of text since the whole text consists of several text nodes
     const instructions = await screen.findAllByText('This thought is not found in any other contexts', { exact: false })
-    expect(instructions.length).toBe(1)
+    expect(instructions).toHaveLength(1)
   })
 
   it('change bullet to no fill', async () => {
     store.dispatch([
       importText({
         text: `
-        - a
-      `,
+          - a
+        `,
       }),
       setCursor(['a']),
       toggleContextView(),
@@ -171,16 +171,16 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - b
-            - m
-              - x
-        - c
-          - d
-            - e
+          - a
+            - b
               - m
-                - y
-      `,
+                - x
+          - c
+            - d
+              - e
+                - m
+                  - y
+        `,
       }),
       setCursor(['a', 'b', 'm']),
       toggleContextView(),
@@ -199,11 +199,11 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-        - b
-          - m
-      `,
+          - a
+            - m
+          - b
+            - m
+        `,
       }),
       setCursor(['a', 'm']),
       toggleContextView(),
@@ -224,11 +224,11 @@ describe('render', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - b
-            - m
-        - m
-      `,
+          - a
+            - b
+              - m
+          - m
+        `,
       }),
       setCursor(['a', 'b', 'm']),
       toggleContextView(),
@@ -255,11 +255,11 @@ describe('editing', () => {
     store.dispatch([
       importText({
         text: `
-        - a
-          - m
-        - b
-          - m
-      `,
+          - a
+            - m
+          - b
+            - m
+        `,
       }),
       setCursor(['a', 'm']),
       toggleContextView(),
