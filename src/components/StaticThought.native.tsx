@@ -7,6 +7,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { store } from '../store'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -37,14 +38,21 @@ const StaticThought = ({
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
   const homeContext = showContexts && isRoot
 
+  // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
+  // use thoughtToPath to re-calculate the SimplePath as ancestors load
+  // Editable and ContextBreadcrumbs can handle Paths with missing ancestors
+  // eventually the complete SimplePath will be loaded
+  // TODO: Should this be done in Thought so that Thought is reloaded?
+  const simplePathLive = useSelector((state: State) => thoughtToPath(state, head(simplePath)))
+
   return (
     <View>
       {showContextBreadcrumbs && !isRoot ? (
         <ContextBreadcrumbs
-          simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
+          simplePath={rootedParentOf(state, rootedParentOf(state, simplePathLive))}
           homeContext={homeContext}
         />
-      ) : showContexts && simplePath.length > 2 ? (
+      ) : showContexts && simplePathLive.length > 2 ? (
         <Text>
           <Text
             onMagicTap={() => {
@@ -59,7 +67,7 @@ const StaticThought = ({
       {homeContext ? (
         <HomeLink />
       ) : isDivider(value) ? (
-        <Divider path={simplePath} />
+        <Divider path={simplePathLive} />
       ) : (
         // cannot use simplePathLive here else Editable gets re-rendered during editing
         <Editable
@@ -69,12 +77,12 @@ const StaticThought = ({
           isEditing={isEditing}
           rank={rank}
           style={style}
-          simplePath={simplePath}
+          simplePath={simplePathLive}
           onEdit={onEdit}
         />
       )}
 
-      <Superscript simplePath={simplePath} superscript={false} />
+      <Superscript simplePath={simplePathLive} superscript={false} />
     </View>
   )
 }

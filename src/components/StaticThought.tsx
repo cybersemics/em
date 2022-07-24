@@ -5,6 +5,7 @@ import expandContextThought from '../action-creators/expandContextThought'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { store } from '../store'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -39,14 +40,21 @@ const StaticThought = ({
   const homeContext = showContexts && isRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
+  // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
+  // use thoughtToPath to re-calculate the SimplePath as ancestors load
+  // Editable and ContextBreadcrumbs can handle Paths with missing ancestors
+  // eventually the complete SimplePath will be loaded
+  // TODO: Should this be done in Thought so that Thought is reloaded?
+  const simplePathLive = useSelector((state: State) => thoughtToPath(state, head(simplePath)))
+
   return (
     <div aria-label='thought' className='thought'>
       {showContextBreadcrumbs && !isRoot ? (
         <ContextBreadcrumbs
-          simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
+          simplePath={rootedParentOf(state, rootedParentOf(state, simplePathLive))}
           homeContext={homeContext}
         />
-      ) : showContexts && simplePath.length > 2 ? (
+      ) : showContexts && simplePathLive.length > 2 ? (
         <span className='ellipsis'>
           <a
             tabIndex={-1}
@@ -64,7 +72,7 @@ const StaticThought = ({
         homeContext ? (
           <HomeIcon />
         ) : isDivider(value) ? (
-          <Divider path={simplePath} />
+          <Divider path={simplePathLive} />
         ) : (
           <Editable
             path={path}
@@ -75,7 +83,7 @@ const StaticThought = ({
             isVisible={isVisible}
             rank={rank}
             style={style}
-            simplePath={showContexts ? rootedParentOf(state, simplePath) : simplePath}
+            simplePath={showContexts ? rootedParentOf(state, simplePathLive) : simplePathLive}
             onEdit={onEdit}
           />
         )
