@@ -12,7 +12,6 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import storage from '../util/storage'
 import Editable from './Editable'
-// components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'

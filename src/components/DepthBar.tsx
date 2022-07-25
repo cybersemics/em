@@ -5,7 +5,6 @@ import getContexts from '../selectors/getContexts'
 import { store } from '../store'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-// components
 import Modal from './Modal'
 
 interface DepthBarProps {

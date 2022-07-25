@@ -1,7 +1,6 @@
 import React from 'react'
 import { Provider } from 'react-redux'
 import { store } from '../store'
-// components
 import AppComponent from './AppComponent'
 import { DragAndDropContext } from './DragAndDropContext'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'

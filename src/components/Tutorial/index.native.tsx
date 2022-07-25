@@ -6,7 +6,6 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import tutorial from '../../action-creators/tutorial'
-// constants
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_HINT,
@@ -34,7 +33,6 @@ import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import { Text } from '../Text.native'
 import TutorialNavigation from './TutorialNavigation.native'
-// components
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 import WithCSSTransition from './WithCSSTransition'
 

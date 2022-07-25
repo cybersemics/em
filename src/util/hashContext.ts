@@ -2,7 +2,6 @@ import * as murmurHash3 from 'murmurhash3js'
 import Context from '../@types/Context'
 import ContextHash from '../@types/ContextHash'
 import globals from '../globals'
-// util
 import { escapeSelector } from './escapeSelector'
 import normalizeThought from './normalizeThought'
 

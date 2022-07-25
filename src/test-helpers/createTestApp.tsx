@@ -5,7 +5,6 @@ import { act } from 'react-dom/test-utils'
 import { Provider } from 'react-redux'
 import Await from '../@types/Await'
 import clear from '../action-creators/clear'
-// components
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'

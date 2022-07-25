@@ -4,8 +4,6 @@ import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import outdent from '../action-creators/outdent'
 
-// import moveCursorBackward from './moveCursorBackward'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
   <Svg width={size} height={size} fill={fill} viewBox='0 0 64 64'>

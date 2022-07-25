@@ -18,8 +18,6 @@ import equalPath from './equalPath'
 import isRoot from './isRoot'
 import pathToContext from './pathToContext'
 
-// import lifecycle from 'page-lifecycle'
-
 declare global {
   interface Window {
     __inputHandlers: ReturnType<typeof inputHandlers>

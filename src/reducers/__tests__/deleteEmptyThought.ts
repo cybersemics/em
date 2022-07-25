@@ -8,7 +8,6 @@ import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../tes
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
-// reducers
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
 import deleteEmptyThought from '../deleteEmptyThought'

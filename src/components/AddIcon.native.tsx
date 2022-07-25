@@ -1,7 +1,5 @@
 import React, { FC } from 'react'
 import Svg, { Path, Polygon } from 'react-native-svg'
-// import { connect } from 'react-redux'
-// import theme from '../selectors/theme'
 import Index from '../@types/IndexType'
 
 interface SearchIconProps {

@@ -1,5 +1,3 @@
-// import attribute, attributeEquals, getSetting, simplifyPath from '../selectors/attribute, attributeEquals, getSetting, simplifyPath'
-// import pathToContext, publishMode, unroot from '../util/pathToContext, publishMode, unroot'
 import State from '../@types/State'
 import getSetting from '../selectors/getSetting'
 import publishMode from '../util/publishMode'

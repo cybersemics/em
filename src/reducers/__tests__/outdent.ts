@@ -3,7 +3,6 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-// reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import outdent from '../outdent'

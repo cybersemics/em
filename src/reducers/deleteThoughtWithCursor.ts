@@ -5,7 +5,6 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
 import setCursor from '../reducers/setCursor'
-// selectors
 import { firstVisibleChild } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
@@ -16,7 +15,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
-// util
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -34,19 +32,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   // same as in newThought
   const showContexts = isContextViewActive(state, rootedParentOf(state, path))
-  // @MIGRATION_TODO: Fix the context view related logic here.
-  if (showContexts) {
-    // Get thought in ContextView
-    // const thoughtInContextView = head(parentOf(path))
-    // // Get context from which we are going to delete thought
-    // const context = getContexts(state, thoughtInContextView.value)
-    //   .map(({ context }) => context)
-    //   .find(context => head(context) === headValue(path))
-    // if (context) {
-    //   // Convert to path
-    //   path = contextToPath(state, [...context, thoughtInContextView.value])
-    // }
-  }
   const simplePath = showContexts ? simplifyPath(state, path) : thoughtToPath(state, head(path))
   const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)

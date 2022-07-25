@@ -2,7 +2,6 @@ import React from 'react'
 import Svg, { Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-// import isDocumentEditable from '../util/isDocumentEditable'
 import indent from '../action-creators/indent'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

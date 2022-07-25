@@ -1,9 +1,3 @@
-// import appendChildPath from '../appendChildPath'
-// import initialState, reducerFlow, pathToContext, contextToThoughtId from '../../util/initialState, reducerFlow, pathToContext, contextToThoughtId'
-// import Path from '../../@types/Path'
-// import SimplePath from '../../@types/SimplePath'
-// import toggleContextView, setCursor from '../../reducers/toggleContextView, setCursor'
-
 // @MIGRATION_TODO: Depends on context view and it's implementation will probably change later.
 it.skip('get child resolved path', () => {
   // const parentPath: Path = [

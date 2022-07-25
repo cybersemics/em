@@ -7,7 +7,6 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
-// reducers
 import setCursor from '../setCursor'
 import splitThought from '../splitThought'
 

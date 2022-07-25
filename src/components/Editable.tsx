@@ -21,7 +21,6 @@ import setEditingValue from '../action-creators/setEditingValue'
 import setInvalidState from '../action-creators/setInvalidState'
 import tutorialNext from '../action-creators/tutorialNext'
 import { isSafari, isTouch } from '../browser'
-// constants
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -36,7 +35,6 @@ import {
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import globals from '../globals'
-// selectors
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -47,7 +45,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import { store } from '../store'
-// util
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'

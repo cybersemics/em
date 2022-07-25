@@ -7,7 +7,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import { ContextBreadcrumbProps, ContextBreadcrumbs } from './ContextBreadcrumbs'
-// components
 import Link from './Link'
 import Superscript from './Superscript'
 

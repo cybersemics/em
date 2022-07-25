@@ -10,7 +10,6 @@ import { commonStyles } from '../style/commonStyles'
 import ancestors from '../util/ancestors'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
-// components
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'

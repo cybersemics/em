@@ -1,4 +1,3 @@
-// constants
 import { SCHEMA_FROM, SCHEMA_TO } from '../constants'
 
 export const schemaVersionFrom = SCHEMA_FROM

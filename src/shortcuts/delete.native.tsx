@@ -1,16 +1,8 @@
 import React from 'react'
 import { Alert } from 'react-native'
 import Svg, { G, Path } from 'react-native-svg'
-// import { Key } from 'ts-key-enum'
-// import { isTouch } from '../browser'
-// import findDescendant from '../selectors/findDescendant'
-// import ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext from '../util/ellipsize, headValue, isDocumentEditable, isEM, isRoot, pathToContext'
-// import alert, archiveThought, deleteAttribute, error from '../action-creators/alert, archiveThought, deleteAttribute, error'
-// import * as selection from '../device/selection'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-
-// import asyncFocus from '../device/asyncFocus'
 
 // let undoArchiveTimer: number // eslint-disable-line fp/no-let
 

@@ -1,6 +1,5 @@
 import React from 'react'
 import Svg, { G, Path } from 'react-native-svg'
-// import { connect } from 'react-redux'
 import Icon from '../../@types/Icon'
 
 /** A pencil icon. */

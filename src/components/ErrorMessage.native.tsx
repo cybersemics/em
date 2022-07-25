@@ -1,6 +1,5 @@
 import { View } from 'moti'
 import React from 'react'
-// import { useDispatch, useSelector } from 'react-redux'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'

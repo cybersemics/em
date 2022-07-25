@@ -10,11 +10,9 @@ import {
 } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import State from '../@types/State'
-// import { ActionButton } from './ActionButton'
 import alert from '../action-creators/alert'
 import submitFeedback from '../util/submitFeedback'
 import { ActionButton } from './ActionButton'
-// import { MODALS } from '../constants'
 import Modal from './Modal'
 import { Text } from './Text.native'
 

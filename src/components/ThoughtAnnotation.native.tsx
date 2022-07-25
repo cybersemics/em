@@ -34,7 +34,6 @@ import once from '../util/once'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-// components
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import { Text } from './Text.native'

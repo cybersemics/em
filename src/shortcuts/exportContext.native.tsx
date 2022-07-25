@@ -1,5 +1,4 @@
 import React from 'react'
-// import { isTouch } from '../browser'
 import Svg, { G, Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'

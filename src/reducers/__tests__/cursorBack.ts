@@ -2,7 +2,6 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import cursorBack from '../cursorBack'
-// reducers
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 

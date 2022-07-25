@@ -1,7 +1,3 @@
-// import initialState, pathToContext from '../../util/initialState, pathToContext'
-// import { chain } from '../../selectors'
-// import { SimplePath, Path } from '../../@types'
-
 /** Ranks the thoughts from 0 to n in the given array order. */
 export const rankThoughtsSequential = (thoughts: string[]) => thoughts.map((value, i) => ({ value, rank: i }))
 

@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import React, { useRef } from 'react'
-// components
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'

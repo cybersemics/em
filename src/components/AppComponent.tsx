@@ -15,7 +15,6 @@ import { inputHandlers, isGestureHint } from '../shortcuts'
 import { store } from '../store'
 import isDocumentEditable from '../util/isDocumentEditable'
 import storage from '../util/storage'
-// components
 import Alert from './Alert'
 import ContentFallback from './ContentFallback'
 import ErrorMessage from './ErrorMessage'

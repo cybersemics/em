@@ -4,7 +4,6 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
-// reducers
 import deleteAttribute from '../deleteAttribute'
 import newThought from '../newThought'
 import setAttribute from '../setAttribute'

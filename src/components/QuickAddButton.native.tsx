@@ -1,5 +1,4 @@
 import React from 'react'
-// import isAbsolute from '../util/isAbsolute'
 import { TouchableOpacity } from 'react-native'
 import { useDispatch } from 'react-redux'
 import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'

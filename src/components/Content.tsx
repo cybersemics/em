@@ -17,7 +17,6 @@ import isAbsolute from '../util/isAbsolute'
 import publishMode from '../util/publishMode'
 import storage from '../util/storage'
 import Editable from './Editable'
-// components
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
 import Subthoughts from './Subthoughts'

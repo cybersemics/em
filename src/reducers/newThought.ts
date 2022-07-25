@@ -3,7 +3,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-// constants
 import {
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_HINT,
@@ -20,14 +19,12 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
 } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-// reducers
 import alert from '../reducers/alert'
 import createThought from '../reducers/createThought'
 import setCursor from '../reducers/setCursor'
 import tutorialNext from '../reducers/tutorialNext'
 import tutorialStepReducer from '../reducers/tutorialStep'
 import findDescendant from '../selectors/findDescendant'
-// selectors
 import { getChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -40,7 +37,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-// util
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'

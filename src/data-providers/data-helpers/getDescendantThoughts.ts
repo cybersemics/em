@@ -1,4 +1,3 @@
-// import { getSessionId } from '../../util/sessionManager'
 import _ from 'lodash'
 import Index from '../../@types/IndexType'
 import State from '../../@types/State'

@@ -1,11 +1,6 @@
 import React from 'react'
 import { StyleSheet, TouchableOpacity } from 'react-native'
-// // import Modal from './Modal'
-// import { MODALS, MODAL_CLOSE_DURATION } from '../constants'
 import Svg, { Path } from 'react-native-svg'
-// import { connect } from 'react-redux'
-// import theme from '../selectors/theme'
-// import home, modalComplete from '../action-creators/home, modalComplete'
 import Connected from '../@types/Connected'
 
 interface HomeLinkProps {

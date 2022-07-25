@@ -23,7 +23,6 @@ import theme from '../selectors/theme'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import Shortcut from './Shortcut'
-// components
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 

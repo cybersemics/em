@@ -6,7 +6,6 @@ import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import tutorial from '../../action-creators/tutorial'
 import { isTouch } from '../../browser'
-// constants
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_HINT,
@@ -32,7 +31,6 @@ import headValue from '../../util/headValue'
 import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
-// components
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 import WithCSSTransition from './WithCSSTransition'
 

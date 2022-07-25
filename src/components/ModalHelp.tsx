@@ -17,7 +17,6 @@ import { store } from '../store'
 import makeCompareByProp from '../util/makeCompareByProp'
 import sort from '../util/sort'
 import { ActionButton } from './ActionButton'
-// components
 import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
 import Modal from './Modal'

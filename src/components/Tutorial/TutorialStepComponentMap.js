@@ -1,4 +1,3 @@
-// constants
 import {
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_CONTEXT1,

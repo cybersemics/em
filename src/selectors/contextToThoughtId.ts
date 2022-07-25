@@ -1,5 +1,3 @@
-// import * as murmurHash3 from 'murmurhash3js'
-// import globals from '../globals'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import State from '../@types/State'

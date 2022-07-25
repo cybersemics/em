@@ -17,7 +17,6 @@ import setCursor from '../action-creators/setCursor'
 import setEditingValue from '../action-creators/setEditingValue'
 import setInvalidState from '../action-creators/setInvalidState'
 import tutorialNext from '../action-creators/tutorialNext'
-// constants
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -30,8 +29,6 @@ import {
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
 import * as selection from '../device/selection'
-// offsetFromClosestParent from '../util/offsetFromClosestParent'
-// selectors
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -39,13 +36,9 @@ import getContexts from '../selectors/getContexts'
 import getLexeme from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
-// isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
-// import { isTouch, isSafari } from '../browser'
-// import globals from '../globals'
 import { store } from '../store'
-// util
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -56,7 +49,6 @@ import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isHTML from '../util/isHTML'
 import isURL from '../util/isURL'
-// import asyncFocus from '../util/asyncFocus'
 import parentOf from '../util/parentOf'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
