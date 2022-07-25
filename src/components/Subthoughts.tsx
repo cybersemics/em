@@ -27,12 +27,14 @@ import {
   getChildren,
   getChildrenRanked,
 } from '../selectors/getChildren'
+import getContexts from '../selectors/getContexts'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getSortPreference from '../selectors/getSortPreference'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import { store } from '../store'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
@@ -210,16 +212,22 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : 0
 
   // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
-  const allChildren = getAllChildren(state, idLive)
+  const allChildren = showContexts
+    ? // in the context view, use thoughtToPath since it changes as context ancestors are loaded
+      // otherwise contexts will only re-render once at the end
+      // TODO: Re-render the specific thought that was loaded rather than all subthoughts
+      getContexts(state, headValue(state, thoughtToPath(state, head(simplePath))))
+    : getAllChildren(state, idLive)
 
   // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
   // this can be removed once childrenFiltered is memoized and passed to render
-  const allChildrenValuesAndRanks = allChildren
-    .map(childId => {
-      const child = getThoughtById(state, childId)
-      return `${child?.value}-${child?.rank}`
-    })
-    .join('__SEP__')
+  const allChildrenValuesAndRanks =
+    allChildren
+      .map(childId => {
+        const child = getThoughtById(state, childId)
+        return `${child?.value}-${child?.rank}`
+      })
+      .join('__SEP__') + Math.random()
 
   const firstChilId = allChildren[0]
 
