@@ -354,6 +354,40 @@ describe('render', () => {
 
     expect(breadcrumbsText).toEqual(['a • d', 'a • d • e', 'b', 'c'])
   })
+
+  it('sort contexts within the same ancestor by value', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+              - d
+                - m
+              - c
+                - m
+        `,
+      }),
+      setCursor(['a', 'b', 'd', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughts = await findSubthoughts('m')
+
+    // get the breadcrumbs and textContent of each context in order
+    const breadcrumbsText = await series(
+      subthoughts.map(subthought => async () => {
+        const thought = await findByLabelText(subthought, 'thought')
+        // the thought.textContent returns the breadcrumbs and thought value concatenated
+        // since all thought values are a single character long, we can easily parse them out
+        return { breadcrumbs: thought.textContent!.slice(0, -1), value: thought.textContent!.slice(-1) }
+      }),
+    )
+
+    expect(breadcrumbsText).toEqual([
+      { breadcrumbs: 'a • b', value: 'c' },
+      { breadcrumbs: 'a • b', value: 'd' },
+    ])
+  })
 })
 
 describe('editing', () => {

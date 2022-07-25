@@ -38,8 +38,13 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   const contextsSorted = _.sortBy(contexts, thought => {
     const path = unroot(thoughtToPath(state, thought.id))
     const breadcrumbs = rootedParentOf(state, parentOf(path))
-    const thoughts = childIdsToThoughts(state, breadcrumbs).map(thought => thought?.value || '__MISSING__')
-    return thoughts.join('__SEP__')
+    const parent = getThoughtById(state, thought.parentId)
+    const encodedBreadcrumbs = childIdsToThoughts(state, breadcrumbs)
+      .map(thought => thought?.value || '__MISSING__')
+      .join('\x00SEP2')
+    // for contexts that have the same ancestors, we need to sort by the rendered value (parent.value)
+    // use SEP1 to ensure the value is sorted ahead of the breadcrumbs separator SEP2
+    return [encodedBreadcrumbs, parent?.value || ''].join('\x00SEP1')
   })
     // generate dynamic ranks in sort order
     .map((thought, i) => ({ ...thought, rank: i }))
