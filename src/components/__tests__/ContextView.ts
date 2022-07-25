@@ -10,6 +10,7 @@ import { findThoughtByText } from '../../test-helpers/queries/findThoughtByText'
 import { getClosestByLabel } from '../../test-helpers/queries/getClosestByLabel'
 import { queryThoughtByText } from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import series from '../../util/series'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -236,15 +237,15 @@ describe('render', () => {
 
     const subthoughts = await findSubthoughts('m')
 
-    // first context a/b should not render home icon
-    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
-    const homeIconA = await queryByLabelText(thoughtA, 'home')
-    expect(homeIconA).toBeNull()
-
-    // second context should render home icon
-    const thoughtB = await findByLabelText(subthoughts[1], 'thought')
+    // first context should render home icon
+    const thoughtB = await findByLabelText(subthoughts[0], 'thought')
     const homeIconB = await findAllByLabelText(thoughtB, 'home')
     expect(homeIconB).toHaveLength(1)
+
+    // second context a/b should not render home icon
+    const thoughtA = await findByLabelText(subthoughts[1], 'thought')
+    const homeIconA = await queryByLabelText(thoughtA, 'home')
+    expect(homeIconA).toBeNull()
   })
 
   it('render correct superscript on contexts', async () => {
@@ -287,6 +288,71 @@ describe('render', () => {
 
     const superscriptB = subthoughtsM[1].querySelector('sup')
     expect(superscriptB).toHaveTextContent('4')
+  })
+
+  it('sort contexts by ancestors (breadcrumbs)', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - b
+            - b1
+              - m
+          - a
+            - a1
+              - m
+        `,
+      }),
+      setCursor(['b', 'b1', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughts = await findSubthoughts('m')
+
+    // get the textContent of each context's breadcrumbs in order
+    const breadcrumbsText = await series(
+      subthoughts.map(subthought => async () => {
+        const breadcrumbs = await findByLabelText(subthought, 'context-breadcrumbs')
+        return breadcrumbs.textContent
+      }),
+    )
+
+    expect(breadcrumbsText).toEqual(['a', 'b'])
+  })
+
+  it('sort contexts by ancestors with different depths', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - c
+            - a1
+              - m
+          - b
+            - x
+              - m
+          - a
+            - d
+              - g
+                - m
+              - e
+                - f
+                  - m
+        `,
+      }),
+      setCursor(['c', 'a1', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughts = await findSubthoughts('m')
+
+    // get the textContent of each context's breadcrumbs in order
+    const breadcrumbsText = await series(
+      subthoughts.map(subthought => async () => {
+        const breadcrumbs = await findByLabelText(subthought, 'context-breadcrumbs')
+        return breadcrumbs.textContent
+      }),
+    )
+
+    expect(breadcrumbsText).toEqual(['a • d', 'a • d • e', 'b', 'c'])
   })
 })
 
