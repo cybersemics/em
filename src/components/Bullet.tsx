@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
 import { connect } from 'react-redux'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -10,6 +11,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import theme from '../selectors/theme'
+import head from '../util/head'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -25,6 +27,7 @@ interface BulletProps {
   publish?: boolean
   showContexts?: boolean
   simplePath: SimplePath
+  path: Path
   thoughtId: ThoughtId
 }
 
@@ -39,7 +42,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     missing: !lexeme,
     fontSize: state.fontSize,
     pending: props.isContextPending || isPending(state, thought),
-    showContexts: isContextViewActiveById(state, thought.id),
+    showContexts: isContextViewActiveById(state, head(props.path)),
     dark: theme(state) !== 'Light',
   }
 }

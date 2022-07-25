@@ -380,6 +380,7 @@ const ThoughtContainer = ({
                 store.dispatch(setCursor({ path: simplePath }))
               }
             }}
+            path={path}
             simplePath={simplePath}
             hideBullet={hideBullet}
             publish={publish}

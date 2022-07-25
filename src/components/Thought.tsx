@@ -459,6 +459,7 @@ const ThoughtContainer = ({
                   store.dispatch(setCursor({ path: simplePath }))
                 }
               }}
+              path={path}
               simplePath={simplePath}
               thoughtId={thoughtId}
               hideBullet={hideBullet}
