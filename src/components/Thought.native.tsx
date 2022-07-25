@@ -396,7 +396,7 @@ const ThoughtContainer = ({
           showContextBreadcrumbs={showContextBreadcrumbs}
           showContexts={showContexts}
           style={styleNew}
-          simplePath={simplePath}
+          simplePath={showContexts ? parentOf(simplePath) : simplePath}
         /> */}
 
         <StaticThought

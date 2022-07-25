@@ -21,6 +21,9 @@ export interface ContextBreadcrumbProps {
   thoughtsLimit?: number
   charLimit?: number
   classNamesObject?: Index<boolean>
+  // renders an invisible ContextBreadcrumbs
+  // useful for ThoughtAnnotation spacing
+  hidden?: boolean
 }
 
 type OverflowChild = {
@@ -37,6 +40,7 @@ const { flexWrap, directionRow, flexGrow, alignItemsCenter } = commonStyles
 
 /** Breadcrumbs for contexts within the context views. */
 export const ContextBreadcrumbs = ({
+  hidden,
   homeContext,
   simplePath,
   thoughtsLimit,

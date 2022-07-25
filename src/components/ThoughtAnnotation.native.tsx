@@ -1,5 +1,5 @@
 import { View } from 'moti'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { TouchableOpacity } from 'react-native'
 import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
@@ -17,12 +17,14 @@ import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import { store } from '../store'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
+import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -103,7 +105,9 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   const { cursor, invalidState, editingValue, showHiddenThoughts } = state
 
   const isEditing = equalPath(cursor, props.path)
-  const simplePathLive = isEditing ? (parentOf(props.simplePath).concat(head(cursor!)) as SimplePath) : props.simplePath
+  const simplePathLive = isEditing
+    ? (appendToPath(parentOf(props.simplePath), head(cursor!)) as SimplePath)
+    : props.simplePath
 
   return {
     dark: theme(state) !== 'Light',
@@ -111,7 +115,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     invalidState: isEditing ? invalidState : false,
     isEditing,
     showHiddenThoughts,
-    path: simplePathLive,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     isThoughtValueEditing: editingValue === headValue(state, simplePathLive),
   }
@@ -119,6 +122,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
+  path,
   simplePath,
   showContextBreadcrumbs,
   isEditing,
@@ -134,18 +138,33 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = headValue(state, simplePath)
+  const showContextsParent = useSelector((state: State) => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, pathParent)
+    return showContexts
+  })
+
+  const value: string | undefined = useSelector((state: State) => {
+    const thought = getThoughtById(state, head(simplePath))
+    return thought?.value || ''
+  })
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
-
+  const [numContexts, setNumContexts] = useState(0)
   const homeContext = useSelector((state: State) => {
-    const pathParent = rootedParentOf(state, simplePath)
-    const showContexts = isContextViewActive(state, simplePath)
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
   })
 
-  // no contexts if thought is empty
-  const contexts = value !== '' ? getContexts(state, isRealTimeContextUpdate ? editingValue! : value) : []
+  const contexts = useSelector((state: State) => getContexts(state, isRealTimeContextUpdate ? editingValue! : value))
+
+  // delay rendering of superscript for performance
+  // recalculate when Lexemes are loaded
+  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+  useEffect(() => {
+    setNumContexts(value === '' ? 0 : contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0))
+  }, [contexts, showHiddenThoughts])
 
   const url = isURL(value)
     ? value
@@ -159,8 +178,6 @@ const ThoughtAnnotation = ({
     // thoughtContext.context should never be undefined, but unfortunately I have personal thoughts in production with no context. I am not sure whether this was old data, or if it's still possible to encounter, so guard against undefined context for now.
     showHiddenThoughts || !getAncestorByValue(state, thoughtContext, '=archive')
 
-  const numContexts = contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
-
   return (
     <View
       style={homeContext ? commonStyles.marginLeft : {}}
@@ -168,7 +185,7 @@ const ThoughtAnnotation = ({
       animate={animate}
       transition={{ type: 'timing' }}
     >
-      {showContextBreadcrumbs && simplePath.length > 1 && (
+      {showContextsParent && (
         <ContextBreadcrumbs simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))} />
       )}
 

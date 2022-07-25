@@ -91,7 +91,7 @@ const StaticThought = ({
         )
       }
 
-      <Superscript simplePath={simplePath} superscript={false} />
+      <Superscript simplePath={simplePathLive} superscript={false} />
     </div>
   )
 }

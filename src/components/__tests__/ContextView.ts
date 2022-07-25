@@ -246,6 +246,48 @@ describe('render', () => {
     const homeIconB = await findAllByLabelText(thoughtB, 'home')
     expect(homeIconB).toHaveLength(1)
   })
+
+  it('render correct superscript on contexts', async () => {
+    store.dispatch([
+      importText({
+        /*
+
+        Superscripts:
+
+        - m: 2
+        - a: 3
+        - b: 4
+
+        */
+
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+          - c
+            - a
+            - b
+          - d
+            - a
+            - b
+          - e
+            - b
+        `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    const subthoughtsM = await findSubthoughts('m')
+
+    const superscriptA = subthoughtsM[0].querySelector('sup')
+    expect(superscriptA).toHaveTextContent('3')
+
+    const superscriptB = subthoughtsM[1].querySelector('sup')
+    expect(superscriptB).toHaveTextContent('4')
+  })
 })
 
 describe('editing', () => {

@@ -19,6 +19,9 @@ export interface ContextBreadcrumbProps {
   thoughtsLimit?: number
   charLimit?: number
   classNamesObject?: Index<boolean>
+  // renders an invisible ContextBreadcrumbs
+  // useful for ThoughtAnnotation spacing
+  hidden?: boolean
 }
 
 type OverflowChild = {
@@ -32,6 +35,7 @@ type OverflowPath = OverflowChild[]
 
 /** Breadcrumbs for contexts within the context views. */
 export const ContextBreadcrumbs = ({
+  hidden,
   homeContext,
   simplePath,
   thoughtsLimit,
@@ -111,7 +115,8 @@ export const ContextBreadcrumbs = ({
 
   return (
     <div
-      aria-label='context-breadcrumbs'
+      aria-label={hidden ? undefined : 'context-breadcrumbs'}
+      style={hidden ? { visibility: 'hidden' } : {}}
       className={classNames({
         'breadcrumbs context-breadcrumbs': true,
         ...classNamesObject,

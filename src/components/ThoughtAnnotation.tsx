@@ -15,15 +15,16 @@ import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import { store } from '../store'
+import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
-import hashContext from '../util/hashContext'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import once from '../util/once'
@@ -98,7 +99,10 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   const { cursor, invalidState, editingValue, showHiddenThoughts } = state
 
   const isEditing = equalPath(cursor, props.path)
-  const simplePathLive = isEditing ? (parentOf(props.simplePath).concat(head(cursor!)) as SimplePath) : props.simplePath
+  const simplePathLive = isEditing
+    ? (appendToPath(parentOf(props.simplePath), head(cursor!)) as SimplePath)
+    : props.simplePath
+  const thought = getThoughtById(state, head(simplePathLive))
 
   return {
     dark: theme(state) !== 'Light',
@@ -106,16 +110,15 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     invalidState: isEditing ? invalidState : false,
     isEditing,
     showHiddenThoughts,
-    path: simplePathLive,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    isThoughtValueEditing: editingValue === headValue(state, simplePathLive),
+    isThoughtValueEditing: editingValue === thought?.value,
   }
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
+  path,
   simplePath,
-  showContextBreadcrumbs,
   isEditing,
   minContexts = 2,
   dispatch,
@@ -129,13 +132,22 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const value = headValue(state, simplePath)
-  const isExpanded = !!state.expanded[hashContext(simplePath)]
+  const showContextsParent = useSelector((state: State) => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, pathParent)
+    return showContexts
+  })
+
+  const value: string | undefined = useSelector((state: State) => {
+    const thought = getThoughtById(state, head(path))
+    return thought?.value || ''
+  })
+  const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
   const homeContext = useSelector((state: State) => {
-    const pathParent = rootedParentOf(state, simplePath)
-    const showContexts = isContextViewActive(state, simplePath)
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
   })
 
@@ -172,9 +184,12 @@ const ThoughtAnnotation = ({
 
   return (
     <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
-      {showContextBreadcrumbs && simplePath.length > 1 && (
-        <ContextBreadcrumbs simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))} />
-      )}
+      {
+        // Spacer for superscript positioning. Actual ContextBreadcrumbs are rendered in StaticThought component.
+        showContextsParent && (
+          <ContextBreadcrumbs simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))} hidden />
+        )
+      }
 
       {homeContext ? (
         <HomeLink />
