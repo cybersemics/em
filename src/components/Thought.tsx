@@ -447,7 +447,14 @@ const ThoughtContainer = ({
         // disable to test if this solves the app switch touch issue on mobile PWA
         // { ...longPressHandlerProps }
       >
-        <div className='thought-container' style={hideBullet ? { marginLeft: -12 } : {}}>
+        <div
+          className='thought-container'
+          style={{
+            // ensure that ThoughtAnnotation is positioned correctly
+            position: 'relative',
+            ...(hideBullet ? { marginLeft: -12 } : null),
+          }}
+        >
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isContextPending={isContextPending}
