@@ -30,7 +30,6 @@ import isURL from '../util/isURL'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
@@ -132,24 +131,21 @@ const ThoughtAnnotation = ({
   const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
   const state = store.getState()
-  const showContextsParent = useSelector((state: State) => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, pathParent)
-    return showContexts
-  })
 
   const value: string | undefined = useSelector((state: State) => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
-  const isExpanded = !!state.expanded[hashPath(simplePath)]
-  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
-  const [numContexts, setNumContexts] = useState(0)
+
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
   })
+
+  const isExpanded = !!state.expanded[hashPath(simplePath)]
+  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
+  const [numContexts, setNumContexts] = useState(0)
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -184,13 +180,6 @@ const ThoughtAnnotation = ({
 
   return (
     <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
-      {
-        // Spacer for superscript positioning. Actual ContextBreadcrumbs are rendered in StaticThought component.
-        showContextsParent && (
-          <ContextBreadcrumbs simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))} hidden />
-        )
-      }
-
       {homeContext ? (
         <HomeLink />
       ) : (

@@ -284,6 +284,8 @@ a.text-link {
 .context-breadcrumbs {
   font-size: 0.867em;
   color: gray;
+  /* approximate bullet width across multiple font sizes */
+  margin-left: calc(1.3em - 14.5px);
   margin-top: 0.533em;
   min-height: 1em;
 }
@@ -1086,12 +1088,6 @@ h1 .num-contexts {
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding: 0.2em 0 0.2em 100px;
-}
-
-/* In context view, make room for breadcrumbs. */
-.child.show-contexts > .thought-container .bullet {
-  position: relative;
-  top: 1.4em;
 }
 
 .child > .thought-container > .bullet .glyph {

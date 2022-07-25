@@ -212,13 +212,11 @@ describe('render', () => {
 
     const subthoughts = await findSubthoughts('m')
 
-    const thoughtA = await findByLabelText(subthoughts[0], 'thought')
-    const homeIconA = await findAllByLabelText(thoughtA, 'home')
-    expect(homeIconA).toHaveLength(1)
+    const homeIconA = await findByLabelText(subthoughts[0], 'home')
+    expect(homeIconA).toBeTruthy()
 
-    const thoughtB = await findByLabelText(subthoughts[1], 'thought')
-    const homeIconB = await findAllByLabelText(thoughtB, 'home')
-    expect(homeIconB).toHaveLength(1)
+    const homeIconB = await findByLabelText(subthoughts[1], 'home')
+    expect(homeIconB).toBeTruthy()
   })
 
   it('render home icon as thought for each thought in the home context', async () => {
@@ -377,16 +375,11 @@ describe('render', () => {
     const breadcrumbsText = await series(
       subthoughts.map(subthought => async () => {
         const thought = await findByLabelText(subthought, 'thought')
-        // the thought.textContent returns the breadcrumbs and thought value concatenated
-        // since all thought values are a single character long, we can easily parse them out
-        return { breadcrumbs: thought.textContent!.slice(0, -1), value: thought.textContent!.slice(-1) }
+        return thought.textContent
       }),
     )
 
-    expect(breadcrumbsText).toEqual([
-      { breadcrumbs: 'a • b', value: 'c' },
-      { breadcrumbs: 'a • b', value: 'd' },
-    ])
+    expect(breadcrumbsText).toEqual(['c', 'd'])
   })
 })
 

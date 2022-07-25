@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
-import expandContextThought from '../action-creators/expandContextThought'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -10,7 +9,6 @@ import { store } from '../store'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Divider from './Divider'
 import Editable from './Editable'
 import Superscript from './Superscript'
@@ -49,24 +47,6 @@ const StaticThought = ({
 
   return (
     <div aria-label='thought' className='thought'>
-      {showContextBreadcrumbs && !isParentRoot ? (
-        <ContextBreadcrumbs
-          simplePath={rootedParentOf(state, rootedParentOf(state, simplePathLive))}
-          homeContext={homeContext}
-        />
-      ) : showContexts && simplePathLive.length > 2 ? (
-        <span className='ellipsis'>
-          <a
-            tabIndex={-1}
-            onClick={() => {
-              store.dispatch(expandContextThought(path))
-            }}
-          >
-            ...{' '}
-          </a>
-        </span>
-      ) : null}
-
       {
         // render nothing if it is a pending context since we have no value
         homeContext ? (

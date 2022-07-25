@@ -11,6 +11,7 @@ import ThoughtId from '../@types/ThoughtId'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
+import expandContextThought from '../action-creators/expandContextThought'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
@@ -37,12 +38,14 @@ import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
+import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
+import { ContextBreadcrumbs } from './ContextBreadcrumbs'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
@@ -292,6 +295,12 @@ const ThoughtContainer = ({
       : null
   })
 
+  const homeContext = useSelector((state: State) => {
+    const pathParent = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, path)
+    return showContexts && isRoot(pathParent)
+  })
+
   if (!thought) return null
 
   const value = thought.value
@@ -455,6 +464,24 @@ const ThoughtContainer = ({
             ...(hideBullet ? { marginLeft: -12 } : null),
           }}
         >
+          {showContexts && simplePath.length > 1 ? (
+            <ContextBreadcrumbs
+              simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
+              homeContext={homeContext}
+            />
+          ) : showContexts && simplePath.length > 2 ? (
+            <span className='ellipsis'>
+              <a
+                tabIndex={-1}
+                onClick={() => {
+                  store.dispatch(expandContextThought(path))
+                }}
+              >
+                ...{' '}
+              </a>
+            </span>
+          ) : null}
+
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isContextPending={isContextPending}

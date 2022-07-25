@@ -156,6 +156,7 @@ const Bullet = ({
       })}
       style={{
         marginLeft: bulletMarginLeft,
+        verticalAlign: 'top',
       }}
     >
       <svg
