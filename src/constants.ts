@@ -234,13 +234,17 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
 // See: thoughtChangeHandler in Editable.tsx.
 export const EDIT_THROTTLE = 500
 
-export const REGEXP_PUNCTUATIONS = /^[…✓✗\-:.?! ]+$/i
+// matches a string with only punctuation
+export const REGEXP_PUNCTUATIONS = /^\W+$/i
 
 export const REGEXP_URL =
   /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
+// matches text with HTML
 export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 
+// matches HTML tags
+// can be used to replace all HTML in a string
 export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'

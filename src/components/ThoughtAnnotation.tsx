@@ -8,7 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
-import { REGEXP_PUNCTUATIONS } from '../constants'
+import { REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
 import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -210,10 +210,12 @@ const ThoughtAnnotation = ({
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
           }
-          {REGEXP_PUNCTUATIONS.test(value) ? null : minContexts === 0 || // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            numContexts > 1 ? (
-            <StaticSuperscript n={numContexts} style={style} />
-          ) : null}
+          {
+            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+            REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1 ? (
+              <StaticSuperscript n={numContexts} style={style} />
+            ) : null
+          }
         </div>
       )}
     </div>

@@ -7,7 +7,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it.skip('Superscript should count all the contexts in which it is defined.', async () => {
+it('Superscript should count all the contexts in which it is defined.', async () => {
   store.dispatch([
     importText({
       text: `
@@ -27,7 +27,36 @@ it.skip('Superscript should count all the contexts in which it is defined.', asy
   expect(element.nodeName).toBe('SUP')
 })
 
-it.skip('Superscript should not count archived contexts', async () => {
+it('Superscript should not render on thoughts in a single context', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c
+      `,
+    }),
+  ])
+
+  expect(() => screen.getByText('1')).toThrow('Unable to find an element')
+})
+
+it('Superscript should not render on empty thoughts', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - ${''}
+        - b
+          - ${''}
+      `,
+    }),
+  ])
+
+  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+})
+
+it('Superscript should not count archived contexts', async () => {
   store.dispatch([
     importText({
       text: `
@@ -46,6 +75,58 @@ it.skip('Superscript should not count archived contexts', async () => {
 
   const element = screen.getByText('2')
   expect(element.nodeName).toBe('SUP')
+})
+
+it('Superscript should not render on punctuation-only thoughts', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - .
+          - ..
+          - ...
+          - …
+          - :
+          - ::
+          - *
+          - +
+          - -
+          - –
+          - —
+        - b
+          - .
+          - ..
+          - ...
+          - …
+          - :
+          - ::
+          - *
+          - -
+          - –
+          - —
+      `,
+    }),
+  ])
+
+  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
+  expect(() => screen.getByText('3')).toThrow('Unable to find an element')
+  expect(() => screen.getByText('4')).toThrow('Unable to find an element')
+  expect(() => screen.getByText('5')).toThrow('Unable to find an element')
+})
+
+it('Superscript should not render on punctuation-only thoughts with HTML', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - <i>...</i>
+        - b
+          - <i>...</i>
+      `,
+    }),
+  ])
+
+  expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
 
 it('Superscript should not count for hashed version of metaprogramming attributes like =archive | archive', async () => {
