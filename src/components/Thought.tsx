@@ -12,7 +12,6 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
-import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
 import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
@@ -487,12 +486,6 @@ const ThoughtContainer = ({
               isContextPending={isContextPending}
               isEditing={isEditing}
               leaf={isLeaf}
-              onClick={(e: React.MouseEvent) => {
-                if (!isEditing || children.length === 0) {
-                  e.stopPropagation()
-                  store.dispatch(setCursor({ path: simplePath }))
-                }
-              }}
               path={path}
               simplePath={simplePath}
               thoughtId={thoughtId}

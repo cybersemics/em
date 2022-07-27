@@ -1,7 +1,12 @@
+import { findAllByLabelText, screen } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughts from '../../action-creators/toggleHiddenThoughts'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import { findCursor } from '../../test-helpers/queries/findCursor'
+import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -116,4 +121,87 @@ it('render bullet of =grandchildren itself', () => {
 
   const bullets = document.querySelectorAll('.bullet')
   expect(bullets.length).toBe(4)
+})
+
+it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+          - d
+      `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  const subthoughts = await findSubthoughts('a')
+  const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
+  userEvent.click(bulletsOfSubthoughtsA[0])
+
+  const thoughtCursor = await findCursor()
+  expect(thoughtCursor).toHaveTextContent('a')
+})
+
+it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - x
+          - a
+            - b
+              - c
+          - d
+      `,
+    }),
+    setCursor(['x', 'a', 'b', 'c']),
+  ])
+
+  const subthoughts = await findSubthoughts('x')
+  const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
+  userEvent.click(bulletsOfSubthoughtsX[0])
+
+  const thoughtCursor = await findCursor()
+  expect(thoughtCursor).toHaveTextContent('x')
+})
+
+it('tapping an expanded root thought bullet should set the cursor to null', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+          - d
+      `,
+    }),
+    setCursor(['a', 'b', 'c']),
+  ])
+
+  const bullets = await screen.findAllByLabelText('bullet')
+  userEvent.click(bullets[0])
+
+  const thoughtCursor = await findCursor()
+  expect(thoughtCursor).toBeNull()
+})
+
+it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+          - d
+      `,
+    }),
+  ])
+
+  const subthoughts = await findSubthoughts('a')
+  const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
+  userEvent.click(bulletB[0])
+
+  const thoughtCursor = await findCursor()
+  expect(thoughtCursor).toHaveTextContent('b')
 })

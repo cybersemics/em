@@ -37,6 +37,7 @@ const StaticThought = ({
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const homeContext = showContexts && isParentRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
+  const fontSize = useSelector((state: State) => state.fontSize)
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
@@ -64,7 +65,11 @@ const StaticThought = ({
             isEditing={isEditing}
             isVisible={isVisible}
             rank={rank}
-            style={style}
+            style={{
+              // must match marginLeft of ThoughtAnnotation
+              marginLeft: fontSize - 18,
+              ...style,
+            }}
             simplePath={showContexts ? rootedParentOf(state, simplePathLive) : simplePathLive}
             onEdit={onEdit}
           />

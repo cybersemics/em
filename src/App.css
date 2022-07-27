@@ -509,7 +509,6 @@ a.text-link {
   width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
   font-weight: 300;
   margin-top: 0;
-  margin-left: 0.667em;
   display: inline-block;
   vertical-align: top;
   white-space: pre-wrap;

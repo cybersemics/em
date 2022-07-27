@@ -137,6 +137,8 @@ const ThoughtAnnotation = ({
     return thought?.value || ''
   })
 
+  const fontSize = useSelector((state: State) => state.fontSize)
+
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
@@ -179,7 +181,14 @@ const ThoughtAnnotation = ({
     : null
 
   return (
-    <div className='thought-annotation' style={homeContext ? { height: '1em', marginLeft: 8 } : {}}>
+    <div
+      className='thought-annotation'
+      style={{
+        ...(homeContext ? { height: '1em' } : null),
+        // must match marginLeft of StaticThought
+        marginLeft: fontSize - 13,
+      }}
+    >
       {homeContext ? (
         <HomeLink />
       ) : (

@@ -1,17 +1,21 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
-import { connect } from 'react-redux'
+import { connect, useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import setCursor from '../action-creators/setCursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import theme from '../selectors/theme'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 
 // other bullets
 // •◦◂◄◀︎ ➤▹▸►◥
@@ -23,7 +27,7 @@ interface BulletProps {
   isDragging?: boolean
   isEditing?: boolean
   leaf?: boolean
-  onClick: (event: React.MouseEvent) => void
+  onClick?: (event: React.MouseEvent) => void
   publish?: boolean
   showContexts?: boolean
   simplePath: SimplePath
@@ -55,9 +59,11 @@ const Bullet = ({
   invalid,
   isContextPending,
   isDragging,
+  isEditing,
   leaf,
   missing,
   onClick,
+  path,
   pending,
   publish,
   showContexts,
@@ -66,6 +72,7 @@ const Bullet = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
   const svgElement = useRef<SVGSVGElement>(null)
+  const dispatch = useDispatch()
 
   const lineHeight = fontSize * 1.25
   const svgSizeStyle = {
@@ -146,6 +153,10 @@ const Bullet = ({
     )
   }
 
+  // offset margin with padding by equal amounts proportional to the font size to extend the click area
+  const extendClickWidth = fontSize * 1.2
+  const extendClickHeight = fontSize / 3
+
   return (
     <span
       aria-label='bullet'
@@ -155,8 +166,32 @@ const Bullet = ({
         'invalid-option': invalid,
       })}
       style={{
-        marginLeft: bulletMarginLeft,
+        marginTop: -extendClickHeight,
+        marginLeft: bulletMarginLeft - extendClickWidth,
+        marginBottom: -extendClickHeight - 2,
+        paddingTop: extendClickHeight,
+        paddingLeft: extendClickWidth,
+        paddingBottom: extendClickHeight + 2,
+        position: 'absolute',
         verticalAlign: 'top',
+        width: 4, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
+        cursor: 'pointer',
+        // place above .thought-container to preserve click area of bullet
+        // otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child
+        zIndex: 10,
+      }}
+      onClick={(e: React.MouseEvent) => {
+        e.stopPropagation()
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          const isExpanded = state.expanded[hashPath(path)]
+          const children = getChildren(state, head(path))
+          const pathParent = path.length > 1 ? parentOf(path) : null
+          // if thought is not expanded, set the cursor on the thought
+          // if thought is expanded, collapse it by moving the cursor to its parent
+          dispatch(setCursor({ path: isExpanded && children.length > 0 ? pathParent : path }))
+        })
+        onClick?.(e)
       }}
     >
       <svg
@@ -168,7 +203,6 @@ const Bullet = ({
           ...svgSizeStyle,
           marginBottom: vendorSpecificData.glyphMarginBottom,
         }}
-        onClick={onClick}
         ref={svgElement}
       >
         <g>
