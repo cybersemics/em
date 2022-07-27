@@ -1,5 +1,12 @@
 {
   "hosting": {
+    "headers": [
+      { "source": "**/*.chunk.*", "headers": [{ "key": "Cache-Control", "value": "31536000" }] },
+      { "source": "**/.woff2", "headers": [{ "key": "Cache-Control", "value": "31536000" }] },
+      { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+      { "source": "/service-worker.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+      { "source": "/scripts/firebase-v*", "headers": [{ "key": "Cache-Control", "value": "31536000" }] }
+    ],
     "public": "build",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
