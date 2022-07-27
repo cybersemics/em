@@ -4,7 +4,6 @@ import { connect, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
-import toggleSidebar from '../action-creators/toggleSidebar'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -31,7 +30,6 @@ import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import Scale from './Scale'
-import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 
@@ -58,18 +56,18 @@ interface DispatchProps {
 }
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
-const SidebarGutter = () => {
-  return (
-    <div style={{ position: 'relative' }}>
-      <div
-        onClick={() => {
-          store.dispatch(toggleSidebar({}))
-        }}
-        style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
-      ></div>
-    </div>
-  )
-}
+// const SidebarGutter = () => {
+//   return (
+//     <div style={{ position: 'relative' }}>
+//       <div
+//         onClick={() => {
+//           store.dispatch(toggleSidebar({}))
+//         }}
+//         style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
+//       ></div>
+//     </div>
+//   )
+// }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
@@ -178,7 +176,7 @@ const AppComponent: FC<Props> = props => {
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
-          <Sidebar />
+          {/* <Sidebar /> */}
           <HamburgerMenu />
         </>
       )}
@@ -230,7 +228,7 @@ const AppComponent: FC<Props> = props => {
             </SplitPane>
 
             <div className='nav-bottom-wrapper'>
-              {isTouch && <SidebarGutter />}
+              {/* {isTouch && <SidebarGutter />} */}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />
               </Scale>
