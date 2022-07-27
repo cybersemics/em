@@ -5,8 +5,11 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import deleteAttribute from '../action-creators/deleteAttribute'
+import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
@@ -186,10 +189,21 @@ const Bullet = ({
           const state = getState()
           const isExpanded = state.expanded[hashPath(path)]
           const children = getChildren(state, head(path))
+          const shouldCollapse = isExpanded && children.length > 0
           const pathParent = path.length > 1 ? parentOf(path) : null
+          const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
           // if thought is not expanded, set the cursor on the thought
           // if thought is expanded, collapse it by moving the cursor to its parent
-          dispatch(setCursor({ path: isExpanded && children.length > 0 ? pathParent : path }))
+          dispatch([
+            // set pin false on expanded only child
+            ...(isExpanded &&
+            (parentChildren?.length === 1 ||
+              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
+              ? [setAttribute({ path: simplePath, key: '=pin', value: 'false' })]
+              : [deleteAttribute({ path: simplePath, key: '=pin' })]),
+            // move cursor
+            setCursor({ path: shouldCollapse ? pathParent : path }),
+          ])
         })
         onClick?.(e)
       }}

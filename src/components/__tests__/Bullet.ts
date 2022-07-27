@@ -2,6 +2,8 @@ import { findAllByLabelText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughts from '../../action-creators/toggleHiddenThoughts'
+import { HOME_TOKEN } from '../../constants'
+import { exportContext } from '../../selectors/exportContext'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findCursor } from '../../test-helpers/queries/findCursor'
@@ -11,42 +13,43 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('render a bullet next to each thought', () => {
-  store.dispatch([
-    importText({
-      text: `
+describe('render', () => {
+  it('render a bullet next to each thought', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - b
             - c
       `,
-    }),
-  ])
+      }),
+    ])
 
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(3)
-})
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(3)
+  })
 
-it('do not render a bullet with =bullet/None', () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('do not render a bullet with =bullet/None', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - =bullet
             - None
       `,
-    }),
-  ])
+      }),
+    ])
 
-  // =bullet is hidden so only a is shown
-  // a should not have a bullet
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(0)
-})
+    // =bullet is hidden so only a is shown
+    // a should not have a bullet
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(0)
+  })
 
-it('do not render bullets on a child of a thought with =children/=bullet/None', () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('do not render bullets on a child of a thought with =children/=bullet/None', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - =children
             - =bullet
@@ -54,39 +57,39 @@ it('do not render bullets on a child of a thought with =children/=bullet/None', 
           - b
           - c
       `,
-    }),
-  ])
+      }),
+    ])
 
-  // =bullet is hidden so only a, b, c are shown
-  // only a should have a bullet
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(1)
-})
+    // =bullet is hidden so only a, b, c are shown
+    // only a should have a bullet
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(1)
+  })
 
-// this is in contrast to how =children/=style works
-// it seems visually disruptive to have inconsistent bullets within a context
-it('do not render bullet of =children itself since it is one of the children', () => {
-  store.dispatch([
-    importText({
-      text: `
+  // this is in contrast to how =children/=style works
+  // it seems visually disruptive to have inconsistent bullets within a context
+  it('do not render bullet of =children itself since it is one of the children', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - =children
             - =bullet
               - None
       `,
-    }),
-    toggleHiddenThoughts(),
-  ])
+      }),
+      toggleHiddenThoughts(),
+    ])
 
-  // =children should not have a bullet since =bullet/None is applied
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(3)
-})
+    // =children should not have a bullet since =bullet/None is applied
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(3)
+  })
 
-it('do not render bullets on a grandchild of a thought with =grandchildren/=bullet/None', () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('do not render bullets on a grandchild of a thought with =grandchildren/=bullet/None', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - =grandchildren
             - =bullet
@@ -97,111 +100,200 @@ it('do not render bullets on a grandchild of a thought with =grandchildren/=bull
             - e
             - f
       `,
-    }),
-  ])
+      }),
+    ])
 
-  // only a and b should have bullets
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(2)
-})
+    // only a and b should have bullets
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(2)
+  })
 
-// in contrast to =children/=bullet, =grandchildren/=bullet does not naturally apply to =grandchildren, so we need to prevent the normal behavior of =bullet being applied to its parent
-it('render bullet of =grandchildren itself', () => {
-  store.dispatch([
-    importText({
-      text: `
+  // in contrast to =children/=bullet, =grandchildren/=bullet does not naturally apply to =grandchildren, so we need to prevent the normal behavior of =bullet being applied to its parent
+  it('render bullet of =grandchildren itself', () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - =grandchildren
             - =bullet
               - None
       `,
-    }),
-    toggleHiddenThoughts(),
-  ])
+      }),
+      toggleHiddenThoughts(),
+    ])
 
-  const bullets = document.querySelectorAll('.bullet')
-  expect(bullets.length).toBe(4)
+    const bullets = document.querySelectorAll('.bullet')
+    expect(bullets.length).toBe(4)
+  })
 })
 
-it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
-  store.dispatch([
-    importText({
-      text: `
+describe('expansion', () => {
+  it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - b
             - c
           - d
       `,
-    }),
-    setCursor(['a', 'b']),
-  ])
+      }),
+      setCursor(['a', 'b']),
+    ])
 
-  const subthoughts = await findSubthoughts('a')
-  const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
-  userEvent.click(bulletsOfSubthoughtsA[0])
+    const subthoughts = await findSubthoughts('a')
+    const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletsOfSubthoughtsA[0])
 
-  const thoughtCursor = await findCursor()
-  expect(thoughtCursor).toHaveTextContent('a')
-})
+    const thoughtCursor = await findCursor()
+    expect(thoughtCursor).toHaveTextContent('a')
+  })
 
-it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - x
           - a
             - b
               - c
           - d
       `,
-    }),
-    setCursor(['x', 'a', 'b', 'c']),
-  ])
+      }),
+      setCursor(['x', 'a', 'b', 'c']),
+    ])
 
-  const subthoughts = await findSubthoughts('x')
-  const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
-  userEvent.click(bulletsOfSubthoughtsX[0])
+    const subthoughts = await findSubthoughts('x')
+    const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletsOfSubthoughtsX[0])
 
-  const thoughtCursor = await findCursor()
-  expect(thoughtCursor).toHaveTextContent('x')
-})
+    const thoughtCursor = await findCursor()
+    expect(thoughtCursor).toHaveTextContent('x')
+  })
 
-it('tapping an expanded root thought bullet should set the cursor to null', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('tapping an expanded root thought bullet should set the cursor to null', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - b
             - c
           - d
       `,
-    }),
-    setCursor(['a', 'b', 'c']),
-  ])
+      }),
+      setCursor(['a', 'b', 'c']),
+    ])
 
-  const bullets = await screen.findAllByLabelText('bullet')
-  userEvent.click(bullets[0])
+    const bullets = await screen.findAllByLabelText('bullet')
+    userEvent.click(bullets[0])
 
-  const thoughtCursor = await findCursor()
-  expect(thoughtCursor).toBeNull()
-})
+    const thoughtCursor = await findCursor()
+    expect(thoughtCursor).toBeNull()
+  })
 
-it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
-  store.dispatch([
-    importText({
-      text: `
+  it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
+    store.dispatch([
+      importText({
+        text: `
         - a
           - b
             - c
           - d
       `,
-    }),
-  ])
+      }),
+    ])
 
-  const subthoughts = await findSubthoughts('a')
-  const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-  userEvent.click(bulletB[0])
+    const subthoughts = await findSubthoughts('a')
+    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletB[0])
 
-  const thoughtCursor = await findCursor()
-  expect(thoughtCursor).toHaveTextContent('b')
+    const thoughtCursor = await findCursor()
+    expect(thoughtCursor).toHaveTextContent('b')
+  })
+
+  it('tapping on a pinned thought should unpin it', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - b
+            - =pin
+              - true
+            - c
+          - d
+            - e
+      `,
+      }),
+    ])
+
+    const subthoughts = await findSubthoughts('a')
+    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletB[0])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- __ROOT__
+  - a
+    - b
+      - c
+    - d
+      - e`)
+  })
+
+  it('tapping on an expanded only child should unpin it', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - b
+            - c
+      `,
+      }),
+    ])
+
+    const subthoughts = await findSubthoughts('a')
+    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletB[0])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- __ROOT__
+  - a
+    - b
+      - =pin
+        - false
+      - c`)
+  })
+
+  it('tapping on a thought expanded by =children should unpin it', async () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - =children
+            - =pin
+              - true
+          - b
+            - c
+          - d
+            - e
+      `,
+      }),
+    ])
+
+    const subthoughts = await findSubthoughts('a')
+    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
+    userEvent.click(bulletB[0])
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- __ROOT__
+  - a
+    - =children
+      - =pin
+        - true
+    - b
+      - =pin
+        - false
+      - c
+    - d
+      - e`)
+  })
 })
