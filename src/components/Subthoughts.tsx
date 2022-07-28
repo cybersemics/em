@@ -221,13 +221,12 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
   // this can be removed once childrenFiltered is memoized and passed to render
-  const allChildrenValuesAndRanks =
-    allChildren
-      .map(childId => {
-        const child = getThoughtById(state, childId)
-        return `${child?.value}-${child?.rank}`
-      })
-      .join('__SEP__') + Math.random()
+  const allChildrenValuesAndRanks = allChildren
+    .map(childId => {
+      const child = getThoughtById(state, childId)
+      return `${child?.value}-${child?.rank}`
+    })
+    .join('__SEP__')
 
   const firstChilId = allChildren[0]
 
@@ -541,12 +540,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
       ? getContextsSortedAndRanked(state, headValue(state, simplePath))
       : contextSortType !== 'None'
       ? getAllChildrenSorted(state, thoughtId)
-      : /*
-          @MIGRATION_TODO: Thought should be accessed using path or id instead of context.
-          Due to pending merge mechanism, sometimes a context can have duplicates for a brief moment. So access by context can be problematic.
-          Migrate all possible context based selectors to use path or thought ids.
-        */
-        getChildrenRanked(state, head(simplePath))
+      : getChildrenRanked(state, head(simplePath))
 
   const cursorThoughtArray = cursor && childIdsToThoughts(state, cursor)
   // Ensure that editable newThought is visible.

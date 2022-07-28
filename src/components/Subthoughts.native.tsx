@@ -27,10 +27,12 @@ import {
   getChildren,
   getChildrenRanked,
 } from '../selectors/getChildren'
+import getContexts from '../selectors/getContexts'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import { commonStyles } from '../style/commonStyles'
@@ -200,7 +202,13 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const hashedPath = hashPath(resolvedPath)
 
-  const allChildren = getAllChildren(state, idLive)
+  // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
+  const allChildren = showContexts
+    ? // in the context view, use thoughtToPath since it changes as context ancestors are loaded
+      // otherwise contexts will only re-render once at the end
+      // TODO: Re-render the specific thought that was loaded rather than all subthoughts
+      getContexts(state, headValue(state, thoughtToPath(state, head(simplePath))))
+    : getAllChildren(state, idLive)
 
   // merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
