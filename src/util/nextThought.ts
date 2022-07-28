@@ -2,7 +2,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH } from '../constants'
 import { firstVisibleChild } from '../selectors/getChildren'
-import getContexts from '../selectors/getContexts'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import getNextSibling from '../selectors/nextSibling'
@@ -13,15 +13,15 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 import once from './once'
 
-/** Gets the next thought in a context view. */
+/** Gets the next context in a context view. */
 const nextContext = (state: State, path: Path) => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contextIds = getContexts(state, parent.value)
+  const contextIds = getContextsSortedAndRanked(state, parent.value)
   // find the thought in the context view
-  const index = contextIds.findIndex(id => getThoughtById(state, id).parentId === head(path))
+  const index = contextIds.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
   // get the next context
-  const nextContextId = contextIds[index + 1]
+  const nextContextId = contextIds[index + 1]?.id
   const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
   // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
   return nextContext
@@ -32,11 +32,11 @@ const nextContext = (state: State, path: Path) => {
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
   const thought = getThoughtById(state, head(path))
-  const contextIds = getContexts(state, thought.value)
+  const contexts = getContextsSortedAndRanked(state, thought.value)
 
   // if context view is empty, move to the next thought
-  const firstContext = getThoughtById(state, contextIds[0])
-  return contextIds.length > 1
+  const firstContext = getThoughtById(state, contexts[0]?.id)
+  return contexts.length > 1
     ? appendToPath(path, firstContext.parentId)
     : nextThought(state, path, { ignoreChildren: true })
 }
@@ -93,7 +93,6 @@ const nextThought = (
       ? appendToPath(parentOf(path), sibling().id)
       : // otherwise, move to the next uncle
         nextUncle(state, path)
-
   return next
 }
 
