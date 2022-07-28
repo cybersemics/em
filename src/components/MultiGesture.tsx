@@ -22,10 +22,20 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
-  onGesture?: (g: Direction | null, sequence: GesturePath, e: GestureResponderEvent) => void
-  onEnd?: (sequence: GesturePath | null, e: GestureResponderEvent) => void
-  onStart?: () => void
-  onCancel?: () => void
+  onGesture?: (args: {
+    gesture: Direction | null
+    sequence: GesturePath
+    clientStart: Point
+    e: GestureResponderEvent
+  }) => void
+  onEnd?: (args: {
+    sequence: GesturePath | null
+    clientStart: Point
+    clientEnd: Point
+    e: GestureResponderEvent
+  }) => void
+  onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
+  onCancel?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
   minDistance?: number
   shouldCancelGesture?: () => boolean
   scrollThreshold?: number
@@ -60,6 +70,7 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
+  clientStart: Point | null = null
   currentStart: Point | null = null
   minDistanceSquared = 0
   scrollYStart: number | null = null
@@ -87,6 +98,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       { passive: false },
     )
 
+    document.body.addEventListener('touchstart', e => {
+      this.clientStart = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      }
+    })
+
     // Listen to touchend directly to catch unterminated gestures.
     // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
     // Unfortunately, there are some cases (#1242) where onPanResponderRelease is never called. Neither is onPanResponderReject or onPanResponderEnd.
@@ -105,7 +123,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
         setTimeout(() => {
           if (!this.abandon && this.sequence) {
-            this.props.onEnd?.(this.sequence, e as unknown as GestureResponderEvent)
+            const clientEnd = {
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            }
+            this.props.onEnd?.({
+              sequence: this.sequence,
+              clientStart: this.clientStart!,
+              clientEnd,
+              e: e as unknown as GestureResponderEvent,
+            })
             this.reset()
           }
         })
@@ -136,7 +163,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
 
         if (this.props.shouldCancelGesture?.()) {
-          this.props.onCancel?.()
+          this.props.onCancel?.({ clientStart: this.clientStart!, e })
           this.abandon = true
           return
         }
@@ -154,7 +181,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
-            this.props.onStart()
+            this.props.onStart({ clientStart: this.clientStart!, e })
           }
           return
         }
@@ -164,7 +191,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // effectively only allows sequences to start with left or right
         if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
           this.sequence = ''
-          this.props.onCancel?.()
+          this.props.onCancel?.({ clientStart: this.clientStart!, e })
           this.abandon = true
           return
         }
@@ -187,14 +214,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             this.sequence += g
-            this.props.onGesture?.(g, this.sequence, e)
+            this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
           }
         }
       },
 
       // In rare cases release won't be called. See touchend above.
-      onPanResponderRelease: (e: GestureResponderEvent) => {
-        this.props.onEnd?.(this.sequence, e)
+      onPanResponderRelease: (e: GestureResponderEvent, gestureState: GestureState) => {
+        const clientEnd = {
+          x: gestureState.moveX,
+          y: gestureState.moveY,
+        }
+        this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         this.reset()
       },
 

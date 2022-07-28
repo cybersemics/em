@@ -5,8 +5,6 @@ import { ScrollView, View } from 'react-native'
 import { DrawerLayout } from 'react-native-gesture-handler'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useDispatch, useSelector } from 'react-redux'
-import Direction from '../@types/Direction'
-import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import toggleSidebar from '../action-creators/toggleSidebar'
@@ -112,13 +110,13 @@ const AppComponent: React.FC = () => {
           >
             <View style={contentHeight}>
               <MultiGesture
-                onGesture={(g: Direction | null, path: GesturePath) => {
+                onGesture={args => {
                   setIsGestureActive(true)
-                  handleGestureSegment(g, path)
+                  handleGestureSegment(args)
                 }}
-                onEnd={(...args) => {
+                onEnd={args => {
                   setIsGestureActive(false)
-                  handleGestureEnd(...args)
+                  handleGestureEnd(args)
                 }}
                 shouldCancelGesture={shouldCancelGesture}
                 onCancel={() => {

@@ -127,7 +127,7 @@ let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
-  handleGestureSegment: (g: Direction | null, path: GesturePath) => {
+  handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
 
@@ -136,7 +136,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // disable when modal is displayed or a drag is in progress
     if (state.showModal || state.dragInProgress) return
 
-    const shortcut = shortcutGestureIndex[path as string]
+    const shortcut = shortcutGestureIndex[sequence as string]
 
     // display gesture hint
     clearTimeout(handleGestureSegmentTimeout)
@@ -159,15 +159,15 @@ export const inputHandlers = (store: Store<State, any>) => ({
   },
 
   /** Executes a valid gesture and closes the gesture hint. */
-  handleGestureEnd: (gesture: GesturePath | null, e: GestureResponderEvent) => {
+  handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
     const { scrollPrioritized } = state
 
     if (scrollPrioritized) return
 
     // disable when modal is displayed or a drag is in progress
-    if (gesture && !state.showModal && !state.dragInProgress) {
-      const shortcut = shortcutGestureIndex[gesture as string]
+    if (sequence && !state.showModal && !state.dragInProgress) {
+      const shortcut = shortcutGestureIndex[sequence as string]
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
         shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
