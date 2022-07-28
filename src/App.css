@@ -321,7 +321,7 @@ a.text-link {
   text-align: right;
   top: 0;
   right: 0;
-  z-index: 2;
+  z-index: 20;
   max-width: 88%;
   user-select: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
