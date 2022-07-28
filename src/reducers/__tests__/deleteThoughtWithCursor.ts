@@ -174,7 +174,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
-  it('delete empty tangential context with no children', () => {
+  it('delete leaf from within tangential context', () => {
     const steps = [
       importText({
         text: `
@@ -202,7 +202,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 
-  it.skip('delete empty cyclic context with no children', () => {
+  it('delete leaf from within cyclic context', () => {
     const steps = [
       importText({
         text: `

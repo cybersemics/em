@@ -64,7 +64,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     path
       ? (state: State) =>
           setCursor(state, {
-            path: path,
+            path,
             editing: state.editing,
             offset,
           })
@@ -82,23 +82,29 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       // TODO: Refactor into nextThought/prevThought
       const next = once(() => (showContexts ? null : firstVisibleChild(state, parentId)))
 
+      // instead of using the thought parent, use the closest valid ancestor
+      // otherwise deleting a thought from a cyclic context will return an invalid cursor
+      const pathParent = rootedParentOf(state, path)
+      const missingIndex = pathParent.findIndex(id => !getThoughtById(state, id))
+      const closestAncestor = missingIndex !== -1 ? (pathParent.slice(0, missingIndex) as Path) : pathParent
+
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
       return setCursorOrBack.apply(
         null,
         prev
-          ? [appendToPath(parentOf(path), prev.id), { offset: prev.value.length }]
+          ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
           : // Case II: set cursor on next thought
           next()
           ? [
               unroot(
-                showContexts ? appendToPath(parentOf(path), next()!.id) : appendToPath(parentOf(path), next()!.id),
+                showContexts ? appendToPath(closestAncestor, next()!.id) : appendToPath(closestAncestor, next()!.id),
               ),
               { offset: 0 },
             ]
           : // Case III: delete last thought in context; set cursor on context
           thoughts.length > 1
-          ? [rootedParentOf(state, path), { offset: getTextContentFromHTML(head(context)).length }]
+          ? [closestAncestor, { offset: getTextContentFromHTML(head(context)).length }]
           : // Case IV: delete very last thought; remove cursor
             [null],
       )(state)
