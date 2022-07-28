@@ -11,7 +11,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import { isTouch } from '../browser'
-import { DROP_TARGET, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { DROP_TARGET, HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -212,21 +212,31 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     : 0
 
   // TODO: Memoize childrenFiltered and pass to render instead of using dummy values to force a re-render
-  const allChildren = showContexts
-    ? // in the context view, use thoughtToPath since it changes as context ancestors are loaded
-      // otherwise contexts will only re-render once at the end
-      // TODO: Re-render the specific thought that was loaded rather than all subthoughts
-      getContexts(state, headValue(state, thoughtToPath(state, head(simplePath))))
-    : getAllChildren(state, idLive)
+  const allChildren = showContexts ? getContexts(state, headValue(state, simplePath)) : getAllChildren(state, idLive)
 
   // encode the children's values and ranks, since the allChildren array will not change when ranks change (i.e. moveThoughtUp/Down)
   // this can be removed once childrenFiltered is memoized and passed to render
   const allChildrenValuesAndRanks = allChildren
     .map(childId => {
-      const child = getThoughtById(state, childId)
-      return `${child?.value}-${child?.rank}`
+      if (showContexts) {
+        // if ancestors have not loaded, return childId
+        // TODO: thoughtToPath can return an invalid non-root path that starts with HOME_TOKEN. It should return null instead.
+        // However, the current logic uses HOME_TOKEN to determine that the ancestors of a context are still loading.
+        const path = thoughtToPath(state, childId)
+        if (path[0] === HOME_TOKEN) return childId
+
+        // if any ancestors are missing, return childId
+        const ancestors = path.map(id => getThoughtById(state, id))
+        if (!ancestors.every(Boolean)) return childId
+
+        // otherwise return ancestor hash
+        return ancestors.map(thought => `${thought?.value}-${thought?.rank}`).join('\x00__SEP1__')
+      } else {
+        const child = getThoughtById(state, childId)
+        return `${child?.value}-${child?.rank}`
+      }
     })
-    .join('__SEP__')
+    .join('\x00__SEP2__')
 
   const firstChilId = allChildren[0]
 
@@ -357,7 +367,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     sortDirection: sortPreference.direction,
     // Re-render when children have been loaded into the thoughtIndex and when any child's value or rank changes
     __hasChildrenLoaded: hasChildrenLoaded,
-    __allChildrenValuesAndRanks: hasChildrenLoaded ? allChildrenValuesAndRanks : null,
+    __allChildrenValuesAndRanks: allChildrenValuesAndRanks,
     // We need to re-render when actualDistance changes, but it is complicated and expensive.
     // Until actualDistance gets refactored and optimized, we can provide a quick fix for any observed rendering issues.
     // The only rendering issue observed so far is when the cursor changes from a leaf thought in the home context (actualDistance: 1) to null (actualDistance: 0).
