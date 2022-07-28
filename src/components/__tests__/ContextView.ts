@@ -381,6 +381,30 @@ describe('render', () => {
 
     expect(breadcrumbsText).toEqual(['c', 'd'])
   })
+
+  it('Expand grandchildren of contexts', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - m
+              - x
+                - x1
+          - b
+            - m
+              - y
+                - y1
+        `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+      setCursor(['a', 'm', 'a', 'x']),
+    ])
+
+    const contextsM = await findSubthoughts('m')
+    const thoughtX1 = await findThoughtByText('x1', contextsM[0])
+    expect(thoughtX1).toBeTruthy()
+  })
 })
 
 describe('editing', () => {

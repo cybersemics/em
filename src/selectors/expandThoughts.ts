@@ -127,7 +127,10 @@ function expandThoughtsRecursive(
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
     ? childIdsToThoughts(state, getContexts(state, thought.value))
-    : getAllChildrenAsThoughts(state, thoughtId)
+    : // when getting normal view children, make sure to use simplePath head rather than path head
+      // otherwise it will retrieve the children of the context view, not the children of the context instance
+      // See ContextView test "Expand grandchildren of contexts"
+      getAllChildrenAsThoughts(state, head(simplePath))
 
   // Note: A path that is ancestor of the expansion path or expansion path itself should always be expanded.
   const visibleChildren = state.showHiddenThoughts
