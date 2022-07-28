@@ -11,6 +11,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
+import isRoot from './isRoot'
 import once from './once'
 
 /** Gets the next context in a context view. */
@@ -44,18 +45,17 @@ const firstContext = (state: State, path: Path): Path | null => {
 /** Returns the next uncle. */
 const nextUncle = (state: State, path: Path) => {
   const pathParent = rootedParentOf(state, path)
-  const parent = getThoughtById(state, head(pathParent))
 
-  return parent
-    ? nextThought(state, pathParent, { ignoreChildren: true })
-    : // reached root thought
-      null
+  // the thought is a root child, then there is no uncle
+  // otherwise, recursively call nextThought on the parent and prevent traversing children
+  return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 
-/** Gets the next sibling after the path. */
+/** Gets the next sibling after the path in normal view. */
 const nextSibling = (state: State, path: Path) => {
-  const thought = getThoughtById(state, head(path))
-  const pathParent = rootedParentOf(state, path)
+  const simplePath = simplifyPath(state, path)
+  const thought = getThoughtById(state, head(simplePath))
+  const pathParent = rootedParentOf(state, simplePath)
   return getNextSibling(state, head(pathParent), thought.value, thought.rank)
 }
 
@@ -93,6 +93,7 @@ const nextThought = (
       ? appendToPath(parentOf(path), sibling().id)
       : // otherwise, move to the next uncle
         nextUncle(state, path)
+
   return next
 }
 

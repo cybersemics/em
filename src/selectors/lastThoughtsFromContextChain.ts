@@ -1,16 +1,17 @@
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import getLexeme from '../selectors/getLexeme'
+import appendToPath from '../util/appendToPath'
 import headValue from '../util/headValue'
 import getThoughtById from './getThoughtById'
 import thoughtToPath from './thoughtToPath'
 
-/** Generates path from the last segment of a context chain. */
+/** Generates a SimplePath from the last segment of a context chain. */
 const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]): SimplePath => {
   if (contextChain.length === 1) return contextChain[0]
 
   // the last path in the context chain is a context within a context view
-  const path = contextChain[contextChain.length - 1]
+  const simplePath = contextChain[contextChain.length - 1]
 
   // the second-to-last path in the context chain is the closest context view
   const pathContextView = contextChain[contextChain.length - 2]
@@ -42,12 +43,12 @@ const lastThoughtsFromContextChain = (state: State, contextChain: SimplePath[]):
     This will find m(1) since its parent matches the cursor 'a'
 
   */
-  const id = lexeme.contexts.find(cxid => getThoughtById(state, cxid)?.parentId === path[0])!
-  const simplePath = thoughtToPath(state, id)
+  const id = lexeme.contexts.find(cxid => getThoughtById(state, cxid)?.parentId === simplePath[0])!
+  const contextPath = thoughtToPath(state, id)
 
-  if (!simplePath) throw new Error(`simplePath not found for thought: ${id}`)
+  if (!contextPath) throw new Error(`SimplePath not found for thought: ${id}`)
 
-  return simplePath
+  return appendToPath(contextPath, ...simplePath.slice(1))
 }
 
 export default lastThoughtsFromContextChain

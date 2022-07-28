@@ -189,7 +189,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
-  it.skip("move cursor from context's one child to its sibling", () => {
+  it("move cursor from context's one child to its sibling", () => {
     const text = `
       - a
         - m
@@ -216,7 +216,7 @@ describe('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'b', 'z'])
   })
 
-  it.skip("move cursor from context's last child to uncle context", () => {
+  it("move cursor from context's last child to uncle context", () => {
     const text = `
       - a
         - m
@@ -240,14 +240,15 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
-  it.skip("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
+  it("move cursor from context's last descendant to next sibling if there aren't any further contexts", () => {
     const text = `
       - a
         - m
           - x
       - b
         - m
-          - y`
+          - y
+    `
 
     const steps = [
       importText({ text }),
@@ -264,7 +265,7 @@ describe('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])
   })
 
-  it.skip('move cursor to circular path', () => {
+  it('move cursor to circular path', () => {
     const text = `
       - a
         - m
@@ -274,7 +275,7 @@ describe('context view', () => {
         - m
           - y
           - z
-      `
+    `
 
     const steps = [
       importText({ text }),
@@ -291,12 +292,17 @@ describe('context view', () => {
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['a', 'm', 'a', 'y'])
   })
 
-  it.skip('should not move cursor if the cursor on last thought', () => {
-    const steps = [newThought('a'), newThought('b'), setCursor(['a']), cursorDown]
+  it('should not move cursor if the cursor on last thought', () => {
+    const text = `
+      - a
+      - b
+    `
+
+    const steps = [importText({ text }), setCursor(['b']), cursorDown]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject(['b'])
+    expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])
   })
 })
