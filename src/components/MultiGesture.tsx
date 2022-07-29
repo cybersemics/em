@@ -30,8 +30,8 @@ interface MultiGestureProps {
   }) => void
   onEnd?: (args: {
     sequence: GesturePath | null
-    clientStart: Point
-    clientEnd: Point
+    clientStart: Point | null
+    clientEnd: Point | null
     e: GestureResponderEvent
   }) => void
   onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
@@ -99,9 +99,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     )
 
     document.body.addEventListener('touchstart', e => {
-      this.clientStart = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY,
+      if (e?.touches.length > 0) {
+        this.clientStart = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+        }
       }
     })
 
@@ -123,10 +125,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
         setTimeout(() => {
           if (!this.abandon && this.sequence) {
-            const clientEnd = {
-              x: e.touches[0].clientX,
-              y: e.touches[0].clientY,
-            }
+            const clientEnd =
+              e?.touches.length > 0
+                ? {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY,
+                  }
+                : null
             this.props.onEnd?.({
               sequence: this.sequence,
               clientStart: this.clientStart!,
