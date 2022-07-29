@@ -357,7 +357,7 @@ a.text-link {
   top: 0;
   right: 0;
   z-index: var(--z-index-toolbar-container);
-  max-width: 88%;
+  max-width: calc(100% - 1em); /* use 100% - 3em when HamburgerMenu is enabled */
   user-select: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
