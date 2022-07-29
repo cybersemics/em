@@ -24,7 +24,6 @@ import parentOf from '../util/parentOf'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  hideBullet?: boolean
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -58,7 +57,6 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 const Bullet = ({
   dark,
   fontSize,
-  hideBullet,
   invalid,
   isContextPending,
   isDragging,
@@ -217,7 +215,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && !hideBullet && (
+          {!(publish && (isRoot || isRootChildLeaf)) && (
             <ellipse
               className='bullet-cursor-overlay'
               fillOpacity='0'

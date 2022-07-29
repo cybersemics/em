@@ -382,7 +382,6 @@ const ThoughtContainer = ({
             }}
             path={path}
             simplePath={simplePath}
-            hideBullet={hideBullet}
             publish={publish}
           />
         )}

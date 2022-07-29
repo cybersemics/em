@@ -244,6 +244,61 @@ const useStyleContainer = ({
   return styleContainer
 }
 
+/** A hook that returns true if the bullet should be hidden based on the =bullet attribute. */
+const useHideBullet = ({
+  children,
+  env,
+  hideBulletProp,
+  isEditing,
+  simplePath,
+  thought,
+}: {
+  children: Thought[]
+  env: LazyEnv | undefined
+  hideBulletProp: boolean | undefined
+  isEditing: boolean
+  simplePath: SimplePath
+  thought: Thought
+}) => {
+  const hideBullet = useSelector((state: State) => {
+    // bullet may be set from =children or =grandchildren and passed as a prop
+    if (hideBulletProp) return true
+
+    /** Returns true if the bullet should be hidden. */
+    const hideBullet = () =>
+      thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
+
+    /** Returns true if the bullet should be hidden if zoomed. */
+    const hideBulletZoom = (): boolean => {
+      if (!isEditing) return false
+      const childEnvZoomId = findFirstEnvContextWithZoom(state, { id: thought.id, env: env || {} })
+      const zoomId = findDescendant(state, head(simplePath), ['=focus', 'Zoom'])
+      return attribute(state, zoomId, '=bullet') === 'None' || attribute(state, childEnvZoomId, '=bullet') === 'None'
+    }
+
+    /** Load =bullet from child expressions that are found in the environment. */
+    const hideBulletEnv = () => {
+      const bulletEnv = children
+        .filter(
+          child =>
+            child.value in GLOBAL_STYLE_ENV ||
+            // children that have an entry in the environment
+            (child.value in { ...env } &&
+              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+              child.id !== env![child.value]),
+        )
+        .map(child =>
+          child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
+        )
+      return bulletEnv.some(envChildBullet => envChildBullet === 'None')
+    }
+
+    return hideBullet() || hideBulletZoom() || hideBulletEnv()
+  })
+
+  return hideBullet
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath, editing } = state
@@ -398,50 +453,14 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
-
-  const hideBullet = useSelector((state: State) => {
-    // bullet may be set from =children or =grandchildren and passed as a prop
-    if (hideBulletProp) return true
-
-    /** Returns true if the bullet should be hidden. */
-    const hideBullet = () =>
-      thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
-
-    /** Returns true if the bullet should be hidden if zoomed. */
-    const hideBulletZoom = (): boolean => {
-      if (!isEditing) return false
-      const childEnvZoomId = findFirstEnvContextWithZoom(state, { id: thought.id, env: env || {} })
-      const zoomId = findDescendant(state, head(simplePath), ['=focus', 'Zoom'])
-      return attribute(state, zoomId, '=bullet') === 'None' || attribute(state, childEnvZoomId, '=bullet') === 'None'
-    }
-
-    /** Load =bullet from child expressions that are found in the environment. */
-    const hideBulletEnv = () => {
-      const bulletEnv = children
-        .filter(
-          child =>
-            child.value in GLOBAL_STYLE_ENV ||
-            // children that have an entry in the environment
-            (child.value in { ...env } &&
-              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-              child.id !== env![child.value]),
-        )
-        .map(child =>
-          child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
-        )
-      return bulletEnv.some(envChildBullet => envChildBullet === 'None')
-    }
-
-    return hideBullet() || hideBulletZoom() || hideBulletEnv()
-  })
-
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
   })
 
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
+  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thought })
   const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
 
@@ -563,7 +582,6 @@ const ThoughtContainer = ({
               path={path}
               simplePath={simplePath}
               thoughtId={thoughtId}
-              hideBullet={hideBullet}
               publish={publish}
               isDragging={isDragging}
             />
