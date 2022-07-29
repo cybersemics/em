@@ -349,6 +349,36 @@ const ThoughtContainer = ({
     return showContexts && isRoot(pathParent)
   })
 
+  const styleContainerZoom = useSelector((state: State) => {
+    if (!isEditingPath) return false
+    const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
+    return getStyle(state, zoomId, { container: true })
+  })
+
+  const styleContainerNew = useSelector((state: State) => {
+    const styleContainerEnv = children
+      .filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // children that have an entry in the environment
+          (child.value in { ...env } &&
+            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+            child.id !== env![child.value]),
+      )
+      .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
+      .reduce<React.CSSProperties>(
+        (accum, style) => ({
+          ...accum,
+          ...style,
+        }),
+        // use stable object reference
+        EMPTY_OBJECT,
+      )
+
+    const styleContainerSelf = getStyle(state, thoughtId, { container: true })
+    return safeRefMerge(styleContainer, styleContainerEnv, styleContainerSelf)
+  })
+
   if (!thought) return null
 
   const value = thought.value
@@ -390,29 +420,6 @@ const ThoughtContainer = ({
       EMPTY_OBJECT,
     )
 
-  const styleContainerEnv = children
-    .filter(
-      child =>
-        child.value in GLOBAL_STYLE_ENV ||
-        // children that have an entry in the environment
-        (child.value in { ...env } &&
-          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-          child.id !== env![child.value]),
-    )
-    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
-    .reduce<React.CSSProperties>(
-      (accum, style) => ({
-        ...accum,
-        ...style,
-      }),
-      // use stable object reference
-      EMPTY_OBJECT,
-    )
-
-  const styleContainerSelf = getStyle(state, thoughtId, { container: true })
-  const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
-  const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
-
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
   const draggingThoughtValue = state.draggingThought
@@ -442,7 +449,6 @@ const ThoughtContainer = ({
 
   // avoid re-renders from object reference change
   const styleNew = safeRefMerge(style, styleEnv, styleSelf)
-  const styleContainerNew = safeRefMerge(styleContainer, styleContainerEnv, styleContainerSelf)
 
   return dropTarget(
     dragSource(

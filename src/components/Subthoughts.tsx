@@ -580,6 +580,15 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     (state: State) => attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
   )
 
+  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId))
+  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId))
+  const styleContainerChildren = useSelector((state: State) =>
+    getStyle(state, childrenAttributeId, { container: true }),
+  )
+  const styleContainerGrandchildren = useSelector((state: State) =>
+    getStyle(state, grandchildrenAttributeId, { container: true }),
+  )
+
   const proposedPageSize = PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
     setPage(page + 1)
@@ -656,11 +665,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
-
-  const styleChildren = getStyle(state, childrenAttributeId)
-  const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
-  const styleContainerChildren = getStyle(state, childrenAttributeId, { container: true })
-  const styleContainerGrandchildren = getStyle(state, grandchildrenAttributeId, { container: true })
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
