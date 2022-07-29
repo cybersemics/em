@@ -813,20 +813,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
             const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
 
-            /** Returns true if the bullet should be hidden. */
-            const hideBullet = () =>
-              child.value !== '=grandchildren' && attribute(state, head(childPath), '=bullet') === 'None'
-
-            /** Returns true if the bullet should be hidden if zoomed. */
-            const hideBulletZoom = (): boolean => {
-              if (!isEditingChildPath()) return false
-              const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
-              return (
-                attribute(state, zoomId, '=bullet') === 'None' ||
-                attribute(state, childEnvZoomId(), '=bullet') === 'None'
-              )
-            }
-
             // TODO: ROOT gets appended when isContextPending
             // What should appendedChildPath be?
             const appendedChildPath = appendChildPath(state, childPath, path)
@@ -846,7 +832,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 allowSingleContext={allowSingleContextParent}
                 depth={depth + 1}
                 env={envParsed}
-                hideBullet={hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()}
+                hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
                 key={`${child.id}-${child.rank}`}
                 rank={child.rank}
                 isVisible={

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import Index from '../@types/IndexType'
+import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -128,6 +129,15 @@ const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLO
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
 
+/** Finds the the first env entry with =focus/Zoom. O(children). */
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
+  const children = getAllChildrenAsThoughts(state, id)
+  const child = children.find(
+    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+  )
+  return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath, editing } = state
@@ -249,6 +259,9 @@ const ThoughtContainer = ({
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
   const parentId = head(rootedParentOf(state, simplePath))
+  const children = childrenForced
+    ? childIdsToThoughts(state, childrenForced)
+    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -294,6 +307,42 @@ const ThoughtContainer = ({
       : null
   })
 
+  const hideBullet = useSelector((state: State) => {
+    // bullet may be set from =children or =grandchildren and passed as a prop
+    if (hideBulletProp) return true
+
+    /** Returns true if the bullet should be hidden. */
+    const hideBullet = () =>
+      thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
+
+    /** Returns true if the bullet should be hidden if zoomed. */
+    const hideBulletZoom = (): boolean => {
+      if (!isEditing) return false
+      const childEnvZoomId = findFirstEnvContextWithZoom(state, { id: thought.id, env: env || {} })
+      const zoomId = findDescendant(state, head(simplePath), ['=focus', 'Zoom'])
+      return attribute(state, zoomId, '=bullet') === 'None' || attribute(state, childEnvZoomId, '=bullet') === 'None'
+    }
+
+    /** Load =bullet from child expressions that are found in the environment. */
+    const hideBulletEnv = () => {
+      const bulletEnv = children
+        .filter(
+          child =>
+            child.value in GLOBAL_STYLE_ENV ||
+            // children that have an entry in the environment
+            (child.value in { ...env } &&
+              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+              child.id !== env![child.value]),
+        )
+        .map(child =>
+          child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
+        )
+      return bulletEnv.some(envChildBullet => envChildBullet === 'None')
+    }
+
+    return hideBullet() || hideBulletZoom() || hideBulletEnv()
+  })
+
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
@@ -307,10 +356,6 @@ const ThoughtContainer = ({
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: Subthoughts render
-
-  const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
@@ -363,23 +408,6 @@ const ThoughtContainer = ({
       // use stable object reference
       EMPTY_OBJECT,
     )
-
-  /** Load =bullet from child expressions that are found in the environment. */
-  const bulletEnv = () =>
-    children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
-      .map(child =>
-        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
-      )
-
-  const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
 
   const styleContainerSelf = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
