@@ -236,7 +236,6 @@ const ThoughtContainer = ({
   const state = store.getState()
   const thoughtId = head(simplePath)
   const thought = getThoughtById(state, thoughtId)
-  const parentId = head(rootedParentOf(state, simplePath))
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
     : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
@@ -281,6 +280,23 @@ const ThoughtContainer = ({
     return showContexts && isRoot(pathParent)
   })
 
+  // true if the thought has an invalid option
+  const invalidOption = useSelector((state: State) => {
+    if (!thought) return false
+
+    const parentId = head(rootedParentOf(state, simplePath))
+    const optionsId = findDescendant(state, parentId, '=options')
+    const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
+
+    const options =
+      !isAttribute(thought.value) && childrenOptions.length > 0
+        ? childrenOptions.map(thought => thought.value.toLowerCase())
+        : null
+    const invalidOption = options ? !options.includes(value.toLowerCase()) : false
+
+    return invalidOption
+  })
+
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thought })
@@ -296,16 +312,6 @@ const ThoughtContainer = ({
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
-
-  const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
-
-  const options =
-    !isAttribute(value) && childrenOptions.length > 0
-      ? childrenOptions.map(thought => {
-          return thought.value.toLowerCase()
-        })
-      : null
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
@@ -349,7 +355,7 @@ const ThoughtContainer = ({
           expanded: isExpanded,
           function: isAttribute(value), // eslint-disable-line quote-props
           'has-only-child': children.length === 1,
-          'invalid-option': options ? !options.includes(value.toLowerCase()) : null,
+          'invalid-option': invalidOption,
           'is-multi-column': isMultiColumnTable,
           // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
           // this is a bit of a hack since the bullet transform checks leaf instead of expanded
