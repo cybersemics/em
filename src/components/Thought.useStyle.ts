@@ -29,9 +29,11 @@ const useStyle = ({
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return undefined
 
-    const parent = getThoughtById(state, thought.parentId)
+    // may return null if context ancestors have not yet loaded
+    const parent = getThoughtById(state, thought.parentId) as Thought | null
+
     const styleSelf =
-      thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
+      thought.value !== '=children' && thought.value !== '=grandchildren' && parent?.value !== '=let'
         ? getStyle(state, thought.id)
         : null
 
