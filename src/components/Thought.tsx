@@ -233,30 +233,35 @@ const ThoughtContainer = ({
   styleContainer: styleContainerProp,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
-  const state = store.getState()
   const thoughtId = head(simplePath)
-  const thought = getThoughtById(state, thoughtId)
-  const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
+  const children = useSelector((state: State) =>
+    childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
+  )
 
   useEffect(() => {
     if (isBeingHoveredOver) {
-      store.dispatch(
-        dragInProgress({
-          value: true,
-          draggingThought: state.draggingThought,
-          hoveringPath: path,
-          hoverId: DROP_TARGET.ThoughtDrop,
-        }),
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          dragInProgress({
+            value: true,
+            draggingThought: getState().draggingThought,
+            hoveringPath: path,
+            hoverId: DROP_TARGET.ThoughtDrop,
+          }),
+        ),
       )
     }
   }, [isBeingHoveredOver])
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
-  const style = useStyle({ children, env, styleProp, thought })
-  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
+  const style = useStyle({ children, env, styleProp, thoughtId })
+  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
+  const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
+  const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
+
+  // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
+  const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
@@ -287,6 +292,7 @@ const ThoughtContainer = ({
 
   // true if the thought has an invalid option
   const invalidOption = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
     if (!thought) return false
 
     const parentId = head(rootedParentOf(state, simplePath))
@@ -311,6 +317,10 @@ const ThoughtContainer = ({
       (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
 
     const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
+
+    const draggingThoughtValue = state.draggingThought
+      ? getThoughtById(state, headId(state.draggingThought))?.value
+      : null
 
     return cursorOnAlphabeticalSort
       ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
@@ -338,10 +348,6 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const draggingThoughtValue = state.draggingThought
-    ? getThoughtById(state, headId(state.draggingThought))?.value
-    : null
-
   return dropTarget(
     dragSource(
       <li
@@ -367,8 +373,7 @@ const ThoughtContainer = ({
           prose: view === 'Prose',
           'show-contexts': showContexts,
           'show-contexts-no-breadcrumbs': simplePath.length === 2,
-          // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-          'table-view': view === 'Table' && !isContextViewActive(state, path),
+          'table-view': isTable,
         })}
         ref={el => {
           if (el) {
@@ -387,10 +392,7 @@ const ThoughtContainer = ({
           }}
         >
           {showContexts && simplePath.length > 1 ? (
-            <ContextBreadcrumbs
-              simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))}
-              homeContext={homeContext}
-            />
+            <ContextBreadcrumbs simplePath={grandparent} homeContext={homeContext} />
           ) : showContexts && simplePath.length > 2 ? (
             <span className='ellipsis'>
               <a

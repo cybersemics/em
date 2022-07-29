@@ -3,9 +3,11 @@ import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
 import findFirstEnvContextWithZoom from '../util/findFirstEnvContextWithZoom'
 import head from '../util/head'
 
@@ -19,16 +21,17 @@ const useHideBullet = ({
   hideBulletProp,
   isEditing,
   simplePath,
-  thought,
+  thoughtId,
 }: {
   children: Thought[]
   env: LazyEnv | undefined
   hideBulletProp: boolean | undefined
   isEditing: boolean
   simplePath: SimplePath
-  thought: Thought
+  thoughtId: ThoughtId
 }) => {
   const hideBullet = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true
 

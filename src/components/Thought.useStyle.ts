@@ -2,6 +2,7 @@ import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -17,14 +18,15 @@ const useStyle = ({
   children,
   env,
   styleProp,
-  thought,
+  thoughtId,
 }: {
   children: Thought[]
   env: LazyEnv | undefined
   styleProp: React.CSSProperties | undefined
-  thought: Thought
+  thoughtId: ThoughtId
 }) => {
   const style = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
     if (!thought) return undefined
 
     const parent = getThoughtById(state, thought.parentId)

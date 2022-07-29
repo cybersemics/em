@@ -245,9 +245,9 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
-  const style = useStyle({ children, env, styleProp, thought })
+  const style = useStyle({ children, env, styleProp, thoughtId })
 
   if (!thought) return null
 

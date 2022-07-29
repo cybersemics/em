@@ -3,9 +3,11 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
 import { isDescendantPath } from '../util/isDescendantPath'
 import { safeRefMerge } from '../util/safeRefMerge'
 
@@ -16,16 +18,18 @@ const useStyleContainer = ({
   children,
   env,
   styleContainerProp,
-  thought,
+  thoughtId,
   path,
 }: {
   children: Thought[]
   env: LazyEnv | undefined
   styleContainerProp: React.CSSProperties | undefined
-  thought: Thought
+  thoughtId: ThoughtId
   path: Path
 }) => {
   const styleContainer = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
+
     /** Returns thought-container style from env and self. */
     const styleContainerNew = () => {
       const styleContainerEnv = children
