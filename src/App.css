@@ -2,22 +2,16 @@
    Keep these in one place to make it easier to determine interactions and prevent conflicts.
    Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
 :root {
+  --z-index-alert: 50;
+  --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
   --z-index-toolbar-container: 20;
-  /* above breadcrumbs, toolbar, export modal and status */
-  --z-index-alert: 11;
-  --z-index-modal: 10;
   --z-index-toolbar: 10;
-  /* place above .thought-container to preserve click area of bullet
-   otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
-  --z-index-bullet: 10;
+  --z-index-toolbar-overlay: 10;
   --z-index-latest-shortcuts: 10;
   /* above .children */
-  --z-index-tutorial-trace-gesture: 10;
-  --z-index-toolbar-overlay: 5;
-  /* above breadcrumbs, hamburger menu, and toolbar */
-  --z-index-status: 4;
-  /* above .children .children */
+  --z-index-tutorial-trace-gesture: 5;
+  /* above .children */
   --z-index-tutorial: 3;
   --z-index-toolbar-arrow: 2;
   /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
@@ -25,6 +19,9 @@
   /* above normal .drop-hover */
   --z-index-drop-end: 2;
   --z-index-resizer: 2;
+  /* place above .thought-container to preserve click area of bullet
+   otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
+  --z-index-bullet: 2;
   /* define a single var to place any element in a stacking context */
   --z-index-stack: 1;
   --z-index-hide: -1;
@@ -846,7 +843,7 @@ body.dark {
   background-color: #c23;
   color: white;
   text-align: center;
-  z-index: var(--z-index-status);
+  z-index: var(--z-index-alert);
   word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
 }
 
@@ -856,7 +853,7 @@ body.dark {
   float: left;
   position: fixed;
   top: 5;
-  z-index: var(--z-index-status);
+  z-index: var(--z-index-alert);
 }
 
 .status span {
