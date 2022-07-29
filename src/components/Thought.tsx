@@ -138,14 +138,117 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
 
+/** A hook for the thought style merged from props, self, and env. Avoids re-renders by using a stable object reference when possible. */
+const useStyle = ({
+  children,
+  env,
+  styleProp,
+  thought,
+}: {
+  children: Thought[]
+  env: LazyEnv | undefined
+  styleProp: React.CSSProperties | undefined
+  thought: Thought
+}) => {
+  const style = useSelector((state: State) => {
+    if (!thought) return undefined
+
+    const parent = getThoughtById(state, thought.parentId)
+    const styleSelf =
+      thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
+        ? getStyle(state, thought.id)
+        : null
+
+    /** Load styles from child expressions that are found in the environment. */
+    const styleEnv = children
+      .filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // children that have an entry in the environment
+          (child.value in { ...env } &&
+            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+            child.id !== env![child.value]),
+      )
+      .map(child =>
+        child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {},
+      )
+      .reduce<React.CSSProperties>(
+        (accum, style) => ({
+          ...accum,
+          ...style,
+        }),
+        // use stable object reference
+        EMPTY_OBJECT,
+      )
+
+    // avoid re-renders from object reference change
+    return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
+  })
+
+  return style
+}
+
+/** A hook for the thought-container style merged from self and zoom. */
+const useStyleContainer = ({
+  children,
+  env,
+  styleContainerProp,
+  thought,
+  path,
+}: {
+  children: Thought[]
+  env: LazyEnv | undefined
+  styleContainerProp: React.CSSProperties | undefined
+  thought: Thought
+  path: Path
+}) => {
+  const styleContainer = useSelector((state: State) => {
+    /** Returns thought-container style from env and self. */
+    const styleContainerNew = () => {
+      const styleContainerEnv = children
+        .filter(
+          child =>
+            child.value in GLOBAL_STYLE_ENV ||
+            // children that have an entry in the environment
+            (child.value in { ...env } &&
+              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+              child.id !== env![child.value]),
+        )
+        .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
+        .reduce<React.CSSProperties>(
+          (accum, style) => ({
+            ...accum,
+            ...style,
+          }),
+          // use stable object reference
+          EMPTY_OBJECT,
+        )
+
+      const styleContainerSelf = getStyle(state, thought.id, { container: true })
+      return safeRefMerge(styleContainerProp, styleContainerEnv, styleContainerSelf)
+    }
+
+    /** Returns thought-container style from zoom. */
+    const styleContainerZoom = () => {
+      // check if the cursor path includes the current thought
+      const isEditingPath = isDescendantPath(state.cursor, path)
+      if (!isEditingPath) return null
+
+      const zoomId = findDescendant(state, thought.id, ['=focus', 'Zoom'])
+      return getStyle(state, zoomId, { container: true })
+    }
+
+    return safeRefMerge(styleContainerNew(), styleContainerZoom()) || undefined
+  })
+
+  return styleContainer
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath, editing } = state
 
   const { path, simplePath, depth } = props
-
-  // check if the cursor path includes the current thought
-  const isEditingPath = isDescendantPath(cursor, path)
 
   // check if the cursor is editing a thought directly
   const isEditing = equalPath(cursor, path)
@@ -184,7 +287,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isCursorGrandparent,
     expandedContextThought,
     isEditing,
-    isEditingPath,
     isExpanded,
     isLeaf,
     publish: !search && publishMode(),
@@ -233,7 +335,6 @@ const ThoughtContainer = ({
   isDeepHovering,
   isDragging,
   isEditing,
-  isEditingPath,
   isExpanded,
   isHeader,
   isHovering,
@@ -251,8 +352,8 @@ const ThoughtContainer = ({
   rank,
   showContexts,
   simplePath,
-  style,
-  styleContainer,
+  style: styleProp,
+  styleContainer: styleContainerProp,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -299,14 +400,6 @@ const ThoughtContainer = ({
 
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
 
-  const styleSelf = useSelector((state: State) => {
-    if (!thought) return null
-    const parent = getThoughtById(state, parentId)
-    return thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
-      ? getStyle(state, thoughtId)
-      : null
-  })
-
   const hideBullet = useSelector((state: State) => {
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true
@@ -349,35 +442,8 @@ const ThoughtContainer = ({
     return showContexts && isRoot(pathParent)
   })
 
-  const styleContainerZoom = useSelector((state: State) => {
-    if (!isEditingPath) return false
-    const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
-    return getStyle(state, zoomId, { container: true })
-  })
-
-  const styleContainerNew = useSelector((state: State) => {
-    const styleContainerEnv = children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
-      .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
-      .reduce<React.CSSProperties>(
-        (accum, style) => ({
-          ...accum,
-          ...style,
-        }),
-        // use stable object reference
-        EMPTY_OBJECT,
-      )
-
-    const styleContainerSelf = getStyle(state, thoughtId, { container: true })
-    return safeRefMerge(styleContainer, styleContainerEnv, styleContainerSelf)
-  })
+  const style = useStyle({ children, env, styleProp, thought })
+  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
 
   if (!thought) return null
 
@@ -399,26 +465,6 @@ const ThoughtContainer = ({
           return thought.value.toLowerCase()
         })
       : null
-
-  /** Load styles from child expressions that are found in the environment. */
-  const styleEnv = children
-    .filter(
-      child =>
-        child.value in GLOBAL_STYLE_ENV ||
-        // children that have an entry in the environment
-        (child.value in { ...env } &&
-          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-          child.id !== env![child.value]),
-    )
-    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
-    .reduce<React.CSSProperties>(
-      (accum, style) => ({
-        ...accum,
-        ...style,
-      }),
-      // use stable object reference
-      EMPTY_OBJECT,
-    )
 
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
@@ -447,17 +493,11 @@ const ThoughtContainer = ({
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
 
-  // avoid re-renders from object reference change
-  const styleNew = safeRefMerge(style, styleEnv, styleSelf)
-
   return dropTarget(
     dragSource(
       <li
         aria-label='thought-container'
-        style={{
-          ...styleContainerNew,
-          ...styleContainerZoom,
-        }}
+        style={styleContainer}
         className={classNames({
           child: true,
           'child-divider': isDivider(value),
@@ -541,7 +581,7 @@ const ThoughtContainer = ({
             path={path}
             minContexts={allowSingleContext ? 0 : 2}
             showContextBreadcrumbs={showContextBreadcrumbs}
-            style={styleNew || undefined}
+            style={style}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
           />
 
@@ -554,7 +594,7 @@ const ThoughtContainer = ({
             isVisible={isVisible}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
-            style={styleNew || undefined}
+            style={style}
             simplePath={simplePath}
             onEdit={!isTouch ? onEdit : undefined}
             view={view}
