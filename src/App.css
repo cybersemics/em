@@ -2315,12 +2315,12 @@ code,
   color: lightblue;
 }
 
-/* the bar that displays on hover when moving thoughts */
+/* the bar that displays on hover when dragging thoughts */
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
   margin-top: -0.3em;
-  margin-left: -0.7em;
+  margin-left: -1.2em;
   background-color: lightblue;
   height: 3px;
   border-radius: 99px;
