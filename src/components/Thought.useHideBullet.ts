@@ -3,25 +3,14 @@ import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import findFirstEnvContextWithZoom from '../util/findFirstEnvContextWithZoom'
 import head from '../util/head'
-import isAttribute from '../util/isAttribute'
 
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
-
-/** Finds the the first env entry with =focus/Zoom. O(children). */
-const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
-  const children = getAllChildrenAsThoughts(state, id)
-  const child = children.find(
-    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
-  )
-  return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
-}
 
 /** A hook that returns true if the bullet should be hidden based on the =bullet attribute. */
 const useHideBullet = ({
