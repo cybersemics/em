@@ -253,6 +253,11 @@ const ThoughtContainer = ({
     }
   }, [isBeingHoveredOver])
 
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
+  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
+  const style = useStyle({ children, env, styleProp, thought })
+  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
+
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
@@ -297,10 +302,30 @@ const ThoughtContainer = ({
     return invalidOption
   })
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
-  const style = useStyle({ children, env, styleProp, thought })
-  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
+  const shouldDisplayHover = useSelector((state: State) => {
+    /** Checks if any descendents of the direct siblings is being hovered. */
+    const isAnySiblingDescendantHovering = () =>
+      !isHovering &&
+      state.hoveringPath &&
+      isDescendantPath(state.hoveringPath, parentOf(path)) &&
+      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
+
+    const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
+
+    return cursorOnAlphabeticalSort
+      ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
+        state.dragInProgress &&
+          isParentHovering &&
+          draggingThoughtValue &&
+          !isAnySiblingDescendantHovering() &&
+          // check if it's alphabetically previous to current thought
+          compareReasonable(draggingThoughtValue, value) <= 0 &&
+          // check if it's alphabetically next to previous thought if it exists
+          // @MIGRATION_TODO: Convert prevChild to thought and get the value
+          (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
+      : // if alphabetical sort is disabled just check if current thought is hovering
+        globals.simulateDropHover || isHovering
+  })
 
   if (!thought) return null
 
@@ -313,32 +338,9 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
-
   const draggingThoughtValue = state.draggingThought
     ? getThoughtById(state, headId(state.draggingThought))?.value
     : null
-
-  /** Checks if any descendents of the direct siblings is being hovered. */
-  const isAnySiblingDescendantHovering = () =>
-    !isHovering &&
-    state.hoveringPath &&
-    isDescendantPath(state.hoveringPath, parentOf(path)) &&
-    (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
-
-  const shouldDisplayHover = cursorOnAlphabeticalSort
-    ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-      state.dragInProgress &&
-      isParentHovering &&
-      draggingThoughtValue &&
-      !isAnySiblingDescendantHovering() &&
-      // check if it's alphabetically previous to current thought
-      compareReasonable(draggingThoughtValue, value) <= 0 &&
-      // check if it's alphabetically next to previous thought if it exists
-      // @MIGRATION_TODO: Convert prevChild to thought and get the value
-      (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
-    : // if alphabetical sort is disabled just check if current thought is hovering
-      globals.simulateDropHover || isHovering
 
   return dropTarget(
     dragSource(
