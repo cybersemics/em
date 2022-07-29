@@ -562,6 +562,24 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
       : 0
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
+  const childrenAttributeId = useSelector(
+    (state: State) =>
+      (value !== '=children' &&
+        getAllChildrenAsThoughts(state, thought.id).find(child => child.value === '=children')?.id) ||
+      null,
+  )
+  const grandchildrenAttributeId = useSelector(
+    (state: State) =>
+      (value !== '=grandchildren' &&
+        getAllChildrenAsThoughts(state, thought.parentId).find(child => child.value === '=grandchildren')?.id) ||
+      null,
+  )
+
+  const hideBulletsChildren = useSelector((state: State) => attribute(state, childrenAttributeId, '=bullet') === 'None')
+  const hideBulletsGrandchildren = useSelector(
+    (state: State) => attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
+  )
+
   const proposedPageSize = PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
     setPage(page + 1)
@@ -639,21 +657,11 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  const childrenAttributeId =
-    (value !== '=children' &&
-      getAllChildrenAsThoughts(state, thought.id).find(child => child.value === '=children')?.id) ||
-    null
-  const grandchildrenAttributeId =
-    (value !== '=grandchildren' &&
-      getAllChildrenAsThoughts(state, thought.parentId).find(child => child.value === '=grandchildren')?.id) ||
-    null
   const styleChildren = getStyle(state, childrenAttributeId)
   const styleGrandchildren = getStyle(state, grandchildrenAttributeId)
   const styleContainerChildren = getStyle(state, childrenAttributeId, { container: true })
   const styleContainerGrandchildren = getStyle(state, grandchildrenAttributeId, { container: true })
 
-  const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
-  const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
   /** In a Multi Column table, gets the children that serve as the column headers. */
