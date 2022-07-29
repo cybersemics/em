@@ -3,7 +3,6 @@ import React, { useEffect } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import Index from '../@types/IndexType'
-import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -15,7 +14,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import globals from '../globals'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
@@ -24,7 +23,6 @@ import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
-import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -42,7 +40,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
-import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs'
@@ -50,6 +47,9 @@ import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './D
 import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts'
+import useHideBullet from './Thought.useHideBullet'
+import useStyle from './Thought.useStyle'
+import useStyleContainer from './Thought.useStyleContainer'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
@@ -120,184 +120,6 @@ export type ConnectedThoughtProps = ThoughtProps & Partial<ReturnType<typeof map
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
 export type ConnectedThoughtDispatchProps = ReturnType<typeof mapDispatchToProps>
-
-const EMPTY_OBJECT = {}
-
-/** Gets a globally defined style. */
-const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
-
-/** Gets a globally defined bullet. */
-const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
-
-/** Finds the the first env entry with =focus/Zoom. O(children). */
-const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
-  const children = getAllChildrenAsThoughts(state, id)
-  const child = children.find(
-    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
-  )
-  return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
-}
-
-/** A hook for the thought style merged from props, self, and env. Avoids re-renders by using a stable object reference when possible. */
-const useStyle = ({
-  children,
-  env,
-  styleProp,
-  thought,
-}: {
-  children: Thought[]
-  env: LazyEnv | undefined
-  styleProp: React.CSSProperties | undefined
-  thought: Thought
-}) => {
-  const style = useSelector((state: State) => {
-    if (!thought) return undefined
-
-    const parent = getThoughtById(state, thought.parentId)
-    const styleSelf =
-      thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
-        ? getStyle(state, thought.id)
-        : null
-
-    /** Load styles from child expressions that are found in the environment. */
-    const styleEnv = children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
-      .map(child =>
-        child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {},
-      )
-      .reduce<React.CSSProperties>(
-        (accum, style) => ({
-          ...accum,
-          ...style,
-        }),
-        // use stable object reference
-        EMPTY_OBJECT,
-      )
-
-    // avoid re-renders from object reference change
-    return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
-  })
-
-  return style
-}
-
-/** A hook for the thought-container style merged from self and zoom. */
-const useStyleContainer = ({
-  children,
-  env,
-  styleContainerProp,
-  thought,
-  path,
-}: {
-  children: Thought[]
-  env: LazyEnv | undefined
-  styleContainerProp: React.CSSProperties | undefined
-  thought: Thought
-  path: Path
-}) => {
-  const styleContainer = useSelector((state: State) => {
-    /** Returns thought-container style from env and self. */
-    const styleContainerNew = () => {
-      const styleContainerEnv = children
-        .filter(
-          child =>
-            child.value in GLOBAL_STYLE_ENV ||
-            // children that have an entry in the environment
-            (child.value in { ...env } &&
-              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-              child.id !== env![child.value]),
-        )
-        .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
-        .reduce<React.CSSProperties>(
-          (accum, style) => ({
-            ...accum,
-            ...style,
-          }),
-          // use stable object reference
-          EMPTY_OBJECT,
-        )
-
-      const styleContainerSelf = getStyle(state, thought.id, { container: true })
-      return safeRefMerge(styleContainerProp, styleContainerEnv, styleContainerSelf)
-    }
-
-    /** Returns thought-container style from zoom. */
-    const styleContainerZoom = () => {
-      // check if the cursor path includes the current thought
-      const isEditingPath = isDescendantPath(state.cursor, path)
-      if (!isEditingPath) return null
-
-      const zoomId = findDescendant(state, thought.id, ['=focus', 'Zoom'])
-      return getStyle(state, zoomId, { container: true })
-    }
-
-    return safeRefMerge(styleContainerNew(), styleContainerZoom()) || undefined
-  })
-
-  return styleContainer
-}
-
-/** A hook that returns true if the bullet should be hidden based on the =bullet attribute. */
-const useHideBullet = ({
-  children,
-  env,
-  hideBulletProp,
-  isEditing,
-  simplePath,
-  thought,
-}: {
-  children: Thought[]
-  env: LazyEnv | undefined
-  hideBulletProp: boolean | undefined
-  isEditing: boolean
-  simplePath: SimplePath
-  thought: Thought
-}) => {
-  const hideBullet = useSelector((state: State) => {
-    // bullet may be set from =children or =grandchildren and passed as a prop
-    if (hideBulletProp) return true
-
-    /** Returns true if the bullet should be hidden. */
-    const hideBullet = () =>
-      thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
-
-    /** Returns true if the bullet should be hidden if zoomed. */
-    const hideBulletZoom = (): boolean => {
-      if (!isEditing) return false
-      const childEnvZoomId = findFirstEnvContextWithZoom(state, { id: thought.id, env: env || {} })
-      const zoomId = findDescendant(state, head(simplePath), ['=focus', 'Zoom'])
-      return attribute(state, zoomId, '=bullet') === 'None' || attribute(state, childEnvZoomId, '=bullet') === 'None'
-    }
-
-    /** Load =bullet from child expressions that are found in the environment. */
-    const hideBulletEnv = () => {
-      const bulletEnv = children
-        .filter(
-          child =>
-            child.value in GLOBAL_STYLE_ENV ||
-            // children that have an entry in the environment
-            (child.value in { ...env } &&
-              // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-              child.id !== env![child.value]),
-        )
-        .map(child =>
-          child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
-        )
-      return bulletEnv.some(envChildBullet => envChildBullet === 'None')
-    }
-
-    return hideBullet() || hideBulletZoom() || hideBulletEnv()
-  })
-
-  return hideBullet
-}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { View } from 'moti'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
@@ -46,6 +45,9 @@ import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './D
 import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts.native'
+import useHideBullet from './Thought.useHideBullet'
+import useStyle from './Thought.useStyle'
+import useStyleContainer from './Thought.useStyleContainer'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
@@ -78,6 +80,7 @@ export interface ThoughtContainerProps {
   rank: number
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
 }
@@ -97,6 +100,7 @@ interface ThoughtProps {
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   style?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   simplePath: SimplePath
   view?: string | null
 }
@@ -214,7 +218,8 @@ const ThoughtContainer = ({
   rank,
   showContexts,
   simplePath,
-  style,
+  style: styleProp,
+  styleContainer: styleContainerProp,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
@@ -222,6 +227,9 @@ const ThoughtContainer = ({
   const thoughtId = head(simplePath)
   const value = thought.value
   const parentId = head(rootedParentOf(state, simplePath))
+  const children = childrenForced
+    ? childIdsToThoughts(state, childrenForced)
+    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
 
   useEffect(() => {
     if (isBeingHoveredOver) {
@@ -257,25 +265,16 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
 
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
-
-  const styleSelf = useSelector((state: State) => {
-    if (!thought) return null
-    const parent = getThoughtById(state, parentId)
-    return thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
-      ? getStyle(state, thoughtId)
-      : null
-  })
+  const style = useStyle({ children, env, styleProp, thought })
+  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
 
   if (!thought) return null
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
   // See: <Subthoughts> render
-
-  const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
 
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
@@ -285,44 +284,6 @@ const ThoughtContainer = ({
   const options =
     !isAttribute(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
-  /** Load styles from child expressions that are found in the environment. */
-  const styleEnv = children
-    .filter(
-      child =>
-        child.value in GLOBAL_STYLE_ENV ||
-        // children that have an entry in the environment
-        (child.value in { ...env } &&
-          // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-          child.id !== env![child.value]),
-    )
-    .map(child => (child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {}))
-    .reduce<React.CSSProperties>(
-      (accum, style) => ({
-        ...accum,
-        ...style,
-      }),
-      // use stable object reference
-      EMPTY_OBJECT,
-    )
-
-  /** Load =bullet from child expressions that are found in the environment. */
-  const bulletEnv = () =>
-    children
-      .filter(
-        child =>
-          child.value in GLOBAL_STYLE_ENV ||
-          // children that have an entry in the environment
-          (child.value in { ...env } &&
-            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
-            child.id !== env![child.value]),
-      )
-      .map(child =>
-        child.value in { ...env } ? attribute(state, env![child.value], '=bullet') : getGlobalBullet(child.value),
-      )
-
-  const hideBullet = hideBulletProp || bulletEnv().some(envChildBullet => envChildBullet === 'None')
-
-  const styleContainer = getStyle(state, thoughtId, { container: true })
   const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
   const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
 
@@ -351,19 +312,6 @@ const ThoughtContainer = ({
       (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
     : // if alphabetical sort is disabled just check if current thought is hovering
       globals.simulateDropHover || isHovering
-
-  // avoid re-renders from object reference change
-  const styleNew =
-    Object.keys(styleSelf || {}).length > 0 ||
-    (Object.keys(styleEnv || {}).length > 0 && Object.keys(style || {}).length > 0)
-      ? {
-          ...style,
-          ...styleEnv,
-          ...styleSelf,
-        }
-      : Object.keys(styleEnv || {}).length > 0
-      ? styleEnv
-      : style
 
   const isProseView = hideBullet
 
@@ -408,7 +356,7 @@ const ThoughtContainer = ({
           onEdit={onEdit}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
-          style={styleNew}
+          style={style}
           simplePath={simplePath}
           view={view}
         />

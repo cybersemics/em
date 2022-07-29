@@ -30,6 +30,7 @@ import {
 import getContexts from '../selectors/getContexts'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
+import getStyle from '../selectors/getStyle'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -51,6 +52,7 @@ import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
+import { safeRefMerge } from '../util/safeRefMerge'
 import GestureDiagram from './GestureDiagram'
 import { Text } from './Text.native'
 import Thought from './Thought'
@@ -611,6 +613,15 @@ export const SubthoughtsComponent = ({
   const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
   // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
+  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId))
+  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId))
+  const styleContainerChildren = useSelector((state: State) =>
+    getStyle(state, childrenAttributeId, { container: true }),
+  )
+  const styleContainerGrandchildren = useSelector((state: State) =>
+    getStyle(state, grandchildrenAttributeId, { container: true }),
+  )
+
   return (
     <>
       {contextBinding && showContexts ? (
@@ -660,6 +671,8 @@ export const SubthoughtsComponent = ({
               marginRight: 20,
             }
 
+            const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
+
             const isTableView = view === VIEW_MODE.Table
             const isProseView = view === VIEW_MODE.Prose
 
@@ -679,6 +692,7 @@ export const SubthoughtsComponent = ({
                   showContexts={showContexts}
                   simplePath={childPath}
                   style={isTableView ? style : {}}
+                  styleContainer={styleContainer || undefined}
                   path={appendChildPath(state, childPath, path)}
                   view={view}
                 />

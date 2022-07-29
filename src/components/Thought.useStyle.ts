@@ -1,0 +1,65 @@
+import { useSelector } from 'react-redux'
+import LazyEnv from '../@types/LazyEnv'
+import State from '../@types/State'
+import Thought from '../@types/Thought'
+import { GLOBAL_STYLE_ENV } from '../constants'
+import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import { safeRefMerge } from '../util/safeRefMerge'
+
+const EMPTY_OBJECT = {}
+
+/** Gets a globally defined style. */
+const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
+
+/** A hook for the thought style merged from props, self, and env. Avoids re-renders by using a stable object reference when possible. */
+const useStyle = ({
+  children,
+  env,
+  styleProp,
+  thought,
+}: {
+  children: Thought[]
+  env: LazyEnv | undefined
+  styleProp: React.CSSProperties | undefined
+  thought: Thought
+}) => {
+  const style = useSelector((state: State) => {
+    if (!thought) return undefined
+
+    const parent = getThoughtById(state, thought.parentId)
+    const styleSelf =
+      thought.value !== '=children' && thought.value !== '=grandchildren' && parent.value !== '=let'
+        ? getStyle(state, thought.id)
+        : null
+
+    /** Load styles from child expressions that are found in the environment. */
+    const styleEnv = children
+      .filter(
+        child =>
+          child.value in GLOBAL_STYLE_ENV ||
+          // children that have an entry in the environment
+          (child.value in { ...env } &&
+            // do not apply to =let itself i.e. =let/x/=style should not apply to =let
+            child.id !== env![child.value]),
+      )
+      .map(child =>
+        child.value in { ...env } ? getStyle(state, env![child.value]) : getGlobalStyle(child.value) || {},
+      )
+      .reduce<React.CSSProperties>(
+        (accum, style) => ({
+          ...accum,
+          ...style,
+        }),
+        // use stable object reference
+        EMPTY_OBJECT,
+      )
+
+    // avoid re-renders from object reference change
+    return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
+  })
+
+  return style
+}
+
+export default useStyle
