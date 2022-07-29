@@ -1,8 +1,7 @@
 import { View } from 'moti'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { connect, useSelector } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
+import { connect } from 'react-redux'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
@@ -14,41 +13,32 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { DROP_TARGET, GLOBAL_STYLE_ENV, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG, VIEW_MODE } from '../constants'
+import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
 import globals from '../globals'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
-import getSortPreference from '../selectors/getSortPreference'
-import getStyle from '../selectors/getStyle'
+import { getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
 import { commonStyles } from '../style/commonStyles'
-import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
-import hashContext from '../util/hashContext'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headId from '../util/headId'
-import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
 import Bullet from './Bullet'
 import Byline from './Byline'
-import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
 import Subthoughts from './Subthoughts.native'
 import useHideBullet from './Thought.useHideBullet'
 import useStyle from './Thought.useStyle'
-import useStyleContainer from './Thought.useStyleContainer'
-import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
  * Redux
@@ -112,19 +102,11 @@ export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<
 // placeholder since mobile Thought component does not have mapDispatchToProps
 export type ConnectedThoughtDispatchProps = Record<string, never>
 
-const EMPTY_OBJECT = {}
-
-/** Gets a globally defined style. */
-const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
-
-/** Gets a globally defined bullet. */
-const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
 
-  const { path, simplePath, showContexts, depth } = props
+  const { path, simplePath, depth } = props
 
   // check if the cursor path includes the current thought
   const isEditingPath = isDescendantPath(cursor, path)
@@ -225,8 +207,6 @@ const ThoughtContainer = ({
   const state = store.getState()
   const thought = getThoughtById(state, head(simplePath))
   const thoughtId = head(simplePath)
-  const value = thought.value
-  const parentId = head(rootedParentOf(state, simplePath))
   const children = childrenForced
     ? childIdsToThoughts(state, childrenForced)
     : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
@@ -268,7 +248,6 @@ const ThoughtContainer = ({
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thought })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thought })
-  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thought, path })
 
   if (!thought) return null
 
@@ -279,39 +258,36 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  const optionsId = findDescendant(state, parentId, '=options')
-  const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
-  const options =
-    !isAttribute(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
+  // const optionsId = findDescendant(state, parentId, '=options')
+  // const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
+  // const options =
+  //   !isAttribute(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
 
-  const zoomId = findDescendant(state, thoughtId, ['=focus', 'Zoom'])
-  const styleContainerZoom = isEditingPath ? getStyle(state, zoomId, { container: true }) : null
+  // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
-  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
-
-  const draggingThoughtValue = state.draggingThought
-    ? getThoughtById(state, headId(state.draggingThought))?.value
-    : null
+  // const draggingThoughtValue = state.draggingThought
+  //   ? getThoughtById(state, headId(state.draggingThought))?.value
+  //   : null
 
   /** Checks if any descendents of the direct siblings is being hovered. */
-  const isAnySiblingDescendantHovering = () =>
-    !isHovering &&
-    state.hoveringPath &&
-    isDescendantPath(state.hoveringPath, parentOf(path)) &&
-    (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
+  // const isAnySiblingDescendantHovering = () =>
+  //   !isHovering &&
+  //   state.hoveringPath &&
+  //   isDescendantPath(state.hoveringPath, parentOf(path)) &&
+  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
 
-  const shouldDisplayHover = cursorOnAlphabeticalSort
-    ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-      state.dragInProgress &&
-      isParentHovering &&
-      draggingThoughtValue &&
-      !isAnySiblingDescendantHovering() &&
-      // check if it's alphabetically previous to current thought
-      compareReasonable(draggingThoughtValue, value) <= 0 &&
-      // check if it's alphabetically next to previous thought if it exists
-      (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
-    : // if alphabetical sort is disabled just check if current thought is hovering
-      globals.simulateDropHover || isHovering
+  // const shouldDisplayHover = cursorOnAlphabeticalSort
+  //   ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
+  //     state.dragInProgress &&
+  //     isParentHovering &&
+  //     draggingThoughtValue &&
+  //     !isAnySiblingDescendantHovering() &&
+  //     // check if it's alphabetically previous to current thought
+  //     compareReasonable(draggingThoughtValue, value) <= 0 &&
+  //     // check if it's alphabetically next to previous thought if it exists
+  //     (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
+  //   : // if alphabetical sort is disabled just check if current thought is hovering
+  //     globals.simulateDropHover || isHovering
 
   const isProseView = hideBullet
 

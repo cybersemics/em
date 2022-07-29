@@ -1,5 +1,5 @@
 import { View } from 'moti'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { TouchableOpacity } from 'react-native'
 import { connect, useSelector, useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
@@ -15,7 +15,6 @@ import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
-import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import getChildPath from '../selectors/getChildPath'
@@ -48,7 +47,6 @@ import isDescendant from '../util/isDescendant'
 import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
-import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
@@ -471,6 +469,18 @@ export const SubthoughtsComponent = ({
       : 0
 
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
+  const childrenAttributeId = findDescendant(state, thoughtId, ['=children'])
+  const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
+  const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
+  const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
+  // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
+
+  const styleContainerChildren = useSelector((state: State) =>
+    getStyle(state, childrenAttributeId, { container: true }),
+  )
+  const styleContainerGrandchildren = useSelector((state: State) =>
+    getStyle(state, grandchildrenAttributeId, { container: true }),
+  )
 
   const proposedPageSize = PAGINATION_SIZE * page
   if (editIndex > proposedPageSize - 1) {
@@ -549,21 +559,6 @@ export const SubthoughtsComponent = ({
 
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
-
-  const childrenAttributeId = findDescendant(state, thoughtId, ['=children'])
-  const grandchildrenAttributeId = findDescendant(state, thoughtId, ['=grandchildren'])
-  const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
-  const hideBulletsGrandchildren = attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
-  // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
-
-  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId))
-  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId))
-  const styleContainerChildren = useSelector((state: State) =>
-    getStyle(state, childrenAttributeId, { container: true }),
-  )
-  const styleContainerGrandchildren = useSelector((state: State) =>
-    getStyle(state, grandchildrenAttributeId, { container: true }),
-  )
 
   return (
     <>
