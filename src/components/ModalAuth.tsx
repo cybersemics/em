@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import Index from '../@types/IndexType'
 import alert from '../action-creators/alert'
 import login from '../action-creators/login'
+import modalComplete from '../action-creators/modalComplete'
 import { FIREBASE_REDIRECT_URL } from '../constants'
 import storage from '../util/storage'
 import { ActionButton } from './ActionButton'
@@ -62,9 +63,9 @@ const ModalAuth = () => {
     try {
       await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
       updateIsSubmitting(false)
-    } catch (error) {
+    } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(error.message || firebaseErrorsIndex.default)
+      return updateError(e.message || firebaseErrorsIndex.default)
     }
     dispatch(alert('Please check your email'))
     closeModal()
@@ -78,9 +79,9 @@ const ModalAuth = () => {
       storage.setItem('modal-to-show', 'welcome')
       updateIsSubmitting(false)
       closeModal()
-    } catch (error) {
+    } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
+      return updateError(firebaseErrorsIndex[e?.code as errorCode] || firebaseErrorsIndex.default)
     }
   }, [])
 
@@ -169,6 +170,7 @@ const ModalAuth = () => {
               onClick={() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
+                dispatch(modalComplete('welcome'))
                 closeModal()
               }}
             >
