@@ -43,9 +43,8 @@ const Divider = ({ path }: { path: Path }) => {
         padding: '10px 4px 16px',
         position: 'relative',
         width: 85,
-        zIndex: 1,
       }}
-      className='divider-container'
+      className='divider-container z-index-stack'
       onClick={setCursorToDivider}
     >
       <div

@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import { noop } from 'lodash'
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
@@ -28,7 +29,11 @@ const HamburgerMenu = () => {
   return (
     <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
       <div
-        className='hamburger-menu'
+        className={classNames({
+          'hamburger-menu': true,
+          // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
+          [showSidebar || tutorial || error || showModal ? 'z-index-hide' : 'z-index-hamburger-menu']: true,
+        })}
         style={{
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
@@ -36,8 +41,6 @@ const HamburgerMenu = () => {
           // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
           transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
           top: 0,
-          // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-          zIndex: showSidebar || tutorial || error || showModal ? -1 : 30,
         }}
         onClick={() => {
           dispatch(toggleSidebar({}))

@@ -1,6 +1,44 @@
-/* COLORS:
-  gray: #838283
-*/
+/* z-index schedule
+   Keep these in one place to make it easier to determine interactions and prevent conflicts.
+   Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
+:root {
+  --z-index-hamburger-menu: 30;
+  --z-index-toolbar-container: 20;
+  /* above breadcrumbs, toolbar, export modal and status */
+  --z-index-alert: 11;
+  --z-index-modal: 10;
+  --z-index-toolbar: 10;
+  /* place above .thought-container to preserve click area of bullet
+   otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
+  --z-index-bullet: 10;
+  --z-index-latest-shortcuts: 10;
+  /* above .children */
+  --z-index-tutorial-trace-gesture: 10;
+  --z-index-toolbar-overlay: 5;
+  /* above breadcrumbs, hamburger menu, and toolbar */
+  --z-index-status: 4;
+  /* above .children .children */
+  --z-index-tutorial: 3;
+  --z-index-toolbar-arrow: 2;
+  /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
+  --z-index-thought-annotation-link: 2;
+  /* above normal .drop-hover */
+  --z-index-drop-end: 2;
+  --z-index-resizer: 2;
+  /* define a single var to place any element in a stacking context */
+  --z-index-stack: 1;
+  --z-index-hide: -1;
+}
+
+.z-index-hamburger-menu {
+  z-index: var(--z-index-hamburger-menu);
+}
+.z-index-stack {
+  z-index: var(--z-index-stack);
+}
+.z-index-hide {
+  z-index: var(--z-index-hide);
+}
 
 /* fixed debug box in bottom right */
 #debug {
@@ -321,7 +359,7 @@ a.text-link {
   text-align: right;
   top: 0;
   right: 0;
-  z-index: 20;
+  z-index: var(--z-index-toolbar-container);
   max-width: 88%;
   user-select: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
@@ -332,7 +370,7 @@ a.text-link {
   display: inline-flex;
   overflow-x: scroll;
   max-width: 100%;
-  z-index: 2;
+  z-index: var(--z-index-toolbar);
   -ms-overflow-style: none;
   background-color: white;
   box-shadow: 10px -20px 15px 25px white;
@@ -359,7 +397,7 @@ a.text-link {
   vertical-align: middle;
   color: gray;
   background-color: white;
-  z-index: 5;
+  z-index: var(--z-index-toolbar-arrow);
   display: inline-block;
   line-height: 20px;
 }
@@ -387,7 +425,7 @@ a.text-link {
   text-align: left;
   font-size: 14px;
   margin: 15px 20px 20px 5px;
-  z-index: 5;
+  z-index: var(--z-index-toolbar-overlay);
   background-color: #ccc;
   padding: 10px;
   box-shadow: 5px 5px 10px 0px #ccc;
@@ -418,7 +456,7 @@ a.text-link {
   font-size: 13px;
   border-color: #87ceeb;
   margin: 0;
-  z-index: 5;
+  z-index: var(--z-index-toolbar-overlay);
   padding: 10px;
   background-color: #ccc;
 }
@@ -450,7 +488,7 @@ a.text-link {
   display: inline-block;
   padding: 5px 8px;
   border-radius: 3px;
-  z-index: 1;
+  z-index: var(--z-index-stack);
   transition: padding 0.2s ease 0s;
 }
 
@@ -493,7 +531,7 @@ a.text-link {
     font-size: 13px;
     border-color: #87ceeb;
     margin: 0;
-    z-index: 5;
+    z-index: var(--z-index-toolbar-overlay);
   }
 }
 
@@ -525,10 +563,9 @@ a.text-link {
   display: inline-block;
 }
 
-/* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
 .thought-annotation a {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-index-thought-annotation-link);
 }
 
 .subthought-text,
@@ -584,9 +621,9 @@ a.text-link {
 }
 
 .children .children {
-  /* create stacking context so modal appears above */
   position: relative;
-  z-index: 1;
+  /* create stacking context so modal appears above */
+  z-index: var(--z-index-stack);
 }
 
 .children {
@@ -684,7 +721,7 @@ body.dark {
 /* Navigation styles */
 .nav {
   position: sticky;
-  z-index: 1;
+  z-index: var(--z-index-stack);
   padding: 0 15px 0 10px;
   bottom: 0;
 }
@@ -740,7 +777,7 @@ body.dark {
 
 .nav .home {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-index-stack);
 }
 
 .nav-top .home {
@@ -778,7 +815,7 @@ body.dark {
   color: gray;
   text-align: center;
   background-color: rgba(256, 256, 256, 0.8);
-  z-index: 11; /* above breadcrumbs, toolbar, export modal and status */
+  z-index: var(--z-index-alert);
 }
 
 .alert-inline {
@@ -809,7 +846,7 @@ body.dark {
   background-color: #c23;
   color: white;
   text-align: center;
-  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
+  z-index: var(--z-index-status);
   word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
 }
 
@@ -819,7 +856,7 @@ body.dark {
   float: left;
   position: fixed;
   top: 5;
-  z-index: 4; /* above breadcrumbs, hamburger menu, and toolbar */
+  z-index: var(--z-index-status);
 }
 
 .status span {
@@ -959,22 +996,18 @@ body.dark {
 }
 
 .superscript-container {
-  /*position: relative;*/
-  /*left: -5px;*/ /* offset .child .editable padding */
   white-space: nowrap; /* prevent expanded click area from wrapping */
-  z-index: 1;
+  z-index: var(--z-index-stack);
 }
 
 .superscript-container sup {
   position: relative;
-  z-index: 1; /* above depth-bar */
+  z-index: var(--z-index-stack); /* above depth-bar */
 }
 
 .num-contexts {
   font-size: 60%;
   white-space: nowrap; /* prevent long depth-bars from wrapping */
-  /* Upping this z-index to overlay .depth-bar will also cause it to overlay modal. Instead lower the depth-bar z-index */
-  /*z-index: 1;*/
 }
 
 .num-contexts > sup {
@@ -1080,6 +1113,10 @@ h1 .num-contexts {
 .dark .placeholder,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
+}
+
+.bullet {
+  z-index: var(--z-index-bullet);
 }
 
 .child {
@@ -1856,7 +1893,7 @@ h1 .num-contexts {
   display: inline-block;
   line-height: 1.5;
   width: calc(100% - 100px);
-  z-index: 10;
+  z-index: var(--z-index-modal);
   animation: fademostlyin 0.4s;
   min-width: 200px;
 }
@@ -2290,7 +2327,7 @@ code,
   background-color: lightblue;
   height: 3px;
   border-radius: 99px;
-  z-index: 1;
+  z-index: var(--z-index-stack);
 }
 
 .children .child:first-child > .drop-hover {
@@ -2301,7 +2338,7 @@ code,
 .drop-end {
   position: absolute;
   width: calc(100% - 38px);
-  z-index: 1; /* Above "Add thought" */
+  z-index: var(--z-index-stack); /* Above "Add thought" */
 }
 
 /* for some reason the drop-end in the outermost ul is too wide */
@@ -2328,7 +2365,7 @@ code,
 
 .empty-children .drop-end {
   /*background-color: red;*/
-  z-index: 2; /* above normal .drop-hover */
+  z-index: var(--z-index-drop-end);
   margin-left: 30px;
   padding-bottom: 1.1em;
 }
@@ -2390,7 +2427,7 @@ code,
   padding: 40px 20px 20px;
   background-color: #ddd;
   position: relative;
-  z-index: 3;
+  z-index: var(--z-index-tutorial);
 }
 
 .dark .tutorial {
@@ -2451,7 +2488,7 @@ code,
 .tutorial-trace-gesture {
   position: absolute;
   margin-top: 50px;
-  z-index: 10; /* above .children .children */
+  z-index: var(--z-index-tutorial-trace-gesture);
   text-align: center;
   left: 0;
   right: 0;
@@ -2534,7 +2571,7 @@ code,
 .Resizer {
   background: #fff;
   opacity: 0.2;
-  z-index: 2;
+  z-index: var(--z-index-resizer);
   box-sizing: border-box;
   background-clip: padding-box;
 }
@@ -2934,7 +2971,7 @@ code,
   position: absolute;
   right: 3px;
   padding: 0px 5px;
-  z-index: 1;
+  z-index: var(--z-index-stack);
 }
 
 .drop-down-wrapper .drop-down-option-wrapper {
@@ -3069,7 +3106,7 @@ code,
   width: 100%;
   display: flex;
   justify-content: center;
-  z-index: 10;
+  z-index: var(--z-index-latest-shortcuts);
   pointer-events: none;
 }
 

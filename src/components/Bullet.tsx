@@ -179,9 +179,6 @@ const Bullet = ({
         verticalAlign: 'top',
         width: 4, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
-        // place above .thought-container to preserve click area of bullet
-        // otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child
-        zIndex: 10,
       }}
       onClick={(e: React.MouseEvent) => {
         e.stopPropagation()
