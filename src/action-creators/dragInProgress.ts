@@ -28,6 +28,12 @@ const dragInProgress =
       ...payload,
     })
 
+    // when at the top of the viewport, bump the scroll bar to prevent gitching in Safari mobile
+    // TODO: It still glitches out if you scroll back to the top during a drag
+    if (document.documentElement.scrollTop === 0) {
+      window.scrollTo(0, document.documentElement.scrollTop + 1)
+    }
+
     dispatch(expandOnHoverTop())
     dispatch(expandOnHoverBottom())
   }

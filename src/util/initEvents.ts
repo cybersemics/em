@@ -25,6 +25,51 @@ declare global {
   }
 }
 
+/** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
+const autoscroll = (() => {
+  /** Cubic easing function. */
+  const ease = (n: number) => Math.pow(n, 3)
+
+  // if true, the window will continue to be scrolled at the current rate without user interaction
+  let autoscrolling = false
+
+  // scroll speed (-1 to 1)
+  let rate = 1
+
+  /** Scroll vertically in the direction given by rate until stop is called. */
+  const scroll = () => {
+    window.scrollTo(0, document.documentElement.scrollTop + rate)
+    window.requestAnimationFrame(() => {
+      if (autoscrolling) {
+        scroll()
+      }
+    })
+  }
+
+  /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
+  const startOrUpdate = (rateNew: number) => {
+    // update the scroll rate
+    rate = ease(rateNew)
+
+    // if we are already autoscrolling, do nothing
+    if (autoscrolling) return
+
+    // otherwise kick off the autoscroll
+    autoscrolling = true
+    scroll()
+  }
+
+  /** Stops scrolling. */
+  startOrUpdate.stop = () => {
+    autoscrolling = false
+  }
+
+  /** Returns true if scrolling. */
+  startOrUpdate.isScrolling = () => autoscrolling
+
+  return startOrUpdate
+})()
+
 /** Add window event handlers. */
 const initEvents = (store: Store<State, any>) => {
   let lastState: number // eslint-disable-line fp/no-let
@@ -68,6 +113,33 @@ const initEvents = (store: Store<State, any>) => {
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true })
+
+  /** Handles auto scroll on drag near the edge of the screen on mobile. */
+  const onTouchMove = (e: TouchEvent) => {
+    const state = store.getState()
+    if (state.dragInProgress) {
+      const y = e.touches[0].clientY
+      // start scrolling down when within 100px of the top edge of the screen
+      if (y < 120) {
+        const rate = 1 + (120 - y) / 60
+        autoscroll(-rate)
+      }
+      // start scrolling up when within 100px of the bottom edge of the screen
+      else if (y > window.innerHeight - 100) {
+        const rate = 1 + (y - window.innerHeight + 100) / 50
+        autoscroll(rate)
+      }
+      // stop scrolling when not near the edge of the screen
+      else {
+        autoscroll.stop()
+      }
+    }
+  }
+
+  /** Stops the autoscroll when dragging stops. */
+  const onTouchEnd = (e: TouchEvent) => {
+    autoscroll.stop()
+  }
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -124,6 +196,8 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('touchmove', onTouchMove)
+  window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('error', onError)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
@@ -138,6 +212,8 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('touchmove', onTouchMove)
+    window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('error', onError)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
