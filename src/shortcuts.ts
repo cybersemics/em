@@ -146,7 +146,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         // only show "Invalid gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
           dispatch(
-            alert(shortcut ? shortcut.label : isGestureHint(getState()) ? '✗ Invalid gesture' : null, {
+            alert(shortcut || isGestureHint(getState()) ? (sequence as string) : null, {
               alertType: 'gestureHint',
               showCloseLink: false,
             }),
