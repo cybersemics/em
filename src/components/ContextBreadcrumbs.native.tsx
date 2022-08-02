@@ -2,14 +2,10 @@ import { View } from 'moti'
 import React from 'react'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
-import ThoughtId from '../@types/ThoughtId'
-import getThoughtById from '../selectors/getThoughtById'
-import { store } from '../store'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
-import ancestors from '../util/ancestors'
 import isRoot from '../util/isRoot'
-import strip from '../util/strip'
+import useEllipsizedThoughts from './ContextBreadcrumbs.useEllipsizedThoughts'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -26,15 +22,6 @@ export interface ContextBreadcrumbProps {
   hidden?: boolean
 }
 
-type OverflowChild = {
-  id: ThoughtId
-  value: string
-  label?: string
-  isOverflow?: boolean
-}
-
-type OverflowPath = OverflowChild[]
-
 const { from, animate } = fadeIn
 const { flexWrap, directionRow, flexGrow, alignItemsCenter } = commonStyles
 
@@ -47,39 +34,8 @@ export const ContextBreadcrumbs = ({
   charLimit,
   classNamesObject,
 }: ContextBreadcrumbProps) => {
-  // if thoughtsLimit or charLimit is not passed , the default value of ellipsize will be false and component will have default behaviour
-  const [ellipsize, setEllipsize] = React.useState(thoughtsLimit !== undefined && charLimit !== undefined)
-
-  const state = store.getState()
-  // calculate if the overflow occurs during ellipsized view
-  // 0 if thoughtsLimit is not defined
-  const overflow = simplePath.length > thoughtsLimit! ? simplePath.length - thoughtsLimit! + 1 : 0
-
-  // if charLimit is exceeded then replace the remaining characters by ellipsis
-  const charLimitedArray: OverflowPath = simplePath.map(id => {
-    const thought = getThoughtById(state, id)
-    return {
-      value: thought.value,
-      id,
-      // add ellipsized label
-      ...(ellipsize
-        ? {
-            label: strip(
-              // subtract 2 so that additional '...' is still within the char limit
-              thought.value.length > charLimit! - 2 ? thought.value.substr(0, charLimit! - 2) + '...' : thought.value,
-            ),
-          }
-        : {}),
-    }
-  })
-
-  // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
-  const overflowArray: OverflowPath =
-    ellipsize && overflow
-      ? charLimitedArray
-          .slice(0, charLimitedArray.length - 1 - overflow)
-          .concat({ isOverflow: true } as OverflowChild, charLimitedArray.slice(charLimitedArray.length - 1))
-      : charLimitedArray
+  const [disabled, setDisabled] = React.useState(false)
+  const ellipsizedThoughts = useEllipsizedThoughts(simplePath, { charLimit, disabled, thoughtsLimit })
 
   return (
     <View style={flexGrow}>
@@ -107,8 +63,8 @@ export const ContextBreadcrumbs = ({
         ) : null
       ) : (
         <View style={[directionRow, flexWrap]}>
-          {overflowArray.map(({ isOverflow, id, label }, i) => {
-            const subthoughts = ancestors(simplePath, id) as SimplePath
+          {ellipsizedThoughts.map(({ isOverflow, id, label }, i) => {
+            const ancestor = simplePath.slice(0, i + 1) as SimplePath
 
             return (
               <View
@@ -127,13 +83,13 @@ export const ContextBreadcrumbs = ({
                 {!isOverflow ? (
                   <Text>
                     {i > 0 ? <Text> • </Text> : null}
-                    {subthoughts && <Link simplePath={subthoughts} label={label} />}
-                    {subthoughts && <Superscript simplePath={subthoughts} />}
+                    <Link simplePath={ancestor} label={label} />
+                    <Superscript simplePath={ancestor} />
                   </Text>
                 ) : (
                   <Text>
                     <Text> • </Text>
-                    <Text onPress={() => setEllipsize(false)}> ... </Text>
+                    <Text onPress={() => setDisabled(true)}> ... </Text>
                   </Text>
                 )}
               </View>
