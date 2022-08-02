@@ -45,7 +45,7 @@ const NavBar = ({
   const isTutorialOn = isTutorial(store.getState())
 
   // avoid re-rendering from simplePath's new object reference
-  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
+  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length) : []) as Path
   const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
 
   return (
