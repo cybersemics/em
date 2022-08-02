@@ -8,6 +8,7 @@ import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import GestureDiagram from '../components/GestureDiagram'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
+import theme from '../selectors/theme'
 import { globalShortcuts } from '../shortcuts'
 
 interface AlertProps {
@@ -21,14 +22,17 @@ const gestureString = (shortcut: Shortcut): string =>
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const ShortcutGestureHint = ({
+  highlight,
   shortcut,
   size,
   style,
 }: {
+  highlight: boolean
   shortcut: Shortcut
   size: number
   style?: React.CSSProperties
 }) => {
+  const dark = useSelector((state: State) => theme(state) !== 'Light')
   return (
     <div style={{ marginBottom: 10, position: 'relative', textAlign: 'left', ...style }}>
       <GestureDiagram
@@ -36,7 +40,12 @@ const ShortcutGestureHint = ({
         path={gestureString(shortcut)}
         style={{ position: 'absolute', left: -size, top: -size / 4 }}
       />{' '}
-      {shortcut.label}
+      <div style={{ color: dark ? (highlight ? 'lightblue' : 'white') : highlight ? 'royalblue' : 'black' }}>
+        {shortcut.label}
+      </div>
+      {highlight && (
+        <div style={{ fontSize: '80%', marginBottom: '1em', width: 'calc(100% - 10em)' }}>{shortcut.description}</div>
+      )}
     </div>
   )
 }
@@ -78,7 +87,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
                       key={shortcut.id}
                       shortcut={shortcut}
                       size={fontSize * 2}
-                      style={{ ...(shortcut.gesture === sequence ? { color: 'lightblue' } : null) }}
+                      highlight={shortcut.gesture === sequence}
                     />
                   ))
                 : '✗ Cancel gesture'}
@@ -118,7 +127,11 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
       {...useSwipeToDismissProps}
       style={{ ...(!children ? { textAlign: 'center' } : { paddingLeft: '6em' }) }}
     >
-      <span className='alert-text' dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}>
+      <span
+        className='alert-text'
+        style={{ ...(alert.alertType === 'gestureHint' ? { width: '100%' } : null) }}
+        dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
+      >
         {children}
       </span>
       {alert.showCloseLink ? (
