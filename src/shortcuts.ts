@@ -118,7 +118,7 @@ const index = (): {
 }
 
 /** Returns true if the current alert is a gestureHint. */
-export const isGestureHint = ({ alert }: State) => alert && alert.alertType === 'gestureHint'
+export const isGestureHint = ({ alert }: State) => alert?.alertType === 'gestureHint'
 
 let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let
 
@@ -138,9 +138,20 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     const shortcut = shortcutGestureIndex[sequence as string]
 
+    if (!isGestureHint(state)) {
+      store.dispatch(
+        alert(
+          shortcut ? shortcut?.label : state.alert?.alertType === 'gestureHintImmediate' ? '✗ Cancel gesture' : null,
+          {
+            alertType: shortcut ? 'gestureHintImmediate' : 'gestureHint',
+          },
+        ),
+      )
+    }
+
     // display gesture hint
-    clearTimeout(handleGestureSegmentTimeout)
     // TODO: Fix ts taking default node js setimeout instead of browser
+    clearTimeout(handleGestureSegmentTimeout)
     handleGestureSegmentTimeout = window.setTimeout(
       () => {
         // only show "Invalid gesture" if hint is already being shown
@@ -165,14 +176,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (scrollPrioritized) return
 
+    const shortcut = shortcutGestureIndex[sequence as string]
+
     // disable when modal is displayed or a drag is in progress
-    if (sequence && !state.showModal && !state.dragInProgress) {
-      const shortcut = shortcutGestureIndex[sequence as string]
-      if (shortcut) {
-        shortcutEmitter.trigger('shortcut', shortcut)
-        shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
-        if (store.getState().enableLatestShorcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
-      }
+    if (shortcut && !state.showModal && !state.dragInProgress) {
+      shortcutEmitter.trigger('shortcut', shortcut)
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
+      if (store.getState().enableLatestShorcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
     }
 
     // clear gesture hint
@@ -182,8 +192,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        if (isGestureHint(getState())) {
-          dispatch(alert(null))
+        // TODO: Add a setting to auto dismiss alerts after the gesture ends
+        if (shortcut && isGestureHint(getState())) {
+          dispatch(alert(shortcut.label))
         }
       })
     })
