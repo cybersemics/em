@@ -23,7 +23,7 @@ const Icon = ({ size = 20 }: IconType) => (
 const collapseContextShortcut: Shortcut = {
   id: 'collapseContext',
   label: 'Collapse',
-  description: 'Archives the current thought and moves its subthoughts to its parent.',
+  description: 'Deletes the current thought and moves all its subthoughts up a level.',
   gesture: 'ldu',
   svg: Icon,
   keyboard: { key: 'c', meta: true, alt: true },
