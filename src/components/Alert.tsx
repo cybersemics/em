@@ -125,7 +125,8 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
     <div
       className={alert.isInline ? 'alert alert-inline' : 'alert'}
       {...useSwipeToDismissProps}
-      style={{ ...(!children ? { textAlign: 'center' } : { paddingLeft: '6em' }) }}
+      // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
+      style={{ ...useSwipeToDismissProps.style, ...(!children ? { textAlign: 'center' } : { paddingLeft: '6em' }) }}
     >
       <span
         className='alert-text'
