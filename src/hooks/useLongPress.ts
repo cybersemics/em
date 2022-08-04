@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useDispatch } from 'react-redux'
+import editing from '../action-creators/editing'
 import { NOOP } from '../constants'
+import * as selection from '../device/selection'
 
 /** Custom hook to manage long press. */
 const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) => {
   const [started, setStarted] = useState(false)
   const [pressed, setPressed] = useState(false)
   const timerIdRef = useRef<number | undefined>()
+  const dispatch = useDispatch()
 
   // when a long press is started, set a timer
   // after the timer completes invoke the callback
@@ -39,10 +43,13 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
   }, [pressed])
 
   return {
-    // disable context menu
+    // disable default long press to select word behavior
+    // user-select and -webkit-touch-callout did not work for some reason
     onContextMenu: (e: React.MouseEvent) => {
       e.preventDefault()
       e.stopPropagation()
+      selection.clear()
+      dispatch(editing({ value: false }))
     },
     onMouseDown: start,
     onMouseUp: stop,
@@ -51,7 +58,7 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
     onTouchMove: scroll,
     onTouchCancel: stop,
     style: {
-      ...(pressed ? { userSelect: 'none' } : null),
+      ...(pressed ? { userSelect: 'none', WebkitTouchCallout: 'none' } : null),
     } as React.CSSProperties,
   }
 }
