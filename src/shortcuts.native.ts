@@ -65,6 +65,22 @@ export const inputHandlers = (store: Store<State, any>) => ({
     clearTimeout(gestureHintExtendedTimeout)
     gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
+    // alert the basic gesture hint (if the extended gesture hint is not already being shown)
+    // ignore back and forward nav gestures
+    if (
+      state.alert?.alertType !== 'gestureHintExtended' &&
+      shortcut?.id !== 'cursorBack' &&
+      shortcut?.id !== 'cursorForward'
+    ) {
+      store.dispatch(
+        // alert the shortcut label if it is a valid gesture
+        // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
+        alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
+          alertType: 'gestureHint',
+        }),
+      )
+    }
+
     setTimeout(
       () => {
         // only show "Cancel gesture" if hint is already being shown

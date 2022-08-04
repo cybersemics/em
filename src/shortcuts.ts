@@ -140,7 +140,12 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const shortcut = shortcutGestureIndex[sequence as string]
 
     // alert the basic gesture hint (if the extended gesture hint is not already being shown)
-    if (state.alert?.alertType !== 'gestureHintExtended') {
+    // ignore back and forward nav gestures
+    if (
+      state.alert?.alertType !== 'gestureHintExtended' &&
+      shortcut?.id !== 'cursorBack' &&
+      shortcut?.id !== 'cursorForward'
+    ) {
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
