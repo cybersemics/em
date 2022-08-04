@@ -10,7 +10,7 @@ import { BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
-import { inputHandlers, isGestureHint } from '../shortcuts'
+import { inputHandlers } from '../shortcuts'
 import { store } from '../store'
 import isDocumentEditable from '../util/isDocumentEditable'
 import storage from '../util/storage'
@@ -96,7 +96,7 @@ const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapse
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
   store.dispatch((dispatch, getState) => {
-    if (isGestureHint(getState())) {
+    if (getState().alert?.alertType === 'gestureHintExtended') {
       dispatch(alert(null))
     }
   })

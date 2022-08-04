@@ -12,7 +12,7 @@ import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
-import { inputHandlers, isGestureHint } from '../shortcuts'
+import { inputHandlers } from '../shortcuts'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
@@ -172,7 +172,7 @@ const initEvents = (store: Store<State, any>) => {
   const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
     if (newState === 'hidden') {
       // dismiss the gesture alert if active
-      if (isGestureHint(store.getState())) {
+      if (store.getState().alert?.alertType?.startsWith('gestureHint')) {
         store.dispatch(alert(null))
       }
       // we could also persist unsaved data here

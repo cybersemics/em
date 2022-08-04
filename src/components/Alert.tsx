@@ -67,7 +67,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
 
   /** Render the gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
   const GestureHint =
-    alert?.alertType === 'gestureHint'
+    alert?.alertType === 'gestureHintExtended'
       ? () => {
           const sequence = alert.value!
 
@@ -129,7 +129,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
     >
       <span
         className='alert-text'
-        style={{ ...(alert.alertType === 'gestureHint' ? { width: '100%' } : null) }}
+        style={{ ...(alert.alertType === 'gestureHintExtended' ? { width: '100%' } : null) }}
         dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
       >
         {children}

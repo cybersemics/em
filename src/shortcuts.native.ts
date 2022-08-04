@@ -9,7 +9,7 @@ import Shortcut from './@types/Shortcut'
 import State from './@types/State'
 import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
-import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
+import { GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
@@ -17,7 +17,7 @@ export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
 
 export const shortcutEmitter = new Emitter()
 
-let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let
+let gestureHintExtendedTimeout: number | undefined // eslint-disable-line fp/no-let
 
 /** Initializes shortcut indices and stores conflicts. */
 const index = (): {
@@ -45,9 +45,6 @@ const index = (): {
   return { shortcutIdIndex, shortcutGestureIndex }
 }
 
-/** Returns true if the current alert is a gestureHint. */
-export const isGestureHint = ({ alert }: State) => alert && alert.alertType === 'gestureHint'
-
 /**
  * Keyboard handlers factory function.
  */
@@ -65,23 +62,30 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const shortcut = shortcutGestureIndex[path as string]
 
     // display gesture hint
-    clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(gestureHintExtendedTimeout)
+    gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
     setTimeout(
       () => {
-        // only show "Invalid gesture" if hint is already being shown
+        // only show "Cancel gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
           dispatch(
-            alert(shortcut ? shortcut.label : isGestureHint(getState()) ? '✗ Invalid gesture' : null, {
-              alertType: 'gestureHint',
-              showCloseLink: false,
-            }),
+            alert(
+              shortcut
+                ? shortcut.label
+                : getState().alert?.alertType === 'gestureHintExtended'
+                ? '✗ Cancel gesture'
+                : null,
+              {
+                alertType: 'gestureHintExtended',
+                showCloseLink: false,
+              },
+            ),
           )
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT,
+      state.alert?.alertType === 'gestureHintExtended' ? 0 : GESTURE_HINT_EXTENDED_TIMEOUT,
     )
   },
 
@@ -103,13 +107,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
     }
 
     // clear gesture hint
-    clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(gestureHintExtendedTimeout)
+    gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        if (isGestureHint(getState())) {
+        if (getState().alert?.alertType === 'gestureHintExtended') {
           dispatch(alert(null))
         }
       })

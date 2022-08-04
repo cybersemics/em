@@ -10,7 +10,7 @@ import alert from '../action-creators/alert'
 import toggleSidebar from '../action-creators/toggleSidebar'
 import * as selection from '../device/selection'
 import isTutorial from '../selectors/isTutorial'
-import { inputHandlers, isGestureHint } from '../shortcuts'
+import { inputHandlers } from '../shortcuts'
 import { store } from '../store'
 import { commonStyles } from '../style/commonStyles'
 import storage from '../util/storage'
@@ -41,7 +41,7 @@ const shouldCancelGesture = () => selection.isActive() || store?.getState().drag
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
   store.dispatch((dispatch, getState) => {
-    if (isGestureHint(getState())) {
+    if (getState().alert?.alertType === 'gestureHintExtended') {
       dispatch(alert(null))
     }
   })

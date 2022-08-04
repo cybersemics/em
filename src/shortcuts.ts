@@ -12,7 +12,7 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { GESTURE_SEGMENT_HINT_TIMEOUT } from './constants'
+import { GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import globals from './globals'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
@@ -117,13 +117,14 @@ const index = (): {
   return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
 }
 
-/** Returns true if the current alert is a gestureHint. */
-export const isGestureHint = ({ alert }: State) => alert?.alertType === 'gestureHint'
-
-let handleGestureSegmentTimeout: number | undefined // eslint-disable-line fp/no-let
+let gestureHintExtendedTimeout: number | undefined // eslint-disable-line fp/no-let
 
 /**
- * Keyboard handlers factory function.
+ * Keyboard and gesture handlers factory function that binds the store to event handlers.
+ *
+ * There are two alert types for gesture hints:
+ * - gestureHint - The basic gesture hint that is shown immediately on swipe.
+ * - gestureHintExtended - The extended gesture hint that shows all possible gestures from the current sequence after a delay.
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
@@ -138,34 +139,33 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     const shortcut = shortcutGestureIndex[sequence as string]
 
-    if (!isGestureHint(state)) {
+    // alert the basic gesture hint (if the extended gesture hint is not already being shown)
+    if (state.alert?.alertType !== 'gestureHintExtended') {
       store.dispatch(
-        alert(
-          shortcut ? shortcut?.label : state.alert?.alertType === 'gestureHintImmediate' ? '✗ Cancel gesture' : null,
-          {
-            alertType: shortcut ? 'gestureHintImmediate' : 'gestureHint',
-          },
-        ),
+        // alert the shortcut label if it is a valid gesture
+        // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
+        alert(shortcut ? shortcut?.label : state.alert?.alertType === 'gestureHint' ? '✗ Cancel gesture' : null, {
+          alertType: shortcut ? 'gestureHint' : 'gestureHintExtended',
+        }),
       )
     }
 
-    // display gesture hint
-    // TODO: Fix ts taking default node js setimeout instead of browser
-    clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = window.setTimeout(
+    // alert the extended gesture hint after a delay of GESTURE_HINT_EXTENDED_TIMEOUT
+    clearTimeout(gestureHintExtendedTimeout)
+    gestureHintExtendedTimeout = window.setTimeout(
       () => {
-        // only show "Invalid gesture" if hint is already being shown
+        // only show "Cancel gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
           dispatch(
-            alert(shortcut || isGestureHint(getState()) ? (sequence as string) : null, {
-              alertType: 'gestureHint',
+            alert(shortcut || getState().alert?.alertType === 'gestureHintExtended' ? (sequence as string) : null, {
+              alertType: 'gestureHintExtended',
               showCloseLink: false,
             }),
           )
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      isGestureHint(state) ? 0 : GESTURE_SEGMENT_HINT_TIMEOUT,
+      state.alert?.alertType === 'gestureHintExtended' ? 0 : GESTURE_HINT_EXTENDED_TIMEOUT,
     )
   },
 
@@ -186,18 +186,18 @@ export const inputHandlers = (store: Store<State, any>) => ({
     }
 
     // clear gesture hint
-    clearTimeout(handleGestureSegmentTimeout)
-    handleGestureSegmentTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(gestureHintExtendedTimeout)
+    gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
         const state = getState()
         // TODO: Add a setting to auto dismiss alerts after the gesture ends
-        if (shortcut && isGestureHint(state)) {
+        if (shortcut && state.alert?.alertType === 'getureHintExtended') {
           dispatch(alert(shortcut.label))
         }
-        // always autoclose invalid gesture hint
+        // always autoclose Cancel gesture hint
         else if (!shortcut) {
           dispatch(alert(null))
         }
