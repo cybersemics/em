@@ -373,7 +373,7 @@ const ThoughtContainer = ({
           'show-contexts': showContexts,
           'show-contexts-no-breadcrumbs': simplePath.length === 2,
           'table-view': isTable,
-          ...longPressHandlerProps.classNames,
+          ...longPressHandlerProps.className,
         })}
         ref={el => {
           if (el) {
