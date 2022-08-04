@@ -125,6 +125,15 @@ let gestureHintExtendedTimeout: number | undefined // eslint-disable-line fp/no-
  * There are two alert types for gesture hints:
  * - gestureHint - The basic gesture hint that is shown immediately on swipe.
  * - gestureHintExtended - The extended gesture hint that shows all possible gestures from the current sequence after a delay.
+ *
+ * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
+ * - Basic gesture hint.
+ * - Preserve gesture hint for valid shortcut.
+ * - Only show "Cancel gesture" if gesture hint is already activated.
+ * - Dismiss gesture hint after release for invalid shortcut.
+ * - Extended gesture hint on hold.
+ * - Extended gesture hint from invalid gesture (e.g. ←↓, hold, ←↓←).
+ * - Change extended gesture hint to basic gesture hint on gesture end.
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
@@ -132,39 +141,44 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
 
-    if (toolbarOverlay || scrollPrioritized) return
-
-    // disable when modal is displayed or a drag is in progress
-    if (state.showModal || state.dragInProgress) return
+    if (toolbarOverlay || scrollPrioritized || state.showModal || state.dragInProgress) return
 
     const shortcut = shortcutGestureIndex[sequence as string]
 
-    // alert the basic gesture hint (if the extended gesture hint is not already being shown)
-    // ignore back and forward nav gestures
+    // basic gesture hint
     if (
+      // only show basic gesture hint if the extended gesture hint is not already being shown
       state.alert?.alertType !== 'gestureHintExtended' &&
+      // ignore back
       shortcut?.id !== 'cursorBack' &&
-      shortcut?.id !== 'cursorForward'
+      // ignore forward
+      shortcut?.id !== 'cursorForward' &&
+      // only show
+      (shortcut || state.alert?.alertType === 'gestureHint')
     ) {
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
         alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
           alertType: 'gestureHint',
+          showCloseLink: !!shortcut,
         }),
       )
     }
 
-    // alert the extended gesture hint after a delay of GESTURE_HINT_EXTENDED_TIMEOUT
+    // extended gesture hint
+    // alert after a delay of GESTURE_HINT_EXTENDED_TIMEOUT
     clearTimeout(gestureHintExtendedTimeout)
     gestureHintExtendedTimeout = window.setTimeout(
       () => {
-        // only show "Cancel gesture" if hint is already being shown
         store.dispatch((dispatch, getState) => {
+          // do not show "Cancel gesture" if already being shown by basic gesture hint
+          if (getState().alert?.value === '✗ Cancel gesture') return
           dispatch(
-            alert(shortcut || getState().alert?.alertType === 'gestureHintExtended' ? (sequence as string) : null, {
+            alert(sequence as string, {
               alertType: 'gestureHintExtended',
-              showCloseLink: false,
+              // no need to show close link on "Cancel gesture" since it is dismiss automatically
+              showCloseLink: !!shortcut,
             }),
           )
         })
