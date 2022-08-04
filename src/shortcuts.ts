@@ -194,17 +194,17 @@ export const inputHandlers = (store: Store<State, any>) => ({
     clearTimeout(gestureHintExtendedTimeout)
     gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
+    // dismiss gesture hint on gesture end
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        const state = getState()
-        // TODO: Add a setting to auto dismiss alerts after the gesture ends
-        if (shortcut && state.alert?.alertType === 'getureHintExtended') {
-          dispatch(alert(shortcut.label))
-        }
-        // always autoclose Cancel gesture hint
-        else if (!shortcut) {
-          dispatch(alert(null))
+        if (getState().alert?.alertType?.startsWith('gestureHint')) {
+          // TODO: Add a setting to auto dismiss alerts after the gesture ends
+          dispatch(
+            alert(
+              shortcut && shortcut.label !== 'cursorForward' && shortcut.label !== 'cursorBack' ? shortcut.label : null,
+            ),
+          )
         }
       })
     })

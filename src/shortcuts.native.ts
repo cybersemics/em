@@ -112,9 +112,10 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (scrollPrioritized) return
 
+    const shortcut = shortcutGestureIndex[gesture as string]
+
     // disable when modal is displayed or a drag is in progress
     if (gesture && !state.showModal && !state.dragInProgress) {
-      const shortcut = shortcutGestureIndex[gesture as string]
       if (shortcut) {
         shortcutEmitter.trigger('shortcut', shortcut)
         shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
@@ -126,11 +127,17 @@ export const inputHandlers = (store: Store<State, any>) => ({
     clearTimeout(gestureHintExtendedTimeout)
     gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
+    // dismiss gesture hint on gesture end
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        if (getState().alert?.alertType === 'gestureHintExtended') {
-          dispatch(alert(null))
+        if (getState().alert?.alertType?.startsWith('gestureHint')) {
+          // TODO: Add a setting to auto dismiss alerts after the gesture ends
+          dispatch(
+            alert(
+              shortcut && shortcut.label !== 'cursorForward' && shortcut.label !== 'cursorBack' ? shortcut.label : null,
+            ),
+          )
         }
       })
     })
