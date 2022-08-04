@@ -6,7 +6,7 @@ const defaultOptions = {
   snapbackEasing: 'ease-out',
 }
 
-/** Custom hook useSwipeToDismiss.js to manage long press. */
+/** Custom hook to manage swipe to dismiss alerts. */
 const useSwipeToDismiss = (
   options: {
     // y offset at which onDismiss is fired, in px or % (of height)

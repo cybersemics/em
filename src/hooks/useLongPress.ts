@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NOOP } from '../constants'
 
-/** Custom hook useLongPress.js to manage long press. */
+/** Custom hook to manage long press. */
 const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) => {
   const [startLongPress, setStartLongPress] = useState(false)
   const [startCallbackDispatched, setStartCallbackDispatched] = useState(false)
-  const timerIdRef = useRef()
+  const timerIdRef = useRef<number | undefined>()
 
   // when a long press is started, set a timer
   // after the timer completes invoke the callback
   useEffect(() => {
     if (startLongPress) {
+      // cast Timeout to number for compatibility with clearTimeout
       timerIdRef.current = setTimeout(() => {
         onLongPressStart()
         setStartCallbackDispatched(true)
-      }, ms)
+      }, ms) as unknown as number
     } else clearTimeout(timerIdRef.current)
 
     return () => clearTimeout(timerIdRef.current)
