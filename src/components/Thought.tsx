@@ -349,7 +349,9 @@ const ThoughtContainer = ({
   return dropTarget(
     dragSource(
       <li
+        {...longPressHandlerProps}
         aria-label='thought-container'
+        style={styleContainer}
         className={classNames({
           child: true,
           'child-divider': isDivider(value),
@@ -371,14 +373,13 @@ const ThoughtContainer = ({
           'show-contexts': showContexts,
           'show-contexts-no-breadcrumbs': simplePath.length === 2,
           'table-view': isTable,
+          ...longPressHandlerProps.classNames,
         })}
         ref={el => {
           if (el) {
             dragPreview()
           }
         }}
-        {...longPressHandlerProps}
-        style={{ ...styleContainer, ...longPressHandlerProps.style }}
       >
         <div
           className='thought-container'

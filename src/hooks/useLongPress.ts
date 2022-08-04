@@ -43,8 +43,8 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
   }, [pressed])
 
   return {
-    // disable default long press to select word behavior
-    // user-select and -webkit-touch-callout did not work for some reason
+    // disable Android context menu
+    // does not work to prevent iOS long press to select behavior
     onContextMenu: (e: React.MouseEvent) => {
       e.preventDefault()
       e.stopPropagation()
@@ -57,9 +57,11 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
     onTouchEnd: stop,
     onTouchMove: scroll,
     onTouchCancel: stop,
-    style: {
-      ...(pressed ? { userSelect: 'none', WebkitTouchCallout: 'none' } : null),
-    } as React.CSSProperties,
+    // Set .pressed so that user-select: none can be applied to disable long press to select on iOS. If user-select: none is added after touchstart, it does not prevent magnifying glass text selection (unresolved). -webkit-touch-callout does not help. It seems the only way to disable it fully is to preventDefault on touchstart. However, this would break navigation in edit mode.
+    // See: https://stackoverflow.com/questions/923782/disable-the-text-highlighting-magnifier-on-touch-hold-on-mobile-safari-webkit
+    classNames: {
+      pressed,
+    },
   }
 }
 
