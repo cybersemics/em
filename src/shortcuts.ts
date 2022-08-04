@@ -144,8 +144,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(shortcut ? shortcut?.label : state.alert?.alertType === 'gestureHint' ? '✗ Cancel gesture' : null, {
-          alertType: shortcut ? 'gestureHint' : 'gestureHintExtended',
+        alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
+          alertType: 'gestureHint',
         }),
       )
     }
