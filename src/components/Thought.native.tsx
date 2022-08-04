@@ -13,7 +13,7 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
@@ -243,7 +243,7 @@ const ThoughtContainer = ({
 
   // temporarily disable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)

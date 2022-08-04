@@ -42,9 +42,11 @@ const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   const thought = getThoughtById(state, props.thoughtId)
   const lexeme = getLexeme(state, thought.value)
+  const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(props.simplePath)
   return {
     // if being edited and meta validation error has occured
     invalid: !!props.isEditing && invalidState,
+    isHighlighted: isHolding || props.isDragging,
     missing: !lexeme,
     fontSize: state.fontSize,
     pending: props.isContextPending || isPending(state, thought),
@@ -59,7 +61,7 @@ const Bullet = ({
   fontSize,
   invalid,
   isContextPending,
-  isDragging,
+  isHighlighted,
   isEditing,
   leaf,
   missing,
@@ -205,7 +207,7 @@ const Bullet = ({
     >
       <svg
         className={classNames('glyph', {
-          'glyph-highlighted': isDragging,
+          'glyph-highlighted': isHighlighted,
         })}
         viewBox='0 0 600 600'
         style={{

@@ -78,7 +78,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps) => {
 
 /** Handles drag end. */
 const endDrag = () => {
-  store.dispatch([dragInProgress({ value: false }), dragHold({ value: false })])
+  store.dispatch([dragInProgress({ value: false }), dragHold({ value: false }), alert(null)])
 }
 
 /** Collects props from the DragSource. */

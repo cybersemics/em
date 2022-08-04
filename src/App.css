@@ -1120,6 +1120,8 @@ h1 .num-contexts {
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding: 0.2em 0 0.2em 100px;
+  /* may be needed to disable context menu on iOS since contextmenu event is not supported */
+  -webkit-touch-callout: none;
 }
 
 .child > .thought-container > .bullet .glyph {

@@ -3,48 +3,56 @@ import { NOOP } from '../constants'
 
 /** Custom hook to manage long press. */
 const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) => {
-  const [startLongPress, setStartLongPress] = useState(false)
-  const [startCallbackDispatched, setStartCallbackDispatched] = useState(false)
+  const [started, setStarted] = useState(false)
+  const [pressed, setPressed] = useState(false)
   const timerIdRef = useRef<number | undefined>()
 
   // when a long press is started, set a timer
   // after the timer completes invoke the callback
   useEffect(() => {
-    if (startLongPress) {
+    if (started) {
       // cast Timeout to number for compatibility with clearTimeout
       timerIdRef.current = setTimeout(() => {
         onLongPressStart()
-        setStartCallbackDispatched(true)
+        setPressed(true)
       }, ms) as unknown as number
     } else clearTimeout(timerIdRef.current)
 
     return () => clearTimeout(timerIdRef.current)
-  }, [startLongPress])
+  }, [started])
 
   // track that long press has started on mouseDown or touchStart
   const start = useCallback(e => {
-    setStartLongPress(true)
+    setStarted(true)
   }, [])
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   const stop = useCallback(() => {
-    setStartLongPress(false)
+    setStarted(false)
+    setPressed(false)
     onLongPressEnd()
-    setStartCallbackDispatched(false)
   }, [])
 
   // set long press state on scroll depending on completion of timer
   const scroll = useCallback(() => {
-    setStartLongPress(startCallbackDispatched)
-  }, [startCallbackDispatched])
+    setStarted(pressed)
+  }, [pressed])
 
   return {
+    // disable context menu
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+    },
     onMouseDown: start,
     onMouseUp: stop,
     onTouchStart: start,
     onTouchEnd: stop,
     onTouchMove: scroll,
     onTouchCancel: stop,
+    style: {
+      ...(pressed ? { userSelect: 'none' } : null),
+    } as React.CSSProperties,
   }
 }
 

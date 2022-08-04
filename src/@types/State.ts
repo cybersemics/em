@@ -32,9 +32,12 @@ interface State {
   // currently only 0 and n are used, where n is the length of the thought
   // null means that the caret is no forcefully set on re-render, allowing the device to set it, e.g. on click
   cursorOffset: number | null
+  // SimplePath of thought with drag hold activated
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath
+  // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
+  // set to true while the user is dragging a thought
   dragInProgress: boolean
   // forces content editable to update inner html if html has not changed
   // TODO: Do we really need to re-render all ContentEditables?

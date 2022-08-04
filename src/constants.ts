@@ -249,7 +249,7 @@ export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
-export const TIMEOUT_BEFORE_DRAG = 200
+export const TIMEOUT_LONG_PRESS_THOUGHT = 300
 
 export const MODIFIER_KEYS = {
   Alt: 1,

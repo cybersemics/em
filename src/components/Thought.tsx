@@ -14,7 +14,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_BEFORE_DRAG } from '../constants'
+import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
@@ -268,7 +268,7 @@ const ThoughtContainer = ({
     if (!store.getState().dragHold) {
       store.dispatch([
         dragHold({ value: true, simplePath }),
-        alert('Drag and drop to move thought', { showCloseLink: false }),
+        alert('Drag and drop to move thought', { alertType: 'dragAndDrop', showCloseLink: false }),
       ])
     }
   }
@@ -280,9 +280,7 @@ const ThoughtContainer = ({
     }
   }
 
-  // temporarily disable
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_BEFORE_DRAG)
+  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
@@ -352,7 +350,6 @@ const ThoughtContainer = ({
     dragSource(
       <li
         aria-label='thought-container'
-        style={styleContainer}
         className={classNames({
           child: true,
           'child-divider': isDivider(value),
@@ -380,8 +377,8 @@ const ThoughtContainer = ({
             dragPreview()
           }
         }}
-        // disable to test if this solves the app switch touch issue on mobile PWA
-        // { ...longPressHandlerProps }
+        {...longPressHandlerProps}
+        style={{ ...styleContainer, ...longPressHandlerProps.style }}
       >
         <div
           className='thought-container'
