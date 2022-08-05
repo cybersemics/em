@@ -274,7 +274,7 @@ const ThoughtContainer = ({
   //   !isHovering &&
   //   state.hoveringPath &&
   //   isDescendantPath(state.hoveringPath, parentOf(path)) &&
-  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtDrop)
+  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtsDrop)
 
   // const shouldDisplayHover = cursorOnAlphabeticalSort
   //   ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering

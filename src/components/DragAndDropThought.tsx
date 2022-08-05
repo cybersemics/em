@@ -7,6 +7,7 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
+import Path from '../@types/Path'
 import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
 import dragHold from '../action-creators/dragHold'
@@ -91,20 +92,23 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
-  const { cursor, expandHoverTopPath } = state
-  const { path } = props
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePath!
   const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
 
-  const distance = cursor ? cursor?.length - thoughtsTo.length : 0
-
-  /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
+  /** If the expand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
-    expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+    state.expandHoverTopPath &&
+    props.path.length > state.expandHoverTopPath.length &&
+    isDescendantPath(props.path, state.expandHoverTopPath)
 
+  // first visible thought not hidden by autofocus
+  const firstVisible =
+    state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
+
+  const isClosestHiddenParent = equalPath(firstVisible, thoughtsTo)
+  const distance = state.cursor ? state.cursor.length - thoughtsTo.length : 0
   const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
-
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
   const oldContext = rootedParentOf(state, thoughtsFrom)
@@ -115,7 +119,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
   // allow drop if thought is the nearest visible though to the root
   // allow drop if the thought is the active expanded top context or it's direct children
-  return !isHidden && !isDescendantOfFrom && (!isSorted || !sameContext)
+  return (!isHidden || isClosestHiddenParent) && !isDescendantOfFrom && (!isSorted || !sameContext)
 }
 
 /** Handles dropping a thought on a DropTarget. */

@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
@@ -9,6 +10,7 @@ import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import { store } from '../store'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -25,26 +27,30 @@ export type ConnectedDragAndDropSubthoughtsProps = ConnectedSubthoughtsProps & R
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
+  const state = store.getState()
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
-  const { cursor, expandHoverTopPath, thoughts } = store.getState()
-
-  const { path } = props
+  const thoughtsTo = props.simplePath!
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
-    path && expandHoverTopPath && path.length >= expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+    props.path &&
+    state.expandHoverTopPath &&
+    props.path.length >= state.expandHoverTopPath.length &&
+    isDescendantPath(props.path, state.expandHoverTopPath)
 
-  const distance = cursor ? cursor.length - props.simplePath.length : 0
-  const isHidden = distance >= 2 && !isExpandedTop()
+  // first visible thought not hidden by autofocus
+  const firstVisible =
+    state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
 
-  // there is no self thought to check since this is <Subthoughts>
-  const isDescendant = isDescendantPath(props.simplePath, thoughtsFrom)
-
-  const toThought = thoughts.thoughtIndex[head(props.simplePath)]
-  const divider = isDivider(toThought.value)
+  const isClosestHiddenParent = equalPath(firstVisible, rootedParentOf(state, thoughtsTo))
+  // Note: The distance calculation for SubthoughtsDrop is 1 less than the ThoughtDrop (in DragAndDropThought.canDrop)
+  const distance = state.cursor ? state.cursor.length - thoughtsTo.length - 1 : 0
+  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
+  const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
+  const divider = isDivider(getThoughtById(state, head(thoughtsTo)).value)
 
   // do not drop on descendants or thoughts hidden by autofocus
-  return !isHidden && !isDescendant && !divider
+  return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

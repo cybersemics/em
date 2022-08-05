@@ -260,11 +260,11 @@ const ThoughtContainer = ({
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
 
-  /** True if a dragged thought is hovering over a visible child (ThoughtDrop or SubthoughtDrop). */
+  /** True if a dragged thought is hovering over a visible child (ThoughtDrop or SubthoughtsDrop). */
   const isChildHovering = useSelector(
     (state: State) =>
       isVisible &&
-      // SubthoughtDrop
+      // SubthoughtsDrop
       (isSubthoughtHovering ||
         // ThoughtDrop
         (state.hoveringPath &&
@@ -325,7 +325,7 @@ const ThoughtContainer = ({
       !isHovering &&
       state.hoveringPath &&
       isDescendantPath(state.hoveringPath, parentOf(path)) &&
-      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtDrop)
+      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtsDrop)
 
     const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
