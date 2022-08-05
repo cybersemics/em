@@ -428,7 +428,7 @@ export const SubthoughtsComponent = ({
   //         value: true,
   //         draggingThought: state.draggingThought,
   //         hoveringPath: path,
-  //         hoverId: DROP_TARGET.EmptyDrop,
+  //         hoverId: DROP_TARGET.SubthoughtDrop,
   //       }),
   //     )
   //   }

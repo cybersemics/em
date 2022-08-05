@@ -15,8 +15,8 @@ import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
 import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
-import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
+import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -143,14 +143,14 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     contextBinding,
     cursorOffset,
     distance,
-    isPublishChild: !search && publishMode() && simplePath.length === 2,
-    isCursorParent,
-    isCursorGrandparent,
     expandedContextThought,
+    isCursorGrandparent,
+    isCursorParent,
     isEditing,
     isEditingPath,
     isExpanded,
     isLeaf,
+    isPublishChild: !search && publishMode() && simplePath.length === 2,
     publish: !search && publishMode(),
     simplePath,
     view: attribute(state, head(simplePath), '=view'),
@@ -246,7 +246,7 @@ const ThoughtContainer = ({
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
+  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thoughtId })
 
   if (!thought) return null
@@ -274,7 +274,7 @@ const ThoughtContainer = ({
   //   !isHovering &&
   //   state.hoveringPath &&
   //   isDescendantPath(state.hoveringPath, parentOf(path)) &&
-  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
+  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtDrop)
 
   // const shouldDisplayHover = cursorOnAlphabeticalSort
   //   ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
@@ -347,7 +347,7 @@ const ThoughtContainer = ({
         env={env}
         path={path}
         depth={depth}
-        isParentHovering={isAnyChildHovering}
+        isParentHovering={isSubthoughtHovering}
         showContexts={allowSingleContext}
         simplePath={simplePath}
         view={view}
@@ -360,12 +360,12 @@ const ThoughtContainer = ({
 const styles = (isEditing?: boolean) =>
   StyleSheet.create({
     proseView: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
       backgroundColor: 'white',
-      opacity: isEditing ? 0.2 : 0,
+      borderRadius: 10,
+      height: 20,
       marginRight: 15,
+      opacity: isEditing ? 0.2 : 0,
+      width: 20,
     },
   })
 

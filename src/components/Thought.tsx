@@ -16,8 +16,8 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import { isTouch } from '../browser'
 import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
-import useIsChildHovering from '../hooks/useIsChildHovering'
 import useLongPress from '../hooks/useLongPress'
+import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
@@ -159,17 +159,17 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     contextBinding,
     cursorOffset,
     distance,
-    isPublishChild: !search && publishMode() && simplePath.length === 2,
-    isCursorParent,
-    isCursorGrandparent,
+    editing,
     expandedContextThought,
+    isCursorGrandparent,
+    isCursorParent,
     isEditing,
     isExpanded,
     isLeaf,
+    isPublishChild: !search && publishMode() && simplePath.length === 2,
+    parentView: attribute(state, head(parentOf(simplePath)), '=view'),
     publish: !search && publishMode(),
     view: attribute(state, head(simplePath), '=view'),
-    parentView: attribute(state, head(parentOf(simplePath)), '=view'),
-    editing,
   }
 }
 
@@ -254,7 +254,7 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const isAnyChildHovering = useIsChildHovering(simplePath, isHovering, isDeepHovering)
+  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thoughtId })
   const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
@@ -312,7 +312,7 @@ const ThoughtContainer = ({
       !isHovering &&
       state.hoveringPath &&
       isDescendantPath(state.hoveringPath, parentOf(path)) &&
-      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.EmptyDrop)
+      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtDrop)
 
     const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
@@ -329,7 +329,6 @@ const ThoughtContainer = ({
           // check if it's alphabetically previous to current thought
           compareReasonable(draggingThoughtValue, value) <= 0 &&
           // check if it's alphabetically next to previous thought if it exists
-          // @MIGRATION_TODO: Convert prevChild to thought and get the value
           (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
       : // if alphabetical sort is disabled just check if current thought is hovering
         globals.simulateDropHover || isHovering
@@ -407,13 +406,13 @@ const ThoughtContainer = ({
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isContextPending={isContextPending}
+              isDragging={isDragging}
               isEditing={isEditing}
               leaf={isLeaf}
               path={path}
+              publish={publish}
               simplePath={simplePath}
               thoughtId={thoughtId}
-              publish={publish}
-              isDragging={isDragging}
             />
           )}
 
@@ -426,27 +425,27 @@ const ThoughtContainer = ({
 
           <ThoughtAnnotation
             env={env}
-            path={path}
             minContexts={allowSingleContext ? 0 : 2}
+            path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
-            style={style}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
+            style={style}
           />
 
           <StaticThought
-            path={path}
             cursorOffset={cursorOffset}
+            editing={editing}
             isContextPending={isContextPending}
-            isPublishChild={isPublishChild}
             isEditing={isEditing}
+            isPublishChild={isPublishChild}
             isVisible={isVisible}
+            onEdit={!isTouch ? onEdit : undefined}
+            path={path}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
-            style={style}
             simplePath={simplePath}
-            onEdit={!isTouch ? onEdit : undefined}
+            style={style}
             view={view}
-            editing={editing}
           />
 
           <Note path={simplePath} />
@@ -467,7 +466,7 @@ const ThoughtContainer = ({
                 path={isHeader ? path : childPath}
                 depth={depth}
                 isHeader={isHeader}
-                isParentHovering={isAnyChildHovering}
+                isParentHovering={isSubthoughtHovering}
                 showContexts={allowSingleContext}
                 simplePath={isHeader ? simplePath : childSimplePath}
               />
@@ -477,10 +476,10 @@ const ThoughtContainer = ({
           <Subthoughts
             allowSingleContext={allowSingleContext}
             childrenForced={childrenForced}
-            env={env}
-            path={path}
             depth={depth}
-            isParentHovering={isAnyChildHovering}
+            env={env}
+            isParentHovering={isSubthoughtHovering}
+            path={path}
             showContexts={allowSingleContext}
             simplePath={simplePath}
           />

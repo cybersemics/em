@@ -53,6 +53,7 @@ interface State {
   expandHoverTopPath?: Path | null
   expandedContextThought?: Path
   fontSize: number
+  // drop target thought currently being hovered over
   hoveringPath?: Path
   hoverId?: DROP_TARGET
   invalidState: boolean
