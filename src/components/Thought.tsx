@@ -254,11 +254,23 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env, styleProp, thoughtId })
   const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
+  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
+
+  /** True if a dragged thought is hovering over a visible child (ThoughtDrop or SubthoughtDrop). */
+  const isChildHovering = useSelector(
+    (state: State) =>
+      isVisible &&
+      // SubthoughtDrop
+      (isSubthoughtHovering ||
+        // ThoughtDrop
+        (state.hoveringPath &&
+          state.hoverId === DROP_TARGET.ThoughtDrop &&
+          equalPath(parentOf(state.hoveringPath), simplePath))),
+  )
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
@@ -306,7 +318,8 @@ const ThoughtContainer = ({
     return invalidOption
   })
 
-  const shouldDisplayHover = useSelector((state: State) => {
+  // true if a thought is being dragged over this drop hover
+  const shouldDisplayDropHover = useSelector((state: State) => {
     /** Checks if any descendents of the direct siblings is being hovered. */
     const isAnySiblingDescendantHovering = () =>
       !isHovering &&
@@ -419,7 +432,7 @@ const ThoughtContainer = ({
           <span
             className='drop-hover'
             style={{
-              display: shouldDisplayHover ? 'inline' : 'none',
+              display: shouldDisplayDropHover ? 'inline' : 'none',
             }}
           ></span>
 
@@ -429,7 +442,11 @@ const ThoughtContainer = ({
             path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={style}
+            style={{
+              ...style,
+              // highlight the parent of the current drop target to make it easier to drop in the intended place
+              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
+            }}
           />
 
           <StaticThought
@@ -444,7 +461,11 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
-            style={style}
+            style={{
+              ...style,
+              // highlight the parent of the current drop target to make it easier to drop in the intended place
+              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
+            }}
             view={view}
           />
 

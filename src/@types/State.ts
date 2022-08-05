@@ -55,6 +55,7 @@ interface State {
   fontSize: number
   // drop target thought currently being hovered over
   hoveringPath?: Path
+  // type of drop target being hovered over
   hoverId?: DROP_TARGET
   invalidState: boolean
   isLoading: boolean
