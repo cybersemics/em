@@ -53,6 +53,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
+import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
 import useZoom from './Subthoughts.useZoom'
@@ -144,10 +145,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
 
   const cursorDepth = cursor ? cursor.length - (isCursorLeaf ? 1 : 0) : 0
 
-  const expandTopDistance = expandHoverTopPath && expandHoverTopPath?.length + 1
-
   // Note: If there is an active expand top path then distance should be caculated with reference of expandTopDistance
-  const referenceDepth = expandTopDistance || cursorDepth
+  const referenceDepth = expandHoverTopPath ? unroot(expandHoverTopPath).length + 1 : cursorDepth
 
   const distance = referenceDepth
     ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, referenceDepth - (props.depth ?? 0)))
@@ -202,15 +201,15 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
 
   // first visible thought at the top
-  const firstVisiblePath = cursor && cursor.length > maxDistance ? (cursor?.slice(0, -maxDistance) as Path) : null
+  const firstVisiblePath =
+    state.expandHoverTopPath ||
+    (cursor && cursor.length > maxDistance ? (cursor?.slice(0, -maxDistance) as Path) : null)
 
   const isDescendantOfFirstVisiblePath =
     !firstVisiblePath ||
-    isDescendant(
-      // TODO: Add support for [ROOT] to isDescendant
-      pathToContext(state, firstVisiblePath),
-      pathToContext(state, resolvedPath),
-    )
+    isRoot(firstVisiblePath) ||
+    // TODO: Why doesn't isDescendantPath work here? Even when excluding equality.
+    isDescendant(pathToContext(state, firstVisiblePath), pathToContext(state, resolvedPath))
 
   // The thoughts that are not the ancestor of cursor or the descendants of first visible thought should be shifted left and hidden.
   const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
@@ -567,15 +566,15 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
     // first visible thought at the top
-    const firstVisiblePath = cursor && cursor.length - maxDistance > 0 ? (cursor.slice(0, -maxDistance) as Path) : null
+    const firstVisiblePath =
+      state.expandHoverTopPath ||
+      (cursor && cursor.length - maxDistance > 0 ? (cursor.slice(0, -maxDistance) as Path) : null)
 
     const isDescendantOfFirstVisiblePath =
       !firstVisiblePath ||
-      isDescendant(
-        // TODO: Add support for [ROOT] to isDescendant
-        pathToContext(state, firstVisiblePath),
-        pathToContext(state, resolvedPath),
-      )
+      isRoot(firstVisiblePath) ||
+      // TODO: Why doesn't isDescendantPath work here? Even when excluding equality.
+      isDescendant(pathToContext(state, firstVisiblePath), pathToContext(state, resolvedPath))
 
     const cursorSubthoughtIndex = once(() => (cursor ? checkIfPathShareSubcontext(cursor, resolvedPath) : -1))
 
@@ -781,6 +780,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
               re-renders.
             */
+
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}

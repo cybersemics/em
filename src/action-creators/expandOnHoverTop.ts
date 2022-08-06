@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import expandHoverTop from '../action-creators/expandHoverTop'
 import { DROP_TARGET, EXPAND_HOVER_DELAY } from '../constants'
+import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
@@ -89,7 +90,7 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
     expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
 
   // Note: expandHoverPath is the parent of the hovering path (thought drop)
-  const newExpandHoverPath = hoveringPath && parentOf(hoveringPath)
+  const newExpandHoverPath = hoveringPath && rootedParentOf(state, hoveringPath)
 
   if (shouldExpand && newExpandHoverPath && !isSameExpandHoverTopPath(newExpandHoverPath)) {
     clearTimer()
