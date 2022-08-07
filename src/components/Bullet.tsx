@@ -12,6 +12,7 @@ import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
+import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
@@ -80,6 +81,12 @@ const Bullet = ({
   const dispatch = useDispatch()
   const dragHold = useSelector((state: State) => state.dragHold)
 
+  const fill = useSelector((state: State) => {
+    const bulletId = findDescendant(state, head(simplePath), '=bullet')
+    const styles = getStyle(state, bulletId)
+    return styles?.color || (dark ? '#d9d9d9' : '#000')
+  })
+
   const lineHeight = fontSize * 1.25
   const svgSizeStyle = {
     height: lineHeight,
@@ -105,7 +112,7 @@ const Bullet = ({
   const isIOSSafari = isTouch && isiPhone && isSafari()
   const vendorSpecificData = isIOSSafari
     ? {
-        foregroundShape: {
+        bullet: {
           ellipseRadius: '105',
           path: 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z',
         },
@@ -113,7 +120,7 @@ const Bullet = ({
         glyphMarginBottom: '-0.2em',
       }
     : {
-        foregroundShape: {
+        bullet: {
           ellipseRadius: '92',
           path: 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z',
         },
@@ -131,10 +138,10 @@ const Bullet = ({
         }
       : {
           stroke: 'none',
-          fill: dark ? '#d9d9d9' : '#000',
+          fill,
         }
 
-    const { ellipseRadius, path } = vendorSpecificData.foregroundShape
+    const { ellipseRadius, path } = vendorSpecificData.bullet
 
     return leaf ? (
       <ellipse
@@ -235,7 +242,7 @@ const Bullet = ({
               rx={vendorSpecificData.bulletOverlayRadius}
               cy='300'
               cx='300'
-              fill={dark ? '#ffffff' : '#000'}
+              fill={dark ? 'white' : 'black'}
             />
           )}
           {foregroundShape({

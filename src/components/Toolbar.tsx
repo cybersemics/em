@@ -22,6 +22,7 @@ import subtree from '../selectors/subtree'
 import theme from '../selectors/theme'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
+import ColorPicker from './ColorPicker'
 import Shortcut from './Shortcut'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -302,6 +303,18 @@ const Toolbar = ({
               <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
             </span>
           </div>
+
+          <div
+            className='z-stack'
+            style={{
+              marginLeft: fontSize * 6,
+              position: 'relative',
+              textAlign: 'left',
+            }}
+          >
+            <ColorPicker fontSize={fontSize} />
+          </div>
+
           <TransitionGroup>
             {shortcut && toolbarOverlay ? (
               <CSSTransition timeout={800} classNames='fade'>
