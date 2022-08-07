@@ -51,8 +51,7 @@ const bindContextShortcut: Shortcut = {
     dispatch(
       toggleAttribute({
         path: path,
-        key: '=bindContextShortcut',
-        value: JSON.stringify(contextBound),
+        values: ['=bindContextShortcut', JSON.stringify(contextBound)],
       }),
     )
   },

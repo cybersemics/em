@@ -69,7 +69,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
       // dismiss SpaceToIndentHint flag
       // TODO: Factor out into setEmThought
       alert?.alertType === AlertType.SpaceToIndentHint
-        ? setAttribute({ path: [EM_TOKEN], key: '=flags', value: 'spaceToIndentHintComplete' })
+        ? setAttribute({ path: [EM_TOKEN], values: ['=flags', 'spaceToIndentHintComplete'] })
         : null,
     ])
   }

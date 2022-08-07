@@ -11,24 +11,26 @@ import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
 /** Sets an attribute on the given context. */
-const setAttribute = (state: State, { path, key, value }: { path: Path; key: string; value?: string }) => {
+const setAttribute = (state: State, { path, value, values }: { path: Path; value?: string; values?: string[] }) => {
+  const _values = values || [value!]
   const parentId = head(path)
-  const attributeId = getAllChildrenAsThoughts(state, parentId).find(child => child.value === key)?.id || createId()
+  const attributeId =
+    getAllChildrenAsThoughts(state, parentId).find(child => child.value === _values[0])?.id || createId()
   return reducerFlow([
-    !getAllChildrenAsThoughts(state, parentId).some(child => child.value === key)
+    !getAllChildrenAsThoughts(state, parentId).some(child => child.value === _values[0])
       ? state =>
           createThought(state, {
             id: attributeId,
             path,
-            value: key,
+            value: _values[0],
             rank: getPrevRank(state, parentId),
           })
       : null,
 
-    value != null
+    _values[1] != null
       ? setFirstSubthought({
           path: unroot([...path, attributeId]),
-          value,
+          value: _values[1],
         })
       : null,
   ])(state)

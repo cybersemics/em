@@ -99,8 +99,7 @@ const Note = ({ path }: NoteProps) => {
     dispatch(
       setAttribute({
         path,
-        key: '=note',
-        value,
+        values: ['=note', value],
       }),
     )
   }

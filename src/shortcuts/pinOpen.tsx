@@ -49,8 +49,7 @@ const pinOpenShortcut: Shortcut = {
     dispatch(
       toggleAttribute({
         path: cursor,
-        key: '=pin',
-        value: 'true',
+        values: ['=pin', 'true'],
       }),
     )
   },

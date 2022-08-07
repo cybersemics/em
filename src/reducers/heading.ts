@@ -24,7 +24,7 @@ const heading = (state: State, { level }: { level: HeadingLevel }): State => {
     ),
 
     // set new heading
-    level > 0 ? setAttribute({ path, key: `=heading${level}` }) : null,
+    level > 0 ? setAttribute({ path, values: [`=heading${level}`] }) : null,
   ])(state)
 }
 

@@ -15,8 +15,7 @@ it('set', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
   ]
 
@@ -35,14 +34,12 @@ it('different value should override existing value', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'goodbye',
+        values: ['=test', 'goodbye'],
       }),
   ]
 
@@ -63,14 +60,12 @@ it('add attribute if key has already been created', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'goodbye',
+        values: ['=test', 'goodbye'],
       }),
   ]
 
@@ -89,7 +84,7 @@ it('omit value to set only attribute', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
+        value: '=test',
       }),
   ]
 
@@ -107,8 +102,7 @@ it('set empty attribute', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: '',
+        values: ['=test', ''],
       }),
   ]
 

@@ -14,7 +14,7 @@ const textColor = (
   { backgroundColor, color, shape }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text' },
 ) => {
   if (!state.cursor) return state
-  const stateNew = shape === 'bullet' ? setAttribute(state, { path: state.cursor!, key: '=bullet' }) : state
+  const stateNew = shape === 'bullet' ? setAttribute(state, { path: state.cursor!, value: '=bullet' }) : state
   const path =
     shape === 'bullet'
       ? appendToPath(state.cursor, findDescendant(stateNew, head(state.cursor!), '=bullet')!)
@@ -71,11 +71,11 @@ const textColor = (
       : null,
 
     // set =style/color
-    color !== 'white' ? setAttribute({ path: path, key: '=style', value: 'color' }) : null,
+    color !== 'white' ? setAttribute({ path: path, values: ['=style', 'color'] }) : null,
 
     // set =style/backgroundColor
     backgroundColor && backgroundColor !== 'black'
-      ? setAttribute({ path: path, key: '=style', value: 'backgroundColor' })
+      ? setAttribute({ path: path, values: ['=style', 'backgroundColor'] })
       : null,
 
     // delete =style if it has no children
@@ -98,16 +98,14 @@ const textColor = (
         color !== 'white'
           ? setAttribute({
               path: stylePath,
-              key: 'color',
-              value: color || 'black',
+              values: ['color', color || 'black'],
             })
           : null,
         // background color
         backgroundColor && backgroundColor !== 'black'
           ? setAttribute({
               path: stylePath,
-              key: 'backgroundColor',
-              value: backgroundColor,
+              values: ['backgroundColor', backgroundColor],
             })
           : null,
       ])(state)

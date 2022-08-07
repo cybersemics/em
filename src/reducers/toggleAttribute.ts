@@ -12,16 +12,20 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
 /** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, just toggles the attribute itself. */
-const toggleAttribute = (state: State, { path, key, value }: { path: Path | null; key: string; value?: string }) => {
-  if (!path) return state
+const toggleAttribute = (
+  state: State,
+  { path, value, values }: { path: Path | null; value?: string; values?: string[] },
+) => {
+  if (!path || (value == null && (values === null || values?.length === 0))) return state
+  const _values = values || [value!]
 
-  const isNullaryAttribute = value === undefined
+  const isNullaryAttribute = _values.length === 1
 
   const exists = !isNullaryAttribute
-    ? path && attributeEquals(state, head(path), key, value!)
-    : !path || findDescendant(state, head(path), key)
+    ? path && attributeEquals(state, head(path), _values[0], _values[1])
+    : !path || findDescendant(state, head(path), _values[0])
 
-  const idAttributeOld = path && findDescendant(state, head(path), key)
+  const idAttributeOld = path && findDescendant(state, head(path), _values[0])
   const idAttribute = idAttributeOld || createId()
   const attributePath = [...path!, idAttribute] as unknown as Path
 
@@ -38,8 +42,8 @@ const toggleAttribute = (state: State, { path, key, value }: { path: Path | null
           ? state =>
               createThought(state, {
                 id: idAttribute,
-                path: path!, // ???
-                value: key,
+                path,
+                value: _values[0],
                 rank: path ? getPrevRank(state, head(path)) : 0,
               })
           : null,
@@ -49,7 +53,7 @@ const toggleAttribute = (state: State, { path, key, value }: { path: Path | null
           ? (state: State) => {
               return setFirstSubthought(state, {
                 path: attributePath,
-                value: value!,
+                value: _values[1],
               })
             }
           : null,

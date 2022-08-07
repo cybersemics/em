@@ -17,8 +17,7 @@ const toggleNote = (state: State) => {
     !hasNote
       ? setAttribute({
           path: state.cursor!,
-          key: '=note',
-          value: '',
+          values: ['=note', ''],
         })
       : // delete an empty note that already exists
       state.noteFocus && !attribute(state, thoughtId, '=note')

@@ -84,8 +84,7 @@ const toggleSortShortcut: Shortcut = {
         dispatch(
           toggleAttribute({
             path: pathSort!,
-            key: currentSortPreference.type,
-            value: currentSortPreference.direction,
+            values: [currentSortPreference.type, currentSortPreference.direction],
           }),
         )
       }
@@ -98,8 +97,7 @@ const toggleSortShortcut: Shortcut = {
         dispatch(
           toggleAttribute({
             path: simplePath,
-            key: '=sort',
-            value: nextSortPreference.type,
+            values: ['=sort', nextSortPreference.type],
           }),
         )
       }
@@ -112,8 +110,7 @@ const toggleSortShortcut: Shortcut = {
         dispatch(
           toggleAttribute({
             path: pathSort!,
-            key: nextSortPreference.type,
-            value: nextSortPreference.direction,
+            values: [nextSortPreference.type, nextSortPreference.direction],
           }),
         )
       }

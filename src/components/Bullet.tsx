@@ -213,7 +213,7 @@ const Bullet = ({
             ...(isExpanded &&
             (parentChildren?.length === 1 ||
               findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
-              ? [setAttribute({ path: simplePath, key: '=pin', value: 'false' })]
+              ? [setAttribute({ path: simplePath, values: ['=pin', 'false'] })]
               : [deleteAttribute({ path: simplePath, key: '=pin' })]),
             // move cursor
             setCursor({ path: shouldCollapse ? pathParent : path }),
