@@ -1,12 +1,9 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import setAttribute from '../reducers/setAttribute'
-import findDescendant from '../selectors/findDescendant'
-import { getAllChildren } from '../selectors/getChildren'
-import appendToPath from '../util/appendToPath'
-import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
-import deleteThought from './deleteThought'
+import deleteAttribute from './deleteAttribute'
+import toggleAttribute from './toggleAttribute'
 
 /** Sets the text color or background color of the cursor. */
 const textColor = (
@@ -15,102 +12,28 @@ const textColor = (
 ) => {
   if (!state.cursor) return state
   const stateNew = shape === 'bullet' ? setAttribute(state, { path: state.cursor!, value: '=bullet' }) : state
-  const path =
-    shape === 'bullet'
-      ? appendToPath(state.cursor, findDescendant(stateNew, head(state.cursor!), '=bullet')!)
-      : state.cursor
+  const path = state.cursor
 
-  return reducerFlow([
-    // clear bullet
-    shape === 'bullet' && color === 'white'
-      ? (state: State) =>
-          deleteThought(state, {
-            pathParent: state.cursor!,
-            thoughtId: head(path),
-          })
-      : null,
+  return shape === 'bullet'
+    ? // bullet
+      // do not modify text color or background color
+      color !== 'white'
+      ? toggleAttribute(state, { path: state.cursor, values: ['=bullet', '=style', 'color', color!] })
+      : deleteAttribute(state, { path, values: ['=bullet', '=style', 'color'] })
+    : // text color/background color
+      reducerFlow([
+        // set =style/color
+        // clear color if white
+        backgroundColor || color !== 'white'
+          ? setAttribute({ path, values: ['=style', 'color', color || 'black'] })
+          : deleteAttribute({ path, values: ['=style', 'color'] }),
 
-    // clear background color if black or unset
-    !backgroundColor || backgroundColor === 'black'
-      ? (state: State) => {
-          const styleId = findDescendant(state, head(path!), '=style')
-          const backgroundColorId = styleId ? findDescendant(state, styleId, 'backgroundColor') : null
-          if (!backgroundColorId) return state
-          return deleteThought(state, {
-            pathParent: path!,
-            thoughtId: backgroundColorId,
-          })
-        }
-      : null,
-
-    // clear color if white
-    // if background color is being set, we still need to set color to black
-    color === 'white'
-      ? (state: State) => {
-          const styleId = findDescendant(state, head(path!), '=style')
-          const colorId = styleId ? findDescendant(state, styleId, 'color') : null
-          if (!colorId) return state
-          return deleteThought(state, {
-            pathParent: path!,
-            thoughtId: colorId,
-          })
-        }
-      : null,
-
-    // clear background color
-    !backgroundColor || backgroundColor === 'black'
-      ? (state: State) => {
-          const styleId = findDescendant(state, head(path!), '=style')
-          const backgroundColorId = styleId ? findDescendant(state, styleId, 'backgroundColor') : null
-          if (!backgroundColorId) return state
-          return deleteThought(state, {
-            pathParent: path!,
-            thoughtId: backgroundColorId,
-          })
-        }
-      : null,
-
-    // set =style/color
-    color !== 'white' ? setAttribute({ path: path, values: ['=style', 'color'] }) : null,
-
-    // set =style/backgroundColor
-    backgroundColor && backgroundColor !== 'black'
-      ? setAttribute({ path: path, values: ['=style', 'backgroundColor'] })
-      : null,
-
-    // delete =style if it has no children
-    // must go after setting =style
-    (state: State) => {
-      const styleId = findDescendant(state, head(path!), '=style')
-      if (!styleId || getAllChildren(state, styleId).length > 0) return null
-      return deleteThought(state, {
-        pathParent: path!,
-        thoughtId: styleId,
-      })
-    },
-
-    // set color/backgroundColor value
-    (state: State) => {
-      const styleId = findDescendant(state, head(path!), '=style')!
-      const stylePath = appendToPath(path, styleId)
-      return reducerFlow([
-        // color
-        color !== 'white'
-          ? setAttribute({
-              path: stylePath,
-              values: ['color', color || 'black'],
-            })
-          : null,
-        // background color
+        // set =style/backgroundColor
+        // clear background color if black or unset
         backgroundColor && backgroundColor !== 'black'
-          ? setAttribute({
-              path: stylePath,
-              values: ['backgroundColor', backgroundColor],
-            })
-          : null,
-      ])(state)
-    },
-  ])(stateNew)
+          ? setAttribute({ path, values: ['=style', 'backgroundColor', backgroundColor] })
+          : deleteAttribute({ path, values: ['=style', 'backgroundColor'] }),
+      ])(stateNew)
 }
 
 export default _.curryRight(textColor)

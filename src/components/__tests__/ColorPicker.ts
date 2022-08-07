@@ -39,10 +39,10 @@ it('Set the background color using the ColorPicker', async () => {
   expect(exported).toEqual(`- __ROOT__
   - a
     - =style
-      - color
-        - black
       - backgroundColor
-        - dodgerblue`)
+        - dodgerblue
+      - color
+        - black`)
 })
 
 it('Set the bullet color using the ColorPicker', async () => {
@@ -134,10 +134,10 @@ it('Clear color and when setting background color', async () => {
   expect(exported).toEqual(`- __ROOT__
   - a
     - =style
-      - color
-        - black
       - backgroundColor
-        - tomato`)
+        - tomato
+      - color
+        - black`)
 })
 
 it('Clear the bullet color when selecting white', async () => {
@@ -162,4 +162,36 @@ it('Clear the bullet color when selecting white', async () => {
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
   - a`)
+})
+
+it('Preserve other bullet attributes and styles when clearing bullet color', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =bullet
+            - None
+            - =style
+              - color
+                - dodgerblue
+              - opacity
+                - 0.5
+      `,
+    }),
+  ])
+
+  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
+  userEvent.click(textColorButton)
+
+  const textBlue = document.querySelector('[aria-label="bullet color swatches"] [aria-label="white"]')!
+  userEvent.click(textBlue)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - =bullet
+      - None
+      - =style
+        - opacity
+          - 0.5`)
 })
