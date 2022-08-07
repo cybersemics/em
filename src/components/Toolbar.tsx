@@ -160,6 +160,7 @@ const Toolbar = ({
   }, [])
 
   const alert = useSelector((state: State) => state.alert)
+  const showColorPicker = useSelector((state: State) => state.showColorPicker)
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
@@ -304,16 +305,18 @@ const Toolbar = ({
             </span>
           </div>
 
-          <div
-            className='z-stack'
-            style={{
-              marginLeft: fontSize * 6,
-              position: 'relative',
-              textAlign: 'left',
-            }}
-          >
-            <ColorPicker fontSize={fontSize} />
-          </div>
+          {showColorPicker && (
+            <div
+              className='z-stack'
+              style={{
+                marginLeft: fontSize * 6,
+                position: 'relative',
+                textAlign: 'left',
+              }}
+            >
+              <ColorPicker fontSize={fontSize} />
+            </div>
+          )}
 
           <TransitionGroup>
             {shortcut && toolbarOverlay ? (

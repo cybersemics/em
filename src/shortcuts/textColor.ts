@@ -13,7 +13,7 @@ const textColor: Shortcut = {
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({
-      type: 'textColorPopup',
+      type: 'toggleColorPicker',
       path: state.cursor,
     })
   },

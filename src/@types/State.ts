@@ -77,6 +77,7 @@ interface State {
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
+  showColorPicker?: boolean
   showHiddenThoughts: boolean
   showModal?: string | null
   showQueue?: boolean | null
