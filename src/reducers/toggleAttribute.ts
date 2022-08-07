@@ -1,9 +1,14 @@
-import { setAttribute } from '.'
+import { deleteThought } from '.'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import deleteThought from '../reducers/deleteThought'
+import createThought from '../reducers/createThought'
+import setFirstSubthought from '../reducers/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
+import { getAllChildren, hasChildren } from '../selectors/getChildren'
+import getPrevRank from '../selectors/getPrevRank'
+import getThoughtById from '../selectors/getThoughtById'
+import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 
@@ -11,24 +16,46 @@ import head from '../util/head'
 const toggleAttribute = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
-) => {
-  if (!path || (value == null && (!values || values.length === 0))) return state
+): State => {
+  // normalize values if user passed single value
   const _values = values || [value!]
+  if (!path || (!value && (!values || values.length === 0))) return state
 
-  const exists = findDescendant(state, head(path), _values)
+  const thoughtId = head(path)
+  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
+  const idNew = createId()
 
-  const idAttributeOld = path && findDescendant(state, head(path), _values[0])
-  const idAttribute = idAttributeOld || createId()
+  // base case: delete or overwrite the first subthought with the last value in the sequence
+  if (_values.length === 1) {
+    const firstThought = getThoughtById(state, getAllChildren(state, thoughtId)[0])
+    return firstThought?.value === _values[0]
+      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id })
+      : setFirstSubthought(state, {
+          path: path,
+          value: _values[0],
+        })
+  }
 
-  return exists
-    ? deleteThought(state, {
-        pathParent: path,
-        thoughtId: idAttribute,
-      })
-    : setAttribute(state, {
+  // otherwise, create the first subthought if it does not exist and recurse
+  const stateWithFirstSubthought = firstSubthoughtId
+    ? state
+    : createThought(state, {
+        id: idNew,
         path,
-        values,
+        value: _values[0],
+        rank: getPrevRank(state, thoughtId),
       })
+
+  // recursion
+  const stateNew = toggleAttribute(stateWithFirstSubthought, {
+    path: appendToPath(path, firstSubthoughtId || idNew),
+    values: _values.slice(1),
+  })
+
+  // after recursion, delete empty descendants
+  return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    : stateNew
 }
 
 export default _.curryRight(toggleAttribute)
