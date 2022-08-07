@@ -4,17 +4,20 @@ import textColor from '../action-creators/textColor'
 import TextColorIcon from './icons/TextColor'
 
 /** A small, square color swatch that can be picked in the color picker. */
-const ColorSwatch: FC<{ backgroundColor?: string; color?: string; shape?: 'text' | 'bullet'; size?: number }> = ({
-  backgroundColor,
-  color,
-  shape,
-  size,
-}) => {
+const ColorSwatch: FC<{
+  backgroundColor?: string
+  color?: string
+  // aria-label; defaults to color or background color
+  label?: string
+  shape?: 'text' | 'bullet'
+  size?: number
+}> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   size = size || 20
   const margin = '3px 3px 8px 3px'
   return (
     <span
+      aria-label={label || color || backgroundColor}
       onClick={e => {
         e.preventDefault()
         dispatch(textColor({ backgroundColor, color, shape }))
@@ -58,48 +61,48 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
       }}
     >
       {/* Bullet Color */}
-      <div style={{ marginBottom: -2 }}>
+      <div aria-label='bullet color swatches' style={{ marginBottom: -2 }}>
         <ColorSwatch shape='bullet' color='white' />
         <ColorSwatch shape='bullet' color='gray' />
         <ColorSwatch shape='bullet' color='orange' />
-        <ColorSwatch shape='bullet' color='#ffee14' />
-        <ColorSwatch shape='bullet' color='mediumspringgreen' />
-        <ColorSwatch shape='bullet' color='mediumseagreen' />
-        <ColorSwatch shape='bullet' color='dodgerblue' />
-        <ColorSwatch shape='bullet' color='mediumpurple' />
+        <ColorSwatch shape='bullet' color='#ffee14' label='yellow' />
+        <ColorSwatch shape='bullet' color='mediumspringgreen' label='spring green' />
+        <ColorSwatch shape='bullet' color='mediumseagreen' label='sea green' />
+        <ColorSwatch shape='bullet' color='dodgerblue' label='blue' />
+        <ColorSwatch shape='bullet' color='mediumpurple' label='purple' />
         <ColorSwatch shape='bullet' color='violet' />
         <ColorSwatch shape='bullet' color='pink' />
-        <ColorSwatch shape='bullet' color='tomato' />
+        <ColorSwatch shape='bullet' color='tomato' label='red' />
       </div>
 
       {/* Text Color */}
-      <div>
+      <div aria-label='text color swatches'>
         <ColorSwatch color='white' />
         <ColorSwatch color='gray' />
         <ColorSwatch color='orange' />
-        <ColorSwatch color='#ffee14' />
-        <ColorSwatch color='mediumspringgreen' />
-        <ColorSwatch color='mediumseagreen' />
-        <ColorSwatch color='dodgerblue' />
-        <ColorSwatch color='mediumpurple' />
+        <ColorSwatch color='#ffee14' label='yellow' />
+        <ColorSwatch color='mediumspringgreen' label='spring green' />
+        <ColorSwatch color='mediumseagreen' label='sea green' />
+        <ColorSwatch color='dodgerblue' label='blue' />
+        <ColorSwatch color='mediumpurple' label='purple' />
         <ColorSwatch color='violet' />
         <ColorSwatch color='pink' />
-        <ColorSwatch color='tomato' />
+        <ColorSwatch color='tomato' label='red' />
       </div>
 
       {/* Background Color */}
-      <div>
+      <div aria-label='background color swatches'>
         <ColorSwatch backgroundColor='white' />
         <ColorSwatch backgroundColor='gray' />
         <ColorSwatch backgroundColor='orange' />
-        <ColorSwatch backgroundColor='#ffee14' />
-        <ColorSwatch backgroundColor='mediumspringgreen' />
-        <ColorSwatch backgroundColor='mediumseagreen' />
-        <ColorSwatch backgroundColor='dodgerblue' />
-        <ColorSwatch backgroundColor='mediumpurple' />
+        <ColorSwatch backgroundColor='#ffee14' label='yellow' />
+        <ColorSwatch backgroundColor='mediumspringgreen' label='spring green' />
+        <ColorSwatch backgroundColor='mediumseagreen' label='sea green' />
+        <ColorSwatch backgroundColor='dodgerblue' label='blue' />
+        <ColorSwatch backgroundColor='mediumpurple' label='purple' />
         <ColorSwatch backgroundColor='violet' />
         <ColorSwatch backgroundColor='pink' />
-        <ColorSwatch backgroundColor='tomato' />
+        <ColorSwatch backgroundColor='tomato' label='red' />
       </div>
     </div>
   )

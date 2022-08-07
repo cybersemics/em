@@ -88,8 +88,8 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
 
   return (
     <div
+      aria-label={shortcut.label}
       key={shortcutId}
-      id={shortcutId}
       style={{
         paddingTop: isButtonExecutable && isPressing ? '10px' : '',
         cursor: isButtonExecutable ? 'pointer' : 'default',
