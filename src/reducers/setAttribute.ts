@@ -5,38 +5,46 @@ import createThought from '../reducers/createThought'
 import setFirstSubthought from '../reducers/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
+import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
-import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
 
-/** Sets an attribute on the given context. */
-const setAttribute = (state: State, { path, value, values }: { path: Path; value?: string; values?: string[] }) => {
+/** Sets a sequence of values as descendants. Preserves existing descendants and unrelated siblings, except for the last value, which always replaces the existing value. */
+const setAttribute = (
+  state: State,
+  { path, value, values }: { path: Path; value?: string; values?: string[] },
+): State => {
+  // normalize values if user passed single value
   const _values = values || [value!]
   if (!value && (!values || values.length === 0)) return state
 
   const thoughtId = head(path)
-  const attributeId = findDescendant(state, thoughtId, _values[0])
+  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
 
-  return reducerFlow([
-    !attributeId
-      ? state =>
-          createThought(state, {
-            id: idNew,
-            path,
-            value: _values[0],
-            rank: getPrevRank(state, thoughtId),
-          })
-      : null,
+  // base case: overwrite the first subthought with the last value in the sequence
+  if (_values.length === 1) {
+    return setFirstSubthought(state, {
+      path: path,
+      value: _values[0],
+    })
+  }
 
-    _values[1] != null
-      ? setFirstSubthought({
-          path: unroot([...path, attributeId || idNew]),
-          value: _values[1],
-        })
-      : null,
-  ])(state)
+  // otherwise, create the first subthought if it does not exist and recurse
+  const stateWithFirstSubthought = firstSubthoughtId
+    ? state
+    : createThought(state, {
+        id: idNew,
+        path,
+        value: _values[0],
+        rank: getPrevRank(state, thoughtId),
+      })
+
+  // recursion
+  return setAttribute(stateWithFirstSubthought, {
+    path: appendToPath(path, firstSubthoughtId || idNew),
+    values: _values.slice(1),
+  })
 }
 
 export default _.curryRight(setAttribute)
