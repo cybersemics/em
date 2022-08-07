@@ -1,24 +1,46 @@
+import { deleteThought } from '.'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import deleteThought from '../reducers/deleteThought'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { hasChildren } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 /** Deletes an attribute. */
-const deleteAtribute = (state: State, { path, key }: { path: Path; key: string }) => {
-  if (!path) return state
+const deleteAttribute = (
+  state: State,
+  { path, key, value, values }: { key?: string; path: Path | null; value?: string; values?: string[] },
+): State => {
+  // normalize values if user passed single value
+  // TODO: Replace key with value
+  value = key
+  const _values = values || [value!]
+  if (!path || (!value && (!values || values.length === 0))) return state
 
-  const thoughtAttribute = getAllChildrenAsThoughts(state, head(path)).find(child => child.value === key)
-  const pathAttribute = thoughtAttribute ? [...path, thoughtAttribute.id] : null
+  const thoughtId = head(path)
+  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
 
-  return pathAttribute && findDescendant(state, head(path), key)
-    ? deleteThought(state, {
-        pathParent: path,
-        thoughtId: head(pathAttribute),
+  // base case: delete or overwrite the first subthought with the last value in the sequence
+  if (_values.length === 1) {
+    const firstSubthought = firstSubthoughtId && getThoughtById(state, firstSubthoughtId)
+    return firstSubthought ? deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId! }) : state
+  }
+
+  // otherwise, create the first subthought if it does not exist and recurse
+  // recursion
+  const stateNew = firstSubthoughtId
+    ? deleteAttribute(state, {
+        path: appendToPath(path, firstSubthoughtId),
+        values: _values.slice(1),
       })
     : state
+
+  // after recursion, delete empty descendants
+  return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    : stateNew
 }
 
-export default _.curryRight(deleteAtribute)
+export default _.curryRight(deleteAttribute)
