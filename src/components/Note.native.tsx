@@ -80,7 +80,7 @@ const Note = ({ path }: NoteProps) => {
     // (delete non-empty note is handled by delete shortcut, which allows mobile gesture to work)
     // note may be '' or null if the attribute child was deleted
     else if (e.key === 'Backspace' && !note) {
-      dispatch(deleteAttribute({ path, key: '=note' }))
+      dispatch(deleteAttribute({ path, value: '=note' }))
       dispatch(setNoteFocus({ value: false }))
     } else if (e.key === 'ArrowDown') {
       dispatch(cursorDown())

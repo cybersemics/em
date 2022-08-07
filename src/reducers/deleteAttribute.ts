@@ -11,11 +11,9 @@ import head from '../util/head'
 /** Deletes an attribute. */
 const deleteAttribute = (
   state: State,
-  { path, key, value, values }: { key?: string; path: Path | null; value?: string; values?: string[] },
+  { path, value, values }: { path: Path | null; value?: string; values?: string[] },
 ): State => {
   // normalize values if user passed single value
-  // TODO: Replace key with value
-  value = key
   const _values = values || [value!]
   if (!path || (!value && (!values || values.length === 0))) return state
 

@@ -70,7 +70,7 @@ const toggleSortShortcut: Shortcut = {
       dispatch(
         deleteAttribute({
           path: simplePath,
-          key: '=sort',
+          value: '=sort',
         }),
       )
     }

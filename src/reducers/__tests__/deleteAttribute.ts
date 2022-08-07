@@ -24,7 +24,7 @@ it('delete attribute', () => {
     (state: State) =>
       deleteAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
+        value: '=test',
       }),
   ]
 
