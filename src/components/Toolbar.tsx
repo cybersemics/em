@@ -305,18 +305,18 @@ const Toolbar = ({
             </span>
           </div>
 
-          {showColorPicker && (
+          <CSSTransition in={showColorPicker} timeout={200} classNames='fade' exit={false} unmountOnExit>
             <div
               className='z-stack'
               style={{
                 marginLeft: fontSize * 6,
-                position: 'relative',
+                position: 'absolute',
                 textAlign: 'left',
               }}
             >
               <ColorPicker fontSize={fontSize} />
             </div>
-          )}
+          </CSSTransition>
 
           <TransitionGroup>
             {shortcut && toolbarOverlay ? (
