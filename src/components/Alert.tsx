@@ -10,7 +10,7 @@ import setAttribute from '../action-creators/setAttribute'
 import GestureDiagram from '../components/GestureDiagram'
 import { AlertType, EM_TOKEN } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
-import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import { globalShortcuts } from '../shortcuts'
 
 interface AlertProps {
@@ -34,7 +34,7 @@ const ShortcutGestureHint = ({
   size: number
   style?: React.CSSProperties
 }) => {
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
+  const colors = useSelector(themeColors)
   return (
     <div style={{ marginBottom: 10, position: 'relative', textAlign: 'left', ...style }}>
       <GestureDiagram
@@ -42,9 +42,7 @@ const ShortcutGestureHint = ({
         path={gestureString(shortcut)}
         style={{ position: 'absolute', left: -size, top: -size / 4 }}
       />{' '}
-      <div style={{ color: dark ? (highlight ? 'lightblue' : 'white') : highlight ? 'royalblue' : 'black' }}>
-        {shortcut.label}
-      </div>
+      <div style={{ color: highlight ? colors.highlight : colors.fg }}>{shortcut.label}</div>
       {highlight && (
         <div style={{ fontSize: '80%', marginBottom: '1em', width: 'calc(100% - 10em)' }}>{shortcut.description}</div>
       )}

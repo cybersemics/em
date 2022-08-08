@@ -29,6 +29,7 @@ import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import ellipsize from '../util/ellipsize'
 import exportPhrase from '../util/exportPhrase'
 import getPublishUrl from '../util/getPublishUrl'
@@ -210,10 +211,9 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   const store = useStore()
   const state = store.getState()
   const [isOpen, setIsOpen] = useState(false)
-  // const [wrapperRef, setWrapper] = useState<HTMLElement | null>(null)
 
   const dark = theme(state) !== 'Light'
-  const themeColor = { color: dark ? 'white' : 'black' }
+  const colors = useSelector(themeColors)
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false)
@@ -224,7 +224,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   return (
     <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-      <a style={themeColor} onClick={() => setIsOpen(!isOpen)}>
+      <a style={{ color: colors.fg }} onClick={() => setIsOpen(!isOpen)}>
         {selected.label}
       </a>
       <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
@@ -278,11 +278,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
   const dark = theme(state) !== 'Light'
-  const themeColor = { color: dark ? 'white' : 'black' }
-  const themeColorWithBackground = dark
-    ? { color: 'black', backgroundColor: 'white' }
-    : { color: 'white', backgroundColor: 'black' }
-
+  const colors = useSelector(themeColors)
   const exportWord = isTouch ? 'Share' : 'Download'
 
   const isPulling = usePullStatus()
@@ -522,7 +518,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
           className='modal-btn-export'
           disabled={exportContent === null}
           onClick={onExportClick}
-          style={themeColorWithBackground}
+          style={{ color: colors.fg, backgroundColor: colors.bg }}
         >
           {exportWord}
         </button>
@@ -627,7 +623,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
               onClick={publish}
-              style={themeColorWithBackground}
+              style={{ color: colors.fg, backgroundColor: colors.bg }}
             >
               Publish
             </button>
@@ -639,8 +635,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
                   dispatch([alert(null), closeModal()])
                 }}
                 style={{
+                  color: colors.fg,
                   fontSize: '14px',
-                  ...themeColor,
                 }}
               >
                 Close

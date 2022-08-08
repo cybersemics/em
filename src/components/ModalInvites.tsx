@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import InviteCode from '../@types/InviteCode'
@@ -8,7 +8,7 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { getInviteById, updateInviteCode } from '../apis/invites'
 import { baseUrl } from '../device/router'
-import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import createId from '../util/createId'
 import timestamp from '../util/timestamp'
 import { ActionButton } from './ActionButton'
@@ -21,7 +21,6 @@ import InvitesIcon from './icons/InvitesIcon'
 const mapStateToProps = (state: State) => {
   const { authenticated, user: { uid = '' } = {} } = state
   return {
-    dark: theme(state) !== 'Light',
     uid,
     authenticated,
   }
@@ -61,9 +60,10 @@ const generateUserInvites = (userId: string) =>
   )
 
 /** Modal to get gift codes. */
-const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
+const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
   const dispatch = useDispatch()
 
+  const colors = useSelector(themeColors)
   const [focusedGiftCode, setFocusedGiftCode] = useState<string | null>(null)
   const [inviteCodes, setInviteCodes] = useState<Index<InviteCode>>({})
 
@@ -172,7 +172,7 @@ const ModalInvites = ({ dark, uid, authenticated }: ReturnType<typeof mapStateTo
               {used ? (
                 <CheckmarkIcon fill={selectedIconFill} size={21} />
               ) : (
-                <CheckmarkIcon fill={dark ? 'black' : 'white'} size={21} />
+                <CheckmarkIcon fill={colors.bg} size={21} />
               )}
               <div className='copy-icon-wrapper' onClick={() => updateCopy(link)}>
                 <CopyClipboard fill={selectedIconFill} size={26} />

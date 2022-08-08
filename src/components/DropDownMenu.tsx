@@ -1,7 +1,9 @@
 import React, { CSSProperties } from 'react'
+import { useSelector } from 'react-redux'
 import ExportOption from '../@types/ExportOption'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
+import themeColors from '../selectors/themeColors'
 
 interface DropDownMenuProps {
   dark?: boolean
@@ -16,12 +18,13 @@ interface DropDownMenuProps {
 // eslint-disable-next-line react/display-name
 const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
   ({ isOpen, onSelect, selected, options, dark, style }, ref) => {
+    const colors = useSelector(themeColors)
     return isOpen ? (
       <div
         ref={ref}
         className='drop-down-wrapper'
         style={{
-          border: '1px solid ' + (dark ? 'white' : 'black'),
+          border: `1px solid ${colors.fg}`,
           ...style,
         }}
       >

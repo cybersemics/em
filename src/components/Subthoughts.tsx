@@ -32,6 +32,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import { store } from '../store'
@@ -334,7 +335,8 @@ const NoChildren = ({
 }) => {
   const store = useStore<State>()
 
-  const { value } = getThoughtById(store.getState(), head(simplePath))
+  const value = useSelector((state: State) => getThoughtById(store.getState(), head(simplePath))?.value)
+  const colors = useSelector(themeColors)
 
   return (
     <div className='children-subheading text-note text-small'>
@@ -344,7 +346,7 @@ const NoChildren = ({
       <span>
         {isTouch ? (
           <span className='gesture-container'>
-            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
           </span>
         ) : (
           <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
@@ -363,7 +365,7 @@ const NoChildren = ({
         //       <GestureDiagram
         //         path={toggleContextViewShortcut.gesture as GesturePath}
         //         size={30}
-        //         color='darkgray' /* mtach .children-subheading color */
+        //         color={colors.gray66} /* mtach .children-subheading color */
         //       />
         //     </span>
         //   ) : (

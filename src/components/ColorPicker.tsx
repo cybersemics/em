@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import textColor from '../action-creators/textColor'
+import themeColors from '../selectors/themeColors'
 import TextColorIcon from './icons/TextColor'
 
 /** A small, square color swatch that can be picked in the color picker. */
@@ -50,10 +51,11 @@ const ColorSwatch: FC<{
 
 /** Text Color Picker component. */
 const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
+  const colors = useSelector(themeColors)
   return (
     <div
       style={{
-        backgroundColor: 'rgba(20, 20, 20, 0.8)',
+        backgroundColor: colors.overlay8,
         borderRadius: 3,
         display: 'inline-block',
         padding: `0 0.5em ${fontSize / 2}px`,

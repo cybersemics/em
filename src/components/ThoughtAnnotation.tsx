@@ -17,7 +17,6 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import theme from '../selectors/theme'
 import { store } from '../store'
 import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
@@ -34,7 +33,6 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  dark?: boolean
   editingValue?: string | null
   env?: string
   focusOffset?: number
@@ -103,7 +101,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   const thought = getThoughtById(state, head(simplePathLive))
 
   return {
-    dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,

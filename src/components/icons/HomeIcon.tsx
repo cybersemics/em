@@ -1,20 +1,10 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
-import theme from '../../selectors/theme'
+import themeColors from '../../selectors/themeColors'
 
 /** A home icon. */
-const HomeIcon = ({
-  color,
-  size,
-  style,
-}: {
-  color?: string
-  dark?: boolean
-  size?: number
-  style?: React.CSSProperties
-}) => {
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
+const HomeIcon = ({ color, size, style }: { color?: string; size?: number; style?: React.CSSProperties }) => {
+  const colors = useSelector(themeColors)
   return (
     <span role='img' aria-label='home' className='logo-wrapper'>
       <svg
@@ -23,10 +13,9 @@ const HomeIcon = ({
         height={size || 24}
         viewBox='0 0 24 24'
         className='logo'
-        fill={color || (dark ? '#FFF' : '#000')}
+        fill={color || colors.fg}
         style={style}
       >
-        <path d='M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z' />
         <path d='M0 0h24v24H0z' fill='none' />
       </svg>
     </span>

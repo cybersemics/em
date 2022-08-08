@@ -32,6 +32,7 @@ import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getStyle from '../selectors/getStyle'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
@@ -299,6 +300,7 @@ const NoChildren = ({
   simplePath: SimplePath
 }) => {
   const store = useStore<State>()
+  const colors = useSelector(themeColors)
 
   return (
     <View>
@@ -306,7 +308,7 @@ const NoChildren = ({
 
       <Text>
         <Text>
-          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
+          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color={colors.gray66} />
         </Text>
         to add "{headValue(store.getState(), simplePath)}" to a new context.
       </Text>
@@ -319,7 +321,7 @@ const NoChildren = ({
         //   <GestureDiagram
         //     path={toggleContextViewShortcut.gesture as GesturePath}
         //     size={30}
-        //     color='darkgray' /* mtach .children-subheading color */
+        //     color={colors.gray66} /* mtach .children-subheading color */
         //   />
         //   to return to the normal view.
         // </Text>

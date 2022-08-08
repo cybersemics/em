@@ -1,30 +1,21 @@
 import React from 'react'
-import { connect } from 'react-redux'
-import Connected from '../@types/Connected'
-import State from '../@types/State'
+import { useDispatch } from 'react-redux'
 import home from '../action-creators/home'
 import modalComplete from '../action-creators/modalComplete'
 import { MODAL_CLOSE_DURATION } from '../constants'
-import theme from '../selectors/theme'
 import Modal from './Modal'
 import HomeIcon from './icons/HomeIcon'
 
 interface HomeLinkProps {
   color?: string
-  dark?: boolean
   showModal?: string | null
   size?: number
   style?: React.CSSProperties
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => ({
-  dark: theme(state) !== 'Light',
-  showModal: state.showModal,
-})
-
 /** A link to the home screen. */
-const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<HomeLinkProps>) => {
+const HomeLink = ({ color, showModal, size, style }: HomeLinkProps) => {
+  const dispatch = useDispatch()
   return (
     <span className='home'>
       <a
@@ -35,7 +26,7 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
           dispatch(home())
         }}
       >
-        <HomeIcon color={color} dark={dark} size={size} style={style} />
+        <HomeIcon color={color} size={size} style={style} />
       </a>
       {showModal === 'home' ? (
         <Modal
@@ -54,4 +45,4 @@ const HomeLink = ({ dark, color, showModal, size, style, dispatch }: Connected<H
   )
 }
 
-export default connect(mapStateToProps)(HomeLink)
+export default HomeLink

@@ -17,6 +17,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import { isContextViewActiveById } from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -81,10 +82,11 @@ const Bullet = ({
   const dispatch = useDispatch()
   const dragHold = useSelector((state: State) => state.dragHold)
 
+  const colors = useSelector(themeColors)
   const fill = useSelector((state: State) => {
     const bulletId = findDescendant(state, head(simplePath), '=bullet')
     const styles = getStyle(state, bulletId)
-    return styles?.color || (dark ? '#d9d9d9' : '#000')
+    return styles?.color || colors.fg85
   })
 
   const lineHeight = fontSize * 1.25
@@ -133,7 +135,7 @@ const Bullet = ({
     const foregroundShapeProps = showContexts
       ? {
           strokeWidth: '30',
-          stroke: dark ? '#d9d9d9' : '#000',
+          stroke: colors.fg85,
           fill: 'none',
         }
       : {
@@ -242,7 +244,7 @@ const Bullet = ({
               rx={vendorSpecificData.bulletOverlayRadius}
               cy='300'
               cx='300'
-              fill={dark ? 'white' : 'black'}
+              fill={colors.fg}
             />
           )}
           {foregroundShape({

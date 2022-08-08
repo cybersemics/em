@@ -15,6 +15,7 @@ import { createSelector } from 'reselect'
 import Icon from '../@types/Icon'
 import State from '../@types/State'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import HamburgerMenu from './HamburgerMenu'
@@ -63,16 +64,9 @@ const ToolbarIcon: FC<ToolbarIconsProps> = ({ shortcutId, fillColor }) => {
 }
 
 /** Toolbar component mobile. */
-const Toolbar = ({
-  dark = true,
-  fontSize = 12,
-  toolbarOverlay = null,
-  scrollPrioritized = true,
-  showTopControls = true,
-}) => {
+const Toolbar = ({ fontSize = 12, toolbarOverlay = null, scrollPrioritized = true, showTopControls = true }) => {
+  const colors = useSelector(themeColors)
   const wholeStore = useSelector((state: State) => state)
-
-  const fillColor = dark ? 'white' : 'black'
 
   const shortcutIds = TOOLBAR_DEFAULT_SHORTCUTS
 
@@ -80,7 +74,7 @@ const Toolbar = ({
 
   // Todo: Fix re-render by adding a isActive methods within the main Icon component
   const renderItem: ListRenderItem<string> = useCallback(
-    ({ item: id }) => <ToolbarIcon key={id} shortcutId={id} fillColor={fillColor} />,
+    ({ item: id }) => <ToolbarIcon key={id} shortcutId={id} fillColor={colors.fg} />,
     [wholeStore],
   )
 

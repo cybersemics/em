@@ -1,10 +1,11 @@
 import React, { FC } from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import getSetting from '../selectors/getSetting'
+import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -66,6 +67,7 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
 }) => {
   // loading
   // show loading message if local store is loading or if remote is loading and there are no children
+  const colors = useSelector(themeColors)
   return (
     <div className='new-thought-instructions'>
       {showLoader ? (
@@ -86,7 +88,8 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
           <span style={{ userSelect: 'none' }}>
             {isTouch ? (
               <span className='gesture-container'>
-                Swipe <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+                Swipe{' '}
+                <GestureDiagram path={newThoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
               </span>
             ) : (
               <span>Hit the Enter key</span>
