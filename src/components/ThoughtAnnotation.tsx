@@ -45,6 +45,7 @@ interface ThoughtAnnotationProps {
   showHiddenThoughts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
+  styleAnnotation?: React.CSSProperties
 }
 
 /** Sets the innerHTML of the ngram text. */
@@ -120,6 +121,8 @@ const ThoughtAnnotation = ({
   invalidState,
   editingValue,
   style,
+  // only applied to the .subthought container
+  styleAnnotation,
   showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
   // only show real time update if being edited while having meta validation error
@@ -194,6 +197,12 @@ const ThoughtAnnotation = ({
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
+          style={{
+            // add a little padding for highlighting
+            padding: '0 3px',
+            marginLeft: -3,
+            ...styleAnnotation,
+          }}
         >
           <span
             className='subthought-text'

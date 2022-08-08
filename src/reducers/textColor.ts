@@ -27,8 +27,8 @@ const textColor = (
     // set background color
     // clear background color if black or unset
     backgroundColor && backgroundColor !== 'black'
-      ? setAttribute({ path, values: ['=style', 'backgroundColor', backgroundColor] })
-      : deleteAttribute({ path, values: ['=style', 'backgroundColor'] }),
+      ? setAttribute({ path, values: ['=styleAnnotation', 'backgroundColor', backgroundColor] })
+      : deleteAttribute({ path, values: ['=styleAnnotation', 'backgroundColor'] }),
   ])(state)
 }
 

@@ -159,7 +159,7 @@ const AppComponent: FC<Props> = props => {
   }, [showSplitView])
 
   const componentClassNames = classNames({
-    container: true,
+    attributeName: '=styleContainer',
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
     android: isAndroid,

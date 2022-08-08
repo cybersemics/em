@@ -10,10 +10,10 @@ import { getAllChildrenAsThoughts } from './getChildren'
 const getStyle = (
   state: State,
   id: ThoughtId | null,
-  { container }: { container?: boolean } = {},
+  { attributeName }: { attributeName?: string } = {},
 ): CSSProperties | null => {
   if (!id) return null
-  const styleId = findDescendant(state, id, container ? '=styleContainer' : '=style')
+  const styleId = findDescendant(state, id, attributeName || '=style')
   if (!styleId) return null
 
   const children = getAllChildrenAsThoughts(state, styleId)

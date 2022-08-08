@@ -102,7 +102,13 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
   const cursorStyle = useSelector(
     (state: State) =>
       state.showColorPicker && state.cursor
-        ? getStyle(state, head(state.cursor)) || ({} as React.CSSProperties)
+        ? {
+            // merge =style (which contains color) and =styleAnnotation (which contains backgroundColor)
+            // the style attribute name is not relevant here
+            ...(getStyle(state, head(state.cursor)) || ({} as React.CSSProperties)),
+            ...(getStyle(state, head(state.cursor), { attributeName: '=styleAnnotation' }) ||
+              ({} as React.CSSProperties)),
+          }
         : ({} as React.CSSProperties),
     shallowEqual,
   )

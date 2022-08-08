@@ -480,10 +480,10 @@ export const SubthoughtsComponent = ({
   // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   const styleContainerChildren = useSelector((state: State) =>
-    getStyle(state, childrenAttributeId, { container: true }),
+    getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
   )
   const styleContainerGrandchildren = useSelector((state: State) =>
-    getStyle(state, grandchildrenAttributeId, { container: true }),
+    getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
   )
 
   const proposedPageSize = PAGINATION_SIZE * page

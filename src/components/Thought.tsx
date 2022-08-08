@@ -22,6 +22,7 @@ import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -286,6 +287,9 @@ const ThoughtContainer = ({
 
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+  const styleAnnotation = useSelector((state: State) =>
+    getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
+  )
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
@@ -474,6 +478,7 @@ const ThoughtContainer = ({
               // highlight the parent of the current drop target to make it easier to drop in the intended place
               ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
             }}
+            styleAnnotation={styleAnnotation || undefined}
           />
 
           <StaticThought

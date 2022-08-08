@@ -73,10 +73,11 @@ it('Set the background color using the ColorPicker', async () => {
   expect(exported).toEqual(`- __ROOT__
   - a
     - =style
-      - backgroundColor
-        - dodgerblue
       - color
-        - black`)
+        - black
+    - =styleAnnotation
+      - backgroundColor
+        - dodgerblue`)
 })
 
 it('Clear the text color when selecting white', async () => {
@@ -108,6 +109,9 @@ it('Clear background color when selecting text color', async () => {
       text: `
         - a
           - =style
+            - color
+              - black
+          - =styleAnnotation
             - backgroundColor
               - dodgerblue
       `,
@@ -132,7 +136,7 @@ it('Clear background color when selecting text color', async () => {
           - tomato`)
 })
 
-it('Clear color and when setting background color', async () => {
+it('Change color to black when setting background color', async () => {
   store.dispatch([
     importText({
       text: `
@@ -154,10 +158,11 @@ it('Clear color and when setting background color', async () => {
   expect(exported).toEqual(`- __ROOT__
   - a
     - =style
-      - backgroundColor
-        - tomato
       - color
-        - black`)
+        - black
+    - =styleAnnotation
+      - backgroundColor
+        - tomato`)
 })
 
 it('Preserve other bullet attributes and styles when clearing text color', async () => {
