@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import Icon from '../components/icons/TextColor'
+import Icon from '../components/icons/TextColorWithColorPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the built-in =done style to cross out an item. */

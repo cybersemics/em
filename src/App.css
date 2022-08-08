@@ -492,6 +492,11 @@ a.text-link {
   flex: 1;
 }
 
+/* TextColor icon is used inside the toolbar-popup, so we need to revert the padding from .toolbar-icon .icon. More resilient than making .toolbar-icon .icon into a child selector. */
+.toolbar-popup .icon {
+  padding-top: 0;
+}
+
 .icon-text {
   flex: 8;
   font-size: 12px;

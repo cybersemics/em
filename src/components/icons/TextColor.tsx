@@ -1,7 +1,7 @@
 import React from 'react'
 import IconType from '../../@types/Icon'
 
-/** Descending Icon Component. */
+/** Text Color Icon Component. */
 const Icon = ({ size = 20, style }: IconType) => (
   <span className='icon' style={{ display: 'inline-block' }}>
     <span

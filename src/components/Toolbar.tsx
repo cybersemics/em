@@ -22,7 +22,6 @@ import subtree from '../selectors/subtree'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
-import ColorPicker from './ColorPicker'
 import Shortcut from './Shortcut'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -159,7 +158,6 @@ const Toolbar = ({
   }, [])
 
   const alert = useSelector((state: State) => state.alert)
-  const showColorPicker = useSelector((state: State) => state.showColorPicker)
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
@@ -303,19 +301,6 @@ const Toolbar = ({
               <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
             </span>
           </div>
-
-          <CSSTransition in={showColorPicker} timeout={200} classNames='fade' exit={false} unmountOnExit>
-            <div
-              className='z-stack'
-              style={{
-                marginLeft: fontSize * 5.7,
-                position: 'absolute',
-                textAlign: 'left',
-              }}
-            >
-              <ColorPicker fontSize={fontSize} />
-            </div>
-          </CSSTransition>
 
           <TransitionGroup>
             {shortcut && toolbarOverlay ? (

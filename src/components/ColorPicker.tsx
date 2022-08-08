@@ -1,9 +1,24 @@
-import React, { FC } from 'react'
+import React, { FC, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import textColor from '../action-creators/textColor'
 import themeColors from '../selectors/themeColors'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
+
+/** A hook that keeps the element in the viewing window. If the element is too wide to fit on the screen, aligns it to the left edge. */
+const useKeepInWindow = (ref: React.RefObject<HTMLElement>) => {
+  useEffect(() => {
+    if (!ref.current) return
+    const rect = ref.current.getBoundingClientRect()
+    const overflowLeft = rect.x
+    const overflowRight = rect.x + rect.width - window.innerWidth
+    if (overflowRight > 0) {
+      ref.current.style.marginLeft = `-${overflowRight + 35}px`
+    } else if (overflowLeft < 0) {
+      ref.current.style.marginLeft = '10px'
+    }
+  }, [])
+}
 
 /** A small, square color swatch that can be picked in the color picker. */
 const ColorSwatch: FC<{
@@ -16,12 +31,16 @@ const ColorSwatch: FC<{
 }> = ({ backgroundColor, color, label, shape, size }) => {
   const dispatch = useDispatch()
   size = size || 20
-  const margin = '3px 3px 8px 3px'
   return (
     <span
       aria-label={label || color || backgroundColor}
+      onTouchStart={e => {
+        // prevent toolbar button dip
+        e.stopPropagation()
+      }}
       onClick={e => {
         e.preventDefault()
+        e.stopPropagation()
         dispatch(textColor({ backgroundColor, color, shape }))
       }}
       style={{ cursor: 'pointer' }}
@@ -32,7 +51,7 @@ const ColorSwatch: FC<{
             color,
             display: 'inline-block',
             fontSize: size,
-            margin,
+            margin: '3px 5px 5px',
             width: size - 1,
             height: size - 1,
             textAlign: 'center',
@@ -43,7 +62,12 @@ const ColorSwatch: FC<{
       ) : (
         <TextColorIcon
           size={size}
-          style={{ backgroundColor, border: 'none', color: backgroundColor ? 'black' : color, margin }}
+          style={{
+            backgroundColor,
+            border: 'none',
+            color: backgroundColor ? 'black' : color,
+            margin: '3px 5px 5px',
+          }}
         />
       )}
     </span>
@@ -53,8 +77,13 @@ const ColorSwatch: FC<{
 /** Text Color Picker component. */
 const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
   const colors = useSelector(themeColors)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useKeepInWindow(ref)
+
   return (
     <div
+      ref={ref}
       style={{
         backgroundColor: colors.overlay10,
         borderRadius: 3,
@@ -64,13 +93,11 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
       }}
     >
       {/* Triangle */}
-      <div style={{ textAlign: 'center' }}>
-        <TriangleDown
-          fill={colors.overlay10}
-          size={fontSize}
-          style={{ position: 'absolute', left: 0, right: 0, top: -9.1, width: '100%' }}
-        />
-      </div>
+      <TriangleDown
+        fill={colors.overlay10}
+        size={fontSize}
+        style={{ position: 'absolute', left: 0, right: 0, top: -9.1, width: '100%' }}
+      />
 
       {/* Bullet Color */}
       <div aria-label='bullet color swatches' style={{ marginBottom: -2, whiteSpace: 'nowrap' }}>
