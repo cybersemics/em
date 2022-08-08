@@ -36,8 +36,7 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const selected =
-    (color && (cursorStyle?.color || 'white') === color) ||
-    (backgroundColor && (cursorStyle?.backgroundColor || 'black') === backgroundColor)
+    (color && cursorStyle?.color === color) || (backgroundColor && cursorStyle?.backgroundColor === backgroundColor)
   size = size || 20
   return (
     <span
@@ -49,7 +48,19 @@ const ColorSwatch: FC<{
       onClick={e => {
         e.preventDefault()
         e.stopPropagation()
-        dispatch(textColor({ backgroundColor, color, shape }))
+        dispatch(
+          textColor({
+            ...(selected
+              ? {
+                  color: 'white',
+                }
+              : {
+                  backgroundColor,
+                  color,
+                }),
+            shape,
+          }),
+        )
       }}
       style={{ cursor: 'pointer' }}
     >
