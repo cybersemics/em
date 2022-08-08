@@ -16,7 +16,7 @@ const useKeepInWindow = (ref: React.RefObject<HTMLElement>) => {
     const overflowLeft = rect.x
     const overflowRight = rect.x + rect.width - window.innerWidth
     if (overflowRight > 0) {
-      ref.current.style.marginLeft = `-${overflowRight + 35}px`
+      ref.current.style.marginLeft = `-${overflowRight + 60}px`
     } else if (overflowLeft < 0) {
       ref.current.style.marginLeft = '10px'
     }
@@ -116,7 +116,7 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
         backgroundColor: colors.overlay10,
         borderRadius: 3,
         display: 'inline-block',
-        padding: `0 0.5em ${fontSize / 2}px`,
+        padding: `${fontSize / 4}px 0.5em ${fontSize / 2}px`,
         userSelect: 'none',
       }}
     >
@@ -126,21 +126,6 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
         size={fontSize}
         style={{ position: 'absolute', left: 0, right: 0, top: -9.1, width: '100%' }}
       />
-
-      {/* Bullet Color */}
-      <div aria-label='bullet color swatches' style={{ marginBottom: -2, whiteSpace: 'nowrap' }}>
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='white' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='gray' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='orange' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='#ffee14' label='yellow' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='mediumspringgreen' label='spring green' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='mediumseagreen' label='sea green' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='dodgerblue' label='blue' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='mediumpurple' label='purple' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='violet' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='pink' />
-        <ColorSwatch cursorStyle={cursorStyle} shape='bullet' color='tomato' label='red' />
-      </div>
 
       {/* Text Color */}
       <div aria-label='text color swatches' style={{ whiteSpace: 'nowrap' }}>
