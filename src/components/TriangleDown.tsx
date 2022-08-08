@@ -1,8 +1,8 @@
 import React from 'react'
 import Icon from '../@types/Icon'
 
-/** A left-facing svg triangle. */
-const TriangleLeft = ({ fill = 'black', size = 20, width, height, style }: Icon) => (
+/** A down-facing triangle component. */
+const TriangleDown = ({ fill = 'black', size = 20, width, height, style }: Icon) => (
   <svg
     xmlns=''
     version='1.1'
@@ -10,10 +10,10 @@ const TriangleLeft = ({ fill = 'black', size = 20, width, height, style }: Icon)
     height={height || (width ? width * 2 : size)}
     fill={fill}
     style={style}
-    viewBox='0 0 5 10'
+    viewBox='0 0 10 10'
   >
-    <polygon points='0,5 5,0 5,10' />
+    <polygon points='0,5 5,0 10,5' />
   </svg>
 )
 
-export default TriangleLeft
+export default TriangleDown

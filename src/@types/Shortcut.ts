@@ -38,6 +38,9 @@ interface Shortcut {
   // a function that returns true if the shortcut should be highlighted in the Toolbar
   isActive?: (getState: () => State) => boolean
 
+  // when true, a small open dropdown indicator will be rendered beneath the icon
+  isDropdownOpen?: (getState: () => State) => boolean
+
   // a keyboard sequence to activate the shortcut
   keyboard?: Key | string
 

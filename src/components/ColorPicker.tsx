@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import textColor from '../action-creators/textColor'
 import themeColors from '../selectors/themeColors'
+import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
 
 /** A small, square color swatch that can be picked in the color picker. */
@@ -55,15 +56,24 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
   return (
     <div
       style={{
-        backgroundColor: colors.overlay8,
+        backgroundColor: colors.overlay10,
         borderRadius: 3,
         display: 'inline-block',
         padding: `0 0.5em ${fontSize / 2}px`,
         userSelect: 'none',
       }}
     >
+      {/* Triangle */}
+      <div style={{ textAlign: 'center' }}>
+        <TriangleDown
+          fill={colors.overlay10}
+          size={fontSize}
+          style={{ position: 'absolute', left: 0, right: 0, top: -9.1, width: '100%' }}
+        />
+      </div>
+
       {/* Bullet Color */}
-      <div aria-label='bullet color swatches' style={{ marginBottom: -2 }}>
+      <div aria-label='bullet color swatches' style={{ marginBottom: -2, whiteSpace: 'nowrap' }}>
         <ColorSwatch shape='bullet' color='white' />
         <ColorSwatch shape='bullet' color='gray' />
         <ColorSwatch shape='bullet' color='orange' />
@@ -78,7 +88,7 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
       </div>
 
       {/* Text Color */}
-      <div aria-label='text color swatches'>
+      <div aria-label='text color swatches' style={{ whiteSpace: 'nowrap' }}>
         <ColorSwatch color='white' />
         <ColorSwatch color='gray' />
         <ColorSwatch color='orange' />
@@ -93,7 +103,7 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
       </div>
 
       {/* Background Color */}
-      <div aria-label='background color swatches'>
+      <div aria-label='background color swatches' style={{ whiteSpace: 'nowrap' }}>
         <ColorSwatch backgroundColor='white' />
         <ColorSwatch backgroundColor='gray' />
         <ColorSwatch backgroundColor='orange' />

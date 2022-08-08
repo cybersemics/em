@@ -91,6 +91,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       key={shortcutId}
       style={{
         paddingTop: isButtonExecutable && isPressing ? '10px' : '',
+        position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
       }}
       className='toolbar-icon'
@@ -307,7 +308,7 @@ const Toolbar = ({
             <div
               className='z-stack'
               style={{
-                marginLeft: fontSize * 6,
+                marginLeft: fontSize * 5.7,
                 position: 'absolute',
                 textAlign: 'left',
               }}
