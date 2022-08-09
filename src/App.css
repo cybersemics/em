@@ -588,7 +588,7 @@ a.text-link {
   padding-top: 0.3em;
 }
 .child.expanded:not(.leaf) + .child > .thought-container .bullet {
-  margin-top: calc(-6px + 0.3em) !important;
+  top: 0.3em;
 }
 
 .child .editable {
@@ -1135,6 +1135,8 @@ h1 .num-contexts {
 
 .bullet {
   z-index: var(--z-index-bullet);
+  /* required for smooth animation when additional space is added after an expanded thought. See ".child.expanded:not(.leaf) + .child > .thought-container .bullet". */
+  top: 0;
 }
 
 /* Disable long press to select on iOS. See Thought.useLongPressHighlight for details. */
