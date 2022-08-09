@@ -2347,7 +2347,7 @@ code,
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
-  margin-top: -0.3em;
+  margin-top: 0;
   margin-left: -1.2em;
   background-color: lightblue;
   height: 3px;
@@ -2366,9 +2366,14 @@ code,
   z-index: var(--z-index-stack); /* Above "Add thought" */
 }
 
+.children > .child.drop-end {
+  margin-top: -0.3em;
+}
+
 /* for some reason the drop-end in the outermost ul is too wide */
-.drop-end.last {
+.child.drop-end.last {
   width: calc(100% - 161px);
+  margin-top: 0.4em;
 }
 
 .child.drop-end::before {

@@ -23,8 +23,10 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// simulate dragging and hovering over all drop targets for debugging
+// show all SubthoughtsDrop targets for debugging
 const simulateDrag = false
+
+// show all ThoughtDrop targets for debugging
 const simulateDropHover = false
 
 // disable the tutorial for debugging
