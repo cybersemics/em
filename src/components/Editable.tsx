@@ -104,6 +104,21 @@ const updateToolbarPositionOnScroll = () => {
   })
 }
 
+/** Returns true if the element has more than one line of text. */
+const useMultiline = (contentRef: React.RefObject<HTMLElement>) => {
+  const [multiline, setMultiline] = useState(false)
+
+  useEffect(() => {
+    if (contentRef.current) {
+      const height = contentRef.current.clientHeight
+      const lineHeight = parseFloat(getComputedStyle(contentRef.current).lineHeight)
+      setMultiline(height > lineHeight * 1.5)
+    }
+  }, [contentRef.current?.innerHTML])
+
+  return multiline
+}
+
 interface EditableProps {
   path: Path
   cursorOffset?: number | null
@@ -188,6 +203,8 @@ const Editable = ({
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
   }
+
+  const multiline = useMultiline(contentRef)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
@@ -674,6 +691,7 @@ const Editable = ({
       disabled={disabled}
       innerRef={contentRef}
       className={classNames({
+        multiline,
         preventAutoscroll: true,
         editable: true,
         ['editable-' + headId(path)]: true,

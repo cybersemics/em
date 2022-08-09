@@ -578,14 +578,40 @@ a.text-link {
   position: absolute;
 }
 
+/* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
+.thought-container {
+  line-height: 1.72;
+}
+
+/* Add some space before the first sibling after an expanded thought to make room for its children. Cannot use line-height since it adds unwanted space on the bottom, so we have to use padding-top even though it messes up the caret placement on click. See ".child .editable" below for details. */
+.child.expanded:not(.leaf) + .child > .thought-container .editable {
+  padding-top: 0.3em;
+}
+.child.expanded:not(.leaf) + .child > .thought-container .bullet {
+  margin-top: calc(-6px + 0.3em) !important;
+}
+
 .child .editable {
-  padding-left: 5px; /* Add padding otherwise cursor disappears on empty elements */
-  /* Cannot use padding-right, as it throws off the cursor when editing end of line. */
-  margin-top: -0.25em; /* offset padding-top */
-  margin-left: -5px; /* offset padding-left */
-  padding-bottom: 0.25em;
-  padding-top: 0.25em;
-  position: relative; /* position above thought-annotation so that function background color does not mask thought */
+  /* Cannot use padding-top on editable, as clicking it causes the selection to go to the beginning. */
+  /* Cannot use padding-bottom on editable, as clicking it causes the selection to go to the end. */
+  /* Add some padding-left otherwise caret is invisible on empty elements. */
+  padding-left: 5px;
+  margin-left: -5px;
+  /* create stacking order to position above thought-annotation so that function background color does not mask thought */
+  position: relative;
+  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
+  margin-top: -0.5px;
+  /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
+  clip-path: inset(0.001px 0 0.1em 0);
+  /* Use minimum height to the cover the gap left by clip-path */
+  min-height: 1.9em;
+}
+
+.editable.multiline {
+  line-height: 1.25;
+  margin-bottom: -2px !important;
+  padding-bottom: 0.5em;
+  padding-top: 5px;
 }
 
 .child .editable,
@@ -606,10 +632,6 @@ a.text-link {
   font-size: 1em;
   margin-top: 0;
   margin-bottom: 0;
-}
-
-.children .child:first-child {
-  padding-top: 0.5em;
 }
 
 /* Additional space not needed due to children-subheading */
@@ -664,7 +686,7 @@ a.text-link {
 .content {
   background-color: white;
   color: #111;
-  padding: 75px 10px 153px 50px
+  padding: 80px 10px 153px 50px
     /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
   transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
@@ -1124,7 +1146,7 @@ h1 .num-contexts {
   position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
-  padding: 0.2em 0 0.2em 100px;
+  padding-left: 100px;
 }
 
 .child > .thought-container > .bullet .glyph {
@@ -2519,10 +2541,11 @@ code,
 /* Prose View */
 
 /* prose view transition added to existing .children ruleset */
+/* do not transition line-height, since it is adjusted dynamically when multiline thoughts are mounted. */
 
 .children > .child > * > * > .superscript-container,
 .children > .child > * > * > .editable {
-  transition: text-indent 0.4s ease-in-out, padding 0.4s ease-in-out, line-height 0.4s ease-in-out;
+  transition: text-indent 0.4s ease-in-out, padding 0.4s ease-in-out;
 }
 
 .children > .child > .thought-container > .bullet {
@@ -3010,9 +3033,11 @@ code,
 }
 
 .note {
-  margin-top: 0;
-  margin-bottom: 0;
+  /* negative margin to compensate for line-height. See .thought-container. */
+  margin-top: -3px;
+  padding-bottom: 0.2em;
   transition: color 0.75s ease-in-out;
+  line-height: 1.25;
 }
 
 /* Publish */

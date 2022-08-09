@@ -127,7 +127,7 @@ const Note = ({ path }: NoteProps) => {
   }
 
   return (
-    <div className='note children-subheading text-note text-small' style={{ top: '4px' }}>
+    <div className='note children-subheading text-note text-small'>
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}
