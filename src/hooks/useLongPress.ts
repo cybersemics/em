@@ -27,8 +27,7 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
 
   // track that long press has started on mouseDown or touchStart
   const start = useCallback(e => {
-    // stop propagation to avoid useLongPress being trigger on ancestors
-    e.stopPropagation()
+    // do not stop propagation, or it will break MultiGesture
     setStarted(true)
   }, [])
 
