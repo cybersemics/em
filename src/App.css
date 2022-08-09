@@ -1137,7 +1137,7 @@ h1 .num-contexts {
   z-index: var(--z-index-bullet);
 }
 
-/* Disable long press to select on iOS. See useLongPress for details. */
+/* Disable long press to select on iOS. See Thought.useLongPressHighlight for details. */
 .pressed .editable {
   user-select: none;
 }

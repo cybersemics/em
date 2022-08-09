@@ -1,6 +1,6 @@
 import classNames from 'classnames'
-import React, { useEffect } from 'react'
-import { connect, useSelector } from 'react-redux'
+import React, { useCallback, useEffect, useState } from 'react'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
@@ -184,6 +184,48 @@ const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props:
   },
 })
 
+/** Set state.dragHold on longPress. */
+const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean; simplePath: SimplePath }) => {
+  // Set .pressed so that user-select: none can be applied to disable long press to select on iOS. If user-select: none is added after touchstart, it does not prevent magnifying glass text selection (unresolved). -webkit-touch-callout does not help. It seems the only way to disable it fully is to preventDefault on touchstart. However, this would break navigation in edit mode.
+  // See: https://stackoverflow.com/questions/923782/disable-the-text-highlighting-magnifier-on-touch-hold-on-mobile-safari-webkit
+  const [isPressed, setIsPressed] = useState(false)
+  const dispatch = useDispatch()
+
+  /** Highlight bullet and show alert on long press on Thought. */
+  const onLongPressStart = useCallback(() => {
+    setIsPressed(true)
+    dispatch([
+      dragHold({ value: true, simplePath }),
+      alert('Drag and drop to move thought', { alertType: 'dragAndDrop', showCloseLink: false }),
+    ])
+  }, [])
+
+  /** Cancel highlighting of bullet and dismiss alert when long press finished. */
+  const onLongPressEnd = useCallback(() => {
+    setIsPressed(false)
+    dispatch((dispatch, getState) => {
+      if (getState().dragHold) {
+        dispatch([dragHold({ value: false }), alert(null)])
+      }
+    })
+  }, [])
+
+  // react-dnd stops propagation so onLongPressEnd sometimes does't get called
+  // so disable pressed as soon as we are dragging
+  useEffect(() => {
+    if (isDragging) {
+      setIsPressed(false)
+    }
+  }, [isDragging])
+
+  const props = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
+
+  return {
+    isPressed,
+    props,
+  }
+}
+
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -275,24 +317,7 @@ const ThoughtContainer = ({
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
 
-  /** Highlight bullet and show alert on long press on Thought. */
-  const onLongPressStart = () => {
-    if (!store.getState().dragHold) {
-      store.dispatch([
-        dragHold({ value: true, simplePath }),
-        alert('Drag and drop to move thought', { alertType: 'dragAndDrop', showCloseLink: false }),
-      ])
-    }
-  }
-
-  /** Cancel highlighting of bullet and dismiss alert when long press finished. */
-  const onLongPressEnd = () => {
-    if (store.getState().dragHold) {
-      store.dispatch([dragHold({ value: false }), alert(null)])
-    }
-  }
-
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
+  const longPress = useLongPressHighlight({ isDragging, simplePath })
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
@@ -361,7 +386,7 @@ const ThoughtContainer = ({
   return dropTarget(
     dragSource(
       <li
-        {...longPressHandlerProps}
+        {...longPress.props}
         aria-label='thought-container'
         style={styleContainer}
         className={classNames({
@@ -380,12 +405,12 @@ const ThoughtContainer = ({
           // this is a bit of a hack since the bullet transform checks leaf instead of expanded
           // TODO: Consolidate with isLeaf if possible
           leaf: isLeaf || (isEditing && globals.suppressExpansion),
+          pressed: longPress.isPressed,
           // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
           prose: view === 'Prose',
           'show-contexts': showContexts,
           'show-contexts-no-breadcrumbs': simplePath.length === 2,
           'table-view': isTable,
-          ...longPressHandlerProps.className,
         })}
         ref={el => {
           if (el) {
