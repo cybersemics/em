@@ -471,8 +471,10 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 
   const { zoom, zoomCursor, zoomParent } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
 
+  // when Subthoughts is hovered over during drag, update the hoveringPath and hoverId
+  // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
   useEffect(() => {
-    if (isHovering) {
+    if (isHovering && store.getState().dragInProgress) {
       store.dispatch(
         dragInProgress({
           value: true,

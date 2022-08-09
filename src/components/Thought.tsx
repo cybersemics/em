@@ -280,9 +280,11 @@ const ThoughtContainer = ({
     childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
   )
 
+  // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
+  // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
   useEffect(() => {
-    if (isBeingHoveredOver) {
-      store.dispatch((dispatch, getState) =>
+    if (isBeingHoveredOver && store.getState().dragInProgress) {
+      store.dispatch((dispatch, getState) => {
         dispatch(
           dragInProgress({
             value: true,
@@ -290,8 +292,8 @@ const ThoughtContainer = ({
             hoveringPath: path,
             hoverId: DROP_TARGET.ThoughtDrop,
           }),
-        ),
-      )
+        )
+      })
     }
   }, [isBeingHoveredOver])
 

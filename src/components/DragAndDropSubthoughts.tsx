@@ -28,6 +28,10 @@ export type ConnectedDragAndDropSubthoughtsProps = ConnectedSubthoughtsProps & R
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
+
+  // dragInProgress can be set to false to abort the drag (e.g. by shaking)
+  if (!state.dragInProgress) return false
+
   const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
   const thoughtsTo = props.simplePath!
 

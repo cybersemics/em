@@ -38,6 +38,7 @@ interface State {
   // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
   // set to true while the user is dragging a thought
+  // may be set to false to abort the drag even while react-dnd is still dragging (e.g. by shaking)
   dragInProgress: boolean
   // forces content editable to update inner html if html has not changed
   // TODO: Do we really need to re-render all ContentEditables?

@@ -92,6 +92,10 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
+
+  // dragInProgress can be set to false to abort the drag (e.g. by shaking)
+  if (!state.dragInProgress) return false
+
   const { simplePath: thoughtsFrom } = monitor.getItem()
   const thoughtsTo = props.simplePath!
   const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
