@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
-import { connect, useDispatch } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -76,6 +76,7 @@ const Bullet = ({
   const isRootChildLeaf = simplePath.length === 2 && leaf
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
+  const dragHold = useSelector((state: State) => state.dragHold)
 
   const lineHeight = fontSize * 1.25
   const svgSizeStyle = {
@@ -181,7 +182,13 @@ const Bullet = ({
         cursor: 'pointer',
       }}
       onClick={(e: React.MouseEvent) => {
+        // stop click event from bubbling up to Content.clickOnEmptySpace
         e.stopPropagation()
+        // short circuit if dragHold
+        // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
+        // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
+        if (dragHold) return
+
         dispatch((dispatch, getState) => {
           const state = getState()
           const isExpanded = state.expanded[hashPath(path)]

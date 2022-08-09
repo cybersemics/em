@@ -26,16 +26,24 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
   }, [started])
 
   // track that long press has started on mouseDown or touchStart
-  const start = useCallback(e => {
+  const start = useCallback(() => {
     setStarted(true)
   }, [])
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
-  const stop = useCallback(() => {
-    setStarted(false)
-    setPressed(false)
-    onLongPressEnd()
-  }, [])
+  const stop = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      // Delay setPressed to ensure that onLongPressEnd is not called until bubbled events complete.
+      // This gives other components a chance to short circuit.
+      // We can't stop propagation here without messing up other components like Bullet.
+      setTimeout(() => {
+        setStarted(false)
+        setPressed(false)
+        onLongPressEnd()
+      }, 10)
+    },
+    [pressed],
+  )
 
   // set long press state on scroll depending on completion of timer
   const scroll = useCallback(() => {
