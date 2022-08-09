@@ -110,8 +110,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // Listen to touchend directly to catch unterminated gestures.
     // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
     // Unfortunately, there are some cases (#1242) where onPanResponderRelease is never called. Neither is onPanResponderReject or onPanResponderEnd.
-    // onPanResponderTerminate is called consistently, but it is also called for any any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
-    // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is called appropriately.
+    // onPanResponderTerminate is called consistently, but it is also called for any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
+    // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is always called.
     // Fixes https://github.com/cybersemics/em/issues/1242
     document.body.addEventListener('touchend', e => {
       // manually reset everything except sequence and abandon, in case reset does not get called
@@ -155,7 +155,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.panResponder = PanResponder.create({
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
-      // NOTE: thought it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
+      // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
       onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.() ?? true,
       onMoveShouldSetPanResponderCapture: () => !this.props.shouldCancelGesture?.() ?? true,
 
@@ -173,8 +173,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           return
         }
 
-        // use the first trigger of the move event to initialize this.currentStart
-        // onPanResponderStart does not work (why?)
+        // initialize this.currentStart on the the first trigger of the move event
+        // TODO: Why doesn't onPanResponderStart work?
         if (!this.currentStart) {
           this.scrolling = false
           // ensure that disableScroll is false when starting in case it wasn't reset properly
@@ -218,8 +218,17 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
 
           if (g !== this.sequence[this.sequence.length - 1]) {
-            this.sequence += g
-            this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+            // abandon gestures that start with d or u
+            // this can occur when dragging down at the top of the screen on mobile
+            // since scrollY is already 0,  this.scrolling will not be set to true to abandon the gesture
+            if (this.sequence.length === 0 && (g === 'd' || g === 'u')) {
+              this.abandon = true
+            }
+            // otherwise append the gesture to the sequence and call the onGesture handler
+            else {
+              this.sequence += g
+              this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+            }
           }
         }
       },
