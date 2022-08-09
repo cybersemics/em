@@ -304,18 +304,6 @@ const ThoughtContainer = ({
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
 
-  /** True if a dragged thought is hovering over a visible child (ThoughtDrop or SubthoughtsDrop). */
-  const isChildHovering = useSelector(
-    (state: State) =>
-      isVisible &&
-      // SubthoughtsDrop
-      (isSubthoughtHovering ||
-        // ThoughtDrop
-        (state.hoveringPath &&
-          state.hoverId === DROP_TARGET.ThoughtDrop &&
-          equalPath(parentOf(state.hoveringPath), simplePath))),
-  )
-
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
 
@@ -373,6 +361,22 @@ const ThoughtContainer = ({
       : // if alphabetical sort is disabled just check if current thought is hovering
         globals.simulateDropHover || isHovering
   })
+
+  /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). */
+  // TODO: it would be nice if we could reuse canDrop
+  const isChildHovering = useSelector(
+    (state: State) =>
+      isVisible &&
+      state.hoveringPath &&
+      // SubthoughtsDrop
+      // can drop on SubthoughtsDrop if this thought is being hovered over
+      ((state.hoverId === DROP_TARGET.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
+        // ThoughtDrop
+        // can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought
+        (equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
+          state.hoverId === DROP_TARGET.ThoughtDrop &&
+          !isDescendantPath(simplePath, state.draggingThought!))),
+  )
 
   if (!thought) return null
 

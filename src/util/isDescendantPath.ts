@@ -2,11 +2,16 @@ import Path from '../@types/Path'
 import equalPath from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive). */
-export const isDescendantPath = (superset: Path | null, subset: Path | null) => {
-  if (!superset || !subset || !superset.length || !subset.length || superset.length < subset.length) return false
-  if (superset === subset || (superset.length === 0 && subset.length === 0)) return true
+export const isDescendantPath = (
+  descendant: Path | null,
+  ancestor: Path | null,
+  { exclusive }: { exclusive?: boolean } = {},
+) => {
+  if (!descendant || !ancestor || !descendant.length || !ancestor.length || descendant.length < ancestor.length)
+    return false
+  if (descendant === ancestor || (descendant.length === 0 && ancestor.length === 0)) return !exclusive
 
-  return !!superset.find((_, i) => equalPath(superset.slice(0, i + subset.length) as Path, subset))
+  return !!descendant.find((_, i) => equalPath(descendant.slice(0, i + ancestor.length) as Path, ancestor))
 }
 
 /** Returns the index of the first element in list that starts with thoughts. */
