@@ -119,7 +119,7 @@ const initDB = async () => {
     db.lexemeIndex.hook('deleting', (primaryKey, lexeme, transaction) => {
       transaction.on('complete', () => {
         // Sometimes lexeme is undefined ??
-        if (lexeme) db.thoughtWordsIndex.delete(hashThought(lexeme.lemma))
+        if (lexeme?.lemma != null) db.thoughtWordsIndex.delete(hashThought(lexeme.lemma))
       })
     })
   }
