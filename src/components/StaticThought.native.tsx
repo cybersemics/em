@@ -17,7 +17,7 @@ import Divider from './Divider'
 import Editable from './Editable'
 import HomeLink from './HomeLink'
 import Superscript from './Superscript'
-import { ConnectedThoughtProps } from './Thought'
+import { ThoughtProps } from './Thought'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
@@ -29,7 +29,7 @@ const StaticThought = ({
   style,
   simplePath,
   onEdit,
-}: ConnectedThoughtProps) => {
+}: ThoughtProps) => {
   const isRoot = simplePath.length === 1
 
   const state = store.getState()

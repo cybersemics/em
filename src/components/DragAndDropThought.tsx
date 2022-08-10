@@ -39,12 +39,11 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
-import { ConnectedThoughtContainerProps, ConnectedThoughtDispatchProps, ThoughtContainerProps } from './Thought'
+import { ConnectedThoughtContainerProps, ThoughtContainerProps } from './Thought'
 
 export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
   ReturnType<typeof dragCollect> &
-  ReturnType<typeof dropCollect> &
-  ConnectedThoughtDispatchProps
+  ReturnType<typeof dropCollect>
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ConnectedThoughtContainerProps) => {

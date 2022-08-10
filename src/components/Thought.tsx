@@ -1,7 +1,6 @@
 import classNames from 'classnames'
 import React, { useCallback, useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import { ThunkDispatch } from 'redux-thunk'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -91,7 +90,7 @@ export interface ThoughtContainerProps {
   view?: string | null
 }
 
-interface ThoughtProps {
+export interface ThoughtProps {
   cursorOffset?: number | null
   editing?: boolean | null
   // When context view is activated, some contexts may be pending
@@ -104,6 +103,7 @@ interface ThoughtProps {
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
+  onEdit?: (args: { newValue: string; oldValue: string }) => void
   path: Path
   rank: number
   showContextBreadcrumbs?: boolean
@@ -114,11 +114,7 @@ interface ThoughtProps {
   view?: string | null
 }
 
-export type ConnectedThoughtProps = ThoughtProps & Partial<ReturnType<typeof mapDispatchToProps>>
-
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
-
-export type ConnectedThoughtDispatchProps = ReturnType<typeof mapDispatchToProps>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -171,17 +167,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     view: attribute(state, head(simplePath), '=view'),
   }
 }
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: ThunkDispatch<State, unknown, any>, props: ThoughtContainerProps) => ({
-  // when the thought is edited, hide the top controls and breadcrumbs for distraction-free typing
-  onEdit: ({ oldValue, newValue }: { oldValue: string; newValue: string }) => {
-    // only hide when typing, not when deleting
-    if (newValue.length > oldValue.length) {
-      dispatch(toggleTopControlsAndBreadcrumbs(false))
-    }
-  },
-})
 
 /** Set state.dragHold on longPress. */
 const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean; simplePath: SimplePath }) => {
@@ -262,7 +247,6 @@ const ThoughtContainer = ({
   isContextPending,
   isPublishChild,
   isVisible,
-  onEdit,
   parentView,
   path,
   prevChildId,
@@ -275,6 +259,7 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const envParsed = JSON.parse(env || '{}') as LazyEnv
+  const dispatch = useDispatch()
 
   const thoughtId = head(simplePath)
   const children = useSelector((state: State) =>
@@ -379,6 +364,14 @@ const ThoughtContainer = ({
           state.hoverId === DROP_TARGET.ThoughtDrop &&
           !isDescendantPath(simplePath, state.draggingThought!))),
   )
+
+  // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
+  const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
+    // only hide when typing, not when deleting
+    if (newValue.length > oldValue.length) {
+      dispatch(toggleTopControlsAndBreadcrumbs(false))
+    }
+  }, [])
 
   if (!thought) return null
 
@@ -546,6 +539,6 @@ const ThoughtContainer = ({
 ThoughtContainer.displayName = 'ThoughtContainer'
 
 // export connected, drag and drop higher order thought component
-const ThoughtComponent = connect(mapStateToProps, mapDispatchToProps)(DragAndDropThought(ThoughtContainer))
+const ThoughtComponent = connect(mapStateToProps)(DragAndDropThought(ThoughtContainer))
 
 export default ThoughtComponent

@@ -193,7 +193,6 @@ const ThoughtContainer = ({
   isParentHovering,
   isPublishChild,
   isVisible,
-  onEdit,
   path,
   prevChildId,
   publish,
@@ -330,7 +329,6 @@ const ThoughtContainer = ({
           isVisible={isVisible}
           isPublishChild={isPublishChild}
           isEditing={isEditing}
-          onEdit={onEdit}
           rank={rank}
           showContextBreadcrumbs={showContextBreadcrumbs}
           style={style}
