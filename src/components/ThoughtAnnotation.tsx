@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -37,7 +36,7 @@ import UrlIcon from './icons/UrlIcon'
 interface ThoughtAnnotationProps {
   dark?: boolean
   editingValue?: string | null
-  env?: Index<any>
+  env?: string
   focusOffset?: number
   homeContext?: boolean
   invalidState?: boolean

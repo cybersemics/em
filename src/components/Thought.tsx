@@ -2,11 +2,10 @@ import classNames from 'classnames'
 import React, { useCallback, useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import { ThunkDispatch } from 'redux-thunk'
-import Index from '../@types/IndexType'
+import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
@@ -62,7 +61,7 @@ export interface ThoughtContainerProps {
   contextBinding?: Path
   cursor?: Path | null
   depth?: number
-  env?: Index<ThoughtId>
+  env?: string
   expandedContextThought?: Path
   hideBullet?: boolean
   // See: ThoughtProps['isContextPending']
@@ -82,7 +81,7 @@ export interface ThoughtContainerProps {
   // See: ThoughtProps['isVisible']
   isVisible?: boolean
   path: Path
-  prevChild?: Thought
+  prevChildId?: ThoughtId
   publish?: boolean
   rank: number
   showContexts?: boolean
@@ -266,7 +265,7 @@ const ThoughtContainer = ({
   onEdit,
   parentView,
   path,
-  prevChild,
+  prevChildId,
   publish,
   rank,
   showContexts,
@@ -275,10 +274,13 @@ const ThoughtContainer = ({
   styleContainer: styleContainerProp,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
+  const envParsed = JSON.parse(env || '{}') as LazyEnv
+
   const thoughtId = head(simplePath)
   const children = useSelector((state: State) =>
     childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
   )
+  const prevChild = useSelector((state: State) => (prevChildId ? getThoughtById(state, prevChildId) : null))
 
   // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
   // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
@@ -297,9 +299,9 @@ const ThoughtContainer = ({
     }
   }, [isBeingHoveredOver])
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const style = useStyle({ children, env, styleProp, thoughtId })
-  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
+  const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
+  const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+  const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)

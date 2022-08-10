@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
-import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -65,7 +64,7 @@ export interface SubthoughtsProps {
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
   depth?: number
-  env?: Index<ThoughtId>
+  env?: string
   expandable?: boolean
   isHeader?: boolean
   isParentHovering?: boolean
@@ -237,7 +236,8 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
-  const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
+  const envParsed = JSON.parse(props.env || '{}')
+  const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
 
   /*
     Note: The following properties is applied to the immediate childrens with given class.
@@ -461,7 +461,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   const thought = getThoughtById(state, head(simplePath))
   const { value } = thought
   const resolvedPath = path ?? simplePath
-  const envParsed = JSON.parse(env || '{}')
+  const envParsed = JSON.parse(env || '{}') as LazyEnv
 
   const show = useSelector((state: State) => {
     /** Returns true if the cursor is on an ancestor of the path. Editing a context in the context view does not count as editing an ancestor. */
@@ -706,7 +706,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
-                        env={envParsed}
+                        env={env}
                         hideBullet={true}
                         rank={child.rank}
                         isVisible={
@@ -716,7 +716,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                           (distance === 2 && isEditingChildPath())
                         }
                         showContexts={showContexts}
-                        prevChild={filteredChildren[i - 1]}
+                        prevChildId={filteredChildren[i - 1]?.id}
                         isParentHovering={isParentHovering}
                         style={{
                           // disable pointer interaction until we can handle column header editing
@@ -787,7 +787,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               <Thought
                 allowSingleContext={allowSingleContextParent}
                 depth={depth + 1}
-                env={envParsed}
+                env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
                 key={`${child.id}-${child.rank}`}
                 rank={child.rank}
@@ -796,7 +796,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   (isChildCursor && !!zoomCursor) || actualDistance() < 2 || (distance === 2 && isEditingChildPath())
                 }
                 showContexts={showContexts}
-                prevChild={filteredChildren[i - 1]}
+                prevChildId={filteredChildren[i - 1]?.id}
                 isContextPending={child.value === '__PENDING__'}
                 isParentHovering={isParentHovering}
                 style={Object.keys(style).length > 0 ? style : undefined}

@@ -62,7 +62,7 @@ interface SubthoughtsProps {
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
   depth?: number
-  env?: Index<ThoughtId>
+  env?: string
   expandable?: boolean
   isParentHovering?: boolean
   showContexts?: boolean
@@ -157,12 +157,13 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
-  const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
+  const envParsed = JSON.parse(props.env || '{}')
+  const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
 
   return {
     contextBinding,
     distance,
-    env,
+    env: JSON.stringify(env),
     isEditing,
     isEditingPath,
     isEditingAncestor: isEditingPath && !isEditing,
@@ -419,7 +420,8 @@ export const SubthoughtsComponent = ({
   const isEditingAncestor = isEditingPath && !isEditing
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
-  const { zoom } = useZoom({ env, isEditing, isEditingPath, simplePath })
+  const envParsed = JSON.parse(env || '{}') as LazyEnv
+  const { zoom } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
 
   // useEffect(() => {
   //   if (isHovering) {
@@ -583,7 +585,7 @@ export const SubthoughtsComponent = ({
             }
 
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
+            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
 
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)
@@ -625,7 +627,7 @@ export const SubthoughtsComponent = ({
                   }
                   isParentHovering={isParentHovering}
                   isVisible={actualDistance() < 2}
-                  prevChild={filteredChildren[i - 1]}
+                  prevChildId={filteredChildren[i - 1]?.id}
                   rank={child.rank}
                   showContexts={showContexts}
                   simplePath={childPath}

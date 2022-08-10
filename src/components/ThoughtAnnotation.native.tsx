@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { TouchableOpacity } from 'react-native'
 import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -46,7 +45,7 @@ const { from, animate } = fadeIn
 interface ThoughtAnnotationProps {
   dark?: boolean
   editingValue?: string | null
-  env?: Index<any>
+  env?: string
   focusOffset?: number
   homeContext?: boolean
   invalidState?: boolean

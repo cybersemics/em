@@ -4,10 +4,10 @@ import { StyleSheet } from 'react-native'
 import { connect } from 'react-redux'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
+import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
@@ -65,7 +65,7 @@ export interface ThoughtContainerProps {
   isHovering?: boolean
   isParentHovering?: boolean
   isVisible?: boolean
-  prevChild?: ThoughtId | ThoughtContext
+  prevChildId?: ThoughtId
   publish?: boolean
   rank: number
   showContexts?: boolean
@@ -195,7 +195,7 @@ const ThoughtContainer = ({
   isVisible,
   onEdit,
   path,
-  prevChild,
+  prevChildId,
   publish,
   rank,
   showContexts,
@@ -245,9 +245,10 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
 
-  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
+  const envParsed = JSON.parse(env || '{}') as LazyEnv
+  const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
-  const style = useStyle({ children, env, styleProp, thoughtId })
+  const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
 
   if (!thought) return null
 
