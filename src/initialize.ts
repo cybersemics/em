@@ -37,11 +37,6 @@ import owner from './util/owner'
 import * as sessionManager from './util/sessionManager'
 import urlDataSource from './util/urlDataSource'
 
-// enable to collect moize usage stats
-// do not enable in production
-// execute moize.getStats in the console to analyze cache hits, e.g. moize.getStats('contextToThoughtId')
-// moize.collectStats()
-
 /** Initialize firebase and event handlers. */
 export const initFirebase = async (): Promise<void> => {
   if (window.firebase) {
@@ -216,6 +211,13 @@ const windowEm = {
 }
 
 window.em = windowEm
+
+/*
+  Uncomment em.moize.collectStats() to start collecting stats on load.
+  Do not enable in production.
+  Call em.moize.getStats in the console to analyze cache hits, e.g. em.moize.getStats('getSetting').
+*/
+// moize.collectStats()
 
 /** Logs debugging information to a fixed position debug window. Useful for PWA debugging. */
 window.debug = (message: string) => {
