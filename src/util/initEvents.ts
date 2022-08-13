@@ -117,7 +117,9 @@ const initEvents = (store: Store<State, any>) => {
   /** Handles auto scroll on drag near the edge of the screen on mobile. */
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
-    if (state.dragInProgress) {
+
+    // do not auto scroll when hovering over DeleteDrop component
+    if (state.dragInProgress && state.alert?.alertType !== 'deleteDropHint') {
       const y = e.touches[0].clientY
       // start scrolling down when within 100px of the top edge of the screen
       if (y < 120) {

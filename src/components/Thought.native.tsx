@@ -14,7 +14,7 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { AlertText, DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -232,7 +232,7 @@ const ThoughtContainer = ({
     if (!store.getState().dragHold) {
       store.dispatch([
         dragHold({ value: true, simplePath }),
-        alert('Drag and drop to move thought', { showCloseLink: false }),
+        alert(AlertText.dragAndDropHint, { showCloseLink: false }),
       ])
     }
   }

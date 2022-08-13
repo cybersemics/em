@@ -433,3 +433,7 @@ export enum VIEW_MODE {
 }
 
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
+
+export const AlertText = {
+  dragAndDropHint: 'Drag and drop to move thought',
+}

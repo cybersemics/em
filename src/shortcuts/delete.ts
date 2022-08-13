@@ -36,8 +36,9 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     if (value) {
       dispatch(
         alert(`Deleted ${ellipsize(value)}`, {
-          showCloseLink: true,
+          alertType: 'deleteThoughtComplete',
           clearDelay: 8000,
+          showCloseLink: true,
         }),
       )
     }
