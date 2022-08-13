@@ -1001,6 +1001,25 @@ body.dark {
   opacity: 0;
 }
 
+/* react-transition-group animation: slide-right */
+.slide-right-enter {
+  transform: translateX(100%);
+}
+
+.slide-right-enter-active {
+  transform: translateX(0);
+  transition: all 200ms ease-out;
+}
+
+.slide-right-exit {
+  transform: translateX(0);
+}
+
+.slide-right-exit-active {
+  transform: translateX(100%);
+  transition: all 200ms ease-out;
+}
+
 .error {
   color: red;
 }

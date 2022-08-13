@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React from 'react'
-import { connect, useSelector } from 'react-redux'
+import { connect } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -10,7 +10,6 @@ import { store } from '../store'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import DeleteDrop from './DeleteDrop'
 import FeedbackButton from './FeedbackButton'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
@@ -48,7 +47,6 @@ const NavBar = ({
   // avoid re-rendering from simplePath's new object reference
   const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length) : []) as Path
   const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
-  const isDragging = useSelector((state: State) => state.dragHold || state.dragInProgress)
 
   return (
     <div
@@ -70,17 +68,11 @@ const NavBar = ({
               </CSSTransition>
 
               <div className='nav-right-button-group'>
-                {!isDragging && (
-                  <>
-                    {authenticated && <InvitesButton />}
-                    <FeedbackButton />
-                    <QuickAddButton />
-                  </>
-                )}
-
-                <CSSTransition in={isDragging} exit={false} timeout={600} classNames='fade-600' unmountOnExit>
-                  <DeleteDrop />
-                </CSSTransition>
+                <>
+                  {authenticated && <InvitesButton />}
+                  <FeedbackButton />
+                  <QuickAddButton />
+                </>
               </div>
             </>
           )}
