@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import _ from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
@@ -262,8 +263,10 @@ const ThoughtContainer = ({
   const dispatch = useDispatch()
 
   const thoughtId = head(simplePath)
-  const children = useSelector((state: State) =>
-    childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
+  const children = useSelector(
+    (state: State) =>
+      childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
+    _.isEqual,
   )
   const prevChild = useSelector((state: State) => (prevChildId ? getThoughtById(state, prevChildId) : null))
 

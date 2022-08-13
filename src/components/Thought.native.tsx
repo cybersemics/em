@@ -1,7 +1,8 @@
+import _ from 'lodash'
 import { View } from 'moti'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -206,9 +207,12 @@ const ThoughtContainer = ({
   const state = store.getState()
   const thought = getThoughtById(state, head(simplePath))
   const thoughtId = head(simplePath)
-  const children = childrenForced
-    ? childIdsToThoughts(state, childrenForced)
-    : getChildrenRanked(state, head(simplePath)) // TODO: contextBinding
+
+  const children = useSelector(
+    (state: State) =>
+      childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
+    _.isEqual,
+  )
 
   useEffect(() => {
     if (isBeingHoveredOver) {
