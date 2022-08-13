@@ -3,6 +3,7 @@ import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
 import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
+import Icon from '../components/icons/DeleteIcon'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -49,8 +50,9 @@ const deleteShortcut: Shortcut = {
   description: 'Permanently delete the current thought.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable(),
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
+  svg: Icon,
 }
 
 export default deleteShortcut

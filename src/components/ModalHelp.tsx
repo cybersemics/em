@@ -327,6 +327,10 @@ const ModalHelp = ({
           Checkmark icon by <a href='https://thenounproject.com/search/?q=checkmark&i=870288'>arif fajar yulianto</a>{' '}
           from the <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Delete icon by <a href='https://thenounproject.com/icon/trash-1371974/'>Clea Doltz</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
 
       <br />

@@ -221,6 +221,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'subcategorizeAll',
   'outdent',
   'indent',
+  'delete',
   'archive',
   'proseView',
   // 'toggleSplitView',
