@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import moize from 'moize'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -84,13 +85,19 @@ const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFun
 const rankDiff = (a: Thought, b: Thought) => Math.abs(a?.rank - b?.rank)
 
 /** Generates children sorted by their values. Sorts empty thoughts to their point of creation. */
-const getChildrenSortedAlphabetical = (state: State, id: ThoughtId): Thought[] => {
-  const comparatorFunction =
-    getSortPreference(state, id).direction === 'Desc' ? compareThoughtDescending : compareThought
-  const sorted = getChildrenSortedBy(state, id, comparatorFunction)
-  const emptyIndex = sorted.findIndex(thought => !thought.value)
-  return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
-}
+const getChildrenSortedAlphabetical = moize(
+  (state: State, id: ThoughtId): Thought[] => {
+    const comparatorFunction =
+      getSortPreference(state, id).direction === 'Desc' ? compareThoughtDescending : compareThought
+    const sorted = getChildrenSortedBy(state, id, comparatorFunction)
+    const emptyIndex = sorted.findIndex(thought => !thought.value)
+    return emptyIndex === -1 ? sorted : resortEmptyInPlace(sorted)
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenSortedAlphabetical',
+  },
+)
 
 /** Re-sorts empty thoughts in a sorted array to their point of creation. */
 const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
@@ -146,10 +153,16 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
 }
 
 /** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
-export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Thought[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
-  return sort(allChildren, compareByRank)
-}
+export const getChildrenRanked = moize(
+  (state: State, thoughtId: ThoughtId | null): Thought[] => {
+    const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
+    return sort(allChildren, compareByRank)
+  },
+  {
+    maxSize: 50,
+    profileName: 'getChildrenRanked',
+  },
+)
 
 /** Returns the first visible child of a context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
