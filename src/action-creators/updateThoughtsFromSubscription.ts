@@ -38,7 +38,7 @@ const updateThoughtsFromSubscription =
     // otherwise they will receive subscription updates from both local and remote
     // if local subscriptions are correctly unsubscribed from on remote connect, it will never hit this case, but it's good to have in place to be safe and make this function less dependent on other subscriptions
     const state = getState()
-    if (state.status === 'loaded' && sessionType === SessionType.LOCAL) return
+    if (state.status === 'loaded' && sessionType === SessionType.Local) return
 
     const thoughtIndexUpdates = keyValueBy(updates.thoughtIndex, (key, parentUpdate) =>
       isValidSource(state, parentUpdate, sessionType)
@@ -71,7 +71,7 @@ const updateThoughtsFromSubscription =
         thoughtIndexUpdates,
         lexemeIndexUpdates,
         // sync remote updates to local
-        local: sessionType === SessionType.REMOTE,
+        local: sessionType === SessionType.Remote,
         // do not sync local updates to remote since Firebase handles offline writes
         remote: false,
       }),

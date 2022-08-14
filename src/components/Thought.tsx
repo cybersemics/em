@@ -13,7 +13,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { AlertText, AlertType, DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { AlertText, AlertType, DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -280,7 +280,7 @@ const ThoughtContainer = ({
             value: true,
             draggingThought: getState().draggingThought,
             hoveringPath: path,
-            hoverId: DROP_TARGET.ThoughtDrop,
+            hoverId: DropTarget.ThoughtDrop,
           }),
         )
       })
@@ -330,7 +330,7 @@ const ThoughtContainer = ({
       !isHovering &&
       state.hoveringPath &&
       isDescendantPath(state.hoveringPath, parentOf(path)) &&
-      (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtsDrop)
+      (state.hoveringPath.length !== path.length || state.hoverId === DropTarget.SubthoughtsDrop)
 
     const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
@@ -360,11 +360,11 @@ const ThoughtContainer = ({
       state.hoveringPath &&
       // SubthoughtsDrop
       // can drop on SubthoughtsDrop if this thought is being hovered over
-      ((state.hoverId === DROP_TARGET.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
+      ((state.hoverId === DropTarget.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
         // ThoughtDrop
         // can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought
         (equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
-          state.hoverId === DROP_TARGET.ThoughtDrop &&
+          state.hoverId === DropTarget.ThoughtDrop &&
           !isDescendantPath(simplePath, state.draggingThought!))),
   )
 

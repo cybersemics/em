@@ -11,7 +11,7 @@ import SortDirection from '../@types/SortDirection'
 import State from '../@types/State'
 import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
-import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, VIEW_MODE } from '../constants'
+import { MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR, ViewMode } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -613,8 +613,8 @@ export const SubthoughtsComponent = ({
 
             const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
 
-            const isTableView = view === VIEW_MODE.Table
-            const isProseView = view === VIEW_MODE.Prose
+            const isTableView = view === ViewMode.Table
+            const isProseView = view === ViewMode.Prose
 
             return child ? (
               <View key={`${child.id || child.rank}${child.id ? '-context' : ''}`} style={[{ marginLeft: depth * 25 }]}>

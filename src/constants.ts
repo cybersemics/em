@@ -283,10 +283,12 @@ export const MODALS: Index<true> = {
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
-export enum DROP_TARGET {
+export enum DropTarget {
   SubthoughtsDrop = 'SubthoughtsDrop',
   ThoughtDrop = 'ThoughtDrop',
 }
+
+assertEnum(DropTarget)
 
 export const EMOJI_REGEX = emojiRegex
 /*
@@ -438,12 +440,12 @@ export const GLOBAL_STYLE_ENV = {
   },
 }
 
-export enum VIEW_MODE {
+export enum ViewMode {
   Table = 'Table',
   Prose = 'Prose',
 }
 
-assertEnum(VIEW_MODE)
+assertEnum(ViewMode)
 
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 

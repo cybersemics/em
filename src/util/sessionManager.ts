@@ -6,8 +6,8 @@ import storage from '../util/storage'
 import storeSession from '../util/storeSession'
 
 export enum SessionType {
-  LOCAL = 'local',
-  REMOTE = 'remote',
+  Local = 'Local',
+  Remote = 'Remote',
 }
 
 /** A unique session id for the current session. Gets instantiated to a uuid on the first call to getSessionId. */
@@ -68,7 +68,7 @@ export const getSessionId = () => {
 export const getSessionType = (sessionId?: string): SessionType | undefined => {
   if (!sessionId) return
   const localSessions = getLocalSessionIds() || {}
-  return localSessions[sessionId] ? SessionType.LOCAL : SessionType.REMOTE
+  return localSessions[sessionId] ? SessionType.Local : SessionType.Remote
 }
 
 /** Add current session to local storage list of sessions, or update timestamp if already present. Removes any sessions that are expired. */

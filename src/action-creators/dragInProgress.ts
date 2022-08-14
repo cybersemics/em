@@ -3,7 +3,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
-import { DROP_TARGET } from '../constants'
+import { DropTarget } from '../constants'
 import globals from '../globals'
 import { store } from '../store'
 import head from '../util/head'
@@ -15,7 +15,7 @@ interface Payload {
   value: boolean
   draggingThought?: SimplePath
   hoveringPath?: Path
-  hoverId?: DROP_TARGET
+  hoverId?: DropTarget
   offset?: number
 }
 

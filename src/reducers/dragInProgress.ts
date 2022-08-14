@@ -2,13 +2,13 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import { DROP_TARGET } from '../constants'
+import { DropTarget } from '../constants'
 
 interface Payload {
   value: boolean
   draggingThought?: SimplePath
   hoveringPath?: Path
-  hoverId?: DROP_TARGET
+  hoverId?: DropTarget
   offset?: number
 }
 

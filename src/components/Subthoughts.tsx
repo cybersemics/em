@@ -10,7 +10,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import { isTouch } from '../browser'
-import { DROP_TARGET, HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { DropTarget, HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -480,7 +480,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           value: true,
           draggingThought: state.draggingThought,
           hoveringPath: path,
-          hoverId: DROP_TARGET.SubthoughtsDrop,
+          hoverId: DropTarget.SubthoughtsDrop,
         }),
       )
     }
