@@ -161,6 +161,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
         alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
           alertType: AlertType.GestureHint,
+          clearDelay: 5000,
           showCloseLink: !!shortcut,
         }),
       )
