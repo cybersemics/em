@@ -18,7 +18,6 @@ it('new thought in root', () => {
 it('new thought after', () => {
   const steps = [newThought('a'), newThought('b')]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -30,7 +29,6 @@ it('new thought after', () => {
 it('new thought before', () => {
   const steps = [newThought('a'), newThought({ value: 'b', insertBefore: true })]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -42,7 +40,6 @@ it('new thought before', () => {
 it('new subthought', () => {
   const steps = [newThought('a'), newThought({ value: 'b', insertNewSubthought: true })]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -64,7 +61,6 @@ it('new subthought top', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -78,7 +74,6 @@ it('new subthought top', () => {
 it('new thought to top of home context', () => {
   const steps = [newThought('a'), setCursor({ path: null }), newThought({ value: 'b', insertBefore: true })]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -96,7 +91,6 @@ it('update cursor to first new thought', () => {
 it('update cursor to new thought', () => {
   const steps = [newThought('a'), newThought('b')]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['b'])!])

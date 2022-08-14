@@ -13,7 +13,6 @@ import subCategorizeAll from '../subCategorizeAll'
 it('subcategorize multiple thoughts', () => {
   const steps = [newThought('a'), newSubthought('b'), newThought('c'), subCategorizeAll]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -27,7 +26,6 @@ it('subcategorize multiple thoughts', () => {
 it('subcategorize multiple thoughts in the root', () => {
   const steps = [newThought('a'), newThought('b'), subCategorizeAll]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -40,7 +38,6 @@ it('subcategorize multiple thoughts in the root', () => {
 it('should do nothing with no cursor', () => {
   const steps = [newThought('a'), newSubthought('b'), setCursor({ path: null }), subCategorizeAll]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -52,7 +49,6 @@ it('should do nothing with no cursor', () => {
 it('set cursor on new empty thought', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), subCategorizeAll]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
@@ -88,7 +84,6 @@ it('move all non meta thoughts and only allowed meta thoughts into new empty tho
     subCategorizeAll,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

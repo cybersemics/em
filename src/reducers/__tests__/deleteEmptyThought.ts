@@ -20,7 +20,6 @@ import splitThought from '../splitThought'
 it('delete empty thought', () => {
   const steps = [newThought('a'), newThought(''), deleteEmptyThought]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -31,7 +30,6 @@ it('delete empty thought', () => {
 it('do not delete non-empty thought', () => {
   const steps = [newThought('a'), deleteEmptyThought]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -42,7 +40,6 @@ it('do not delete non-empty thought', () => {
 it('do not delete thought with children', () => {
   const steps = [newThought(''), newSubthought('1'), cursorBack, deleteEmptyThought]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -63,7 +60,6 @@ it("archive thought with hidden children - arvhive all children in cursor's pare
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -89,7 +85,6 @@ it("archive thought with archived and hidden children - arvhive all children in 
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -104,7 +99,6 @@ it("archive thought with archived and hidden children - arvhive all children in 
 it('do nothing if there is no cursor', () => {
   const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), deleteEmptyThought]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -124,7 +118,6 @@ it('merge thoughts', () => {
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -142,7 +135,6 @@ it("insert second thought's children", () => {
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -165,7 +157,6 @@ it("do not change first thought's children", () => {
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -186,7 +177,6 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
@@ -195,7 +185,6 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
   const steps = [newThought('a'), newSubthought(''), deleteEmptyThought]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
@@ -204,7 +193,6 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
   const steps = [newThought(''), deleteEmptyThought]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
@@ -258,7 +246,6 @@ it('merge thought should respect space if any (whitespace at end of left splitte
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -278,7 +265,6 @@ it('merge thought should respect space if any (whitespace at front of right spli
     deleteEmptyThought,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

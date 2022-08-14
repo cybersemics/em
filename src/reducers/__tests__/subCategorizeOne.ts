@@ -14,7 +14,6 @@ import subCategorizeOne from '../subCategorizeOne'
 it('subcategorize a thought', () => {
   const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -27,7 +26,6 @@ it('subcategorize a thought', () => {
 it('subcategorize a thought in the root', () => {
   const steps = [newThought('a'), subCategorizeOne]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -39,7 +37,6 @@ it('subcategorize a thought in the root', () => {
 it('subcategorize with no cursor should do nothing', () => {
   const steps = [newThought('a'), newSubthought('b'), setCursor({ path: null }), subCategorizeOne]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -51,7 +48,6 @@ it('subcategorize with no cursor should do nothing', () => {
 it('set cursor on new empty thought', () => {
   const steps = [newThought('a'), newSubthought('b'), subCategorizeOne]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
@@ -81,7 +77,6 @@ it('subcategorize within alphabteically sorted context', () => {
     subCategorizeOne,
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -110,7 +105,6 @@ it('subcategorize within alphabteically sorted context', () => {
 //     subCategorizeOne,
 //   ]
 
-//   // run steps through reducer flow and export as plaintext for readable test
 //   const stateNew = reducerFlow(steps)(initialState())
 //   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -136,7 +130,6 @@ it('subcategorize within alphabteically sorted context', () => {
 //     subCategorizeOne,
 //   ]
 
-//   // run steps through reducer flow and export as plaintext for readable test
 //   const stateNew = reducerFlow(steps)(initialState())
 //   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

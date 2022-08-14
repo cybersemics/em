@@ -11,7 +11,6 @@ import setCursor from '../setCursor'
 it('outdent within root', () => {
   const steps = [newThought('a'), newSubthought('a1'), outdent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -23,7 +22,6 @@ it('outdent within root', () => {
 it('outdent with no cursor should do nothing ', () => {
   const steps = [newThought('a'), newSubthought('a1'), setCursor({ path: null }), outdent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -35,7 +33,6 @@ it('outdent with no cursor should do nothing ', () => {
 it('outdent root thought should do nothing ', () => {
   const steps = [newThought('a'), newThought('b'), outdent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -47,7 +44,6 @@ it('outdent root thought should do nothing ', () => {
 it('outdent within context', () => {
   const steps = [newThought('a'), newSubthought('a1'), newSubthought('a2'), outdent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -60,7 +56,6 @@ it('outdent within context', () => {
 it('preserve cursor', () => {
   const steps = [newThought('a'), newSubthought('a1'), newSubthought('a2'), outdent]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)

@@ -18,7 +18,6 @@ it('meta and archived thoughts are included', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain')
@@ -43,7 +42,6 @@ it('meta is included but archived thoughts are excluded', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeArchived: true })
@@ -66,7 +64,6 @@ it('meta is excluded', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', {
@@ -90,7 +87,6 @@ it('meta is excluded but archived is included', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true })
@@ -107,7 +103,6 @@ it('exported as plain text with no formatting', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true, excludeMarkdownFormatting: true })
@@ -124,7 +119,6 @@ it('exported as html', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/html', { excludeMeta: true })

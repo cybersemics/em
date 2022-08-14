@@ -12,7 +12,6 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
 it('delete from root', () => {
-  // run steps through reducer flow and export as plaintext for readable test
   const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
   const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
   const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
@@ -29,7 +28,6 @@ it('delete from root', () => {
 it('delete descendants of root thought', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex
@@ -46,7 +44,6 @@ it('delete descendants of root thought', () => {
 it('delete thought with duplicate child', () => {
   const steps = [newThought('a'), newSubthought('a'), deleteThoughtAtFirstMatch(['a'])]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   // cnntextIndex

@@ -8,7 +8,6 @@ import newThought from '../newThought'
 it('move cursor to parent', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
@@ -17,7 +16,6 @@ it('move cursor to parent', () => {
 it('remove cursor from root thought', () => {
   const steps = [newThought('a'), cursorBack]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toEqual(null)

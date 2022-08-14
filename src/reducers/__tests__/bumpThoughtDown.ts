@@ -11,7 +11,6 @@ import newThought from '../newThought'
 it('bump leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -24,7 +23,6 @@ it('bump leaf', () => {
 it('cursor should stay in empty thought', () => {
   const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, [
@@ -36,7 +34,6 @@ it('cursor should stay in empty thought', () => {
 it('bump thought with children', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, bumpThoughtDown({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -57,7 +54,6 @@ it('bump thought with children multiple times', () => {
     bumpThoughtDown({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -72,7 +68,6 @@ it('bump thought with children multiple times', () => {
 it('bump root leaf', () => {
   const steps = [newThought('a'), bumpThoughtDown({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -84,7 +79,6 @@ it('bump root leaf', () => {
 it('bump root thought with children', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

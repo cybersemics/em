@@ -11,7 +11,6 @@ import reducerFlow from '../../util/reducerFlow'
 it('indent within root', () => {
   const steps = [newThought('a'), newThought('b'), indent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -23,7 +22,6 @@ it('indent within root', () => {
 it('indent with no cursor should do nothing ', () => {
   const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), indent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -35,7 +33,6 @@ it('indent with no cursor should do nothing ', () => {
 it('indent fully indented thought should do nothing ', () => {
   const steps = [newThought('a'), newSubthought('b'), indent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -47,7 +44,6 @@ it('indent fully indented thought should do nothing ', () => {
 it('indent within context', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), indent]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -60,7 +56,6 @@ it('indent within context', () => {
 it('indent on cursor thought should update cursor', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), indent]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a1', 'a2'])!)

@@ -16,7 +16,6 @@ import reducerFlow from '../../util/reducerFlow'
 it('archive a thought', () => {
   const steps = [newThought('a'), newThought('b'), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -30,7 +29,6 @@ it('archive a thought', () => {
 it.skip('deduplicate archived thoughts with the same value', () => {
   const steps = [newThought('a'), newThought('b'), newThought('b'), archiveThought({}), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -42,7 +40,6 @@ it.skip('deduplicate archived thoughts with the same value', () => {
 it('do nothing if there is no cursor', () => {
   const steps = [newThought('a'), setCursor({ path: null }), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -53,7 +50,6 @@ it('do nothing if there is no cursor', () => {
 it('move to top of archive', () => {
   const steps = [newThought('a'), newThought('b'), newThought('c'), archiveThought({}), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -67,7 +63,6 @@ it('move to top of archive', () => {
 it('permanently delete empty thought', () => {
   const steps = [newThought('a'), newThought(''), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -84,7 +79,6 @@ it('permanently delete thought from archive', () => {
     archiveThought({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -102,7 +96,6 @@ it('permanently delete archive', () => {
     archiveThought({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -123,7 +116,6 @@ it('permanently delete archive with descendants', () => {
     archiveThought({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -139,7 +131,6 @@ it('permanently delete archive with descendants', () => {
 it('cursor should move to prev sibling', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), newThought('a3'), cursorUp, archiveThought({})]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
   expectPathToEqual(stateNew, stateNew.cursor, [
     { value: 'a', rank: 0 },
@@ -158,7 +149,6 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
     archiveThought({}),
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, [
@@ -170,7 +160,6 @@ it('cursor should move to next sibling if there is no prev sibling', () => {
 it('cursor should move to parent if the deleted thought has no siblings', () => {
   const steps = [newThought('a'), newSubthought('a1'), archiveThought({})]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a', rank: 0 }])
@@ -179,7 +168,6 @@ it('cursor should move to parent if the deleted thought has no siblings', () => 
 it('cursor should be removed if the last thought is deleted', () => {
   const steps = [newThought('a'), archiveThought({})]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toBe(null)
@@ -188,7 +176,6 @@ it('cursor should be removed if the last thought is deleted', () => {
 it('empty thought should be archived if it has descendants', () => {
   const steps = [newThought('a'), newThought(''), newSubthought('b'), setCursorFirstMatch(['']), archiveThought({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -269,7 +256,6 @@ describe.skip('context view', () => {
       archiveThought({}),
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject([
@@ -293,7 +279,6 @@ describe.skip('context view', () => {
       archiveThought({}),
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject([

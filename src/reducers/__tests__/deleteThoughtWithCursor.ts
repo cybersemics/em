@@ -17,7 +17,6 @@ describe('delete', () => {
   it('delete thought within root', () => {
     const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor({})]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -28,7 +27,6 @@ describe('delete', () => {
   it('delete thought with no cursor should do nothing ', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), deleteThoughtWithCursor({})]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -40,7 +38,6 @@ describe('delete', () => {
   it('delete thought within context', () => {
     const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -51,7 +48,6 @@ describe('delete', () => {
   it('delete descendants', () => {
     const steps = [newThought('a'), newSubthought('a1'), newSubthought('a1.1'), cursorBack, deleteThoughtWithCursor({})]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -69,7 +65,6 @@ describe('delete', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a3'])!)
@@ -84,7 +79,6 @@ describe('delete', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
@@ -93,7 +87,6 @@ describe('delete', () => {
   it('cursor should move to parent if the deleted thought has no siblings', () => {
     const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor({})]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
@@ -101,7 +94,6 @@ describe('delete', () => {
 
   it('cursor should be removed if the last thought in the thoughtspace is deleted', () => {
     const steps = [newThought('a'), deleteThoughtWithCursor({})]
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
@@ -127,7 +119,6 @@ describe('context view', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -159,7 +150,6 @@ describe('context view', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -189,7 +179,6 @@ describe('context view', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -217,7 +206,6 @@ describe('context view', () => {
       deleteThoughtWithCursor({}),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

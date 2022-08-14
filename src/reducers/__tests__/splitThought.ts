@@ -27,7 +27,6 @@ it('split thought', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -47,7 +46,6 @@ it('split thought with formatting', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
@@ -72,7 +70,6 @@ it('split thought within a formatting tag', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
@@ -97,7 +94,6 @@ it('cursor moves to second thought', () => {
     }),
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
@@ -129,7 +125,6 @@ it('move children to the new sibling even when the context is sorted and the new
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

@@ -31,7 +31,6 @@ it('edit a thought', () => {
       at: ['a'],
     }),
   ]
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -85,7 +84,6 @@ it('edit a descendant', () => {
       at: ['a', 'a1'],
     }),
   ]
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -118,7 +116,6 @@ it('edit a thought with descendants', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -172,7 +169,6 @@ it('edit a thought existing in mutliple contexts', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -256,7 +252,6 @@ it('edit a thought that exists in another context', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -299,7 +294,6 @@ it('edit a child with the same value as its parent', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -346,7 +340,6 @@ it('do not duplicate children when new and old context are same', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -375,7 +368,6 @@ it('data integrity test', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
@@ -404,7 +396,6 @@ it('data integrity test after editing a parent with multiple descendants with sa
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
@@ -429,7 +420,6 @@ describe('changing thought with duplicate descendent', () => {
       }),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -460,7 +450,6 @@ describe('changing thought with duplicate descendent', () => {
       }),
     ]
 
-    // run steps through reducer flow and export as plaintext for readable test
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

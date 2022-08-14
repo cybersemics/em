@@ -31,7 +31,6 @@ it('move within root', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -83,7 +82,6 @@ it('move within context (rank only)', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -116,7 +114,6 @@ it('move across contexts', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -153,7 +150,6 @@ it('move descendants', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -196,7 +192,6 @@ it('moving cursor thought should update cursor', () => {
     }),
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([
@@ -218,7 +213,6 @@ it('moving ancestor of cursor should update cursor', () => {
     }),
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
@@ -244,7 +238,6 @@ it('moving unrelated thought should not update cursor', () => {
     }),
   ]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(childIdsToThoughts(stateNew, stateNew.cursor!)).toMatchObject([{ value: 'a', rank: 0 }])
@@ -266,7 +259,6 @@ it('move root thought into another root thought', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -307,7 +299,6 @@ it('move descendants with siblings', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -345,7 +336,6 @@ it('merge duplicate with new rank', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -385,7 +375,6 @@ it('merge with duplicate with duplicate rank', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -421,7 +410,6 @@ it('move with duplicate descendant', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   // thoughtIndex
@@ -608,7 +596,6 @@ it('data integrity test', () => {
       newRank: 0,
     }),
   ]
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
 
@@ -633,7 +620,6 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate merge', ()
       }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const contextsOfB = getContexts(stateNew, 'b')
 
@@ -684,7 +670,6 @@ it('re-expand after moving across contexts', () => {
     }),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

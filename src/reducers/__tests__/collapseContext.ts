@@ -14,7 +14,6 @@ import reducerFlow from '../../util/reducerFlow'
 it('do nothing on leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), collapseContext({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const state = initialState()
   const stateNew = reducerFlow(steps)(state)
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -27,7 +26,6 @@ it('do nothing on leaf', () => {
 it('collapse context with single child', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, collapseContext({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -49,7 +47,6 @@ it('collapse context with multiple children', () => {
     collapseContext({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -74,7 +71,6 @@ it('merge children', () => {
     collapseContext({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -99,7 +95,6 @@ it('merge duplicate children', () => {
     collapseContext({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -121,7 +116,6 @@ it('after collapse context set cursor to the first visible children.', () => {
     collapseContext({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: 'c' }])
@@ -130,7 +124,6 @@ it('after collapse context set cursor to the first visible children.', () => {
 it('after collapse context set cursor to the parent if there are no visible children.', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, collapseContext({})]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }])
@@ -150,7 +143,6 @@ it('collapse empty thought with empty child', () => {
     collapseContext({}),
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

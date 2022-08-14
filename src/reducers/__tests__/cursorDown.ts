@@ -16,7 +16,6 @@ describe('normal view', () => {
   it('move cursor to next sibling', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(['a']), cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
@@ -25,7 +24,6 @@ describe('normal view', () => {
   it('move cursor from parent first child', () => {
     const steps = [newThought('a'), newSubthought('b'), setCursor(['a']), cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
   })
@@ -33,7 +31,6 @@ describe('normal view', () => {
   it('move to first root child when there is no cursor', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
@@ -47,7 +44,6 @@ describe('normal view', () => {
   it('move cursor to next uncle', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(['a']), newSubthought('a1'), cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
@@ -64,7 +60,6 @@ describe('normal view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
@@ -99,7 +94,6 @@ describe('context view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
@@ -137,7 +131,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
@@ -161,7 +154,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'a', 'x'])
@@ -183,7 +175,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
@@ -209,7 +200,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
@@ -234,7 +224,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
@@ -258,7 +247,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
@@ -285,7 +273,6 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBeDefined()
@@ -300,7 +287,6 @@ describe('context view', () => {
 
     const steps = [importText({ text }), setCursor(['b']), cursorDown]
 
-    // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(pathToContext(stateNew, stateNew.cursor!)).toMatchObject(['b'])

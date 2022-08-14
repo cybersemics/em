@@ -16,7 +16,6 @@ import toggleAttribute from '../toggleAttribute'
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -28,7 +27,6 @@ it('move within root', () => {
 it('move within context', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), moveThoughtUp]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -50,7 +48,6 @@ it('move to prev uncle', () => {
     moveThoughtUp,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -75,7 +72,6 @@ it('move to prev uncle in sorted list', () => {
     moveThoughtUp,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -98,7 +94,6 @@ it('prevent move in sorted list when there is no previous uncle', () => {
     moveThoughtUp,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -125,7 +120,6 @@ it('move descendants', () => {
     moveThoughtUp,
   ]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -141,7 +135,6 @@ it('move descendants', () => {
 it('trying to move last thought of root should do nothing', () => {
   const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), moveThoughtUp]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -153,7 +146,6 @@ it('trying to move last thought of root should do nothing', () => {
 it('trying to move first thought of context with no prev uncle should do nothing', () => {
   const steps = [newThought('a'), newThought('b'), newSubthought('b1'), newSubthought('b1.1'), moveThoughtUp]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -167,7 +159,6 @@ it('trying to move first thought of context with no prev uncle should do nothing
 it('do nothing when there is no cursor', () => {
   const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), moveThoughtUp]
 
-  // run steps through reducer flow and export as plaintext for readable test
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -179,7 +170,6 @@ it('do nothing when there is no cursor', () => {
 it('move cursor thought should update cursor', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), moveThoughtUp]
 
-  // run steps through reducer flow
   const stateNew = reducerFlow(steps)(initialState())
 
   const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
