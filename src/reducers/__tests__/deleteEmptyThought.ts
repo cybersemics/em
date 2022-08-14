@@ -175,15 +175,6 @@ it("do not change first thought's children", () => {
     - a2`)
 })
 
-it('cursor should move to prev sibling', () => {
-  const steps = [newThought('a'), newSubthought('a1'), newThought(''), newThought('a3'), cursorUp, deleteEmptyThought]
-
-  // run steps through reducer flow
-  const stateNew = reducerFlow(steps)(initialState())
-
-  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a1'])!)
-})
-
 it('cursor should move to next sibling if there is no prev sibling', () => {
   const steps = [
     newThought('a'),

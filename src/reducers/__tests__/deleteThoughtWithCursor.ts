@@ -59,29 +59,28 @@ describe('delete', () => {
   - a`)
   })
 
-  it('cursor should move to prev sibling', () => {
+  it('cursor should move to next sibling by default', () => {
     const steps = [
       newThought('a'),
       newSubthought('a1'),
       newThought('a2'),
       newThought('a3'),
+      cursorUp,
       deleteThoughtWithCursor({}),
     ]
 
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())
 
-    expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
+    expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a3'])!)
   })
 
-  it('cursor should move to next sibling if there is no prev sibling', () => {
+  it('cursor should move to prev sibling when deleting the last thought in the context', () => {
     const steps = [
       newThought('a'),
       newSubthought('a1'),
       newThought('a2'),
       newThought('a3'),
-      cursorUp,
-      cursorUp,
       deleteThoughtWithCursor({}),
     ]
 
@@ -100,7 +99,7 @@ describe('delete', () => {
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
   })
 
-  it('cursor should be removed if the last thought is deleted', () => {
+  it('cursor should be removed if the last thought in the thoughtspace is deleted', () => {
     const steps = [newThought('a'), deleteThoughtWithCursor({})]
     // run steps through reducer flow
     const stateNew = reducerFlow(steps)(initialState())

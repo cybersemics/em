@@ -5,10 +5,10 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
 import setCursor from '../reducers/setCursor'
-import { firstVisibleChild } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import nextSibling from '../selectors/nextSibling'
 import parentOfThought from '../selectors/parentOfThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -22,7 +22,6 @@ import once from '../util/once'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
@@ -56,8 +55,9 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     return context
   }
 
-  // prev must be calculated before dispatching deleteThought
+  // prev and next must be calculated before dispatching deleteThought
   const prev = showContexts ? prevContext() : prevSibling(state, value, rootedParentOf(state, simplePath), rank)
+  const next = nextSibling(state, parentId, value, rank)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
@@ -79,9 +79,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
     // move cursor
     state => {
-      // TODO: Refactor into nextThought/prevThought
-      const next = once(() => (showContexts ? null : firstVisibleChild(state, parentId)))
-
       // instead of using the thought parent, use the closest valid ancestor
       // otherwise deleting a thought from a cyclic context will return an invalid cursor
       const pathParent = rootedParentOf(state, path)
@@ -92,20 +89,16 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       // eslint-disable-next-line prefer-spread
       return setCursorOrBack.apply(
         null,
-        prev
+        // Case I: set cursor on next thought
+        next
+          ? [appendToPath(parentOf(path), next.id)]
+          : // Case II: set cursor on first thought
+          prev
           ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
-          : // Case II: set cursor on next thought
-          next()
-          ? [
-              unroot(
-                showContexts ? appendToPath(closestAncestor, next()!.id) : appendToPath(closestAncestor, next()!.id),
-              ),
-              { offset: 0 },
-            ]
-          : // Case III: delete last thought in context; set cursor on context
+          : // Case III: delete last thought in context; set cursor on parent
           thoughts.length > 1
           ? [closestAncestor, { offset: getTextContentFromHTML(head(context)).length }]
-          : // Case IV: delete very last thought; remove cursor
+          : // Case IV: delete last thought in thoughtspace; remove cursor
             [null],
       )(state)
     },
