@@ -68,7 +68,7 @@ const newThought =
       splitResult.right.length > 0 &&
       splitResult.left.length < editingValue?.length
 
-    if ((!split || !uneditable) && isTouch && isSafari) {
+    if ((!split || !uneditable) && isTouch && isSafari()) {
       asyncFocus()
     }
     if (split) {

@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { deleteCursor, updateCursor } from '../data-providers/dexie'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import hashPathURL from '../selectors/hashPathURL'
 import equalArrays from '../util/equalArrays'
@@ -90,11 +91,22 @@ const updateUrlHistoryThrottled = _.throttle(getState => {
   updateUrlHistory(state, state.cursor)
 }, THROTTLE_MIDDLEWARE)
 
+// store the last cursor
+let cursorLast: Path | null = null
+
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
 const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)
     updateUrlHistoryThrottled(getState)
+
+    // if the cursor has changed, scroll it into view
+    const cursor = getState().cursor
+    if (cursor !== cursorLast) {
+      // give new cursor time to render
+      scrollCursorIntoView(10)
+    }
+    cursorLast = cursor
   }
 }
 

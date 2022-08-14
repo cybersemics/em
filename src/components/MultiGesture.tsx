@@ -87,7 +87,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     this.reset()
 
+    // disable scroll by preventing default touchmove
     // allow enabling/disabling scroll with this.disableScroll
+    // Note: This breaks window.scrollTo on Mobile Safari when using asyncFocus and scrollY is 0.
+    // Other methods of disabling scroll such as overflow: hidden have unintended side effects.
+    // This only workable solution I found is to ensure the scroll bar is not at 0 with window.scrollTo(0, 1)
     document.body.addEventListener(
       'touchmove',
       e => {

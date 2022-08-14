@@ -276,7 +276,7 @@ const Toolbar = ({
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
             onTouchMove={onTouchMove}
-            onScroll={onScroll}
+            onScroll={!Math ? onScroll : undefined}
           >
             <span id='left-arrow' className={leftArrowElementClassName}>
               <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />

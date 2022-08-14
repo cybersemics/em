@@ -3,6 +3,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
+import { isSafari } from '../browser'
 import { DropTarget } from '../constants'
 import globals from '../globals'
 import { store } from '../store'
@@ -93,8 +94,8 @@ const dragInProgress =
 
     // when at the top of the viewport, bump the scroll bar to prevent gitching in Safari mobile
     // TODO: It still glitches out if you scroll back to the top during a drag
-    if (document.documentElement.scrollTop === 0) {
-      window.scrollTo(0, document.documentElement.scrollTop + 1)
+    if (isSafari() && document.documentElement.scrollTop === 0) {
+      window.scrollTo(0, 1)
     }
 
     dispatch(expandOnHoverTop())
