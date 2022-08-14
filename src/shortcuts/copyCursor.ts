@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
 import pull from '../action-creators/pull'
+import { AlertType } from '../constants'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
 import exportContext from '../selectors/exportContext'
@@ -27,7 +28,7 @@ const copyCursorShortcut: Shortcut = {
     // if there are any pending descendants, do a pull
     // otherwise copy whatever is in state
     if (someDescendants(state, head(simplePath), child => isPending(state, getThoughtById(state, child.id)))) {
-      dispatch(alert('Loading thoughts...', { alertType: 'clipboard' }))
+      dispatch(alert('Loading thoughts...', { alertType: AlertType.Clipboard }))
       await dispatch(pull([head(simplePath)], { maxDepth: Infinity }))
     }
 
@@ -42,7 +43,7 @@ const copyCursorShortcut: Shortcut = {
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {
-        alertType: 'clipboard',
+        alertType: AlertType.Clipboard,
         clearDelay: 3000,
       }),
     )

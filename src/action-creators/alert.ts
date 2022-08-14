@@ -1,8 +1,9 @@
 import { FunctionComponent } from 'react'
 import Thunk from '../@types/Thunk'
+import { AlertType } from '../constants'
 
 interface Options {
-  alertType?: string
+  alertType?: keyof typeof AlertType
   showCloseLink?: boolean
   clearDelay?: number
   isInline?: boolean

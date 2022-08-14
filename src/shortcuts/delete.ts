@@ -4,6 +4,7 @@ import alert from '../action-creators/alert'
 import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
 import Icon from '../components/icons/DeleteIcon'
+import { AlertType } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -36,7 +37,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     if (value) {
       dispatch(
         alert(`Deleted ${ellipsize(value)}`, {
-          alertType: 'deleteThoughtComplete',
+          alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
         }),

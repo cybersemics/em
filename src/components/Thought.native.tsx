@@ -230,10 +230,7 @@ const ThoughtContainer = ({
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
-      store.dispatch([
-        dragHold({ value: true, simplePath }),
-        alert(AlertText.dragAndDropHint, { showCloseLink: false }),
-      ])
+      store.dispatch([dragHold({ value: true, simplePath }), alert(AlertText.DragAndDrop, { showCloseLink: false })])
     }
   }
 

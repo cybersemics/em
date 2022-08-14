@@ -15,7 +15,7 @@ import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import modalComplete from '../action-creators/modalComplete'
 import pull from '../action-creators/pull'
-import { HOME_PATH } from '../constants'
+import { AlertType, HOME_PATH } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import exportContext from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
@@ -296,7 +296,10 @@ const ModalExport = () => {
     Clipboard.setString(exportContent || '')
     dispatch([
       modalComplete('export'),
-      alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearDelay: 3000 }),
+      alert(`Copied ${exportThoughtsPhrase} to the clipboard`, {
+        alertType: AlertType.Clipboard,
+        clearDelay: 3000,
+      }),
     ])
   }
 

@@ -40,7 +40,6 @@ const splitSentencesShortcut: Shortcut = {
     if (!sentences || sentences.length === 1) {
       dispatch(
         alert('Cannot split sentences: thought has only one sentence.', {
-          alertType: 'splitSentencesErr2',
           clearDelay: 3000,
         }),
       )
@@ -60,7 +59,6 @@ const splitSentencesShortcut: Shortcut = {
     if (duplicates.length !== 0) {
       dispatch(
         alert('Cannot split sentences: splitting creates duplicates.', {
-          alertType: 'splitSentencesErr3',
           clearDelay: 3000,
         }),
       )

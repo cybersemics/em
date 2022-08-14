@@ -6,7 +6,7 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isTouch } from '../browser'
-import { BASE_FONT_SIZE } from '../constants'
+import { AlertType, BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
@@ -97,7 +97,7 @@ const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapse
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
   store.dispatch((dispatch, getState) => {
-    if (getState().alert?.alertType === 'gestureHintExtended') {
+    if (getState().alert?.alertType === AlertType.GestureHintExtended) {
       dispatch(alert(null))
     }
   })

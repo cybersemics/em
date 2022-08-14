@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import { AlertType } from '../constants'
 
 interface Options {
-  alertType?: string
+  alertType?: keyof typeof AlertType
   showCloseLink?: boolean
   value: string | null
   isInline?: boolean

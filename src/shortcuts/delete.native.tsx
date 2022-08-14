@@ -28,7 +28,7 @@ import Shortcut from '../@types/Shortcut'
 //       // only close the alert if it is an undo alert
 //       undoArchiveTimer = setTimeout(() => {
 //         const state = getState()
-//         if (state.alert && state.alert.alertType === 'undoArchive') {
+//         if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
 //           dispatch(alert(null))
 //         }
 //       }, 5000)

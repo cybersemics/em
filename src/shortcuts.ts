@@ -12,7 +12,7 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import globals from './globals'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
@@ -148,19 +148,19 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // basic gesture hint
     if (
       // only show basic gesture hint if the extended gesture hint is not already being shown
-      state.alert?.alertType !== 'gestureHintExtended' &&
+      state.alert?.alertType !== AlertType.GestureHintExtended &&
       // ignore back
       shortcut?.id !== 'cursorBack' &&
       // ignore forward
       shortcut?.id !== 'cursorForward' &&
       // only show
-      (shortcut || state.alert?.alertType === 'gestureHint')
+      (shortcut || state.alert?.alertType === AlertType.GestureHint)
     ) {
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
         alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
-          alertType: 'gestureHint',
+          alertType: AlertType.GestureHint,
           showCloseLink: !!shortcut,
         }),
       )
@@ -176,7 +176,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
           if (getState().alert?.value === '✗ Cancel gesture') return
           dispatch(
             alert(sequence as string, {
-              alertType: 'gestureHintExtended',
+              alertType: AlertType.GestureHintExtended,
               // no need to show close link on "Cancel gesture" since it is dismiss automatically
               showCloseLink: !!shortcut,
             }),
@@ -184,7 +184,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      state.alert?.alertType === 'gestureHintExtended' ? 0 : GESTURE_HINT_EXTENDED_TIMEOUT,
+      state.alert?.alertType === AlertType.GestureHintExtended ? 0 : GESTURE_HINT_EXTENDED_TIMEOUT,
     )
   },
 

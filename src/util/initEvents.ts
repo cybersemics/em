@@ -7,6 +7,7 @@ import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
+import { AlertType } from '../constants'
 import * as db from '../data-providers/dexie'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
@@ -119,7 +120,7 @@ const initEvents = (store: Store<State, any>) => {
     const state = store.getState()
 
     // do not auto scroll when hovering over DeleteDrop component
-    if (state.dragInProgress && state.alert?.alertType !== 'deleteDropHint') {
+    if (state.dragInProgress && state.alert?.alertType !== AlertType.DeleteDropHint) {
       const y = e.touches[0].clientY
       // start scrolling down when within 100px of the top edge of the screen
       if (y < 120) {
@@ -174,7 +175,8 @@ const initEvents = (store: Store<State, any>) => {
   const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
     if (newState === 'hidden') {
       // dismiss the gesture alert if active
-      if (store.getState().alert?.alertType?.startsWith('gestureHint')) {
+      const alertType = store.getState().alert?.alertType
+      if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
         store.dispatch(alert(null))
       }
       // we could also persist unsaved data here

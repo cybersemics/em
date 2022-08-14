@@ -7,6 +7,7 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import GestureDiagram from '../components/GestureDiagram'
+import { AlertType } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import theme from '../selectors/theme'
 import { globalShortcuts } from '../shortcuts'
@@ -67,7 +68,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
 
   /** Render the gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
   const GestureHint =
-    alert?.alertType === 'gestureHintExtended'
+    alert?.alertType === AlertType.GestureHintExtended
       ? () => {
           const sequence = alert.value!
 
@@ -130,7 +131,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
     >
       <span
         className='alert-text'
-        style={{ ...(alert.alertType === 'gestureHintExtended' ? { width: '100%' } : null) }}
+        style={{ ...(alert.alertType === AlertType.GestureHintExtended ? { width: '100%' } : null) }}
         dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
       >
         {children}

@@ -17,7 +17,7 @@ import closeModal from '../action-creators/closeModal'
 import error from '../action-creators/error'
 import pull from '../action-creators/pull'
 import { isTouch } from '../browser'
-import { HOME_PATH } from '../constants'
+import { AlertType, HOME_PATH } from '../constants'
 import download from '../device/download'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -349,7 +349,10 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       dispatch([
         closeModal(),
-        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, { alertType: 'clipboard', clearDelay: 3000 }),
+        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, {
+          alertType: AlertType.Clipboard,
+          clearDelay: 3000,
+        }),
       ])
 
       clearTimeout(globals.errorTimer)
@@ -360,7 +363,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       dispatch(error({ value: 'Error copying thoughts' }))
 
       clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: 'clipboard' })), 10000)
+      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: AlertType.Clipboard })), 10000)
     })
 
     return () => {

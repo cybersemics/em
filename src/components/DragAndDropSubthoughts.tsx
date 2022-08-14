@@ -4,7 +4,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
-import { HOME_TOKEN } from '../constants'
+import { AlertType, HOME_TOKEN } from '../constants'
 import attribute from '../selectors/attribute'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -110,7 +110,9 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo}.`, { alertType: 'moveThought', clearDelay: 5000 }))
+      store.dispatch(
+        alert(`${alertFrom} moved to ${alertTo}.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
+      )
     }, 100)
   }
 }

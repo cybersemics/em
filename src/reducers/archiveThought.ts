@@ -4,7 +4,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
-import { HOME_PATH } from '../constants'
+import { AlertType, HOME_PATH } from '../constants'
 import alert from '../reducers/alert'
 import deleteThought from '../reducers/deleteThought'
 import moveThought from '../reducers/moveThought'
@@ -171,7 +171,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           alert({
             value: `Archived ${alertLabel}`,
             // provide an alertType so the delete shortcut can null the alert after a delay
-            alertType: 'undoArchive',
+            alertType: AlertType.ThoughtArchived,
             showCloseLink: true,
           }),
 

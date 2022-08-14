@@ -15,7 +15,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
 import moveThought from '../action-creators/moveThought'
 import { isTouch } from '../browser'
-import { NOOP } from '../constants'
+import { AlertType, NOOP } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -82,7 +82,7 @@ const endDrag = () => {
     dragInProgress({ value: false }),
     dragHold({ value: false }),
     (dispatch, getState) => {
-      if (getState().alert?.alertType === 'dragAndDrop') {
+      if (getState().alert?.alertType === AlertType.DragAndDrop) {
         dispatch(alert(null))
       }
     },
@@ -187,7 +187,9 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
       const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
-      store.dispatch(alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: 'moveThought', clearDelay: 5000 }))
+      store.dispatch(
+        alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
+      )
     }, 100)
   }
 }

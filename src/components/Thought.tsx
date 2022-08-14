@@ -13,7 +13,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { AlertText, DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { AlertText, AlertType, DROP_TARGET, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -181,7 +181,7 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
     setIsPressed(true)
     dispatch([
       dragHold({ value: true, simplePath }),
-      alert(AlertText.dragAndDropHint, { alertType: 'dragAndDrop', showCloseLink: false }),
+      alert(AlertText.DragAndDrop, { alertType: AlertType.DragAndDrop, showCloseLink: false }),
     ])
   }, [])
 

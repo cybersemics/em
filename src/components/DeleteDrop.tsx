@@ -6,7 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import deleteThought from '../action-creators/deleteThought'
-import { AlertText } from '../constants'
+import { AlertText, AlertType } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
@@ -28,7 +28,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
       thoughtId: head(simplePath),
     }),
     alert(`Deleted ${ellipsize(value)}`, {
-      alertType: 'deleteThoughtComplete',
+      alertType: AlertType.DeleteThoughtComplete,
       clearDelay: 8000,
       showCloseLink: true,
     }),
@@ -40,10 +40,10 @@ const hover = (isHovering: boolean) => {
   const state = store.getState()
   const value = state.draggingThought && getThoughtById(state, head(state.draggingThought))?.value
 
-  if (isHovering || state.alert?.alertType === 'deleteDropHint') {
+  if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {
     store.dispatch(
-      alert(isHovering ? `Drop to delete ${ellipsize(value!)}` : AlertText.dragAndDropHint, {
-        alertType: isHovering ? 'deleteDropHint' : 'dragAndDrop',
+      alert(isHovering ? `Drop to delete ${ellipsize(value!)}` : AlertText.DragAndDrop, {
+        alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDrop,
         showCloseLink: false,
       }),
     )

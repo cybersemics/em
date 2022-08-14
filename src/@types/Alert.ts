@@ -1,5 +1,7 @@
+import { AlertType } from '../constants'
+
 type Alert = {
-  alertType?: string
+  alertType?: keyof typeof AlertType
   showCloseLink?: boolean
   value: string | null
   isInline?: boolean

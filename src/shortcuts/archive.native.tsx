@@ -6,7 +6,7 @@ import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
 import archiveThought from '../action-creators/archiveThought'
 import error from '../action-creators/error'
-import { HOME_PATH } from '../constants'
+import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -46,7 +46,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       // only close the alert if it is an undo alert
       undoArchiveTimer = setTimeout(() => {
         const state = getState()
-        if (state.alert && state.alert.alertType === 'undoArchive') {
+        if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
           dispatch(alert(null))
         }
         // TODO: Fix global setTimeout type issue

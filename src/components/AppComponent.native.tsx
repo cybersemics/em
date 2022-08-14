@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import toggleSidebar from '../action-creators/toggleSidebar'
+import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import isTutorial from '../selectors/isTutorial'
 import { inputHandlers } from '../shortcuts'
@@ -41,7 +42,7 @@ const shouldCancelGesture = () => selection.isActive() || store?.getState().drag
 /** Dismiss gesture hint that is shown by alert. */
 const handleGestureCancel = () => {
   store.dispatch((dispatch, getState) => {
-    if (getState().alert?.alertType === 'gestureHintExtended') {
+    if (getState().alert?.alertType === AlertType.GestureHintExtended) {
       dispatch(alert(null))
     }
   })

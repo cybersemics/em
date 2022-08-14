@@ -6,6 +6,17 @@ import { emojiRegex } from './emojiRegex'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
+/** Ensures that enum values equal their keys. */
+const assertEnum = (obj: Index<string>) => {
+  Object.entries(obj).forEach(([key, value]) => {
+    if (key !== obj[key]) {
+      throw new Error(
+        `When using an object as an enum, values should match keys for uniqueness and readability. Key "${key}" has value "${obj[key]}".`,
+      )
+    }
+  })
+}
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
@@ -432,8 +443,35 @@ export enum VIEW_MODE {
   Prose = 'Prose',
 }
 
+assertEnum(VIEW_MODE)
+
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 
 export const AlertText = {
-  dragAndDropHint: 'Drag and drop to move thought',
+  DragAndDrop: 'Drag and drop to move thought',
 }
+
+export enum AlertType {
+  // shown when a thought is copied to the clipboard
+  Clipboard = 'Clipboard',
+  // shown when a dragged thought is hovering over the DeleteDrop component
+  DeleteDropHint = 'DeleteDropHint',
+  // shown when a thought is deleted
+  DeleteThoughtComplete = 'DeleteThoughtComplete',
+  // shown when dragging a thought
+  DragAndDrop = 'DragAndDrop',
+  // shown during a MultiGesture
+  GestureHint = 'GestureHint',
+  // shown after a longer delay during a MultiGesture
+  GestureHintExtended = 'GestureHintExtended',
+  // shown when a thought is archived
+  ThoughtArchived = 'ThoughtArchived',
+  // shown when a thought has been deleted
+  ThoughtDeleted = 'ThoughtDeleted',
+  // shown when a thought has been moved to a different context
+  ThoughtMoved = 'ThoughtMoved',
+  // shown when the user has exceeded the maximimum number of characters allowed in feedback
+  ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
+}
+
+assertEnum(AlertType)

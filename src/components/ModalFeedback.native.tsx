@@ -11,6 +11,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
+import { AlertType } from '../constants'
 import submitFeedback from '../util/submitFeedback'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
@@ -42,7 +43,7 @@ const ModalFeedback = () => {
     if (feedback.length < FEEDBACK_MIN_LENGTH) {
       dispatch(
         alert(`Message must be at least ${FEEDBACK_MIN_LENGTH} characters`, {
-          alertType: 'modalFeedback',
+          alertType: AlertType.ModalFeedbackMaxChars,
           clearDelay: 5000,
         }),
       )
@@ -69,7 +70,7 @@ const ModalFeedback = () => {
        const disable = feedback.length < FEEDBACK_MIN_LENGTH
        setIsDisabled(disable)
        if (!disable) {
-         dispatch(alert(null, { alertType: 'modalFeedback' }))
+         dispatch(alert(null, { alertType: AlertType.ModalFeedbackMaxChars }))
        }
      }
    }, [feedback]) */
