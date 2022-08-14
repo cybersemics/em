@@ -8,7 +8,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import TutorialChoice from '../@types/TutorialChoice'
-import cursorBack from '../action-creators/cursorBack'
 import cursorCleared from '../action-creators/cursorCleared'
 import editThought from '../action-creators/editThought'
 import editingAction from '../action-creators/editing'
@@ -672,7 +671,7 @@ const Editable = ({
       // do not set cursor on hidden thought
       e.preventDefault()
       if (!isVisible) {
-        dispatch(cursorBack())
+        selection.clear()
       } else {
         // prevent focus to allow navigation with mobile keyboard down
         setCursorOnThought()

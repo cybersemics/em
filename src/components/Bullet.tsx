@@ -28,6 +28,7 @@ interface BulletProps {
   isContextPending?: boolean
   isDragging?: boolean
   isEditing?: boolean
+  isVisible?: boolean
   leaf?: boolean
   onClick?: (event: React.MouseEvent) => void
   publish?: boolean
@@ -63,6 +64,7 @@ const Bullet = ({
   isContextPending,
   isHighlighted,
   isEditing,
+  isVisible,
   leaf,
   missing,
   onClick,
@@ -178,6 +180,7 @@ const Bullet = ({
         paddingBottom: extendClickHeight + 2,
         position: 'absolute',
         verticalAlign: 'top',
+        visibility: isVisible ? 'visible' : 'hidden',
         width: 4, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
       }}

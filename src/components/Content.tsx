@@ -4,7 +4,6 @@ import { connect, useDispatch } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
-import cursorBackActionCreator from '../action-creators/cursorBack'
 import expandContextThought from '../action-creators/expandContextThought'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
@@ -87,7 +86,6 @@ const Content: ContentComponent = props => {
     if (showModal) {
       dispatch(closeModal())
     } else if (!noteFocus) {
-      dispatch(cursorBackActionCreator())
       expandContextThought(null)
     }
   }
