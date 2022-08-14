@@ -1,6 +1,8 @@
 import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import { AlertText, AlertType } from '../constants'
+import alert from './alert'
 
 interface Payload {
   value: boolean
@@ -9,7 +11,9 @@ interface Payload {
 
 /** Reducer for highlighting a bullet on click and hold. */
 const dragHold = (state: State, { value = false, simplePath }: Payload) => ({
-  ...state,
+  ...(value
+    ? alert(state, { value: AlertText.DragAndDrop, alertType: AlertType.DragAndDrop, showCloseLink: false })
+    : state),
   dragHold: value,
   // Prevent setting new draggedThoughtRanked before, if previous value wasn't reset to undefined
   draggedSimplePath: state.draggedSimplePath ? (!simplePath ? undefined : state.draggedSimplePath) : simplePath,

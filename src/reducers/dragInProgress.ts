@@ -15,7 +15,9 @@ interface Payload {
 
 /** Sets dragInProgress. */
 const dragInProgress = (state: State, { value, draggingThought, hoveringPath, hoverId, offset }: Payload): State => ({
-  ...(value ? alert(state, { value: AlertText.DragAndDrop, alertType: AlertType.DragAndDrop }) : state),
+  ...(value
+    ? alert(state, { value: AlertText.DragAndDrop, alertType: AlertType.DragAndDrop, showCloseLink: false })
+    : state),
   dragInProgress: value,
   draggingThought,
   hoveringPath,

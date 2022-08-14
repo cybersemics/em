@@ -13,7 +13,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { AlertText, AlertType, DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -179,10 +179,7 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = useCallback(() => {
     setIsPressed(true)
-    dispatch([
-      dragHold({ value: true, simplePath }),
-      alert(AlertText.DragAndDrop, { alertType: AlertType.DragAndDrop, showCloseLink: false }),
-    ])
+    dispatch(dragHold({ value: true, simplePath }))
   }, [])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */

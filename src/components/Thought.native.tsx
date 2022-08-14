@@ -14,7 +14,7 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { AlertText, DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -230,7 +230,7 @@ const ThoughtContainer = ({
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = () => {
     if (!store.getState().dragHold) {
-      store.dispatch([dragHold({ value: true, simplePath }), alert(AlertText.DragAndDrop, { showCloseLink: false })])
+      store.dispatch([dragHold({ value: true, simplePath })])
     }
   }
 
