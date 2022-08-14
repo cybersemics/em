@@ -33,7 +33,7 @@
     "deploy:functions": "cat ./firebase-config.json | node ./scripts/setFirebaseConfig.js && cd ./functions && npm run build && firebase deploy --only functions",
     "postinstall": "husky install",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
-    "lint:src": "eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
+    "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:functions": "cd ./functions && npm run lint",
     "servebuild": "npx serve -s build -l 3001",
