@@ -43,7 +43,7 @@ const hover = (isHovering: boolean) => {
   if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {
     store.dispatch(
       alert(isHovering ? `Drop to delete ${ellipsize(value!)}` : AlertText.DragAndDrop, {
-        alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDrop,
+        alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
         showCloseLink: false,
       }),
     )

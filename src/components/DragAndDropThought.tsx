@@ -82,7 +82,7 @@ const endDrag = () => {
     dragInProgress({ value: false }),
     dragHold({ value: false }),
     (dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.DragAndDrop) {
+      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
         dispatch(alert(null))
       }
     },

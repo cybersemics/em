@@ -454,14 +454,14 @@ export const AlertText = {
 }
 
 export enum AlertType {
-  // shown when a thought is copied to the clipboard
+  // shown when a thought is copied to the clipboard or still loading in the export modal
   Clipboard = 'Clipboard',
   // shown when a dragged thought is hovering over the DeleteDrop component
   DeleteDropHint = 'DeleteDropHint',
   // shown when a thought is deleted
   DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a thought
-  DragAndDrop = 'DragAndDrop',
+  DragAndDropHint = 'DragAndDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown after a longer delay during a MultiGesture
