@@ -162,7 +162,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
           alertType: AlertType.GestureHint,
           clearDelay: 5000,
-          showCloseLink: !!shortcut,
+          showCloseLink: false,
         }),
       )
     }
@@ -213,14 +213,16 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        if (
-          getState().alert?.alertType?.startsWith('gestureHint') &&
-          shortcut?.id !== 'cursorForward' &&
-          shortcut?.id !== 'cursorBack'
-        ) {
-          // TODO: Add a setting to auto dismiss alerts after the gesture ends
-          // clear alert if gesture is cancelled
-          dispatch(alert(shortcut?.label || null))
+        const alertType = getState().alert?.alertType
+        if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
+          dispatch(
+            alert(
+              // clear alert if gesture is cancelled (no shortcut)
+              // clear alert if back/forward
+              shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack' ? shortcut.label : null,
+              { alertType: AlertType.GestureHint, clearDelay: 5000 },
+            ),
+          )
         }
       })
     })
