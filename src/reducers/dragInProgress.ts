@@ -2,7 +2,8 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import { DropTarget } from '../constants'
+import { AlertText, AlertType, DropTarget } from '../constants'
+import alert from './alert'
 
 interface Payload {
   value: boolean
@@ -14,7 +15,7 @@ interface Payload {
 
 /** Sets dragInProgress. */
 const dragInProgress = (state: State, { value, draggingThought, hoveringPath, hoverId, offset }: Payload): State => ({
-  ...state,
+  ...(value ? alert(state, { value: AlertText.DragAndDrop, alertType: AlertType.DragAndDrop }) : state),
   dragInProgress: value,
   draggingThought,
   hoveringPath,

@@ -73,7 +73,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps) => {
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath: simplePath }
+  return { simplePath }
 }
 
 /** Handles drag end. */
