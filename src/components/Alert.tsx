@@ -78,18 +78,30 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
   const GestureHint =
     alert?.alertType === AlertType.GestureHintExtended
       ? () => {
-          const sequence = alert.value!
+          const sequence = alert.value === '*' ? '' : alert.value!
 
           // get the shortcuts that can be executed with the current sequence
           const possibleShortcuts = globalShortcuts.filter(
-            shortcut => !shortcut.hideFromInstructions && gestureString(shortcut).startsWith(sequence),
+            shortcut =>
+              !shortcut.hideFromInstructions && shortcut.gesture && gestureString(shortcut).startsWith(sequence),
           )
           const possibleShortcutsSorted = _.sortBy(
             possibleShortcuts,
             shortcut => `${shortcut.gesture!.length}\x00${shortcut.label}`,
           )
           return (
-            <div>
+            <div style={{ marginBottom: fontSize * 2 }}>
+              <div
+                style={{
+                  marginLeft: -fontSize * 2,
+                  marginBottom: 12,
+                  paddingLeft: 5,
+                  borderBottom: 'solid 1px gray',
+                  width: `calc(50% + ${fontSize * 2}px)`,
+                }}
+              >
+                Gestures
+              </div>
               {possibleShortcutsSorted.length > 0
                 ? possibleShortcutsSorted.map(shortcut => (
                     <ShortcutGestureHint
@@ -133,13 +145,22 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   return (
     <div
       className={alert.isInline ? 'alert alert-inline' : 'alert'}
-      {...useSwipeToDismissProps}
+      {...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
-      style={{ ...useSwipeToDismissProps.style, ...(!children ? { textAlign: 'center' } : { paddingLeft: '6em' }) }}
+      style={{
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        maxHeight: '100%',
+        maxWidth: '100%',
+        ...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps.style : null),
+        ...(!children ? { textAlign: 'center' } : null),
+      }}
     >
       <span
         className='alert-text'
-        style={{ ...(alert.alertType === AlertType.GestureHintExtended ? { width: '100%' } : null) }}
+        style={{
+          ...(alert.alertType === AlertType.GestureHintExtended ? { paddingLeft: '6em', width: '100%' } : null),
+        }}
         dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
       >
         {children}

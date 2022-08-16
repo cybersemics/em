@@ -4,6 +4,7 @@ import { connect } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import isTutorial from '../selectors/isTutorial'
 import simplifyPath from '../selectors/simplifyPath'
 import { store } from '../store'
@@ -11,6 +12,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import FeedbackButton from './FeedbackButton'
+import GestureHintExtendedButton from './GestureHintExtendedButton'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import QuickAddButton from './QuickAddButton'
@@ -69,6 +71,7 @@ const NavBar = ({
 
               <div className='nav-right-button-group'>
                 <>
+                  {isTouch && <GestureHintExtendedButton />}
                   {authenticated && <InvitesButton />}
                   <FeedbackButton />
                   <QuickAddButton />
