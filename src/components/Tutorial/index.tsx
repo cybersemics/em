@@ -35,9 +35,9 @@ import TutorialStepComponentMap from './TutorialStepComponentMap'
 import WithCSSTransition from './WithCSSTransition'
 
 // assert shortcut at load time
-const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
+const newThoughtShortcut = shortcutById('newThought')
 if (!newThoughtShortcut) {
-  throw new Error('newThoughtOrOutdent shortcut not found.')
+  throw new Error('newThought shortcut not found.')
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -84,7 +84,7 @@ const Tutorial = ({
       tutorialStep === TUTORIAL_STEP_SECONDTHOUGHT_HINT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT ||
       tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-        ? shortcutById('newThoughtOrOutdent')?.gesture
+        ? shortcutById('newThought')?.gesture
         : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
           tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
           tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||

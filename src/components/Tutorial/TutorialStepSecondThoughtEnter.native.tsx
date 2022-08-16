@@ -8,7 +8,7 @@ import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 import { Text } from '../Text.native'
 
-const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
+const newThoughtShortcut = shortcutById('newThought')
 
 const { smallText, italic } = commonStyles
 

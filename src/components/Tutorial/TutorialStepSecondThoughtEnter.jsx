@@ -5,7 +5,7 @@ import { shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 
-const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
+const newThoughtShortcut = shortcutById('newThought')
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = ({ cursor }) => {

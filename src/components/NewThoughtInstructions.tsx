@@ -15,9 +15,9 @@ interface NewThoughtInstructionsProps {
 }
 
 // assert the search shortcut at load time
-const newThoughtShortcut = shortcutById('newThoughtOrOutdent')
+const newThoughtShortcut = shortcutById('newThought')
 if (!newThoughtShortcut) {
-  throw new Error('newThoughtOrOutdent shortcut not found.')
+  throw new Error('newThought shortcut not found.')
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
