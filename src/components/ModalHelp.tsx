@@ -331,6 +331,10 @@ const ModalHelp = ({
           Delete icon by <a href='https://thenounproject.com/icon/trash-1371974/'>Clea Doltz</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Gesture icon by <a href='https://thenounproject.com/icon/gesture-2211316/'>Adrien Coquet</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
 
       <br />
