@@ -6,17 +6,6 @@ import { emojiRegex } from './emojiRegex'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
-/** Ensures that enum values equal their keys. */
-const assertEnum = (obj: Index<string>) => {
-  Object.entries(obj).forEach(([key, value]) => {
-    if (key !== obj[key]) {
-      throw new Error(
-        `When using an object as an enum, values should match keys for uniqueness and readability. Key "${key}" has value "${obj[key]}".`,
-      )
-    }
-  })
-}
-
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
@@ -288,8 +277,6 @@ export enum DropTarget {
   ThoughtDrop = 'ThoughtDrop',
 }
 
-assertEnum(DropTarget)
-
 export const EMOJI_REGEX = emojiRegex
 /*
   Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.
@@ -445,8 +432,6 @@ export enum ViewMode {
   Prose = 'Prose',
 }
 
-assertEnum(ViewMode)
-
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 
 export const AlertText = {
@@ -466,6 +451,8 @@ export enum AlertType {
   GestureHint = 'GestureHint',
   // shown after a longer delay during a MultiGesture
   GestureHintExtended = 'GestureHintExtended',
+  // shown the first time the user types space to indent
+  SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when a thought is archived
   ThoughtArchived = 'ThoughtArchived',
   // shown when a thought has been deleted
@@ -475,5 +462,3 @@ export enum AlertType {
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
 }
-
-assertEnum(AlertType)

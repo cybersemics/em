@@ -6,8 +6,9 @@ import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
+import setAttribute from '../action-creators/setAttribute'
 import GestureDiagram from '../components/GestureDiagram'
-import { AlertType } from '../constants'
+import { AlertType, EM_TOKEN } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import theme from '../selectors/theme'
 import { globalShortcuts } from '../shortcuts'
@@ -63,7 +64,14 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
   /** Dismiss the alert on close. */
   const onClose = () => {
     setDismiss(true)
-    dispatch(alertActionCreator(null))
+    dispatch([
+      alertActionCreator(null),
+      // dismiss SpaceToIndentHint flag
+      // TODO: Factor out into setEmThought
+      alert?.alertType === AlertType.SpaceToIndentHint
+        ? setAttribute({ path: [EM_TOKEN], key: '=flags', value: 'spaceToIndentHintComplete' })
+        : null,
+    ])
   }
 
   /** Render the gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */

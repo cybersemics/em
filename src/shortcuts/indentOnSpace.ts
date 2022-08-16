@@ -1,8 +1,12 @@
+import { noop } from 'lodash'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
+import alert from '../action-creators/alert'
 import indent from '../action-creators/indent'
+import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import getEmThought from '../selectors/getEmThought'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -25,7 +29,19 @@ const canExecute = (getState: () => State) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const exec: Shortcut['exec'] = dispatch => dispatch(indent())
+const exec: Shortcut['exec'] = (dispatch, getState) => {
+  // show an explanation of space-to-indent the first time they execute it
+  const spaceToIndentHintComplete = getEmThought(getState(), ['=flags', 'spaceToIndentHintComplete'])
+  dispatch([
+    indent(),
+    !spaceToIndentHintComplete
+      ? alert(
+          '✨ Shortcut discovered! ✨<br/><span style="display: inline-block; font-size: 90%; padding-top: 0.5em;">Type space at the beginning of a thought to indent</span>',
+          { alertType: AlertType.SpaceToIndentHint },
+        )
+      : noop,
+  ])
+}
 
 const indentOnSpace: Shortcut = {
   id: 'indentOnSpace',
