@@ -30,10 +30,11 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const indentShortcut: Shortcut = {
   id: 'indent',
   label: 'Indent',
-  description: 'Move the current thought "in" (to the end of the previous thought). No surprises here.',
+  description: 'Indent the current thought one level deeper. No surprises here.',
   overlay: {
     keyboard: moveCursorForward.keyboard,
   },
+  gesture: 'rlr',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: dispatch => dispatch(indent()),

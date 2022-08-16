@@ -30,11 +30,11 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const outdentShortcut: Shortcut = {
   id: 'outdent',
   label: 'De-indent',
-  description:
-    'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought "out" a level (immediately after its parent).',
+  description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought up a level.',
   overlay: {
     keyboard: moveCursorBackward.keyboard,
   },
+  gesture: 'lrl',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
