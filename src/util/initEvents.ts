@@ -8,12 +8,12 @@ import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { AlertType } from '../constants'
-import * as db from '../data-providers/dexie'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
+import { store } from '../store'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
@@ -156,21 +156,6 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Error event listener. NOTE: This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
-  // const onError = (e: { message: string; error?: Error }) => {
-  const onError = (e: any) => {
-    // ignore generic script error caused by a firebase disconnect (cross-site error)
-    // https://blog.sentry.io/2016/05/17/what-is-script-error
-    if (e.message === 'Script error.' || e.code?.startsWith('auth/')) return
-
-    console.error({ message: e.message, code: e.code, 'error.code': (error as any).code, errors: e.errors })
-    if (e.error && 'stack' in e.error) {
-      console.error(e.error.stack)
-      db.log({ message: e.message, stack: e.error.stack })
-    }
-    store.dispatch(error({ value: e.message }))
-  }
-
   /** Handle a page lifecycle state change. */
   const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
     if (newState === 'hidden') {
@@ -202,7 +187,6 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
-  window.addEventListener('error', onError)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
 
@@ -218,7 +202,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
-    window.removeEventListener('error', onError)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
     lifecycle.removeEventListener('statechange', onStateChange)
@@ -226,6 +209,25 @@ const initEvents = (store: Store<State, any>) => {
 
   // return input handlers as another way to remove them on cleanup
   return { keyDown, keyUp, cleanup }
+}
+
+/** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
+// const onError = (e: { message: string; error?: Error }) => {
+const onError = (e: any) => {
+  // ignore generic script error caused by a firebase disconnect (cross-site error)
+  // https://blog.sentry.io/2016/05/17/what-is-script-error
+  if (e.message === 'Network Error' || e.message === 'Script error.' || e.code?.startsWith('auth/')) return
+
+  console.error({ message: e.message, code: e.code, 'error.code': (error as any).code, errors: e.errors })
+  if (e.error && 'stack' in e.error) {
+    console.error(e.error.stack)
+  }
+  store.dispatch(error({ value: e.message }))
+}
+
+// error handler must be added immediately to catch Firebase auth errors
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', onError)
 }
 
 export default initEvents
