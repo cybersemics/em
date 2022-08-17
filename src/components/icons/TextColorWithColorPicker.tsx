@@ -22,7 +22,7 @@ const Icon = ({ size = 20, style }: IconType) => {
             // does not allow overflow-y: visible at the same time for some reason
             position: 'fixed',
             // % margin-left does not work on position fixed
-            transform: 'translate(-50%, 0)',
+            transform: `translate(calc(-50%), 0)`,
           }}
         >
           <ColorPicker fontSize={size} />
