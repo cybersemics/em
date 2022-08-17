@@ -6,8 +6,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const textColor: Shortcut = {
   id: 'textColor',
   label: 'Text Color',
-  description:
-    'Change the text color or background color to your liking. You could use chartreuse if you are feeling masochistic.',
+  description: 'Change the text color or highlight color to your liking.',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
