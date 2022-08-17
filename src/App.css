@@ -363,6 +363,7 @@ a.text-link {
 }
 
 .toolbar {
+  position: relative;
   touch-action: inherit;
   display: inline-flex;
   overflow-x: scroll;
@@ -371,6 +372,7 @@ a.text-link {
   -ms-overflow-style: none;
   background-color: white;
   box-shadow: 10px -20px 15px 25px white;
+  right: 5px;
 }
 
 .dark .toolbar {
@@ -380,10 +382,6 @@ a.text-link {
 
 .toolbar::-webkit-scrollbar {
   display: none;
-}
-
-.mobile .toolbar {
-  right: 5px;
 }
 
 #left-arrow,
