@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -382,6 +382,36 @@ const ThoughtContainer = ({
     }
   }, [])
 
+  // colors that are applied to the container
+  const styleColors = useMemo(
+    () => ({
+      // add transparency to the foreground color based on autofocus
+      ...(style?.backgroundColor
+        ? {
+            backgroundColor: alpha(
+              style.backgroundColor as `rgb${string}`,
+              autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+            ),
+          }
+        : null),
+      // add transparency to the foreground color based on autofocus
+      color: alpha(
+        (style?.color as `rgb${string}`) || colors.fg,
+        autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+      ),
+    }),
+    [autofocus, colors, style],
+  )
+
+  // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
+  const styleWithoutColors = useMemo((): React.CSSProperties => {
+    return {
+      ...(style ? _.omit(style, ['color', 'background-color']) : null),
+      // highlight the parent of the current drop target to make it easier to drop in the intended place
+      ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
+    }
+  }, [isChildHovering, style])
+
   if (!thought) return null
 
   const value = thought.value
@@ -393,25 +423,13 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  // add transparency to the foreground color based on autofocus
-  const color = alpha(
-    (style?.color as `rgb${string}`) || colors.fg,
-    autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-  )
-
-  // add transparency to the foreground color based on autofocus
-  const backgroundColor = style?.backgroundColor
-    ? alpha(style.backgroundColor as `rgb${string}`, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
-    : null
-
   return dropTarget(
     dragSource(
       <li
         {...longPress.props}
         aria-label='thought-container'
         style={{
-          backgroundColor,
-          color,
+          ...styleColors,
           ...styleContainer,
         }}
         className={classNames({
@@ -494,11 +512,7 @@ const ThoughtContainer = ({
             path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={{
-              ..._.omit(style, ['color', 'background-color']),
-              // highlight the parent of the current drop target to make it easier to drop in the intended place
-              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
-            }}
+            style={styleWithoutColors}
             styleAnnotation={styleAnnotation || undefined}
           />
 
@@ -514,11 +528,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
-            style={{
-              ..._.omit(style, ['color', 'background-color']),
-              // highlight the parent of the current drop target to make it easier to drop in the intended place
-              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
-            }}
+            style={styleWithoutColors}
             view={view}
           />
 
