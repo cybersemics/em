@@ -42,6 +42,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
+import { safeRefMerge } from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs'
@@ -293,7 +294,12 @@ const ThoughtContainer = ({
   const colors = useSelector(themeColors)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
   const styleAnnotation = useSelector((state: State) =>
-    getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
+    safeRefMerge(
+      // apply normal style color to the annotation style
+      style?.color ? { color: style.color } : null,
+      // apply annotation style (mainly used for background color)
+      getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
+    ),
   )
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))

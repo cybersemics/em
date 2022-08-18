@@ -112,10 +112,9 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
             // merge =style (which contains color) and =styleAnnotation (which contains backgroundColor)
             // the style attribute name is not relevant here
             ...(getStyle(state, head(state.cursor)) || ({} as React.CSSProperties)),
-            ...(getStyle(state, head(state.cursor), { attributeName: '=styleAnnotation' }) ||
-              ({} as React.CSSProperties)),
+            ...getStyle(state, head(state.cursor), { attributeName: '=styleAnnotation' }),
           }
-        : ({} as React.CSSProperties),
+        : undefined,
     shallowEqual,
   )
 
