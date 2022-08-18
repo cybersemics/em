@@ -88,8 +88,7 @@ describe('normal view', () => {
         dispatch(
           toggleAttribute({
             path: contextToPath(getState(), ['SORT']),
-            key: '=sort',
-            value: 'Alphabetical',
+            values: ['=sort', 'Alphabetical'],
           }),
         ),
       setCursorFirstMatchActionCreator(['SORT', 'a']),

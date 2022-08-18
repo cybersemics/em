@@ -263,8 +263,7 @@ describe('DOM', () => {
 
       toggleAttribute({
         path: HOME_PATH,
-        key: '=sort',
-        value: 'Alphabetical',
+        values: ['=sort', 'Alphabetical'],
       }),
     ])
 
@@ -289,8 +288,7 @@ describe('DOM', () => {
         dispatch(
           toggleAttribute({
             path: contextToPath(getState(), ['a']),
-            key: '=sort',
-            value: 'Alphabetical',
+            values: ['=sort', 'Alphabetical'],
           }),
         ),
     ])
@@ -382,8 +380,7 @@ describe('DOM', () => {
           dispatch(
             toggleAttribute({
               path: contextToPath(getState(), ['a']),
-              key: '=sort',
-              value: 'None',
+              values: ['=sort', 'None'],
             }),
           ),
       ])
@@ -410,8 +407,7 @@ describe('DOM', () => {
       store.dispatch([
         toggleAttribute({
           path: HOME_PATH,
-          key: '=sort',
-          value: 'Alphabetical',
+          values: ['=sort', 'Alphabetical'],
         }),
         (dispatch, getState) =>
           dispatch(
@@ -445,8 +441,7 @@ describe('DOM', () => {
           dispatch(
             toggleAttribute({
               path: contextToPath(getState(), ['a']),
-              key: '=sort',
-              value: 'Alphabetical',
+              values: ['=sort', 'Alphabetical'],
             }),
           ),
         (dispatch, getState) =>

@@ -18,6 +18,7 @@ import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import setEditingValue from '../action-creators/setEditingValue'
 import setInvalidState from '../action-creators/setInvalidState'
+import toggleColorPicker from '../action-creators/toggleColorPicker'
 import tutorialNext from '../action-creators/tutorialNext'
 import { isSafari, isTouch } from '../browser'
 import {
@@ -670,8 +671,13 @@ const Editable = ({
     ) {
       // do not set cursor on hidden thought
       e.preventDefault()
+
       if (!isVisible) {
         selection.clear()
+
+        if (state.showColorPicker) {
+          dispatch(toggleColorPicker({ value: false }))
+        }
       } else {
         // prevent focus to allow navigation with mobile keyboard down
         setCursorOnThought()

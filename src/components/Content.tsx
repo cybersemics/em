@@ -1,10 +1,13 @@
 import classNames from 'classnames'
 import React, { FC, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch } from 'react-redux'
+import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import { Thunk } from '../@types/Thunk'
 import closeModal from '../action-creators/closeModal'
 import expandContextThought from '../action-creators/expandContextThought'
+import toggleColorPicker from '../action-creators/toggleColorPicker'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import * as selection from '../device/selection'
@@ -36,7 +39,7 @@ const TransientEditable = (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { isLoading, noteFocus, search, showModal, rootContext } = state
+  const { isLoading, search, rootContext } = state
 
   const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
 
@@ -50,11 +53,9 @@ const mapStateToProps = (state: State) => {
 
   return {
     search,
-    showModal,
     isTutorialLocal,
     tutorialStep,
     rootThoughtsLength,
-    noteFocus,
     isAbsoluteContext,
     isLoading,
     rootContext,
@@ -65,17 +66,21 @@ type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
 
 /** The main content section of em. */
 const Content: ContentComponent = props => {
-  const { search, isTutorialLocal, tutorialStep, showModal, rootThoughtsLength, noteFocus, isAbsoluteContext } = props
+  const { search, isTutorialLocal, tutorialStep, rootThoughtsLength, isAbsoluteContext } = props
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
-  const clickOnEmptySpace = () => {
+  const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
+    const state = getState()
+
     // make sure the the actual Content element has been clicked
     // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
     if (!isPressed) return
     setIsPressed(false)
+
+    dispatch([state.showColorPicker ? toggleColorPicker({ value: false }) : null])
 
     // web only
     // click event occured during text selection has focus node of type text unlike normal event which has node of type element
@@ -83,11 +88,10 @@ const Content: ContentComponent = props => {
     if (selection.isText()) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    if (showModal) {
-      dispatch(closeModal())
-    } else if (!noteFocus) {
-      expandContextThought(null)
-    }
+    dispatch([
+      state.showModal ? closeModal() : null,
+      state.expandedContextThought && !state.noteFocus ? expandContextThought(null) : null,
+    ])
   }
 
   /** Generate class names. */
@@ -107,7 +111,7 @@ const Content: ContentComponent = props => {
         id='content'
         ref={contentRef}
         className={contentClassNames}
-        onClick={clickOnEmptySpace}
+        onClick={() => dispatch(clickOnEmptySpace)}
         onMouseDown={() => setIsPressed(true)}
       >
         {search != null ? (

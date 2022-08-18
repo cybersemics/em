@@ -19,7 +19,7 @@ import { isTouch } from '../browser'
 import { SCROLL_PRIORITIZATION_TIMEOUT, SHORTCUT_HINT_OVERLAY_TIMEOUT, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import subtree from '../selectors/subtree'
-import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
 import Shortcut from './Shortcut'
@@ -44,7 +44,6 @@ const mapStateToProps = (state: State) => {
   const { fontSize, isLoading, toolbarOverlay, scrollPrioritized, showTopControls, showHiddenThoughts } = state
 
   return {
-    dark: theme(state) !== 'Light',
     isLoading,
     fontSize,
     scrollPrioritized,
@@ -87,10 +86,11 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
 
   return (
     <div
+      aria-label={shortcut.label}
       key={shortcutId}
-      id={shortcutId}
       style={{
         paddingTop: isButtonExecutable && isPressing ? '10px' : '',
+        position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
       }}
       className='toolbar-icon'
@@ -127,7 +127,6 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
 
 /** Toolbar component. */
 const Toolbar = ({
-  dark,
   fontSize,
   toolbarOverlay,
   scrollPrioritized,
@@ -140,8 +139,8 @@ const Toolbar = ({
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
-  const fg = dark ? 'white' : 'black'
   const arrowWidth = fontSize / 3
+  const colors = useSelector(themeColors)
 
   const shortcut = toolbarOverlay ? shortcutById(toolbarOverlay) : null
 
@@ -288,7 +287,7 @@ const Toolbar = ({
                   // disable click while alert is active or still being dismissed
                   // except inline alerts, which do not obscure the toolbar
                   disabled={!!alert && !alert.isInline}
-                  fg={fg}
+                  fg={colors.fg}
                   fontSize={fontSize}
                   isPressing={pressingToolbarId === id}
                   key={id}
@@ -302,6 +301,7 @@ const Toolbar = ({
               <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
             </span>
           </div>
+
           <TransitionGroup>
             {shortcut && toolbarOverlay ? (
               <CSSTransition timeout={800} classNames='fade'>

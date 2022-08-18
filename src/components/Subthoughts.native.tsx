@@ -32,6 +32,7 @@ import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getStyle from '../selectors/getStyle'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { shortcutById } from '../shortcuts'
 import { store } from '../store'
@@ -299,6 +300,7 @@ const NoChildren = ({
   simplePath: SimplePath
 }) => {
   const store = useStore<State>()
+  const colors = useSelector(themeColors)
 
   return (
     <View>
@@ -306,7 +308,7 @@ const NoChildren = ({
 
       <Text>
         <Text>
-          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color='darkgray' />
+          Swipe <GestureDiagram path={subthoughtShortcut?.gesture as GesturePath} size={30} color={colors.gray66} />
         </Text>
         to add "{headValue(store.getState(), simplePath)}" to a new context.
       </Text>
@@ -319,7 +321,7 @@ const NoChildren = ({
         //   <GestureDiagram
         //     path={toggleContextViewShortcut.gesture as GesturePath}
         //     size={30}
-        //     color='darkgray' /* mtach .children-subheading color */
+        //     color={colors.gray66} /* mtach .children-subheading color */
         //   />
         //   to return to the normal view.
         // </Text>
@@ -478,10 +480,10 @@ export const SubthoughtsComponent = ({
   // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, context).type === 'Alphabetical'
 
   const styleContainerChildren = useSelector((state: State) =>
-    getStyle(state, childrenAttributeId, { container: true }),
+    getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
   )
   const styleContainerGrandchildren = useSelector((state: State) =>
-    getStyle(state, grandchildrenAttributeId, { container: true }),
+    getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
   )
 
   const proposedPageSize = PAGINATION_SIZE * page
@@ -493,11 +495,11 @@ export const SubthoughtsComponent = ({
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
   /** Calculates the autofocus state to hide or dim thoughts.
-   * Note: The following properties is applied to the immediate childrens with given class.
-   * - distance-from-cursor-0 fully visible
-   * - distance-from-cursor-1 dimmed
-   * - distance-from-cursor-2 shifted left and hidden
-   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: The following properties are applied to the immediate children with given class.
+   * - autofocus-show fully visible
+   * - autofocus-dim dimmed
+   * - autofocus-hide shifted left and hidden
+   * - autofocus-hide-parent shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
   const actualDistance = once(() => {
@@ -513,7 +515,7 @@ export const SubthoughtsComponent = ({
       - first visible thought should be dimmed if it is not direct parent of the cursor.
       - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
 
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
     const isCursorLeaf = cursor && isLeaf(state, head(cursor))

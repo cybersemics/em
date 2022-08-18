@@ -23,6 +23,7 @@ import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import themeColors from '../selectors/themeColors'
 import exportPhrase from '../util/exportPhrase'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -168,6 +169,7 @@ const ModalExport = () => {
   const dispatch = useDispatch()
   const state = store.getState()
   const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
+  const colors = useSelector(themeColors)
   const simplePath = simplifyPath(state, cursor)
   const id = head(simplePath)
   const context = pathToContext(state, simplePath)
@@ -378,7 +380,7 @@ const ModalExport = () => {
                 key={`${id}-key-${title}`}
                 style={[styles.marginVertical, styles.row]}
               >
-                <View style={styles.checkContainer}>{checked && <FontAwesome5 name='check' color='#fff' />}</View>
+                <View style={styles.checkContainer}>{checked && <FontAwesome5 name='check' color={colors.fg} />}</View>
                 <View>
                   <Text style={styles.white}>{title}</Text>
                   <Text style={[styles.white, styles.opacity]}>{description}</Text>

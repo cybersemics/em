@@ -17,8 +17,9 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import { store } from '../store'
+import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
@@ -34,7 +35,7 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  dark?: boolean
+  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
   editingValue?: string | null
   env?: string
   focusOffset?: number
@@ -47,6 +48,7 @@ interface ThoughtAnnotationProps {
   showHiddenThoughts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
+  styleAnnotation?: React.CSSProperties
 }
 
 /** Sets the innerHTML of the ngram text. */
@@ -103,7 +105,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
   const thought = getThoughtById(state, head(simplePathLive))
 
   return {
-    dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,
@@ -115,6 +116,7 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
+  autofocus,
   path,
   simplePath,
   isEditing,
@@ -123,6 +125,8 @@ const ThoughtAnnotation = ({
   invalidState,
   editingValue,
   style,
+  // only applied to the .subthought container
+  styleAnnotation,
   showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
   // only show real time update if being edited while having meta validation error
@@ -147,6 +151,7 @@ const ThoughtAnnotation = ({
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
+  const colors = useSelector(themeColors)
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -179,6 +184,17 @@ const ThoughtAnnotation = ({
     ? childrenUrls()[0].value
     : null
 
+  // add transparency to the foreground color based on autofocus
+  const color = alpha(
+    (styleAnnotation?.color as `rgb${string}`) || colors.fg,
+    autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+  )
+
+  // add transparency to the foreground color based on autofocus
+  const backgroundColor = styleAnnotation?.backgroundColor
+    ? alpha(styleAnnotation.backgroundColor as `rgb${string}`, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
+    : null
+
   return (
     <div
       className='thought-annotation'
@@ -197,6 +213,14 @@ const ThoughtAnnotation = ({
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
+          style={{
+            // add a little padding for highlighting
+            padding: '0 3px',
+            marginLeft: -3,
+            ...styleAnnotation,
+            color,
+            backgroundColor,
+          }}
         >
           <span
             className='subthought-text'

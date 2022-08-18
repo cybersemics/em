@@ -5,8 +5,8 @@ import Thunk from './Thunk'
 interface Dispatch {
   <T = void>(thunks: Thunk<T>[]): T[]
   <T = void>(thunk: Thunk<T>): T
-  (actions: (AnyAction | Thunk)[]): void
-  (action: AnyAction | Thunk): void
+  (actions: (AnyAction | Thunk | null)[]): void
+  (action: AnyAction | Thunk | null): void
 }
 
 export default Dispatch

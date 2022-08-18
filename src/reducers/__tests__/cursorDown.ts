@@ -71,7 +71,7 @@ describe('normal view', () => {
       newThought('m'),
       setCursor(['a']),
       (state: State) =>
-        toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
+        toggleAttribute(state, { path: contextToPath(state, ['a']), values: ['=sort', 'Alphabetical'] }),
       cursorDown,
     ]
 

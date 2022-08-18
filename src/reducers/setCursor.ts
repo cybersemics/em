@@ -159,6 +159,7 @@ const setCursor = (
     expanded,
     noteFocus,
     cursorInitialized: true,
+    ...(!thoughtsResolved ? { showColorPicker: false } : null),
   }
 
   return stateNew

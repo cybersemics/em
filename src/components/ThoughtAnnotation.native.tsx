@@ -19,7 +19,6 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import theme from '../selectors/theme'
 import { store } from '../store'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
@@ -43,7 +42,6 @@ import UrlIcon from './icons/UrlIcon'
 const { from, animate } = fadeIn
 
 interface ThoughtAnnotationProps {
-  dark?: boolean
   editingValue?: string | null
   env?: string
   focusOffset?: number
@@ -109,7 +107,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     : props.simplePath
 
   return {
-    dark: theme(state) !== 'Light',
     editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,

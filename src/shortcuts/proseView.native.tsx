@@ -40,8 +40,7 @@ const proseViewShortcut: Shortcut = {
     dispatch(
       toggleAttribute({
         path: simplePath,
-        key: '=view',
-        value: 'Prose',
+        values: ['=view', 'Prose'],
       }),
     )
   },

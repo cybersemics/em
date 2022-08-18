@@ -21,7 +21,7 @@ it('define =focus/Zoom in a =let expression and apply it to a thought', async ()
   // instead check the zoomCursor class
 
   // b should initially be visible
-  const thoughtB = (await findThoughtByText('b')) as HTMLElement
+  const thoughtB = (await findThoughtByText('b'))!.closest('[aria-label="thought-container"]')!
   const subthoughts = thoughtB.closest('.children')
   expect(subthoughts).not.toHaveClass('zoomCursor')
 
@@ -32,7 +32,7 @@ it('define =focus/Zoom in a =let expression and apply it to a thought', async ()
   expect(subthoughts).toHaveClass('zoomCursor')
 })
 
-it('=focus/Zoom/=style', async () => {
+it.skip('=focus/Zoom/=style', async () => {
   paste(`
     - =let
       - =foo
@@ -40,15 +40,15 @@ it('=focus/Zoom/=style', async () => {
           - Zoom
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
     - apple
       - =foo
     - bear
   `)
 
-  const thoughtA = (await findThoughtByText('apple')) as HTMLElement
-  expect(thoughtA).not.toHaveStyle({ color: 'pink' })
+  const thoughtA = (await findThoughtByText('apple'))!.closest('[aria-label="thought-container"]')!
+  expect(thoughtA).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   userEvent.click(thoughtA)
-  expect(thoughtA).toHaveStyle({ color: 'pink' })
+  expect(thoughtA).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })

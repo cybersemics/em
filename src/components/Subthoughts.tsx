@@ -32,6 +32,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import { store } from '../store'
@@ -229,7 +230,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
 
   /*
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
   */
 
   // merge ancestor env into self env
@@ -240,12 +241,12 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
 
   /*
-    Note: The following properties is applied to the immediate childrens with given class.
+    Note: The following properties are applied to the immediate children with given class.
 
-    distance-from-cursor-0 fully visible
-    distance-from-cursor-1 dimmed
-    distance-from-cursor-2 shifted left and hidden
-    distance-from-cursor-3 shiifted left and hidden
+    autofocus-show fully visible
+    autofocus-dim dimmed
+    autofocus-hide shifted left and hidden
+    autofocus-hide-parent shiifted left and hidden
 
     Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
   */
@@ -334,7 +335,8 @@ const NoChildren = ({
 }) => {
   const store = useStore<State>()
 
-  const { value } = getThoughtById(store.getState(), head(simplePath))
+  const value = useSelector((state: State) => getThoughtById(store.getState(), head(simplePath))?.value)
+  const colors = useSelector(themeColors)
 
   return (
     <div className='children-subheading text-note text-small'>
@@ -344,7 +346,7 @@ const NoChildren = ({
       <span>
         {isTouch ? (
           <span className='gesture-container'>
-            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color='darkgray' />
+            Swipe <GestureDiagram path={subthoughtShortcut.gesture as GesturePath} size={30} color={colors.gray66} />
           </span>
         ) : (
           <span>Type {formatKeyboardShortcut(subthoughtShortcut.keyboard!)}</span>
@@ -363,7 +365,7 @@ const NoChildren = ({
         //       <GestureDiagram
         //         path={toggleContextViewShortcut.gesture as GesturePath}
         //         size={30}
-        //         color='darkgray' /* mtach .children-subheading color */
+        //         color={colors.gray66} /* mtach .children-subheading color */
         //       />
         //     </span>
         //   ) : (
@@ -526,10 +528,10 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId))
   const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId))
   const styleContainerChildren = useSelector((state: State) =>
-    getStyle(state, childrenAttributeId, { container: true }),
+    getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
   )
   const styleContainerGrandchildren = useSelector((state: State) =>
-    getStyle(state, grandchildrenAttributeId, { container: true }),
+    getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
   )
 
   const proposedPageSize = PAGINATION_SIZE * page
@@ -540,11 +542,11 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   const isPaginated = show && filteredChildren.length > proposedPageSize
 
   /** Calculates the autofocus state to hide or dim thoughts.
-   * Note: The following properties is applied to the immediate childrens with given class.
-   * - distance-from-cursor-0 fully visible
-   * - distance-from-cursor-1 dimmed
-   * - distance-from-cursor-2 shifted left and hidden
-   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: The following properties are applied to the immediate children with given class.
+   * - autofocus-show fully visible
+   * - autofocus-dim dimmed
+   * - autofocus-hide shifted left and hidden
+   * - autofocus-hide-parent shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
   const actualDistance = once(() => {
@@ -560,7 +562,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
       - first visible thought should be dimmed if it is not direct parent of the cursor.
       - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
 
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
     const isCursorLeaf = cursor && isLeaf(state, head(cursor))
@@ -620,6 +622,12 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
   }
 
+  /** Returns the base autofocus for all subthoughts based on the actual distance from the cursor. This will be overwridden for specific children, e.g. if the cursor is on a child it will be set to 'show'. */
+  const autofocus = (): 'show' | 'dim' | 'hide' | 'hide-parent' => {
+    const distance = actualDistance()
+    return distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
+  }
+
   return (
     <>
       {contextBinding && showContexts ? (
@@ -643,7 +651,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           className={classNames({
             children: true,
             'context-chain': showContexts,
-            [`distance-from-cursor-${actualDistance()}`]: true,
+            [`autofocus-${autofocus()}`]: true,
             zoomCursor,
             zoomParent,
           })}
@@ -771,7 +779,9 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             // TODO: ROOT gets appended when isContextPending
             // What should appendedChildPath be?
             const appendedChildPath = appendChildPath(state, childPath, path)
-            const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
+            const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
+            const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
+            const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
 
             /*
               simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -786,6 +796,13 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
+                autofocus={
+                  isChildCursor || (isParentCursor && distance === 1)
+                    ? 'show'
+                    : isParentCursor || (isGrandparentCursor && distance === 2)
+                    ? 'dim'
+                    : autofocus()
+                }
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren}

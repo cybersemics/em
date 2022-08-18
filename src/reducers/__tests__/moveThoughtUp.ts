@@ -66,8 +66,7 @@ it('move to prev uncle in sorted list', () => {
       value: 'b',
       at: ['a'],
     }),
-    (state: State) =>
-      toggleAttribute(state, { path: contextToPath(state, ['b']), key: '=sort', value: 'Alphabetical' }),
+    (state: State) => toggleAttribute(state, { path: contextToPath(state, ['b']), values: ['=sort', 'Alphabetical'] }),
     newSubthought('b1'),
     moveThoughtUp,
   ]
@@ -87,8 +86,7 @@ it('move to prev uncle in sorted list', () => {
 it('prevent move in sorted list when there is no previous uncle', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      toggleAttribute(state, { path: contextToPath(state, ['a']), key: '=sort', value: 'Alphabetical' }),
+    (state: State) => toggleAttribute(state, { path: contextToPath(state, ['a']), values: ['=sort', 'Alphabetical'] }),
     newSubthought('a1'),
     newThought('a2'),
     moveThoughtUp,

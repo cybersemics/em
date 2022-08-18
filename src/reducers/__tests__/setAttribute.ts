@@ -1,7 +1,9 @@
+import { importText } from '..'
 import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import { getLexeme } from '../../selectors/getLexeme'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -15,8 +17,7 @@ it('set', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
   ]
 
@@ -29,20 +30,18 @@ it('set', () => {
       - hello`)
 })
 
-it('different value should override existing value', () => {
+it('last value should override existing value', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'goodbye',
+        values: ['=test', 'goodbye'],
       }),
   ]
 
@@ -63,14 +62,12 @@ it('add attribute if key has already been created', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: 'goodbye',
+        values: ['=test', 'goodbye'],
       }),
   ]
 
@@ -83,13 +80,30 @@ it('add attribute if key has already been created', () => {
       - goodbye`)
 })
 
+it('noop if no values are given', () => {
+  const stateStart = newThought(initialState(), 'a')
+
+  const steps = [
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        values: [],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(stateStart)
+
+  expect(stateNew).toEqual(stateStart)
+})
+
 it('omit value to set only attribute', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
+        value: '=test',
       }),
   ]
 
@@ -107,8 +121,7 @@ it('set empty attribute', () => {
     (state: State) =>
       setAttribute(state, {
         path: contextToPath(state, ['a'])!,
-        key: '=test',
-        value: '',
+        values: ['=test', ''],
       }),
   ]
 
@@ -119,4 +132,122 @@ it('set empty attribute', () => {
   - a
     - =test
       -${' '}`)
+})
+
+it('set multiple levels', () => {
+  const steps = [
+    newThought('a'),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - y
+          - z`)
+})
+
+it('preserve unrelated siblings', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - m
+    `,
+    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - y
+          - z
+    - m`)
+})
+
+it('preserve existing descendants', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - w
+          - x
+    `,
+    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - y
+          - z`)
+
+  const lexemeW = getLexeme(stateNew, 'w')!
+  expect(lexemeW.contexts).toHaveLength(1)
+
+  const lexemeX = getLexeme(stateNew, 'x')!
+  expect(lexemeX.contexts).toHaveLength(1)
+})
+
+it('preserve unrelated descendants', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - m
+        - w
+          - n
+          - x
+            - o
+    `,
+    }),
+    (state: State) =>
+      setAttribute(state, {
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+    - w
+      - n
+      - x
+        - y
+          - z
+        - o`)
 })

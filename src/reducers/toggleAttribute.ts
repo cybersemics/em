@@ -1,59 +1,61 @@
+import { deleteThought } from '.'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import createThought from '../reducers/createThought'
-import deleteThought from '../reducers/deleteThought'
 import setFirstSubthought from '../reducers/setFirstSubthought'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
+import { getAllChildren, hasChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
+import getThoughtById from '../selectors/getThoughtById'
+import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
-import reducerFlow from '../util/reducerFlow'
 
-/** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, just toggles the attribute itself. */
-const toggleAttribute = (state: State, { path, key, value }: { path: Path | null; key: string; value?: string }) => {
-  if (!path) return state
+/** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, toggles the attribute itself. */
+const toggleAttribute = (
+  state: State,
+  { path, value, values }: { path: Path | null; value?: string; values?: string[] },
+): State => {
+  // normalize values if user passed single value
+  const _values = values || [value!]
+  if (!path || (!value && (!values || values.length === 0))) return state
 
-  const isNullaryAttribute = value === undefined
+  const thoughtId = head(path)
+  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
+  const idNew = createId()
 
-  const exists = !isNullaryAttribute
-    ? path && attributeEquals(state, head(path), key, value!)
-    : !path || findDescendant(state, head(path), key)
+  // base case: delete or overwrite the first subthought with the last value in the sequence
+  if (_values.length === 1) {
+    const firstThought = getThoughtById(state, getAllChildren(state, thoughtId)[0])
+    return firstThought?.value === _values[0]
+      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id })
+      : setFirstSubthought(state, {
+          path: path,
+          value: _values[0],
+        })
+  }
 
-  const idAttributeOld = path && findDescendant(state, head(path), key)
-  const idAttribute = idAttributeOld || createId()
-  const attributePath = [...path!, idAttribute] as unknown as Path
-
-  return exists
-    ? // delete existing attribute
-      deleteThought(state, {
-        pathParent: path!,
-        thoughtId: head(attributePath),
+  // otherwise, create the first subthought if it does not exist and recurse
+  const stateWithFirstSubthought = firstSubthoughtId
+    ? state
+    : createThought(state, {
+        id: idNew,
+        path,
+        value: _values[0],
+        rank: getPrevRank(state, thoughtId),
       })
-    : // create new attribute
-      reducerFlow([
-        // create attribute if it does not exist
-        !idAttributeOld
-          ? state =>
-              createThought(state, {
-                id: idAttribute,
-                path: path!, // ???
-                value: key,
-                rank: path ? getPrevRank(state, head(path)) : 0,
-              })
-          : null,
 
-        // set attribute value
-        !isNullaryAttribute
-          ? (state: State) => {
-              return setFirstSubthought(state, {
-                path: attributePath,
-                value: value!,
-              })
-            }
-          : null,
-      ])(state)
+  // recursion
+  const stateNew = toggleAttribute(stateWithFirstSubthought, {
+    path: appendToPath(path, firstSubthoughtId || idNew),
+    values: _values.slice(1),
+  })
+
+  // after recursion, delete empty descendants
+  return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    : stateNew
 }
 
 export default _.curryRight(toggleAttribute)

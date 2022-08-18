@@ -1,3 +1,4 @@
+import { importText } from '..'
 import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
@@ -15,8 +16,7 @@ it('toggle on', () => {
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
   ]
 
@@ -31,18 +31,17 @@ it('toggle on', () => {
 
 it('toggle off', () => {
   const steps = [
-    newThought('a'),
+    importText({
+      text: `
+        - a
+          - =test
+            - hello
+      `,
+    }),
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'hello',
-      }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
   ]
 
@@ -55,18 +54,17 @@ it('toggle off', () => {
 
 it('different value should override existing value', () => {
   const steps = [
-    newThought('a'),
+    importText({
+      text: `
+        - a
+          - =test
+            - hello
+      `,
+    }),
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'hello',
-      }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'goodbye',
+        values: ['=test', 'goodbye'],
       }),
   ]
 
@@ -87,8 +85,7 @@ it('add attribute if key has already been created', () => {
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
-        value: 'hello',
+        values: ['=test', 'hello'],
       }),
   ]
 
@@ -107,7 +104,7 @@ it('toggle nullary attribute on', () => {
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
+        values: ['=test'],
       }),
   ]
 
@@ -125,12 +122,12 @@ it('toggle nullary attribute off', () => {
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
+        values: ['=test'],
       }),
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),
-        key: '=test',
+        values: ['=test'],
       }),
   ]
 
@@ -139,4 +136,112 @@ it('toggle nullary attribute off', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
+})
+
+it('toggle deep attribute on', () => {
+  const steps = [
+    newThought('a'),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - y
+          - z`)
+})
+
+it('preserve other descendants when toggling deep attribute on', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - w
+          - x
+            - m
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - y
+          - z
+        - m`)
+})
+
+it('toggle deep attribute off', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - w
+          - x
+            - y
+              - z
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a`)
+})
+
+it('preserve other descendants when toggling deep attribute off', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - w
+          - x
+            - m
+            - y
+              - z
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      }),
+  ]
+
+  // run steps through reducer flow and export as plaintext for readable test
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - w
+      - x
+        - m`)
 })

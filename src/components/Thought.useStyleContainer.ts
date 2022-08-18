@@ -41,7 +41,9 @@ const useStyleContainer = ({
               // do not apply to =let itself i.e. =let/x/=style should not apply to =let
               child.id !== env![child.value]),
         )
-        .map(child => (child.value in { ...env } ? getStyle(state, env![child.value], { container: true }) : {}))
+        .map(child =>
+          child.value in { ...env } ? getStyle(state, env![child.value], { attributeName: '=styleContainer' }) : {},
+        )
         .reduce<React.CSSProperties>(
           (accum, style) => ({
             ...accum,
@@ -51,7 +53,7 @@ const useStyleContainer = ({
           EMPTY_OBJECT,
         )
 
-      const styleContainerSelf = getStyle(state, thought.id, { container: true })
+      const styleContainerSelf = getStyle(state, thought.id, { attributeName: '=styleContainer' })
       return safeRefMerge(styleContainerProp, styleContainerEnv, styleContainerSelf)
     }
 
@@ -62,7 +64,7 @@ const useStyleContainer = ({
       if (!isEditingPath) return null
 
       const zoomId = findDescendant(state, thought.id, ['=focus', 'Zoom'])
-      return getStyle(state, zoomId, { container: true })
+      return getStyle(state, zoomId, { attributeName: '=styleContainer' })
     }
 
     return safeRefMerge(styleContainerNew(), styleContainerZoom()) || undefined

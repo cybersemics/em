@@ -217,6 +217,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS = [
   'pinSubthoughts',
   'toggleSort',
   'toggleTableView',
+  'textColor',
   'toggleContextView',
   'note',
   'subcategorizeOne',

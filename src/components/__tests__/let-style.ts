@@ -15,7 +15,7 @@ it('define =style in a =let expressions and apply it to a child of the parent co
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
         - Razzle
           - =dazzle
         - Nuzzle
@@ -23,11 +23,11 @@ it('define =style in a =let expressions and apply it to a child of the parent co
     }),
   ])
 
-  const thoughtRazzle = await findThoughtByText('Razzle')
-  expect(thoughtRazzle).toHaveStyle({ color: 'pink' })
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 0.5)' })
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
-  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtNuzzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('=let/x/=style is not applied to siblings and sibling descendants', async () => {
@@ -38,7 +38,7 @@ it('=let/x/=style is not applied to siblings and sibling descendants', async () 
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
         - Razzle
           - =dazzle
           - Roo
@@ -46,11 +46,11 @@ it('=let/x/=style is not applied to siblings and sibling descendants', async () 
     }),
   ])
 
-  const thoughtRazzle = await findThoughtByText('Razzle')
-  expect(thoughtRazzle).toHaveStyle({ color: 'pink' })
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   const thoughtNuzzle = await findThoughtByText('Roo')
-  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtNuzzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('=let/=test/=style is not applied to =test within the =let definition', async () => {
@@ -61,13 +61,13 @@ it('=let/=test/=style is not applied to =test within the =let definition', async
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
       `,
     }),
   ])
 
   const thoughtDazzle = await findThoughtByText('=dazzle')
-  expect(thoughtDazzle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtDazzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('=let/x/=style is not applied to =let itself', async () => {
@@ -78,13 +78,13 @@ it('=let/x/=style is not applied to =let itself', async () => {
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
       `,
     }),
   ])
 
   const thoughtLet = await findThoughtByText('=let')
-  expect(thoughtLet).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtLet).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('=let/x/=style is available to all descendants', async () => {
@@ -95,7 +95,7 @@ it('=let/x/=style is available to all descendants', async () => {
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
         - Shoozle
           - Razzle
             - =dazzle
@@ -106,13 +106,13 @@ it('=let/x/=style is available to all descendants', async () => {
   ])
 
   const thoughtShoozle = await findThoughtByText('Shoozle')
-  expect(thoughtShoozle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtShoozle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
-  const thoughtRazzle = await findThoughtByText('Razzle')
-  expect(thoughtRazzle).toHaveStyle({ color: 'pink' })
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
-  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtNuzzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('multiple definitions in same =let', async () => {
@@ -123,7 +123,7 @@ it('multiple definitions in same =let', async () => {
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
           - =fizzle
             - =style
               - fontStyle
@@ -136,9 +136,13 @@ it('multiple definitions in same =let', async () => {
     setCursorFirstMatchActionCreator(['Razzle']),
   ])
 
+  const thoughtRazzleContainer = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzleContainer).toHaveStyle({
+    color: 'rgba(255, 192, 203, 1)',
+  })
+
   const thoughtRazzle = await findThoughtByText('Razzle')
   expect(thoughtRazzle).toHaveStyle({
-    color: 'pink',
     fontStyle: 'italic',
   })
 })
@@ -151,13 +155,13 @@ it('deep let > shallow let', async () => {
           - =dazzle
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
         - Shoozle
           - =let
             - =dazzle
               - =style
                 - color
-                  - champagne
+                  - rgba(100, 100, 100, 1)
           - Razzle
             - =dazzle
       `,
@@ -165,6 +169,6 @@ it('deep let > shallow let', async () => {
     setCursorFirstMatchActionCreator(['Shoozle']),
   ])
 
-  const thoughtRazzle = await findThoughtByText('Razzle')
-  expect(thoughtRazzle).toHaveStyle({ color: 'champagne' })
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(100, 100, 100, 1)' })
 })

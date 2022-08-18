@@ -44,8 +44,7 @@ const toggleTableViewShortcut: Shortcut = {
     dispatch(
       toggleAttribute({
         path: simplePath,
-        key: '=view',
-        value: 'Table',
+        values: ['=view', 'Table'],
       }),
     )
   },

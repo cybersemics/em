@@ -68,8 +68,7 @@ const pinSubthoughtsShortcut: Shortcut = {
         ? [
             toggleAttribute({
               path: simplePath,
-              key: '=children',
-              value: '=pin',
+              values: ['=children', '=pin'],
             }),
           ]
         : []),
@@ -79,8 +78,7 @@ const pinSubthoughtsShortcut: Shortcut = {
         dispatch(
           setAttribute({
             path: appendToPath(simplePath, childrenAttributeIdNew!),
-            key: '=pin',
-            value: 'true',
+            values: ['=pin', 'true'],
           }),
         )
       },

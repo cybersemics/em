@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -22,10 +22,13 @@ import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
+import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import { store } from '../store'
+import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
@@ -39,6 +42,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
+import { safeRefMerge } from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import { ContextBreadcrumbs } from './ContextBreadcrumbs'
@@ -57,6 +61,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
+  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
   childrenForced?: ThoughtId[]
   contextBinding?: Path
   cursor?: Path | null
@@ -218,6 +223,7 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
  */
 const ThoughtContainer = ({
   allowSingleContext,
+  autofocus,
   childrenForced,
   contextBinding,
   cursor,
@@ -285,7 +291,16 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
+  const colors = useSelector(themeColors)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+  const styleAnnotation = useSelector((state: State) =>
+    safeRefMerge(
+      // apply normal style color to the annotation style
+      style?.color ? { color: style.color } : null,
+      // apply annotation style (mainly used for background color)
+      getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
+    ),
+  )
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
@@ -373,6 +388,36 @@ const ThoughtContainer = ({
     }
   }, [])
 
+  // colors that are applied to the container
+  const styleColors = useMemo(
+    () => ({
+      // add transparency to the foreground color based on autofocus
+      ...(style?.backgroundColor
+        ? {
+            backgroundColor: alpha(
+              style.backgroundColor as `rgb${string}`,
+              autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+            ),
+          }
+        : null),
+      // add transparency to the foreground color based on autofocus
+      color: alpha(
+        (style?.color as `rgb${string}`) || colors.fg,
+        autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+      ),
+    }),
+    [autofocus, colors, style],
+  )
+
+  // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
+  const styleWithoutColors = useMemo((): React.CSSProperties => {
+    return {
+      ...(style ? _.omit(style, ['color', 'background-color']) : null),
+      // highlight the parent of the current drop target to make it easier to drop in the intended place
+      ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
+    }
+  }, [isChildHovering, style])
+
   if (!thought) return null
 
   const value = thought.value
@@ -389,7 +434,10 @@ const ThoughtContainer = ({
       <li
         {...longPress.props}
         aria-label='thought-container'
-        style={styleContainer}
+        style={{
+          ...styleColors,
+          ...styleContainer,
+        }}
         className={classNames({
           child: true,
           'child-divider': isDivider(value),
@@ -464,16 +512,14 @@ const ThoughtContainer = ({
           ></span>
 
           <ThoughtAnnotation
+            autofocus={autofocus}
             env={env}
             minContexts={allowSingleContext ? 0 : 2}
             path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={{
-              ...style,
-              // highlight the parent of the current drop target to make it easier to drop in the intended place
-              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
-            }}
+            style={styleWithoutColors}
+            styleAnnotation={styleAnnotation || undefined}
           />
 
           <StaticThought
@@ -488,11 +534,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
-            style={{
-              ...style,
-              // highlight the parent of the current drop target to make it easier to drop in the intended place
-              ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
-            }}
+            style={styleWithoutColors}
             view={view}
           />
 
