@@ -1546,29 +1546,6 @@ h1 .num-contexts {
   pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
 }
 
-/* child */
-.autofocus-show > .child {
-  color: rgba(0, 0, 0, 1);
-}
-.autofocus-dim > .child {
-  color: rgba(0, 0, 0, 0.5);
-}
-.autofocus-dim > .child.editing {
-  color: rgba(0, 0, 0, 1);
-}
-.autofocus-dim > .child.cursor-parent {
-  color: rgba(0, 0, 0, 1);
-}
-.autofocus-hide > .child:not(.editing) {
-  color: rgba(0, 0, 0, 0);
-}
-.autofocus-hide > .child:not(.editing).cursor-parent {
-  color: rgba(0, 0, 0, 0.5);
-}
-.autofocus-hide-parent > .child {
-  color: rgba(0, 0, 0, 0);
-}
-
 /* sibling of cursor in =focus Zoom */
 .autofocus-hide.zoomCursor > .child:not(.editing).cursor-parent > .thought-container {
   color: rgba(0, 0, 0, 0);
@@ -1587,29 +1564,6 @@ h1 .num-contexts {
 /* hide nieces when cursor is in column 1 */
 .autofocus-dim.zoomCursor > .child:not(.editing) > .thought-container {
   color: rgba(0, 0, 0, 0);
-}
-
-/* depth-bar */
-.autofocus-show > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 1);
-}
-.autofocus-dim > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.autofocus-dim > .child.editing > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 1);
-}
-.autofocus-dim > .child.cursor-parent > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 1);
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 0);
-}
-.autofocus-hide > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.autofocus-hide-parent > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(0, 0, 0, 0);
 }
 
 /* note */
@@ -1743,52 +1697,6 @@ h1 .num-contexts {
 }
 .autofocus-hide-parent > .child > .thought-container > .thought .home {
   opacity: 0;
-}
-
-/* dark child */
-.dark .autofocus-show > .child {
-  color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-dim > .child {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-dim > .child.editing {
-  color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-dim > .child.cursor-parent {
-  color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-hide > .child:not(.editing) {
-  color: rgba(255, 255, 255, 0);
-}
-.dark .autofocus-hide > .child:not(.editing).cursor-parent {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-hide-parent > .child {
-  color: rgba(255, 255, 255, 0);
-}
-
-/* dark depth-bar */
-.dark .autofocus-show > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-dim > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-dim > .child.editing > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-dim > .child.cursor-parent > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 1);
-}
-.dark .autofocus-hide > .child:not(.editing) > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 0);
-}
-.dark .autofocus-hide > .child:not(.editing).cursor-parent > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-hide-parent > .child > .thought-container > .thought .depth-bar {
-  background-color: rgba(255, 255, 255, 0);
 }
 
 /* dark note */

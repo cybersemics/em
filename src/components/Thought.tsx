@@ -26,7 +26,9 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import { store } from '../store'
+import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
@@ -58,6 +60,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
+  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
   childrenForced?: ThoughtId[]
   contextBinding?: Path
   cursor?: Path | null
@@ -219,6 +222,7 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
  */
 const ThoughtContainer = ({
   allowSingleContext,
+  autofocus,
   childrenForced,
   contextBinding,
   cursor,
@@ -286,6 +290,7 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
+  const colors = useSelector(themeColors)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
   const styleAnnotation = useSelector((state: State) =>
     getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
@@ -388,12 +393,18 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
+  // add transparency to the foreground color based on autofocus
+  const color = alpha(colors.fg, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
+
   return dropTarget(
     dragSource(
       <li
         {...longPress.props}
         aria-label='thought-container'
-        style={styleContainer}
+        style={{
+          color,
+          ...styleContainer,
+        }}
         className={classNames({
           child: true,
           'child-divider': isDivider(value),

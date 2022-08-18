@@ -622,8 +622,8 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
   }
 
-  /** Returns the autofocus class name based on the actual distance from the cursor. */
-  const autofocus = () => {
+  /** Returns the base autofocus for all subthoughts based on the actual distance from the cursor. This will be overwridden for specific children, e.g. if the cursor is on a child it will be set to 'show'. */
+  const autofocus = (): 'show' | 'dim' | 'hide' | 'hide-parent' => {
     const distance = actualDistance()
     return distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
   }
@@ -779,7 +779,9 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             // TODO: ROOT gets appended when isContextPending
             // What should appendedChildPath be?
             const appendedChildPath = appendChildPath(state, childPath, path)
-            const isChildCursor = cursor && equalPath(appendedChildPath, state.cursor)
+            const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
+            const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
+            const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
 
             /*
               simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -794,6 +796,13 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             return child ? (
               <Thought
                 allowSingleContext={allowSingleContextParent}
+                autofocus={
+                  isChildCursor || (isParentCursor && distance === 1)
+                    ? 'show'
+                    : isParentCursor || (isGrandparentCursor && distance === 2)
+                    ? 'dim'
+                    : autofocus()
+                }
                 depth={depth + 1}
                 env={env}
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
