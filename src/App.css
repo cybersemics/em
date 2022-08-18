@@ -2298,10 +2298,6 @@ code,
   z-index: var(--z-index-stack); /* Above "Add thought" */
 }
 
-.children > .child.drop-end {
-  margin-top: -0.3em;
-}
-
 /* for some reason the drop-end in the outermost ul is too wide */
 .child.drop-end.last {
   width: calc(100% - 161px);
@@ -2313,20 +2309,28 @@ code,
 }
 
 .drop-end .drop-hover {
-  /*background-color: purple;*/
   margin-left: -1.25em;
   width: calc(100% - 41px);
 }
 
+/* To enable drag simulation, set simulateDropHover to true in globals.ts. */
+.debug-simulate-drag .drop-end .drop-hover {
+  background-color: violet;
+}
+.debug-simulate-drag .empty-children .child.child > .drop-hover {
+  background-color: tomato;
+}
+.debug-simulate-drag .empty-children .drop-end {
+  background-color: pink;
+}
+
 /* bump specificity */
 .empty-children .child.child > .drop-hover {
-  /*background-color: tomato;*/
   margin-top: -0.6em;
   width: calc(100% - 158px);
 }
 
 .empty-children .drop-end {
-  /*background-color: red;*/
   z-index: var(--z-index-drop-end);
   margin-left: 30px;
   padding-bottom: 1.1em;

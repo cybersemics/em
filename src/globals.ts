@@ -23,7 +23,7 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// show all SubthoughtsDrop targets for debugging
+// show all ThoughtDrop and SubthoughtsDrop targets for debugging
 const simulateDrag = false
 
 // show all ThoughtDrop targets for debugging

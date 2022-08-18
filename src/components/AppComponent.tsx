@@ -8,6 +8,7 @@ import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isTouch } from '../browser'
 import { AlertType, BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import { inputHandlers } from '../shortcuts'
@@ -145,6 +146,9 @@ const AppComponent: FC<Props> = props => {
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
+    if (globals.simulateDropHover || globals.simulateDropHover) {
+      document.body.classList.add('debug-simulate-drag')
+    }
   }, [dark])
 
   useEffect(() => {
