@@ -57,11 +57,12 @@ const ColorSwatch: FC<{
           textColor({
             ...(selected
               ? {
-                  color: 'white',
+                  color: 'default',
                 }
+              : color
+              ? { color: label }
               : {
-                  backgroundColor,
-                  color,
+                  backgroundColor: label,
                 }),
             shape,
           }),

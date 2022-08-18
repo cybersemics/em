@@ -16,20 +16,23 @@ const textColor = (
 
   return reducerFlow([
     // set bullet to text color
-    color && color !== colors.fg
+    color && color !== 'default'
       ? setAttribute({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
       : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
 
     // set text color
     // clear color if white
-    backgroundColor || color !== colors.fg
+    backgroundColor || color !== 'default'
       ? setAttribute({ path, values: ['=style', 'color', color || 'rgba(0, 0, 0, 1)'] })
       : deleteAttribute({ path, values: ['=style', 'color'] }),
 
     // set background color
     // clear background color if default or unset
     backgroundColor && backgroundColor !== colors.bg
-      ? setAttribute({ path, values: ['=styleAnnotation', 'backgroundColor', backgroundColor] })
+      ? setAttribute({
+          path,
+          values: ['=styleAnnotation', 'backgroundColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor],
+        })
       : deleteAttribute({ path, values: ['=styleAnnotation', 'backgroundColor'] }),
   ])(state)
 }

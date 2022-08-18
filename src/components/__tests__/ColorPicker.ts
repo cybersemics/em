@@ -3,12 +3,8 @@ import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import themeColors from '../../selectors/themeColors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import initialState from '../../util/initialState'
-
-const colors = themeColors(initialState())
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -28,10 +24,10 @@ it('Set the text color using the ColorPicker', async () => {
     - =bullet
       - =style
         - color
-          - ${colors.blue}
+          - blue
     - =style
       - color
-        - ${colors.blue}`)
+        - blue`)
 })
 
 it('Set the text color from another color using the ColorPicker', async () => {
@@ -41,7 +37,7 @@ it('Set the text color from another color using the ColorPicker', async () => {
         - a
           - =style
             - color
-              - ${colors.blue}
+              - blue
       `,
     }),
   ])
@@ -57,11 +53,11 @@ it('Set the text color from another color using the ColorPicker', async () => {
   - a
     - =style
       - color
-        - ${colors.red}
+        - red
     - =bullet
       - =style
         - color
-          - ${colors.red}`)
+          - red`)
 })
 
 it('Set the background color using the ColorPicker', async () => {
@@ -81,7 +77,27 @@ it('Set the background color using the ColorPicker', async () => {
         - rgba(0, 0, 0, 1)
     - =styleAnnotation
       - backgroundColor
-        - ${colors.blue}`)
+        - blue`)
+})
+
+it('Set the background color to the theme inverse color', async () => {
+  store.dispatch([newThought({ value: 'a' })])
+
+  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
+  userEvent.click(textColorButton)
+
+  const textBlue = document.querySelector('[aria-label="background color swatches"] [aria-label="inverse"]')!
+  userEvent.click(textBlue)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - =style
+      - color
+        - rgba(0, 0, 0, 1)
+    - =styleAnnotation
+      - backgroundColor
+        - rgba(255, 255, 255, 1)`)
 })
 
 it('Clear the text color when selecting white', async () => {
@@ -91,7 +107,7 @@ it('Clear the text color when selecting white', async () => {
         - a
           - =style
             - color
-              - ${colors.blue}
+              - blue
       `,
     }),
   ])
@@ -117,7 +133,7 @@ it('Clear background color when selecting text color', async () => {
               - rgba(0, 0, 0, 1)
           - =styleAnnotation
             - backgroundColor
-              - ${colors.blue}
+              - blue
       `,
     }),
   ])
@@ -133,11 +149,11 @@ it('Clear background color when selecting text color', async () => {
   - a
     - =style
       - color
-        - ${colors.red}
+        - red
     - =bullet
       - =style
         - color
-          - ${colors.red}`)
+          - red`)
 })
 
 it('Change color to black when setting background color', async () => {
@@ -147,7 +163,7 @@ it('Change color to black when setting background color', async () => {
         - a
           - =style
             - color
-              - ${colors.blue}
+              - blue
       `,
     }),
   ])
@@ -166,7 +182,7 @@ it('Change color to black when setting background color', async () => {
         - rgba(0, 0, 0, 1)
     - =styleAnnotation
       - backgroundColor
-        - ${colors.red}`)
+        - red`)
 })
 
 it('Preserve other bullet attributes and styles when clearing text color', async () => {
@@ -178,12 +194,12 @@ it('Preserve other bullet attributes and styles when clearing text color', async
             - None
             - =style
               - color
-                - ${colors.blue}
+                - blue
               - opacity
                 - 0.5
           - =style
             - color
-              - ${colors.blue}
+              - blue
       `,
     }),
   ])
