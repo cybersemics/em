@@ -495,11 +495,11 @@ export const SubthoughtsComponent = ({
   // expand root, editing path, and contexts previously marked for expansion in setCursor
 
   /** Calculates the autofocus state to hide or dim thoughts.
-   * Note: The following properties is applied to the immediate childrens with given class.
-   * - distance-from-cursor-0 fully visible
-   * - distance-from-cursor-1 dimmed
-   * - distance-from-cursor-2 shifted left and hidden
-   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: The following properties are applied to the immediate children with given class.
+   * - autofocus-show fully visible
+   * - autofocus-dim dimmed
+   * - autofocus-hide shifted left and hidden
+   * - autofocus-hide-parent shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
   const actualDistance = once(() => {
@@ -515,7 +515,7 @@ export const SubthoughtsComponent = ({
       - first visible thought should be dimmed if it is not direct parent of the cursor.
       - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
 
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
     const isCursorLeaf = cursor && isLeaf(state, head(cursor))

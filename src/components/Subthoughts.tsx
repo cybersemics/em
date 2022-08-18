@@ -230,7 +230,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
     cursor && isDescendantOfFirstVisiblePath && !(isCursorParent && isCursorLeaf) && !isCursor && !isDescendantOfCursor
 
   /*
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
   */
 
   // merge ancestor env into self env
@@ -241,12 +241,12 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
 
   /*
-    Note: The following properties is applied to the immediate childrens with given class.
+    Note: The following properties are applied to the immediate children with given class.
 
-    distance-from-cursor-0 fully visible
-    distance-from-cursor-1 dimmed
-    distance-from-cursor-2 shifted left and hidden
-    distance-from-cursor-3 shiifted left and hidden
+    autofocus-show fully visible
+    autofocus-dim dimmed
+    autofocus-hide shifted left and hidden
+    autofocus-hide-parent shiifted left and hidden
 
     Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
   */
@@ -542,11 +542,11 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   const isPaginated = show && filteredChildren.length > proposedPageSize
 
   /** Calculates the autofocus state to hide or dim thoughts.
-   * Note: The following properties is applied to the immediate childrens with given class.
-   * - distance-from-cursor-0 fully visible
-   * - distance-from-cursor-1 dimmed
-   * - distance-from-cursor-2 shifted left and hidden
-   * - distance-from-cursor-3 shiifted left and hidden
+   * Note: The following properties are applied to the immediate children with given class.
+   * - autofocus-show fully visible
+   * - autofocus-dim dimmed
+   * - autofocus-hide shifted left and hidden
+   * - autofocus-hide-parent shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
   const actualDistance = once(() => {
@@ -562,7 +562,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
       - first visible thought should be dimmed if it is not direct parent of the cursor.
       - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
 
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because distance-from-cursor implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
+    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
     const isCursorLeaf = cursor && isLeaf(state, head(cursor))
@@ -622,6 +622,12 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return isMultiColumnTable ? ([{ headerFirstColumn: true }, ...headerChildren] as typeof headerChildren) : []
   }
 
+  /** Returns the autofocus class name based on the actual distance from the cursor. */
+  const autofocus = () => {
+    const distance = actualDistance()
+    return distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
+  }
+
   return (
     <>
       {contextBinding && showContexts ? (
@@ -645,7 +651,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           className={classNames({
             children: true,
             'context-chain': showContexts,
-            [`distance-from-cursor-${actualDistance()}`]: true,
+            [`autofocus-${autofocus()}`]: true,
             zoomCursor,
             zoomParent,
           })}

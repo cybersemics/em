@@ -43,12 +43,12 @@ beforeEach(async () => {
 afterEach(cleanupTestApp)
 
 /*
-  The following properties is assumed to be applied to the immediate childrens of the context with given class.
+  The following properties are assumed to be applied to the immediate children of the context with given class.
 
-  distance-from-cursor-0 fully visible
-  distance-from-cursor-1 dimmed
-  distance-from-cursor-2 shifted left and hidden
-  distance-from-cursor-3 shiifted left and hidden
+  autofocus-show fully visible
+  autofocus-dim dimmed
+  autofocus-hide shifted left and hidden
+  autofocus-hide-parent shiifted left and hidden
 
   Note: This doesn't fully account for the visibility. There are other factors that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
 */
@@ -77,9 +77,9 @@ it('ancestors should be visible only up to allowed distance from cursor', () => 
   const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
   const childrenA = getChildrenComponent(store.getState(), ['a'])
 
-  expect(childrenC.hasClass('distance-from-cursor-1')).toBe(true)
-  expect(childrenB.hasClass('distance-from-cursor-2')).toBe(true)
-  expect(childrenA.hasClass('distance-from-cursor-3')).toBe(true)
+  expect(childrenC.hasClass('autofocus-dim')).toBe(true)
+  expect(childrenB.hasClass('autofocus-hide')).toBe(true)
+  expect(childrenA.hasClass('autofocus-hide-parent')).toBe(true)
 })
 
 it('descendants of hidden ancestor must be hidden too', () => {
@@ -110,9 +110,9 @@ it('descendants of hidden ancestor must be hidden too', () => {
   const childrenE = getChildrenComponent(store.getState(), ['a', 'e'])
   const childrenF = getChildrenComponent(store.getState(), ['a', 'e', 'f'])
 
-  expect(childrenC.hasClass('distance-from-cursor-1')).toBe(true)
-  expect(childrenE.hasClass('distance-from-cursor-2')).toBe(true)
-  expect(childrenF.hasClass('distance-from-cursor-2')).toBe(true)
+  expect(childrenC.hasClass('autofocus-dim')).toBe(true)
+  expect(childrenE.hasClass('autofocus-hide')).toBe(true)
+  expect(childrenF.hasClass('autofocus-hide')).toBe(true)
 })
 
 it('when the cursor is on a table grandchild leaf (column 2), other grandchildren of the table should be visible and dimmed', () => {
@@ -141,8 +141,8 @@ it('when the cursor is on a table grandchild leaf (column 2), other grandchildre
   const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
   const childrenK = getChildrenComponent(store.getState(), ['a', 'k'])
 
-  expect(childrenB.hasClass('distance-from-cursor-1')).toBe(true)
-  expect(childrenK.hasClass('distance-from-cursor-1')).toBe(true)
+  expect(childrenB.hasClass('autofocus-dim')).toBe(true)
+  expect(childrenK.hasClass('autofocus-dim')).toBe(true)
 })
 
 it('when the cursor is null, all thoughts should be visible and not dimmed', () => {
@@ -169,9 +169,9 @@ it('when the cursor is null, all thoughts should be visible and not dimmed', () 
   const childrenB = getChildrenComponent(store.getState(), ['a', 'b'])
   const childrenA = getChildrenComponent(store.getState(), ['a'])
 
-  expect(childrenC.hasClass('distance-from-cursor-0')).toBe(true)
-  expect(childrenB.hasClass('distance-from-cursor-0')).toBe(true)
-  expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
+  expect(childrenC.hasClass('autofocus-show')).toBe(true)
+  expect(childrenB.hasClass('autofocus-show')).toBe(true)
+  expect(childrenA.hasClass('autofocus-show')).toBe(true)
 })
 
 it('siblings of the leaf cursor should not be dimmed', () => {
@@ -195,7 +195,7 @@ it('siblings of the leaf cursor should not be dimmed', () => {
 
   const childrenA = getChildrenComponent(store.getState(), ['a'])
 
-  expect(childrenA.hasClass('distance-from-cursor-0')).toBe(true)
+  expect(childrenA.hasClass('autofocus-show')).toBe(true)
 })
 
 it('siblings of the non leaf cursor should be dimmed', () => {
@@ -220,5 +220,5 @@ it('siblings of the non leaf cursor should be dimmed', () => {
 
   const childrenA = getChildrenComponent(store.getState(), ['a'])
 
-  expect(childrenA.hasClass('distance-from-cursor-1')).toBe(true)
+  expect(childrenA.hasClass('autofocus-dim')).toBe(true)
 })

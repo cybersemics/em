@@ -105,9 +105,10 @@ const NewThought = ({
 }: NewThoughtProps & NewThoughtDispatchProps) => {
   const depth = unroot(path).length
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
+  const autofocus = distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
 
   return show ? (
-    <ul style={{ marginTop: 0 }} className={'children-new distance-from-cursor-' + distance}>
+    <ul style={{ marginTop: 0 }} className={'children-new autofocus-' + autofocus}>
       <li className='child leaf'>
         {type === 'bullet' ? <span className='bullet' /> : null}
         <div className='thought'>
