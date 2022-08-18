@@ -26,7 +26,7 @@ const HomeLink = ({ color, showModal, size, style }: HomeLinkProps) => {
           dispatch(home())
         }}
       >
-        <HomeIcon color={color} size={size} style={style} />
+        <HomeIcon fill={color} size={size} style={style} />
       </a>
       {showModal === 'home' ? (
         <Modal
