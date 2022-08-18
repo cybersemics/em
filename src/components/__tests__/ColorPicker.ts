@@ -3,8 +3,12 @@ import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import themeColors from '../../selectors/themeColors'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import initialState from '../../util/initialState'
+
+const colors = themeColors(initialState())
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -24,10 +28,10 @@ it('Set the text color using the ColorPicker', async () => {
     - =bullet
       - =style
         - color
-          - dodgerblue
+          - ${colors.blue}
     - =style
       - color
-        - dodgerblue`)
+        - ${colors.blue}`)
 })
 
 it('Set the text color from another color using the ColorPicker', async () => {
@@ -37,7 +41,7 @@ it('Set the text color from another color using the ColorPicker', async () => {
         - a
           - =style
             - color
-              - dodgerblue
+              - ${colors.blue}
       `,
     }),
   ])
@@ -53,11 +57,11 @@ it('Set the text color from another color using the ColorPicker', async () => {
   - a
     - =style
       - color
-        - tomato
+        - ${colors.red}
     - =bullet
       - =style
         - color
-          - tomato`)
+          - ${colors.red}`)
 })
 
 it('Set the background color using the ColorPicker', async () => {
@@ -74,10 +78,10 @@ it('Set the background color using the ColorPicker', async () => {
   - a
     - =style
       - color
-        - black
+        - rgba(0, 0, 0, 1)
     - =styleAnnotation
       - backgroundColor
-        - dodgerblue`)
+        - ${colors.blue}`)
 })
 
 it('Clear the text color when selecting white', async () => {
@@ -87,7 +91,7 @@ it('Clear the text color when selecting white', async () => {
         - a
           - =style
             - color
-              - dodgerblue
+              - ${colors.blue}
       `,
     }),
   ])
@@ -95,7 +99,7 @@ it('Clear the text color when selecting white', async () => {
   const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
   userEvent.click(textColorButton)
 
-  const textWhite = document.querySelector('[aria-label="text color swatches"] [aria-label="white"]')!
+  const textWhite = document.querySelector('[aria-label="text color swatches"] [aria-label="default"]')!
   userEvent.click(textWhite)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -110,10 +114,10 @@ it('Clear background color when selecting text color', async () => {
         - a
           - =style
             - color
-              - black
+              - rgba(0, 0, 0, 1)
           - =styleAnnotation
             - backgroundColor
-              - dodgerblue
+              - ${colors.blue}
       `,
     }),
   ])
@@ -129,11 +133,11 @@ it('Clear background color when selecting text color', async () => {
   - a
     - =style
       - color
-        - tomato
+        - ${colors.red}
     - =bullet
       - =style
         - color
-          - tomato`)
+          - ${colors.red}`)
 })
 
 it('Change color to black when setting background color', async () => {
@@ -143,7 +147,7 @@ it('Change color to black when setting background color', async () => {
         - a
           - =style
             - color
-              - dodgerblue
+              - ${colors.blue}
       `,
     }),
   ])
@@ -159,10 +163,10 @@ it('Change color to black when setting background color', async () => {
   - a
     - =style
       - color
-        - black
+        - rgba(0, 0, 0, 1)
     - =styleAnnotation
       - backgroundColor
-        - tomato`)
+        - ${colors.red}`)
 })
 
 it('Preserve other bullet attributes and styles when clearing text color', async () => {
@@ -174,12 +178,12 @@ it('Preserve other bullet attributes and styles when clearing text color', async
             - None
             - =style
               - color
-                - dodgerblue
+                - ${colors.blue}
               - opacity
                 - 0.5
           - =style
             - color
-              - dodgerblue
+              - ${colors.blue}
       `,
     }),
   ])
@@ -187,7 +191,7 @@ it('Preserve other bullet attributes and styles when clearing text color', async
   const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
   userEvent.click(textColorButton)
 
-  const textBlue = document.querySelector('[aria-label="text color swatches"] [aria-label="white"]')!
+  const textBlue = document.querySelector('[aria-label="text color swatches"] [aria-label="default"]')!
   userEvent.click(textBlue)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')

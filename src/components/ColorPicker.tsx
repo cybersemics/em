@@ -156,28 +156,28 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
 
         {/* Text Color */}
         <div aria-label='text color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch cursorStyle={cursorStyle} color='white' />
-          <ColorSwatch cursorStyle={cursorStyle} color='gray' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#ff8800' label='orange' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#ffd014' label='yellow' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#00d688' label='green' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#00c7e6' label='blue' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#aa80ff' label='purple' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#ee82ee' label='pink' />
-          <ColorSwatch cursorStyle={cursorStyle} color='#ff573d' label='red' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.fg} label='default' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.gray} label='gray' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.orange} label='orange' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.yellow} label='yellow' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.green} label='green' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.blue} label='blue' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.purple} label='purple' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.pink} label='pink' />
+          <ColorSwatch cursorStyle={cursorStyle} color={colors.red} label='red' />
         </div>
 
         {/* Background Color */}
         <div aria-label='background color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='white' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#aaaaaa' label='gray' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#ff8800' label='orange' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#ffd014' label='yellow' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#00d688' label='green' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#00c7e6' label='blue' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#aa80ff' label='purple' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#ee82ee' label='pink' />
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor='#ff573d' label='red' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.bg} label='default' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.gray} label='gray' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.orange} label='orange' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.yellow} label='yellow' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.green} label='green' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.blue} label='blue' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.purple} label='purple' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.pink} label='pink' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.red} label='red' />
         </div>
       </div>
     </div>

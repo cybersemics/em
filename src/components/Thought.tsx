@@ -394,7 +394,10 @@ const ThoughtContainer = ({
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   // add transparency to the foreground color based on autofocus
-  const color = alpha(colors.fg, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
+  const color = alpha(
+    (style?.color as `rgb${string}`) || colors.fg,
+    autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+  )
 
   return dropTarget(
     dragSource(
@@ -485,7 +488,7 @@ const ThoughtContainer = ({
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
             style={{
-              ...style,
+              ..._.omit(style, ['color', 'background-color']),
               // highlight the parent of the current drop target to make it easier to drop in the intended place
               ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
             }}
@@ -505,7 +508,7 @@ const ThoughtContainer = ({
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
             style={{
-              ...style,
+              ..._.omit(style, ['color', 'background-color']),
               // highlight the parent of the current drop target to make it easier to drop in the intended place
               ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
             }}
