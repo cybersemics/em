@@ -399,12 +399,18 @@ const ThoughtContainer = ({
     autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
   )
 
+  // add transparency to the foreground color based on autofocus
+  const backgroundColor = style?.backgroundColor
+    ? alpha(style.backgroundColor as `rgb${string}`, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
+    : null
+
   return dropTarget(
     dragSource(
       <li
         {...longPress.props}
         aria-label='thought-container'
         style={{
+          backgroundColor,
           color,
           ...styleContainer,
         }}
@@ -482,6 +488,7 @@ const ThoughtContainer = ({
           ></span>
 
           <ThoughtAnnotation
+            autofocus={autofocus}
             env={env}
             minContexts={allowSingleContext ? 0 : 2}
             path={path}

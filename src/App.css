@@ -562,6 +562,7 @@ a.text-link {
 
 .thought-annotation .subthought {
   display: inline-block;
+  transition: color 0.4s ease-in-out, background-color 0.4s ease-in-out;
 }
 
 .thought-annotation a {

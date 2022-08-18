@@ -12,7 +12,7 @@ const colors = {
     overlay8: 'rgba(20, 20, 20, 0.8)',
     overlay10: 'rgba(20, 20, 20, 0.9)',
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
-    orange: 'rgba(255, 136, 0)', // #ff8800
+    orange: 'rgba(255, 136, 0, 1)', // #ff8800
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
     green: 'rgba(0, 214, 136, 1)', // #00d688
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6

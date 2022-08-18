@@ -169,7 +169,7 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
 
         {/* Background Color */}
         <div aria-label='background color swatches' style={{ whiteSpace: 'nowrap' }}>
-          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.bg} label='default' />
+          <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.fg} label='inverse' />
           <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.gray} label='gray' />
           <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.orange} label='orange' />
           <ColorSwatch cursorStyle={cursorStyle} backgroundColor={colors.yellow} label='yellow' />

@@ -14,17 +14,17 @@ it('apply =style attribute to a thought', async () => {
         - Razzle
           - =style
             - color
-              - pink
+              - rgba(255, 192, 203, 1)
         - Nuzzle
       `,
     }),
   ])
 
-  const thoughtRazzle = await findThoughtByText('Razzle')
-  expect(thoughtRazzle).toHaveStyle({ color: 'pink' })
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 0.5)' })
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
-  expect(thoughtNuzzle).not.toHaveStyle({ color: 'pink' })
+  expect(thoughtNuzzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('apply =children/=style to all children', async () => {
@@ -37,7 +37,7 @@ it('apply =children/=style to all children', async () => {
               - true
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
           - b
             - c
           - d
@@ -46,14 +46,18 @@ it('apply =children/=style to all children', async () => {
   ])
 
   // do not apply to thought itself
-  expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // apply to children (must be pinned open to find elemetns)
-  expect(await findThoughtByText('b')).toHaveStyle({ color: 'pink' })
-  expect(await findThoughtByText('d')).toHaveStyle({ color: 'pink' })
+  const b = (await findThoughtByText('b'))?.closest('[aria-label="thought-container"]')
+  expect(b).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
+
+  const d = (await findThoughtByText('d'))?.closest('[aria-label="thought-container"]')
+  expect(d).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // do not apply to grandchildren
-  expect(await findThoughtByText('c')).not.toHaveStyle({ color: 'pink' })
+  const c = (await findThoughtByText('c'))?.closest('[aria-label="thought-container"]')
+  expect(c).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('as an exception, do not apply =children/=style to =children itself', async () => {
@@ -64,14 +68,14 @@ it('as an exception, do not apply =children/=style to =children itself', async (
           - =children
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
           - b
       `,
     }),
     toggleHiddenThoughts(),
   ])
 
-  expect(await findThoughtByText('=children')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('=children')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('apply =grandchildren/=style to all grandchildren', async () => {
@@ -82,7 +86,7 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
           - =grandchildren
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
           - b
             - c
               - d
@@ -91,16 +95,17 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
   ])
 
   // do not apply to thought itself
-  expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // do not apply to children
-  expect(await findThoughtByText('b')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('b')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // apply to grandchildren (must be pinned open to find elemetns)
-  expect(await findThoughtByText('c')).toHaveStyle({ color: 'pink' })
+  const c = (await findThoughtByText('c'))?.closest('[aria-label="thought-container"]')
+  expect(c).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // do not apply to great grandchildren
-  expect(await findThoughtByText('d')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('d')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
 it('as an exception, do not apply =grandchildren/=style to =grandchildren itself', async () => {
@@ -111,12 +116,12 @@ it('as an exception, do not apply =grandchildren/=style to =grandchildren itself
           - =grandchildren
             - =style
               - color
-                - pink
+                - rgba(255, 192, 203, 1)
           - b
       `,
     }),
     toggleHiddenThoughts(),
   ])
 
-  expect(await findThoughtByText('=grandchildren')).not.toHaveStyle({ color: 'pink' })
+  expect(await findThoughtByText('=grandchildren')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
