@@ -369,15 +369,9 @@ a.text-link {
   overflow-x: scroll;
   max-width: 100%;
   z-index: var(--z-index-toolbar);
-  -ms-overflow-style: none;
-  background-color: white;
-  box-shadow: 10px -20px 15px 25px white;
   right: 5px;
-}
-
-.dark .toolbar {
-  background-color: black;
-  box-shadow: 10px -20px 15px 25px black;
+  /* override default align-items:stretch so that icons do not take up full height of toolbar */
+  align-items: flex-start;
 }
 
 .toolbar::-webkit-scrollbar {

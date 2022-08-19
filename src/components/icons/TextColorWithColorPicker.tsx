@@ -16,16 +16,18 @@ const Icon = ({ size = 20, style }: IconType) => {
         <div
           className='z-index-stack toolbar-popup'
           style={{
-            marginLeft: size / 2,
-            marginTop: size / 2 + 5,
-            // required to avoid being clipped by toolbar's overflow-x: scroll
-            // does not allow overflow-y: visible at the same time for some reason
-            position: 'fixed',
-            // % margin-left does not work on position fixed
-            transform: `translate(calc(-50%), 0)`,
+            position: 'relative',
+            // eyeballing it to get font sizes 14–24 to look right
+            left: (size * (size + 90)) / 200 + 600 / (size * size),
+            marginTop: size * 1.2 - 10,
+            // position fixed or absolute causes the ColorPicker to get clipped by the toolbar's overflow-x: scroll
+            // ideally we want overflow-x:scroll and overflow-y:visible, but Safari does not differing allow overflow-x and overflow-y
+            // instead, keep position:static but set the width to 0
+            // this will increase the height of the toolbar so the ColorPicker does not get clipped without taking up horizontal space
+            width: 0,
           }}
         >
-          <ColorPicker fontSize={size} />
+          <ColorPicker fontSize={size} style={{ transform: `translate(-50%)` }} />
         </div>
       </CSSTransition>
     </div>

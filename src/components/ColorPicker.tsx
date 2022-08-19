@@ -8,19 +8,18 @@ import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
 
-/** A hook that returns the left and right overflow of the element outside the bounds of the screen. Includes the Toolbar's scrollLeft to position the triangle. Do not re-calculate on every render or it will create an infinite loop when scrolling the Toolbar. */
+/** A hook that returns the left and right overflow of the element outside the bounds of the screen. Do not re-calculate on every render or it will create an infinite loop when scrolling the Toolbar. */
 const useWindowOverflow = (ref: React.RefObject<HTMLElement>) => {
-  const [overflow, setOverflow] = useState({ scrollLeft: 0, left: 0, right: 0, width: 0 })
+  const [overflow, setOverflow] = useState({ left: 0, right: 0 })
 
   useEffect(() => {
     if (!ref.current) return
     const rect = ref.current.getBoundingClientRect()
-    const left = Math.max(0, -rect.x)
+    const left = Math.max(0, -rect.x + 15)
     // add 10px for padding
-    const right = Math.max(0, rect.x + rect.width - window.innerWidth) + 10
+    const right = Math.max(0, rect.x + rect.width - window.innerWidth + 10)
     if (left > 0 || right > 0) {
-      const scrollLeft = ref.current.closest('.toolbar')?.scrollLeft || 0
-      setOverflow({ scrollLeft, left, right: right, width: rect.width })
+      setOverflow({ left, right })
     }
   }, [])
 
@@ -102,7 +101,7 @@ const ColorSwatch: FC<{
 }
 
 /** Text Color Picker component. */
-const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
+const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
   const cursorStyle = useSelector(
@@ -120,26 +119,22 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
 
   const overflow = useWindowOverflow(ref)
 
-  // offset the triangle by the right overflow so that it stays even with the ColorPicker's inner div
-  // include -10 to match the additional pixels added to the inner div's overflow for padding
-  // do not exceed half the width of the ref, otherwise the triangle will disconnect from the ColorPicker
-  const triangleOffset = -Math.min(overflow.width / 2 - fontSize, overflow.scrollLeft - overflow.right)
-
   return (
     <div
-      ref={ref}
       style={{
         userSelect: 'none',
       }}
     >
       <div
+        ref={ref}
         style={{
           backgroundColor: colors.overlay10,
           borderRadius: 3,
           display: 'inline-block',
-          padding: `${fontSize / 4}px 0.5em ${fontSize / 2}px`,
+          padding: '0.2em 0.25em 0.25em',
           position: 'relative',
-          right: overflow.right,
+          ...(overflow.left ? { left: overflow.left } : { right: overflow.right }),
+          ...style,
         }}
       >
         {/* Triangle */}
@@ -148,8 +143,8 @@ const ColorPicker: FC<{ fontSize: number }> = ({ fontSize }) => {
           size={fontSize}
           style={{
             position: 'absolute',
-            left: triangleOffset,
-            top: -9.1,
+            ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
+            top: -fontSize / 2,
             width: '100%',
           }}
         />

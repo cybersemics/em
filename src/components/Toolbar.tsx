@@ -114,6 +114,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       }}
     >
       <SVG
+        size={fontSize}
         style={{
           cursor: isButtonExecutable ? 'pointer' : 'default',
           fill: isButtonExecutable && isButtonActive ? fg : 'gray',
