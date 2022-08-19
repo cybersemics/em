@@ -88,11 +88,10 @@ const ColorSwatch: FC<{
           size={size}
           style={{
             backgroundColor,
-            border: 'none',
+            border: `solid 1px ${selected ? colors.fg : 'transparent'}`,
             fontWeight: selected ? 'bold' : 'normal',
             color: backgroundColor ? 'black' : color,
             margin: '3px 5px 5px',
-            ...(selected ? { outline: `solid 1px ${colors.gray66}` } : null),
           }}
         />
       )}
