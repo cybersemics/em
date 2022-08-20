@@ -832,8 +832,20 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 'drop-end': true,
                 last: depth === 0,
               })}
-              style={{ display: globals.simulateDrag || isDragInProgress ? 'list-item' : 'none' }}
+              style={{
+                display:
+                  (autofocus() === 'show' || autofocus() !== 'dim') && (globals.simulateDrag || isDragInProgress)
+                    ? 'list-item'
+                    : 'none',
+              }}
             >
+              {/*
+              <span style={{ backgroundColor: 'rgba(100, 200, 255, 0.5)', position: 'absolute' }}>
+                {value}
+                {isHovering ? '*' : ''}
+              </span>
+              */}
+
               <span
                 className='drop-hover'
                 style={{

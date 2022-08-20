@@ -2272,7 +2272,6 @@ code,
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
-  margin-top: 0;
   margin-left: -1.2em;
   background-color: lightblue;
   height: 3px;
@@ -2287,14 +2286,23 @@ code,
 /* the drop target at the end of a context */
 .drop-end {
   position: absolute;
+  height: 0.4em;
   width: calc(100% - 38px);
   z-index: var(--z-index-stack); /* Above "Add thought" */
 }
 
-/* for some reason the drop-end in the outermost ul is too wide */
-.child.drop-end.last {
-  width: calc(100% - 161px);
+.children.autofocus-dim > .child.drop-end {
   margin-top: 0.4em;
+}
+
+/*.child.expanded:not(.leaf) + .child > .thought-container .drop-hover {
+  margin-top: 0.3em;
+}*/
+
+.child.drop-end.last {
+  margin-top: 0.4em;
+  /* extend click area since there are no thoughts below */
+  height: 4em;
 }
 
 .child.drop-end::before {
@@ -2319,7 +2327,7 @@ code,
 
 /* bump specificity */
 .empty-children .child.child > .drop-hover {
-  margin-top: -0.6em;
+  margin-top: -0.4em;
   width: calc(100% - 158px);
 }
 
