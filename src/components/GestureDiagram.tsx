@@ -10,11 +10,19 @@ interface GestureDiagramProps {
   className?: string
   color?: string
   flexibleSize?: number
+  // override auto height
+  height?: number
   path: GesturePath
   reversalOffset?: number
   size?: number
   strokeWidth?: number
   style?: React.CSSProperties
+  // overrides the SVG's viewBox attributeo
+  // if not provided, viewBox will be calculated automatically
+  // TODO: improve auto cropping so there is no excess space
+  viewBox?: `${number} ${number} ${number} ${number}`
+  // override auto width
+  width?: number
 }
 
 /** Returns the direction resulting from a 90 degree clockwise rotation. */
@@ -48,15 +56,18 @@ const mapStateToProps = (state: State, props: GestureDiagramProps) => ({
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
 const GestureDiagram = ({
-  path,
-  size = 50,
-  flexibleSize,
-  strokeWidth = 1.5,
   arrowSize,
-  reversalOffset,
-  color,
   className,
+  color,
+  flexibleSize,
+  height,
+  path,
+  reversalOffset,
+  size = 50,
+  strokeWidth = 1.5,
   style,
+  viewBox,
+  width,
 }: GestureDiagramProps) => {
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
@@ -103,8 +114,10 @@ const GestureDiagram = ({
 
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
-    if (el) {
-      // crop viewbox to diagram
+    if (!el) return
+
+    // crop viewbox to diagram
+    if (!viewBox) {
       const bbox = el.getBBox()
       el.setAttribute(
         'viewBox',
@@ -112,17 +125,25 @@ const GestureDiagram = ({
           +bbox.width + +arrowSize! * 5 + +strokeWidth * 8
         } ${+bbox.height + +arrowSize! * 2 + +strokeWidth * 4}`,
       )
+    }
 
-      // use size if sumWidth is ~0, eg. for the path 'rl'
-      // sumWidth will not be exactly 0 due to the reversal offset
+    // use size if sumWidth is ~0, eg. for the path 'rl'
+    // sumWidth will not be exactly 0 due to the reversal offset
+    if (!width) {
       el.setAttribute('width', (flexibleSize ? Math.max(sumWidth, size) : size) + 'px')
       el.setAttribute('height', (flexibleSize ? Math.max(sumHeight, size) : size) + 'px')
     }
   }
 
-  // return path
   return (
-    <svg width='100' height='100' className={className} style={style} ref={onRef}>
+    <svg
+      width={width || '100'}
+      height={height || '100'}
+      className={className}
+      style={style}
+      ref={onRef}
+      viewBox={viewBox}
+    >
       <defs>
         <marker
           id='arrow'
@@ -131,6 +152,7 @@ const GestureDiagram = ({
           refY='5'
           markerWidth={arrowSize!}
           markerHeight={arrowSize}
+          markerUnits='userSpaceOnUse'
           orient='auto-start-reverse'
         >
           <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />

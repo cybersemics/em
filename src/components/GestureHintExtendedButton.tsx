@@ -18,9 +18,17 @@ const GestureHintExtendedButton: React.FC = () => {
           }),
         )
       }
-      style={{ overflow: 'hidden', width: 30, height: 20, marginTop: 2, marginRight: -16 }}
+      style={{ display: 'inline-flex' }}
     >
-      <GestureDiagram path={'rdr'} size={55} strokeWidth={4} style={{ marginTop: -19, marginLeft: -8 }} />
+      <GestureDiagram
+        path={'ldr'}
+        width={20}
+        height={20}
+        strokeWidth={5}
+        // override viewBox for better cropping
+        viewBox='-5 55 85 50'
+        style={{ marginRight: 1 }}
+      />
     </div>
   )
 }
