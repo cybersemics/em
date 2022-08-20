@@ -213,6 +213,50 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
   }
 }
 
+/** Returns autofocus styles. Works with rgb colors. */
+const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style?: React.CSSProperties) => {
+  const colors = useSelector(themeColors)
+  const [transition, setTransition] = useState<boolean>(true)
+  const [color, setColor] = useState<`rgb${string}` | undefined>(style?.color as `rgb${string}`)
+
+  const styleColors = useMemo(() => {
+    if (
+      color !== style?.color &&
+      (!color || !style?.color || alpha(style.color as `rgb${string}`, 1) !== alpha(color, 1))
+    ) {
+      setColor(style?.color as `rgb${string}`)
+      setTransition(false)
+      setTimeout(() => {
+        setTransition(true)
+      })
+    }
+
+    return {
+      // add transparency to the foreground color based on autofocus
+      ...(style?.backgroundColor
+        ? {
+            backgroundColor: alpha(
+              style.backgroundColor as `rgb${string}`,
+              autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+            ),
+          }
+        : null),
+      // add transparency to the foreground color based on autofocus
+      color: alpha(
+        (style?.color as `rgb${string}`) || colors.fg,
+        autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+      ),
+      ...(!transition
+        ? {
+            transition: 'color 0s',
+          }
+        : null),
+    }
+  }, [autofocus, colors, style?.color, style?.backgroundColor, transition])
+
+  return styleColors
+}
+
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -291,7 +335,6 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
-  const colors = useSelector(themeColors)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
   const styleAnnotation = useSelector((state: State) =>
     safeRefMerge(
@@ -389,25 +432,7 @@ const ThoughtContainer = ({
   }, [])
 
   // colors that are applied to the container
-  const styleColors = useMemo(
-    () => ({
-      // add transparency to the foreground color based on autofocus
-      ...(style?.backgroundColor
-        ? {
-            backgroundColor: alpha(
-              style.backgroundColor as `rgb${string}`,
-              autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-            ),
-          }
-        : null),
-      // add transparency to the foreground color based on autofocus
-      color: alpha(
-        (style?.color as `rgb${string}`) || colors.fg,
-        autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-      ),
-    }),
-    [autofocus, colors, style],
-  )
+  const styleColors = useAutofocus(autofocus, style)
 
   // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
   const styleWithoutColors = useMemo((): React.CSSProperties => {
