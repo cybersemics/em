@@ -25,7 +25,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const cursorForwardShortcut: Shortcut = {
   id: 'cursorForward',
-  description: 'Move the cursor forward or down a level',
+  description: 'Move the cursor down a level.',
   label: 'Forward',
   gesture: 'l',
   svg: Icon,

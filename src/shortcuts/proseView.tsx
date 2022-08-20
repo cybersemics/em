@@ -33,7 +33,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const proseViewShortcut: Shortcut = {
   id: 'proseView',
   label: 'Prose View',
-  description: 'Display the current context as indented paragraphs.',
+  description: 'Display subthoughts of the current thought as indented paragraphs.',
   gesture: 'rudr',
   keyboard: { key: 'p', shift: true, alt: true },
   svg: Icon,

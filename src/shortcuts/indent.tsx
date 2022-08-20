@@ -30,7 +30,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const indentShortcut: Shortcut = {
   id: 'indent',
   label: 'Indent',
-  description: 'Indent the current thought one level deeper. No surprises here.',
+  description: 'Indent the current thought one level deeper.',
   overlay: {
     keyboard: moveCursorForward.keyboard,
   },

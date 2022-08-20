@@ -27,8 +27,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const cursorPrevShortcut: Shortcut = {
   id: 'cursorPrev',
-  label: 'Cursor Previous Thought',
-  description: 'Move cursor to previous thought, skipping expanded children.',
+  label: 'Previous Thought',
+  description: 'Move the cursor to the previous thought.',
   gesture: 'lur',
   svg: Icon,
   keyboard: { key: Key.ArrowUp, meta: true },

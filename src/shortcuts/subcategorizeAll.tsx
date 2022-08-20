@@ -23,7 +23,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const subCategorizeAllShortcut: Shortcut = {
   id: 'subcategorizeAll',
   label: 'Subcategorize All',
-  description: 'Insert all thoughts in the current context into a new context.',
+  description: 'Move all thoughts at the current level into a new, empty thought.',
   gesture: 'ldr',
   keyboard: { key: 'a', meta: true, alt: true },
   svg: Icon,

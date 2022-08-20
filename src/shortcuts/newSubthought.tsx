@@ -30,7 +30,7 @@ const exec = newThought({ insertNewSubthought: true })
 const newSubthoughtShortcut: Shortcut = {
   id: 'newSubthought',
   label: 'New Subthought',
-  description: 'Create a new subthought in the current thought. Add it to the bottom of any existing subthoughts.',
+  description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
   keyboard: { key: Key.Enter, meta: true },
   svg: Icon,

@@ -28,9 +28,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 const newUncleShortcut: Shortcut = {
   id: 'newUncle',
-  label: 'New Thought After Parent',
-  description:
-    "Add a new thought to the context that immediately follows the current thought's context. It's like creating a new thought and then de-indenting it.",
+  label: 'New Subthought (next)',
+  description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
   gesture: 'rdl',
   keyboard: { key: Key.Enter, meta: true, alt: true },
   svg: Icon,

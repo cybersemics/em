@@ -29,8 +29,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const outdentShortcut: Shortcut = {
   id: 'outdent',
-  label: 'De-indent',
-  description: 'De-indent? Outdent? Whatever the opposite of indent is. Move the current thought up a level.',
+  label: 'Outdent',
+  description: 'Outdent? De-indent? Whatever the opposite of indent is. Move the current thought up a level.',
   overlay: {
     keyboard: moveCursorBackward.keyboard,
   },

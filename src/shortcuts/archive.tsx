@@ -78,7 +78,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const archiveShortcut: Shortcut = {
   id: 'archive',
   label: 'Archive',
-  description: 'Archive the current thought.',
+  description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   gesture: 'ldldl',
   svg: Icon,
   keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },

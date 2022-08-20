@@ -49,7 +49,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 const deleteShortcut: Shortcut = {
   id: 'delete',
   label: 'Delete',
-  description: 'Permanently delete the current thought.',
+  description: 'Say goodbye to the current thought... forever.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

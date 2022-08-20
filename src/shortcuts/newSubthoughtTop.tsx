@@ -26,7 +26,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const newSubthoughtTopShortcut: Shortcut = {
   id: 'newSubthoughtTop',
-  label: 'New Subthought (top)',
+  label: 'New Subthought (above)',
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
   keyboard: { key: Key.Enter, shift: true, meta: true },

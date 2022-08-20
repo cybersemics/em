@@ -7,7 +7,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 /**
- * Creates a new grand child at first visible subthought.
+ * Creates a new grandchild at first visible subthought.
  */
 const newGrandChild = (state: State) => {
   const { cursor } = state

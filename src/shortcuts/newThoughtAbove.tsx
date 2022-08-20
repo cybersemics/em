@@ -27,7 +27,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 
 const newThoughtAboveShortcut: Shortcut = {
   id: 'newThoughtAbove',
-  label: 'New Thought Above',
+  label: 'New Thought (above)',
   description: 'Create a new thought immediately above the current thought.',
   gesture: 'rul',
   ...(!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),

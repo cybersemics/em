@@ -35,6 +35,7 @@ const bindContextShortcut: Shortcut = {
   description: 'Bind two different contexts of a thought so that they always have the same children.',
   gesture: 'rud',
   keyboard: { key: 'b', shift: true, alt: true },
+  hideFromInstructions: true,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()

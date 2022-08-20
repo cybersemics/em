@@ -23,8 +23,8 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 // NOTE: The keyboard shortcut for New Uncle handled in New Thought command until it is confirmed that shortcuts are evaluated in the correct order
 const subCategorizeOneShortcut: Shortcut = {
   id: 'subcategorizeOne',
-  label: 'Subcategorize One',
-  description: 'Insert the current thought into a new context.',
+  label: 'Subcategorize',
+  description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
   keyboard: { key: 'o', meta: true, alt: true },
   svg: Icon,
@@ -35,7 +35,7 @@ const subCategorizeOneShortcut: Shortcut = {
 // a shortcut for Raine until we have custom user shortcuts
 export const subCategorizeOneShortcutAlias: Shortcut = {
   id: 'subcategorizeOneAlias',
-  label: 'Subcategorize One',
+  label: 'Subcategorize',
   hideFromInstructions: true,
   keyboard: { key: ']', meta: true },
   svg: Icon,

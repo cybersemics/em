@@ -26,7 +26,7 @@ const Icon = ({ size = 20 }: IconType) => (
 
 const cursorBackShortcut: Shortcut = {
   id: 'cursorBack',
-  description: 'Move the cursor back or up a level',
+  description: 'Move the cursor up a level.',
   label: 'Back',
   gesture: 'r',
   svg: Icon,

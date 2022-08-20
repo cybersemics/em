@@ -7,7 +7,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const bumpThoughtDownShortcut: Shortcut = {
   id: 'bumpThought',
   label: 'Bump Thought Down',
-  description: 'Bump the current thought down to its children and replace with empty text.',
+  description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'rld',
   keyboard: { key: 'd', meta: true, alt: true },
   canExecute: getState => !!getState().cursor && isDocumentEditable(),

@@ -41,7 +41,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e, { type }: { type: string 
 const newThoughtShortcut: Shortcut = {
   id: 'newThought',
   label: 'New Thought',
-  description: 'Create a new thought or outdent if focused thought is empty.',
+  description: 'Create a shiny new thought.',
   keyboard: { key: Key.Enter },
   gesture: 'rd',
   svg: Icon,

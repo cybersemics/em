@@ -6,7 +6,6 @@ import closeModal from '../action-creators/closeModal'
 import toggleShortcutsDiagram from '../action-creators/toggleShortcutsDiagram'
 import tutorial from '../action-creators/tutorial'
 import setTutorialStep from '../action-creators/tutorialStep'
-import { isTouch } from '../browser'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import * as db from '../data-providers/dexie'
 import getSetting from '../selectors/getSetting'
@@ -89,8 +88,6 @@ const ModalHelp = ({
           </div>
         </div>
       </section>
-
-      <h2 className='modal-subtitle'>{isTouch ? 'Gesture' : 'Keyboard'} Shortcuts</h2>
 
       <ShortcutTable />
 

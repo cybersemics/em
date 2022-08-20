@@ -28,8 +28,8 @@ const Icon = ({ size = 20, style }: IconType) => (
 
 const toggleTableViewShortcut: Shortcut = {
   id: 'toggleTableView',
-  label: 'Toggle Table View',
-  description: 'View the current context as a table, where each level of subthoughts is shown as a column.',
+  label: 'Table View',
+  description: 'Display the current thought as a table, where each subthought is a separate column.',
   gesture: 'rdlu',
   keyboard: { key: 't', alt: true, shift: true },
   svg: Icon,

@@ -10,7 +10,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const noteShortcut: Shortcut = {
   id: 'note',
   label: 'Note',
-  description: 'Add a small note beneath a thought.',
+  description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   svg: PencilIcon,
