@@ -15,6 +15,7 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import { isTouch } from '../browser'
 import { DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
+import useAutofocus from '../hooks/useAutofocus'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
@@ -26,9 +27,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
 import { store } from '../store'
-import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
@@ -213,50 +212,6 @@ const useLongPressHighlight = ({ isDragging, simplePath }: { isDragging: boolean
   }
 }
 
-/** Returns autofocus styles. Works with rgb colors. */
-const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style?: React.CSSProperties) => {
-  const colors = useSelector(themeColors)
-  const [transition, setTransition] = useState<boolean>(true)
-  const [color, setColor] = useState<`rgb${string}` | undefined>(style?.color as `rgb${string}`)
-
-  const styleColors = useMemo(() => {
-    if (
-      color !== style?.color &&
-      (!color || !style?.color || alpha(style.color as `rgb${string}`, 1) !== alpha(color, 1))
-    ) {
-      setColor(style?.color as `rgb${string}`)
-      setTransition(false)
-      setTimeout(() => {
-        setTransition(true)
-      })
-    }
-
-    return {
-      // add transparency to the foreground color based on autofocus
-      ...(style?.backgroundColor
-        ? {
-            backgroundColor: alpha(
-              style.backgroundColor as `rgb${string}`,
-              autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-            ),
-          }
-        : null),
-      // add transparency to the foreground color based on autofocus
-      color: alpha(
-        (style?.color as `rgb${string}`) || colors.fg,
-        autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-      ),
-      ...(!transition
-        ? {
-            transition: 'color 0s',
-          }
-        : null),
-    }
-  }, [autofocus, colors, style?.color, style?.backgroundColor, transition])
-
-  return styleColors
-}
-
 /**********************************************************************
  * Components
  **********************************************************************/
@@ -432,7 +387,7 @@ const ThoughtContainer = ({
   }, [])
 
   // colors that are applied to the container
-  const styleColors = useAutofocus(autofocus, style)
+  const styleAutofocus = useAutofocus(autofocus, style)
 
   // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
   const styleWithoutColors = useMemo((): React.CSSProperties => {
@@ -460,7 +415,7 @@ const ThoughtContainer = ({
         {...longPress.props}
         aria-label='thought-container'
         style={{
-          ...styleColors,
+          ...styleAutofocus,
           ...styleContainer,
         }}
         className={classNames({

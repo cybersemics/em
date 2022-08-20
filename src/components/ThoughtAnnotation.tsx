@@ -9,6 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
 import { REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
 import { isInternalLink } from '../device/router'
+import useAutofocus from '../hooks/useAutofocus'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
@@ -17,9 +18,7 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
 import { store } from '../store'
-import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
@@ -151,7 +150,6 @@ const ThoughtAnnotation = ({
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
-  const colors = useSelector(themeColors)
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -184,16 +182,7 @@ const ThoughtAnnotation = ({
     ? childrenUrls()[0].value
     : null
 
-  // add transparency to the foreground color based on autofocus
-  const color = alpha(
-    (styleAnnotation?.color as `rgb${string}`) || colors.fg,
-    autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-  )
-
-  // add transparency to the foreground color based on autofocus
-  const backgroundColor = styleAnnotation?.backgroundColor
-    ? alpha(styleAnnotation.backgroundColor as `rgb${string}`, autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0)
-    : null
+  const styleAutofocus = useAutofocus(autofocus, styleAnnotation)
 
   return (
     <div
@@ -218,8 +207,7 @@ const ThoughtAnnotation = ({
             padding: '0 3px',
             marginLeft: -3,
             ...styleAnnotation,
-            color,
-            backgroundColor,
+            ...styleAutofocus,
           }}
         >
           <span
