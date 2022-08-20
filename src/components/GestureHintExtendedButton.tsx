@@ -1,7 +1,6 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import alert from '../action-creators/alert'
-import { AlertType } from '../constants'
+import showModal from '../action-creators/showModal'
 import GestureDiagram from './GestureDiagram'
 
 /** A button that activates the extended gesture hint. */
@@ -9,17 +8,7 @@ const GestureHintExtendedButton: React.FC = () => {
   const dispatch = useDispatch()
 
   return (
-    <div
-      onClick={() =>
-        dispatch(
-          alert('*', {
-            alertType: AlertType.GestureHintExtended,
-            showCloseLink: true,
-          }),
-        )
-      }
-      style={{ display: 'inline-flex' }}
-    >
+    <div onClick={() => dispatch(showModal({ id: 'gesture-help' }))} style={{ display: 'inline-flex' }}>
       <GestureDiagram
         path={'ldr'}
         width={20}

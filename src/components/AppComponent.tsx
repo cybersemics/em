@@ -24,6 +24,7 @@ import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import ModalAuth from './ModalAuth'
 import ModalExport from './ModalExport'
 import ModalFeedback from './ModalFeedback'
+import ModalGestureHelp from './ModalGestureHelp'
 import ModalHelp from './ModalHelp'
 import ModalInvites from './ModalInvites'
 import ModalSignup from './ModalSignup'
@@ -197,6 +198,8 @@ const AppComponent: FC<Props> = props => {
             <ModalWelcome />
           ) : showModal === 'help' ? (
             <ModalHelp />
+          ) : showModal === 'gesture-help' ? (
+            <ModalGestureHelp />
           ) : showModal === 'export' ? (
             <ModalExport />
           ) : showModal === 'feedback' ? (
@@ -208,7 +211,7 @@ const AppComponent: FC<Props> = props => {
           ) : showModal === 'invites' ? (
             <ModalInvites />
           ) : (
-            'Invalid showModal'
+            `Invalid showModal: ${showModal}`
           )
         ) : (
           // navigation, content, and footer

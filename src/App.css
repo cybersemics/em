@@ -1892,8 +1892,8 @@ h1 .num-contexts {
 
 .popup-close-x {
   position: fixed;
-  top: 2px;
-  right: 7px;
+  top: 0.15em;
+  right: 0.4em;
   font-size: 24px;
   color: inherit;
   text-decoration: none;

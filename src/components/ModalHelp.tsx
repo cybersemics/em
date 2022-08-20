@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
-import GesturePath from '../@types/GesturePath'
-import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
 import toggleShortcutsDiagram from '../action-creators/toggleShortcutsDiagram'
@@ -12,14 +10,10 @@ import { isTouch } from '../browser'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import * as db from '../data-providers/dexie'
 import getSetting from '../selectors/getSetting'
-import { formatKeyboardShortcut, globalShortcuts } from '../shortcuts'
-import { store } from '../store'
-import makeCompareByProp from '../util/makeCompareByProp'
-import sort from '../util/sort'
 import { ActionButton } from './ActionButton'
-import GestureDiagram from './GestureDiagram'
 import Logs from './Logs'
 import Modal from './Modal'
+import ShortcutTable from './ShortcutTable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -29,38 +23,6 @@ const mapStateToProps = (state: State) => {
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     enableLatestShorcutsDiagram,
   }
-}
-
-/** Renders all of a shortcut's details as a table row. */
-const ShortcutRows = (shortcut: Shortcut, i: number) => (
-  <tr key={i}>
-    <th>
-      <b>{shortcut.label}</b>
-      <p>{typeof shortcut.description === 'function' ? shortcut.description(store.getState) : shortcut.description}</p>
-    </th>
-    <td>
-      {isTouch && shortcut.gesture ? (
-        // GesturePath[]
-        <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
-      ) : shortcut.keyboard ? (
-        formatKeyboardShortcut(shortcut.keyboard)
-      ) : null}
-    </td>
-  </tr>
-)
-
-/** Renders a table of shortcuts. */
-const ShortcutTable = () => {
-  // filter out shortcuts that do not exist on the current platform
-  const shortcuts = sort(globalShortcuts, makeCompareByProp('name')).filter(
-    shortcut => !shortcut.hideFromInstructions && (isTouch ? shortcut.gesture : shortcut.keyboard),
-  )
-
-  return (
-    <table className='shortcuts'>
-      <tbody>{shortcuts.map(ShortcutRows)}</tbody>
-    </table>
-  )
 }
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
