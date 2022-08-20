@@ -2,6 +2,7 @@ import React, { FC, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import State from '../@types/State'
 import textColor from '../action-creators/textColor'
+import { isTouch } from '../browser'
 import getStyle from '../selectors/getStyle'
 import themeColors from '../selectors/themeColors'
 import head from '../util/head'
@@ -42,31 +43,36 @@ const ColorSwatch: FC<{
   const selected =
     (color && cursorStyle?.color === color) || (backgroundColor && cursorStyle?.backgroundColor === backgroundColor)
   size = size || fontSize * 1.2
+
+  /** Toggles the text color to the clicked swatch. */
+  const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
+    // stop toolbar button dip
+    e.stopPropagation()
+    dispatch(
+      textColor({
+        ...(selected
+          ? {
+              color: 'default',
+            }
+          : color
+          ? { color: label }
+          : {
+              backgroundColor: label,
+            }),
+        shape,
+      }),
+    )
+  }
   return (
     <span
       aria-label={label || color || backgroundColor}
-      onTouchStart={e => {
-        // prevent toolbar button dip
-        e.stopPropagation()
-      }}
       onClick={e => {
-        e.preventDefault()
+        // stop click empty space
         e.stopPropagation()
-        dispatch(
-          textColor({
-            ...(selected
-              ? {
-                  color: 'default',
-                }
-              : color
-              ? { color: label }
-              : {
-                  backgroundColor: label,
-                }),
-            shape,
-          }),
-        )
       }}
+      onTouchStart={toggleTextColor}
+      // only add mousedown to desktop, otherwise it will activate twice on mobile
+      onMouseDown={!isTouch ? toggleTextColor : undefined}
       style={{ cursor: 'pointer' }}
     >
       {shape === 'bullet' ? (
