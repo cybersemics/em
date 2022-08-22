@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import deleteThought from '../action-creators/deleteThought'
+import toggleAttribute from '../action-creators/toggleAttribute'
 import { AlertText, AlertType } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -19,20 +20,32 @@ import DeleteIcon from './icons/DeleteIcon'
 /** Delete the thought on drop. */
 const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
-  const { simplePath } = monitor.getItem() as { simplePath: SimplePath }
-  const value = getThoughtById(state, head(simplePath))?.value
+  const { path, simplePath } = monitor.getItem() as { path: SimplePath; simplePath: SimplePath }
 
-  store.dispatch([
-    deleteThought({
-      pathParent: rootedParentOf(state, simplePath),
-      thoughtId: head(simplePath),
-    }),
-    alert(`Deleted ${ellipsize(value)}`, {
-      alertType: AlertType.DeleteThoughtComplete,
-      clearDelay: 8000,
-      showCloseLink: true,
-    }),
-  ])
+  if (path) {
+    const value = getThoughtById(state, head(path))?.value
+    store.dispatch([
+      toggleAttribute({ path, values: ['=favorite', 'true'] }),
+      alert(`Removed ${ellipsize(value)} from favorites`, {
+        alertType: AlertType.DeleteThoughtComplete,
+        clearDelay: 8000,
+        showCloseLink: true,
+      }),
+    ])
+  } else {
+    const value = getThoughtById(state, head(simplePath))?.value
+    store.dispatch([
+      deleteThought({
+        pathParent: rootedParentOf(state, simplePath),
+        thoughtId: head(simplePath),
+      }),
+      alert(`Deleted ${ellipsize(value)}`, {
+        alertType: AlertType.DeleteThoughtComplete,
+        clearDelay: 8000,
+        showCloseLink: true,
+      }),
+    ])
+  }
 }
 
 /** Show an alert on hover that notifies the user the thought will be deleted if dropped on the icon. */
@@ -78,6 +91,7 @@ const DeleteDrop = ({ dropTarget, isDragInProgress, isHovering }: ReturnType<typ
             margin: '-1em',
             right: '1em',
             top: '20vh',
+            zIndex: 9999,
             borderRadius: '999px 0 0 999px',
             backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
           }}

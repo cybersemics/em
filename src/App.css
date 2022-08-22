@@ -2,7 +2,8 @@
    Keep these in one place to make it easier to determine interactions and prevent conflicts.
    Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
 :root {
-  --z-index-alert: 50;
+  --z-index-alert: 1500;
+  /* Sidebar : 1300 */
   --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
   --z-index-toolbar-container: 20;
