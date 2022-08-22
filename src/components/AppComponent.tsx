@@ -20,6 +20,7 @@ import ContentFallback from './ContentFallback'
 import DeleteDrop from './DeleteDrop'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
+import HamburgerMenu from './HamburgerMenu'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import ModalAuth from './ModalAuth'
 import ModalExport from './ModalExport'
@@ -32,6 +33,7 @@ import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import Scale from './Scale'
+import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 
@@ -179,12 +181,12 @@ const AppComponent: FC<Props> = props => {
       <ErrorMessage />
       {enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
 
-      {/* isDocumentEditable() && !tutorial && !showModal && (
+      {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />
           <HamburgerMenu />
         </>
-      ) */}
+      )}
 
       {!showModal && !tutorial && <Toolbar />}
 

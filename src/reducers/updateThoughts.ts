@@ -16,7 +16,7 @@ import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
-export type UpdateThoughtsOptions = Omit<PushBatch, 'pendingLexemes'> & {
+export type UpdateThoughtsOptions = PushBatch & {
   contextChain?: SimplePath[]
   isLoading?: boolean
   pendingEdits?: editThoughtPayload[]
@@ -117,6 +117,7 @@ const updateThoughts = (
     recentlyEdited,
     updates,
     pendingDeletes,
+    pendingLexemes,
     preventExpandThoughts,
     local = true,
     remote = true,
@@ -135,7 +136,7 @@ const updateThoughts = (
 
   // lexemes from the updates that are not available in the state yet
   // pull pending Lexemes when updates are being saved to local and remote, i.e. user edits, not updates from pull
-  const pendingLexemes =
+  const pendingLexemesUpdated =
     local && remote
       ? Object.keys(lexemeIndexUpdates).reduce<Index<boolean>>((acc, thoughtId) => {
           const lexemeInState = state.thoughts.lexemeIndex[thoughtId]
@@ -171,7 +172,7 @@ const updateThoughts = (
     lexemeIndexUpdates,
     local,
     pendingDeletes,
-    pendingLexemes,
+    pendingLexemes: { ...pendingLexemesUpdated, ...pendingLexemes },
     recentlyEdited: recentlyEditedNew,
     remote,
     thoughtIndexUpdates: thoughtIndexUpdates,

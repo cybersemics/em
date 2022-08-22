@@ -39,7 +39,9 @@ const useEllipsizedThoughts = (
   const thoughtValuesLiveEncoded = useSelector((state: State) =>
     encode(
       simplePath.map(id =>
-        state.editingValue && id === head(state.cursor!) ? state.editingValue : getThoughtById(state, id)?.value,
+        state.editingValue && state.cursor && id === head(state.cursor)
+          ? state.editingValue
+          : getThoughtById(state, id)?.value,
       ),
     ),
   )

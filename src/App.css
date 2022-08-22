@@ -370,7 +370,8 @@ a.text-link {
   touch-action: inherit;
   display: inline-flex;
   overflow-x: scroll;
-  max-width: 100%;
+  /* leave space on left for sidebar menu */
+  max-width: calc(100% - 3em);
   z-index: var(--z-index-toolbar);
   right: 5px;
   /* override default align-items:stretch so that icons do not take up full height of toolbar */
