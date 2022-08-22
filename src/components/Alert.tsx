@@ -43,9 +43,7 @@ const ShortcutGestureHint = ({
         style={{ position: 'absolute', left: -size, top: -size / 4 }}
       />{' '}
       <div style={{ color: highlight ? colors.highlight : colors.fg }}>{shortcut.label}</div>
-      {highlight && (
-        <div style={{ fontSize: '80%', marginBottom: '1em', width: 'calc(100% - 10em)' }}>{shortcut.description}</div>
-      )}
+      {highlight && <div style={{ fontSize: '80%', marginBottom: '1em' }}>{shortcut.description}</div>}
     </div>
   )
 }
@@ -72,7 +70,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
     ])
   }
 
-  /** Render the gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
+  /** Render an extended gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
   const GestureHint =
     alert?.alertType === AlertType.GestureHintExtended
       ? () => {
@@ -88,28 +86,39 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
             shortcut => `${shortcut.gesture!.length}\x00${shortcut.label}`,
           )
           return (
-            <div style={{ marginBottom: fontSize * 2 }}>
-              <div
-                style={{
-                  marginLeft: -fontSize * 2,
-                  marginBottom: 12,
-                  paddingLeft: 5,
-                  borderBottom: 'solid 1px gray',
-                  width: `calc(50% + ${fontSize * 2}px)`,
-                }}
-              >
-                Gestures
-              </div>
-              {possibleShortcutsSorted.length > 0
-                ? possibleShortcutsSorted.map(shortcut => (
+            <div
+              style={{
+                ...(possibleShortcutsSorted.length > 0 ? { paddingLeft: '4em', paddingRight: '4em' } : null),
+                marginBottom: fontSize,
+                textAlign: 'left',
+              }}
+            >
+              {possibleShortcutsSorted.length > 0 ? (
+                <div>
+                  <h2
+                    style={{
+                      marginTop: 0,
+                      marginBottom: '1em',
+                      marginLeft: -fontSize * 1.8,
+                      paddingLeft: 5,
+                      borderBottom: 'solid 1px gray',
+                    }}
+                  >
+                    Gestures
+                  </h2>
+
+                  {possibleShortcutsSorted.map(shortcut => (
                     <ShortcutGestureHint
                       key={shortcut.id}
                       shortcut={shortcut}
                       size={fontSize * 2}
                       highlight={shortcut.gesture === sequence}
                     />
-                  ))
-                : '✗ Cancel gesture'}
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center' }}>✗ Cancel gesture</div>
+              )}
             </div>
           )
         }
@@ -134,6 +143,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
 const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   const dispatch = useDispatch()
   const useSwipeToDismissProps = useSwipeToDismiss({
+    ...(alert.isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
       dispatch(alertActionCreator(null))
@@ -142,7 +152,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
 
   return (
     <div
-      className={alert.isInline ? 'alert alert-inline' : 'alert'}
+      className='alert'
       {...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
@@ -150,19 +160,19 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         overflowY: 'auto',
         maxHeight: '100%',
         maxWidth: '100%',
-        ...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps.style : null),
+        /* if inline, leave room on the left side so the user can click undo/redo */
+        ...(alert.isInline ? { left: '50%', width: 'auto' } : null),
         ...(!children ? { textAlign: 'center' } : null),
+        ...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps.style : null),
       }}
     >
-      <span
+      <div
         className='alert-text'
-        style={{
-          ...(alert.alertType === AlertType.GestureHintExtended ? { paddingLeft: '6em', width: '100%' } : null),
-        }}
+        style={{ padding: '5px 10px' }}
         dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
       >
         {children}
-      </span>
+      </div>
       {alert.showCloseLink ? (
         <a className='upper-right status-close-x text-small' onClick={onClose}>
           ✕

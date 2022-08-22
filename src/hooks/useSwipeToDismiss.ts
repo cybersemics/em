@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 const defaultOptions = {
   dismissThreshold: '50%',
+  dx: 0,
   snapbackDuration: 0.1,
   snapbackEasing: 'ease-out',
 }
@@ -11,6 +12,10 @@ const useSwipeToDismiss = (
   options: {
     // y offset at which onDismiss is fired, in px or % (of height)
     dismissThreshold?: string | number
+
+    // x offset override
+    // not used in this hook, but can be passed in to adjust the x position, otherwise transform will override it
+    dx?: string
 
     // dismiss handler
     onDismiss?: () => void
@@ -26,7 +31,7 @@ const useSwipeToDismiss = (
   } = {},
 ) => {
   // initialize default options
-  const { dismissThreshold, onDismiss, onDismissEnd, snapbackDuration, snapbackEasing } = {
+  const { dismissThreshold, dx, onDismiss, onDismissEnd, snapbackDuration, snapbackEasing } = {
     ...defaultOptions,
     ...options,
   }
@@ -101,7 +106,7 @@ const useSwipeToDismiss = (
     onTouchCancel: stop,
     ref,
     style: {
-      transform: `translateY(${dy}px)`,
+      transform: `translate(${dx}, ${dy}px)`,
       transition: animate ? `transform ${snapbackDuration}s ${snapbackEasing}` : '',
       touchAction: 'none',
     },

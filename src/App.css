@@ -835,22 +835,7 @@ body.dark {
   z-index: var(--z-index-alert);
 }
 
-.alert-inline {
-  width: auto;
-  left: 45%;
-}
-
 .dark .alert {
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-.alert-text {
-  padding: 5px 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  display: inline-block;
-}
-
-.dark .alert-text {
   background-color: rgba(0, 0, 0, 0.8);
 }
 

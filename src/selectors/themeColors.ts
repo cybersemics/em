@@ -4,6 +4,7 @@ import theme from './theme'
 const colors = {
   dark: {
     bg: 'rgba(0, 0, 0, 1)',
+    bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
@@ -24,6 +25,7 @@ const colors = {
   },
   light: {
     bg: 'rgba(255, 255, 255, 1)',
+    bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     fg85: 'rgba(39, 39, 39, 1)', // #272727
