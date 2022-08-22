@@ -68,29 +68,38 @@ const filterChildrenBy = (children: Index<Thought>, predicate: (thought: Thought
 /** Returns true if the Thoughts or Path is the one of the root contexts. */
 const isRoot = (id: ThoughtId): boolean => id === HOME_TOKEN || id === EM_TOKEN || id === ABSOLUTE_TOKEN
 
-/**
- * Generates the context of a thought by traversing upwards to the root thought.
- */
-const thoughtToContext = (thoughtId: ThoughtId): Context => {
-  if (isRoot(thoughtId)) return [thoughtId]
+/** Generates the context of a thought by traversing upwards to the root thought. */
+const thoughtToContext = (thoughtId: ThoughtId, { touched }: { touched: ThoughtId[] } = { touched: [] }): Context => {
+  if (isRoot(thoughtId)) return [HOME_TOKEN]
   const thought = db.thoughtIndex[thoughtId]
+  if (touched.includes(thoughtId)) {
+    const partialPath = [thoughtId, ...touched]
+    const partialValues = partialPath.map(id => db.thoughtIndex[id]?.value)
+    console.error({ partialPath, partialValues })
+    console.error(`Circular path found: ${thought.value} (${thoughtId}) in: ${partialPath.join('/')}`)
+    return partialValues
+  }
   if (!thought) return []
-  return thought
-    ? isRoot(thought.parentId)
-      ? [thought.value]
-      : [...thoughtToContext(thought.parentId), thought.value]
-    : [HOME_TOKEN]
+  if (isRoot(thought.parentId)) return [thought.value]
+  const ancestors = thoughtToContext(thought.parentId, { touched: [thoughtId, ...touched] })
+  return [...ancestors, thought.value]
 }
 
-const thoughtToPath = (thoughtId: ThoughtId): Path => {
+/** Generates the context of a thought by traversing upwards to the root thought. */
+const thoughtToPath = (thoughtId: ThoughtId, { touched }: { touched: ThoughtId[] } = { touched: [] }): Path => {
   if (isRoot(thoughtId)) return [thoughtId]
   const thought = db.thoughtIndex[thoughtId]
+  if (touched.includes(thoughtId)) {
+    const partialPath = [thoughtId, ...touched] as Path
+    const partialValues = partialPath.map(id => db.thoughtIndex[id]?.value)
+    console.error({ partialPath, partialValues })
+    console.error(`Circular path found: ${thought.value} (${thoughtId}) in: ${partialPath.join('/')}`)
+    return partialPath
+  }
   if (!thought) return [] as unknown as Path
-  return thought
-    ? isRoot(thought.parentId)
-      ? [thought.id]
-      : ([...thoughtToContext(thought.parentId), thought.id] as unknown as Path)
-    : HOME_PATH
+  if (isRoot(thought.parentId)) return [thought.id]
+  const ancestors = thoughtToPath(thought.parentId, { touched: [thoughtId, ...touched] })
+  return [...ancestors, thought.id]
 }
 
 /** Moves a thought to a new parent. */
@@ -432,8 +441,8 @@ console.info('Repairing unreachable thoughts')
 Object.values(db.thoughtIndex).forEach(thought => {
   // reconstruct unreachable thoughts
   if (!visited[thought.id] && !isRoot(thought.id)) {
-    const path = thoughtToPath(thought.id)
-    const oldestThought = db.thoughtIndex[path[0]]
+    // const path = thoughtToPath(thought.id)
+    // const oldestThought = db.thoughtIndex[path[0]]
 
     // if (oldestThought?.parentId === HOME_TOKEN) {
     //   const context = thoughtToContext(thought.id)
