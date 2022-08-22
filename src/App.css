@@ -2698,16 +2698,12 @@ code,
 }
 
 /* column 1 */
+/* allow auto width so columns adjust to their contents */
 .table-view > .children > .child > .thought-container {
   display: table-cell;
   text-align: right;
   position: relative; /* used to constrain .drop-hover width */
   padding-bottom: 10px; /* padding must go on column 1 cell since it may be a leaf */
-}
-
-.table-view > .children > .child > .thought-container > .thought > .editable,
-.table-view > .children > .child > .thought-container > .thought-annotation > .subthought {
-  word-break: normal;
 }
 
 @media screen and (min-width: 600px) {
@@ -2745,10 +2741,10 @@ code,
 }
 
 /* column 2 */
+/* allow auto width so columns adjust to their contents */
 .table-view > .children > .child > .children {
   display: table-cell;
   vertical-align: top;
-  width: 100%;
   padding-bottom: 15px;
 }
 
@@ -2769,7 +2765,6 @@ code,
 }
 
 .table-view > .children > .child > .children > .child {
-  width: 100%;
   padding-top: 3px;
   padding-left: 40px;
   margin-left: 0;
