@@ -19,10 +19,11 @@ interface LinkProps {
   charLimit?: number
   label?: string
   simplePath: SimplePath
+  style?: React.CSSProperties
 }
 
 /** Renders a link with the appropriate label to the given context. */
-const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
+const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
   const emContext = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const thought = getThoughtById(store.getState(), head(simplePath))
   const value = label || strip(thought.value)
@@ -43,6 +44,7 @@ const Link = ({ simplePath, label, charLimit = 32 }: LinkProps) => {
         dispatch(toggleSidebar({ value: false }))
         scrollCursorIntoView()
       }}
+      style={style}
       dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}
     >
       {!emContext ? ellipsize(decodeCharacterEntities(value), charLimit!) : null}

@@ -328,6 +328,16 @@ a.text-link {
   min-height: 1em;
 }
 
+.favorites .context-breadcrumbs {
+  margin-left: 0;
+  margin-bottom: -0.5em;
+}
+
+/* override link font-weight to allow bold on hover */
+.favorites a {
+  font-weight: inherit;
+}
+
 .context-breadcrumbs .superscript-container {
   position: relative;
   left: -2px;

@@ -18,6 +18,7 @@ export interface ContextBreadcrumbProps {
   // renders an invisible ContextBreadcrumbs
   // useful for ThoughtAnnotation spacing
   hidden?: boolean
+  styleLink?: React.CSSProperties
 }
 
 /** Renders single BreadCrumb. If isDeleting and no overflow, only renders divider dot. */

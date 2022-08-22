@@ -151,9 +151,12 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   // push local and remote batches
   await Promise.all([
     // push will detect that these are only local updates
-    Object.keys(localMergedBatch.thoughtIndexUpdates || {}).length > 0 && dispatch(pushBatch(localMergedBatch)),
+    (Object.keys(localMergedBatch.thoughtIndexUpdates || {}).length > 0 ||
+      Object.keys(localMergedBatch.lexemeIndexUpdates || {}).length > 0) &&
+      dispatch(pushBatch(localMergedBatch)),
     // push will detect that these are only remote updates
-    Object.keys(remoteMergedBatch.thoughtIndexUpdates || {}).length > 0 &&
+    (Object.keys(remoteMergedBatch.thoughtIndexUpdates || {}).length > 0 ||
+      Object.keys(remoteMergedBatch.lexemeIndexUpdates || {}).length > 0) &&
       dispatch(pushBatch({ ...remoteMergedBatch })),
   ])
 

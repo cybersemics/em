@@ -1,5 +1,5 @@
 /** Pure splice. */
-const splice = <T>(arr: T[], start: number, deleteCount: number, ...thoughts: T[]) =>
-  ([] as T[]).concat(arr.slice(0, start), thoughts, arr.slice(start + deleteCount))
+const splice = <T>(arr: T[], start: number, deleteCount: number, ...itemsToInsert: T[]) =>
+  ([] as T[]).concat(arr.slice(0, start), itemsToInsert, arr.slice(start + deleteCount))
 
 export default splice
