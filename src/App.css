@@ -1008,6 +1008,7 @@ body.dark {
 .superscript-container {
   white-space: nowrap; /* prevent expanded click area from wrapping */
   z-index: var(--z-index-stack);
+  pointer-events: none;
 }
 
 .superscript-container sup {
