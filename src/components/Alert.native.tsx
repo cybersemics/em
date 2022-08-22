@@ -2,7 +2,6 @@ import { View } from 'moti'
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
-import Alert from '../@types/Alert'
 import State from '../@types/State'
 import alertAction from '../action-creators/alert'
 import { fadeIn } from '../style/animations'
@@ -13,7 +12,7 @@ const { flexEnd, whiteText, centerText } = commonStyles
 
 /** An alert component with an optional closeLink that fades in and out. */
 const AlertComponent = () => {
-  const alert = useSelector((state: State) => state.alert) as NonNullable<Alert>
+  const alert = useSelector((state: State) => state.alert)
   const dispatch = useDispatch()
 
   // eslint-disable-next-line jsdoc/require-jsdoc

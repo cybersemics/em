@@ -133,7 +133,7 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fo
       <div
         ref={ref}
         style={{
-          backgroundColor: colors.overlay10,
+          backgroundColor: colors.fgOverlay90,
           borderRadius: 3,
           display: 'inline-block',
           padding: '0.2em 0.25em 0.25em',
@@ -144,7 +144,7 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fo
       >
         {/* Triangle */}
         <TriangleDown
-          fill={colors.overlay10}
+          fill={colors.fgOverlay90}
           size={fontSize}
           style={{
             position: 'absolute',

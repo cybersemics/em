@@ -27,6 +27,9 @@
   --z-index-hide: -1;
 }
 
+.z-index-alert {
+  z-index: var(--z-index-alert);
+}
 .z-index-hamburger-menu {
   z-index: var(--z-index-hamburger-menu);
 }
@@ -823,20 +826,6 @@ body.dark {
 
 .thought-annotation .home {
   display: none;
-}
-
-.alert {
-  position: fixed;
-  width: 100%;
-  top: 8px;
-  padding: 5px 0;
-  color: gray;
-  background-color: rgba(256, 256, 256, 0.8);
-  z-index: var(--z-index-alert);
-}
-
-.dark .alert {
-  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .error-message {

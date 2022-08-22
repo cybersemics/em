@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React, { FC, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
@@ -14,7 +14,7 @@ import themeColors from '../selectors/themeColors'
 import { globalShortcuts } from '../shortcuts'
 
 interface AlertProps {
-  alert: NonNullable<Alert>
+  alert?: Alert | null
   onClose: () => void
 }
 
@@ -48,14 +48,65 @@ const ShortcutGestureHint = ({
   )
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ alert }: State) => ({ alert })
+/** Render an extended gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
+const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
+  const fontSize = useSelector((state: State) => state.fontSize)
 
-/** An alert component with an optional closeLink that fades in and out. */
-const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
+  if (!alert.value) return null
+
+  const sequence = alert.value === '*' ? '' : alert.value!
+
+  // get the shortcuts that can be executed with the current sequence
+  const possibleShortcuts = globalShortcuts.filter(
+    shortcut => !shortcut.hideFromInstructions && shortcut.gesture && gestureString(shortcut).startsWith(sequence),
+  )
+  const possibleShortcutsSorted = _.sortBy(
+    possibleShortcuts,
+    shortcut => `${shortcut.gesture!.length}\x00${shortcut.label}`,
+  )
+  return (
+    <div
+      style={{
+        ...(possibleShortcutsSorted.length > 0 ? { paddingLeft: '4em', paddingRight: '4em' } : null),
+        marginBottom: fontSize,
+        textAlign: 'left',
+      }}
+    >
+      {possibleShortcutsSorted.length > 0 ? (
+        <div>
+          <h2
+            style={{
+              marginTop: 0,
+              marginBottom: '1em',
+              marginLeft: -fontSize * 1.8,
+              paddingLeft: 5,
+              borderBottom: 'solid 1px gray',
+            }}
+          >
+            Gestures
+          </h2>
+
+          {possibleShortcutsSorted.map(shortcut => (
+            <ShortcutGestureHint
+              key={shortcut.id}
+              shortcut={shortcut}
+              size={fontSize * 2}
+              highlight={shortcut.gesture === sequence}
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center' }}>✗ Cancel gesture</div>
+      )}
+    </div>
+  )
+}
+
+/** An alert component that fades in and out. */
+const AlertWithTransition: FC = ({ children }) => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const alert = useSelector((state: State) => state.alert)
 
   /** Dismiss the alert on close. */
   const onClose = () => {
@@ -70,60 +121,6 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
     ])
   }
 
-  /** Render an extended gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
-  const GestureHint =
-    alert?.alertType === AlertType.GestureHintExtended
-      ? () => {
-          const sequence = alert.value === '*' ? '' : alert.value!
-
-          // get the shortcuts that can be executed with the current sequence
-          const possibleShortcuts = globalShortcuts.filter(
-            shortcut =>
-              !shortcut.hideFromInstructions && shortcut.gesture && gestureString(shortcut).startsWith(sequence),
-          )
-          const possibleShortcutsSorted = _.sortBy(
-            possibleShortcuts,
-            shortcut => `${shortcut.gesture!.length}\x00${shortcut.label}`,
-          )
-          return (
-            <div
-              style={{
-                ...(possibleShortcutsSorted.length > 0 ? { paddingLeft: '4em', paddingRight: '4em' } : null),
-                marginBottom: fontSize,
-                textAlign: 'left',
-              }}
-            >
-              {possibleShortcutsSorted.length > 0 ? (
-                <div>
-                  <h2
-                    style={{
-                      marginTop: 0,
-                      marginBottom: '1em',
-                      marginLeft: -fontSize * 1.8,
-                      paddingLeft: 5,
-                      borderBottom: 'solid 1px gray',
-                    }}
-                  >
-                    Gestures
-                  </h2>
-
-                  {possibleShortcutsSorted.map(shortcut => (
-                    <ShortcutGestureHint
-                      key={shortcut.id}
-                      shortcut={shortcut}
-                      size={fontSize * 2}
-                      highlight={shortcut.gesture === sequence}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center' }}>✗ Cancel gesture</div>
-              )}
-            </div>
-          )
-        }
-      : null
-
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
@@ -131,7 +128,7 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
         <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <AlertComponent alert={alert} onClose={onClose} key={alert.value}>
-            {GestureHint?.() || children}
+            {alert?.alertType === AlertType.GestureHintExtended ? <ExtendedGestureHint alert={alert} /> : children}
           </AlertComponent>
         </CSSTransition>
       ) : null}
@@ -142,20 +139,29 @@ const AlertWithTransition: FC<{ alert?: Alert }> = ({ alert, children }) => {
 /** The alert component itself. Separate so that a key property can be used to force a reset of useSwipeToDismissProps. */
 const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   const dispatch = useDispatch()
+  const colors = useSelector(themeColors)
   const useSwipeToDismissProps = useSwipeToDismiss({
-    ...(alert.isInline ? { dx: '-50%' } : null),
+    ...(alert?.isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
       dispatch(alertActionCreator(null))
     },
   })
 
+  if (!alert) return null
+
   return (
     <div
-      className='alert'
+      className='alert z-index-alert'
       {...(alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
+        position: 'fixed',
+        width: '100%',
+        top: 8,
+        padding: '5px 0',
+        color: colors.gray50,
+        backgroundColor: colors.bgOverlay80,
         overflowX: 'hidden',
         overflowY: 'auto',
         maxHeight: '100%',
@@ -182,4 +188,4 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   )
 }
 
-export default connect(mapStateToProps)(AlertWithTransition)
+export default AlertWithTransition

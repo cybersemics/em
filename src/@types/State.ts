@@ -14,7 +14,7 @@ import Timestamp from './Timestamp'
 
 interface State {
   absoluteContextTime?: Timestamp
-  alert?: Alert
+  alert?: Alert | null
   archived?: boolean
   authenticated: boolean
   autologin: boolean
