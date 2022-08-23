@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import GesturePath from '../@types/GesturePath'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -10,7 +11,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import { isTouch } from '../browser'
-import { DropTarget, HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -482,7 +483,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           value: true,
           draggingThought: state.draggingThought,
           hoveringPath: path,
-          hoverId: DropTarget.SubthoughtsDrop,
+          hoverId: DropThoughtZone.SubthoughtsDrop,
         }),
       )
     }

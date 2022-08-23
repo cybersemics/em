@@ -1,27 +1,28 @@
 import _ from 'lodash'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import { AlertText, AlertType, DropTarget } from '../constants'
+import { AlertText, AlertType } from '../constants'
 import alert from './alert'
 
 interface Payload {
   value: boolean
   draggingThought?: SimplePath
   hoveringPath?: Path
-  hoverId?: DropTarget
+  hoverZone?: DropThoughtZone
   offset?: number
 }
 
 /** Sets dragInProgress. */
-const dragInProgress = (state: State, { value, draggingThought, hoveringPath, hoverId, offset }: Payload): State => ({
+const dragInProgress = (state: State, { value, draggingThought, hoveringPath, hoverZone, offset }: Payload): State => ({
   ...(value
     ? alert(state, { value: AlertText.DragAndDrop, alertType: AlertType.DragAndDropHint, showCloseLink: false })
     : state),
   dragInProgress: value,
   draggingThought,
   hoveringPath,
-  hoverId,
+  hoverZone,
   cursorOffset: offset || state.cursorOffset,
 })
 

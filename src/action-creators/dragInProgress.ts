@@ -1,10 +1,10 @@
 import _ from 'lodash'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
-import { DropTarget } from '../constants'
 import globals from '../globals'
 import { store } from '../store'
 import head from '../util/head'
@@ -16,7 +16,7 @@ interface Payload {
   value: boolean
   draggingThought?: SimplePath
   hoveringPath?: Path
-  hoverId?: DropTarget
+  hoverId?: DropThoughtZone
   offset?: number
 }
 

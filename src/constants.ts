@@ -306,11 +306,6 @@ export const MODALS: Index<true> = {
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
-export enum DropTarget {
-  SubthoughtsDrop = 'SubthoughtsDrop',
-  ThoughtDrop = 'ThoughtDrop',
-}
-
 export const EMOJI_REGEX = emojiRegex
 /*
   Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.

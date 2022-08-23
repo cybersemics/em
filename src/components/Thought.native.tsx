@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { connect, useSelector } from 'react-redux'
 import Context from '../@types/Context'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -14,7 +15,7 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useLongPress from '../hooks/useLongPress'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
@@ -221,7 +222,7 @@ const ThoughtContainer = ({
           value: true,
           draggingThought: state.draggingThought,
           hoveringPath: path,
-          hoverId: DropTarget.ThoughtDrop,
+          hoverId: DropThoughtZone.ThoughtDrop,
         }),
       )
     }

@@ -1,9 +1,10 @@
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import expandHoverTop from '../action-creators/expandHoverTop'
-import { DropTarget, EXPAND_HOVER_DELAY } from '../constants'
+import { EXPAND_HOVER_DELAY } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import equalPath from '../util/equalPath'
@@ -14,11 +15,11 @@ import parentOf from '../util/parentOf'
  * Checks if the current hovering thought's parent should expand it's context.
  */
 const shouldAllowActiveHoverTop = (state: State) => {
-  const { cursor, hoverId, expandHoverTopPath, hoveringPath } = state
+  const { cursor, hoverZone, expandHoverTopPath, hoveringPath } = state
 
   if (!hoveringPath) return false
 
-  if (hoverId !== DropTarget.ThoughtDrop) return false
+  if (hoverZone !== DropThoughtZone.ThoughtDrop) return false
 
   const parentOfHoveringThought = hoveringPath && parentOf(hoveringPath)
 

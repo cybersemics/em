@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -13,7 +14,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { DropTarget, MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import globals from '../globals'
 import useAutofocus from '../hooks/useAutofocus'
 import useLongPress from '../hooks/useLongPress'
@@ -282,7 +283,7 @@ const ThoughtContainer = ({
             value: true,
             draggingThought: getState().draggingThought,
             hoveringPath: path,
-            hoverId: DropTarget.ThoughtDrop,
+            hoverId: DropThoughtZone.ThoughtDrop,
           }),
         )
       })
@@ -340,7 +341,7 @@ const ThoughtContainer = ({
       !isHovering &&
       state.hoveringPath &&
       isDescendantPath(state.hoveringPath, parentOf(path)) &&
-      (state.hoveringPath.length !== path.length || state.hoverId === DropTarget.SubthoughtsDrop)
+      (state.hoveringPath.length !== path.length || state.hoverZone === DropThoughtZone.SubthoughtsDrop)
 
     const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
 
@@ -370,11 +371,11 @@ const ThoughtContainer = ({
       state.hoveringPath &&
       // SubthoughtsDrop
       // can drop on SubthoughtsDrop if this thought is being hovered over
-      ((state.hoverId === DropTarget.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
+      ((state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
         // ThoughtDrop
         // can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought
         (equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
-          state.hoverId === DropTarget.ThoughtDrop &&
+          state.hoverZone === DropThoughtZone.ThoughtDrop &&
           !isDescendantPath(simplePath, state.draggingThought!))),
   )
 

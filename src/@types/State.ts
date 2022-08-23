@@ -1,4 +1,4 @@
-import { DropTarget } from '../constants'
+import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
 import Context from './Context'
 import { User } from './Firebase'
@@ -57,7 +57,7 @@ interface State {
   // drop target thought currently being hovered over
   hoveringPath?: Path
   // type of drop target being hovered over
-  hoverId?: DropTarget
+  hoverZone?: DropThoughtZone
   invalidState: boolean
   isLoading: boolean
   isPushing?: boolean
