@@ -1,24 +1,14 @@
 import _ from 'lodash'
-import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
-import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
 import globals from '../globals'
+import { DragInProgressPayload } from '../reducers/dragInProgress'
 import { store } from '../store'
 import head from '../util/head'
 import alert from './alert'
 import expandOnHoverBottom from './expandOnHoverBottom'
 import expandOnHoverTop from './expandOnHoverTop'
-
-interface Payload {
-  value: boolean
-  draggingThought?: SimplePath
-  hoveringPath?: Path
-  hoverId?: DropThoughtZone
-  offset?: number
-}
 
 /** A utility that shakes if hit too much. Call shaker.hit with a id representing the source of the hit. If the number of unique ids exceeds the SHAKE_THRESHOLD within DEBOUNCE_SHAKING, trigger a shake. */
 const Shaker = (onShake: () => unknown) => {
@@ -74,7 +64,7 @@ const shaker = Shaker(() => {
 
 /** Drag in progress. */
 const dragInProgress =
-  (payload: Payload): Thunk =>
+  (payload: DragInProgressPayload): Thunk =>
   (dispatch, getState) => {
     const { hoveringPath, value } = payload
 

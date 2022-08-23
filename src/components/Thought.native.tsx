@@ -222,7 +222,7 @@ const ThoughtContainer = ({
           value: true,
           draggingThought: state.draggingThought,
           hoveringPath: path,
-          hoverId: DropThoughtZone.ThoughtDrop,
+          hoverZone: DropThoughtZone.ThoughtDrop,
         }),
       )
     }

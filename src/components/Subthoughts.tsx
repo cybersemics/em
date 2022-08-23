@@ -483,7 +483,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           value: true,
           draggingThought: state.draggingThought,
           hoveringPath: path,
-          hoverId: DropThoughtZone.SubthoughtsDrop,
+          hoverZone: DropThoughtZone.SubthoughtsDrop,
         }),
       )
     }

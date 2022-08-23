@@ -465,6 +465,7 @@ export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
+  ReorderFavorites: 'Drag and drop to reorder favorites',
 }
 
 export enum AlertType {

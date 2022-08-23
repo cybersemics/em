@@ -432,7 +432,7 @@ export const SubthoughtsComponent = ({
   //         value: true,
   //         draggingThought: state.draggingThought,
   //         hoveringPath: path,
-  //         hoverId: DROP_TARGET.SubthoughtsDrop,
+  //         hoverZone: DROP_TARGET.SubthoughtsDrop,
   //       }),
   //     )
   //   }

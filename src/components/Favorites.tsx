@@ -32,12 +32,13 @@ import splice from '../util/splice'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 
 /** Handles drag start. */
-const beginDrag = ({ simplePath }: { simplePath: SimplePath }): DragThoughtItem => {
+const beginDrag = ({ simplePath, zone }: { simplePath: SimplePath; zone: DragThoughtZone }): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
       value: true,
       draggingThought: simplePath,
+      sourceZone: zone,
       ...(offset != null ? { offset } : null),
     }),
   )

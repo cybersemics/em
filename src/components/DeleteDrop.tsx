@@ -2,7 +2,8 @@ import React, { useEffect } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
-import SimplePath from '../@types/SimplePath'
+import DragThoughtItem from '../@types/DragThoughtItem'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import deleteThought from '../action-creators/deleteThought'
@@ -20,19 +21,19 @@ import DeleteIcon from './icons/DeleteIcon'
 /** Delete the thought on drop. */
 const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
-  const { path, simplePath } = monitor.getItem() as { path: SimplePath; simplePath: SimplePath }
+  const { simplePath, zone } = monitor.getItem() as DragThoughtItem
 
-  if (path) {
-    const value = getThoughtById(state, head(path))?.value
+  if (zone === DragThoughtZone.Favorites) {
+    const value = getThoughtById(state, head(simplePath))?.value
     store.dispatch([
-      toggleAttribute({ path, values: ['=favorite', 'true'] }),
+      toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
       alert(`Removed ${ellipsize(value)} from favorites`, {
         alertType: AlertType.DeleteThoughtComplete,
         clearDelay: 8000,
         showCloseLink: true,
       }),
     ])
-  } else {
+  } else if (zone === DragThoughtZone.Content) {
     const value = getThoughtById(state, head(simplePath))?.value
     store.dispatch([
       deleteThought({
@@ -45,17 +46,26 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
         showCloseLink: true,
       }),
     ])
+  } else {
+    console.error(`Unsupported DragThoughtZone: ${zone}`)
   }
 }
 
 /** Show an alert on hover that notifies the user the thought will be deleted if dropped on the icon. */
-const hover = (isHovering: boolean) => {
+const hover = (isHovering: boolean, zone: DragThoughtZone) => {
   const state = store.getState()
   const value = state.draggingThought && getThoughtById(state, head(state.draggingThought))?.value
 
   if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {
+    const message = isHovering
+      ? zone === DragThoughtZone.Content
+        ? `Drop to delete ${ellipsize(value!)}`
+        : `Remove ${ellipsize(value!)} from favorites`
+      : zone === DragThoughtZone.Content
+      ? AlertText.DragAndDrop
+      : AlertText.ReorderFavorites
     store.dispatch(
-      alert(isHovering ? `Drop to delete ${ellipsize(value!)}` : AlertText.DragAndDrop, {
+      alert(message, {
         alertType: isHovering ? AlertType.DeleteDropHint : AlertType.DragAndDropHint,
         showCloseLink: false,
       }),
@@ -66,18 +76,19 @@ const hover = (isHovering: boolean) => {
 /** Creates the props for drop. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isDragInProgress: monitor.getItem() as boolean,
+  isDragInProgress: !!monitor.getItem(),
+  zone: monitor.getItem()?.zone || null,
   isHovering: monitor.isOver({ shallow: true }),
 })
 
 /** An icon that a thought can be dropped on to delete. */
-const DeleteDrop = ({ dropTarget, isDragInProgress, isHovering }: ReturnType<typeof dropCollect>) => {
+const DeleteDrop = ({ dropTarget, isDragInProgress, isHovering, zone }: ReturnType<typeof dropCollect>) => {
   const dark = useSelector((state: State) => theme(state) !== 'Light')
   const fontSize = useSelector((state: State) => state.fontSize)
   const isDragging = useSelector((state: State) => state.dragHold || state.dragInProgress)
 
   useEffect(() => {
-    hover(isHovering)
+    hover(isHovering, zone)
   }, [isHovering])
 
   return (
