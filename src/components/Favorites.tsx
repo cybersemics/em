@@ -221,7 +221,7 @@ const Favorites = () => {
   }, [favoritesLoaded])
 
   return (
-    <div className='favorites recently-edited-sidebar'>
+    <div className='favorites recently-edited-sidebar' style={{ userSelect: 'none' }}>
       <div className='header'>Favorites</div>
       <div style={{ padding: '0 2em' }}>
         {simplePaths.length > 0
