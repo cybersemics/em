@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, useEffect } from 'react'
 import {
@@ -21,6 +22,7 @@ import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import updateThoughts from '../action-creators/updateThoughts'
 import { AlertType, HOME_PATH, NOOP } from '../constants'
 import * as selection from '../device/selection'
+import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
@@ -131,11 +133,15 @@ const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType>) =>
 const DragAndDropFavorite = DragAndDropThought(
   ({ dragSource, dropTarget, isDragging, isHovering, simplePath }: DragAndDropFavoriteReturnType) => {
     const colors = useSelector(themeColors)
+    const dragHoldResult = useDragHold({ isDragging, simplePath })
     return dropTarget(
       dragSource(
-        <div>
+        <div {...dragHoldResult.props}>
           <span
-            className='drop-hover'
+            className={classNames({
+              'drop-hover': true,
+              pressed: dragHoldResult.isPressed,
+            })}
             style={{
               display: isHovering ? 'inline' : 'none',
               marginLeft: 0,
@@ -148,7 +154,7 @@ const DragAndDropFavorite = DragAndDropThought(
             charLimit={32}
             thoughtsLimit={10}
             styleLink={{
-              ...(isDragging
+              ...(isDragging || dragHoldResult.isPressed
                 ? {
                     color: colors.highlight,
                     fontWeight: 'bold',
