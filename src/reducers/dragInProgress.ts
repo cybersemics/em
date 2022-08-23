@@ -23,7 +23,7 @@ const dragInProgress = (
 ): State => ({
   ...(value
     ? alert(state, {
-        value: sourceZone === DragThoughtZone.Content ? AlertText.DragAndDrop : AlertText.ReorderFavorites,
+        value: sourceZone === DragThoughtZone.Thoughts ? AlertText.DragAndDrop : AlertText.ReorderFavorites,
         alertType: AlertType.DragAndDropHint,
         showCloseLink: false,
       })

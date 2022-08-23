@@ -64,7 +64,7 @@ const drop = ({ simplePath }: { simplePath: SimplePath }, monitor: DropTargetMon
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
   const { simplePath: thoughtsFrom, zone } = monitor.getItem() as DragThoughtItem
-  if (zone === DragThoughtZone.Content) {
+  if (zone === DragThoughtZone.Thoughts) {
     console.error('TODO: Add support for other thought drag sources', monitor.getItem())
     return
   }

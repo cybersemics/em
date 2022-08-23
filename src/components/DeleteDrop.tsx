@@ -33,7 +33,7 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
         showCloseLink: true,
       }),
     ])
-  } else if (zone === DragThoughtZone.Content) {
+  } else if (zone === DragThoughtZone.Thoughts) {
     const value = getThoughtById(state, head(simplePath))?.value
     store.dispatch([
       deleteThought({
@@ -58,10 +58,10 @@ const hover = (isHovering: boolean, zone: DragThoughtZone) => {
 
   if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {
     const message = isHovering
-      ? zone === DragThoughtZone.Content
+      ? zone === DragThoughtZone.Thoughts
         ? `Drop to delete ${ellipsize(value!)}`
         : `Remove ${ellipsize(value!)} from favorites`
-      : zone === DragThoughtZone.Content
+      : zone === DragThoughtZone.Thoughts
       ? AlertText.DragAndDrop
       : AlertText.ReorderFavorites
     store.dispatch(

@@ -1,5 +1,5 @@
 enum DragThoughtZone {
-  'Content' = 'Content',
+  'Thoughts' = 'Thoughts',
   'Favorites' = 'Favorites',
 }
 

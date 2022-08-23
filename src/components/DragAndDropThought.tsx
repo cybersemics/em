@@ -75,7 +75,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtI
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath, zone: DragThoughtZone.Content }
+  return { simplePath, zone: DragThoughtZone.Thoughts }
 }
 
 /** Handles drag end. */
