@@ -18,7 +18,6 @@ export const EXPAND_HOVER_DELAY = 1000
 // sufficient to avoid flash on login
 export const OFFLINE_TIMEOUT = 8 * 1000
 export const ERROR_TIMEOUT = 30 * 1000
-export const RENDER_DELAY = 50
 export const MAX_CURSOR_HISTORY = 50
 export const MODAL_REMIND_ME_LATER_DURATION = 1000 * 60 * 60 * 2 // 2 hours
 // export const MODAL_REMIND_ME_TOMORROW_DURATION = 1000 * 60 * 60 * 20 // 20 hours
@@ -283,6 +282,8 @@ export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
+// delay before long press is activated
+// also used for react-dnd's delayTouchStart
 export const TIMEOUT_LONG_PRESS_THOUGHT = 300
 
 export const MODIFIER_KEYS = {

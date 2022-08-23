@@ -3,6 +3,7 @@ import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
 import { TouchBackend } from 'react-dnd-touch-backend'
+import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 
 const options = {
   backends: [
@@ -11,7 +12,7 @@ const options = {
     },
     {
       backend: TouchBackend,
-      options: { delayTouchStart: 200 },
+      options: { delayTouchStart: TIMEOUT_LONG_PRESS_THOUGHT },
       preview: true,
       transition: TouchTransition,
     },
