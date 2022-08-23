@@ -7,6 +7,8 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
+import DragThoughtItem from '../@types/DragThoughtItem'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
 import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
@@ -64,7 +66,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps) => {
+const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -73,7 +75,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps) => {
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath }
+  return { simplePath, zone: DragThoughtZone.Content }
 }
 
 /** Handles drag end. */
@@ -88,13 +90,6 @@ const endDrag = () => {
     },
   ])
 }
-
-/** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: NOOP,
-  isDragging: monitor.isDragging(),
-})
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
@@ -193,6 +188,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     }, 100)
   }
 }
+
+/** Collects props from the DragSource. */
+const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
+  dragSource: connect.dragSource(),
+  dragPreview: NOOP,
+  isDragging: monitor.isDragging(),
+})
 
 /** Collects props from the DropTarget. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({

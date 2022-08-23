@@ -5,6 +5,7 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import State from '../@types/State'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
+import simplifyPath from '../selectors/simplifyPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import Favorites from './Favorites'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
@@ -34,9 +35,10 @@ const RecentEdited = () => {
     <div className='recently-edited-sidebar'>
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
-        {recentlyEdited.map((recentlyEditedThought, i) => (
-          <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />
-        ))}
+        {recentlyEdited.map((recentlyEditedThought, i) => {
+          const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
+          return <RecentlyEditedBreadcrumbs key={i} simplePath={simplePath} charLimit={32} thoughtsLimit={10} />
+        })}
       </div>
     </div>
   )

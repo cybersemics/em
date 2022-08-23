@@ -4,6 +4,7 @@ import React from 'react'
 import { StyleSheet, View } from 'react-native'
 import { useSelector, useStore } from 'react-redux'
 import State from '../@types/State'
+import simplifyPath from '../selectors/simplifyPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { Text } from './Text.native'
@@ -29,9 +30,8 @@ const RecentEdited = () => {
 
       <View style={styles.padding}>
         {recentlyEdited.map((recentlyEditedThought, i) => {
-          return (
-            <RecentlyEditedBreadcrumbs key={i} path={recentlyEditedThought.path} charLimit={32} thoughtsLimit={10} />
-          )
+          const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
+          return <RecentlyEditedBreadcrumbs key={i} simplePath={simplePath} charLimit={32} thoughtsLimit={10} />
         })}
       </View>
     </View>

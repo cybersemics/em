@@ -9,6 +9,8 @@ import {
   DropTargetMonitor,
 } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
+import DragThoughtItem from '../@types/DragThoughtItem'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -30,16 +32,16 @@ import splice from '../util/splice'
 import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 
 /** Handles drag start. */
-const beginDrag = ({ path }: { path: SimplePath }) => {
+const beginDrag = ({ simplePath }: { simplePath: SimplePath }): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
       value: true,
-      draggingThought: path,
+      draggingThought: simplePath,
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path }
+  return { simplePath, zone: DragThoughtZone.Favorites }
 }
 
 /** Handles drag end. */
@@ -55,23 +57,17 @@ const endDrag = () => {
   ])
 }
 
-/** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: NOOP,
-  isDragging: monitor.isDragging(),
-})
-
 /** Handles dropping a thought on a DropTarget. */
-const drop = (
-  props: Parameters<typeof RecentlyEditedBreadcrumbs>[0] & { index?: number },
-  monitor: DropTargetMonitor,
-) => {
+const drop = ({ simplePath }: { simplePath: SimplePath }, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { path: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.path
+  const { simplePath: thoughtsFrom, zone } = monitor.getItem() as DragThoughtItem
+  if (zone === DragThoughtZone.Content) {
+    console.error('TODO: Add support for other thought drag sources', monitor.getItem())
+    return
+  }
+  const thoughtsTo = simplePath
 
   const state = store.getState()
 
@@ -107,6 +103,13 @@ const drop = (
   )
 }
 
+/** Collects props from the DragSource. */
+const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
+  dragSource: connect.dragSource(),
+  dragPreview: NOOP,
+  isDragging: monitor.isDragging(),
+})
+
 /** Collects props from the DropTarget. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
@@ -116,24 +119,16 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
   isDeepHovering: monitor.isOver(),
 })
 
+type DragAndDropFavoriteReturnType = ReturnType<typeof dragCollect> &
+  ReturnType<typeof dropCollect> & {
+    simplePath: SimplePath
+  }
 /** A draggable and droppable thought. */
-const DragAndDropThought = (el: FC<any>) =>
+const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType>) =>
   DragSource('thought', { beginDrag, endDrag }, dragCollect)(DropTarget('thought', { drop }, dropCollect)(el))
 
 const DragAndDropFavorite = DragAndDropThought(
-  ({
-    dragSource,
-    dropTarget,
-    isDragging,
-    isHovering,
-    path,
-  }: {
-    dragSource: any
-    dropTarget: any
-    isDragging: boolean
-    isHovering: boolean
-    path: SimplePath
-  }) => {
+  ({ dragSource, dropTarget, isDragging, isHovering, simplePath }: DragAndDropFavoriteReturnType) => {
     const colors = useSelector(themeColors)
     return dropTarget(
       dragSource(
@@ -148,7 +143,7 @@ const DragAndDropFavorite = DragAndDropThought(
             }}
           />
           <RecentlyEditedBreadcrumbs
-            path={path}
+            simplePath={simplePath}
             charLimit={32}
             thoughtsLimit={10}
             styleLink={{
@@ -171,7 +166,7 @@ const DropEnd = DropTarget(
   'thought',
   { drop },
   dropCollect,
-)(({ dropTarget, isHovering, path }: { dropTarget: any; isHovering: boolean; path: SimplePath }) =>
+)(({ dropTarget, isHovering, simplePath }: ReturnType<typeof dropCollect> & { simplePath: SimplePath }) =>
   dropTarget(
     <div style={{ height: '4em' }}>
       <span
@@ -197,7 +192,7 @@ const Favorites = () => {
     return lexeme && lexeme.contexts.every(cxid => getThoughtById(state, cxid))
   })
 
-  const paths = useSelector((state: State) => {
+  const simplePaths = useSelector((state: State) => {
     return (getLexeme(state, '=favorite')?.contexts || [])
       .map(id => {
         const thought = getThoughtById(state, id)
@@ -228,10 +223,10 @@ const Favorites = () => {
     <div className='favorites recently-edited-sidebar'>
       <div className='header'>Favorites</div>
       <div style={{ padding: '0 2em' }}>
-        {paths.length > 0
-          ? paths.map((path, i) => <DragAndDropFavorite key={head(path)} index={i} path={path} />)
+        {simplePaths.length > 0
+          ? simplePaths.map((simplePath, i) => <DragAndDropFavorite key={head(simplePath)} simplePath={simplePath} />)
           : 'No favorites'}
-        <DropEnd path={HOME_PATH as SimplePath} />
+        <DropEnd simplePath={HOME_PATH as SimplePath} />
       </div>
     </div>
   )
