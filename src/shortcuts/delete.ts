@@ -10,7 +10,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
-import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
@@ -52,7 +51,6 @@ const deleteShortcut: Shortcut = {
   description: 'Say goodbye to the current thought... forever.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
-  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
   svg: Icon,
 }
