@@ -205,6 +205,9 @@ const updateThoughts = (
       // disable loading screen as soon as the root is loaded
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: state.isLoading && isStillLoading(),
+      // reset the jump cursor after any edit
+      // See: State.jumpCursor
+      jumpCursor: null,
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),

@@ -61,6 +61,11 @@ interface State {
   invalidState: boolean
   isLoading: boolean
   isPushing?: boolean
+  // Overrides the jump behavior to use the cursor before the last jump instead of the last edit.
+  // This is necessary because the jump itself does not count as an edit.
+  // we want it to count as an edit when it comes to jump behavior, but not for undo behavior, so we provide an override.
+  // Otherwise jump will think the cursor is unchanged and continue to the next-to-last edit point
+  jumpCursor?: Path | null
   lastUpdated?: string
   latestShortcuts: Shortcut[]
   modals: Index<{ complete?: boolean }>

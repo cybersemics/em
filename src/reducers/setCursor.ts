@@ -36,10 +36,11 @@ const setCursor = (
     cursorHistoryClear,
     cursorHistoryPop,
     editing,
-    offset,
-    replaceContextViews,
-    path,
     noteFocus = false,
+    offset,
+    path,
+    replaceContextViews,
+    setJumpCursor,
   }: {
     contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
@@ -47,8 +48,10 @@ const setCursor = (
     editing?: boolean | null
     noteFocus?: boolean
     offset?: number | null
-    replaceContextViews?: Index<boolean>
     path: Path | null
+    replaceContextViews?: Index<boolean>
+    // See: State.jumpCursor
+    setJumpCursor?: boolean
   },
 ): State => {
   if (path && path.length > 1 && path[0] === HOME_TOKEN) {
@@ -160,6 +163,11 @@ const setCursor = (
     noteFocus,
     cursorInitialized: true,
     ...(!thoughtsResolved ? { showColorPicker: false } : null),
+    // set the jump cursor to the old cursor so it can be restored
+    // if false, clear the jump cursor
+    // otherwise ignore it
+    // See: State.jumpCursor
+    ...(setJumpCursor != null ? { jumpCursor: setJumpCursor ? state.cursor : null } : null),
   }
 
   return stateNew
