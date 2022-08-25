@@ -493,3 +493,6 @@ export enum AlertType {
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
 }
+
+// maximum size of state.jumpHistory
+export const MAX_JUMPS = 100

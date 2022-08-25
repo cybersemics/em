@@ -11,19 +11,19 @@ import isDivider from '../util/isDivider'
 const cursorChangedEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
-    /**
-     * Clear cursor selection if on divider.
-     */
+    /** Clears the cursor selection if on divider or cursor is null. */
     const cursorChangedReducer = (state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
-      const updatedState = reducer(state, action)
+      const updatedState = reducer(state || initialState, action)
       if (
-        updatedState.cursor &&
-        !equalPath(state.cursor, updatedState.cursor) &&
-        isDivider(headValue(updatedState, updatedState.cursor))
+        // selection may still exist after jump to null
+        !updatedState.cursor ||
+        // clear selection when cursor is on divider
+        (!equalPath(state.cursor, updatedState.cursor) && isDivider(headValue(updatedState, updatedState.cursor)))
       ) {
         selection.clear()
       }
+
       return updatedState
     }
 

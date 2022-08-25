@@ -2,13 +2,11 @@ import importText from '../../action-creators/importText'
 import indent from '../../action-creators/indent'
 import jump from '../../action-creators/jump'
 import newSubthought from '../../action-creators/newSubthought'
+import newThought from '../../action-creators/newThought'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pathToContext from '../../util/pathToContext'
-
-// store is required to test jump since it relies on undoRedoEnhancer
-// a reducer test is insufficient as state.undoPatches is always be empty when using pure reducers without middleware
 
 it('jump to last edit point', () => {
   const store = createTestStore()
@@ -142,7 +140,7 @@ it('jump to last edit point in deeply nested thoughts', () => {
   expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b', 'cc'])
 })
 
-it('jump after indent', () => {
+it('jump back to edit after indent', () => {
   const store = createTestStore()
 
   store.dispatch([
@@ -167,7 +165,32 @@ it('jump after indent', () => {
   expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['aa'])
 })
 
-it.skip('jump after new subthought', () => {
+it('jump twice after indent', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    newThought({ value: '' }),
+    editThought({
+      oldValue: '',
+      newValue: 'a',
+      at: [''],
+    }),
+    newThought({ value: '' }),
+    editThought({
+      oldValue: '',
+      newValue: 'b',
+      at: [''],
+    }),
+    indent(),
+    jump(),
+    jump(),
+  ])
+
+  const state = store.getState()
+  expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b'])
+})
+
+it('jump after new subthought', () => {
   const store = createTestStore()
 
   store.dispatch([
@@ -196,4 +219,28 @@ it.skip('jump after new subthought', () => {
 
   const state = store.getState()
   expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['a', 'b'])
+})
+
+it('jump from null cursor', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+    editThought({
+      oldValue: 'a',
+      newValue: 'aa',
+      at: ['a'],
+    }),
+    setCursor(null),
+    jump(),
+  ])
+
+  const state = store.getState()
+  expect(state.cursor && pathToContext(state, state.cursor)).toEqual(['aa'])
 })

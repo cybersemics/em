@@ -122,6 +122,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     invalidState: false,
     isLoading: true,
     isPushing: false,
+    jumpHistory: [],
     latestShortcuts: [],
     modals: {},
     noteFocus: false, // true if a note has the browser selection

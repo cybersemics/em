@@ -6,14 +6,16 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_JUMPS } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import equalPath from '../util/equalPath'
 import keyValueBy from '../util/keyValueBy'
 import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
+import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 
 export type UpdateThoughtsOptions = PushBatch & {
@@ -205,9 +207,6 @@ const updateThoughts = (
       // disable loading screen as soon as the root is loaded
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: state.isLoading && isStillLoading(),
-      // reset the jump cursor after any edit
-      // See: State.jumpCursor
-      jumpCursor: null,
       recentlyEdited: recentlyEditedNew,
       // only push the batch to the pushQueue if syncing at least local or remote
       ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
@@ -216,13 +215,33 @@ const updateThoughts = (
         lexemeIndex,
       },
     }),
-    // calculate expanded using fresh thoughts and cursor
-    !preventExpandThoughts
-      ? state => ({
-          ...state,
-          expanded: expandThoughts(state, state.cursor),
-        })
-      : null,
+    // state changes that rely on new state
+    state => {
+      const lastJump = state.jumpHistory[0]
+      const lastJumpParent = lastJump ? parentOf(lastJump) : null
+      const cursorParent = state.cursor ? parentOf(state.cursor) : null
+
+      /** Returns true if the cursor and last jump point are parent-child or child-parent. When this is true, the cursor will replace the last jump history entry rather than appending to it. */
+      const isParentChild = () =>
+        !!state.cursor &&
+        state.cursor.length > 0 &&
+        !!lastJump &&
+        lastJump.length > 0 &&
+        (equalPath(lastJumpParent, state.cursor) || equalPath(lastJump, cursorParent))
+
+      return {
+        ...state,
+        // append old cursor to jump history if different
+        // replace last jump if adjacent
+        // limit to MAX_JUMPS
+        // See: State.jumpHistory
+        ...(lastJump !== state.cursor
+          ? { jumpHistory: [state.cursor, ...state.jumpHistory.slice(isParentChild() ? 1 : 0, MAX_JUMPS)] }
+          : null),
+        // calculate expanded using fresh thoughts and cursor
+        ...(!preventExpandThoughts ? { expanded: expandThoughts(state, state.cursor) } : null),
+      }
+    },
 
     // data integrity checks
     // immediately throws if any data integity issues are found
