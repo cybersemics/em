@@ -6,20 +6,20 @@ import themeColors from '../../selectors/themeColors'
 
 /** A home icon. */
 const HomeIcon = ({ fill, size, style }: IconType) => {
-  const fontSize = useSelector((state: State) => (size || state.fontSize) * 1.333)
+  const sizeCalculated = useSelector((state: State) => size || state.fontSize)
   const colors = useSelector(themeColors)
   return (
     <span role='img' aria-label='home' className='logo-wrapper'>
       <svg
         xmlns='http://www.w3.org/2000/svg'
-        width={fontSize}
-        height={fontSize}
+        width={sizeCalculated}
+        height={sizeCalculated}
         viewBox='0 0 24 24'
         className='logo'
         fill={fill || colors.fg}
         style={{
-          height: fontSize,
-          width: fontSize,
+          height: sizeCalculated,
+          width: sizeCalculated,
           ...style,
         }}
       >

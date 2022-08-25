@@ -62,7 +62,8 @@ const NavBar = ({
         <div className='nav-container' style={{ justifyContent: 'flex-end' }}>
           {!isTutorialOn && (
             <>
-              {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink /> : null}
+              {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
+              {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink size={24} /> : null}
               <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
                   <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
