@@ -15,6 +15,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import { store } from '../store'
+import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
 import ContentEditable, { ContentEditableEvent, IKeyDown } from './ContentEditable.native'
@@ -49,7 +50,7 @@ const Note = ({ path }: NoteProps) => {
   useEffect(() => {
     const state = store.getState()
     // cursor must be true if note is focused
-    if (state.noteFocus && state.cursor && head(state.cursor) === head(path)) {
+    if (state.noteFocus && equalPathHead(state.cursor, path)) {
       // TODO: Set the caret to the end of the note
       // selection.set(noteRef.current!, { end: true })
     }

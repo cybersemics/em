@@ -19,6 +19,7 @@ import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import { store } from '../store'
+import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -58,7 +59,7 @@ const Note = ({ path }: NoteProps) => {
   const [justPasted, setJustPasted] = useState(false)
 
   /** Gets state.noteFocus. */
-  const hasFocus = useSelector((state: State) => state.noteFocus && state.cursor && head(state.cursor) === head(path))
+  const hasFocus = useSelector((state: State) => state.noteFocus && equalPathHead(state.cursor, path))
 
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {

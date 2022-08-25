@@ -14,8 +14,8 @@ import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
+import equalPathHead from '../util/equalPathHead'
 import hashThought from '../util/hashThought'
-import head from '../util/head'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
@@ -199,7 +199,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  const isDeletedThoughtCursor = !!path && !!state.cursor && head(path) === head(state.cursor)
+  const isDeletedThoughtCursor = equalPathHead(path, state.cursor)
 
   const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
 
