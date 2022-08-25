@@ -26,7 +26,7 @@ interface LinkProps {
 const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
   const emContext = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const thought = getThoughtById(store.getState(), head(simplePath))
-  const value = label || strip(thought.value)
+  const value = strip(label || thought.value)
   const dispatch = useDispatch()
 
   // TODO: Fix tabIndex for accessibility
