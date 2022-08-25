@@ -127,6 +127,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     // Used by the Content component to determine if there are no root children and NewThoughtInstructions should be displayed.
     isLoading: true,
     isPushing: false,
+    jumpHistory: [],
     latestShortcuts: [],
     modals: {},
     noteFocus: false,

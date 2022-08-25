@@ -110,7 +110,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
 }
 
 /**
- * Returns the diff between two states as a json-fast-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
+ * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
   compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))

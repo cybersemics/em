@@ -36,10 +36,10 @@ const setCursor = (
     cursorHistoryClear,
     cursorHistoryPop,
     editing,
-    offset,
-    replaceContextViews,
-    path,
     noteFocus = false,
+    offset,
+    path,
+    replaceContextViews,
   }: {
     contextChain?: SimplePath[]
     cursorHistoryClear?: boolean
@@ -47,8 +47,8 @@ const setCursor = (
     editing?: boolean | null
     noteFocus?: boolean
     offset?: number | null
-    replaceContextViews?: Index<boolean>
     path: Path | null
+    replaceContextViews?: Index<boolean>
   },
 ): State => {
   if (path && path.length > 1 && path[0] === HOME_TOKEN) {

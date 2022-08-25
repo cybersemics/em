@@ -49,7 +49,6 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
     // TODO: return Path
     return path as SimplePath
   } catch (e) {
-    console.warn(e)
     return null
   }
 }
