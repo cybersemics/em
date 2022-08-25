@@ -1,6 +1,7 @@
 import React from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import search from '../action-creators/search'
 import searchContexts from '../action-creators/searchContexts'
 import setCursor from '../action-creators/setCursor'
@@ -9,7 +10,6 @@ import { EM_TOKEN } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
-import { store } from '../store'
 import decodeCharacterEntities from '../util/decodeCharacterEntities'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -24,9 +24,8 @@ interface LinkProps {
 
 /** Renders a link with the appropriate label to the given context. */
 const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
-  const emContext = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const thought = getThoughtById(store.getState(), head(simplePath))
-  const value = strip(label || thought.value)
+  const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
+  const value = useSelector((state: State) => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
 
   // TODO: Fix tabIndex for accessibility
@@ -38,16 +37,18 @@ const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
         selection.clear()
-        dispatch(search({ value: null }))
-        dispatch(searchContexts({ value: null }))
-        dispatch(setCursor({ path: simplePath }))
-        dispatch(toggleSidebar({ value: false }))
+        dispatch([
+          search({ value: null }),
+          searchContexts({ value: null }),
+          setCursor({ path: simplePath }),
+          toggleSidebar({ value: false }),
+        ])
         scrollCursorIntoView()
       }}
       style={style}
-      dangerouslySetInnerHTML={emContext ? { __html: '<b>em</b>' } : undefined}
+      dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
-      {!emContext ? ellipsize(decodeCharacterEntities(value), charLimit!) : null}
+      {!isEM ? ellipsize(decodeCharacterEntities(value), charLimit) : null}
     </a>
   )
 }
