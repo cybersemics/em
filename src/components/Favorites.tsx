@@ -133,7 +133,7 @@ const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType>) =>
 const DragAndDropFavorite = DragAndDropThought(
   ({ dragSource, dropTarget, isDragging, isHovering, simplePath }: DragAndDropFavoriteReturnType) => {
     const colors = useSelector(themeColors)
-    const dragHoldResult = useDragHold({ isDragging, simplePath })
+    const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
     return dropTarget(
       dragSource(
         <div {...dragHoldResult.props}>

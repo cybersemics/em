@@ -72,6 +72,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtI
     dragInProgress({
       value: true,
       draggingThought: simplePath,
+      sourceZone: DragThoughtZone.Thoughts,
       ...(offset != null ? { offset } : null),
     }),
   )

@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import GesturePath from '../@types/GesturePath'
 import LazyEnv from '../@types/LazyEnv'
@@ -484,6 +485,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           draggingThought: state.draggingThought,
           hoveringPath: path,
           hoverZone: DropThoughtZone.SubthoughtsDrop,
+          sourceZone: DragThoughtZone.Thoughts,
         }),
       )
     }

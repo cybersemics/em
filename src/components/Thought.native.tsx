@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
 import { connect, useSelector } from 'react-redux'
 import Context from '../@types/Context'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -11,13 +12,11 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import alert from '../action-creators/alert'
-import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
-import { MAX_DISTANCE_FROM_CURSOR, TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
-import useLongPress from '../hooks/useLongPress'
+import useDragHold from '../hooks/useDragHold'
 import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
@@ -223,33 +222,19 @@ const ThoughtContainer = ({
           draggingThought: state.draggingThought,
           hoveringPath: path,
           hoverZone: DropThoughtZone.ThoughtDrop,
+          sourceZone: DragThoughtZone.Thoughts,
         }),
       )
     }
   }, [isBeingHoveredOver])
 
-  /** Highlight bullet and show alert on long press on Thought. */
-  const onLongPressStart = () => {
-    if (!store.getState().dragHold) {
-      store.dispatch([dragHold({ value: true, simplePath })])
-    }
-  }
-
-  /** Cancel highlighting of bullet and dismiss alert when long press finished. */
-  const onLongPressEnd = () => {
-    if (store.getState().dragHold) {
-      store.dispatch([dragHold({ value: false }), alert(null)])
-    }
-  }
-
-  // temporarily disable
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const longPressHandlerProps = useLongPress(onLongPressStart, onLongPressEnd, TIMEOUT_LONG_PRESS_THOUGHT)
-
   const envParsed = JSON.parse(env || '{}') as LazyEnv
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })
 
   if (!thought) return null
 

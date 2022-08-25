@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
+import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -237,12 +238,14 @@ const ThoughtContainer = ({
   useEffect(() => {
     if (isBeingHoveredOver && store.getState().dragInProgress) {
       store.dispatch((dispatch, getState) => {
+        const state = getState()
         dispatch(
           dragInProgress({
             value: true,
-            draggingThought: getState().draggingThought,
+            draggingThought: state.draggingThought,
             hoveringPath: path,
             hoverZone: DropThoughtZone.ThoughtDrop,
+            sourceZone: DragThoughtZone.Thoughts,
           }),
         )
       })
@@ -267,7 +270,7 @@ const ThoughtContainer = ({
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
 
-  const dragHoldResult = useDragHold({ isDragging, simplePath })
+  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)

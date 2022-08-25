@@ -433,6 +433,7 @@ export const SubthoughtsComponent = ({
   //         draggingThought: state.draggingThought,
   //         hoveringPath: path,
   //         hoverZone: DROP_TARGET.SubthoughtsDrop,
+  //         sourceZone: DragThoughtZone.Thoughts,
   //       }),
   //     )
   //   }
