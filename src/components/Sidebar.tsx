@@ -8,7 +8,7 @@ import { isTouch } from '../browser'
 import simplifyPath from '../selectors/simplifyPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import Favorites from './Favorites'
-import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
+import ThoughtLink from './ThoughtLink'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
@@ -37,7 +37,7 @@ const RecentEdited = () => {
       <div style={{ padding: '0 2em' }}>
         {recentlyEdited.map((recentlyEditedThought, i) => {
           const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
-          return <RecentlyEditedBreadcrumbs key={i} simplePath={simplePath} charLimit={32} thoughtsLimit={10} />
+          return <ThoughtLink key={i} simplePath={simplePath} />
         })}
       </div>
     </div>

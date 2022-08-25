@@ -6,8 +6,8 @@ import { useSelector, useStore } from 'react-redux'
 import State from '../@types/State'
 import simplifyPath from '../selectors/simplifyPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
-import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
 import { Text } from './Text.native'
+import ThoughtLink from './ThoughtLink'
 
 /** Displays recently edited thoughts with a header. */
 const RecentEdited = () => {
@@ -31,7 +31,7 @@ const RecentEdited = () => {
       <View style={styles.padding}>
         {recentlyEdited.map((recentlyEditedThought, i) => {
           const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
-          return <RecentlyEditedBreadcrumbs key={i} simplePath={simplePath} charLimit={32} thoughtsLimit={10} />
+          return <ThoughtLink key={i} simplePath={simplePath} />
         })}
       </View>
     </View>

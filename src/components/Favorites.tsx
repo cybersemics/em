@@ -31,7 +31,7 @@ import { store } from '../store'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
-import RecentlyEditedBreadcrumbs from './RecentlyEditedBreadcrumbs'
+import ThoughtLink from './ThoughtLink'
 
 /** Handles drag start. */
 const beginDrag = ({ simplePath, zone }: { simplePath: SimplePath; zone: DragThoughtZone }): DragThoughtItem => {
@@ -149,10 +149,8 @@ const DragAndDropFavorite = DragAndDropThought(
               width: 'calc(100% - 4em)',
             }}
           />
-          <RecentlyEditedBreadcrumbs
+          <ThoughtLink
             simplePath={simplePath}
-            charLimit={32}
-            thoughtsLimit={10}
             styleLink={{
               ...(isDragging || dragHoldResult.isPressed
                 ? {

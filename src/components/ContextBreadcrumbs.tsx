@@ -48,7 +48,7 @@ const BreadCrumb: FC<{
 }
 
 /** Breadcrumbs for contexts within the context views. */
-export const ContextBreadcrumbs = ({
+const ContextBreadcrumbs = ({
   charLimit,
   classNamesObject,
   hidden,
