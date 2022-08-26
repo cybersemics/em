@@ -55,6 +55,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
+import strip from '../util/strip'
 import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
@@ -388,14 +389,19 @@ const EmptyChildrenDropTarget = ({
   isDragInProgress,
   isHovering,
   isThoughtDivider,
+  debugValue,
 }: {
   depth?: number
   dropTarget: ConnectDropTarget
   isDragInProgress?: boolean
   isHovering?: boolean
   isThoughtDivider?: boolean
+  debugValue?: string
 }) => (
-  <ul className='empty-children' style={{ display: globals.simulateDrag || isDragInProgress ? 'block' : 'none' }}>
+  <ul
+    className='empty-children'
+    style={{ display: globals.simulateDrag || globals.simulateDrop || isDragInProgress ? 'block' : 'none' }}
+  >
     {dropTarget(
       <li
         className={classNames({
@@ -404,11 +410,28 @@ const EmptyChildrenDropTarget = ({
           'inside-divider': isThoughtDivider,
           last: depth === 0,
         })}
+        style={{
+          backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
+          opacity: 0.9,
+        }}
       >
-        <span
-          className='drop-hover'
-          style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}
-        ></span>
+        {globals.simulateDrop && (
+          <span
+            style={{
+              paddingLeft: 5,
+              position: 'absolute',
+              // make sure label does not interfere with drop target hovering
+              pointerEvents: 'none',
+              left: 0,
+              color: '#ff7bc3' /* mid pink */,
+            }}
+          >
+            {strip(debugValue || '')} subthoughts
+            {isHovering ? '*' : ''}
+          </span>
+        )}
+
+        <span className='drop-hover' style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}></span>
       </li>,
     )}
   </ul>
@@ -811,6 +834,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
                 key={`${child.id}-${child.rank}`}
                 rank={child.rank}
+                debugIndex={globals.simulateDrop ? i : undefined}
                 isVisible={
                   // if thought is a zoomed cursor then it is visible
                   (isChildCursor && !!zoomCursor) || actualDistance() < 2 || (distance === 2 && isEditingChildPath())
@@ -837,22 +861,32 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               })}
               style={{
                 display:
-                  (autofocus() === 'show' || autofocus() !== 'dim') && (globals.simulateDrag || isDragInProgress)
+                  (autofocus() === 'show' || autofocus() !== 'dim') && (globals.simulateDrop || isDragInProgress)
                     ? 'list-item'
                     : 'none',
+                backgroundColor: globals.simulateDrop ? '#252346' : undefined, // dark eggplant
               }}
             >
-              {/*
-              <span style={{ backgroundColor: 'rgba(100, 200, 255, 0.5)', position: 'absolute' }}>
-                {value}
-                {isHovering ? '*' : ''}
-              </span>
-              */}
+              {globals.simulateDrop && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    paddingLeft: 30,
+                    // make sure label does not interfere with drop target hovering
+                    pointerEvents: 'none',
+                    left: 0,
+                    color: '#ff7bc3' /* mid pink */,
+                  }}
+                >
+                  {strip(value)} subthoughts
+                  {isHovering ? '*' : ''}
+                </span>
+              )}
 
               <span
                 className='drop-hover'
                 style={{
-                  display: (globals.simulateDropHover || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none',
+                  display: (globals.simulateDrag || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none',
                 }}
               ></span>
             </li>,
@@ -866,6 +900,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             dropTarget={dropTarget}
             isDragInProgress={isDragInProgress}
             isHovering={isHovering}
+            debugValue={globals.simulateDrop ? value : undefined}
           />
         )
       )}

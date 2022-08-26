@@ -274,7 +274,7 @@ const ThoughtContainer = ({
   //     // check if it's alphabetically next to previous thought if it exists
   //     (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
   //   : // if alphabetical sort is disabled just check if current thought is hovering
-  //     globals.simulateDropHover || isHovering
+  //     globals.simulateDrag || isHovering
 
   const isProseView = hideBullet
 

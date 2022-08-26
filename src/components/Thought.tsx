@@ -64,6 +64,8 @@ export interface ThoughtContainerProps {
   childrenForced?: ThoughtId[]
   contextBinding?: Path
   cursor?: Path | null
+  // used by globals.simulateDrop
+  debugIndex?: number
   depth?: number
   env?: string
   expandedContextThought?: Path
@@ -97,6 +99,7 @@ export interface ThoughtContainerProps {
 
 export interface ThoughtProps {
   cursorOffset?: number | null
+  debugIndex?: number
   editing?: boolean | null
   // When context view is activated, some contexts may be pending
   // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
@@ -188,6 +191,7 @@ const ThoughtContainer = ({
   contextBinding,
   cursor,
   cursorOffset,
+  debugIndex,
   depth = 0,
   dragPreview,
   dragSource,
@@ -322,7 +326,7 @@ const ThoughtContainer = ({
           // check if it's alphabetically next to previous thought if it exists
           (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
       : // if alphabetical sort is disabled just check if current thought is hovering
-        globals.simulateDropHover || isHovering
+        globals.simulateDrag || isHovering
   })
 
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). */
@@ -380,6 +384,11 @@ const ThoughtContainer = ({
         style={{
           ...styleAutofocus,
           ...styleContainer,
+          ...(globals.simulateDrop
+            ? {
+                backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
+              }
+            : null),
         }}
         className={classNames({
           child: true,
@@ -450,7 +459,7 @@ const ThoughtContainer = ({
           <span
             className='drop-hover'
             style={{
-              display: shouldDisplayDropHover ? 'inline' : 'none',
+              display: globals.simulateDrag || shouldDisplayDropHover ? 'inline' : 'none',
             }}
           ></span>
 

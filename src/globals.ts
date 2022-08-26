@@ -23,11 +23,12 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// show all ThoughtDrop and SubthoughtsDrop targets for debugging
+// show all drop-hover elements for debugging
+// as if hovering over all elements at once
 const simulateDrag = false
 
-// show all ThoughtDrop targets for debugging
-const simulateDropHover = false
+// show all drop targets with color blocking for debugging
+const simulateDrop = false
 
 // disable the tutorial for debugging
 const disableTutorial = false
@@ -53,7 +54,7 @@ const globals = {
   offlineTimer,
   rendered,
   simulateDrag,
-  simulateDropHover,
+  simulateDrop,
   suppressExpansion,
   touched,
   touching,

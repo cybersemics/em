@@ -2301,17 +2301,6 @@ code,
   width: calc(100% - 41px);
 }
 
-/* To enable drag simulation, set simulateDropHover to true in globals.ts. */
-.debug-simulate-drag .drop-end .drop-hover {
-  background-color: violet;
-}
-.debug-simulate-drag .empty-children .child.child > .drop-hover {
-  background-color: tomato;
-}
-.debug-simulate-drag .empty-children .drop-end {
-  background-color: pink;
-}
-
 /* bump specificity */
 .empty-children .child.child > .drop-hover {
   margin-top: -0.4em;

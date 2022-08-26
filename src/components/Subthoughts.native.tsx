@@ -356,7 +356,7 @@ const NoChildren = ({
 //       >
 //         <span
 //           className='drop-hover'
-//           style={{ display: globals.simulateDropHover || isHovering ? 'inline' : 'none' }}
+//           style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}
 //         ></span>
 //       </li>,
 //     )}

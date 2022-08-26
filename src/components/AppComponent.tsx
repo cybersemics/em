@@ -149,8 +149,11 @@ const AppComponent: FC<Props> = props => {
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
-    if (globals.simulateDropHover || globals.simulateDropHover) {
+    if (globals.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
+    }
+    if (globals.simulateDrop) {
+      document.body.classList.add('debug-simulate-drop')
     }
   }, [dark])
 
