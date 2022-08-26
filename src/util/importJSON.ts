@@ -360,8 +360,12 @@ const importJSON = (
   const lastChildFirstLevel =
     thoughtIndex[importId] && Object.values(thoughtIndex[importId].childrenMap)[lastChildIndex]
 
+  // true if every thought at the first level is a meta attribute
+  // if so, the cursor is not moved to the last imported subthought
+  const metaOnly = blocksNormalized.every(block => isAttribute(block.scope))
+
   // there may be no last child even if there are imported blocks, i.e. a lone __ROOT__
-  const lastImported = lastChildFirstLevel ? appendToPath(importPath, lastChildFirstLevel) : null
+  const lastImported = lastChildFirstLevel && !metaOnly ? appendToPath(importPath, lastChildFirstLevel) : null
 
   return {
     thoughtIndexUpdates: { ...initialThoughtIndex, ...thoughtIndex },

@@ -472,8 +472,44 @@ it('import as subthoughts of non-empty cursor', () => {
   - a
     - x
     - y`)
+})
+
+it('set cursor to last imported subthought at first level', () => {
+  const paste = `
+    - x
+    - y
+  `
+
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
+  ])(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'y'])!)
+})
+
+it('do not move cursor when importing only meta attributes', () => {
+  const paste = `
+    - =style
+      - color
+        - black
+    - =styleAnnotation
+      - backgroundColor
+        - tomato
+  `
+
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
+  ])(initialState())
+
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
 
 it('decode HTML entities', () => {

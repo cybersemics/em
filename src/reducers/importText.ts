@@ -242,7 +242,7 @@ const importText = (
       // if original destination is empty then collapse once more.
       shouldImportIntoDummy && destEmpty ? collapseContext({ at: parentOfDestination }) : null,
       // restore the cursor to the last imported thought on the first level
-      // Note: Since collapseContext behavior sets cursor to the first children, we need to set cursor back to the old cursor if preventSetCursor is true.
+      // Note: collapseContext may be executed as part of the import. Since collapseContext moves the cursor, we need to set cursor back to the old cursor if preventSetCursor is true.
       !preventSetCursor
         ? setLastImportedCursor
         : setCursor({
