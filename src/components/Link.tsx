@@ -22,7 +22,7 @@ interface LinkProps {
   style?: React.CSSProperties
 }
 
-/** Renders a link with the appropriate label to the given context. */
+/** Renders a link to a thought. */
 const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const value = useSelector((state: State) => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
@@ -45,7 +45,10 @@ const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
         ])
         scrollCursorIntoView()
       }}
-      style={style}
+      style={{
+        userSelect: 'none',
+        ...style,
+      }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
       {!isEM ? ellipsize(decodeCharacterEntities(value), charLimit) : null}

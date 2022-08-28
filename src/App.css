@@ -264,12 +264,14 @@ a.button-variable-width {
 a.button[disabled] {
   opacity: 0.25;
   pointer-events: none;
+  user-select: none;
   cursor: auto;
 }
 
 button[disabled] {
   opacity: 0.25;
   pointer-events: none;
+  user-select: none;
   cursor: auto;
 }
 
@@ -565,6 +567,7 @@ a.text-link {
 .thought-annotation {
   position: absolute; /* cannot use position:absolute as it changes what the width is relative to */
   pointer-events: none;
+  user-select: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
 }
@@ -1021,6 +1024,7 @@ body.dark {
   white-space: nowrap; /* prevent expanded click area from wrapping */
   z-index: var(--z-index-stack);
   pointer-events: none;
+  user-select: none;
 }
 
 .superscript-container sup {
@@ -3341,4 +3345,8 @@ a.advance-setting-link {
 
 .copy-icon-wrapper svg {
   cursor: pointer;
+}
+
+a {
+  user-select: none;
 }
