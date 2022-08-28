@@ -113,3 +113,47 @@ it('remove =children when toggling off from true', () => {
       - f
       - g`)
 })
+
+it('remove =pin/false from all subthoughts when toggling on', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - =pin
+              - false
+            - c
+            - d
+          - e
+            - =pin
+              - false
+            - f
+            - g
+          - h
+            - i
+            - j
+    `,
+    }),
+    setCursor(['a']),
+  ])
+
+  executeShortcut(pinChildrenShortcut, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - =children
+      - =pin
+        - true
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g
+    - h
+      - i
+      - j`)
+})

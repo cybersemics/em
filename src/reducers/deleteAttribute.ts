@@ -15,6 +15,7 @@ const deleteAttribute = (
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
+
   if (!path || (!value && (!values || values.length === 0))) return state
 
   const thoughtId = head(path)
