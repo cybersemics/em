@@ -158,8 +158,6 @@ const Toolbar = ({
     }
   }, [])
 
-  const alert = useSelector((state: State) => state.alert)
-
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = () => {
     const el = toolbarRef.current
@@ -285,9 +283,6 @@ const Toolbar = ({
               return (
                 <ToolbarIcon
                   clearHoldTimer={clearHoldTimer}
-                  // disable click while alert is active or still being dismissed
-                  // except inline alerts, which do not obscure the toolbar
-                  disabled={!!alert && !alert.isInline}
                   fg={colors.fg}
                   fontSize={fontSize}
                   isPressing={pressingToolbarId === id}
