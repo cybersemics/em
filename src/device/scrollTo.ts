@@ -1,5 +1,5 @@
 /** Scrolls the content to the top or bottom. */
-const scrollTo = (target: 'top' | 'bottom') => {
+const scrollTo = (target: 'top' | 'bottom', behavior?: 'smooth') => {
   const top = target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
 
   if (top === null) {
@@ -9,7 +9,7 @@ const scrollTo = (target: 'top' | 'bottom') => {
   window.scrollTo({
     top,
     left: 0,
-    behavior: 'smooth',
+    behavior,
   })
 }
 
