@@ -19,10 +19,10 @@ const Icon = ({ size = 20, fill }: IconType) => (
   </Svg>
 )
 
-const pinOpenShortcut: Shortcut = {
-  id: 'pinOpen',
+const pinShortcut: Shortcut = {
+  id: 'pin',
   label: 'Pin Open',
-  description: 'Pin and expand the current thought.',
+  description: 'Pin open the current thought.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: Icon,
 
@@ -46,4 +46,4 @@ const pinOpenShortcut: Shortcut = {
   },
 }
 
-export default pinOpenShortcut
+export default pinShortcut

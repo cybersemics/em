@@ -7,10 +7,10 @@ import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 
-const pinOpenShortcut: Shortcut = {
-  id: 'pinOpen',
+const pinShortcut: Shortcut = {
+  id: 'pin',
   label: 'Pin Open',
-  description: 'Pin and expand the current thought.',
+  description: 'Pin open the current thought.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: PinIcon,
   canExecute: getState => !!getState().cursor,
@@ -41,4 +41,4 @@ const pinOpenShortcut: Shortcut = {
   },
 }
 
-export default pinOpenShortcut
+export default pinShortcut

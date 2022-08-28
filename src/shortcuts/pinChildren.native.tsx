@@ -24,8 +24,8 @@ const Icon = ({ size = 20, fill }: IconType) => (
   </Svg>
 )
 
-const pinSubthoughtsShortcut: Shortcut = {
-  id: 'pinSubthoughts',
+const pinChildrenShortcut: Shortcut = {
+  id: 'pinChildren',
   label: 'Pin Open Subthoughts',
   description: "Pin open the current thought's subthoughts.",
   // keyboard: { key: 'p', meta: true, shift: true },
@@ -72,4 +72,4 @@ const pinSubthoughtsShortcut: Shortcut = {
   },
 }
 
-export default pinSubthoughtsShortcut
+export default pinChildrenShortcut
