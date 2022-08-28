@@ -1,5 +1,6 @@
 /** Here's documentation for all shortcuts. */
 
+export { default as archive, archiveAliases } from './archive'
 export { default as bindContext } from './bindContext'
 export { default as bumpThoughtDown } from './bumpThoughtDown'
 export { default as clearThought } from './clearThought'
@@ -13,7 +14,6 @@ export { default as cursorPrev } from './cursorPrev'
 export { default as cursorUp } from './cursorUp'
 export { default as delete } from './delete'
 export { default as deleteEmptyThoughtOrOutdent, deleteEmptyThoughtOrOutdentAlias } from './deleteEmptyThoughtOrOutdent'
-export { default as deleteThoughtWithCursor, archiveAliases } from './archive'
 export { default as exportContext } from './exportContext'
 export { default as extractThought } from './extractThought'
 export { default as favorite } from './favorite'
