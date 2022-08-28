@@ -513,7 +513,7 @@ a.text-link {
 
 /* Toolbar mask */
 .toolbar-mask {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
