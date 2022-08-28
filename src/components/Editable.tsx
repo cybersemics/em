@@ -68,6 +68,7 @@ const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 /** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
+  document.addEventListener('scroll', updateToolbarPosition)
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
@@ -83,6 +84,7 @@ const makeToolbarPositionFixed = () => {
 }
 /** Reset position:absolute of toolbar elements. */
 const resetToolbarPosition = () => {
+  document.removeEventListener('scroll', updateToolbarPosition)
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
@@ -95,7 +97,7 @@ const resetToolbarPosition = () => {
   })
 }
 /** Update position of toolbar elements while scrolling in order to show them always on top. */
-const updateToolbarPositionOnScroll = () => {
+const updateToolbarPosition = () => {
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   Array.from([hamburgerMenu, toolbar]).forEach(el => {
@@ -551,7 +553,6 @@ const Editable = ({
 
     if (isTouch && isSafari()) {
       resetToolbarPosition()
-      document.removeEventListener('scroll', updateToolbarPositionOnScroll)
     }
 
     const { invalidState } = state
@@ -635,7 +636,6 @@ const Editable = ({
 
     if (isTouch && isSafari()) {
       makeToolbarPositionFixed()
-      document.addEventListener('scroll', updateToolbarPositionOnScroll)
     }
 
     // get new state
