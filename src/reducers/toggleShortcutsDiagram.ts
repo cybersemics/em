@@ -1,11 +1,11 @@
 import State from '../@types/State'
 
 /**
- * Enable or disable shortcuts diagram.
+ * Enable or disable latest shortcuts diagram for webcasts.
  */
 const toggleShortcutsDiagram = (state: State): State => ({
   ...state,
-  enableLatestShorcutsDiagram: !state.enableLatestShorcutsDiagram,
+  enableLatestShortcutsDiagram: !state.enableLatestShortcutsDiagram,
 })
 
 export default toggleShortcutsDiagram

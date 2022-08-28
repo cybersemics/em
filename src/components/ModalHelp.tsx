@@ -16,11 +16,11 @@ import ShortcutTable from './ShortcutTable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { showQueue, enableLatestShorcutsDiagram } = state
+  const { showQueue, enableLatestShortcutsDiagram } = state
   return {
     showQueue,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-    enableLatestShorcutsDiagram,
+    enableLatestShortcutsDiagram,
   }
 }
 
@@ -29,7 +29,7 @@ const ModalHelp = ({
   tutorialStep,
   showQueue,
   dispatch,
-  enableLatestShorcutsDiagram,
+  enableLatestShortcutsDiagram,
 }: Connected<ReturnType<typeof mapStateToProps>>) => {
   const [logs, setLogs] = useState<db.Log[] | null>(null)
 
@@ -192,7 +192,7 @@ const ModalHelp = ({
 
       <form>
         <label onChange={toggleShortcutsDiagramSetting}>
-          <input type='checkbox' checked={enableLatestShorcutsDiagram}></input> Enable gesture diagrams (touch screen){' '}
+          <input type='checkbox' checked={enableLatestShortcutsDiagram}></input> Enable gesture diagrams (touch screen){' '}
         </label>
       </form>
 

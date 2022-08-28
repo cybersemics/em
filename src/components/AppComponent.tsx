@@ -51,7 +51,7 @@ interface StateProps {
   showSplitView?: boolean
   splitPosition?: number
   fontSize: number
-  enableLatestShorcutsDiagram: boolean
+  enableLatestShortcutsDiagram: boolean
   isUserLoading?: boolean
 }
 
@@ -75,7 +75,7 @@ interface DispatchProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShorcutsDiagram } = state
+  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   const scale = state.fontSize / BASE_FONT_SIZE
   return {
@@ -87,7 +87,7 @@ const mapStateToProps = (state: State): StateProps => {
     splitPosition,
     showSplitView,
     fontSize: state.fontSize,
-    enableLatestShorcutsDiagram,
+    enableLatestShortcutsDiagram,
   }
 }
 
@@ -131,7 +131,7 @@ const AppComponent: FC<Props> = props => {
   const {
     dark,
     dragInProgress,
-    enableLatestShorcutsDiagram,
+    enableLatestShortcutsDiagram,
     isLoading,
     showModal,
     scale,
@@ -182,7 +182,7 @@ const AppComponent: FC<Props> = props => {
     <div className={componentClassNames}>
       <Alert />
       <ErrorMessage />
-      {enableLatestShorcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
+      {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
 
       {isDocumentEditable() && !tutorial && !showModal && (
         <>

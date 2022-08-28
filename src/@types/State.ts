@@ -46,7 +46,8 @@ interface State {
   editableNonce: number
   editing: boolean | null
   editingValue: string | null
-  enableLatestShorcutsDiagram: boolean
+  // show the latest activated shortcuts at the bottom of the screen for webcasts.
+  enableLatestShortcutsDiagram: boolean
   error?: string | null
   expanded: Index<Path>
   expandedBottom: Index<Path>

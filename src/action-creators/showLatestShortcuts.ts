@@ -18,7 +18,7 @@ const clearTimer = () => {
 }
 
 /**
- * Adds latest shorcuts diagram to be shown in the screen. Also clears after certain interval.
+ * Adds latest shortcuts diagram to be shown in the screen. Also clears after certain interval.
  */
 const showLatestShortcuts =
   (shortcut?: Shortcut, { clear }: Options = {}): Thunk =>

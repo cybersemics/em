@@ -22,11 +22,11 @@ interface IMetaprogramming {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { showQueue, enableLatestShorcutsDiagram } = state
+  const { showQueue, enableLatestShortcutsDiagram } = state
   return {
     showQueue,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-    enableLatestShorcutsDiagram,
+    enableLatestShortcutsDiagram,
   }
 }
 
@@ -67,7 +67,7 @@ const ModalHelp = ({
   tutorialStep,
   showQueue,
   dispatch,
-  enableLatestShorcutsDiagram,
+  enableLatestShortcutsDiagram,
 }: Connected<ReturnType<typeof mapStateToProps>>) => {
   // const [logs, setLogs] = useState<db.Log[] | null>(null)
 

@@ -126,7 +126,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     if (shortcut && !state.showModal && !state.dragInProgress) {
       shortcutEmitter.trigger('shortcut', shortcut)
       shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
-      if (store.getState().enableLatestShorcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
+      if (store.getState().enableLatestShortcutsDiagram) store.dispatch(showLatestShortcuts(shortcut))
     }
 
     // clear gesture hint

@@ -11,7 +11,7 @@ interface LatestShortcutsDiagramProps {
 }
 
 /**
- * Shows latest activated shorcuts diagram.
+ * Shows latest activated shortcuts diagram.
  */
 const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
   const latestShortcuts = useSelector((state: State) => state.latestShortcuts)

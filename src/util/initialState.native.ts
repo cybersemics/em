@@ -114,7 +114,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     editableNonce: 0,
     editing: null,
     editingValue: null,
-    enableLatestShorcutsDiagram: false,
+    enableLatestShortcutsDiagram: false,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 10),
     expandedBottom: {},
