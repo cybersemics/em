@@ -107,16 +107,22 @@ const updateToolbarPosition = () => {
 }
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>) => {
+const useMultiline = (contentRef: React.RefObject<HTMLElement>, value: string) => {
   const [multiline, setMultiline] = useState(false)
 
   useEffect(() => {
     if (contentRef.current) {
       const height = contentRef.current.clientHeight
-      const lineHeight = parseFloat(getComputedStyle(contentRef.current).lineHeight)
-      setMultiline(height > lineHeight * 1.5)
+      // get the default line height from the editable's parent (i.e. thought)
+      // we cannot get it from the editable itself since its line-height changes for multiline thoughts
+      // See ".editable.multiline"
+      const defaultLineHeight = parseFloat(getComputedStyle(contentRef.current.parentElement!).lineHeight)
+      // the element is multiline if its height is at least twice the default line height
+      // allow a margin of error of 0.1
+      // however, don't lower the threshold any further, as it needs to work with both the default line height and the multiline line hieght. Otherwise it won't detect when a multiline thought changes back to single line.
+      setMultiline(height > defaultLineHeight * 1.9)
     }
-  }, [contentRef.current?.innerHTML])
+  }, [value])
 
   return multiline
 }
@@ -206,7 +212,7 @@ const Editable = ({
     contentRef.current.style.opacity = '1.0'
   }
 
-  const multiline = useMultiline(contentRef)
+  const multiline = useMultiline(contentRef, isEditing ? state.editingValue! : value)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
