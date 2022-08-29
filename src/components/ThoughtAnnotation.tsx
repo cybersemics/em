@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import moize from 'moize'
 import React, { useEffect, useState } from 'react'
-import { connect, useSelector } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -19,7 +19,6 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { store } from '../store'
 import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
@@ -28,7 +27,6 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import { resolveArray } from '../util/memoizeResolvers'
-import once from '../util/once'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import HomeLink from './HomeLink'
@@ -72,27 +70,32 @@ const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
 
 /** A Url icon that links to the url. */
-const UrlIconLink = ({ url }: { url: string }) => (
-  <a
-    href={addMissingProtocol(url)}
-    rel='noopener noreferrer'
-    target='_blank'
-    className='external-link'
-    onClick={e => {
-      e.stopPropagation() // prevent Editable onMouseDown
-      if (isInternalLink(url)) {
-        const { path, contextViews } = decodeThoughtsUrl(store.getState(), {
-          exists: true,
-          url,
-        })
-        store.dispatch(setCursor({ path, replaceContextViews: contextViews }))
-        e.preventDefault()
-      }
-    }}
-  >
-    <UrlIcon />
-  </a>
-)
+const UrlIconLink = ({ url }: { url: string }) => {
+  const dispatch = useDispatch()
+  return (
+    <a
+      href={addMissingProtocol(url)}
+      rel='noopener noreferrer'
+      target='_blank'
+      className='external-link'
+      onClick={e => {
+        e.stopPropagation() // prevent Editable onMouseDown
+        if (isInternalLink(url)) {
+          dispatch((dispatch, getState) => {
+            const { path, contextViews } = decodeThoughtsUrl(getState(), {
+              exists: true,
+              url,
+            })
+            dispatch(setCursor({ path, replaceContextViews: contextViews }))
+          })
+          e.preventDefault()
+        }
+      }}
+    >
+      <UrlIcon />
+    </a>
+  )
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
@@ -127,8 +130,6 @@ const ThoughtAnnotation = ({
   // only applied to the .subthought container
   styleAnnotation,
 }: Connected<ThoughtAnnotationProps>) => {
-  const state = store.getState()
-
   const value: string | undefined = useSelector((state: State) => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
@@ -142,8 +143,17 @@ const ThoughtAnnotation = ({
     return showContexts && isRoot(pathParent)
   })
 
-  const isExpanded = !!state.expanded[hashPath(simplePath)]
-  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
+  const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
+  const url = useSelector((state: State) => {
+    const childrenUrls = getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value))
+    const urlValue = isURL(value)
+      ? value
+      : // if the only subthought is a url and the thought is not expanded, link the thought
+      !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
+      ? childrenUrls[0].value
+      : null
+    return urlValue
+  })
 
   // delay calculation of contexts for performance
   // recalculate after the component has mounted
@@ -189,14 +199,8 @@ const ThoughtAnnotation = ({
     setCalculateContexts(true)
   }, [])
 
-  const url = isURL(value)
-    ? value
-    : // if the only subthought is a url and the thought is not expanded, link the thought
-    !isExpanded && childrenUrls().length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-    ? childrenUrls()[0].value
-    : null
-
   const styleAutofocus = useAutofocus(autofocus, styleAnnotation)
+  const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
 
   return (
     <div
@@ -224,11 +228,7 @@ const ThoughtAnnotation = ({
             ...styleAutofocus,
           }}
         >
-          <span
-            className='subthought-text'
-            style={style}
-            dangerouslySetInnerHTML={getTextMarkup(state, !!isEditing, value, head(simplePath))}
-          />
+          <span className='subthought-text' style={style} dangerouslySetInnerHTML={textMarkup} />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
