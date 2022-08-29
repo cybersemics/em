@@ -2,7 +2,7 @@ import importText from '../../action-creators/importText'
 import { store } from '../../store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -64,6 +64,7 @@ it('=let/=test/=style is not applied to =test within the =let definition', async
                 - rgba(255, 192, 203, 1)
       `,
     }),
+    setCursor(['=let']),
   ])
 
   const thoughtDazzle = await findThoughtByText('=dazzle')
@@ -81,6 +82,7 @@ it('=let/x/=style is not applied to =let itself', async () => {
                 - rgba(255, 192, 203, 1)
       `,
     }),
+    setCursor(['=let']),
   ])
 
   const thoughtLet = await findThoughtByText('=let')
@@ -102,7 +104,7 @@ it('=let/x/=style is available to all descendants', async () => {
         - Nuzzle
       `,
     }),
-    setCursorFirstMatchActionCreator(['Shoozle']),
+    setCursor(['Shoozle']),
   ])
 
   const thoughtShoozle = await findThoughtByText('Shoozle')
@@ -133,7 +135,7 @@ it('multiple definitions in same =let', async () => {
           - =fizzle
       `,
     }),
-    setCursorFirstMatchActionCreator(['Razzle']),
+    setCursor(['Razzle']),
   ])
 
   const thoughtRazzleContainer = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
@@ -166,7 +168,7 @@ it('deep let > shallow let', async () => {
             - =dazzle
       `,
     }),
-    setCursorFirstMatchActionCreator(['Shoozle']),
+    setCursor(['Shoozle']),
   ])
 
   const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
