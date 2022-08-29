@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import moize from 'moize'
 import React, { useEffect, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
@@ -26,6 +27,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
+import { resolveArray } from '../util/memoizeResolvers'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -44,7 +46,6 @@ interface ThoughtAnnotationProps {
   minContexts?: number
   path: Path
   showContextBreadcrumbs?: boolean
-  showHiddenThoughts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
   styleAnnotation?: React.CSSProperties
@@ -95,7 +96,7 @@ const UrlIconLink = ({ url }: { url: string }) => (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
-  const { cursor, invalidState, editingValue, showHiddenThoughts } = state
+  const { cursor, invalidState, editingValue } = state
 
   const isEditing = equalPath(cursor, props.path)
   const simplePathLive = isEditing
@@ -107,7 +108,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
     editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,
-    showHiddenThoughts,
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     isThoughtValueEditing: editingValue === thought?.value,
   }
@@ -126,12 +126,7 @@ const ThoughtAnnotation = ({
   style,
   // only applied to the .subthought container
   styleAnnotation,
-  showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
-  // only show real time update if being edited while having meta validation error
-  // do not increase numContexts when in an invalid state since the thought has not been updated in state
-  const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
-
   const state = store.getState()
 
   const value: string | undefined = useSelector((state: State) => {
@@ -149,7 +144,11 @@ const ThoughtAnnotation = ({
 
   const isExpanded = !!state.expanded[hashPath(simplePath)]
   const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
-  const [numContexts, setNumContexts] = useState(0)
+
+  // delay calculation of contexts for performance
+  // recalculate after the component has mounted
+  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+  const [calculateContexts, setCalculateContexts] = useState(false)
 
   /**
    * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -160,20 +159,35 @@ const ThoughtAnnotation = ({
    * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
    */
 
-  /** Returns true if the thought is not archived. */
-  const isNotArchive = (id: ThoughtId) => {
-    const state = store.getState()
-    return state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
-  }
+  const numContexts = useSelector(
+    moize(
+      (state: State) => {
+        if (!calculateContexts) return 0
 
-  const contexts = useSelector((state: State) => getContexts(state, isRealTimeContextUpdate ? editingValue! : value))
+        /** Returns true if the thought is not archived. */
+        const isNotArchive = (id: ThoughtId) => state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
 
-  // delay rendering of superscript for performance
-  // recalculate when Lexemes are loaded
-  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+        // only show real time update if being edited while having meta validation error
+        // do not increase numContexts when in an invalid state since the thought has not been updated in state
+        const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
+
+        const contexts = getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
+        return value === '' ? 0 : contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
+      },
+      {
+        maxSize: 1000,
+        profileName: 'numContexts',
+        transformArgs: ([state]) => {
+          const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
+          return [resolveArray(getContexts(state, isRealTimeContextUpdate ? editingValue! : value))]
+        },
+      },
+    ),
+  )
+
   useEffect(() => {
-    setNumContexts(value === '' ? 0 : contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0))
-  }, [contexts, showHiddenThoughts])
+    setCalculateContexts(true)
+  }, [])
 
   const url = isURL(value)
     ? value
