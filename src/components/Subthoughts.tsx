@@ -624,15 +624,12 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     const isCursorParent = cursor && isAncestorOfCursor && cursor.length - resolvedPath.length === 1
 
     /** Returns true if the children should be dimmed by the autofocus. */
-    const shouldDim = () => {
-      return (
-        cursor &&
-        isDescendantOfFirstVisiblePath &&
-        !(isCursorParent && isCursorLeaf) &&
-        !isCursor &&
-        !isDescendantOfCursor()
-      )
-    }
+    const shouldDim = () =>
+      cursor &&
+      isDescendantOfFirstVisiblePath &&
+      !(isCursorParent && isCursorLeaf) &&
+      !isCursor &&
+      !isDescendantOfCursor()
 
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
@@ -669,7 +666,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           />
         ) : null
       ) : null}
-
       {show && filteredChildren.length > (showContexts && !allowSingleContext ? 1 : 0) ? (
         <ul
           aria-label='subthoughts'
@@ -892,6 +888,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
         </ul>
       ) : (
         dropTarget &&
+        (autofocus() === 'show' || autofocus() === 'dim') &&
         // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
         !equalPath(state.draggingThought, simplePath) && (
           <EmptyChildrenDropTarget
