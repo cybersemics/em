@@ -2286,6 +2286,12 @@ code,
   height: 0.75em;
   /* margin to offset bullet width */
   margin-left: -1em;
+  /* Add additional click area to position the drop target more evenly between siblings (vertically).
+     Unfortunately, due to the HTML hierarchy stacking order, multiple drop-ends at the same y position (e.g. after /a/b/c below) will always be obscured by their previous siblings descendants.
+     This is still better than nothing.
+   */
+  margin-top: -0.5em;
+  padding-top: 0.5em;
   /* must use z-index 0 since deeply nested drop targets come BEFORE other subsequent uncles in the HTML. Otherwise z-index will be ignored and the HTML order will force an incorrect stacking order; later uncles will obscure deeply nested drop targets.
 
   e.g. The subthught drop target for a would incorrectly obscure that of b and c.
@@ -2329,8 +2335,9 @@ code,
 
 .empty-children .drop-end {
   z-index: var(--z-index-drop-end);
-  margin-left: 30px;
-  padding-bottom: 1.1em;
+  margin-left: 1.75em;
+  /* add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target. */
+  padding-bottom: 1em;
 }
 
 .empty-children .drop-end.inside-divider {
