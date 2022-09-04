@@ -891,7 +891,9 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           )}
         </ul>
       ) : (
-        dropTarget && (
+        dropTarget &&
+        // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
+        !equalPath(state.draggingThought, simplePath) && (
           <EmptyChildrenDropTarget
             isThoughtDivider={isDivider(value)}
             depth={depth}
