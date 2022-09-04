@@ -2265,11 +2265,15 @@ code,
 .drop-hover {
   position: absolute;
   width: calc(100% - 80px);
-  margin-left: -1.2em;
   background-color: lightblue;
   height: 3px;
   border-radius: 99px;
   z-index: var(--z-index-stack);
+}
+
+/* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
+.thought-container .drop-hover {
+  margin-left: -1.2em;
 }
 
 .children .child:first-child > .drop-hover {
@@ -2279,9 +2283,20 @@ code,
 /* the drop target at the end of a context */
 .drop-end {
   position: absolute;
-  height: 0.4em;
+  height: 0.75em;
+  /* margin to offset bullet width */
+  margin-left: -1em;
+  /* must use z-index 0 since deeply nested drop targets come BEFORE other subsequent uncles in the HTML. Otherwise z-index will be ignored and the HTML order will force an incorrect stacking order; later uncles will obscure deeply nested drop targets.
+
+  e.g. The subthught drop target for a would incorrectly obscure that of b and c.
+
+  - a
+    - b
+      - c
+
+  */
+  z-index: 0;
   width: calc(100% - 38px);
-  z-index: var(--z-index-stack); /* Above "Add thought" */
 }
 
 .children.autofocus-dim > .child.drop-end {
@@ -2303,7 +2318,6 @@ code,
 }
 
 .drop-end .drop-hover {
-  margin-left: -1.25em;
   width: calc(100% - 41px);
 }
 

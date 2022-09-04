@@ -426,7 +426,7 @@ const EmptyChildrenDropTarget = ({
               color: '#ff7bc3' /* mid pink */,
             }}
           >
-            {strip(debugValue || '')} subthoughts
+            {strip(debugValue || '')}
             {isHovering ? '*' : ''}
           </span>
         )}
@@ -855,7 +855,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           {(dropTarget || ID)(
             <li
               className={classNames({
-                child: true,
                 'drop-end': true,
                 last: depth === 0,
               })}
@@ -864,21 +863,20 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   (autofocus() === 'show' || autofocus() !== 'dim') && (globals.simulateDrop || isDragInProgress)
                     ? 'list-item'
                     : 'none',
-                backgroundColor: globals.simulateDrop ? '#252346' : undefined, // dark eggplant
+                backgroundColor: globals.simulateDrop ? `hsl(30, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
               }}
             >
               {globals.simulateDrop && (
                 <span
                   style={{
                     position: 'absolute',
-                    paddingLeft: 30,
+                    left: '0.3em',
                     // make sure label does not interfere with drop target hovering
                     pointerEvents: 'none',
-                    left: 0,
                     color: '#ff7bc3' /* mid pink */,
                   }}
                 >
-                  {strip(value)} subthoughts
+                  {strip(value)}
                   {isHovering ? '*' : ''}
                 </span>
               )}
