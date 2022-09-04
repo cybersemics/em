@@ -28,7 +28,7 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 const simulateDrag = false
 
 // show all drop targets with color blocking for debugging
-const simulateDrop = false
+const simulateDrop = true
 
 // disable the tutorial for debugging
 const disableTutorial = false

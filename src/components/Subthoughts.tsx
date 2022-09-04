@@ -860,7 +860,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               })}
               style={{
                 display:
-                  (autofocus() === 'show' || autofocus() !== 'dim') && (globals.simulateDrop || isDragInProgress)
+                  (autofocus() === 'show' || autofocus() === 'dim') && (globals.simulateDrop || isDragInProgress)
                     ? 'list-item'
                     : 'none',
                 backgroundColor: globals.simulateDrop ? `hsl(30, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
