@@ -676,6 +676,10 @@ a.text-link {
   /*causes next siblings to overlap z-index*/
   /*perspective: 1000;*/
   backface-visibility: hidden;
+  /* left, padding-left, and margin-right work togethr to make the child extend to the left withut changing the positioning of the content. This ensures the child-as-drop-target is correct left of the bullets. (Cannot use transform as it affects the stacking context.) */
+  padding-left: calc(100px + 10em);
+  margin-right: -10em;
+  left: -10em;
 }
 
 .children-subheading {
