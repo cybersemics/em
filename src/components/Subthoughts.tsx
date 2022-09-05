@@ -871,7 +871,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 marginLeft: isLastVisible ? '-4em' : undefined,
                 // offset marginLeft, minus 1em for bullet
                 // otherwise drop-hover will be too far left
-                paddingLeft: isLastVisible ? '3em' : undefined,
+                paddingLeft: isLastVisible ? (isTouch ? '9em' : '3em') : undefined,
               }}
             >
               {globals.simulateDrop && (

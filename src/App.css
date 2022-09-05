@@ -2292,7 +2292,7 @@ code,
 /* the drop target at the end of a context */
 .drop-end {
   position: absolute;
-  height: 0.75em;
+  height: 0.5em;
   /* margin to offset bullet width */
   margin-left: -1em;
   /* Add additional click area to position the drop target more evenly between siblings (vertically).
@@ -2312,6 +2312,20 @@ code,
   */
   z-index: 0;
   width: calc(100% - 38px);
+}
+
+.drop-end:not(.child) {
+  height: 1.5em;
+}
+
+/* move drop-end to the right so that the user's finger does not obscure the drop target */
+.mobile .drop-end:not(.child) {
+  margin-left: 5em;
+}
+
+/* the drop-target is to the right (see above), but the drop-hover needs to be positioned normally where the thought will be inserted, so offset the drop-target offset. */
+.mobile .drop-end:not(.child) .drop-hover {
+  margin-left: -6em;
 }
 
 .children.autofocus-dim > .child.drop-end {
@@ -2353,6 +2367,7 @@ code,
   margin-left: 60px;
 }
 
+/* move drop-end right on mobile so that drop target is not obscured by the user's finger */
 .mobile .empty-children .drop-end {
   margin-left: 25%;
 }
