@@ -5,7 +5,7 @@ import head from '../util/head'
 import rootedParentOf from './rootedParentOf'
 
 /**
- * Finds if a thought is the last visible child in its context.
+ * Finds if a thought is the last visible child in its context. O(n * log n) due to sort.
  */
 const isLastVisibleChild = (state: State, simplePath: SimplePath) => {
   const parentId = head(rootedParentOf(state, simplePath))

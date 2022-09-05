@@ -651,6 +651,9 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
   }
 
+  // the last visible drop-end will always be a dimmed thought at distance 1 (an uncle)
+  const isLastVisible = isRoot(simplePath) || (distance === 1 && autofocus() === 'dim')
+
   return (
     <>
       {contextBinding && showContexts ? (
@@ -859,7 +862,12 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   (autofocus() === 'show' || autofocus() === 'dim') && (globals.simulateDrop || isDragInProgress)
                     ? 'list-item'
                     : 'none',
-                backgroundColor: globals.simulateDrop ? `hsl(30, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
+                backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
+                // Extend the height of the drop target when there is nothing below.
+                // Always extend the height of the root subthught drop target.
+                // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                height: isLastVisible ? '4em' : undefined,
               }}
             >
               {globals.simulateDrop && (
@@ -876,7 +884,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   {isHovering ? '*' : ''}
                 </span>
               )}
-
               <span
                 className='drop-hover'
                 style={{
