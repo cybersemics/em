@@ -863,11 +863,15 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                     ? 'list-item'
                     : 'none',
                 backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-                // Extend the height of the drop target when there is nothing below.
-                // Always extend the height of the root subthught drop target.
+                // Extend the click area of the drop target when there is nothing below.
+                // Always extend the root subthught drop target.
                 // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
                 // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
                 height: isLastVisible ? '4em' : undefined,
+                marginLeft: isLastVisible ? '-4em' : undefined,
+                // offset marginLeft, minus 1em for bullet
+                // otherwise drop-hover will be too far left
+                paddingLeft: isLastVisible ? '3em' : undefined,
               }}
             >
               {globals.simulateDrop && (
