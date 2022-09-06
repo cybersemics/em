@@ -624,6 +624,11 @@ a.text-link {
   min-height: 1.9em;
 }
 
+/* TODO: Safari only? */
+.mobile .child .editable {
+  margin-top: -2px;
+}
+
 /* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. */
 .editable.multiline {
   line-height: 1.25;
