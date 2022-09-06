@@ -13,6 +13,7 @@ import { createChildrenMapFromThoughts } from '../../util/createChildrenMap'
 import filterObject from '../../util/filterObject'
 import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
+import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
@@ -115,7 +116,16 @@ async function* getDescendantThoughts(
     // filter out the missing thought ids and proceed as usual
     // const providerThoughtsRaw = await provider.getThoughtsByIds(thoughtIdQueue.get())
 
-    const ids = thoughtIdQueue.next()
+    // Add the cursor to the queue if the cursor is pending.
+    // This ensures that if the cursor is moved while thoughts are still loading, the cursor will always be loaded at the first possible opportunity.
+    // This must be done here (within getDescendantThoughts) instead of in the pull queue to ensure that the cursor is fetched even in the middle of a long pull.
+    // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
+    // TODO: Avoid redundant cursor fetches
+    const cursor = getState().cursor
+    const cursorThought = cursor ? (getThoughtById(getState(), head(cursor)) as Thought | null) : null
+    const pendingCursorId = cursor && (!cursorThought || cursorThought?.pending) ? ([head(cursor)] as [ThoughtId]) : []
+
+    const ids: ThoughtId[] = [...pendingCursorId, ...thoughtIdQueue.next()]
 
     // get thoughts from the cache or the database
     // if database, use the efficient getThoughtWithChildren and cache the thought's children for efficiency
