@@ -786,22 +786,8 @@ body.dark {
   align-items: center;
 }
 
-.nav-fill {
-  background-color: white;
-}
-
-.dark .nav-fill {
-  background-color: black;
-}
-
 .nav-top {
   top: 0;
-}
-
-.nav-bottom-wrapper {
-  position: sticky;
-  /* cannot use safe-area-inset here because of mobile Safari z-index issues. */
-  bottom: 0;
 }
 
 .nav-bottom {

@@ -241,7 +241,14 @@ const AppComponent: FC<Props> = props => {
               )}
             </SplitPane>
 
-            <div className='nav-bottom-wrapper z-index-stack'>
+            <div
+              className='z-index-stack'
+              style={{
+                position: 'sticky',
+                // cannot use safe-area-inset because of mobile Safari z-index issues
+                bottom: 0,
+              }}
+            >
               {/* {isTouch && <SidebarGutter />} */}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />

@@ -1,12 +1,13 @@
 import classNames from 'classnames'
 import React from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import isTutorial from '../selectors/isTutorial'
 import simplifyPath from '../selectors/simplifyPath'
+import themeColors from '../selectors/themeColors'
 import { store } from '../store'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
@@ -44,7 +45,8 @@ const NavBar = ({
   showBreadcrumbs: boolean
   authenticated: boolean
 }) => {
-  const isTutorialOn = isTutorial(store.getState())
+  const isTutorialOn = useSelector(isTutorial)
+  const colors = useSelector(themeColors)
 
   // avoid re-rendering from simplePath's new object reference
   const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length) : []) as Path
@@ -55,8 +57,10 @@ const NavBar = ({
       className={classNames({
         nav: true,
         ['nav-' + position]: true,
-        'nav-fill': cursor && cursor.length > 0,
       })}
+      style={{
+        backgroundColor: cursor && cursor.length > 0 ? colors.bg : undefined,
+      }}
     >
       <div className='nav-inset'>
         <div className='nav-container' style={{ justifyContent: 'flex-end' }}>
