@@ -73,9 +73,11 @@ export const isOnFirstLine = (): boolean => {
 
   const { y: baseNodeY } = baseNodeParentEl.getClientRects()[0]
   const [paddingTop] = getElementPaddings(baseNodeParentEl)
+  // assume font size is in px
+  const fontSize = parseInt(window.getComputedStyle(baseNodeParentEl, null).fontSize)
 
-  // allow error of 5px
-  return Math.abs(rangeY - baseNodeY - paddingTop) < 5
+  // allow error of 10px
+  return Math.abs(rangeY - baseNodeY - paddingTop - fontSize / 3) < 10
 }
 
 /** Returns true if the selection is on the last line of its content. Returns true if there is no selection or if the text is a single line. */
@@ -98,11 +100,13 @@ export const isOnLastLine = (): boolean => {
   const { y: baseNodeY, height: baseNodeHeight } = baseNodeParentEl.getClientRects()[0]
   const [paddingTop, , paddingBottom] = getElementPaddings(baseNodeParentEl)
 
-  const isMultiline = Math.abs(rangeY - baseNodeY - paddingTop) > 0
+  // assume font size is in px
+  const fontSize = parseInt(window.getComputedStyle(baseNodeParentEl, null).fontSize)
+  const isMultiline = Math.abs(rangeY - baseNodeY - paddingTop - fontSize) > 2
   if (!isMultiline) return true
 
-  // allow error of 5px
-  return rangeY + rangeHeight > baseNodeY + baseNodeHeight - paddingTop - paddingBottom - 5
+  // allow error of 90% fontSize
+  return rangeY + rangeHeight > baseNodeY + baseNodeHeight - paddingTop - paddingBottom - fontSize * 0.9
 }
 
 /** Returns true if the browser selection is on a text node. */
