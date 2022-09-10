@@ -128,6 +128,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     isLoading: true,
     isPushing: false,
     jumpHistory: [],
+    jumpIndex: 0,
     latestShortcuts: [],
     modals: {},
     noteFocus: false,

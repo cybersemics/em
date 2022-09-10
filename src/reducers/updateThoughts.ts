@@ -222,7 +222,7 @@ const updateThoughts = (
       const cursorParent = state.cursor ? parentOf(state.cursor) : null
 
       /** Returns true if the cursor and last jump point are parent-child or child-parent. When this is true, the cursor will replace the last jump history entry rather than appending to it. */
-      const isParentChild = () =>
+      const isAdjacent = () =>
         !!state.cursor &&
         state.cursor.length > 0 &&
         !!lastJump &&
@@ -236,7 +236,10 @@ const updateThoughts = (
         // limit to MAX_JUMPS
         // See: State.jumpHistory
         ...(lastJump !== state.cursor
-          ? { jumpHistory: [state.cursor, ...state.jumpHistory.slice(isParentChild() ? 1 : 0, MAX_JUMPS)] }
+          ? {
+              jumpHistory: [state.cursor, ...state.jumpHistory.slice(isAdjacent() ? 1 : 0, MAX_JUMPS)],
+              jumpIndex: 0,
+            }
           : null),
         // calculate expanded using fresh thoughts and cursor
         ...(!preventExpandThoughts ? { expanded: expandThoughts(state, state.cursor) } : null),

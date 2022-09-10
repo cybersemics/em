@@ -62,10 +62,13 @@ interface State {
   invalidState: boolean
   isLoading: boolean
   isPushing?: boolean
-  // history of edit points that can be navigated with the jump command
-  // cannot use undoHistory because it omits the cursor from some edits
-  // e.g. This jump test fails: 'jump after new subthought'
+  // History of edit points that can be navigated with the jump command.
+  // Cannot use undoHistory because it omits the cursor from some edits.
+  // i.e. It causes the 'jump after new subthought' to fail.
   jumpHistory: (Path | null)[]
+  // The current index of the jump history that is being navigated
+  // Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward
+  jumpIndex: number
   lastUpdated?: string
   latestShortcuts: Shortcut[]
   modals: Index<{ complete?: boolean }>
