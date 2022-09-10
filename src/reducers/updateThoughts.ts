@@ -18,6 +18,33 @@ import mergeUpdates from '../util/mergeUpdates'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 
+/** A reducer that prepends the cursor to the the jump history. If the cursor is the same as the last jump point, does nothing. */
+const updateJumpHistory = (state: State): State => {
+  const lastJump = state.jumpHistory[0]
+  const lastJumpParent = lastJump ? parentOf(lastJump) : null
+  const cursorParent = state.cursor ? parentOf(state.cursor) : null
+
+  /** Returns true if the cursor and last jump point are parent-child or child-parent. When this is true, the cursor will replace the last jump history entry rather than appending to it. */
+  const isAdjacent = () =>
+    !!state.cursor &&
+    state.cursor.length > 0 &&
+    !!lastJump &&
+    lastJump.length > 0 &&
+    (equalPath(lastJumpParent, state.cursor) || equalPath(lastJump, cursorParent))
+
+  // append old cursor to jump history if different
+  // replace last jump if adjacent
+  // limit to MAX_JUMPS
+  // See: State.jumpHistory
+  return lastJump !== state.cursor
+    ? {
+        ...state,
+        jumpHistory: [state.cursor, ...state.jumpHistory.slice(isAdjacent() ? 1 : 0, MAX_JUMPS)],
+        jumpIndex: 0,
+      }
+    : state
+}
+
 export type UpdateThoughtsOptions = PushBatch & {
   contextChain?: SimplePath[]
   isLoading?: boolean
@@ -217,34 +244,14 @@ const updateThoughts = (
     }),
     // state changes that rely on new state
     state => {
-      const lastJump = state.jumpHistory[0]
-      const lastJumpParent = lastJump ? parentOf(lastJump) : null
-      const cursorParent = state.cursor ? parentOf(state.cursor) : null
-
-      /** Returns true if the cursor and last jump point are parent-child or child-parent. When this is true, the cursor will replace the last jump history entry rather than appending to it. */
-      const isAdjacent = () =>
-        !!state.cursor &&
-        state.cursor.length > 0 &&
-        !!lastJump &&
-        lastJump.length > 0 &&
-        (equalPath(lastJumpParent, state.cursor) || equalPath(lastJump, cursorParent))
-
       return {
         ...state,
-        // append old cursor to jump history if different
-        // replace last jump if adjacent
-        // limit to MAX_JUMPS
-        // See: State.jumpHistory
-        ...(lastJump !== state.cursor
-          ? {
-              jumpHistory: [state.cursor, ...state.jumpHistory.slice(isAdjacent() ? 1 : 0, MAX_JUMPS)],
-              jumpIndex: 0,
-            }
-          : null),
         // calculate expanded using fresh thoughts and cursor
         ...(!preventExpandThoughts ? { expanded: expandThoughts(state, state.cursor) } : null),
       }
     },
+
+    updateJumpHistory,
 
     // data integrity checks
     // immediately throws if any data integity issues are found
