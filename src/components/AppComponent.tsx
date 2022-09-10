@@ -241,7 +241,7 @@ const AppComponent: FC<Props> = props => {
               )}
             </SplitPane>
 
-            <div className='nav-bottom-wrapper'>
+            <div className='nav-bottom-wrapper z-index-stack'>
               {/* {isTouch && <SidebarGutter />} */}
               <Scale amount={scale!} origin='bottom left'>
                 <NavBar position='bottom' />

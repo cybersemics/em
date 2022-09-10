@@ -55,7 +55,7 @@ const NavBar = ({
       className={classNames({
         nav: true,
         ['nav-' + position]: true,
-        'nav-fill': cursor && cursor.length > 1,
+        'nav-fill': cursor && cursor.length > 0,
       })}
     >
       <div className='nav-inset'>
