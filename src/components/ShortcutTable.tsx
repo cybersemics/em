@@ -14,7 +14,7 @@ import GestureDiagram from './GestureDiagram'
 const groups = [
   {
     title: 'Navigation',
-    shortcuts: ['cursorBack', 'cursorForward', 'cursorPrev', 'jump'],
+    shortcuts: ['cursorBack', 'cursorForward', 'cursorPrev', 'jumpBack', 'jumpForward'],
   },
   {
     title: 'Creating thoughts',
