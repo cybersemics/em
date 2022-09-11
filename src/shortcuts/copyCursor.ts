@@ -18,6 +18,7 @@ const copyCursorShortcut: Shortcut = {
   label: 'Copy Cursor',
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
+  hideFromInstructions: true,
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
     selection.isCollapsed() && !!getState().cursor && isDocumentEditable(),

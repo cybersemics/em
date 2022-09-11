@@ -29,7 +29,7 @@ const openShortcutPopupShortcut: Shortcut = {
   label: 'Open Shortcut Popup',
   description: `Open the help screen which contains the tutorials and a list of all ${
     isTouch ? 'gestures' : 'keyboard shortcuts'
-  }.`,
+  }. Yes, this help screen.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {

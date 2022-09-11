@@ -5,16 +5,27 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts, shortcutById } from '../shortcuts'
+import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import makeCompareByProp from '../util/makeCompareByProp'
-import sort from '../util/sort'
 import GestureDiagram from './GestureDiagram'
 
 // define the grouping and ordering of shortcuts
 const groups = [
   {
     title: 'Navigation',
-    shortcuts: ['cursorBack', 'cursorForward', 'cursorPrev', 'jumpBack', 'jumpForward'],
+    shortcuts: [
+      'cursorBack',
+      'cursorForward',
+      'cursorNext',
+      'cursorPrev',
+      'jumpBack',
+      'jumpForward',
+      'moveCursorBackward',
+      'moveCursorForward',
+      'home',
+      'search',
+      'openShortcutPopup',
+    ],
   },
   {
     title: 'Creating thoughts',
@@ -27,6 +38,7 @@ const groups = [
       'newGrandChild',
       'subcategorizeOne',
       'subcategorizeAll',
+      'extract',
     ],
   },
   {
@@ -35,52 +47,78 @@ const groups = [
   },
   {
     title: 'Moving thoughts',
-    shortcuts: ['indent', 'outdent', 'bumpThought'],
+    shortcuts: ['indent', 'outdent', 'bumpThought', 'moveThoughtDown', 'moveThoughtUp'],
+  },
+  {
+    title: 'Editing thoughts',
+    shortcuts: ['join', 'splitSentences'],
   },
   {
     title: 'Special Views',
-    shortcuts: ['note', 'toggleContextView', 'proseView', 'toggleTableView'],
+    shortcuts: [
+      'note',
+      'toggleContextView',
+      'proseView',
+      'toggleTableView',
+      'toggleSort',
+      'heading0',
+      'heading1',
+      'heading2',
+      'heading3',
+      'heading4',
+      'heading5',
+    ],
+  },
+  {
+    title: 'Visibility',
+    shortcuts: ['pin', 'pinChildren', 'toggleDone', 'toggleHiddenThoughts'],
   },
 ]
 
-// get all ungrouped shortcuts to display after the groups
-// this is important to ensure that new shortcuts get added to the help modal even if the developer did not add them to a group
-// filter out shortcuts that do not exist on the current platform
+// assert that groups include all necessary shortcuts
 const shortcutsGroupedMap = keyValueBy(
   groups.flatMap(group => group.shortcuts),
   shortcutId => ({ [shortcutId]: true }),
 )
-const shortcutsUngrouped = sort(
-  globalShortcuts.filter(
-    shortcut =>
-      !shortcutsGroupedMap[shortcut.id] &&
-      !shortcut.hideFromInstructions &&
-      (isTouch ? shortcut.gesture : shortcut.keyboard),
-  ),
-  makeCompareByProp('name'),
+const shortcutsUngrouped = globalShortcuts.filter(
+  shortcut =>
+    !shortcutsGroupedMap[shortcut.id] &&
+    !shortcut.hideFromInstructions &&
+    (isTouch ? shortcut.gesture : shortcut.keyboard),
 )
 
-/** Renders all of a shortcut's details as a table row. */
-const ShortcutRow = (shortcut: Shortcut) => {
-  const description = useSelector((state: State) =>
-    typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description,
+if (shortcutsUngrouped.length > 0) {
+  throw new Error(
+    `ShortcutTable groups are missing shortcut(s). Please add ${conjunction(
+      shortcutsUngrouped.map(shortcut => shortcut.id),
+    )} to the appropriate group, or add hideFromInstructions: true to the Shortcut.`,
   )
+}
+
+/** Renders all of a shortcut's details as a table row. */
+const ShortcutRow = (shortcut: Shortcut | null) => {
+  const description = useSelector((state: State) => {
+    if (!shortcut) return ''
+    return typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description
+  })
 
   return (
-    <tr key={shortcut.id}>
-      <th>
-        <b>{shortcut.label}</b>
-        <p>{description}</p>
-      </th>
-      <td>
-        {isTouch && shortcut.gesture ? (
-          // GesturePath[]
-          <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
-        ) : shortcut.keyboard ? (
-          formatKeyboardShortcut(shortcut.keyboard)
-        ) : null}
-      </td>
-    </tr>
+    shortcut && (
+      <tr key={shortcut.id}>
+        <th>
+          <b>{shortcut.label}</b>
+          <p>{description}</p>
+        </th>
+        <td>
+          {isTouch && shortcut.gesture ? (
+            // GesturePath[]
+            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
+          ) : shortcut.keyboard ? (
+            formatKeyboardShortcut(shortcut.keyboard)
+          ) : null}
+        </td>
+      </tr>
+    )
   )
 }
 
@@ -93,26 +131,14 @@ const ShortcutTable = () => {
           <h2 className='modal-subtitle'>{group.title}</h2>
           <table className='shortcuts'>
             <tbody>
-              {group.shortcuts.map(shortcutId => {
-                const shortcut = shortcutById(shortcutId)
-                if (!shortcut) {
-                  throw new Error(`Invalid shortcut id: ${shortcutId}`)
-                }
-                return ShortcutRow(shortcut)
-              })}
+              {group.shortcuts
+                .map(shortcutById)
+                .filter(shortcut => shortcut && (isTouch ? shortcut.gesture : shortcut.keyboard))
+                .map(ShortcutRow)}
             </tbody>
           </table>
         </div>
       ))}
-
-      {shortcutsUngrouped.length > 0 && (
-        <div>
-          <h2 className='modal-subtitle'>Other</h2>
-          <table className='shortcuts'>
-            <tbody>{shortcutsUngrouped.map(ShortcutRow)}</tbody>
-          </table>
-        </div>
-      )}
     </div>
   )
 }
