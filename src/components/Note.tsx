@@ -56,10 +56,9 @@ const Note = ({ path }: NoteProps) => {
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
-  const [justPasted, setJustPasted] = useState(false)
-
-  /** Gets state.noteFocus. */
+  const fontSize = useSelector((state: State) => state.fontSize)
   const hasFocus = useSelector((state: State) => state.noteFocus && equalPathHead(state.cursor, path))
+  const [justPasted, setJustPasted] = useState(false)
 
   // set the caret on the note if editing this thought and noteFocus is true
   useEffect(() => {
@@ -127,7 +126,13 @@ const Note = ({ path }: NoteProps) => {
   }
 
   return (
-    <div className='note children-subheading text-note text-small'>
+    <div
+      className='note children-subheading text-note text-small'
+      style={{
+        // offset editable's margin-left, which is dynamically set based on font size
+        marginLeft: fontSize - 14,
+      }}
+    >
       <ContentEditable
         html={note || ''}
         innerRef={noteRef}

@@ -630,7 +630,7 @@ a.text-link {
   margin-top: -2px;
 }
 
-/* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. */
+/* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is used instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. */
 .editable.multiline {
   line-height: 1.25;
   margin-top: -1.5px;
@@ -2996,7 +2996,6 @@ code,
 .note {
   /* negative margin to compensate for line-height. See .thought-container. */
   margin-top: -3px;
-  padding-bottom: 0.2em;
   transition: color 0.75s ease-in-out;
   line-height: 1.25;
 }
