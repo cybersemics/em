@@ -2,7 +2,7 @@ import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useEffect, useRef, useState } from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -109,20 +109,19 @@ const updateToolbarPosition = () => {
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, value: string) => {
   const [multiline, setMultiline] = useState(false)
+  const fontSize = useSelector((state: State) => state.fontSize)
 
   useEffect(() => {
     if (contentRef.current) {
       const height = contentRef.current.clientHeight
-      // get the default line height from the editable's parent (i.e. thought)
-      // we cannot get it from the editable itself since its line-height changes for multiline thoughts
-      // See ".editable.multiline"
-      const defaultLineHeight = parseFloat(getComputedStyle(contentRef.current.parentElement!).lineHeight)
-      // the element is multiline if its height is at least twice the default line height
-      // allow a margin of error of 0.1
-      // however, don't lower the threshold any further, as it needs to work with both the default line height and the multiline line hieght. Otherwise it won't detect when a multiline thought changes back to single line.
-      setMultiline(height > defaultLineHeight * 1.9)
+      // 1.72 must match line-height as defined in .thought-container
+      const singleLineHeight = fontSize * 1.72
+      // The element is multiline if its height is at least twice the default line height
+      // Allow a margin of error of 15% (10% works on Chrome but not Safari).
+      // However, don't lower the threshold any further, as it needs to work with both the default line height and the multiline line hieght. Otherwise it won't detect when a multiline thought changes back to single line.
+      setMultiline(height > singleLineHeight * 1.85)
     }
-  }, [value])
+  }, [fontSize, value])
 
   return multiline
 }

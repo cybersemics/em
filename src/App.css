@@ -597,6 +597,7 @@ a.text-link {
 
 /* Use line-height to vertically center the text and bullet. We cannot use padding since it messes up the selection. This needs to be overwritten on multiline elements. See ".child .editable" below. */
 .thought-container {
+  /* must match value used in Editable useMultiline */
   line-height: 1.72;
 }
 
@@ -632,10 +633,10 @@ a.text-link {
 /* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. */
 .editable.multiline {
   line-height: 1.25;
-  margin-bottom: -2px !important;
   margin-top: -1.5px;
   padding-bottom: 0.5em;
   padding-top: 5px;
+  /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
 }
 
 .child .editable,
