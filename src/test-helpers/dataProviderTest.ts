@@ -215,7 +215,7 @@ const dataProviderTest = (provider: DataProvider) => {
     }
 
     const thoughtWithChildren = toThoughtWithChildren(thought)
-    await provider.updateThought('test' as ThoughtId, thoughtWithChildren)
+    await provider.updateThought('test' as ThoughtId, undefined, thoughtWithChildren)
 
     const dbThought = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbThought).toEqual(thought)
@@ -248,8 +248,8 @@ const dataProviderTest = (provider: DataProvider) => {
     const thoughtXWithChildren = toThoughtWithChildren(thoughtX)
     const thoughtAWithChildren = toThoughtWithChildren(thoughtA)
 
-    await provider.updateThought('testIdX' as ThoughtId, thoughtXWithChildren)
-    await provider.updateThought('testIdA' as ThoughtId, thoughtAWithChildren)
+    await provider.updateThought('testIdX' as ThoughtId, undefined, thoughtXWithChildren)
+    await provider.updateThought('testIdA' as ThoughtId, undefined, thoughtAWithChildren)
 
     const dbThoughts = await provider.getThoughtsByIds([thoughtX.id, thoughtA.id])
     expect(dbThoughts).toEqual([thoughtX, thoughtA])

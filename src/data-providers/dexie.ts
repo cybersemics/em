@@ -13,6 +13,7 @@ import { SCHEMA_LATEST } from '../constants'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import groupObjectBy from '../util/groupObjectBy'
 import hashThought from '../util/hashThought'
+import series from '../util/series'
 import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 import win from './win'
@@ -185,6 +186,7 @@ export const getLexemesByIds = (keys: string[]) =>
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (
   id: ThoughtId,
+  thoughtOld: ThoughtWithChildren | undefined,
   { children, childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
 ) => {
   return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
@@ -198,17 +200,15 @@ export const updateThought = async (
       Object.values(children).some(child => child.pending) ||
       Object.keys(children).length < Object.keys(childrenMap || {}).length
 
-    const thought = await db.thoughtIndex.get(id)
-
     /** Does a put if the thought does not exist, otherwise update. */
     const putOrUpdate = (changes: Partial<ThoughtWithChildren>) =>
-      thought ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
+      thoughtOld ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
 
     return putOrUpdate({
       id,
       value,
       ...(hasPendingChildren
-        ? { childrenMap: childrenMap || thought?.childrenMap || {} }
+        ? { childrenMap: childrenMap || thoughtOld?.childrenMap || {} }
         : // when no children are pending, we can safely delete childrenMap
           { children, childrenMap: {} }),
       lastUpdated,
@@ -218,6 +218,61 @@ export const updateThought = async (
       ...(archived ? { archived } : null),
     })
   })
+}
+
+/** Atomically updates the thoughtIndex and lexemeIndex. */
+export const updateThoughts = async (
+  thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
+  lexemeIndexUpdates: Index<Lexeme | null>,
+  schemaVersion: number,
+) => {
+  // group thought updates and deletes so that we can use the db bulk functions
+  const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
+    thought ? 'update' : 'delete',
+  ) as {
+    update?: Index<ThoughtWithChildren>
+    delete?: Index<null>
+  }
+
+  // group lexeme updates and deletes so that we can use the db bulk functions
+  const { update: lexemeUpdates, delete: lexemeDeletes } = groupObjectBy(lexemeIndexUpdates, (id, lexeme) =>
+    lexeme ? 'update' : 'delete',
+  ) as {
+    update?: Index<Lexeme>
+    delete?: Index<null>
+  }
+
+  return db.transaction(
+    'rw',
+    [db.thoughtIndex, db.thoughtWordsIndex, db.lexemeIndex, db.helpers],
+    async (tx: ObservableTransaction) => {
+      tx.source = getSessionId()
+
+      const thoughtsOld = await db.thoughtIndex.bulkGet(Object.keys(thoughtUpdates || {}))
+
+      // Executing the inner transaction in parallel and/or without explicitly waiting causes a TransactionInactiveError.
+      // Dexie is supposed to wait for all subtransactions to complete, so I am not sure why this occurs. updateThought does not contain any non-Dexie async calls.
+      // However, TransactionInactiveError or PrematureCommitError still gets thrown when updateThoughts gets called in parallel, e.g. if push gets called before the previous push completes.
+      // Run shortcuts/__tests__/moveThought on its own to reproduce.
+      await Dexie.waitFor(
+        series(
+          Object.entries(thoughtUpdates || {}).map(
+            ([id, thought], i) =>
+              () =>
+                updateThought(id as ThoughtId, thoughtsOld[i], thought),
+          ),
+        ),
+      )
+
+      return Promise.all([
+        thoughtDeletes ? db.thoughtIndex.bulkDelete(Object.keys(thoughtDeletes)) : null,
+        lexemeDeletes ? db.lexemeIndex.bulkDelete(Object.keys(lexemeDeletes)) : null,
+        lexemeUpdates ? updateLexemeIndex(lexemeUpdates) : null,
+        updateLastUpdated(timestamp()),
+        updateSchemaVersion(schemaVersion),
+      ] as Promise<unknown>[])
+    },
+  )
 }
 
 /** Updates multiple thoughts in the thoughtIndex. */
@@ -313,47 +368,5 @@ export const fullTextSearch = async (value: string) => {
 /** Logs a message. */
 export const log = async ({ message, stack }: { message: string; stack: any }) =>
   db.logs.add({ created: timestamp(), message, stack })
-
-/** Atomically updates the thoughtIndex and lexemeIndex. */
-export const updateThoughts = async (
-  thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
-  lexemeIndexUpdates: Index<Lexeme | null>,
-  schemaVersion: number,
-) => {
-  db.transaction(
-    'rw',
-    [db.thoughtIndex, db.thoughtWordsIndex, db.lexemeIndex, db.helpers],
-    async (tx: ObservableTransaction) => {
-      tx.source = getSessionId()
-
-      // group thought updates and deletes so that we can use the db bulk functions
-      const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
-        thought ? 'update' : 'delete',
-      ) as {
-        update?: Index<ThoughtWithChildren>
-        delete?: Index<null>
-      }
-
-      // group lexeme updates and deletes so that we can use the db bulk functions
-      const { update: lexemeUpdates, delete: lexemeDeletes } = groupObjectBy(lexemeIndexUpdates, (id, lexeme) =>
-        lexeme ? 'update' : 'delete',
-      ) as {
-        update?: Index<Lexeme>
-        delete?: Index<null>
-      }
-
-      return Promise.all([
-        thoughtDeletes ? db.thoughtIndex.bulkDelete(Object.keys(thoughtDeletes)) : null,
-        lexemeDeletes ? db.lexemeIndex.bulkDelete(Object.keys(lexemeDeletes)) : null,
-        ...(thoughtUpdates
-          ? Object.entries(thoughtUpdates).map(([id, thought]) => updateThought(id as ThoughtId, thought))
-          : []),
-        lexemeUpdates ? updateLexemeIndex(lexemeUpdates) : null,
-        updateLastUpdated(timestamp()),
-        updateSchemaVersion(schemaVersion),
-      ] as Promise<unknown>[])
-    },
-  )
-}
 
 export default initDB

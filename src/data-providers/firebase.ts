@@ -163,7 +163,11 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   },
 
   /** Updates a context in the thoughtIndex. */
-  async updateThought(id: string, thoughtWithChildren: ThoughtWithChildren): Promise<unknown> {
+  async updateThought(
+    id: string,
+    thoughtOld: ThoughtWithChildren | undefined,
+    thoughtWithChildren: ThoughtWithChildren,
+  ): Promise<unknown> {
     const nonPendingChildren = filterObject(thoughtWithChildren.children, (id, child) => !child.pending)
     // pending thoughts should never be persisted
     // since this is an update rather than a set, the thought will retain any children it already has in the database

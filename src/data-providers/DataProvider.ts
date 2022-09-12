@@ -22,7 +22,11 @@ export interface DataProvider {
 
   // testing only
   updateLexeme: (id: string, thought: Lexeme) => Promise<unknown>
-  updateThought: (id: ThoughtId, thoughtWithChildren: ThoughtWithChildren) => Promise<unknown>
+  updateThought: (
+    id: ThoughtId,
+    thoughtOld: ThoughtWithChildren | undefined,
+    thoughtWithChildren: ThoughtWithChildren,
+  ) => Promise<unknown>
   updateLexemeIndex: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
   updateThoughtIndex: (thoughtIndex: Index<ThoughtWithChildren>) => Promise<unknown>
 }
