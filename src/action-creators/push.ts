@@ -230,7 +230,8 @@ const push =
           recentlyEdited,
           updatesValidated,
         )(dispatch, getState)
-      : pushLocal(
+      : local
+      ? pushLocal(
           getState(),
           thoughtIndexUpdatesWithParents,
           lexemeIndexUpdates,
@@ -238,6 +239,7 @@ const push =
           updatesValidated,
           localStorageSettingsContexts,
         )
+      : Promise.resolve()
   }
 
 export default push
