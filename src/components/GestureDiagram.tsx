@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import theme from '../selectors/theme'
+import createId from '../util/createId'
 
 interface GestureDiagramProps {
   arrowSize?: number
@@ -69,6 +70,7 @@ const GestureDiagram = ({
   viewBox,
   width,
 }: GestureDiagramProps) => {
+  const [id] = useState(createId())
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
@@ -146,7 +148,7 @@ const GestureDiagram = ({
     >
       <defs>
         <marker
-          id='arrow'
+          id={id}
           viewBox='0 0 10 10'
           refX='5'
           refY='5'
@@ -165,7 +167,7 @@ const GestureDiagram = ({
         strokeLinecap='round'
         strokeLinejoin='round'
         fill='none'
-        markerEnd='url(#arrow)'
+        markerEnd={`url(#${id})`}
       />
     </svg>
   )
