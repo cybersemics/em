@@ -116,10 +116,9 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, value: string) =
       const height = contentRef.current.clientHeight
       // 1.72 must match line-height as defined in .thought-container
       const singleLineHeight = fontSize * 1.72
-      // The element is multiline if its height is at least twice the default line height
-      // Allow a margin of error of 15% (10% works on Chrome but not Safari).
-      // However, don't lower the threshold any further, as it needs to work with both the default line height and the multiline line hieght. Otherwise it won't detect when a multiline thought changes back to single line.
-      setMultiline(height > singleLineHeight * 1.85)
+      // The element is multiline if its height is twice the single line height.
+      // (Actually we just check if it is over 1.5x the single line height for a more forgiving condition.)
+      setMultiline(height > singleLineHeight * 1.5)
     }
   }, [fontSize, value])
 
