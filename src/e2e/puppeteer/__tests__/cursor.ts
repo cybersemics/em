@@ -99,7 +99,7 @@ it('set the cursor on the cursor grandparent', async () => {
   expect(thoughtValue).toBe('a')
 })
 
-it('move the cursor up one level when clicking on a hidden ancestor', async () => {
+it('do nothing when clicking on a hidden ancestor', async () => {
   const importText = `
   - a
     - b
@@ -111,17 +111,16 @@ it('move the cursor up one level when clicking on a hidden ancestor', async () =
   await clickThought('a')
 
   const thoughtValue = await getEditingText()
-  expect(thoughtValue).toBe('c')
+  expect(thoughtValue).toBe('d')
 })
 
-it('move the cursor up one level when clicking on a hidden great uncle', async () => {
+it('do nothing when clicking on a hidden great uncle', async () => {
   const importText = `
   - a
     - b
       - c
   - d`
   await paste(importText)
-  // click a to expand
   await waitForEditable('a')
   await clickThought('a')
   await waitForEditable('c')
@@ -129,7 +128,7 @@ it('move the cursor up one level when clicking on a hidden great uncle', async (
   await clickThought('d')
 
   const thoughtValue = await getEditingText()
-  expect(thoughtValue).toBe('b')
+  expect(thoughtValue).toBe('c')
 })
 
 it('set the cursor on click after cursorBack sets it to null', async () => {
