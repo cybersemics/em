@@ -286,7 +286,7 @@ const Editable = ({
    * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
    */
   const thoughtChangeHandler = (newValue: string, { rank, simplePath }: { rank: number; simplePath: SimplePath }) => {
-    // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause cause contentEditable to be out of sync.
+    // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
 
     // make sure to get updated state
@@ -437,8 +437,24 @@ const Editable = ({
 
     // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
     const oldValue = oldValueRef.current
+
+    // If the target value (innerHTML) contains divs, then it is either Optical Character Recognition (OCR) or Speech-to-text (STT).
+    // Only detect OCR into an empty thought, otherwise it will cause a false positive for STT with multiple newlines.
+    // <div><br> only occurs in STT, so exclude it.
+    // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
+    const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
+
     const newValue = e.target
-      ? stripEmptyFormattingTags(addEmojiSpace(unescape(strip(e.target.value, { preserveFormatting: true }))))
+      ? stripEmptyFormattingTags(
+          addEmojiSpace(
+            unescape(
+              // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
+              // Therefore, when OCR is detected, join the lines together with spaes.
+              // Otherwise the multiline STT handler in onBlur will separate them into separate thoughts.
+              strip(ocrDetected ? e.target.value.replace(/<div>/g, ' ') : e.target.value, { preserveFormatting: true }),
+            ),
+          ),
+        )
       : oldValue
 
     // TODO: Disable keypress
@@ -490,9 +506,10 @@ const Editable = ({
 
     const isEmpty = newValue.length === 0
 
-    // safari adds <br> to empty contenteditables after editing, so strip them out
-    // make sure empty thoughts are truly empty'
-    if (isEmpty && contentRef.current) {
+    // Safari adds <br> to empty contenteditables after editing, so strip them out.
+    // Make sure empty thoughts are truly empty.
+    // Also update the ContentEditable with the joined OCR result, otherwise onBlur will split it into separate lines.
+    if (contentRef.current && (isEmpty || ocrDetected)) {
       contentRef.current.innerHTML = newValue
     }
 
