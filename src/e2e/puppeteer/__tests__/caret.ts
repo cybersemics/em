@@ -67,7 +67,7 @@ describe('all platforms', () => {
 
     await click(editableNodeHandle, { offset: 5 })
     await waitUntil(() => window.getSelection()?.focusOffset === 5)
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
@@ -81,9 +81,9 @@ describe('all platforms', () => {
 
     const editableNodeHandle = await waitForEditable('Richard Feynman')
 
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
     await waitUntil(() => window.getSelection()?.focusOffset === 0)
-    await click(editableNodeHandle, { horizontalClickLine: 'right' })
+    await click(editableNodeHandle, { edge: 'right' })
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe('Richard Feynman'.length)
@@ -114,7 +114,7 @@ describe('all platforms', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('Husky')
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
 
     await press('ArrowDown')
 
@@ -194,7 +194,7 @@ describe('mobile only', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('B')
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
 
     // to close keyboard
     await clickBullet('B')
@@ -238,8 +238,8 @@ describe('mobile only', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable('B')
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
-    await click(editableNodeHandle, { horizontalClickLine: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
+    await click(editableNodeHandle, { edge: 'left' })
 
     await waitForState('editing', true)
 

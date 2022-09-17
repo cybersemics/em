@@ -1,9 +1,9 @@
 import { JSHandle, Page } from 'puppeteer'
 
 interface Options {
-  // Where in the horizontal line (inside) of the target node should the mouse be clicked
-  horizontalClickLine?: 'left' | 'right'
-  // Specify specific node on editable to click on. Overrides horizontalClickLine
+  // Click on the inside edge of the editable
+  edge?: 'left' | 'right'
+  // Specify specific node on editable to click on. Overrides edge.
   offset?: number
   // Number of pixels of x offset to add to the click coordinates
   x?: number
@@ -17,7 +17,7 @@ interface Options {
 const click = async (
   page: Page,
   nodeHandleOrSelector: JSHandle | string,
-  { horizontalClickLine = 'left', offset, x = 0, y = 0 }: Options = {},
+  { edge = 'left', offset, x = 0, y = 0 }: Options = {},
 ) => {
   // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click
   if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
@@ -53,13 +53,7 @@ const click = async (
 
   const coordinate = !offset
     ? {
-        x:
-          boundingBox.x +
-          (horizontalClickLine === 'left'
-            ? 0
-            : horizontalClickLine === 'right'
-            ? boundingBox.width - 1
-            : boundingBox.width / 2),
+        x: boundingBox.x + (edge === 'left' ? 1 : edge === 'right' ? boundingBox.width - 1 : boundingBox.width / 2),
         y: boundingBox.y + boundingBox.height / 2,
       }
     : await offsetCoordinates()
