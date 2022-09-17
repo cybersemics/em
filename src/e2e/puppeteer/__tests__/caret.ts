@@ -186,7 +186,7 @@ describe('mobile only', () => {
     ref,
   } = helpers({ emulatedDevice: devices['iPhone 11'] })
 
-  it('when subCategorizeOne, caret should be on new thought', async () => {
+  it('After subcategorizeOne, the caret should be on the new thought', async () => {
     const importText = `
     - a
       - b`
@@ -199,7 +199,7 @@ describe('mobile only', () => {
     // to close keyboard
     await clickBullet('b')
 
-    await click('#subcategorizeOne')
+    await click('[aria-label="Subcategorize"]')
 
     await waitForState('editing', true)
 
@@ -210,7 +210,7 @@ describe('mobile only', () => {
     expect(offset).toBe(0)
   })
 
-  it('do nothing when a hidden thought is clicked', async () => {
+  it('do nothing when a hidden uncle is clicked', async () => {
     const importText = `
     - a
       - b
@@ -227,10 +227,10 @@ describe('mobile only', () => {
     await waitForEditable('a')
 
     const cursorText = await getEditingText()
-    expect(cursorText).toBe('b')
+    expect(cursorText).toBe('c')
   })
 
-  it('while editing true, after opening modal the editing should be false', async () => {
+  it('edit mode should be disabled after opening a modal', async () => {
     const importText = `
     - a
       - b`
@@ -243,7 +243,7 @@ describe('mobile only', () => {
 
     await waitForState('editing', true)
 
-    await click('#exportContext')
+    await click('[aria-label="Export Context"]')
     await click('.popup-close-x')
 
     await waitForState('editing', false)
