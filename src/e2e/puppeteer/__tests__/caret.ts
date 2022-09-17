@@ -188,16 +188,16 @@ describe('mobile only', () => {
 
   it('when subCategorizeOne, caret should be on new thought', async () => {
     const importText = `
-    - A
-      - B`
+    - a
+      - b`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable('B')
+    const editableNodeHandle = await waitForEditable('b')
     await click(editableNodeHandle, { edge: 'left' })
 
     // to close keyboard
-    await clickBullet('B')
+    await clickBullet('b')
 
     await click('#subcategorizeOne')
 
@@ -210,34 +210,34 @@ describe('mobile only', () => {
     expect(offset).toBe(0)
   })
 
-  it('on clicking the hidden thought, caret should be on the parent thought of editing thought', async () => {
+  it('do nothing when a hidden thought is clicked', async () => {
     const importText = `
-    - A
-      - B
-        -C
-    - D`
+    - a
+      - b
+        - c
+    - d`
 
     await paste(importText)
-    await clickThought('A')
-    await clickThought('C')
+    await clickThought('a')
+    await clickThought('c')
 
-    await waitForHiddenEditable('D')
-    await clickThought('D')
+    await waitForHiddenEditable('d')
+    await clickThought('d')
 
-    await waitForEditable('A')
+    await waitForEditable('a')
 
     const cursorText = await getEditingText()
-    expect(cursorText).toBe('B')
+    expect(cursorText).toBe('b')
   })
 
   it('while editing true, after opening modal the editing should be false', async () => {
     const importText = `
-    - A
-      - B`
+    - a
+      - b`
 
     await paste(importText)
 
-    const editableNodeHandle = await waitForEditable('B')
+    const editableNodeHandle = await waitForEditable('b')
     await click(editableNodeHandle, { edge: 'left' })
     await click(editableNodeHandle, { edge: 'left' })
 
