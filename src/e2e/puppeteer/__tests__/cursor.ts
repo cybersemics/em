@@ -8,8 +8,7 @@ jest.setTimeout(20000)
 const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought, press } =
   helpers()
 
-// @MIGRATION_TODO
-it.skip('set the cursor to a thought in the home context on load', async () => {
+it('set the cursor to a thought in the home context on load', async () => {
   const importText = `
   - a
   - b`
@@ -33,9 +32,7 @@ it.skip('set the cursor to a thought in the home context on load', async () => {
   expect(thoughtValue).toBe('b')
 })
 
-// @MIGRATION_TODO
-
-it.skip('set the cursor on a subthought on load', async () => {
+it('set the cursor on a subthought on load', async () => {
   const importText = `
   - a
     - x

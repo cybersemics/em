@@ -7,9 +7,8 @@ jest.setTimeout(20000)
 
 const { paste, press, ref, refresh, waitForEditable, waitForState } = helpers()
 
-// @MIGRATION_TODO: Fix this after persistance is re enabled
 // Original issue: #1394
-it.skip('sort on load', async () => {
+it('sort on load', async () => {
   await paste(`
     - a
       - =sort

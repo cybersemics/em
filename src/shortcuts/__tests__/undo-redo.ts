@@ -208,8 +208,7 @@ describe('undo', () => {
     expect(cursorThoughts).toMatchObject(expectedCursor)
   })
 
-  // @MIGRATION_TODO
-  it.skip('persists undo thought change', async () => {
+  it('persists undo thought change', async () => {
     /**
      * Note: we can't use await with initialize as that results in a timeout error due to dexie. It's handled using the usetestTimer from Sinon.
      * More on that here - https://github.com/cybersemics/em/issues/919#issuecomment-739135971.

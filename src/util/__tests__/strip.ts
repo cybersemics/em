@@ -60,8 +60,7 @@ it('empty formatting tags multiline', () => {
   ).toBe('')
 })
 
-// This fails here, but succeeds on regex101.com (???)
-it.skip('preserve bold with newlines in attribute', () => {
+it('preserve bold with newlines in attribute', () => {
   expect(
     strip(
       `Hello <b

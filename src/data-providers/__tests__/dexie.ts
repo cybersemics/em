@@ -41,8 +41,8 @@ describe('integration', () => {
     storage.clear()
   })
 
-  // TODO: Fix regression from 1089c96071
-  it.skip('load settings into indexedDB on initialization', async () => {
+  // TODO: Intermittent TransactionInactiveError when run with other tests in this describe
+  it('load settings into indexedDB on initialization', async () => {
     const thoughtState = getLexeme(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()

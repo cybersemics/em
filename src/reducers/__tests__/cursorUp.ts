@@ -62,8 +62,7 @@ it('do nothing when there are no thoughts', () => {
   expect(stateNew.cursor).toBe(null)
 })
 
-// @MIGRATION_TODO: Context view is not working yet.
-describe.skip('context view', () => {
+describe('context view', () => {
   it("move cursor from context's first child to parent", () => {
     const text = `
       - a

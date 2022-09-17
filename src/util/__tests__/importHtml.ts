@@ -143,6 +143,7 @@ it("<span> with nested li's", () => {
 `)
 })
 
+// TODO
 it.skip("empty thought with nested li's", () => {
   expect(
     importExport(

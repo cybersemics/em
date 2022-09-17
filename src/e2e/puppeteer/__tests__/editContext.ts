@@ -14,7 +14,7 @@ jest.setTimeout(20000)
 
 const { $, clickThought, getEditable, paste, press, type } = helpers()
 
-it.skip('edit context value', async () => {
+it('edit context value', async () => {
   const importText = `
   - a
     - m
@@ -33,7 +33,7 @@ it.skip('edit context value', async () => {
   await editableBM.asElement()!.click()
 
   // toggle context view
-  const toggleContextView = await $('#toggleContextView')
+  const toggleContextView = await $('[aria-label="Context View"]')
   await toggleContextView!.click()
 
   // click on b/m~/a
