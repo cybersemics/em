@@ -30,6 +30,7 @@ import getThoughtById from './selectors/getThoughtById'
 import { store } from './store'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import importToContext from './test-helpers/importToContext'
+import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
@@ -208,6 +209,7 @@ const windowEm = {
   contextToThoughtId,
   hashThought,
   moize,
+  prettyPath,
 }
 
 window.em = windowEm
