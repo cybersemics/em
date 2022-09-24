@@ -140,6 +140,7 @@ const AlertWithTransition: FC = ({ children }) => {
 const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
+  const fontSize = useSelector((state: State) => state.fontSize)
   const useSwipeToDismissProps = useSwipeToDismiss({
     ...(alert?.isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
@@ -158,7 +159,8 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
       style={{
         position: 'fixed',
         width: '100%',
-        top: 8,
+        // scale with font size to stay vertically centered over toolbar
+        top: fontSize / 2 - 3,
         padding: '5px 0',
         color: colors.gray50,
         backgroundColor: colors.bgOverlay80,
