@@ -158,10 +158,10 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
         position: 'fixed',
+        top: 0,
         width: '100%',
         // scale with font size to stay vertically centered over toolbar
-        top: fontSize / 2 - 3,
-        padding: '5px 0',
+        padding: `${fontSize / 2 + 2}px 0 5px`,
         color: colors.gray50,
         backgroundColor: colors.bgOverlay80,
         overflowX: 'hidden',

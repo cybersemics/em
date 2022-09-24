@@ -66,14 +66,15 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 // eslint-disable-next-line jsdoc/require-jsdoc
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
-/** Add position:absolute to toolbar elements in order to fix Safari position:fixed browser behavior when keyboard is up. */
+/** Change position:fixed top nav to position:absolute in order to fix Safari position:fixed browser behavior when keyboard is up. */
 const makeToolbarPositionFixed = () => {
   document.addEventListener('scroll', updateToolbarPosition)
+  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
-  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+  Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.position = 'absolute'
     el.style.overflowX = 'hidden'
@@ -85,11 +86,12 @@ const makeToolbarPositionFixed = () => {
 /** Reset position:absolute of toolbar elements. */
 const resetToolbarPosition = () => {
   document.removeEventListener('scroll', updateToolbarPosition)
+  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
   const rightArrow = document.getElementById('right-arrow') as HTMLElement
   const leftArrow = document.getElementById('left-arrow') as HTMLElement
-  Array.from([hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
+  Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
     if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.position = 'fixed'
     el.style.overflowX = ''
@@ -98,9 +100,10 @@ const resetToolbarPosition = () => {
 }
 /** Update position of toolbar elements while scrolling in order to show them always on top. */
 const updateToolbarPosition = () => {
+  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
   const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
   const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
-  Array.from([hamburgerMenu, toolbar]).forEach(el => {
+  Array.from([alert, hamburgerMenu, toolbar]).forEach(el => {
     if (!el) return // hamburger menu and toolbar are not rendered during tutorial
     el.style.top = `${window.scrollY}px`
   })
