@@ -150,7 +150,8 @@ const initEvents = (store: Store<State, any>) => {
     const shouldConfirmReload = store.getState().isPushing
 
     if (shouldConfirmReload) {
-      // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+      // Note: Showing confirmation dialog can vary between browsers.
+      // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()
       e.returnValue = ''
       return ''
@@ -159,7 +160,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
-    if (newState === 'hidden') {
+    if (newState === 'hidden' || oldState === 'hidden') {
       // dismiss the gesture alert if active
       const alertType = store.getState().alert?.alertType
       if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
