@@ -376,6 +376,9 @@ a.text-link {
   max-width: calc(100% - 1em); /* use 100% - 3em when HamburgerMenu is enabled */
   user-select: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  /* Extend upward beyond the top edge of the screen. This is necessary because when the position:absolute hack is used for Safari while the keyboard is up, the mask is not able to stay perfectly glued to the top edge during scrolling to emulate position:fixed, and underlying thoughts can bleed through. */
+  margin-top: -500px;
+  padding-top: 500px;
 }
 
 .toolbar {
@@ -515,6 +518,7 @@ a.text-link {
 
 /* Toolbar mask */
 .toolbar-mask {
+  padding-top: 500px; /* offset .toolbar-container negative margin-top */
   position: absolute;
   top: 0;
   left: 0;
