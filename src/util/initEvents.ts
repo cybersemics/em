@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
+import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
@@ -156,8 +157,8 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Handle a page lifecycle state change. */
-  const onStateChange = ({ oldState, newState }: { oldState: string; newState: string }) => {
+  /** Handle a page lifecycle state change, i.e. switching apps. */
+  const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     if (newState === 'hidden') {
       // dismiss the gesture alert if active
       const alertType = store.getState().alert?.alertType
@@ -190,7 +191,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
 
-  // clean up when PWA is hidden
+  // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
 
