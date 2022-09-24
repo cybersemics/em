@@ -928,6 +928,7 @@ body.dark {
   line-height: 16px;
   margin: 0 3px;
   vertical-align: 1px;
+  user-select: none;
 }
 
 /* react-transition-group animation: fade */
@@ -1806,6 +1807,7 @@ h1 .num-contexts {
 
 .footer-divider {
   margin: 0 6px;
+  user-select: none;
 }
 
 .increase-font {
