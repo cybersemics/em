@@ -168,19 +168,22 @@ const initialState = (created: Timestamp = timestamp()) => {
   }
 
   /**
-   * When user was being logged in using google, it was showing auth screen for few seconds and then flip to welcome.
-   * Use localStorage to get the value of modal to show to avoid the flip second auth screen.
-   * If modal-to-show is unset, default to the auth screen, unless on localhost.
+   * Show the modal specified by modal-to-show.
+   * Modal-to-show is set to 'welcome' on login, 'auth' on logout, and empty string in offline mode.
+   * Modal-to-show is needed because otherwise when the user is autologged in with google, it shows the signup screen for a few seconds then flips to welcome.
+   * Use localStorage to get the value of modal-to-show to avoid the flip second auth screen.
+   * If modal-to-show is unset, default to the signup screen, unless on localhost.
    * If working offline, modal-to-show is set to an empty string so the welcome dialog is skipped.
    */
   if (!isLocalNetwork) {
     const showModalLocal = getLocal('modal-to-show')
-    if (showModalLocal !== '') {
+    // do not show the modal if it has been permanently dismissed (complete)
+    if (showModalLocal !== '' && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
       state.showModal = showModalLocal || 'auth'
     }
   }
 
-  // Show sign up modal if the app is loaded with signup path
+  // show the signup modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {
     state.showModal = 'signup'
   }
