@@ -14,6 +14,8 @@ import newThought from './newThought'
 import paste from './paste'
 import press from './press'
 import refresh from './refresh'
+import screenshot from './screenshot'
+import scroll from './scroll'
 import setup from './setup'
 import type from './type'
 import waitForAlert from './waitForAlert'
@@ -45,6 +47,8 @@ const helpers = {
   paste,
   press,
   refresh,
+  screenshot,
+  scroll,
   type,
   waitForAlert,
   waitForContextHasChildWithValue,
