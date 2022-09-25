@@ -56,7 +56,9 @@ it('Superscript should not render on empty thoughts', async () => {
   expect(() => screen.getByText('2')).toThrow('Unable to find an element')
 })
 
-it('Superscript should not count archived contexts', async () => {
+// Showing archived descendants is unavoidable since we do not have the full path of unloaded contexts
+// See: isVisibleContext
+it.skip('Superscript should not count archived contexts', async () => {
   store.dispatch([
     importText({
       text: `
@@ -75,6 +77,18 @@ it('Superscript should not count archived contexts', async () => {
 
   const element = screen.getByText('2')
   expect(element.nodeName).toBe('SUP')
+})
+
+it('Superscript should not render on thoughts that match EM descendants', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - on
+      `,
+    }),
+  ])
+
+  expect(() => screen.getByRole('superscript')).toThrow('Unable to find an accessible element')
 })
 
 it('Superscript should not render on punctuation-only thoughts', async () => {

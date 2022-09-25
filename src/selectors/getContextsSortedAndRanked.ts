@@ -3,14 +3,13 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
-import isAncestorsVisible from '../selectors/isAncestorsVisible'
 import isRoot from '../util/isRoot'
+import isVisibleContext from '../util/isVisibleContext'
 import never from '../util/never'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
 import rootedParentOf from './rootedParentOf'
-import thoughtToContext from './thoughtToContext'
 import thoughtToPath from './thoughtToPath'
 
 // sort missing thoughts to end
@@ -20,7 +19,7 @@ const PENDING_TOKEN = '__PENDING__'
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   const contexts = getContexts(state, value)
-    .filter(id => isAncestorsVisible(state, unroot(thoughtToContext(state, id)!)))
+    .filter(id => isVisibleContext(state, id))
     .map((cxid, i) => {
       const thought = getThoughtById(state, cxid)
       const thoughtRanked: Thought = {

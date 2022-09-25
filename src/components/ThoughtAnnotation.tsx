@@ -13,7 +13,6 @@ import { isInternalLink } from '../device/router'
 import useAutofocus from '../hooks/useAutofocus'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
-import getAncestorByValue from '../selectors/getAncestorByValue'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
@@ -26,6 +25,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
+import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
@@ -174,15 +174,14 @@ const ThoughtAnnotation = ({
       (state: State) => {
         if (!calculateContexts) return 0
 
-        /** Returns true if the thought is not archived. */
-        const isNotArchive = (id: ThoughtId) => state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
-
         // only show real time update if being edited while having meta validation error
         // do not increase numContexts when in an invalid state since the thought has not been updated in state
         const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
 
         const contexts = getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
-        return value === '' ? 0 : contexts.filter(isNotArchive).length + (isRealTimeContextUpdate ? 1 : 0)
+        return value === ''
+          ? 0
+          : contexts.filter(id => isVisibleContext(state, id)).length + (isRealTimeContextUpdate ? 1 : 0)
       },
       {
         maxSize: 1000,

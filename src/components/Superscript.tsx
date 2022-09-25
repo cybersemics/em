@@ -4,15 +4,14 @@ import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
-import getAncestorByValue from '../selectors/getAncestorByValue'
 import getContexts from '../selectors/getContexts'
 import hasLexeme from '../selectors/hasLexeme'
 import { store } from '../store'
 import equalArrays from '../util/equalArrays'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isVisibleContext from '../util/isVisibleContext'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 
@@ -64,17 +63,13 @@ const Superscript: FC<ReturnType<typeof mapStateToProps> & SuperscriptProps> = (
 
   const contexts = useSelector((state: State) => getContexts(state, head(simplePathLive || simplePath)))
 
-  /** Returns true if the thought is not archived. */
-  const isNotArchive = (id: ThoughtId) => {
-    const state = store.getState()
-    return state.showHiddenThoughts || !getAncestorByValue(state, id, '=archive')
-  }
-
   // delay rendering of superscript for performance
-  // recalculate when Lexemes are loaded
-  // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
+  // recalculate when Lexeme contexts are loaded
+  // Note: This results in a total running time for all superscripts of O(totalNumberOfContexts * depth)
   useEffect(() => {
-    setNumContexts(contexts.filter(isNotArchive).length)
+    window.requestAnimationFrame(() => {
+      setNumContexts(contexts.filter(id => isVisibleContext(store.getState(), id)).length)
+    })
   }, [contexts, showHiddenThoughts])
 
   return (

@@ -4,7 +4,7 @@ import React from 'react'
 const StaticSuperscript = ({ n, style }: { n: number; style?: React.CSSProperties }) => (
   <span className='superscript-container' style={style}>
     <span className='num-contexts'>
-      <sup>{n}</sup>
+      <sup role='superscript'>{n}</sup>
     </span>
   </span>
 )

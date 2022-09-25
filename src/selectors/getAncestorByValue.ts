@@ -5,7 +5,7 @@ import ThoughtId from '../@types/ThoughtId'
 import getThoughtById from './getThoughtById'
 
 /**
- * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function.
+ * Traverses the thought tree upwards from the given thought and returns the first ancestor that passes the check function. O(depth).
  */
 export const getAncestorBy = (
   state: State,

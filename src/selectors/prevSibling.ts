@@ -5,10 +5,9 @@ import { getChildrenRanked, getChildrenSorted, isChildVisible } from '../selecto
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
-import isAncestorsVisible from '../selectors/isAncestorsVisible'
 import isContextViewActive from '../selectors/isContextViewActive'
 import head from '../util/head'
-import thoughtToContext from './thoughtToContext'
+import isVisibleContext from '../util/isVisibleContext'
 
 /**
  * Gets the previous sibling of a thought according to its parent's sort preference.
@@ -35,9 +34,7 @@ export const prevSibling = (state: State, value: string, path: Path, rank: numbe
     if (child.rank === rank && (contextViewActive || child.value === value)) {
       return true
     } else if (
-      !(contextViewActive
-        ? isAncestorsVisible(state, thoughtToContext(state, child.id)!)
-        : showHiddenThoughts || isChildVisible(state, child))
+      !(contextViewActive ? isVisibleContext(state, child.id) : showHiddenThoughts || isChildVisible(state, child))
     ) {
       return false
     } else {
