@@ -606,7 +606,7 @@ a.text-link {
 }
 
 /* Add some space before the first sibling after an expanded thought to make room for its children. Cannot use line-height since it adds unwanted space on the bottom, so we have to use padding-top even though it messes up the caret placement on click. See ".child .editable" below for details. */
-.child.expanded:not(.leaf) + .child > .thought-container .editable {
+.child.expanded:not(.leaf) + .child > .thought-container {
   padding-top: 0.3em;
 }
 .child.expanded:not(.leaf) + .child > .thought-container .bullet {

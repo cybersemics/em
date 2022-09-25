@@ -16,8 +16,11 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
     // puppeteer anti-aliasing (?) commonly creates small differences in text and svg rendering at different font sizes, so increase the threshold
     threshold: 0.1,
   },
-  // full picture failure threshold (pixels)
-  failureThreshold: 10,
+  // Full picture failure threshold (pixels)
+  // 4 pixels definitely has false positives.
+  // 14 px definitely has false negatives.
+  // Hopefully 8 is the sweet spot.
+  failureThreshold: 8,
 })
 expect.extend({ toMatchImageSnapshot })
 
@@ -122,6 +125,7 @@ const testSuite = () => {
         - d
       - e
       - f
+      - g
     `)
 
     // move cursor to the multiline thought
