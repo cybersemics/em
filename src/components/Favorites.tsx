@@ -251,7 +251,14 @@ const Favorites = () => {
   }, [favoritesLoaded])
 
   return (
-    <div className='favorites recently-edited-sidebar' style={{ userSelect: 'none' }}>
+    <div
+      className='favorites recently-edited-sidebar'
+      style={{
+        userSelect: 'none',
+        // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
+        position: 'relative',
+      }}
+    >
       <div className='header'>Favorites</div>
       <div style={{ padding: '0 2em' }}>
         {simplePaths.length > 0
