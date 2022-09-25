@@ -20,7 +20,7 @@ import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, HOME_PATH, NOOP } from '../constants'
+import { AlertType, NOOP } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
@@ -61,7 +61,15 @@ const endDrag = () => {
 }
 
 /** Handles dropping a thought on a DropTarget. */
-const drop = ({ simplePath }: { simplePath: SimplePath }, monitor: DropTargetMonitor) => {
+const drop = (
+  {
+    simplePath,
+  }: {
+    // when simplePath is null, it means the thought was dropped on DropEnd at the end of the favorites list
+    simplePath: SimplePath | null
+  },
+  monitor: DropTargetMonitor,
+) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
@@ -78,22 +86,40 @@ const drop = ({ simplePath }: { simplePath: SimplePath }, monitor: DropTargetMon
   if (!lexemeFavorites) {
     throw new Error('=favorite lexeme missing')
   }
-  // the index of the thoughtsFrom path within the =favorite lexeme contexts
+  // the index of thoughtsFrom id within the =favorite lexeme contexts
   const indexFrom = lexemeFavorites.contexts.findIndex(cxid => {
     const thought = getThoughtById(state, cxid)
-    return thought && thought.parentId === head(thoughtsFrom)
+    return thought?.parentId === head(thoughtsFrom)
   })
   const fromId = lexemeFavorites.contexts[indexFrom]
-  const indexTo = lexemeFavorites.contexts.findIndex(cxid => {
-    const thought = getThoughtById(state, cxid)
-    return thought && thought.parentId === head(thoughtsTo)
-  })
-  if (indexFrom === indexTo) return
 
+  // the index of the thoughtsTo id within the =favorite lexeme contexts
+  // -1 indicates end of the list
+  const indexTo = thoughtsTo
+    ? lexemeFavorites.contexts.findIndex(cxid => {
+        const thought = getThoughtById(state, cxid)
+        return thought?.parentId === head(thoughtsTo)
+      })
+    : lexemeFavorites.contexts.length
+
+  // do nothing if dropping in the same position (above or below the dropped thought)
+  if (indexFrom === indexTo || indexFrom === indexTo - 1) return
+
+  // first, remove the thought from the contexts array
   const contextsTemp = splice(lexemeFavorites.contexts, indexFrom, 1)
+
+  // then insert the thought at the drop point
+  const contextsNew = splice(
+    contextsTemp,
+    // if dropping after indexFrom, we need to decrement the index by 1 to account for the adjusted indexes in contextsTemp after splicing the contexts
+    indexTo - (indexTo > indexFrom ? 1 : 0),
+    0,
+    fromId,
+  )
+
   const lexemeNew: Lexeme = {
     ...lexemeFavorites,
-    contexts: indexTo !== -1 ? splice(contextsTemp, indexTo, 0, fromId) : [...contextsTemp, fromId],
+    contexts: contextsNew,
   }
 
   store.dispatch(
@@ -171,7 +197,7 @@ const DropEnd = DropTarget(
   'thought',
   { drop },
   dropCollect,
-)(({ dropTarget, isHovering, simplePath }: ReturnType<typeof dropCollect> & { simplePath: SimplePath }) =>
+)(({ dropTarget, isHovering }: ReturnType<typeof dropCollect>) =>
   dropTarget(
     <div style={{ height: '4em' }}>
       <span
@@ -231,7 +257,7 @@ const Favorites = () => {
         {simplePaths.length > 0
           ? simplePaths.map((simplePath, i) => <DragAndDropFavorite key={head(simplePath)} simplePath={simplePath} />)
           : 'No favorites'}
-        <DropEnd simplePath={HOME_PATH as SimplePath} />
+        <DropEnd />
       </div>
     </div>
   )
