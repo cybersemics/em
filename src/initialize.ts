@@ -27,6 +27,7 @@ import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './s
 import getContexts from './selectors/getContexts'
 import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
+import thoughtToContext from './selectors/thoughtToContext'
 import { store } from './store'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import importToContext from './test-helpers/importToContext'
@@ -184,14 +185,16 @@ const testHelpers = {
   clearAll: db.clearAll,
 }
 
-// add em object to window for debugging
+// add useful functions to window.em for debugging
 const windowEm = {
+  contextToThoughtId,
   db,
-  store,
-  // helper functions that will be used by puppeteer tests
-  testHelpers,
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
+  getLexemeContexts: withState((state: State, value: string) => {
+    const contexts = getLexeme(state, value)?.contexts || []
+    return contexts.map(id => thoughtToContext(state, getThoughtById(state, id)?.parentId))
+  }),
   getAllChildrenByContext: withState((state: State, context: Context) =>
     getAllChildren(state, contextToThoughtId(state, context) || null),
   ),
@@ -206,10 +209,13 @@ const windowEm = {
     const id = contextToThoughtId(state, context)
     return id ? getThoughtById(state, id) : undefined
   }),
-  contextToThoughtId,
   hashThought,
   moize,
   prettyPath,
+  store,
+  // helper functions that will be used by puppeteer tests
+  testHelpers,
+  thoughtToContext: withState(thoughtToContext),
 }
 
 window.em = windowEm
