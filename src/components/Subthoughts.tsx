@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -9,6 +9,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtType from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import { isTouch } from '../browser'
@@ -771,86 +772,36 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               </li>
             )
           }
-          {filteredChildren.map((child, i) => {
-            if (i >= proposedPageSize) {
-              return null
-            }
-
-            const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
-
-            /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
-            const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
-
-            /** Gets the =focus/Zoom/=style of the child path. */
-            const styleZoom = () => {
-              const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
-              return getStyle(state, zoomId)
-            }
-
-            const style = {
-              ...styleGrandchildren,
-              ...(child.value !== '=children' ? styleChildren : null),
-              ...(isEditingChildPath()
-                ? {
-                    ...styleZoom(),
-                    ...getStyle(state, childEnvZoomId()),
-                  }
-                : null),
-            }
-
-            const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
-
-            // TODO: ROOT gets appended when isContextPending
-            // What should appendedChildPath be?
-            const appendedChildPath = appendChildPath(state, childPath, path)
-            const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
-            const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
-            const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
-
-            /*
-              simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
-              The main problem is that when a new Thought is added it will get key (index) of the previous thought,
-              causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
-
-              By using child's rank we have unique key for every new thought.
-              Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
-              re-renders.
-            */
-
-            return child ? (
-              <Thought
-                allowSingleContext={allowSingleContextParent}
-                autofocus={
-                  isChildCursor || (isParentCursor && distance === 1)
-                    ? 'show'
-                    : isParentCursor || (isGrandparentCursor && distance === 2)
-                    ? 'dim'
-                    : autofocus()
-                }
-                depth={depth + 1}
-                env={env}
-                hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
-                key={`${child.id}-${child.rank}`}
-                rank={child.rank}
-                debugIndex={globals.simulateDrop ? i : undefined}
-                isVisible={
-                  // if thought is a zoomed cursor then it is visible
-                  (isChildCursor && !!zoomCursor) || actualDistance() < 2 || (distance === 2 && isEditingChildPath())
-                }
-                showContexts={showContexts}
-                prevChildId={filteredChildren[i - 1]?.id}
-                isContextPending={child.value === '__PENDING__'}
-                isParentHovering={isParentHovering}
-                style={Object.keys(style).length > 0 ? style : undefined}
-                styleContainer={styleContainer || undefined}
-                path={appendedChildPath}
-                simplePath={childPath}
-                isMultiColumnTable={isMultiColumnTable}
-                isHeader={isHeader}
-              />
-            ) : null
-          })}
+          {filteredChildren.map(
+            (child, i) =>
+              i < proposedPageSize && (
+                <Subthought
+                  actualDistance={actualDistance()}
+                  allowSingleContext={allowSingleContextParent}
+                  child={child}
+                  depth={depth}
+                  distance={distance}
+                  env={env}
+                  envParsed={envParsed}
+                  hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
+                  key={child.id}
+                  prevChildId={filteredChildren[i - 1]?.id}
+                  styleContainerChildren={styleContainerChildren || undefined}
+                  styleContainerGrandchildren={styleContainerGrandchildren || undefined}
+                  autofocus={autofocus()}
+                  index={i}
+                  isHeader={isHeader}
+                  isMultiColumnTable={isMultiColumnTable}
+                  isParentHovering={isParentHovering}
+                  zoomCursor={zoomCursor}
+                  path={path}
+                  showContexts={showContexts}
+                  simplePath={simplePath}
+                  styleChildren={styleChildren || undefined}
+                  styleGrandchildren={styleGrandchildren || undefined}
+                />
+              ),
+          )}
           {(dropTarget || ID)(
             <li
               className={classNames({
@@ -922,6 +873,135 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
 }
 
 SubthoughtsComponent.displayName = 'SubthoughtsComponent'
+
+/** Wraps a Thought component and calculates the child Path, style, etc. */
+const Subthought = ({
+  actualDistance,
+  allowSingleContext,
+  autofocus,
+  child,
+  depth,
+  distance,
+  env,
+  envParsed,
+  hideBullet,
+  index,
+  isHeader,
+  isMultiColumnTable,
+  isParentHovering,
+  zoomCursor,
+  path,
+  prevChildId,
+  showContexts,
+  simplePath,
+  styleChildren,
+  styleGrandchildren,
+  styleContainerChildren,
+  styleContainerGrandchildren,
+}: {
+  actualDistance: number
+  allowSingleContext?: boolean
+  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
+  child: ThoughtType
+  depth: number
+  distance: number
+  env: any
+  envParsed: any
+  hideBullet?: boolean
+  index?: number
+  isHeader?: boolean
+  isMultiColumnTable?: boolean
+  isParentHovering?: boolean
+  zoomCursor?: boolean
+  path?: Path
+  prevChildId: ThoughtId
+  showContexts: boolean
+  simplePath: SimplePath
+  styleChildren?: React.CSSProperties
+  styleContainerChildren?: React.CSSProperties
+  styleGrandchildren?: React.CSSProperties
+  styleContainerGrandchildren?: React.CSSProperties
+}) => {
+  const state = store.getState()
+  const { cursor } = state
+
+  const childPath = useMemo(
+    () => getChildPath(state, child.id, simplePath, showContexts),
+    [child.id, simplePath, showContexts],
+  )
+  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
+
+  /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
+  const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
+
+  /** Gets the =focus/Zoom/=style of the child path. */
+  const styleZoom = () => {
+    const zoomId = findDescendant(state, head(childPath), ['=focus', 'Zoom'])
+    return getStyle(state, zoomId)
+  }
+
+  const style = {
+    ...styleGrandchildren,
+    ...(child.value !== '=children' ? styleChildren : null),
+    ...(isEditingChildPath()
+      ? {
+          ...styleZoom(),
+          ...getStyle(state, childEnvZoomId()),
+        }
+      : null),
+  }
+
+  const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
+
+  // TODO: ROOT gets appended when isContextPending
+  // What should appendedChildPath be?
+  const appendedChildPath = appendChildPath(state, childPath, path)
+  const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
+  const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
+  const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
+
+  /*
+              simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
+              The main problem is that when a new Thought is added it will get key (index) of the previous thought,
+              causing React DOM to think it as old component that needs re-render and thus the new thoughyt won't be able to mount itself as a new component.
+
+              By using child's rank we have unique key for every new thought.
+              Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
+              re-renders.
+            */
+
+  return child ? (
+    <Thought
+      autofocus={
+        isChildCursor || (isParentCursor && distance === 1)
+          ? 'show'
+          : isParentCursor || (isGrandparentCursor && distance === 2)
+          ? 'dim'
+          : autofocus || 'show'
+      }
+      depth={depth + 1}
+      env={env}
+      hideBullet={hideBullet}
+      key={`${child.id}-${child.rank}`}
+      rank={child.rank}
+      debugIndex={globals.simulateDrop ? index : undefined}
+      isVisible={
+        // if thought is a zoomed cursor then it is visible
+        (isChildCursor && zoomCursor) || actualDistance < 2 || (distance === 2 && isEditingChildPath())
+      }
+      showContexts={showContexts}
+      prevChildId={prevChildId}
+      isContextPending={child.value === '__PENDING__'}
+      isParentHovering={isParentHovering}
+      style={Object.keys(style).length > 0 ? style : undefined}
+      styleContainer={styleContainer || undefined}
+      path={appendedChildPath}
+      simplePath={childPath}
+      isMultiColumnTable={isMultiColumnTable}
+      isHeader={isHeader}
+    />
+  ) : null
+}
 
 const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))
 
