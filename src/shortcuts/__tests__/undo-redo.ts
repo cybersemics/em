@@ -6,7 +6,7 @@ import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
-import * as undoUtils from '../../selectors/isUndoEnabled'
+import * as isUndoEnabledModule from '../../selectors/isUndoEnabled'
 import { store as appStore } from '../../store'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -24,7 +24,7 @@ const timer = testTimer()
  ******************************************************************/
 
 describe('undo', () => {
-  const isUndoEnabled = jest.spyOn(undoUtils, 'isUndoEnabled')
+  const isUndoEnabled = jest.spyOn(isUndoEnabledModule, 'isUndoEnabled')
 
   it('dispatches undo action on shortcut if undo is enabled', () => {
     // enable undo

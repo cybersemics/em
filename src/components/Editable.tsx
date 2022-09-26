@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useEffect, useRef, useState } from 'react'
+import React, { FocusEventHandler, useEffect, useMemo, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
@@ -219,6 +219,7 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const editableNonceRef = useRef(state.editableNonce)
   const [isTapped, setIsTapped] = useState(false)
+  const fontSize = useSelector((state: State) => state.fontSize)
 
   useEffect(() => {
     editableNonceRef.current = state.editableNonce
@@ -735,6 +736,14 @@ const Editable = ({
 
   // strip formatting tags for clearThought placeholder
   const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
+  const styleMemo = useMemo(
+    () => ({
+      // must match marginLeft of ThoughtAnnotation
+      marginLeft: fontSize - 18,
+      ...style,
+    }),
+    [fontSize, style],
+  )
 
   return (
     <ContentEditable
@@ -780,7 +789,7 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
-      style={style || {}}
+      style={styleMemo}
     />
   )
 }

@@ -26,7 +26,7 @@ const useWhyDidYouUpdate = (name: string, props: any) => {
 
       // If changesObj not empty then output to console
       if (Object.keys(changesObj).length) {
-        console.info('[why-did-you-update]', name, changesObj)
+        console.info('useWhyDidYouUpdate: ', name, changesObj)
       }
     }
 
