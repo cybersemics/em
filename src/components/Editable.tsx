@@ -702,7 +702,7 @@ const Editable = ({
     // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
     // in this case, we need to prevent onTap from being called a second time via onMouseDown
     // https://github.com/cybersemics/em/issues/1268
-    else if (globals.touching) {
+    else if (globals.touching && e.cancelable) {
       e.preventDefault()
     }
 
