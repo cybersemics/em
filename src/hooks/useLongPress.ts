@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
 import { NOOP } from '../constants'
@@ -14,55 +14,57 @@ const useLongPress = (
   onTouchStart: (() => void) | null = NOOP,
   ms = 250,
 ) => {
-  const [started, setStarted] = useState(false)
   const [pressed, setPressed] = useState(false)
   const [scrollStart, setScrollStart] = useState(0)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
 
-  // when a long press is started, set a timer
-  // after the timer completes invoke the callback
-  useEffect(() => {
-    if (started) {
-      // cast Timeout to number for compatibility with clearTimeout
-      timerIdRef.current = setTimeout(() => {
-        if (Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) return
-        onLongPressStart?.()
-        setPressed(true)
-      }, ms) as unknown as number
-    } else clearTimeout(timerIdRef.current)
+  /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
+  const startTimer = () => {
+    setScrollStart(window.scrollY)
 
-    return () => clearTimeout(timerIdRef.current)
-  }, [started])
+    // cast Timeout to number for compatibility with clearTimeout
+    clearTimeout(timerIdRef.current)
+    timerIdRef.current = setTimeout(() => {
+      if (Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) return
+      onLongPressStart?.()
+      setPressed(true)
+    }, ms) as unknown as number
+  }
 
   // track that long press has started on mouseDown or touchStart
   const start = useCallback(e => {
     // do not stop propagation, or it will break MultiGesture
-    setStarted(true)
-    setScrollStart(window.scrollY)
+    startTimer()
+    setScrollStart(e.touches?.[0]?.clientY)
     onTouchStart?.()
   }, [])
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
   // TODO: Maybe an unmount handler would be better?
-  const stop = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
-      // Delay setPressed to ensure that onLongPressEnd is not called until bubbled events complete.
-      // This gives other components a chance to short circuit.
-      // We can't stop propagation here without messing up other components like Bullet.
-      setTimeout(() => {
-        setStarted(false)
-        setPressed(false)
-        onLongPressEnd?.()
-      }, 10)
-    },
-    [pressed],
-  )
+  const stop = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    // Delay setPressed to ensure that onLongPressEnd is not called until bubbled events complete.
+    // This gives other components a chance to short circuit.
+    // We can't stop propagation here without messing up other components like Bullet.
+    setTimeout(() => {
+      clearTimeout(timerIdRef.current)
+      setPressed(false)
+      onLongPressEnd?.()
+    }, 10)
+  }, [])
 
-  // set long press state on scroll depending on completion of timer
-  const scroll = useCallback(() => {
-    setStarted(pressed)
+  // if the user scrolls past the threshold, end the press
+  // timerIdRef is set to 0 to short circuit the calculation
+  const move = useCallback(() => {
+    if (timerIdRef && Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) {
+      if (pressed) {
+        onLongPressEnd?.()
+      } else {
+        clearTimeout(timerIdRef.current)
+        timerIdRef.current = 0
+      }
+    }
   }, [pressed])
 
   return {
@@ -78,7 +80,7 @@ const useLongPress = (
     onMouseUp: stop,
     onTouchStart: start,
     onTouchEnd: stop,
-    onTouchMove: scroll,
+    onTouchMove: move,
     onTouchCancel: stop,
   }
 }
