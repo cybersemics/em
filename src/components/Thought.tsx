@@ -274,7 +274,12 @@ const ThoughtContainer = ({
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
 
-  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })
+  const dragHoldResult = useDragHold({
+    isDragging,
+    disabled: autofocus === 'hide' || autofocus === 'hide-parent',
+    simplePath,
+    sourceZone: DragThoughtZone.Thoughts,
+  })
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
@@ -425,6 +430,10 @@ const ThoughtContainer = ({
             // ensure that ThoughtAnnotation is positioned correctly
             position: 'relative',
             ...(hideBullet ? { marginLeft: -12 } : null),
+            // Disable pointer-events on hidden thoughts to prevent activating the drag-and-drop alert.
+            // This is needed in addition to manually disabling dragHold.
+            // Apply to div. not outer li, to ensure that visible children can still be interacted with.
+            ...(autofocus === 'hide' || autofocus === 'hide-parent' ? { pointerEvents: 'none' } : null),
           }}
         >
           {showContexts && simplePath.length > 1 ? (

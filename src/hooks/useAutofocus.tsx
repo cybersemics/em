@@ -43,7 +43,7 @@ const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style
       })
     }
 
-    return {
+    const styles: React.CSSProperties = {
       // add transparency to the background color based on autofocus
       ...(style?.backgroundColor
         ? {
@@ -64,6 +64,8 @@ const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style
           }
         : null),
     }
+
+    return styles
   }, [autofocus, colors, style?.color, style?.backgroundColor, disableTransition])
 
   return styleColors

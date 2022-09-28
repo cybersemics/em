@@ -10,10 +10,12 @@ import useLongPress from './useLongPress'
 /** Set state.dragHold on longPress. */
 const useDragHold = ({
   isDragging,
+  disabled,
   simplePath,
   sourceZone,
 }: {
   isDragging: boolean
+  disabled?: boolean
   simplePath: SimplePath
   sourceZone: DragThoughtZone
 }) => {
@@ -24,12 +26,14 @@ const useDragHold = ({
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = useCallback(() => {
+    if (disabled) return
     setIsPressed(true)
     dispatch(dragHold({ value: true, simplePath, sourceZone }))
   }, [])
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(() => {
+    if (disabled) return
     setIsPressed(false)
     dispatch((dispatch, getState) => {
       if (getState().dragHold) {
