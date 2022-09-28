@@ -340,13 +340,16 @@ const ThoughtContainer = ({
     (state: State) =>
       isVisible &&
       state.hoveringPath &&
+      // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
+      // Reordering is a less destructive action that does not need to bring attention to the parent.
+      !equalPath(rootedParentOf(state, state.draggingThought!), simplePath) &&
       // SubthoughtsDrop
-      // can drop on SubthoughtsDrop if this thought is being hovered over
+      // Can drop on SubthoughtsDrop if this thought is being hovered over.
       ((state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||
         // ThoughtDrop
-        // can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought
-        (equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
-          state.hoverZone === DropThoughtZone.ThoughtDrop &&
+        // Can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought.
+        (state.hoverZone === DropThoughtZone.ThoughtDrop &&
+          equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
           !isDescendantPath(simplePath, state.draggingThought!))),
   )
 
