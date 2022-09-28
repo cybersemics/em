@@ -43,11 +43,16 @@ const useDragHold = ({
   }, [])
 
   // react-dnd stops propagation so onLongPressEnd sometimes does't get called
-  // so disable pressed as soon as we are dragging
+  // so disable dragHold and isPressed as soon as we are dragging
+  // or if no longer dragging and dragHold never got cleared.
+  //
   useEffect(() => {
-    if (isDragging) {
-      setIsPressed(false)
-    }
+    dispatch((dispatch, getState) => {
+      if (isDragging || getState().dragHold) {
+        setIsPressed(false)
+        dispatch([dragHold({ value: false }), alert(null)])
+      }
+    })
   }, [isDragging])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)

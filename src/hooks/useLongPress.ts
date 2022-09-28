@@ -44,6 +44,8 @@ const useLongPress = (
   }, [])
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
+  // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
+  // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       // Delay setPressed to ensure that onLongPressEnd is not called until bubbled events complete.
