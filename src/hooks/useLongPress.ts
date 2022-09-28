@@ -4,10 +4,19 @@ import editing from '../action-creators/editing'
 import { NOOP } from '../constants'
 import * as selection from '../device/selection'
 
+// number of pixels of scrolling to allow before abandoning the long tap
+const SCROLL_THRESHOLD = 10
+
 /** Custom hook to manage long press. */
-const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) => {
+const useLongPress = (
+  onLongPressStart: (() => void) | null = NOOP,
+  onLongPressEnd: (() => void) | null = NOOP,
+  onTouchStart: (() => void) | null = NOOP,
+  ms = 250,
+) => {
   const [started, setStarted] = useState(false)
   const [pressed, setPressed] = useState(false)
+  const [scrollStart, setScrollStart] = useState(0)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
 
@@ -17,7 +26,8 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
     if (started) {
       // cast Timeout to number for compatibility with clearTimeout
       timerIdRef.current = setTimeout(() => {
-        onLongPressStart()
+        if (Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) return
+        onLongPressStart?.()
         setPressed(true)
       }, ms) as unknown as number
     } else clearTimeout(timerIdRef.current)
@@ -29,6 +39,8 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
   const start = useCallback(e => {
     // do not stop propagation, or it will break MultiGesture
     setStarted(true)
+    setScrollStart(window.scrollY)
+    onTouchStart?.()
   }, [])
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
@@ -40,7 +52,7 @@ const useLongPress = (onLongPressStart = NOOP, onLongPressEnd = NOOP, ms = 250) 
       setTimeout(() => {
         setStarted(false)
         setPressed(false)
-        onLongPressEnd()
+        onLongPressEnd?.()
       }, 10)
     },
     [pressed],
