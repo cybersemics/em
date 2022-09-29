@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
+import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -27,9 +28,12 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import { store } from '../store'
+import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import { compareReasonable } from '../util/compareThought'
+import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -123,6 +127,42 @@ export interface ThoughtProps {
 }
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
+
+/** Returns a unique className and injectStyle function that can be used to style pseudo elements. Apply the className to the desired element and render injectStyle() nearby. The pseudo selector, e.g. ::before, will be appended to the unique className, styling a pseudo element directly, or a descendant pseudo element, as determined by the selector. */
+const pseudo = (pseudoSelector: string, style: Index<string>) => {
+  const className = `pseudo-${createId()}`
+
+  // simple encoding of style dictionary
+  // unlike React.CSSProperties, assumes that keys are already in slug case and units have been added
+  const styleCSS =
+    '{' +
+    Object.entries(style)
+      .map(([name, value]) => `${name}: ${value};`)
+      .join('') +
+    '}'
+
+  /** Style element. */
+  const styleElement = () => <style>{`.${className}${pseudoSelector} ${styleCSS}`}</style>
+  styleElement.displayName = className
+
+  return {
+    className,
+    injectStyle: styleElement,
+  }
+}
+
+/** Returns placeholder pseudo styles that animate with autofocus. */
+const useAutofocusPlaceholder = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent') => {
+  const colors = useSelector(themeColors)
+  return useMemo(
+    () =>
+      pseudo(' [placeholder]:empty::before', {
+        color: alpha(colors.fg, autofocus === 'hide' || autofocus === 'hide-parent' ? 0 : 0.5),
+        transition: 'color 0.75s ease-out',
+      }),
+    [autofocus, colors],
+  )
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -364,6 +404,9 @@ const ThoughtContainer = ({
   // colors that are applied to the container
   const styleAutofocus = useAutofocus(autofocus, style)
 
+  // placeholder style animates with autofocus
+  const placeholder = useAutofocusPlaceholder(autofocus)
+
   // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
   const styleWithoutColors = useMemo((): React.CSSProperties => {
     return {
@@ -400,6 +443,7 @@ const ThoughtContainer = ({
         }}
         className={classNames({
           child: true,
+          [placeholder.className]: true,
           'child-divider': isDivider(value),
           'cursor-parent': isCursorParent,
           'cursor-grandparent': isCursorGrandparent,
@@ -474,6 +518,8 @@ const ThoughtContainer = ({
               display: globals.simulateDrag || shouldDisplayDropHover ? 'inline' : 'none',
             }}
           ></span>
+
+          {placeholder.injectStyle()}
 
           <ThoughtAnnotation
             autofocus={autofocus}

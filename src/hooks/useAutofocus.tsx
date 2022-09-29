@@ -14,7 +14,7 @@ const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style
     style?.backgroundColor as `rgb${string}`,
   )
 
-  // By default, App.css will apply a slow (0.75s) color and backgroundColor transition for smooth autofocus animations while navigating. See .children > .child styles.
+  // By default, App.css will apply a slow (0.75s ease-out) color and backgroundColor transition for smooth autofocus animations while navigating. See .children > .child styles.
   // However, we need to disable the transition when clicking a color swatch in order to provide snappier feedback to the user.
   const [disableTransition, setDisableTransition] = useState<boolean>(false)
 
