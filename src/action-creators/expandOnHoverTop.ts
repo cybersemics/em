@@ -11,15 +11,33 @@ import equalPath from '../util/equalPath'
 import isDescendantPath from '../util/isDescendantPath'
 import parentOf from '../util/parentOf'
 
-/**
- * Checks if the current hovering thought's parent should expand it's context.
- */
+// eslint-disable-next-line prefer-const
+let expandTopTimer: Timer | null = null
+
+/** Clears an active delayed dispatch. */
+const clearTimer = () => {
+  if (expandTopTimer) {
+    clearTimeout(expandTopTimer)
+    expandTopTimer = null
+  }
+}
+
+/** Delays dispatch of expandHoverTop. */
+const expandHoverTopDebounced =
+  (path: Path): Thunk =>
+  (dispatch, getState) => {
+    clearTimer()
+    expandTopTimer = setTimeout(() => {
+      dispatch(expandHoverTop({ path }))
+      expandTopTimer = null
+    }, EXPAND_HOVER_DELAY)
+  }
+
+/** Checks if the current hovering thought's parent should expand its context. */
 const shouldAllowActiveHoverTop = (state: State) => {
-  const { cursor, hoverZone, expandHoverTopPath, hoveringPath } = state
+  const { cursor, expandHoverTopPath, hoveringPath } = state
 
-  if (!hoveringPath) return false
-
-  if (hoverZone !== DropThoughtZone.ThoughtDrop) return false
+  if (!hoveringPath || state.hoverZone !== DropThoughtZone.ThoughtDrop) return false
 
   const parentOfHoveringThought = hoveringPath && parentOf(hoveringPath)
 
@@ -38,14 +56,21 @@ const shouldAllowActiveHoverTop = (state: State) => {
     distanceFromCusor - 1 === visibleDistanceAboveCursor(state) &&
     isDescendantPath(cursor, parentOfHoveringThought)
 
-  /** Check if current hovering thought is actually the current expanded hover top path and the given path is it's parent. */
+  /** Check if current hovering thought is actually the current expanded hover top path and the given path is its parent. */
   const isParentOfCurrentExpandedTop = () => expandHoverTopPath && equalPath(hoveringPath, expandHoverTopPath)
 
-  return isParentOfFirstVisibleThought || isParentOfCurrentExpandedTop()
-}
+  const newExpandHoverPath = rootedParentOf(state, hoveringPath)
 
-// eslint-disable-next-line prefer-const
-let expandTopTimer: Timer | null = null
+  /** Check if current expand hover top is same as the hovering path. */
+  const isSameExpandHoverTopPath = (newExpandTopPath: Path) =>
+    expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
+
+  return (
+    newExpandHoverPath &&
+    !isSameExpandHoverTopPath(newExpandHoverPath) &&
+    (isParentOfFirstVisibleThought || isParentOfCurrentExpandedTop())
+  )
+}
 
 /**
  * Handles expansion due to hover on one of its children thought drop.
@@ -57,46 +82,19 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   const { hoveringPath, expandHoverTopPath, dragInProgress } = state
   const shouldExpand = shouldAllowActiveHoverTop(state)
 
-  /** Clears an active delayed dispatch. */
-  const clearTimer = () => {
-    if (expandTopTimer) {
-      clearTimeout(expandTopTimer)
-      expandTopTimer = null
-    }
-  }
-
   // Cancel only when drag is not in progress and there is no active expandHoverTopPath
-  const shouldCancel = !dragInProgress && expandHoverTopPath
-
-  if (shouldCancel) dispatch(expandHoverTop({ path: null }))
-
-  if (!shouldExpand) {
+  if (!dragInProgress && expandHoverTopPath) {
+    clearTimer()
+    dispatch(expandHoverTop({ path: null }))
+    return
+  } else if (!shouldExpand) {
     clearTimer()
     return
   }
 
-  /** Delays dispatch of expandHoverTop. */
-  const delayedDispatch = (newExpandTopPath: Path) =>
-    setTimeout(() => {
-      dispatch(
-        expandHoverTop({
-          path: newExpandTopPath,
-        }),
-      )
-      expandTopTimer = null
-    }, EXPAND_HOVER_DELAY)
-
-  /** Check if current expand hover top is same as the hovering path. */
-  const isSameExpandHoverTopPath = (newExpandTopPath: Path) =>
-    expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
-
   // Note: expandHoverPath is the parent of the hovering path (thought drop)
-  const newExpandHoverPath = hoveringPath && rootedParentOf(state, hoveringPath)
-
-  if (shouldExpand && newExpandHoverPath && !isSameExpandHoverTopPath(newExpandHoverPath)) {
-    clearTimer()
-    expandTopTimer = delayedDispatch(newExpandHoverPath)
-  }
+  // hoveringPath already checked in shouldAllowActiveHoverTop
+  dispatch(expandHoverTopDebounced(rootedParentOf(state, hoveringPath!)))
 }
 
 export default expandOnHoverTop

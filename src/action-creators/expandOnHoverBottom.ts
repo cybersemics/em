@@ -13,9 +13,26 @@ import expandBottom from './expandBottom'
 // eslint-disable-next-line prefer-const
 let expandBottomTimer: Timer | null = null
 
-/**
- * Handles expansion of the context due to hover on the thought's empty drop.
- */
+/** Clears active delayed dispatch. */
+const clearTimer = () => {
+  if (expandBottomTimer) {
+    clearTimeout(expandBottomTimer)
+    expandBottomTimer = null
+  }
+}
+
+/** Delays dispatch of expandHoverBottom. */
+const expandHoverBottomDebounced =
+  (path: Path): Thunk =>
+  (dispatch, getState) => {
+    clearTimer()
+    expandBottomTimer = setTimeout(() => {
+      dispatch(expandBottom({ path }))
+      expandBottomTimer = null
+    }, EXPAND_HOVER_DELAY)
+  }
+
+/** Handles expansion of the context due to hover on the thought's empty drop. */
 const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
@@ -26,43 +43,24 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   const shouldExpand =
     hoverZone === DropThoughtZone.SubthoughtsDrop && hoveringPath && getChildren(state, head(hoveringPath)).length > 0
 
-  /** Clears active delayed dispatch. */
-  const clearTimer = () => {
-    if (expandBottomTimer) {
-      clearTimeout(expandBottomTimer)
-      expandBottomTimer = null
-    }
-  }
-
-  const shouldCancel = !dragInProgress
-
-  if (shouldCancel) dispatch(clearExpandBottom())
-
-  if (!shouldExpand) {
+  if (!dragInProgress) {
+    clearTimer()
+    dispatch(clearExpandBottom())
+    return
+  } else if (!shouldExpand) {
     clearTimer()
     return
   }
 
-  /** Delays dispatch of expandBottom. */
-  const delayedDispatch = (path: Path) => {
-    expandBottomTimer = setTimeout(() => {
-      dispatch(
-        expandBottom({
-          path,
-        }),
-      )
-      expandBottomTimer = null
-    }, EXPAND_HOVER_DELAY)
+  /** Check if current hovering context is already has active expansion. */
+  const isAlreadyExpanded = () => {
+    // hoveringPath truthiness already checked in condition below
+    const parentId = headId(hoveringPath!)
+    return hoveringContext && expandHoverBottomPaths[parentId]
   }
 
-  const parentId = headId(hoveringPath!)
-
-  /** Check if current hovering context is already has active expansion. */
-  const isAlreadyExpanded = () => hoveringContext && expandHoverBottomPaths[parentId]
-
   if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
-    clearTimer()
-    delayedDispatch(hoveringPath)
+    dispatch(expandHoverBottomDebounced(hoveringPath))
   }
 }
 
