@@ -14,7 +14,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { AlertType, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import useAutofocus from '../hooks/useAutofocus'
 import useDragHold from '../hooks/useDragHold'
@@ -390,7 +390,8 @@ const ThoughtContainer = ({
         // Can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought.
         (state.hoverZone === DropThoughtZone.ThoughtDrop &&
           equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
-          !isDescendantPath(simplePath, state.draggingThought!))),
+          !isDescendantPath(simplePath, state.draggingThought!))) &&
+      state.alert?.alertType !== AlertType.DeleteDropHint,
   )
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
