@@ -110,9 +110,10 @@ const updateToolbarPosition = () => {
 }
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>, value: string) => {
+const useMultiline = (contentRef: React.RefObject<HTMLElement>, isEditing: boolean, valueThrottled: string) => {
   const [multiline, setMultiline] = useState(false)
   const cursor = useSelector((state: State) => state.cursor)
+  const value = useSelector((state: State) => (isEditing ? state.editingValue! : valueThrottled))
   const fontSize = useSelector((state: State) => state.fontSize)
 
   useEffect(
@@ -235,7 +236,7 @@ const Editable = ({
     contentRef.current.style.opacity = '1.0'
   }
 
-  const multiline = useMultiline(contentRef, isEditing ? state.editingValue! : value)
+  const multiline = useMultiline(contentRef, !!isEditing, value)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
