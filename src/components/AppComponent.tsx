@@ -5,7 +5,7 @@ import SplitPane from 'react-split-pane'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
-import { isAndroid, isTouch } from '../browser'
+import { isAndroid, isSafari, isTouch } from '../browser'
 import { AlertType, BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -175,7 +175,7 @@ const AppComponent: FC<Props> = props => {
     android: isAndroid,
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
-    safari: /Safari/.test(navigator.userAgent),
+    safari: isSafari(),
   })
 
   return (
