@@ -2,7 +2,7 @@ import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useEffect, useMemo, useRef, useState } from 'react'
-import { connect, useSelector } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -173,41 +173,24 @@ interface EditableProps {
 // intended to be global, not local state
 let blurring = false
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: EditableProps) => {
-  const thought = getThoughtById(state, head(props.simplePath))
-  const hasNoteFocus = state.noteFocus && equalPath(state.cursor, props.path)
-  return {
-    isCursorCleared: props.isEditing && state.cursorCleared,
-    value: thought.value,
-    rank: thought.rank,
-    // re-render when noteFocus changes in order to set the selection
-    hasNoteFocus,
-  }
-}
-
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
+  cursorOffset,
   disabled,
-  isCursorCleared,
+  editing,
   isEditing,
   isVisible,
-  simplePath,
-  path,
-  cursorOffset,
-  hasNoteFocus,
-  rank,
-  value,
-  style,
   onEdit,
-  dispatch,
+  path,
+  simplePath,
+  style,
   transient,
-  editing,
-}: Connected<EditableProps & ReturnType<typeof mapStateToProps>>) => {
+}: Connected<EditableProps>) => {
   const state = store.getState()
+  const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const parentId = head(rootedParentOf(state, simplePath))
   const readonly = findDescendant(state, thoughtId, '=readonly')
@@ -216,11 +199,16 @@ const Editable = ({
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
+  const rank = useSelector((state: State) => getThoughtById(state, head(simplePath)).rank)
+  const editableNonceRef = useRef(state.editableNonce)
+  const fontSize = useSelector((state: State) => state.fontSize)
+  // must re-render when noteFocus changes in order to set the selection
+  const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
+  const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  const editableNonceRef = useRef(state.editableNonce)
   const [isTapped, setIsTapped] = useState(false)
-  const fontSize = useSelector((state: State) => state.fontSize)
 
   useEffect(() => {
     editableNonceRef.current = state.editableNonce
@@ -795,4 +783,6 @@ const Editable = ({
   )
 }
 
-export default connect(mapStateToProps)(Editable)
+// Use connect to prevent Editable from being re-rendered when its parent Thought re-rerenders.
+// TODO: Is there a better way?
+export default connect()(Editable)
