@@ -2,7 +2,7 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
-import { EXPAND_HOVER_DELAY } from '../constants'
+import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import { getChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import headId from '../util/headId'
@@ -27,6 +27,9 @@ const expandHoverBottomDebounced =
   (dispatch, getState) => {
     clearTimer()
     expandBottomTimer = setTimeout(() => {
+      const state = getState()
+      // abort if dragging over DeleteDrop component
+      if (state.alert?.alertType === AlertType.DeleteDropHint) return
       dispatch(expandBottom({ path }))
       expandBottomTimer = null
     }, EXPAND_HOVER_DELAY)
