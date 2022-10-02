@@ -17,6 +17,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import storage from '../util/storage'
 import Alert from './Alert'
 import ContentFallback from './ContentFallback'
+import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -194,6 +195,7 @@ const AppComponent: FC<Props> = props => {
       {!showModal && !tutorial && <Toolbar />}
 
       {isTouch && <DeleteDrop />}
+      {isTouch && <CopyOneDrop />}
 
       <MultiGestureIfTouch>
         {showModal ? (

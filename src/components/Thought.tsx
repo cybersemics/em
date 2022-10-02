@@ -391,7 +391,8 @@ const ThoughtContainer = ({
         (state.hoverZone === DropThoughtZone.ThoughtDrop &&
           equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
           !isDescendantPath(simplePath, state.draggingThought!))) &&
-      state.alert?.alertType !== AlertType.DeleteDropHint,
+      state.alert?.alertType !== AlertType.DeleteDropHint &&
+      state.alert?.alertType !== AlertType.CopyOneDropHint,
   )
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing

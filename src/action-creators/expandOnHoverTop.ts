@@ -29,8 +29,9 @@ const expandHoverTopDebounced =
     clearTimer()
     expandTopTimer = setTimeout(() => {
       const state = getState()
-      // abort if dragging over DeleteDrop component
-      if (state.alert?.alertType === AlertType.DeleteDropHint) return
+      // abort if dragging over quick drop components
+      if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
+        return
       dispatch(expandHoverTop({ path }))
       expandTopTimer = null
     }, EXPAND_HOVER_DELAY)
