@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
-/** A redo icon. */
+/** A delete icon. */
 const DeleteIcon = ({ fill, size = 18, style }: Icon) => {
   const colors = useSelector(themeColors)
   return (
