@@ -59,6 +59,7 @@ import parentOf from '../util/parentOf'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
+import * as positionFixed from './Editable/positionFixed'
 import useMultiline from './Editable/useMultiline'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -66,49 +67,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 /** Stops propagation of an event. */
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
-
-/** Change position:fixed top nav to position:absolute in order to fix Safari position:fixed browser behavior when keyboard is up. */
-const makeToolbarPositionFixed = () => {
-  document.addEventListener('scroll', updateToolbarPosition)
-  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
-  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
-  const rightArrow = document.getElementById('right-arrow') as HTMLElement
-  const leftArrow = document.getElementById('left-arrow') as HTMLElement
-  Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
-    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
-    el.style.position = 'absolute'
-    el.style.overflowX = 'hidden'
-    if (el !== rightArrow && el !== leftArrow) {
-      el.style.top = `${window.scrollY}px`
-    }
-  })
-}
-/** Reset position:absolute of toolbar elements. */
-const resetToolbarPosition = () => {
-  document.removeEventListener('scroll', updateToolbarPosition)
-  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
-  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
-  const rightArrow = document.getElementById('right-arrow') as HTMLElement
-  const leftArrow = document.getElementById('left-arrow') as HTMLElement
-  Array.from([alert, hamburgerMenu, toolbar, rightArrow, leftArrow]).forEach(el => {
-    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
-    el.style.position = 'fixed'
-    el.style.overflowX = ''
-    el.style.top = ''
-  })
-}
-/** Update position of toolbar elements while scrolling in order to show them always on top. */
-const updateToolbarPosition = () => {
-  const alert = document.getElementsByClassName('alert')[0] as HTMLElement
-  const hamburgerMenu = document.getElementsByClassName('hamburger-menu')[0] as HTMLElement
-  const toolbar = document.getElementsByClassName('toolbar-container')[0] as HTMLElement
-  Array.from([alert, hamburgerMenu, toolbar]).forEach(el => {
-    if (!el) return // hamburger menu and toolbar are not rendered during tutorial
-    el.style.top = `${window.scrollY}px`
-  })
-}
 
 interface EditableProps {
   path: Path
@@ -578,7 +536,7 @@ const Editable = ({
     blurring = true
 
     if (isTouch && isSafari()) {
-      resetToolbarPosition()
+      positionFixed.stop()
     }
 
     const { invalidState } = state
@@ -661,7 +619,7 @@ const Editable = ({
     blurring = false
 
     if (isTouch && isSafari()) {
-      makeToolbarPositionFixed()
+      positionFixed.start()
     }
 
     // get new state
