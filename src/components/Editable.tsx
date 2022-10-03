@@ -12,7 +12,7 @@ import cursorCleared from '../action-creators/cursorCleared'
 import editThought from '../action-creators/editThought'
 import editingAction from '../action-creators/editing'
 import error from '../action-creators/error'
-import insertMultipleThoughts from '../action-creators/insertMultipleThoughts'
+import importSpeechToText from '../action-creators/importSpeechToText'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import setEditingValue from '../action-creators/setEditingValue'
@@ -395,83 +395,64 @@ const Editable = ({
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
 
   /** Flushes edits and updates certain state variables on blur. */
-  const onBlur: FocusEventHandler<HTMLElement> = useCallback(e => {
-    blurring = true
+  const onBlur: FocusEventHandler<HTMLElement> = useCallback(
+    e => {
+      blurring = true
 
-    if (isTouch && isSafari()) {
-      positionFixed.stop()
-    }
-
-    const { invalidState } = state
-    throttledChangeRef.current.flush()
-
-    // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
-    // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
-    // oldValueRef.current is the latest value since throttledChangeRef was just flushed
-    if (contentRef.current?.innerHTML !== oldValueRef.current) {
-      // remove the invalid state error, remove invalid-option class, and reset editable html
-      if (invalidState) {
-        invalidStateError(null)
+      if (isTouch && isSafari()) {
+        positionFixed.stop()
       }
-      contentRef.current!.innerHTML = oldValueRef.current
-    }
 
-    // if we know that the focus is changing to another editable or note then do not set editing to false
-    // (does not work when clicking a bullet as it is set to null)
-    const isRelatedTargetEditableOrNote =
-      e.relatedTarget &&
-      ((e.relatedTarget as Element).classList.contains('editable') ||
-        (e.relatedTarget as Element).classList.contains('note-editable'))
+      const { invalidState } = state
+      throttledChangeRef.current.flush()
 
-    if (isRelatedTargetEditableOrNote) return
+      // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
+      // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
+      // oldValueRef.current is the latest value since throttledChangeRef was just flushed
+      if (contentRef.current?.innerHTML !== oldValueRef.current) {
+        // remove the invalid state error, remove invalid-option class, and reset editable html
+        if (invalidState) {
+          invalidStateError(null)
+        }
+        contentRef.current!.innerHTML = oldValueRef.current
+      }
 
-    // check for separate lines created via speech-to-text newlines
-    // only after blur can we safely convert newlines to new thoughts without interrupting speeach-to-text
-    const lines = (e.target as HTMLInputElement).value
-      .split(/<div>/g)
-      .map(line => line.replace('</div>', ''))
-      .slice(1)
+      // if we know that the focus is changing to another editable or note then do not set editing to false
+      // (does not work when clicking a bullet as it is set to null)
+      const isRelatedTargetEditableOrNote =
+        e.relatedTarget &&
+        ((e.relatedTarget as Element).classList.contains('editable') ||
+          (e.relatedTarget as Element).classList.contains('note-editable'))
 
-    // insert speech-to-text lines
-    if (lines.length > 1) {
-      // edit original thought to first line
-      dispatch([
-        editThought({
-          oldValue: value,
-          newValue: lines[0],
-          rankInContext: rank,
-          path: simplePath,
-        }),
-        // insert remaining lines
-        insertMultipleThoughts({ simplePath, lines: lines.slice(1) }),
-        // set editing to false again, since inserting thoughts enables edit mode
-        // TODO: There is a call to setCursor with editing: true that invalidates this line
-        editingAction({ value: false }),
-      ])
-    }
+      if (isRelatedTargetEditableOrNote) return
 
-    // if related target is not editable wait until the next render to determine if we have really blurred
-    // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
-    setTimeout(() => {
-      if (blurring) {
-        blurring = false
-        // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
-        // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+      // if related target is not editable wait until the next render to determine if we have really blurred
+      // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
+      setTimeout(() => {
+        // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
+        dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
+
+        if (blurring) {
+          blurring = false
+          // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
+          // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
+          if (isTouch) {
+            dispatch(setEditingValue(null))
+          }
+          // temporary states such as duplicate error states and cursorCleared are reset on blur
+          dispatch(cursorCleared({ value: false }))
+        }
+
         if (isTouch) {
-          dispatch(setEditingValue(null))
+          // Set editing value to false if user exits editing mode by tapping on a non-editable element.
+          if (!selection.isThought()) {
+            dispatch(editingAction({ value: false }))
+          }
         }
-        // temporary states such as duplicate error states and cursorCleared are reset on blur
-        dispatch(cursorCleared({ value: false }))
-      }
-
-      if (isTouch) {
-        // Set editing value to false if user exits editing mode by tapping on a non-editable element.
-        if (!selection.isThought()) {
-          dispatch(editingAction({ value: false }))
-        }
-      }
-    })
-  }, [])
+      })
+    },
+    [simplePath],
+  )
 
   /**
    * Sets the cursor on focus.
