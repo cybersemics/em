@@ -34,11 +34,9 @@ import {
 } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
-import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
-import getLexeme from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -61,9 +59,7 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useMultiline from './Editable/useMultiline'
-
-// the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
-const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
+import usePlaceholder from './Editable/usePlaceholder'
 
 /** Stops propagation of an event. */
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
@@ -114,7 +110,6 @@ const Editable = ({
   const optionsId = findDescendant(state, parentId, '=options')
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
-  const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
@@ -124,6 +119,7 @@ const Editable = ({
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const [isTapped, setIsTapped] = useState(false)
+  const placeholder = usePlaceholder({ isEditing, simplePath })
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -148,7 +144,6 @@ const Editable = ({
     editableNonceRef.current = state.editableNonce
   }, [state.editableNonce])
 
-  const lexeme = getLexeme(state, value)
   const labelId = findDescendant(state, parentId, '=label')
   const childrenLabel = getAllChildrenAsThoughts(state, labelId)
 
@@ -612,8 +607,6 @@ const Editable = ({
     [disabled, isVisible, path],
   )
 
-  // strip formatting tags for clearThought placeholder
-  const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
   const styleMemo = useMemo(
     () => ({
       // must match marginLeft of ThoughtAnnotation
@@ -648,15 +641,7 @@ const Editable = ({
           ? childrenLabel[0].value
           : ellipsizeUrl(value)
       }
-      placeholder={
-        isCursorCleared
-          ? valueStripped || 'This is an empty thought'
-          : isTableColumn1
-          ? ''
-          : lexeme && Date.now() - new Date(lexeme.lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
-          ? 'This is an empty thought'
-          : 'Add a thought'
-      }
+      placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)
       onClick={stopPropagation}
       onTouchEnd={onTap}
