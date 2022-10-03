@@ -28,26 +28,30 @@ const useEditMode = ({
   style: React.CSSProperties | undefined
   transient: boolean | undefined
 }) => {
-  const { cursorOffset: cursorOffsetState, dragHold, dragInProgress, editing, noteFocus } = store.getState()
+  // must re-render when noteFocus changes in order to set the selection
+  const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
+  const editing = useSelector((state: State) => state.editing)
+  const noteFocus = useSelector((state: State) => state.noteFocus)
+  const dragHold = useSelector((state: State) => state.dragHold)
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
 
-  // must re-render when noteFocus changes in order to set the selection
-  const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
-
-  /** Set the selection to the current Editable at the cursor offset. */
-  const setSelectionToCursorOffset = () => {
-    // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
-    // https://github.com/cybersemics/em/issues/1596
-    if (style?.visibility === 'hidden') {
-      selection.clear()
-    } else {
-      selection.set(contentRef.current, { offset: cursorOffset || cursorOffsetState || 0 })
-    }
-  }
-
   useEffect(() => {
+    const { cursorOffset: cursorOffsetState } = store.getState()
+
+    /** Set the selection to the current Editable at the cursor offset. */
+    const setSelectionToCursorOffset = () => {
+      // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
+      // https://github.com/cybersemics/em/issues/1596
+      if (style?.visibility === 'hidden') {
+        selection.clear()
+      } else {
+        selection.set(contentRef.current, { offset: cursorOffset || cursorOffsetState || 0 })
+      }
+    }
+
     // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
     const cursorWithoutSelection = cursorOffsetState !== null || !selection.isActive()
 
