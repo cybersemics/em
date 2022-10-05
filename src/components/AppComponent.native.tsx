@@ -23,6 +23,7 @@ import ModalAuth from './ModalAuth'
 import ModalExport from './ModalExport'
 import ModalFeedback from './ModalFeedback'
 import ModalHelp from './ModalHelp'
+import ModalSettings from './ModalSettings'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
@@ -134,6 +135,7 @@ const AppComponent: React.FC = () => {
           </ScrollView>
           <ModalAuth />
           <ModalFeedback />
+          <ModalSettings />
           <ModalHelp />
           <ModalWelcome />
           <ModalExport />

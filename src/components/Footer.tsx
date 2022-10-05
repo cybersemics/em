@@ -46,6 +46,15 @@ const Footer = () => {
         </span>
         <a
           tabIndex={-1}
+          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          Settings
+        </a>
+        <span className='footer-divider'> | </span>
+        <a
+          tabIndex={-1}
           onClick={() => dispatch(showModal({ id: 'feedback' }))}
           target='_blank'
           rel='noopener noreferrer'

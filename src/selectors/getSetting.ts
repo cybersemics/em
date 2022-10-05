@@ -19,7 +19,7 @@ const localStorageSettingsCache = keyValueBy(['Tutorial', 'Tutorial Step'], valu
 const localCached = (context: Context | string) =>
   typeof context === 'string' ? localStorageSettingsCache[context] : undefined
 
-/** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. */
+/** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. Returns undefined if the setting has no subthoughts. */
 const getStateSetting = (state: State, context: Context | string): string | undefined => {
   const id = contextToThoughtId(state, [EM_TOKEN, 'Settings'].concat(context))
   const valueId = getAllChildren(state, id).find(childId => {

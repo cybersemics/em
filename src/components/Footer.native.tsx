@@ -46,6 +46,10 @@ const Footer = () => {
             <Text style={[lightblueText, hyperlink]}>Feedback</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: 'settings' }))}>
+            <Text style={[lightblueText, hyperlink]}>Settings</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: 'help' }))}>
             <Text style={[lightblueText, hyperlink]}>Help</Text>
           </TouchableOpacity>

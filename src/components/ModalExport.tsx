@@ -565,12 +565,15 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
                 </div>
+
+                {/* Note: never preventDefault on a controlled checkbox in React.
+                    See: https://stackoverflow.com/a/70030088/4806080 */}
                 <input
                   type='checkbox'
                   id={id}
-                  checked={!!checked}
+                  checked={checked}
                   onChange={onChangeFunc}
-                  defaultChecked={!!defaultChecked}
+                  defaultChecked={defaultChecked}
                 />
                 <span className='checkmark'></span>
               </label>

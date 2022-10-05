@@ -29,6 +29,7 @@ import ModalFeedback from './ModalFeedback'
 import ModalGestureHelp from './ModalGestureHelp'
 import ModalHelp from './ModalHelp'
 import ModalInvites from './ModalInvites'
+import ModalSettings from './ModalSettings'
 import ModalSignup from './ModalSignup'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
@@ -170,7 +171,6 @@ const AppComponent: FC<Props> = props => {
   }, [showSplitView])
 
   const componentClassNames = classNames({
-    attributeName: '=styleContainer',
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
     android: isAndroid,
@@ -215,10 +215,12 @@ const AppComponent: FC<Props> = props => {
             <ModalAuth />
           ) : showModal === 'signup' ? (
             <ModalSignup />
+          ) : showModal === 'settings' ? (
+            <ModalSettings />
           ) : showModal === 'invites' ? (
             <ModalInvites />
           ) : (
-            `Invalid showModal: ${showModal}`
+            `Invalid showModal: ${showModal}. Either the id is wrong, or the modal has not been added to AppComponent.ts.`
           )
         ) : (
           // navigation, content, and footer

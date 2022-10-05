@@ -8,7 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
-import { REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
+import { EM_TOKEN, REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
 import { isInternalLink } from '../device/router'
 import useAutofocus from '../hooks/useAutofocus'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -136,6 +136,9 @@ const ThoughtAnnotation = ({
   })
 
   const fontSize = useSelector((state: State) => state.fontSize)
+  const hideSuperscriptsSetting = useSelector(
+    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'hideSuperscripts']),
+  )
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)
@@ -172,7 +175,7 @@ const ThoughtAnnotation = ({
   const numContexts = useSelector(
     moize(
       (state: State) => {
-        if (!calculateContexts) return 0
+        if (!calculateContexts || hideSuperscriptsSetting) return 0
 
         // only show real time update if being edited while having meta validation error
         // do not increase numContexts when in an invalid state since the thought has not been updated in state
@@ -200,6 +203,9 @@ const ThoughtAnnotation = ({
 
   const styleAutofocus = useAutofocus(autofocus, styleAnnotation)
   const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
+  const showSuperscript =
+    !hideSuperscriptsSetting &&
+    (REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1)
 
   return (
     <div
@@ -234,9 +240,7 @@ const ThoughtAnnotation = ({
           }
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1 ? (
-              <StaticSuperscript n={numContexts} style={style} />
-            ) : null
+            showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
           }
         </div>
       )}

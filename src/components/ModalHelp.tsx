@@ -1,16 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
-import toggleShortcutsDiagram from '../action-creators/toggleShortcutsDiagram'
 import tutorial from '../action-creators/tutorial'
 import setTutorialStep from '../action-creators/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
-import * as db from '../data-providers/dexie'
 import getSetting from '../selectors/getSetting'
 import { ActionButton } from './ActionButton'
-import Logs from './Logs'
 import Modal from './Modal'
 import ShortcutTable from './ShortcutTable'
 
@@ -31,19 +28,6 @@ const ModalHelp = ({
   dispatch,
   enableLatestShortcutsDiagram,
 }: Connected<ReturnType<typeof mapStateToProps>>) => {
-  const [logs, setLogs] = useState<db.Log[] | null>(null)
-
-  /** Toogle shortcuts diagram settings. */
-  const toggleShortcutsDiagramSetting = () => dispatch(toggleShortcutsDiagram())
-
-  /** Toggles the logs. Loads the logs if they have not been loaded yet. */
-  const toggleLogs = async () => setLogs(logs ? null : await db.getLogs())
-
-  /** Refreshes the page without using cache. */
-  const refresh = () => {
-    window.location = window.location // eslint-disable-line no-self-assign
-  }
-
   return (
     <Modal
       id='help'
@@ -188,14 +172,6 @@ const ModalHelp = ({
         longform writing. Default: List.
       </p>
 
-      <h2 className='modal-subtitle'>Development Settings</h2>
-
-      <form>
-        <label onChange={toggleShortcutsDiagramSetting}>
-          <input type='checkbox' checked={enableLatestShortcutsDiagram}></input> Enable gesture diagrams (touch screen){' '}
-        </label>
-      </form>
-
       <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
         <div>
           Context View icon by{' '}
@@ -295,19 +271,6 @@ const ModalHelp = ({
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
       </div>
-
-      <br />
-
-      <p>
-        <a tabIndex={-1} onClick={refresh}>
-          Refresh
-        </a>
-        <br />
-        <a tabIndex={-1} onClick={toggleLogs}>
-          Logs
-        </a>
-        {logs && <Logs logs={logs ?? []} />}
-      </p>
     </Modal>
   )
 }
