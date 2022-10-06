@@ -925,10 +925,23 @@ const Subthought = ({
   const state = store.getState()
   const { cursor } = state
 
-  const childPath = useMemo(
+  // getChildPath cannot be trivially memoized since it is not a pure function; its return value depends on which thoughts are loaded.
+  // Memoizing it naively can result in not re-rendering contexts in the context view while they are loading.
+  // There is no way to determine a priori whether a thought id's path to the root is fully loaded without traversing up the tree.
+  // Instead we do a double memoization to minimize re-renders.
+  const childPathUnstable = useMemo(
+    // First, memoize the child path with, in addition to the parameters, the thought index (only if context view is activated, as full paths are guaranteed to be loaded in normal view).
+    // This is O(depth) for each child, but is is only recalculated when the Subthoughts component is re-rendered; it won't trigger any additional re-renders of the child thought (due to the next memoization step).
+    // However, childPathUnstable has a new object reference every time the thought index changes.
     () => getChildPath(state, child.id, simplePath, showContexts),
-    [child.id, simplePath, showContexts],
+    [child.id, simplePath, showContexts, showContexts && state.thoughts.thoughtIndex],
   )
+  // Second, therefore, memoize childPathUnstable based on its length, since we know that if thoughtToPath returns an array of the same length for the same id, then it is the same path.
+  const childPath = useMemo(
+    () => childPathUnstable,
+    [child.id, simplePath, showContexts, showContexts && childPathUnstable.length],
+  )
+
   const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
 
   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
