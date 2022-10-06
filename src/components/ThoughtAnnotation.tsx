@@ -221,7 +221,7 @@ const ThoughtAnnotation = ({
       ) : (
         <div
           className={classNames({
-            subthought: true,
+            'editable-annotation': true,
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
@@ -233,7 +233,7 @@ const ThoughtAnnotation = ({
             ...styleAutofocus,
           }}
         >
-          <span className='subthought-text' style={style} dangerouslySetInnerHTML={textMarkup} />
+          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={textMarkup} />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
