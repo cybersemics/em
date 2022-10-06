@@ -2378,6 +2378,7 @@ code,
 
 .drop-end .drop-hover {
   width: calc(100% - 41px);
+  margin-left: -0.2em; /* lines up with sibling drop-ends */
 }
 
 /* bump specificity */
