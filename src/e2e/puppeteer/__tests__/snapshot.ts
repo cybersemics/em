@@ -214,6 +214,33 @@ describe('Font Size: 14', () => {
   testSuite()
 })
 
+describe('Font Size: 13', () => {
+  beforeEach(async () => {
+    await waitForState('isPushing', false)
+
+    // TODO: identify what needs to be waited for specifically
+    await delay(1000)
+
+    await click('.decrease-font') // 17
+    await click('.decrease-font') // 16
+    await click('.decrease-font') // 15
+    await click('.decrease-font') // 14
+    await click('.decrease-font') // 13
+
+    // close alert
+    await click('.status-close-x')
+
+    // scroll to top
+    await scroll(0, 0)
+
+    // wait for toolbar size transitions to complete
+    await delay(400)
+  })
+
+  // run the snapshot tests at font size 14
+  testSuite()
+})
+
 describe('Font Size: 22', () => {
   beforeEach(async () => {
     await waitForState('isPushing', false)
