@@ -29,6 +29,7 @@ import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
+import useMultiline from './Editable/useMultiline'
 import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
@@ -130,6 +131,7 @@ const ThoughtAnnotation = ({
   // only applied to the .subthought container
   styleAnnotation,
 }: Connected<ThoughtAnnotationProps>) => {
+  const contentRef = React.useRef<HTMLInputElement>(null)
   const value: string | undefined = useSelector((state: State) => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
@@ -207,9 +209,12 @@ const ThoughtAnnotation = ({
     !hideSuperscriptsSetting &&
     (REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1)
 
+  const multiline = useMultiline(contentRef, !!isEditing, value)
+
   return (
     <div
       className='thought-annotation'
+      ref={contentRef}
       style={{
         ...(homeContext ? { height: '1em' } : null),
         // must match marginLeft of StaticThought
@@ -222,6 +227,7 @@ const ThoughtAnnotation = ({
         <div
           className={classNames({
             'editable-annotation': true,
+            multiline,
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}

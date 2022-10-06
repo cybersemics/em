@@ -138,6 +138,42 @@ const testSuite = () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('url', async () => {
+    await paste('https://thinkwithem.com')
+
+    // wait for toolbar highlight animations to complete
+    await delay(400)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('superscript', async () => {
+    await paste(`
+      - a
+      - a
+    `)
+
+    // wait for toolbar highlight animations to complete
+    await delay(400)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('superscript on multiline thought', async () => {
+    await paste(`
+      - This is a multiline thought that will wrap onto two lines as long as it keeps going and going
+      - This is a multiline thought that will wrap onto two lines as long as it keeps going and going
+    `)
+
+    // wait for toolbar highlight animations to complete
+    await delay(400)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 }
 
 describe('Font Size: 18 (default)', () => {
