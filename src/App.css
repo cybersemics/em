@@ -629,6 +629,20 @@ a.text-link {
   min-height: 1.9em;
 }
 
+/* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
+   Add padding-top to shift the caret down.
+   This bumps the placeholder text off, so we need to shift the placeholder text up by the same amount.
+*/
+.safari .child .editable:empty {
+  padding-top: 0.2em;
+  margin-bottom: -0.4em; /* offset padding-top, otherwise next sibling will be bumped down */
+}
+/* shift placeholder up to offset padding-top */
+.safari .child .editable:empty::before {
+  top: -0.2em;
+  position: relative;
+}
+
 /* TODO: Safari only? */
 .mobile .child .editable {
   margin-top: -2px;
