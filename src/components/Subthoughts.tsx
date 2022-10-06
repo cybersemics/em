@@ -802,7 +802,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 />
               ),
           )}
-          {(dropTarget || ID)(
+          {(dropTarget || ID || globals.simulateDrag)(
             <li
               className={classNames({
                 'drop-end': true,
@@ -810,7 +810,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               })}
               style={{
                 display:
-                  (autofocus() === 'show' || autofocus() === 'dim') && (globals.simulateDrop || isDragInProgress)
+                  (autofocus() === 'show' || autofocus() === 'dim') && (globals.simulateDrag || isDragInProgress)
                     ? 'list-item'
                     : 'none',
                 backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
