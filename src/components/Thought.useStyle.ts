@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import State from '../@types/State'
@@ -13,7 +14,7 @@ const EMPTY_OBJECT = {}
 /** Gets a globally defined style. */
 const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
 
-/** A hook for the thought style merged from props, self, and env. Avoids re-renders by using a stable object reference when possible. */
+/** A hook for the thought style merged from props, self, and env. Avoids re-renders by always returning a stable object reference. */
 const useStyle = ({
   children,
   env,
@@ -63,7 +64,10 @@ const useStyle = ({
     return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
   })
 
-  return style
+  // create a stable object reference to avoid unnecessary re-renders
+  const styleMemoized = useMemo(() => style, [JSON.stringify(style)])
+
+  return styleMemoized
 }
 
 export default useStyle
