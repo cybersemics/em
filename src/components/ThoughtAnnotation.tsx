@@ -51,20 +51,18 @@ interface ThoughtAnnotationProps {
   styleAnnotation?: React.CSSProperties
 }
 
-/** Sets the innerHTML of the ngram text. */
-const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
+/** Gets the innerHTML of the live thought text. */
+const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId): string => {
   const labelId = findDescendant(state, id, '=label')
   const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
   const { editingValue } = state
-  return {
-    __html: isEditing
-      ? editingValue && value !== editingValue
-        ? editingValue
-        : value
-      : labelChildren.length > 0
-      ? labelChildren[0].value
-      : ellipsizeUrl(value),
-  }
+  return isEditing
+    ? editingValue && value !== editingValue
+      ? editingValue
+      : value
+    : labelChildren.length > 0
+    ? labelChildren[0].value
+    : ellipsizeUrl(value)
 }
 
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
@@ -240,7 +238,7 @@ const ThoughtAnnotation = ({
             ...styleAutofocus,
           }}
         >
-          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={textMarkup} />
+          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
