@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import State from '../@types/State'
@@ -62,12 +62,9 @@ const useStyle = ({
 
     // avoid re-renders from object reference change
     return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
-  })
+  }, _.isEqual)
 
-  // create a stable object reference to avoid unnecessary re-renders
-  const styleMemoized = useMemo(() => style, [JSON.stringify(style)])
-
-  return styleMemoized
+  return style
 }
 
 export default useStyle
