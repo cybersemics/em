@@ -53,7 +53,7 @@ import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import { safeRefMerge } from '../util/safeRefMerge'
 import GestureDiagram from './GestureDiagram'
-import useZoom from './Subthoughts.useZoom'
+import useZoom from './Subthoughts/useZoom'
 import { Text } from './Text.native'
 import Thought from './Thought'
 

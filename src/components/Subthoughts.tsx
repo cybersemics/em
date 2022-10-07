@@ -62,8 +62,8 @@ import strip from '../util/strip'
 import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
-import useZoom from './Subthoughts.useZoom'
 import DropEnd from './Subthoughts/DropEnd'
+import useZoom from './Subthoughts/useZoom'
 import Thought from './Thought'
 
 /** The type of the exported Subthoughts. */
