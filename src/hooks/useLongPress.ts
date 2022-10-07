@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
 import { NOOP } from '../constants'
@@ -6,6 +6,10 @@ import * as selection from '../device/selection'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
+
+// only one component can be pressed at a time
+// use a global lock since stopPropagation breaks MultiGesture
+let lock = false
 
 /** Custom hook to manage long press. */
 const useLongPress = (
@@ -21,6 +25,7 @@ const useLongPress = (
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
   const startTimer = () => {
+    if (lock) return
     setScrollStart(window.scrollY)
 
     // cast Timeout to number for compatibility with clearTimeout
@@ -29,6 +34,7 @@ const useLongPress = (
       if (Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) return
       onLongPressStart?.()
       setPressed(true)
+      lock = true
     }, ms) as unknown as number
   }
 
@@ -50,6 +56,7 @@ const useLongPress = (
     setTimeout(() => {
       clearTimeout(timerIdRef.current)
       setPressed(false)
+      lock = false
       onLongPressEnd?.()
     }, 10)
   }, [])
@@ -67,15 +74,25 @@ const useLongPress = (
     }
   }, [pressed])
 
+  const onContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    selection.clear()
+    dispatch(editing({ value: false }))
+  }, [])
+
+  // unlock on unmount
+  // this may have a race condition if start is activated on another component right before this is unmounting, but it seems unlikely
+  useEffect(() => {
+    return () => {
+      lock = false
+    }
+  }, [])
+
   return {
     // disable Android context menu
     // does not work to prevent iOS long press to select behavior
-    onContextMenu: (e: React.MouseEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      selection.clear()
-      dispatch(editing({ value: false }))
-    },
+    onContextMenu: onContextMenu,
     onMouseDown: start,
     onMouseUp: stop,
     onTouchStart: start,
