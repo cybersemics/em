@@ -170,6 +170,25 @@ const Editable = ({
   const oldValueRef = useRef(value)
   const [isTapped, setIsTapped] = useState(false)
 
+  // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
+  // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
+  //   cursorOffset,
+  //   disabled,
+  //   editing,
+  //   isEditing,
+  //   isVisible,
+  //   onEdit,
+  //   path,
+  //   simplePath,
+  //   style,
+  //   transient,
+  //   value,
+  //   rank,
+  //   fontSize,
+  //   hasNoteFocus,
+  //   isCursorCleared,
+  // })
+
   useEffect(() => {
     editableNonceRef.current = state.editableNonce
   }, [state.editableNonce])
