@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
@@ -6,7 +5,6 @@ import State from '../@types/State'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import rootedParentOf from '../selectors/rootedParentOf'
-import { store } from '../store'
 import equalPath from '../util/equalPath'
 import findFirstEnvContextWithZoom from '../util/findFirstEnvContextWithZoom'
 import head from '../util/head'
@@ -24,48 +22,44 @@ const useZoom = ({
   isEditingPath: boolean
   simplePath: SimplePath
 }) => {
-  const [zoom, setZoom] = useState(false)
-  const [zoomCursor, setZoomCursor] = useState(false)
-  const [zoomParent, setZoomParent] = useState(false)
-  const cursor = useSelector((state: State) => state.cursor)
-
-  useEffect(() => {
-    const state = store.getState()
-
-    const parentChildrenAttributeId = cursor && findDescendant(state, head(rootedParentOf(state, cursor)), '=children')
-    const grandparentChildrenAttributeId =
-      cursor && findDescendant(state, head(rootedParentOf(state, parentOf(cursor))), '=children')
-
-    /*
+  /*
     When =focus/Zoom is set on the cursor or parent of the cursor, change the autofocus so that it hides the level above.
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
-    const zoomCursor =
-      !!cursor &&
-      (attributeEquals(state, head(cursor), '=focus', 'Zoom') ||
+  const zoomCursor = useSelector((state: State) => {
+    const parentChildrenAttributeId =
+      state.cursor && findDescendant(state, head(rootedParentOf(state, state.cursor)), '=children')
+
+    return (
+      !!state.cursor &&
+      (attributeEquals(state, head(state.cursor), '=focus', 'Zoom') ||
         attributeEquals(state, parentChildrenAttributeId, '=focus', 'Zoom') ||
-        !!findFirstEnvContextWithZoom(state, { id: head(cursor), env }))
+        !!findFirstEnvContextWithZoom(state, { id: head(state.cursor), env }))
+    )
+  })
 
-    const zoomParent =
-      !!cursor &&
-      (attributeEquals(state, head(rootedParentOf(state, cursor)), '=focus', 'Zoom') ||
+  const zoomParent = useSelector((state: State) => {
+    const grandparentChildrenAttributeId =
+      state.cursor && findDescendant(state, head(rootedParentOf(state, parentOf(state.cursor))), '=children')
+
+    return (
+      !!state.cursor &&
+      (attributeEquals(state, head(rootedParentOf(state, state.cursor)), '=focus', 'Zoom') ||
         attributeEquals(state, grandparentChildrenAttributeId, '=focus', 'Zoom') ||
-        !!findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, cursor)), env }))
+        !!findFirstEnvContextWithZoom(state, { id: head(rootedParentOf(state, state.cursor)), env }))
+    )
+  })
 
+  const zoom = useSelector((state: State) => {
     const isEditingAncestor = isEditingPath && !isEditing
 
     /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */
     const zoomParentEditing = () =>
-      !!cursor && cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(cursor)), simplePath) // resolvedPath?
+      !!state.cursor && state.cursor.length > 2 && zoomParent && equalPath(parentOf(parentOf(state.cursor)), simplePath) // resolvedPath?
 
-    /** Returns true if the thought is zoomed. */
-    const isZoomed = () => isEditingAncestor && (zoomCursor || zoomParentEditing())
-
-    setZoomCursor(zoomCursor)
-    setZoomParent(zoomParent)
-    setZoom(isZoomed)
-  }, [cursor])
+    return isEditingAncestor && (zoomCursor || zoomParentEditing())
+  })
 
   return { zoom, zoomCursor, zoomParent }
 }
