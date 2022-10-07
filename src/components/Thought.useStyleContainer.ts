@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -13,7 +14,7 @@ import { safeRefMerge } from '../util/safeRefMerge'
 
 const EMPTY_OBJECT = {}
 
-/** A hook for the thought-container style merged from self and zoom. */
+/** A hook for the thought-container style merged from self and zoom. Returns a stable object reference. */
 const useStyleContainer = ({
   children,
   env,
@@ -68,7 +69,7 @@ const useStyleContainer = ({
     }
 
     return safeRefMerge(styleContainerNew(), styleContainerZoom()) || undefined
-  })
+  }, _.isEqual)
 
   return styleContainer
 }
