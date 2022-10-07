@@ -275,7 +275,7 @@ const ThoughtContainer = ({
       childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
     _.isEqual,
   )
-  const prevChild = useSelector((state: State) => (prevChildId ? getThoughtById(state, prevChildId) : null))
+  const prevChild = useSelector((state: State) => (prevChildId ? getThoughtById(state, prevChildId) : null), _.isEqual)
 
   // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
   // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
@@ -298,17 +298,19 @@ const ThoughtContainer = ({
 
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
-  const styleAnnotation = useSelector((state: State) =>
-    safeRefMerge(
-      // apply normal style color to the annotation style
-      style?.color ? { color: style.color } : null,
-      // apply annotation style (mainly used for background color)
-      getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
-    ),
+  const styleAnnotation = useSelector(
+    (state: State) =>
+      safeRefMerge(
+        // apply normal style color to the annotation style
+        style?.color ? { color: style.color } : null,
+        // apply annotation style (mainly used for background color)
+        getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
+      ),
+    _.isEqual,
   )
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
-  const thought = useSelector((state: State) => getThoughtById(state, thoughtId))
-  const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)))
+  const thought = useSelector((state: State) => getThoughtById(state, thoughtId), _.isEqual)
+  const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
   const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
@@ -417,6 +419,69 @@ const ThoughtContainer = ({
       ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
     }
   }, [isChildHovering, style])
+
+  // console.info('<Thought> ' + prettyPath(store.getState(), simplePath))
+  // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
+  //   allowSingleContext,
+  //   autofocus,
+  //   childrenForced,
+  //   contextBinding,
+  //   cursor,
+  //   cursorOffset,
+  //   debugIndex,
+  //   depth,
+  //   dragPreview,
+  //   dragSource,
+  //   dropTarget,
+  //   editing,
+  //   env,
+  //   expandedContextThought,
+  //   hideBulletProp,
+  //   isBeingHoveredOver,
+  //   isCursorGrandparent,
+  //   isCursorParent,
+  //   isDeepHovering,
+  //   isDragging,
+  //   isEditing,
+  //   isExpanded,
+  //   isHeader,
+  //   isHovering,
+  //   isLeaf,
+  //   isMultiColumnTable,
+  //   isParentHovering,
+  //   isContextPending,
+  //   isPublishChild,
+  //   isVisible,
+  //   parentView,
+  //   path,
+  //   prevChildId,
+  //   publish,
+  //   rank,
+  //   showContexts,
+  //   simplePath,
+  //   styleProp,
+  //   styleContainerProp,
+  //   view,
+  //   // hooks
+  //   children,
+  //   prevChild,
+  //   hideBullet,
+  //   style,
+  //   styleAnnotation,
+  //   styleContainer,
+  //   thought,
+  //   grandparent,
+  //   isSubthoughtHovering,
+  //   homeContext,
+  //   isTable,
+  //   invalidOption,
+  //   shouldDisplayDropHover,
+  //   isChildHovering,
+  //   styleAutofocus,
+  //   placeholder,
+  //   styleWithoutColors,
+  //   ...dragHoldResult.props,
+  // })
 
   if (!thought) return null
 
