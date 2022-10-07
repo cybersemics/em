@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import _ from 'lodash'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
@@ -497,6 +498,31 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return depth < MAX_DEPTH && (isExpanded || isEditingAncestor())
   })
 
+  // console.info('<Subthoughts> ' + prettyPath(state, simplePath))
+  // useWhyDidYouUpdate('<Subthoughts> ' + prettyPath(state, simplePath), {
+  //   allowSingleContext,
+  //   allowSingleContextParent,
+  //   childrenForced,
+  //   contextBinding,
+  //   depth,
+  //   distance,
+  //   dropTarget,
+  //   env,
+  //   isDragInProgress,
+  //   isEditing,
+  //   isEditingPath,
+  //   isExpanded,
+  //   isHeader,
+  //   isHovering,
+  //   isMultiColumnTable,
+  //   isParentHovering,
+  //   path,
+  //   showContexts,
+  //   simplePath,
+  //   sortDirection: contextSortDirection,
+  //   sortType: contextSortType,
+  // })
+
   const { zoom, zoomCursor, zoomParent } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
 
   // when Subthoughts is hovered over during drag, update the hoveringPath and hoverId
@@ -552,13 +578,15 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     (state: State) => attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
   )
 
-  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId))
-  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId))
-  const styleContainerChildren = useSelector((state: State) =>
-    getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
+  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId), _.isEqual)
+  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId), _.isEqual)
+  const styleContainerChildren = useSelector(
+    (state: State) => getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
+    _.isEqual,
   )
-  const styleContainerGrandchildren = useSelector((state: State) =>
-    getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
+  const styleContainerGrandchildren = useSelector(
+    (state: State) => getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
+    _.isEqual,
   )
 
   const proposedPageSize = PAGINATION_SIZE * page
@@ -964,7 +992,10 @@ const Subthought = ({
       : null),
   }
 
-  const styleContainer = safeRefMerge(styleContainerGrandchildren, styleContainerChildren)
+  const styleContainer = useMemo(
+    () => safeRefMerge(styleContainerGrandchildren, styleContainerChildren),
+    [styleContainerChildren, styleContainerGrandchildren],
+  )
 
   // TODO: ROOT gets appended when isContextPending
   // What should appendedChildPath be?
