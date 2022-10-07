@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import State from '../@types/State'
@@ -40,9 +41,29 @@ const StaticThought = ({
   // Editable and ContextBreadcrumbs can handle Paths with missing ancestors
   // eventually the complete SimplePath will be loaded
   // TODO: Should this be done in Thought so that Thought is reloaded?
-  const simplePathLive = useSelector((state: State) =>
-    showContexts ? rootedParentOf(state, thoughtToPath(state, head(simplePath))) : simplePath,
+  const simplePathLive = useSelector(
+    (state: State) => (showContexts ? rootedParentOf(state, thoughtToPath(state, head(simplePath))) : simplePath),
+    _.isEqual,
   )
+
+  // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
+  // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
+  //   cursorOffset,
+  //   editing,
+  //   isContextPending,
+  //   isEditing,
+  //   isVisible,
+  //   onEdit,
+  //   path,
+  //   rank,
+  //   showContextBreadcrumbs,
+  //   simplePath,
+  //   style,
+  //   // hooks
+  //   showContexts,
+  //   value,
+  //   simplePathLive: simplePathLive.join('/'),
+  // })
 
   return (
     <div aria-label='thought' className='thought'>
