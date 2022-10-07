@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import themeColors from '../selectors/themeColors'
 import alpha from '../util/alpha'
 
 /** Applies alpha transparency to colors (or default foreground color) for autofocus. */
-const useAutofocus = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent', style?: React.CSSProperties) => {
+const useAutofocus = (autofocus?: Autofocus, style?: React.CSSProperties) => {
   const colors = useSelector(themeColors)
 
   // track when the color or background color changes

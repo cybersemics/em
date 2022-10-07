@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
@@ -64,7 +65,7 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
+  autofocus?: Autofocus
   childrenForced?: ThoughtId[]
   contextBinding?: Path
   cursor?: Path | null
@@ -152,7 +153,7 @@ const pseudo = (pseudoSelector: string, style: Index<string>) => {
 }
 
 /** Returns placeholder pseudo styles that animate with autofocus. */
-const useAutofocusPlaceholder = (autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent') => {
+const useAutofocusPlaceholder = (autofocus?: Autofocus) => {
   const colors = useSelector(themeColors)
   return useMemo(
     () =>
@@ -380,8 +381,8 @@ const ThoughtContainer = ({
   // TODO: it would be nice if we could reuse canDrop
   const isChildHovering = useSelector(
     (state: State) =>
-      isVisible &&
-      state.hoveringPath &&
+      !!isVisible &&
+      !!state.hoveringPath &&
       // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
       // Reordering is a less destructive action that does not need to bring attention to the parent.
       !equalPath(rootedParentOf(state, state.draggingThought!), simplePath) &&

@@ -3,6 +3,7 @@ import _ from 'lodash'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { connect, useSelector, useStore } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import GesturePath from '../@types/GesturePath'
@@ -14,7 +15,7 @@ import ThoughtType from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import { isTouch } from '../browser'
-import { HOME_TOKEN, ID, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { HOME_TOKEN, MAX_DEPTH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -62,6 +63,7 @@ import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
 import useZoom from './Subthoughts.useZoom'
+import DropEnd from './Subthoughts/DropEnd'
 import Thought from './Thought'
 
 /** The type of the exported Subthoughts. */
@@ -85,7 +87,6 @@ export type ConnectedSubthoughtsProps = Omit<SubthoughtsProps, 'env'> & ReturnTy
 /** Props needed for drag-and-drop behavior. Must match the return type of dropCollect in DragAndDropSubthoughts. (We cannot import the type directly since it creates a circular import). */
 interface SubthoughtsDropCollect {
   dropTarget?: ConnectDropTarget
-  isDragInProgress?: boolean
   isHovering?: boolean
 }
 
@@ -388,56 +389,60 @@ const NoChildren = ({
 const EmptyChildrenDropTarget = ({
   depth,
   dropTarget,
-  isDragInProgress,
   isHovering,
   isThoughtDivider,
   debugValue,
 }: {
   depth?: number
   dropTarget: ConnectDropTarget
-  isDragInProgress?: boolean
   isHovering?: boolean
   isThoughtDivider?: boolean
   debugValue?: string
-}) => (
-  <ul
-    className='empty-children'
-    style={{ display: globals.simulateDrag || globals.simulateDrop || isDragInProgress ? 'block' : 'none' }}
-  >
-    {dropTarget(
-      <li
-        className={classNames({
-          child: true,
-          'drop-end': true,
-          'inside-divider': isThoughtDivider,
-          last: depth === 0,
-        })}
-        style={{
-          backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
-          opacity: 0.9,
-        }}
-      >
-        {globals.simulateDrop && (
-          <span
-            style={{
-              paddingLeft: 5,
-              position: 'absolute',
-              // make sure label does not interfere with drop target hovering
-              pointerEvents: 'none',
-              left: 0,
-              color: '#ff7bc3' /* mid pink */,
-            }}
-          >
-            {strip(debugValue || '')}
-            {isHovering ? '*' : ''}
-          </span>
-        )}
+}) => {
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  return (
+    <ul
+      className='empty-children'
+      style={{ display: globals.simulateDrag || globals.simulateDrop || dragInProgress ? 'block' : 'none' }}
+    >
+      {dropTarget(
+        <li
+          className={classNames({
+            child: true,
+            'drop-end': true,
+            'inside-divider': isThoughtDivider,
+            last: depth === 0,
+          })}
+          style={{
+            backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
+            opacity: 0.9,
+          }}
+        >
+          {globals.simulateDrop && (
+            <span
+              style={{
+                paddingLeft: 5,
+                position: 'absolute',
+                // make sure label does not interfere with drop target hovering
+                pointerEvents: 'none',
+                left: 0,
+                color: '#ff7bc3' /* mid pink */,
+              }}
+            >
+              {strip(debugValue || '')}
+              {isHovering ? '*' : ''}
+            </span>
+          )}
 
-        <span className='drop-hover' style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}></span>
-      </li>,
-    )}
-  </ul>
-)
+          <span
+            className='drop-hover'
+            style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}
+          ></span>
+        </li>,
+      )}
+    </ul>
+  )
+}
 
 EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
 
@@ -446,17 +451,6 @@ EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
  *
  * @param allowSingleContext         Allow showing a single context in context view. Default: false.
  * @param allowSingleContextParent   Pass through to Subthought since the SearchSubthoughts component does not have direct access. Default: false.
- * @param childrenForced             Optional.
- * @param contextBinding             Optional.
- * @param contextChain = []          Optional. Default: [].
- * @param depth.                     Optional. Default: 0.
- * @param isDragInProgress           Optional.
- * @param isEditingAncestor          Optional.
- * @param isHovering                 Optional.
- * @param showContexts               Optional.
- * @param showHiddenThoughts         Optional.
- * @param sort                       Optional. Default: contextSort.
- * @param simplePath             Renders the children of the given simplePath.
  */
 export const SubthoughtsComponent = ({
   allowSingleContext,
@@ -467,7 +461,6 @@ export const SubthoughtsComponent = ({
   distance,
   dropTarget,
   env,
-  isDragInProgress,
   isEditing,
   isEditingPath,
   isExpanded,
@@ -663,8 +656,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return shouldShiftAndHide || zoom ? 2 : shouldDim() ? 1 : distance
   })
 
-  const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
-
   /** In a Multi Column table, gets the children that serve as the column headers. */
   const headerChildrenWithFirstColumn = () => {
     if (!isMultiColumnTable) return []
@@ -675,13 +666,10 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   }
 
   /** Returns the base autofocus for all subthoughts based on the actual distance from the cursor. This will be overwridden for specific children, e.g. if the cursor is on a child it will be set to 'show'. */
-  const autofocus = (): 'show' | 'dim' | 'hide' | 'hide-parent' => {
+  const autofocus = (): Autofocus => {
     const distance = actualDistance()
     return distance === 0 ? 'show' : distance === 1 ? 'dim' : distance === 2 ? 'hide' : 'hide-parent'
   }
-
-  // the last visible drop-end will always be a dimmed thought at distance 1 (an uncle)
-  const isLastVisible = isRoot(simplePath) || (distance === 1 && autofocus() === 'dim')
 
   return (
     <>
@@ -830,50 +818,17 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 />
               ),
           )}
-          {(dropTarget || ID || globals.simulateDrag)(
-            <li
-              className={classNames({
-                'drop-end': true,
-                last: depth === 0,
-              })}
-              style={{
-                display:
-                  (autofocus() === 'show' || autofocus() === 'dim') && (globals.simulateDrag || isDragInProgress)
-                    ? 'list-item'
-                    : 'none',
-                backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-                // Extend the click area of the drop target when there is nothing below.
-                // Always extend the root subthught drop target.
-                // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                height: isLastVisible ? '4em' : undefined,
-                marginLeft: isLastVisible ? '-4em' : undefined,
-                // offset marginLeft, minus 1em for bullet
-                // otherwise drop-hover will be too far left
-                paddingLeft: isLastVisible ? (isTouch ? '9em' : '3em') : undefined,
-              }}
-            >
-              {globals.simulateDrop && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '0.3em',
-                    // make sure label does not interfere with drop target hovering
-                    pointerEvents: 'none',
-                    color: '#ff7bc3' /* mid pink */,
-                  }}
-                >
-                  {strip(value)}
-                  {isHovering ? '*' : ''}
-                </span>
-              )}
-              <span
-                className='drop-hover'
-                style={{
-                  display: (globals.simulateDrag || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none',
-                }}
-              ></span>
-            </li>,
+          {(dropTarget || globals.simulateDrag || globals.simulateDrop) && (
+            <div>
+              <DropEnd
+                autofocus={autofocus()}
+                depth={depth}
+                distance={distance}
+                dropTarget={dropTarget}
+                isHovering={isHovering}
+                simplePath={simplePath}
+              />
+            </div>
           )}
         </ul>
       ) : (
@@ -885,7 +840,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             isThoughtDivider={isDivider(value)}
             depth={depth}
             dropTarget={dropTarget}
-            isDragInProgress={isDragInProgress}
             isHovering={isHovering}
             debugValue={globals.simulateDrop ? value : undefined}
           />
@@ -929,7 +883,7 @@ const Subthought = ({
 }: {
   actualDistance: number
   allowSingleContext?: boolean
-  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
+  autofocus?: Autofocus
   child: ThoughtType
   depth: number
   distance: number

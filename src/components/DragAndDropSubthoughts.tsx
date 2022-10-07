@@ -120,7 +120,6 @@ const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 /** Creates the props for drop. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isDragInProgress: monitor.getItem() as boolean,
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
 })
 

@@ -64,7 +64,8 @@ const useStyle = ({
     return safeRefMerge(styleProp, styleEnv, styleSelf) || undefined
   }, _.isEqual)
 
-  return style
+  // do not return empty object
+  return Object.keys(style || {}).length > 0 ? style : undefined
 }
 
 export default useStyle

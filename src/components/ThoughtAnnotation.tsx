@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import moize from 'moize'
 import React, { useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -35,7 +36,7 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  autofocus?: 'show' | 'dim' | 'hide' | 'hide-parent'
+  autofocus?: Autofocus
   editingValue?: string | null
   env?: string
   focusOffset?: number
