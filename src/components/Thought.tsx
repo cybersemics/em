@@ -349,7 +349,7 @@ const ThoughtContainer = ({
   })
 
   // true if a thought is being dragged over this drop hover
-  const shouldDisplayDropHover = useSelector((state: State) => {
+  const showDropHover = useSelector((state: State) => {
     /** Checks if any descendents of the direct siblings is being hovered. */
     const isAnySiblingDescendantHovering = () =>
       !isHovering &&
@@ -357,20 +357,20 @@ const ThoughtContainer = ({
       isDescendantPath(state.hoveringPath, parentOf(path)) &&
       (state.hoveringPath.length !== path.length || state.hoverZone === DropThoughtZone.SubthoughtsDrop)
 
-    const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
+    const isSorted = getSortPreference(state, thought.parentId).type === 'Alphabetical'
 
     const draggingThoughtValue = state.draggingThought
       ? getThoughtById(state, headId(state.draggingThought))?.value
       : null
 
-    return cursorOnAlphabeticalSort
+    return isSorted
       ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
         state.dragInProgress &&
           isParentHovering &&
           draggingThoughtValue &&
           !isAnySiblingDescendantHovering() &&
           // check if it's alphabetically previous to current thought
-          compareReasonable(draggingThoughtValue, value) <= 0 &&
+          compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
           // check if it's alphabetically next to previous thought if it exists
           (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
       : // if alphabetical sort is disabled just check if current thought is hovering
@@ -476,7 +476,7 @@ const ThoughtContainer = ({
   //   homeContext,
   //   isTable,
   //   invalidOption,
-  //   shouldDisplayDropHover,
+  //   showDropHover,
   //   isChildHovering,
   //   styleAutofocus,
   //   placeholder,
@@ -583,7 +583,7 @@ const ThoughtContainer = ({
           <span
             className='drop-hover'
             style={{
-              display: globals.simulateDrag || shouldDisplayDropHover ? 'inline' : 'none',
+              display: showDropHover ? 'inline' : 'none',
             }}
           ></span>
 

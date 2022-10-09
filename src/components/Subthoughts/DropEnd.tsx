@@ -33,10 +33,15 @@ const DropEnd = ({
   const thoughtId = head(simplePath)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
+
   // the last visible drop-end will always be a dimmed thought at distance 1 (an uncle)
   const isLastVisible = isRoot(simplePath) || (distance === 1 && autofocus === 'dim')
-  const cursorOnAlphabeticalSort = useSelector(
-    (state: State) => state.cursor && getSortPreference(state, thoughtId).type === 'Alphabetical',
+
+  // a boolean indicating if the drop-hover component is shown
+  // true if hovering and the context is not sorted
+  const showDropHover = useSelector(
+    (state: State) =>
+      (globals.simulateDrag || isHovering) && getSortPreference(state, thoughtId).type !== 'Alphabetical',
   )
 
   return (dropTarget || ID)(
@@ -79,7 +84,7 @@ const DropEnd = ({
       <span
         className='drop-hover'
         style={{
-          display: (globals.simulateDrag || isHovering) && !cursorOnAlphabeticalSort ? 'inline' : 'none',
+          display: showDropHover ? 'inline' : 'none',
         }}
       ></span>
     </li>,
