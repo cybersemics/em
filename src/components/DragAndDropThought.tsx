@@ -81,15 +81,20 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtI
 
 /** Handles drag end. */
 const endDrag = () => {
-  store.dispatch([
-    dragInProgress({ value: false }),
-    dragHold({ value: false }),
-    (dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-        dispatch(alert(null))
-      }
-    },
-  ])
+  // Wait till the next tick before ending dragInProgress.
+  // This allows onTap to be aborted in Editable to prevent the cursor from moving at the end of a drag.
+  // If this delay causes a regression, then we will need to find a different way to prevent the cursor from moving at the end of a drag.
+  setTimeout(() => {
+    store.dispatch([
+      dragInProgress({ value: false }),
+      dragHold({ value: false }),
+      (dispatch, getState) => {
+        if (getState().alert?.alertType === AlertType.DragAndDropHint) {
+          dispatch(alert(null))
+        }
+      },
+    ])
+  })
 }
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
