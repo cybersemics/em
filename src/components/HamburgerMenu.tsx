@@ -41,7 +41,6 @@ const HamburgerMenu = () => {
           // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
           transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
           top: 0,
-          userSelect: 'none',
         }}
         onClick={() => {
           dispatch(toggleSidebar({}))

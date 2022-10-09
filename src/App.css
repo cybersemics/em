@@ -1188,7 +1188,7 @@ h1 .num-contexts {
   pointer-events: none;
 }
 
-/* Disable long press to select on iOS. See Thought.useLongPressHighlight for details. */
+/* Disable long press to select on iOS. See useLongPress for details. */
 .pressed .editable {
   user-select: none;
 }
@@ -2593,6 +2593,13 @@ code,
   margin-left: 3.5em;
   margin-bottom: 10px;
 }
+
+.SplitPane,
+.SplitPane .Resizer,
+.SplitPane .Pane {
+  user-select: none;
+}
+
 .Resizer {
   background: #fff;
   opacity: 0.2;
@@ -2651,6 +2658,12 @@ code,
 }
 
 /* hamburger menu div */
+/* prevent long press to select */
+/* user-select is not inherited */
+.hamburger-menu,
+.hamburger-menu * {
+  user-select: none;
+}
 
 .hamburger-menu > div > span {
   background: black;
