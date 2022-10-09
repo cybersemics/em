@@ -653,9 +653,9 @@ const Editable = ({
     }
 
     // get new state
-    const { dragInProgress } = store.getState()
+    const { dragHold, dragInProgress } = store.getState()
 
-    if (!dragInProgress) {
+    if (!dragHold && !dragInProgress) {
       setCursorOnThought({ editing: true })
       dispatch(setEditingValue(value))
     }
