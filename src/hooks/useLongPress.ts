@@ -19,19 +19,21 @@ const useLongPress = (
   ms = 250,
 ) => {
   const [pressed, setPressed] = useState(false)
-  const [scrollStart, setScrollStart] = useState(0)
+  // useState doesn't work for some reason (???)
+  // scrollY variable is always 0 in onPressed
+  const scrollYRef = useRef<number>(0)
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
   const startTimer = () => {
     if (lock) return
-    setScrollStart(window.scrollY)
+    scrollYRef.current = window.scrollY
 
     // cast Timeout to number for compatibility with clearTimeout
     clearTimeout(timerIdRef.current)
     timerIdRef.current = setTimeout(() => {
-      if (Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) return
+      if (Math.abs(window.scrollY - scrollYRef.current) > SCROLL_THRESHOLD) return
       onLongPressStart?.()
       setPressed(true)
       lock = true
@@ -42,7 +44,6 @@ const useLongPress = (
   const start = useCallback(e => {
     // do not stop propagation, or it will break MultiGesture
     startTimer()
-    setScrollStart(e.touches?.[0]?.clientY)
     onTouchStart?.()
   }, [])
 
@@ -50,7 +51,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    // Delay setPressed to ensure that onLongPressEnd is not called until bubbled events complete.
+    // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
     // This gives other components a chance to short circuit.
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
@@ -64,12 +65,13 @@ const useLongPress = (
   // if the user scrolls past the threshold, end the press
   // timerIdRef is set to 0 to short circuit the calculation
   const move = useCallback(() => {
-    if (timerIdRef && Math.abs(window.scrollY - scrollStart) > SCROLL_THRESHOLD) {
+    if (timerIdRef && Math.abs(window.scrollY - scrollYRef.current) > SCROLL_THRESHOLD) {
       if (pressed) {
         onLongPressEnd?.()
       } else {
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
+        scrollYRef.current = 0
       }
     }
   }, [pressed])
