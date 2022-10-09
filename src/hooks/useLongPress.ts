@@ -21,31 +21,32 @@ const useLongPress = (
   const [pressed, setPressed] = useState(false)
   // useState doesn't work for some reason (???)
   // scrollY variable is always 0 in onPressed
-  const scrollYRef = useRef<number>(0)
+  const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
-  const startTimer = () => {
-    if (lock) return
-    scrollYRef.current = window.scrollY
-
-    // cast Timeout to number for compatibility with clearTimeout
-    clearTimeout(timerIdRef.current)
-    timerIdRef.current = setTimeout(() => {
-      if (Math.abs(window.scrollY - scrollYRef.current) > SCROLL_THRESHOLD) return
-      onLongPressStart?.()
-      setPressed(true)
-      lock = true
-    }, ms) as unknown as number
-  }
-
   // track that long press has started on mouseDown or touchStart
-  const start = useCallback(e => {
-    // do not stop propagation, or it will break MultiGesture
-    startTimer()
-    onTouchStart?.()
-  }, [])
+  const start = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      // do not stop propagation, or it will break MultiGesture
+      if (lock) return
+
+      if ('touches' in e) {
+        clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
+      }
+      onTouchStart?.()
+
+      // cast Timeout to number for compatibility with clearTimeout
+      clearTimeout(timerIdRef.current)
+      timerIdRef.current = setTimeout(() => {
+        onLongPressStart?.()
+        setPressed(true)
+        lock = true
+      }, ms) as unknown as number
+    },
+    [lock],
+  )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
@@ -56,25 +57,33 @@ const useLongPress = (
     // We can't stop propagation here without messing up other components like Bullet.
     setTimeout(() => {
       clearTimeout(timerIdRef.current)
-      setPressed(false)
+      timerIdRef.current = 0
       lock = false
+      setPressed(false)
       onLongPressEnd?.()
     }, 10)
   }, [])
 
-  // if the user scrolls past the threshold, end the press
-  // timerIdRef is set to 0 to short circuit the calculation
-  const move = useCallback(() => {
-    if (timerIdRef && Math.abs(window.scrollY - scrollYRef.current) > SCROLL_THRESHOLD) {
-      if (pressed) {
-        onLongPressEnd?.()
-      } else {
+  // If the user moves, end the press.
+  // If timerIdRef is set to 0, abort to prevent unnecessary calculations.
+  const move = useCallback(
+    e => {
+      if (!timerIdRef.current) return
+      const moveCoords = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
+      if (
+        Math.abs(moveCoords.x - clientCoords.current.x) > SCROLL_THRESHOLD ||
+        Math.abs(moveCoords.y - clientCoords.current.y) > SCROLL_THRESHOLD
+      ) {
         clearTimeout(timerIdRef.current)
         timerIdRef.current = 0
-        scrollYRef.current = 0
+        clientCoords.current = { x: 0, y: 0 }
+        if (pressed) {
+          onLongPressEnd?.()
+        }
       }
-    }
-  }, [pressed])
+    },
+    [pressed],
+  )
 
   const onContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
