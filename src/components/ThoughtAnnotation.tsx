@@ -208,7 +208,7 @@ const ThoughtAnnotation = ({
     !hideSuperscriptsSetting &&
     (REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1)
 
-  const multiline = useMultiline(contentRef, !!isEditing, value)
+  const multiline = useMultiline(contentRef, simplePath, isEditing)
 
   return (
     <div

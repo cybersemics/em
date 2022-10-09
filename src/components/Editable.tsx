@@ -203,7 +203,7 @@ const Editable = ({
     contentRef.current.style.opacity = '1.0'
   }
 
-  const multiline = useMultiline(contentRef, !!isEditing, value)
+  const multiline = useMultiline(contentRef, simplePath, isEditing)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>
