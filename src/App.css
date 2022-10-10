@@ -2303,16 +2303,18 @@ code,
 /* the bar that displays on hover when dragging thoughts */
 .drop-hover {
   position: absolute;
-  width: calc(100% - 80px);
+  width: calc(100% - 2em);
   background-color: lightblue;
   height: 3px;
   border-radius: 99px;
   z-index: var(--z-index-stack);
 }
 
+/* Thought drop-hover */
 /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
 .thought-container .drop-hover {
-  margin-left: -1.2em;
+  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+  margin-left: calc(-0.4em - 13px);
 }
 
 .children .child:first-child > .drop-hover {
@@ -2376,15 +2378,16 @@ code,
   display: none;
 }
 
+/* Last drop-end in Subthoughts */
 .drop-end .drop-hover {
-  width: calc(100% - 41px);
+  width: calc(80vw - 5em);
   margin-left: -0.2em; /* lines up with sibling drop-ends */
 }
 
 /* bump specificity */
 .empty-children .child.child > .drop-hover {
   margin-top: -0.4em;
-  width: calc(100% - 158px);
+  margin-left: calc(-1.8em - 115px);
 }
 
 .empty-children .drop-end {
