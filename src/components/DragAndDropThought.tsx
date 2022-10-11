@@ -98,6 +98,10 @@ const endDrag = () => {
 }
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
+// do not drop on descendants (exclusive) or thoughts hidden by autofocus
+// allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
+// allow drop if thought is the nearest visible though to the root
+// allow drop if the thought is the active expanded top context or it's direct children
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
@@ -106,7 +110,6 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
   const thoughtsTo = props.simplePath!
-  const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
 
   /** If the expand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
@@ -114,22 +117,25 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     props.path.length > state.expandHoverTopPath.length &&
     isDescendantPath(props.path, state.expandHoverTopPath)
 
+  const distance = state.cursor ? state.cursor.length - thoughtsTo.length : 0
+  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
+
   // first visible thought not hidden by autofocus
   const firstVisible =
     state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
 
   const isClosestHiddenParent = equalPath(firstVisible, thoughtsTo)
-  const distance = state.cursor ? state.cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
+  if (isHidden && !isClosestHiddenParent) return false
+
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
+
+  if (isDescendantOfFrom) return false
+
+  const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
   const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
 
-  // do not drop on descendants (exclusive) or thoughts hidden by autofocus
-  // allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
-  // allow drop if thought is the nearest visible though to the root
-  // allow drop if the thought is the active expanded top context or it's direct children
-  return (!isHidden || isClosestHiddenParent) && !isDescendantOfFrom && (!isSorted || !sameParent)
+  return !isSorted || !sameParent
 }
 
 /** Handles dropping a thought on a DropTarget. */
