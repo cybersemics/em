@@ -2381,7 +2381,7 @@ code,
 /* Last drop-end in Subthoughts */
 .drop-end .drop-hover {
   width: calc(80vw - 5em);
-  margin-left: -0.2em; /* lines up with sibling drop-ends */
+  margin-left: calc(0.6em - 13px);
 }
 
 /* bump specificity */
