@@ -61,7 +61,7 @@ import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
-import SubthoughtsDrop from './Subthoughts/SubthoughtsDrop'
+import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 import useZoom from './Subthoughts/useZoom'
 import Thought from './Thought'
@@ -757,25 +757,28 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 />
               ),
           )}
-          {(dropTarget || globals.simulateDrag || globals.simulateDrop) && (
-            <div>
+          {(autofocus() === 'show' || autofocus() === 'dim') &&
+            (dropTarget || globals.simulateDrag || globals.simulateDrop) && (
               <SubthoughtsDropEnd
-                autofocus={autofocus()}
                 depth={depth}
                 distance={distance}
                 dropTarget={dropTarget}
                 isHovering={isHovering}
                 simplePath={simplePath}
+                // Extend the click area of the drop target when there is nothing below.
+                // Always extend the root subthught drop target.
+                // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                last={isRoot(simplePath) || (distance === 1 && autofocus() === 'dim')}
               />
-            </div>
-          )}
+            )}
         </ul>
       ) : (
         dropTarget &&
         (autofocus() === 'show' || autofocus() === 'dim') &&
         // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
         !equalPath(state.draggingThought, simplePath) && (
-          <SubthoughtsDrop
+          <SubthoughtsDropEmpty
             isThoughtDivider={isDivider(value)}
             depth={depth}
             dropTarget={dropTarget}

@@ -7,7 +7,7 @@ import globals from '../../globals'
 import strip from '../../util/strip'
 
 /** A drop target when there are no children or the thought is collapsed. */
-const SubthoughtsDrop = ({
+const SubthoughtsDropEmpty = ({
   depth,
   dropTarget,
   isHovering,
@@ -64,6 +64,6 @@ const SubthoughtsDrop = ({
   )
 }
 
-SubthoughtsDrop.displayName = 'SubthoughtsDrop'
+SubthoughtsDropEmpty.displayName = 'SubthoughtsDropEmpty'
 
-export default SubthoughtsDrop
+export default SubthoughtsDropEmpty

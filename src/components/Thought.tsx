@@ -276,8 +276,6 @@ const ThoughtContainer = ({
       childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
     _.isEqual,
   )
-  const prevChild = useSelector((state: State) => (prevChildId ? getThoughtById(state, prevChildId) : null), _.isEqual)
-
   // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
   // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
   useEffect(() => {
@@ -363,9 +361,16 @@ const ThoughtContainer = ({
       ? getThoughtById(state, headId(state.draggingThought))?.value
       : null
 
-    return isSorted
-      ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-        state.dragInProgress &&
+    // TODO: Show the first drop-hover with distance === 2. How to determine?
+    // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
+
+    const prevChild = prevChildId ? getThoughtById(state, prevChildId) : null
+
+    return (
+      (autofocus === 'show' || autofocus === 'dim') &&
+      (isSorted
+        ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
+          state.dragInProgress &&
           isParentHovering &&
           draggingThoughtValue &&
           !isAnySiblingDescendantHovering() &&
@@ -373,8 +378,9 @@ const ThoughtContainer = ({
           compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
           // check if it's alphabetically next to previous thought if it exists
           (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
-      : // if alphabetical sort is disabled just check if current thought is hovering
-        globals.simulateDrag || isHovering
+        : // if alphabetical sort is disabled just check if current thought is hovering
+          globals.simulateDrag || isHovering)
+    )
   })
 
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). */
