@@ -26,6 +26,7 @@ import { ConnectedSubthoughtsProps, SubthoughtsProps } from './Subthoughts'
 export type ConnectedDragAndDropSubthoughtsProps = ConnectedSubthoughtsProps & ReturnType<typeof dropCollect>
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
+// Fires much less frequently than DragAndDropThought:canDrop
 const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 

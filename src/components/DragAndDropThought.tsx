@@ -10,6 +10,7 @@ import {
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
 import dragHold from '../action-creators/dragHold'
@@ -32,7 +33,6 @@ import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import { store } from '../store'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
-import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
@@ -104,7 +104,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { simplePath: thoughtsFrom } = monitor.getItem()
+  const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
   const thoughtsTo = props.simplePath!
   const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
 
@@ -123,15 +123,13 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
   const isSelf = equalPath(thoughtsTo, thoughtsFrom)
   const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
-  const oldContext = rootedParentOf(state, thoughtsFrom)
-  const newContext = rootedParentOf(state, thoughtsTo)
-  const sameContext = equalArrays(oldContext, newContext)
+  const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
 
   // do not drop on descendants (exclusive) or thoughts hidden by autofocus
   // allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
   // allow drop if thought is the nearest visible though to the root
   // allow drop if the thought is the active expanded top context or it's direct children
-  return (!isHidden || isClosestHiddenParent) && !isDescendantOfFrom && (!isSorted || !sameContext)
+  return (!isHidden || isClosestHiddenParent) && !isDescendantOfFrom && (!isSorted || !sameParent)
 }
 
 /** Handles dropping a thought on a DropTarget. */
@@ -146,12 +144,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const toThought = pathToThought(state, thoughtsTo)
   const fromThought = pathToThought(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const oldContext = rootedParentOf(state, thoughtsFrom)
-  const newContext = rootedParentOf(state, thoughtsTo)
-  const sameContext = equalArrays(oldContext, newContext)
+  const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
 
   // cannot move root or em context
-  if (isRootOrEM && !sameContext) {
+  if (isRootOrEM && !sameParent) {
     store.dispatch(
       error({ value: `Cannot move the ${isRoot(thoughtsFrom) ? 'home' : 'em'} context to another context.` }),
     )
@@ -182,11 +178,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
 
   // alert user of move to another context
-  if (!sameContext) {
+  if (!sameParent) {
     // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-      const alertTo = isRoot(newContext) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
+      const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
 
       store.dispatch(
         alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
