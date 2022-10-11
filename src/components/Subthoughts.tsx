@@ -2,7 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
-import { connect, useSelector, useStore } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -339,9 +339,7 @@ const NoChildren = ({
   children: ThoughtId[]
   simplePath: SimplePath
 }) => {
-  const store = useStore<State>()
-
-  const value = useSelector((state: State) => getThoughtById(store.getState(), head(simplePath))?.value)
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
   const colors = useSelector(themeColors)
 
   return (
