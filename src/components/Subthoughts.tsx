@@ -58,11 +58,11 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
-import strip from '../util/strip'
 import unroot from '../util/unroot'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
-import DropEnd from './Subthoughts/DropEnd'
+import SubthoughtsDrop from './Subthoughts/SubthoughtsDrop'
+import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 import useZoom from './Subthoughts/useZoom'
 import Thought from './Thought'
 
@@ -384,67 +384,6 @@ const NoChildren = ({
     </div>
   )
 }
-
-/** A drop target when there are no children in a context. Otherwise no drop target would be rendered in an empty context. */
-const EmptyChildrenDropTarget = ({
-  depth,
-  dropTarget,
-  isHovering,
-  isThoughtDivider,
-  debugValue,
-}: {
-  depth?: number
-  dropTarget: ConnectDropTarget
-  isHovering?: boolean
-  isThoughtDivider?: boolean
-  debugValue?: string
-}) => {
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
-  return (
-    <ul
-      className='empty-children'
-      style={{ display: globals.simulateDrag || globals.simulateDrop || dragInProgress ? 'block' : 'none' }}
-    >
-      {dropTarget(
-        <li
-          className={classNames({
-            child: true,
-            'drop-end': true,
-            'inside-divider': isThoughtDivider,
-            last: depth === 0,
-          })}
-          style={{
-            backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
-            opacity: 0.9,
-          }}
-        >
-          {globals.simulateDrop && (
-            <span
-              style={{
-                paddingLeft: 5,
-                position: 'absolute',
-                // make sure label does not interfere with drop target hovering
-                pointerEvents: 'none',
-                left: 0,
-                color: '#ff7bc3' /* mid pink */,
-              }}
-            >
-              {strip(debugValue || '')}
-              {isHovering ? '*' : ''}
-            </span>
-          )}
-
-          <span
-            className='drop-hover'
-            style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}
-          ></span>
-        </li>,
-      )}
-    </ul>
-  )
-}
-
-EmptyChildrenDropTarget.displayName = 'EmptyChildrenDropTarget'
 
 /**
  * The static Subthoughts component.
@@ -820,7 +759,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           )}
           {(dropTarget || globals.simulateDrag || globals.simulateDrop) && (
             <div>
-              <DropEnd
+              <SubthoughtsDropEnd
                 autofocus={autofocus()}
                 depth={depth}
                 distance={distance}
@@ -836,7 +775,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
         (autofocus() === 'show' || autofocus() === 'dim') &&
         // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
         !equalPath(state.draggingThought, simplePath) && (
-          <EmptyChildrenDropTarget
+          <SubthoughtsDrop
             isThoughtDivider={isDivider(value)}
             depth={depth}
             dropTarget={dropTarget}

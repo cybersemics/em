@@ -15,7 +15,7 @@ import isRoot from '../../util/isRoot'
 import strip from '../../util/strip'
 
 /** The drop target at the end of a list. */
-const DropEnd = ({
+const SubthoughtsDropEnd = ({
   autofocus,
   depth,
   distance,
@@ -91,4 +91,4 @@ const DropEnd = ({
   )
 }
 
-export default DropEnd
+export default SubthoughtsDropEnd
