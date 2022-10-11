@@ -1,3 +1,4 @@
+import moize from 'moize'
 import { FC } from 'react'
 import {
   DragSource,
@@ -98,10 +99,6 @@ const endDrag = () => {
 }
 
 /** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-// do not drop on descendants (exclusive) or thoughts hidden by autofocus
-// allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
-// allow drop if thought is the nearest visible though to the root
-// allow drop if the thought is the active expanded top context or it's direct children
 const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
@@ -110,33 +107,53 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
   const thoughtsTo = props.simplePath!
-
-  /** If the expand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
-  const isExpandedTop = () =>
-    state.expandHoverTopPath &&
-    props.path.length > state.expandHoverTopPath.length &&
-    isDescendantPath(props.path, state.expandHoverTopPath)
-
-  const distance = state.cursor ? state.cursor.length - thoughtsTo.length : 0
-  const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
-
-  // first visible thought not hidden by autofocus
-  const firstVisible =
-    state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
-
-  const isClosestHiddenParent = equalPath(firstVisible, thoughtsTo)
-  if (isHidden && !isClosestHiddenParent) return false
-
-  const isSelf = equalPath(thoughtsTo, thoughtsFrom)
-  const isDescendantOfFrom = isDescendantPath(thoughtsTo, thoughtsFrom) && !isSelf
-
-  if (isDescendantOfFrom) return false
-
-  const isSorted = getSortPreference(state, head(props.simplePath!)).type !== 'None'
-  const sameParent = equalPath(parentOf(thoughtsFrom), parentOf(thoughtsTo))
-
-  return !isSorted || !sameParent
+  return canDropPath(thoughtsFrom, thoughtsTo, state.cursor, props.path, state.expandHoverTopPath)
 }
+
+/** Memoized function that returns true if the thought can be dropped at the destination path. This will be called in a continuous loop by react-dnd so it needs to be fast. */
+// do not drop on descendants (exclusive) or thoughts hidden by autofocus
+// allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
+// allow drop if thought is the nearest visible though to the root
+// allow drop if the thought is the active expanded top context or it's direct children
+const canDropPath = moize(
+  (from: SimplePath, to: SimplePath, cursor: Path | null, path: Path, expandHoverTopPath: Path | null | undefined) => {
+    const state = store.getState()
+
+    /** If the expand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
+    const isExpandedTop = () =>
+      expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
+
+    const distance = cursor ? cursor.length - to.length : 0
+    // visible distance above cursor only depends on the cursor and if the cursor has children
+    // thus, is does not need to be given to moize as a parameter even though it uses live state
+    const visibleDistance = visibleDistanceAboveCursor(state)
+    const isHidden = distance >= visibleDistance && !isExpandedTop()
+
+    // first visible thought not hidden by autofocus
+    const firstVisible = expandHoverTopPath || (cursor && (cursor.slice(0, -visibleDistance) as Path))
+
+    const isClosestHiddenParent = equalPath(firstVisible, to)
+    if (isHidden && !isClosestHiddenParent) return false
+
+    const isSelf = equalPath(from, to)
+    const isDescendantOfFrom = isDescendantPath(to, from) && !isSelf
+
+    if (isDescendantOfFrom) return false
+
+    // the sort preference of the destination will not change in the middle of a drag
+    // thus, is does not need to be given to moize as a parameter even though it uses live state
+    const isSorted = getSortPreference(state, head(to)).type !== 'None'
+    const sameParent = equalPath(parentOf(from), parentOf(to))
+
+    return !isSorted || !sameParent
+  },
+  {
+    // only needs to be big enough to cache the calls within a single drag
+    // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
+    maxSize: 50,
+    profileName: 'canDropPath',
+  },
+)
 
 /** Handles dropping a thought on a DropTarget. */
 const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
