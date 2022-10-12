@@ -25,7 +25,6 @@ import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
-import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import isBefore from '../selectors/isBefore'
 import pathToThought from '../selectors/pathToThought'
@@ -138,14 +137,7 @@ const canDropPath = moize(
     const isSelf = equalPath(from, to)
     const isDescendantOfFrom = isDescendantPath(to, from) && !isSelf
 
-    if (isDescendantOfFrom) return false
-
-    // the sort preference of the destination will not change in the middle of a drag
-    // thus, is does not need to be given to moize as a parameter even though it uses live state
-    const isSorted = getSortPreference(state, head(to)).type !== 'None'
-    const sameParent = equalPath(parentOf(from), parentOf(to))
-
-    return !isSorted || !sameParent
+    return !isDescendantOfFrom
   },
   {
     // only needs to be big enough to cache the calls within a single drag
