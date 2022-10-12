@@ -24,7 +24,6 @@ import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
-import getSortPreference from '../selectors/getSortPreference'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -33,12 +32,10 @@ import themeColors from '../selectors/themeColors'
 import { store } from '../store'
 import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
-import { compareReasonable } from '../util/compareThought'
 import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
@@ -57,6 +54,7 @@ import Subthoughts from './Subthoughts'
 import useHideBullet from './Thought.useHideBullet'
 import useStyle from './Thought.useStyle'
 import useStyleContainer from './Thought.useStyleContainer'
+import ThoughtDropHover from './Thought/ThoughtDropHover'
 import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
@@ -346,45 +344,6 @@ const ThoughtContainer = ({
     return invalidOption
   })
 
-  // true if a thought is being dragged over this drop hover
-  const showDropHover = useSelector((state: State) => {
-    if (autofocus !== 'show' && autofocus !== 'dim') return false
-
-    // if alphabetical sort is disabled just check if current thought is hovering
-    const isParentSorted = getSortPreference(state, thought.parentId).type === 'Alphabetical'
-    if (!isParentSorted) return globals.simulateDrag || isHovering
-
-    const draggingThoughtValue = state.draggingThought
-      ? getThoughtById(state, headId(state.draggingThought))?.value
-      : null
-
-    // render the drop-hover if hovering over any thought in a sorted list
-    const isThoughtHovering =
-      state.hoveringPath &&
-      equalPath(parentOf(state.hoveringPath), parentOf(simplePath)) &&
-      state.hoverZone === DropThoughtZone.ThoughtDrop
-
-    // render the drop-hover if hovering over sorted Subthoughts
-    const isSubthoughtsHovering =
-      state.hoveringPath &&
-      equalPath(state.hoveringPath, rootedParentOf(state, simplePath)) &&
-      state.hoverZone === DropThoughtZone.SubthoughtsDrop
-
-    // TODO: Show the first drop-hover with distance === 2. How to determine?
-    // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
-
-    return (
-      // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-      state.dragInProgress &&
-      (isThoughtHovering || isSubthoughtsHovering) &&
-      draggingThoughtValue &&
-      // check if it's alphabetically previous to current thought
-      compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
-      // check if it's alphabetically next to previous thought if it exists
-      (!prevChildId || compareReasonable(draggingThoughtValue, getThoughtById(state, prevChildId).value) === 1)
-    )
-  })
-
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
   // TODO: it would be nice if we could reuse canDrop
   const isChildHovering = useSelector(
@@ -588,12 +547,12 @@ const ThoughtContainer = ({
             />
           )}
 
-          <span
-            className='drop-hover'
-            style={{
-              display: showDropHover ? 'inline' : 'none',
-            }}
-          ></span>
+          <ThoughtDropHover
+            autofocus={autofocus}
+            isHovering={isHovering}
+            prevChildId={prevChildId}
+            simplePath={simplePath}
+          />
 
           {placeholder.injectStyle()}
 

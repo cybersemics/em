@@ -12,7 +12,7 @@ import getThoughtById from '../../selectors/getThoughtById'
 import head from '../../util/head'
 import strip from '../../util/strip'
 
-/** The drop target at the end of the Subthoughts. */
+/** The drop target at the end of the Subthoughts. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEnd = ({
   depth,
   distance,

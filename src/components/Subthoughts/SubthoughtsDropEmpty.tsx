@@ -6,7 +6,7 @@ import State from '../../@types/State'
 import globals from '../../globals'
 import strip from '../../util/strip'
 
-/** A drop target when there are no children or the thought is collapsed. */
+/** A drop target when there are no children or the thought is collapsed. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEmpty = ({
   depth,
   dropTarget,
