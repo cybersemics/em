@@ -348,42 +348,44 @@ const ThoughtContainer = ({
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector((state: State) => {
-    /** Checks if any descendents of the direct siblings is being hovered. */
-    const isAnySiblingDescendantHovering = () =>
-      !isHovering &&
-      state.hoveringPath &&
-      isDescendantPath(state.hoveringPath, parentOf(path)) &&
-      (state.hoveringPath.length !== path.length || state.hoverZone === DropThoughtZone.SubthoughtsDrop)
+    if (autofocus !== 'show' && autofocus !== 'dim') return false
 
-    const isSorted = getSortPreference(state, thought.parentId).type === 'Alphabetical'
+    // if alphabetical sort is disabled just check if current thought is hovering
+    const isParentSorted = getSortPreference(state, thought.parentId).type === 'Alphabetical'
+    if (!isParentSorted) return globals.simulateDrag || isHovering
 
     const draggingThoughtValue = state.draggingThought
       ? getThoughtById(state, headId(state.draggingThought))?.value
       : null
 
+    // render the drop-hover if hovering over any thought in a sorted list
+    const isThoughtHovering =
+      state.hoveringPath &&
+      equalPath(parentOf(state.hoveringPath), parentOf(simplePath)) &&
+      state.hoverZone === DropThoughtZone.ThoughtDrop
+
+    // render the drop-hover if hovering over sorted Subthoughts
+    const isSubthoughtsHovering =
+      state.hoveringPath &&
+      equalPath(state.hoveringPath, rootedParentOf(state, simplePath)) &&
+      state.hoverZone === DropThoughtZone.SubthoughtsDrop
+
     // TODO: Show the first drop-hover with distance === 2. How to determine?
     // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
-    const prevChild = prevChildId ? getThoughtById(state, prevChildId) : null
-
     return (
-      (autofocus === 'show' || autofocus === 'dim') &&
-      (isSorted
-        ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-          state.dragInProgress &&
-          isParentHovering &&
-          draggingThoughtValue &&
-          !isAnySiblingDescendantHovering() &&
-          // check if it's alphabetically previous to current thought
-          compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
-          // check if it's alphabetically next to previous thought if it exists
-          (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
-        : // if alphabetical sort is disabled just check if current thought is hovering
-          globals.simulateDrag || isHovering)
+      // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
+      state.dragInProgress &&
+      (isThoughtHovering || isSubthoughtsHovering) &&
+      draggingThoughtValue &&
+      // check if it's alphabetically previous to current thought
+      compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
+      // check if it's alphabetically next to previous thought if it exists
+      (!prevChildId || compareReasonable(draggingThoughtValue, getThoughtById(state, prevChildId).value) === 1)
     )
   })
 
-  /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). */
+  /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
   // TODO: it would be nice if we could reuse canDrop
   const isChildHovering = useSelector(
     (state: State) =>
