@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -18,7 +18,8 @@ interface ThoughtLinkProps {
 
 /** Link to thought with ContextBreadcrumbs. */
 const ThoughtLink = ({ charLimit, simplePath, styleLink, thoughtsLimit }: ThoughtLinkProps) => {
-  const parentSimplePath = parentOf(simplePath)
+  // create a stable object reference to avoid re-rendering ContextBreadcrumbs when simplePath hasn't changed
+  const parentSimplePath = useMemo(() => parentOf(simplePath), [simplePath])
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   return (
