@@ -28,6 +28,7 @@ const ThoughtDropHover = ({
   simplePath: SimplePath
 }) => {
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)))
+
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector((state: State) => {
     if (autofocus !== 'show' && autofocus !== 'dim') return false

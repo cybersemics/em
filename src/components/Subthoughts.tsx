@@ -75,7 +75,6 @@ export interface SubthoughtsProps {
   env?: string
   expandable?: boolean
   isHeader?: boolean
-  isParentHovering?: boolean
   showContexts?: boolean
   simplePath: SimplePath
   path?: Path
@@ -404,7 +403,6 @@ export const SubthoughtsComponent = ({
   isHeader,
   isHovering,
   isMultiColumnTable,
-  isParentHovering,
   path,
   showContexts,
   simplePath,
@@ -445,7 +443,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   //   isHeader,
   //   isHovering,
   //   isMultiColumnTable,
-  //   isParentHovering,
   //   path,
   //   showContexts,
   //   simplePath,
@@ -704,7 +701,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                         }
                         showContexts={showContexts}
                         prevChildId={filteredChildren[i - 1]?.id}
-                        isParentHovering={isParentHovering}
                         style={{
                           // disable pointer interaction until we can handle column header editing
                           // otherwise it edits them only for the first row (and seems to create a circular context for some reason)
@@ -745,7 +741,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   index={i}
                   isHeader={isHeader}
                   isMultiColumnTable={isMultiColumnTable}
-                  isParentHovering={isParentHovering}
                   zoomCursor={zoomCursor}
                   path={path}
                   showContexts={showContexts}
@@ -810,7 +805,6 @@ const Subthought = ({
   index,
   isHeader,
   isMultiColumnTable,
-  isParentHovering,
   zoomCursor,
   path,
   prevChildId,
@@ -833,7 +827,6 @@ const Subthought = ({
   index?: number
   isHeader?: boolean
   isMultiColumnTable?: boolean
-  isParentHovering?: boolean
   zoomCursor?: boolean
   path?: Path
   prevChildId: ThoughtId
@@ -930,7 +923,6 @@ const Subthought = ({
       showContexts={showContexts}
       prevChildId={prevChildId}
       isContextPending={child.value === '__PENDING__'}
-      isParentHovering={isParentHovering}
       style={Object.keys(style).length > 0 ? style : undefined}
       styleContainer={styleContainer || undefined}
       path={appendedChildPath}

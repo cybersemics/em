@@ -19,7 +19,6 @@ import { AlertType, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import useAutofocus from '../hooks/useAutofocus'
 import useDragHold from '../hooks/useDragHold'
-import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
@@ -85,7 +84,6 @@ export interface ThoughtContainerProps {
   isHeader?: boolean
   isHovering?: boolean
   isMultiColumnTable?: boolean
-  isParentHovering?: boolean
   isPublishChild?: boolean
   // See: ThoughtProps['isVisible']
   isVisible?: boolean
@@ -250,7 +248,6 @@ const ThoughtContainer = ({
   isHovering,
   isLeaf,
   isMultiColumnTable,
-  isParentHovering,
   isContextPending,
   isPublishChild,
   isVisible,
@@ -308,7 +305,6 @@ const ThoughtContainer = ({
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
   const thought = useSelector((state: State) => getThoughtById(state, thoughtId), _.isEqual)
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
-  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
@@ -416,7 +412,6 @@ const ThoughtContainer = ({
   //   isHovering,
   //   isLeaf,
   //   isMultiColumnTable,
-  //   isParentHovering,
   //   isContextPending,
   //   isPublishChild,
   //   isVisible,
@@ -601,7 +596,6 @@ const ThoughtContainer = ({
                 path={isHeader ? path : childPath}
                 depth={depth}
                 isHeader={isHeader}
-                isParentHovering={isSubthoughtHovering}
                 showContexts={allowSingleContext}
                 simplePath={isHeader ? simplePath : childSimplePath}
               />
@@ -613,7 +607,6 @@ const ThoughtContainer = ({
             childrenForced={childrenForced}
             depth={depth}
             env={env}
-            isParentHovering={isSubthoughtHovering}
             path={path}
             showContexts={allowSingleContext}
             simplePath={simplePath}

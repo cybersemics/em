@@ -65,7 +65,6 @@ interface SubthoughtsProps {
   depth?: number
   env?: string
   expandable?: boolean
-  isParentHovering?: boolean
   showContexts?: boolean
   sortType?: string
   sortDirection?: SortDirection | null
@@ -396,7 +395,6 @@ export const SubthoughtsComponent = ({
   isEditing,
   isEditingPath,
   // isHovering,
-  isParentHovering,
   showContexts,
   sortDirection: contextSortDirection,
   sortType: contextSortType,
@@ -628,7 +626,6 @@ export const SubthoughtsComponent = ({
                   hideBullet={
                     isProseView || hideBulletsChildren || hideBulletsGrandchildren || hideBullet() || hideBulletZoom()
                   }
-                  isParentHovering={isParentHovering}
                   isVisible={actualDistance() < 2}
                   prevChildId={filteredChildren[i - 1]?.id}
                   rank={child.rank}

@@ -17,7 +17,6 @@ import setCursor from '../action-creators/setCursor'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
-import useSubthoughtHovering from '../hooks/useSubthoughtHovering'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -64,7 +63,6 @@ export interface ThoughtContainerProps {
   isEditingPath?: boolean
   isExpanded?: boolean
   isHovering?: boolean
-  isParentHovering?: boolean
   isVisible?: boolean
   prevChildId?: ThoughtId
   publish?: boolean
@@ -191,7 +189,6 @@ const ThoughtContainer = ({
   isExpanded,
   isHovering,
   isLeaf,
-  isParentHovering,
   isPublishChild,
   isVisible,
   path,
@@ -230,7 +227,6 @@ const ThoughtContainer = ({
 
   const envParsed = JSON.parse(env || '{}') as LazyEnv
   const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
-  const isSubthoughtHovering = useSubthoughtHovering(simplePath, isHovering, isDeepHovering)
   const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -249,32 +245,6 @@ const ThoughtContainer = ({
   // const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   // const options =
   //   !isAttribute(value) && childrenOptions.length > 0 ? childrenOptions.map(child => child.value.toLowerCase()) : null
-
-  // const cursorOnAlphabeticalSort = cursor && getSortPreference(state, thoughtId).type === 'Alphabetical'
-
-  // const draggingThoughtValue = state.draggingThought
-  //   ? getThoughtById(state, headId(state.draggingThought))?.value
-  //   : null
-
-  /** Checks if any descendents of the direct siblings is being hovered. */
-  // const isAnySiblingDescendantHovering = () =>
-  //   !isHovering &&
-  //   state.hoveringPath &&
-  //   isDescendantPath(state.hoveringPath, parentOf(path)) &&
-  //   (state.hoveringPath.length !== path.length || state.hoverId === DROP_TARGET.SubthoughtsDrop)
-
-  // const shouldDisplayHover = cursorOnAlphabeticalSort
-  //   ? // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-  //     state.dragInProgress &&
-  //     isParentHovering &&
-  //     draggingThoughtValue &&
-  //     !isAnySiblingDescendantHovering() &&
-  //     // check if it's alphabetically previous to current thought
-  //     compareReasonable(draggingThoughtValue, value) <= 0 &&
-  //     // check if it's alphabetically next to previous thought if it exists
-  //     (!prevChild || compareReasonable(draggingThoughtValue, prevChild.value) === 1)
-  //   : // if alphabetical sort is disabled just check if current thought is hovering
-  //     globals.simulateDrag || isHovering
 
   const isProseView = hideBullet
 
@@ -333,7 +303,6 @@ const ThoughtContainer = ({
         env={env}
         path={path}
         depth={depth}
-        isParentHovering={isSubthoughtHovering}
         showContexts={allowSingleContext}
         simplePath={simplePath}
         view={view}
