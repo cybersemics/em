@@ -34,7 +34,7 @@ const RecentEdited = () => {
   )
 
   return (
-    <div className='recently-edited-sidebar'>
+    <div className='sidebar'>
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
         {recentlyEdited.map((recentlyEditedThought, i) => {

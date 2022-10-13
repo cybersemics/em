@@ -264,7 +264,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
 
   return (
     <div
-      className='favorites recently-edited-sidebar'
+      className='favorites sidebar'
       style={{
         userSelect: 'none',
         // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled

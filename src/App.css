@@ -2690,7 +2690,7 @@ code,
   text-overflow: ellipsis;
 }
 
-.recently-edited-sidebar {
+.sidebar {
   background: #f5f5f5;
   overflow-y: scroll;
   box-sizing: border-box;
@@ -2701,23 +2701,23 @@ code,
   line-height: 1.8;
 }
 
-.dark .recently-edited-sidebar {
+.dark .sidebar {
   color: white;
   background: #292a2b;
   color: white;
 }
 
-.dark .recently-edited-sidebar {
+.dark .sidebar {
   background: #292a2b;
 }
 
-.recently-edited-sidebar::-webkit-scrollbar {
+.sidebar::-webkit-scrollbar {
   width: 0px; /* Remove scrollbar space */
   background: transparent; /* Optional: just make scrollbar invisible */
   display: none;
 }
 
-.recently-edited-sidebar .header {
+.sidebar .header {
   color: #666;
   font-weight: 300;
   display: flex;
