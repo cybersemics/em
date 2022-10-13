@@ -60,6 +60,10 @@ const endDrag = () => {
   ])
 }
 
+/** Returns true if the Favorite can be dropped at the given DropTarget. */
+const canDrop = (props: { disableDragAndDrop: boolean; simplePath: SimplePath }, monitor: DropTargetMonitor) =>
+  !props.disableDragAndDrop
+
 /** Handles dropping a thought on a DropTarget. */
 const drop = (
   {
@@ -142,19 +146,27 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 /** Collects props from the DropTarget. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }),
+  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
 })
 
 type DragAndDropFavoriteReturnType = ReturnType<typeof dragCollect> &
   ReturnType<typeof dropCollect> & {
+    disableDragAndDrop?: boolean
     simplePath: SimplePath
   }
 /** A draggable and droppable thought. */
 const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType>) =>
-  DragSource('thought', { beginDrag, endDrag }, dragCollect)(DropTarget('thought', { drop }, dropCollect)(el))
+  DragSource('thought', { beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(el))
 
 const DragAndDropFavorite = DragAndDropThought(
-  ({ dragSource, dropTarget, isDragging, isHovering, simplePath }: DragAndDropFavoriteReturnType) => {
+  ({
+    disableDragAndDrop,
+    dragSource,
+    dropTarget,
+    isDragging,
+    isHovering,
+    simplePath,
+  }: DragAndDropFavoriteReturnType) => {
     const colors = useSelector(themeColors)
     const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
     return dropTarget(
@@ -165,10 +177,10 @@ const DragAndDropFavorite = DragAndDropThought(
           <span
             className={classNames({
               'drop-hover': true,
-              pressed: dragHoldResult.isPressed,
+              pressed: !disableDragAndDrop && dragHoldResult.isPressed,
             })}
             style={{
-              display: isHovering ? 'inline' : 'none',
+              display: !disableDragAndDrop && isHovering ? 'inline' : 'none',
               marginLeft: 0,
               marginTop: '-0.4em',
               width: 'calc(100% - 4em)',
@@ -177,12 +189,13 @@ const DragAndDropFavorite = DragAndDropThought(
           <ThoughtLink
             simplePath={simplePath}
             styleLink={{
-              ...(isDragging || dragHoldResult.isPressed
-                ? {
-                    color: colors.highlight,
-                    fontWeight: 'bold',
-                  }
-                : undefined),
+              ...(!disableDragAndDrop &&
+                (isDragging || dragHoldResult.isPressed
+                  ? {
+                      color: colors.highlight,
+                      fontWeight: 'bold',
+                    }
+                  : undefined)),
             }}
           />
         </div>,
@@ -213,7 +226,7 @@ const DropEnd = DropTarget(
 )
 
 /** Favorites list. */
-const Favorites = () => {
+const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const dispatch = useDispatch()
 
   // true if all favorites have been loaded
@@ -261,7 +274,13 @@ const Favorites = () => {
       <div className='header'>Favorites</div>
       <div style={{ padding: '0 2em' }}>
         {simplePaths.length > 0
-          ? simplePaths.map((simplePath, i) => <DragAndDropFavorite key={head(simplePath)} simplePath={simplePath} />)
+          ? simplePaths.map((simplePath, i) => (
+              <DragAndDropFavorite
+                key={head(simplePath)}
+                simplePath={simplePath}
+                disableDragAndDrop={disableDragAndDrop}
+              />
+            ))
           : 'No favorites'}
         <DropEnd />
       </div>

@@ -1,8 +1,10 @@
 import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import _ from 'lodash'
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import State from '../@types/State'
+import dragHold from '../action-creators/dragHold'
+import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
 import simplifyPath from '../selectors/simplifyPath'
@@ -12,7 +14,7 @@ import ThoughtLink from './ThoughtLink'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
-  SwipeableDrawerProps & { classes: any }
+  SwipeableDrawerProps & { classes: any; ref: any }
 >
 
 /** Displays recently edited thoughts with a header. */
@@ -46,6 +48,8 @@ const RecentEdited = () => {
 
 /** The Recently Edited sidebar component. */
 const Sidebar = () => {
+  const [isSwiping, setIsSwiping] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const dispatch = useDispatch()
 
@@ -64,6 +68,7 @@ const Sidebar = () => {
      */
     <SwipeableDrawerWithClasses
       classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      ref={ref}
       swipeAreaWidth={8}
       anchor='left'
       onOpen={() => {
@@ -75,7 +80,37 @@ const Sidebar = () => {
       open={showSidebar}
     >
       {/* <RecentEdited /> */}
-      <Favorites />
+      <div
+        // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
+        // Unfortunately, MUI SwipeableDrawer does provide an API for its animation or swipe state, or final open/close.
+        // Therefore we check translateX from the .MuiDrawer-paper element and disable drag-and-drop
+        // See: https://bit.cloud/mui-org/material-ui/swipeable-drawer
+        //      https://mui.com/material-ui/api/swipeable-drawer/
+        onTouchMove={_.throttle(
+          () => {
+            if (isSwiping) return
+            const drawer = ref.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
+            if (!drawer) return
+            const translateX = parseInt(drawer.style.transform.slice(10))
+            // set isSwiping if translateX is not parseable (NaN) or explicitly set to 0
+            if (translateX) {
+              setIsSwiping(true)
+              dispatch([dragHold({ value: false }), dragInProgress({ value: false })])
+            }
+          },
+          10,
+          // no need to check on the first touchmove trigger since translateX is probably not yet set
+          { leading: false },
+        )}
+        onTouchEnd={() => {
+          setIsSwiping(false)
+        }}
+        style={{
+          height: '100%',
+        }}
+      >
+        <Favorites disableDragAndDrop={isSwiping} />
+      </div>
     </SwipeableDrawerWithClasses>
   )
 }
