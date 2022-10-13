@@ -143,9 +143,6 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
   isHovering: monitor.isOver({ shallow: true }),
-  // is being hovered over current thought irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
-  isDeepHovering: monitor.isOver(),
 })
 
 type DragAndDropFavoriteReturnType = ReturnType<typeof dragCollect> &
