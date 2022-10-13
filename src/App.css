@@ -2346,18 +2346,21 @@ code,
   width: calc(100% - 38px);
 }
 
+/* last drop-end needs to be less wide */
 .drop-end:not(.child) {
   height: 1.5em;
+}
+.drop-end:not(.child) .drop-hover {
+  width: calc(80vw - 4.7em - 60px);
 }
 
 /* move drop-end to the right so that the user's finger does not obscure the drop target */
 .mobile .drop-end:not(.child) {
   margin-left: 5em;
 }
-
 /* the drop-target is to the right (see above), but the drop-hover needs to be positioned normally where the thought will be inserted, so offset the drop-target offset. */
 .mobile .drop-end:not(.child) .drop-hover {
-  margin-left: -6em;
+  margin-left: calc(-5.4em - 13px);
 }
 
 .children.autofocus-dim > .child.drop-end {
@@ -2380,8 +2383,11 @@ code,
 
 /* Last drop-end in Subthoughts */
 .drop-end .drop-hover {
-  width: calc(80vw - 5em);
+  width: calc(80vw - 6em - 20px);
   margin-left: calc(0.6em - 13px);
+}
+.mobile .drop-end .drop-hover {
+  width: calc(80vw - 4.7em + 25px);
 }
 
 /* bump specificity */
@@ -2412,6 +2418,8 @@ code,
 
 .mobile .empty-children .drop-end > .drop-hover {
   margin-left: calc(-25% - 103px);
+  /* needs to be wider on mobile to extend beyond ThoughtDrop drop-hover */
+  width: calc(80vw - 3em);
 }
 
 .status-button {
