@@ -162,7 +162,9 @@ const DragAndDropFavorite = DragAndDropThought(
     const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
     return dropTarget(
       dragSource(
-        <div {...dragHoldResult.props}>
+        // Set overflow:auto so the drop target fully wraps its contents.
+        // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
+        <div {...dragHoldResult.props} style={{ overflow: 'auto' }}>
           <span
             className={classNames({
               'drop-hover': true,
