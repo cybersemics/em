@@ -38,9 +38,25 @@ const autoscroll = (() => {
   // scroll speed (-1 to 1)
   let rate = 1
 
-  /** Scroll vertically in the direction given by rate until stop is called. */
+  // cache the autoscroll container on start for performance
+  // if the Sidebar is open on touch start, this is set to the .sidebar element
+  let scrollContainer: Window | HTMLElement = window
+
+  /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
-    window.scrollTo(0, document.documentElement.scrollTop + rate)
+    const el = scrollContainer || window
+    // if scrollContainer is undefined or window, use the document scrollTop
+    const scrollTop = (scrollContainer as HTMLElement).scrollTop ?? document.documentElement.scrollTop
+    const scrollTopNew = Math.max(0, scrollTop + rate)
+
+    // if we have hit the end, stop autoscrolling
+    // i.e. if the next increment would not change scrollTop
+    if (scrollTopNew === scrollTop) {
+      autoscrolling = false
+      return
+    }
+
+    el.scrollTo(0, scrollTopNew)
     window.requestAnimationFrame(() => {
       if (autoscrolling) {
         scroll()
@@ -49,15 +65,16 @@ const autoscroll = (() => {
   }
 
   /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
-  const startOrUpdate = (rateNew: number) => {
+  const startOrUpdate = (rateNew?: number) => {
     // update the scroll rate
-    rate = ease(rateNew)
+    rate = ease(rateNew ?? 1)
 
     // if we are already autoscrolling, do nothing
     if (autoscrolling) return
 
     // otherwise kick off the autoscroll
     autoscrolling = true
+    scrollContainer = (document.querySelector('.sidebar') as HTMLElement | null) || window
     scroll()
   }
 
@@ -65,9 +82,6 @@ const autoscroll = (() => {
   startOrUpdate.stop = () => {
     autoscrolling = false
   }
-
-  /** Returns true if scrolling. */
-  startOrUpdate.isScrolling = () => autoscrolling
 
   return startOrUpdate
 })()
@@ -117,26 +131,33 @@ const initEvents = (store: Store<State, any>) => {
   const onMouseMove = _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true })
 
   /** Handles auto scroll on drag near the edge of the screen on mobile. */
+  // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
 
-    // do not auto scroll when hovering over DeleteDrop component
-    if (state.dragInProgress && state.alert?.alertType !== AlertType.DeleteDropHint) {
-      const y = e.touches[0].clientY
-      // start scrolling down when within 100px of the top edge of the screen
-      if (y < 120) {
-        const rate = 1 + (120 - y) / 60
-        autoscroll(-rate)
-      }
-      // start scrolling up when within 100px of the bottom edge of the screen
-      else if (y > window.innerHeight - 100) {
-        const rate = 1 + (y - window.innerHeight + 100) / 50
-        autoscroll(rate)
-      }
-      // stop scrolling when not near the edge of the screen
-      else {
-        autoscroll.stop()
-      }
+    // do not auto scroll when hovering over QuickDrop component
+    if (
+      !state.dragInProgress ||
+      state.alert?.alertType === AlertType.DeleteDropHint ||
+      state.alert?.alertType === AlertType.CopyOneDropHint
+    )
+      return
+
+    const y = e.touches[0].clientY
+
+    // start scrolling up when within 100px of the top edge of the screen
+    if (y < 120) {
+      const rate = 1 + (120 - y) / 60
+      autoscroll(-rate)
+    }
+    // start scrolling down when within 100px of the bottom edge of the screen
+    else if (y > window.innerHeight - 100) {
+      const rate = 1 + (y - window.innerHeight + 100) / 50
+      autoscroll(rate)
+    }
+    // stop scrolling when not near the edge of the screen
+    else {
+      autoscroll.stop()
     }
   }
 
@@ -187,6 +208,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
+  // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
