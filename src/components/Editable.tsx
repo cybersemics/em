@@ -159,8 +159,9 @@ const Editable = ({
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
-  const rank = useSelector((state: State) => getThoughtById(state, head(simplePath)).rank)
+  // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
+  const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
   const editableNonceRef = useRef(state.editableNonce)
   const fontSize = useSelector((state: State) => state.fontSize)
   // must re-render when noteFocus changes in order to set the selection
