@@ -202,7 +202,7 @@ const ThoughtAnnotation = ({
     setCalculateContexts(true)
   }, [])
 
-  const styleAutofocus = useAutofocus(autofocus, styleAnnotation)
+  const styleAutofocus = useAutofocus(simplePath, autofocus, styleAnnotation)
   const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
   const showSuperscript =
     !hideSuperscriptsSetting &&

@@ -1,12 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import themeColors from '../selectors/themeColors'
 import alpha from '../util/alpha'
+import { isDescendantPath } from '../util/isDescendantPath'
 
 /** Applies alpha transparency to colors (or default foreground color) for autofocus. */
-const useAutofocus = (autofocus?: Autofocus, style?: React.CSSProperties) => {
+const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: React.CSSProperties) => {
   const colors = useSelector(themeColors)
+  const isHidden = useSelector(
+    (state: State) =>
+      (autofocus === 'hide' || autofocus === 'hide-parent') && !isDescendantPath(state.cursor, simplePath),
+  )
+  const [noHeight, setNoHeight] = useState<boolean>(false)
+  const timerRef = useRef<number | undefined>(undefined)
 
   // track when the color or background color changes
   // used to determine transition
@@ -59,6 +68,8 @@ const useAutofocus = (autofocus?: Autofocus, style?: React.CSSProperties) => {
         (style?.color as `rgb${string}`) || colors.fg,
         autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
       ),
+      // set height:0 instead of display:none as display:none breads the CSS autofocus animation for fade-in
+      ...(noHeight ? { height: 0 } : null),
       ...(disableTransition
         ? {
             transition: 'color 0s, background-color 0s',
@@ -67,7 +78,25 @@ const useAutofocus = (autofocus?: Autofocus, style?: React.CSSProperties) => {
     }
 
     return styles
-  }, [autofocus, colors, style?.color, style?.backgroundColor, disableTransition])
+  }, [autofocus, colors, noHeight, style?.color, style?.backgroundColor, disableTransition])
+
+  // set display:none after the autofocus fade out transition completes (750ms)
+  if (isHidden && !noHeight) {
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      setNoHeight(true)
+    }, 800) as unknown as number
+  }
+  // remove display:none when visible
+  else if (noHeight && !isHidden) {
+    clearTimeout(timerRef.current)
+    setNoHeight(false)
+  }
+
+  // prevent setters after unmount
+  useEffect(() => {
+    return () => clearTimeout(timerRef.current)
+  }, [])
 
   return styleColors
 }

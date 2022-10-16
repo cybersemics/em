@@ -370,7 +370,7 @@ const ThoughtContainer = ({
   }, [])
 
   // colors that are applied to the container
-  const styleAutofocus = useAutofocus(autofocus, style)
+  const styleAutofocus = useAutofocus(simplePath, autofocus, style)
 
   // placeholder style animates with autofocus
   const placeholder = useAutofocusPlaceholder(autofocus)
