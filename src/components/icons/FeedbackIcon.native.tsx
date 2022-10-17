@@ -4,14 +4,14 @@ import { useSelector } from 'react-redux'
 import Index from '../../@types/IndexType'
 import themeColors from '../../selectors/themeColors'
 
-interface ChatIconProps {
+interface IconProps {
   fill?: string
   size: number
   style?: Index<string>
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const FeedbackIcon: FC<ChatIconProps> = ({ fill, size = 20, style }) => {
+const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <Svg x='0px' y='0px' viewBox='0 0 46 50' width={size} height={size} fill={fill || colors.fg} style={style}>
