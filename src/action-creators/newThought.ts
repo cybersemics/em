@@ -4,6 +4,7 @@ import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { TUTORIAL_STEP_START } from '../constants'
 import asyncFocus from '../device/asyncFocus'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import findDescendant from '../selectors/findDescendant'
 import getSetting from '../selectors/getSetting'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -88,6 +89,8 @@ const newThought =
       preventSetCursor,
       value,
     })
+
+    scrollCursorIntoView()
   }
 
 export default newThought
