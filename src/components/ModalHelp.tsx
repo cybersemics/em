@@ -250,6 +250,10 @@ const ModalHelp = ({
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
         <div>
+          Settings icon by <a href='https://thenounproject.com/icon/settings-5241749/'>Parisa Qolbi</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
           Gift icon by <a href='https://thenounproject.com/search/?q=gift&i=2221484'> Sarote Impheng</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>

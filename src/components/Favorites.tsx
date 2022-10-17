@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, useEffect } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import {
   DragSource,
   DragSourceConnector,
@@ -10,6 +10,7 @@ import {
   DropTargetMonitor,
 } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
+import CSSTransition from 'react-transition-group/CSSTransition'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Lexeme from '../@types/Lexeme'
@@ -19,10 +20,12 @@ import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import pullPendingLexemes from '../action-creators/pullPendingLexemes'
+import toggleAttribute from '../action-creators/toggleAttribute'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, NOOP } from '../constants'
+import { AlertType, EM_TOKEN, NOOP } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
+import findDescendant from '../selectors/findDescendant'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import themeColors from '../selectors/themeColors'
@@ -155,7 +158,7 @@ type DragAndDropFavoriteReturnType = ReturnType<typeof dragCollect> &
     simplePath: SimplePath
   }
 /** A draggable and droppable thought. */
-const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType>) =>
+const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType & { hideContext?: boolean }>) =>
   DragSource('thought', { beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(el))
 
 const DragAndDropFavorite = DragAndDropThought(
@@ -163,10 +166,11 @@ const DragAndDropFavorite = DragAndDropThought(
     disableDragAndDrop,
     dragSource,
     dropTarget,
+    hideContext,
     isDragging,
     isHovering,
     simplePath,
-  }: DragAndDropFavoriteReturnType) => {
+  }: DragAndDropFavoriteReturnType & { hideContext?: boolean }) => {
     const colors = useSelector(themeColors)
     const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
     return dropTarget(
@@ -188,6 +192,7 @@ const DragAndDropFavorite = DragAndDropThought(
             }}
           />
           <ThoughtLink
+            hideContext={hideContext}
             simplePath={simplePath}
             styleLink={{
               ...(!disableDragAndDrop &&
@@ -226,9 +231,77 @@ const DropEnd = DropTarget(
   ),
 )
 
+/** Favorites Options toggle link and list of options. */
+const FavoritesOptions = ({
+  setShowOptions,
+  showOptions,
+}: {
+  setShowOptions: (value: boolean) => void
+  showOptions?: boolean
+}) => {
+  const dispatch = useDispatch()
+  const hideContexts = useSelector(
+    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
+  )
+
+  return (
+    <div style={{ marginBottom: '0.5em' }}>
+      {/* Show Options toggle */}
+      <div style={{ textAlign: 'center' }}>
+        <span
+          onClick={() => setShowOptions(!showOptions)}
+          style={{ color: '#444', cursor: 'pointer', fontSize: '0.7em', fontWeight: 'bold', position: 'relative' }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              transform: `rotate(${showOptions ? 90 : 0}deg)`,
+              transition: 'transform 150ms ease-out',
+              // avoid position:absolute to trivially achieve correct vertical alignment with text
+              marginLeft: '-1em',
+            }}
+          >
+            ▸
+          </span>{' '}
+          <span>OPTIONS</span>
+        </span>
+      </div>
+
+      <div style={{ overflow: 'hidden' }}>
+        <CSSTransition in={showOptions} timeout={150} classNames='slidedown' unmountOnExit>
+          <form
+            style={{
+              backgroundColor: '#3e3e3e',
+              borderRadius: '0.5em',
+              fontSize: '0.8em',
+              padding: '0.5em',
+            }}
+          >
+            <label style={{ cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type='checkbox'
+                checked={!hideContexts}
+                onChange={e => {
+                  // Note: never preventDefault on a controlled checkbox in React.
+                  // See: https://stackoverflow.com/a/70030088/4806080
+                  dispatch(toggleAttribute({ path: [EM_TOKEN], values: ['Settings', 'favoritesHideContexts'] }))
+                }}
+                style={{ cursor: 'pointer' }}
+              ></input>{' '}
+              Show full contexts
+            </label>
+          </form>
+        </CSSTransition>
+      </div>
+    </div>
+  )
+}
+
 /** Favorites list. */
 const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const dispatch = useDispatch()
+  const [showOptions, setShowOptions] = useState(false)
+  const colors = useSelector(themeColors)
 
   // true if all favorites have been loaded
   const favoritesLoaded = useSelector((state: State) => {
@@ -246,6 +319,10 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
       })
       .filter(x => x) as SimplePath[]
   }, _.isEqual)
+
+  const hideContexts = useSelector(
+    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
+  )
 
   useEffect(() => {
     if (favoritesLoaded) return
@@ -270,16 +347,38 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         userSelect: 'none',
         // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
         position: 'relative',
+        padding: '0 1em',
+        minWidth: '60vw',
       }}
     >
-      <div className='header'>Favorites</div>
-      <div style={{ padding: '0 2em' }}>
+      {/* <div
+        onClick={() => setShowOptions(!showOptions)}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          fontSize: '1.2em',
+          fontWeight: 'bold',
+          padding: '0.25em',
+        }}
+      >
+        <SettingsIcon />
+      </div> */}
+
+      <div className='header' style={{ color: colors.fg, fontSize: '1.2em', fontWeight: 600, marginBottom: 0 }}>
+        Favorites
+      </div>
+
+      <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
+
+      <div>
         {simplePaths.length > 0
           ? simplePaths.map((simplePath, i) => (
               <DragAndDropFavorite
                 key={head(simplePath)}
                 simplePath={simplePath}
                 disableDragAndDrop={disableDragAndDrop}
+                hideContext={hideContexts}
               />
             ))
           : 'No favorites'}

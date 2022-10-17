@@ -978,7 +978,41 @@ body.dark {
   transition: opacity 0.8s ease-out;
 }
 
-/* react-transition-group animation: fade */
+/* react-transition-group animation: slidedown */
+/* use transform: translateY(-100%) for auto height animation (less smooth) */
+.slidedown-enter {
+  margin-bottom: 0;
+  margin-top: -3em;
+}
+
+.slidedown-enter-active {
+  margin-bottom: 1em;
+  margin-top: 0;
+  transition: margin 150ms ease-out;
+}
+
+.slidedown-enter-done {
+  margin-bottom: 1em;
+  margin-top: 0;
+}
+
+.slidedown-exit {
+  margin-bottom: 1em;
+  margin-top: 0;
+}
+
+.slidedown-exit-active {
+  margin-bottom: 0;
+  margin-top: -3em;
+  transition: margin 150ms ease-out;
+}
+
+.slidedown-exit-done {
+  margin-bottom: 0;
+  margin-top: -3em;
+}
+
+/* react-transition-group animation: fade-600 */
 .fade-600-enter {
   opacity: 0;
 }
@@ -2698,11 +2732,6 @@ code,
 
 .dark .sidebar {
   color: white;
-  background: #292a2b;
-  color: white;
-}
-
-.dark .sidebar {
   background: #292a2b;
 }
 
