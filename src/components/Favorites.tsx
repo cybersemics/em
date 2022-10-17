@@ -180,6 +180,7 @@ const DragAndDropFavorite = DragAndDropThought(
               pressed: !disableDragAndDrop && dragHoldResult.isPressed,
             })}
             style={{
+              backgroundColor: colors.highlight,
               display: !disableDragAndDrop && isHovering ? 'inline' : 'none',
               marginLeft: 0,
               marginTop: '-0.4em',

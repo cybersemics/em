@@ -4,6 +4,7 @@ import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import State from '../../@types/State'
 import globals from '../../globals'
+import themeColors from '../../selectors/themeColors'
 import strip from '../../util/strip'
 
 /** A drop target when there are no children or the thought is collapsed. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
@@ -21,6 +22,8 @@ const SubthoughtsDropEmpty = ({
   debugValue?: string
 }) => {
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  const colors = useSelector(themeColors)
+
   return (
     <ul
       className='empty-children'
@@ -56,7 +59,10 @@ const SubthoughtsDropEmpty = ({
           )}
           <span
             className='drop-hover'
-            style={{ display: globals.simulateDrag || isHovering ? 'inline' : 'none' }}
+            style={{
+              display: globals.simulateDrag || isHovering ? 'inline' : 'none',
+              backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2,
+            }}
           ></span>
         </li>,
       )}

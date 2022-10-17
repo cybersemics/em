@@ -12,11 +12,13 @@ import { getChildrenSorted } from '../../selectors/getChildren'
 import getSortPreference from '../../selectors/getSortPreference'
 import getThoughtById from '../../selectors/getThoughtById'
 import rootedParentOf from '../../selectors/rootedParentOf'
+import themeColors from '../../selectors/themeColors'
 import { compareReasonable } from '../../util/compareThought'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import headId from '../../util/headId'
 import strip from '../../util/strip'
+import unroot from '../../util/unroot'
 
 /** The drop target at the end of the Subthoughts. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEnd = ({
@@ -40,6 +42,7 @@ const SubthoughtsDropEnd = ({
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   // const parentId = useSelector((state: State) => getThoughtById(state, thoughtId)?.parentId)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  const colors = useSelector(themeColors)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -115,6 +118,8 @@ const SubthoughtsDropEnd = ({
         className='drop-hover'
         style={{
           display: showDropHover ? 'inline' : 'none',
+          // unroot the simplePath, otherwise the root thought will have the same depth as the first level
+          backgroundColor: unroot(simplePath).length % 2 ? colors.highlight : colors.highlight2,
         }}
       ></span>
     </li>,

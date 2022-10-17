@@ -2304,7 +2304,6 @@ code,
 .drop-hover {
   position: absolute;
   width: calc(100% - 2em);
-  background-color: lightblue;
   height: 3px;
   border-radius: 99px;
   z-index: var(--z-index-stack);

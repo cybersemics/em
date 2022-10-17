@@ -9,6 +9,7 @@ import globals from '../../globals'
 import getSortPreference from '../../selectors/getSortPreference'
 import getThoughtById from '../../selectors/getThoughtById'
 import rootedParentOf from '../../selectors/rootedParentOf'
+import themeColors from '../../selectors/themeColors'
 import { compareReasonable } from '../../util/compareThought'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
@@ -27,14 +28,16 @@ const ThoughtDropHover = ({
   prevChildId?: ThoughtId
   simplePath: SimplePath
 }) => {
-  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)))
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
+  const colors = useSelector(themeColors)
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector((state: State) => {
     if (autofocus !== 'show' && autofocus !== 'dim') return false
 
     // if alphabetical sort is disabled just check if current thought is hovering
-    const isParentSorted = getSortPreference(state, thought.parentId).type === 'Alphabetical'
+    const parentId = getThoughtById(state, head(simplePath))?.parentId
+    const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
     if (!isParentSorted) return globals.simulateDrag || isHovering
 
     const draggingThoughtValue = state.draggingThought
@@ -62,7 +65,7 @@ const ThoughtDropHover = ({
       (isThoughtHovering || isSubthoughtsHovering) &&
       draggingThoughtValue &&
       // check if it's alphabetically previous to current thought
-      compareReasonable(draggingThoughtValue, thought.value) <= 0 &&
+      compareReasonable(draggingThoughtValue, value) <= 0 &&
       // check if it's alphabetically next to previous thought if it exists
       (!prevChildId || compareReasonable(draggingThoughtValue, getThoughtById(state, prevChildId).value) === 1)
     )
@@ -73,6 +76,7 @@ const ThoughtDropHover = ({
       className='drop-hover'
       style={{
         display: showDropHover ? 'inline' : 'none',
+        backgroundColor: simplePath.length % 2 ? colors.highlight2 : colors.highlight,
       }}
     ></span>
   )
