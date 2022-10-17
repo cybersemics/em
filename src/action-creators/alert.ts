@@ -24,11 +24,14 @@ const alert =
   (dispatch, getState) => {
     const { alert } = getState()
 
-    // if clearDelay is not provided i.e undefined alert should not dismiss.
-    if (clearDelay) {
-      // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
-      clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
-      clearAlertTimeoutId = setTimeout(() => {
+    /** Clears the original alert, or NOOP if the alert has changed. */
+    const clearOriginalAlert = () => {
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        // Do not clear a different alert than was originally shown.
+        // For example, the extended gesture hint would be incorrectly cleared after a delay.
+        if (alert !== state.alert) return
+
         dispatch({
           type: 'alert',
           alertType,
@@ -36,8 +39,15 @@ const alert =
           value: null,
           isInline,
         })
-        clearAlertTimeoutId = null
-      }, clearDelay)
+      })
+      clearAlertTimeoutId = null
+    }
+
+    // if clearDelay is not provided i.e undefined alert should not dismiss.
+    if (clearDelay) {
+      // if clearAlertTimeoutId !== null, it means that previous alert hasn't been cleared yet. In this case cancel previous timeout and start new.
+      clearAlertTimeoutId && clearTimeout(clearAlertTimeoutId)
+      clearAlertTimeoutId = setTimeout(clearOriginalAlert, clearDelay)
     }
 
     if (alert && alert.value === value) return
