@@ -193,7 +193,7 @@ const AppComponent: FC<Props> = props => {
 
       {!showModal && !tutorial && <Toolbar />}
 
-      {isTouch && <QuickDrop />}
+      <QuickDrop />
 
       <MultiGestureIfTouch>
         {showModal ? (
