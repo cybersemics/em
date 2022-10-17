@@ -24,11 +24,13 @@ const gestureString = (shortcut: Shortcut): string =>
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const ShortcutGestureHint = ({
+  gestureInProgress,
   highlight,
   shortcut,
   size,
   style,
 }: {
+  gestureInProgress: string
   highlight: boolean
   shortcut: Shortcut
   size: number
@@ -38,11 +40,14 @@ const ShortcutGestureHint = ({
   return (
     <div style={{ marginBottom: 10, position: 'relative', textAlign: 'left', ...style }}>
       <GestureDiagram
-        size={size}
+        highlight={gestureInProgress.length}
         path={gestureString(shortcut)}
-        style={{ position: 'absolute', left: -size, top: -size / 4 }}
+        strokeWidth={4}
+        style={{ position: 'absolute', left: -size, top: -size / 3.2 }}
+        width={45}
+        height={45}
       />{' '}
-      <div style={{ color: highlight ? colors.highlight : colors.fg }}>{shortcut.label}</div>
+      <div style={{ color: highlight ? colors.vividHighlight : colors.fg }}>{shortcut.label}</div>
       {highlight && <div style={{ fontSize: '80%', marginBottom: '1em' }}>{shortcut.description}</div>}
     </div>
   )
@@ -89,6 +94,7 @@ const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
 
           {possibleShortcutsSorted.map(shortcut => (
             <ShortcutGestureHint
+              gestureInProgress={gestureInProgress}
               key={shortcut.id}
               shortcut={shortcut}
               size={fontSize * 2}

@@ -112,7 +112,7 @@ const ShortcutRow = (shortcut: Shortcut | null) => {
         <td>
           {isTouch && shortcut.gesture ? (
             // GesturePath[]
-            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} />
+            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
           ) : shortcut.keyboard ? (
             formatKeyboardShortcut(shortcut.keyboard)
           ) : null}

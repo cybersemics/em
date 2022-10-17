@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import createId from '../util/createId'
 
 interface GestureDiagramProps {
@@ -13,6 +14,8 @@ interface GestureDiagramProps {
   flexibleSize?: number
   // override auto height
   height?: number
+  // highlight the first n segments of the gesture diagram
+  highlight?: number
   path: GesturePath
   reversalOffset?: number
   size?: number
@@ -62,6 +65,7 @@ const GestureDiagram = ({
   color,
   flexibleSize,
   height,
+  highlight,
   path,
   reversalOffset,
   size = 50,
@@ -71,6 +75,8 @@ const GestureDiagram = ({
   width,
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
+  const colors = useSelector(themeColors)
+
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
@@ -110,7 +116,6 @@ const GestureDiagram = ({
 
   // eslint-disable-next-line no-extra-parens
   const pathSegments = (Array.from(path) as Direction[]).map(pathSegmentDelta)
-  const pathString = pathSegments.map(segment => `l ${segment.dx} ${segment.dy}`).join(' ')
   const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
   const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
 
@@ -157,18 +162,31 @@ const GestureDiagram = ({
           markerUnits='userSpaceOnUse'
           orient='auto-start-reverse'
         >
-          <path d='M 0 0 L 10 5 L 0 10 z' fill={color} stroke='none' />
+          <path
+            d='M 0 0 L 10 5 L 0 10 z'
+            fill={highlight != null && highlight >= path.length ? colors.vividHighlight : color}
+            stroke='none'
+          />
         </marker>
       </defs>
-      <path
-        d={'M 50 50 ' + pathString}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap='round'
-        strokeLinejoin='round'
-        fill='none'
-        markerEnd={`url(#${id})`}
-      />
+
+      {pathSegments.map((segment, i) => {
+        const { x, y } = pathSegments
+          .slice(0, i)
+          .reduce((accum, segment) => ({ x: accum.x + segment.dx, y: accum.y + segment.dy }), { x: 50, y: 50 })
+        return (
+          <path
+            d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
+            key={i}
+            stroke={highlight != null && i < highlight ? colors.vividHighlight : color}
+            strokeWidth={strokeWidth * 1.5}
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            markerEnd={i === pathSegments.length - 1 ? `url(#${id})` : undefined}
+          />
+        )
+      })}
     </svg>
   )
 }

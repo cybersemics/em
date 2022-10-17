@@ -21,6 +21,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
+    vividHighlight: '#63c9ea',
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
   },
@@ -44,6 +45,7 @@ const colors = {
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
     white: 'rgba(255, 255, 255, 1)',
+    vividHighlight: '#63c9ea',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
   },
 } as const
