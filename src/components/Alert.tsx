@@ -54,11 +54,12 @@ const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
 
   if (!alert.value) return null
 
-  const sequence = alert.value === '*' ? '' : alert.value!
+  const gestureInProgress = alert.value === '*' ? '' : alert.value!
 
-  // get the shortcuts that can be executed with the current sequence
+  // get the shortcuts that can be executed from the current gesture in progress
   const possibleShortcuts = globalShortcuts.filter(
-    shortcut => !shortcut.hideFromInstructions && shortcut.gesture && gestureString(shortcut).startsWith(sequence),
+    shortcut =>
+      !shortcut.hideFromInstructions && shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress),
   )
   const possibleShortcutsSorted = _.sortBy(
     possibleShortcuts,
@@ -91,7 +92,7 @@ const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
               key={shortcut.id}
               shortcut={shortcut}
               size={fontSize * 2}
-              highlight={shortcut.gesture === sequence}
+              highlight={shortcut.gesture === gestureInProgress}
             />
           ))}
         </div>
