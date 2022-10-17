@@ -47,6 +47,8 @@ const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
       }}
       style={{
         userSelect: 'none',
+        color: 'inherit',
+        textDecoration: 'none',
         ...style,
       }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}

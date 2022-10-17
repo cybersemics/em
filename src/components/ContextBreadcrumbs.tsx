@@ -1,8 +1,14 @@
 import classNames from 'classnames'
 import React, { FC } from 'react'
+import { useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import getThoughtById from '../selectors/getThoughtById'
+import decodeCharacterEntities from '../util/decodeCharacterEntities'
+import ellipsize from '../util/ellipsize'
+import head from '../util/head'
 import isRoot from '../util/isRoot'
 import useEllipsizedThoughts from './ContextBreadcrumbs.useEllipsizedThoughts'
 import HomeLink from './HomeLink'
@@ -10,14 +16,16 @@ import Link from './Link'
 import Superscript from './Superscript'
 
 export interface ContextBreadcrumbProps {
-  homeContext?: boolean
-  simplePath: SimplePath
-  thoughtsLimit?: number
   charLimit?: number
   classNamesObject?: Index<boolean>
   // renders an invisible ContextBreadcrumbs
   // useful for ThoughtAnnotation spacing
   hidden?: boolean
+  homeContext?: boolean
+  simplePath: SimplePath
+  // disables click on breadcrumb fragments
+  staticText?: boolean
+  thoughtsLimit?: number
 }
 
 /** Renders single BreadCrumb. If isDeleting and no overflow, only renders divider dot. */
@@ -29,11 +37,14 @@ const BreadCrumb: FC<{
   onClickEllipsis: () => void
   simplePath: SimplePath
   showDivider?: boolean
-}> = ({ isOverflow, simplePath, label, isDeleting, id, showDivider, onClickEllipsis }) => {
+  staticText?: boolean
+}> = ({ isOverflow, simplePath, label, isDeleting, id, showDivider, onClickEllipsis, staticText }) => {
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
   return !isOverflow ? (
-    <span>
+    <span style={{ fontSize: staticText ? '0.8em' : undefined }}>
       {showDivider ? <span className='breadcrumb-divider'> • </span> : null}
-      {!isDeleting && <Link simplePath={simplePath} label={label} />}
+      {!isDeleting &&
+        (staticText ? ellipsize(decodeCharacterEntities(value)) : <Link simplePath={simplePath} label={label} />)}
       {!isDeleting && <Superscript simplePath={simplePath} />}
     </span>
   ) : (
@@ -54,6 +65,7 @@ const ContextBreadcrumbs = ({
   hidden,
   homeContext,
   simplePath,
+  staticText,
   thoughtsLimit,
 }: ContextBreadcrumbProps) => {
   const [disabled, setDisabled] = React.useState(false)
@@ -114,6 +126,7 @@ const ContextBreadcrumbs = ({
                   onClickEllipsis={() => setDisabled(true)}
                   simplePath={ancestor}
                   showDivider={i > 0}
+                  staticText={staticText}
                 />
               </CSSTransition>
             )

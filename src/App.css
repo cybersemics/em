@@ -317,11 +317,6 @@ a.text-link {
   text-decoration: none;
 }
 
-.recently-edited-breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
 .context-breadcrumbs {
   font-size: 0.867em;
   color: gray;
@@ -332,8 +327,9 @@ a.text-link {
 }
 
 .favorites .context-breadcrumbs {
+  margin-top: 1em;
   margin-left: 0;
-  margin-bottom: -0.5em;
+  line-height: 1.5;
 }
 
 /* override link font-weight to allow bold on hover */
