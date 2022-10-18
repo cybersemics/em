@@ -64,7 +64,9 @@ const useSwipeToDismiss = (
   const stop = useCallback(
     (e: React.TouchEvent) => {
       // preventDefault on touchEnd to prevent ToolbarIcon click
-      e.preventDefault()
+      if (!(e.target as HTMLElement).classList.contains('no-swipe-to-dismiss')) {
+        e.preventDefault()
+      }
 
       // animate on release for snapback animation
       setAnimate(true)

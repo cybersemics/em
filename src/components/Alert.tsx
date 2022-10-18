@@ -189,7 +189,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         {children}
       </div>
       {alert.showCloseLink ? (
-        <a className='upper-right status-close-x text-small' onClick={onClose}>
+        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' onClick={onClose}>
           ✕
         </a>
       ) : null}
