@@ -168,9 +168,8 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         top: 0,
         width: '100%',
         // scale with font size to stay vertically centered over toolbar
-        padding: `${fontSize / 2 + 2}px 0 5px`,
+        padding: `${fontSize / 2 + 2}px 0 1em`,
         color: colors.gray50,
-        backgroundColor: colors.bgOverlay80,
         overflowX: 'hidden',
         overflowY: 'auto',
         maxHeight: '100%',
@@ -183,7 +182,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
     >
       <div
         className='alert-text'
-        style={{ padding: '5px 10px' }}
+        style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}
         dangerouslySetInnerHTML={!children ? { __html: alert.value || '' } : undefined}
       >
         {children}
