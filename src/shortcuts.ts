@@ -178,8 +178,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
           dispatch(
             alert(sequence as string, {
               alertType: AlertType.GestureHintExtended,
-              // no need to show close link on "Cancel gesture" since it is dismiss automatically
-              showCloseLink: !!shortcut,
+              // no need to show close link since it is dismissed on touchend
+              showCloseLink: false,
             }),
           )
         })
