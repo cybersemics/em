@@ -741,7 +741,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   zoomCursor={zoomCursor}
                   path={path}
                   showContexts={showContexts}
-                  simplePath={simplePath}
+                  parentPath={simplePath}
                   styleChildren={styleChildren || undefined}
                   styleGrandchildren={styleGrandchildren || undefined}
                 />
@@ -802,10 +802,10 @@ const Subthought = ({
   isHeader,
   isMultiColumnTable,
   zoomCursor,
+  parentPath,
   path,
   prevChildId,
   showContexts,
-  simplePath,
   styleChildren,
   styleGrandchildren,
   styleContainerChildren,
@@ -823,10 +823,10 @@ const Subthought = ({
   isHeader?: boolean
   isMultiColumnTable?: boolean
   zoomCursor?: boolean
+  parentPath: SimplePath
   path?: Path
   prevChildId: ThoughtId
   showContexts: boolean
-  simplePath: SimplePath
   styleChildren?: React.CSSProperties
   styleContainerChildren?: React.CSSProperties
   styleGrandchildren?: React.CSSProperties
@@ -843,13 +843,13 @@ const Subthought = ({
     // First, memoize the child path with, in addition to the parameters, the thought index (only if context view is activated, as full paths are guaranteed to be loaded in normal view).
     // This is O(depth) for each child, but is is only recalculated when the Subthoughts component is re-rendered; it won't trigger any additional re-renders of the child thought (due to the next memoization step).
     // However, childPathUnstable has a new object reference every time the thought index changes.
-    () => getChildPath(state, child.id, simplePath, showContexts),
-    [child.id, simplePath, showContexts, showContexts && state.thoughts.thoughtIndex],
+    () => getChildPath(state, child.id, parentPath, showContexts),
+    [child.id, parentPath, showContexts, showContexts && state.thoughts.thoughtIndex],
   )
   // Second, therefore, memoize childPathUnstable based on its length, since we know that if thoughtToPath returns an array of the same length for the same id, then it is the same path.
   const childPath = useMemo(
     () => childPathUnstable,
-    [child.id, simplePath, showContexts, showContexts && childPathUnstable.length],
+    [child.id, parentPath, showContexts, showContexts && childPathUnstable.length],
   )
 
   const envParsed = JSON.parse(env || '{}')
@@ -897,7 +897,8 @@ const Subthought = ({
               re-renders.
             */
 
-  // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, simplePath), {
+  // console.log('One <Subthought>', prettyPath(childPath))
+  // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, childPath), {
   //   actualDistance,
   //   allowSingleContext,
   //   autofocus,
@@ -910,10 +911,10 @@ const Subthought = ({
   //   isHeader,
   //   isMultiColumnTable,
   //   zoomCursor,
+  //   parentPath,
   //   path,
   //   prevChildId,
   //   showContexts,
-  //   simplePath,
   //   styleChildren,
   //   styleGrandchildren,
   //   styleContainerChildren,
@@ -933,25 +934,25 @@ const Subthought = ({
           ? 'dim'
           : autofocus || 'show'
       }
+      debugIndex={globals.simulateDrop ? index : undefined}
       depth={depth + 1}
       env={env}
       hideBullet={hideBullet}
-      key={`${child.id}-${child.rank}`}
-      rank={child.rank}
-      debugIndex={globals.simulateDrop ? index : undefined}
+      isContextPending={child.value === '__PENDING__'}
+      isHeader={isHeader}
+      isMultiColumnTable={isMultiColumnTable}
       isVisible={
         // if thought is a zoomed cursor then it is visible
         (isChildCursor && zoomCursor) || actualDistance < 2 || (distance === 2 && isEditingChildPath())
       }
-      showContexts={showContexts}
+      key={`${child.id}-${child.rank}`}
+      path={appendedChildPath}
       prevChildId={prevChildId}
-      isContextPending={child.value === '__PENDING__'}
+      rank={child.rank}
+      showContexts={showContexts}
+      simplePath={childPath}
       style={Object.keys(style).length > 0 ? style : undefined}
       styleContainer={styleContainer || undefined}
-      path={appendedChildPath}
-      simplePath={childPath}
-      isMultiColumnTable={isMultiColumnTable}
-      isHeader={isHeader}
     />
   ) : null
 }
