@@ -67,9 +67,9 @@ function expandThoughts<B extends boolean>(
  * @param suppressExpansion - Prevents expansion of non pinned expansion path.
  * @example {
  *   [hashContext(context)]: true,
- *   [hashContext([...context, childA])]: true,
- *   [hashContext([...context, childB])]: true,
- *   [hashContext([...context, childC])]: true,
+ *   [hashContext([...context, childA])]: pathA,
+ *   [hashContext([...context, childB])]: pathB,
+ *   [hashContext([...context, childC])]: pathC,
  *   ...
  * }
  */
@@ -79,14 +79,20 @@ function expandThoughts(
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
   const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
-  const expansionStartingPath =
+  const expansionBasePath =
     firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
+  const ancestors = path ? expansionBasePath.map((id, i) => path.slice(0, i + 1) as Path) : []
 
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, expansionStartingPath || HOME_PATH, options)
+  return {
+    // expand all ancestors
+    ...keyValueBy(ancestors, ancestor => ({ [hashPath(ancestor)]: ancestor })),
+    // expand from expansionBasePath
+    ...expandThoughtsRecursive(state, path || HOME_PATH, expansionBasePath || HOME_PATH, options),
+  }
 }
 
 /**

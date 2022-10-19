@@ -496,3 +496,25 @@ it('thought with html value should be expanded', () => {
 
   expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
 })
+
+it('cursor ancestors are expanded', () => {
+  const text = `
+      - a
+        - b
+          - c
+            - d
+              - e
+                - f
+    `
+
+  const steps = [importText({ text }), setCursorFirstMatch(['a', 'b', 'c', 'd', 'e', 'f'])]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+  expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
+  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e'])).toBeTruthy()
+  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e', 'f'])).toBeTruthy()
+})
