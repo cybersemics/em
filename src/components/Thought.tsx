@@ -198,7 +198,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   return {
     contextBinding,
     cursorOffset,
-    distance,
     editing,
     expandedContextThought,
     isCursorGrandparent,
@@ -384,7 +383,6 @@ const ThoughtContainer = ({
     }
   }, [isChildHovering, style])
 
-  // console.info('<Thought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
   //   allowSingleContext,
   //   autofocus,
@@ -427,18 +425,15 @@ const ThoughtContainer = ({
   //   view,
   //   // hooks
   //   children,
-  //   prevChild,
   //   hideBullet,
   //   style,
   //   styleAnnotation,
   //   styleContainer,
   //   thought,
   //   grandparent,
-  //   isSubthoughtHovering,
   //   homeContext,
   //   isTable,
   //   invalidOption,
-  //   showDropHover,
   //   isChildHovering,
   //   styleAutofocus,
   //   placeholder,
