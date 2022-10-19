@@ -242,7 +242,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
-  const envParsed = JSON.parse(props.env || '{}')
+  const envParsed: LazyEnv = JSON.parse(props.env || '{}')
   const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
 
   /*
@@ -426,8 +426,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
     return depth < MAX_DEPTH && (isExpanded || isEditingAncestor())
   })
 
-  // console.info('<Subthoughts> ' + prettyPath(state, simplePath))
-  // useWhyDidYouUpdate('<Subthoughts> ' + prettyPath(state, simplePath), {
+  // useWhyDidYouUpdate('All <Subthoughts> ' + prettyPath(state, simplePath), {
   //   allowSingleContext,
   //   allowSingleContextParent,
   //   childrenForced,
@@ -436,7 +435,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
   //   distance,
   //   dropTarget,
   //   env,
-  //   isDragInProgress,
   //   isEditing,
   //   isEditingPath,
   //   isExpanded,
@@ -731,7 +729,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                   depth={depth}
                   distance={distance}
                   env={env}
-                  envParsed={envParsed}
                   hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
                   key={child.id}
                   prevChildId={filteredChildren[i - 1]?.id}
@@ -800,7 +797,6 @@ const Subthought = ({
   depth,
   distance,
   env,
-  envParsed,
   hideBullet,
   index,
   isHeader,
@@ -821,8 +817,7 @@ const Subthought = ({
   child: ThoughtType
   depth: number
   distance: number
-  env: any
-  envParsed: any
+  env: string
   hideBullet?: boolean
   index?: number
   isHeader?: boolean
@@ -857,6 +852,7 @@ const Subthought = ({
     [child.id, simplePath, showContexts, showContexts && childPathUnstable.length],
   )
 
+  const envParsed = JSON.parse(env || '{}')
   const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
 
   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
@@ -900,6 +896,33 @@ const Subthought = ({
               Using unique rank will help React DOM to properly identify old components and the new one. Thus eliminating sophisticated
               re-renders.
             */
+
+  // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, simplePath), {
+  //   actualDistance,
+  //   allowSingleContext,
+  //   autofocus,
+  //   child,
+  //   depth,
+  //   distance,
+  //   env,
+  //   hideBullet,
+  //   index,
+  //   isHeader,
+  //   isMultiColumnTable,
+  //   zoomCursor,
+  //   path,
+  //   prevChildId,
+  //   showContexts,
+  //   simplePath,
+  //   styleChildren,
+  //   styleGrandchildren,
+  //   styleContainerChildren,
+  //   styleContainerGrandchildren,
+  //   // hooks
+  //   childPathUnstable,
+  //   childPath,
+  //   styleContainer,
+  // })
 
   return child ? (
     <Thought
