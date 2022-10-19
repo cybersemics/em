@@ -11,7 +11,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const fontSize = useSelector((state: State) => state.fontSize)
 
   // re-render when live value changes
-  useSelector((state: State) => (isEditing ? state.editingValue : getThoughtById(state, head(simplePath))))
+  useSelector((state: State) => (isEditing ? state.editingValue : getThoughtById(state, head(simplePath))?.value))
 
   useEffect(() => {
     if (contentRef.current) {
