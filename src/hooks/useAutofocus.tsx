@@ -14,6 +14,7 @@ import { isDescendantPath } from '../util/isDescendantPath'
 /** Applies alpha transparency to colors (or default foreground color) for autofocus. */
 const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: React.CSSProperties) => {
   const timerRef = useRef<number | undefined>(undefined)
+  const disableTransitionTimer = useRef<number | undefined>(undefined)
   const [noHeight, setNoHeight] = useState<boolean>(false)
 
   const colors = useSelector(themeColors)
@@ -52,9 +53,10 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
     ) {
       setColor(style?.color as `rgb${string}`)
       setDisableTransition(true)
-      setTimeout(() => {
+      clearTimeout(disableTransitionTimer.current)
+      disableTransitionTimer.current = setTimeout(() => {
         setDisableTransition(false)
-      })
+      }) as unknown as number
     }
 
     if (
@@ -65,9 +67,10 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
     ) {
       setBackgroundColor(style?.backgroundColor as `rgb${string}`)
       setDisableTransition(true)
-      setTimeout(() => {
+      clearTimeout(disableTransitionTimer.current)
+      disableTransitionTimer.current = setTimeout(() => {
         setDisableTransition(false)
-      })
+      }) as unknown as number
     }
 
     const styles: React.CSSProperties = {
@@ -113,7 +116,10 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
 
   // prevent setters after unmount
   useEffect(() => {
-    return () => clearTimeout(timerRef.current)
+    return () => {
+      clearTimeout(timerRef.current)
+      clearTimeout(disableTransitionTimer.current)
+    }
   }, [])
 
   return styleColors
