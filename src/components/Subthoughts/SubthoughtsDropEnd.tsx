@@ -84,6 +84,8 @@ const SubthoughtsDropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
+  if (!globals.simulateDrag && !dragInProgress) return null
+
   return (dropTarget || ID)(
     <li
       className={classNames({
@@ -91,7 +93,7 @@ const SubthoughtsDropEnd = ({
         last: depth === 0,
       })}
       style={{
-        display: globals.simulateDrag || dragInProgress ? 'list-item' : 'none',
+        display: 'list-item',
         backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: last ? '4em' : undefined,
         marginLeft: last ? '-4em' : undefined,
@@ -114,14 +116,15 @@ const SubthoughtsDropEnd = ({
           {isHovering ? '*' : ''}
         </span>
       )}
-      <span
-        className='drop-hover'
-        style={{
-          display: showDropHover ? 'inline' : 'none',
-          // unroot the simplePath, otherwise the root thought will have the same depth as the first level
-          backgroundColor: unroot(simplePath).length % 2 ? colors.highlight : colors.highlight2,
-        }}
-      ></span>
+      {showDropHover && (
+        <span
+          className='drop-hover'
+          style={{
+            // unroot the simplePath, otherwise the root thought will have the same depth as the first level
+            backgroundColor: unroot(simplePath).length % 2 ? colors.highlight : colors.highlight2,
+          }}
+        ></span>
+      )}
     </li>,
   )
 }
