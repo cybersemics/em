@@ -230,28 +230,31 @@ const Editable = ({
   }
 
   /** Set the cursor on the thought. */
-  const setCursorOnThought = ({ editing }: { editing?: boolean } = {}) => {
-    const { cursor, editing: editingMode } = store.getState() // use fresh state
+  const setCursorOnThought = useCallback(
+    ({ editing }: { editing?: boolean } = {}) => {
+      const { cursor, editing: editingMode } = store.getState() // use fresh state
 
-    // do not set cursor if it is unchanged and we are not entering edit mode
-    if ((!editing || editingMode) && equalPath(cursor, path)) return
+      // do not set cursor if it is unchanged and we are not entering edit mode
+      if ((!editing || editingMode) && equalPath(cursor, path)) return
 
-    const isEditing = equalPath(cursor, path)
+      const isEditing = equalPath(cursor, path)
 
-    const pathLive = cursor && isEditing ? appendToPath(parentOf(path), head(cursor)) : path
+      const pathLive = cursor && isEditing ? appendToPath(parentOf(path), head(cursor)) : path
 
-    dispatch(
-      setCursor({
-        cursorHistoryClear: true,
-        editing,
-        // set offset to null to prevent selection.set on next render
-        // to use the existing offset after a user clicks or touches the screent
-        // when cursor is changed through another method, such as cursorDown, offset will be reset
-        offset: null,
-        path: pathLive,
-      }),
-    )
-  }
+      dispatch(
+        setCursor({
+          cursorHistoryClear: true,
+          editing,
+          // set offset to null to prevent selection.set on next render
+          // to use the existing offset after a user clicks or touches the screent
+          // when cursor is changed through another method, such as cursorDown, offset will be reset
+          offset: null,
+          path: pathLive,
+        }),
+      )
+    },
+    [isEditing, path],
+  )
 
   /**
    * Dispatches editThought and has tutorial logic.
