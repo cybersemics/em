@@ -31,7 +31,8 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
         {options.map((option, index) => (
           <div
             className='drop-down-option-wrapper'
-            key={index}
+            // composite key is unique
+            key={`${option.type}-${option.label}`}
             onClick={() => {
               if (onSelect) {
                 onSelect(option)
