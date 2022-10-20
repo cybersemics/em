@@ -32,7 +32,6 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
@@ -60,6 +59,7 @@ import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
+import useEditMode from './Editable/useEditMode'
 import useMultiline from './Editable/useMultiline'
 
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
@@ -122,8 +122,6 @@ const Editable = ({
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
   const editableNonceRef = useRef(state.editableNonce)
   const fontSize = useSelector((state: State) => state.fontSize)
-  // must re-render when noteFocus changes in order to set the selection
-  const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
   const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -276,78 +274,9 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  /** Set the selection to the current Editable at the cursor offset. */
-  const setSelectionToCursorOffset = () => {
-    // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
-    // https://github.com/cybersemics/em/issues/1596
-    if (style?.visibility === 'hidden') {
-      selection.clear()
-    } else {
-      selection.set(contentRef.current, { offset: cursorOffset || state.cursorOffset || 0 })
-    }
-  }
+  useEditMode({ contentRef, cursorOffset, disabled: isTapped, isEditing, path, style, transient })
 
   useEffect(() => {
-    // Set editing to false after unmount
-    return () => {
-      const { cursor, editing } = store.getState()
-      if (editing && equalPath(cursor, path)) {
-        dispatch(editingAction({ value: false }))
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    const { editing, noteFocus, dragHold } = state
-
-    // focus on the ContentEditable element if editing os on desktop
-    const editMode = !isTouch || editing
-
-    // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = state.cursorOffset !== null || !selection.isActive()
-
-    // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
-    // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
-    // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = !isTouch && selection.offset() === 0
-
-    // allow transient editable to have focus on render
-    if (
-      transient ||
-      (isEditing &&
-        editMode &&
-        !noteFocus &&
-        contentRef.current &&
-        (cursorWithoutSelection || isAtBeginning) &&
-        !dragHold &&
-        !isTapped)
-    ) {
-      /*
-        When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
-        On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
-        Only breaks on Enter or Backspace, not gesture. Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
-        For some reason, setTimeout fixes it.
-      */
-      if (isTouch && isSafari()) {
-        asyncFocus()
-        setTimeout(setSelectionToCursorOffset)
-      } else {
-        setSelectionToCursorOffset()
-      }
-    }
-
-    // // there are many different values that determine if we set the selection
-    // // use this to help debug selection issues
-    // else if (isEditing) {
-    //   console.info('These values are false, preventing the selection from being set on', value)
-    //   if (!editMode) console.info('  - editMode')
-    //   if (!contentRef.current) console.info('  - contentRef.current')
-    //   if (noteFocus) console.info('  - !noteFocus')
-    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('  - cursorWithoutSelection || isAtBeginning')
-    //   if (dragHold) console.info('  - !dragHold')
-    //   if (isTapped) console.info('  - !isTapped')
-    // }
-
     if (isTapped) {
       setIsTapped(false)
     }
@@ -362,7 +291,17 @@ const Editable = ({
       shortcutEmitter.off('shortcut', flush)
       // showDuplicationAlert(false, dispatch)
     }
-  }, [isEditing, cursorOffset, hasNoteFocus, state.dragInProgress, editing])
+  }, [isTapped])
+
+  useEffect(() => {
+    // Set editing to false after unmount
+    return () => {
+      const { cursor, editing } = store.getState()
+      if (editing && equalPath(cursor, path)) {
+        dispatch(editingAction({ value: false }))
+      }
+    }
+  }, [])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
