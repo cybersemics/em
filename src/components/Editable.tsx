@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
@@ -663,45 +663,48 @@ const Editable = ({
   }
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
-  const onTap = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
-    if (e.nativeEvent instanceof MouseEvent) {
-      e.stopPropagation()
-    }
-    // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
-    // in this case, we need to prevent onTap from being called a second time via onMouseDown
-    // https://github.com/cybersemics/em/issues/1268
-    else if (globals.touching && e.cancelable) {
-      e.preventDefault()
-    }
+  const onTap = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
+      if (e.nativeEvent instanceof MouseEvent) {
+        e.stopPropagation()
+      }
+      // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
+      // in this case, we need to prevent onTap from being called a second time via onMouseDown
+      // https://github.com/cybersemics/em/issues/1268
+      else if (globals.touching && e.cancelable) {
+        e.preventDefault()
+      }
 
-    const state = store.getState()
+      const state = store.getState()
 
-    const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
+      const editingOrOnCursor = state.editing || equalPath(path, state.cursor)
 
-    if (
-      disabled ||
-      // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-      (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || !isVisible))
-    ) {
-      // do not set cursor on hidden thought
-      e.preventDefault()
+      if (
+        disabled ||
+        // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
+        (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || !isVisible))
+      ) {
+        // do not set cursor on hidden thought
+        e.preventDefault()
 
-      if (!isVisible) {
-        selection.clear()
+        if (!isVisible) {
+          selection.clear()
 
-        if (state.showColorPicker) {
-          dispatch(toggleColorPicker({ value: false }))
+          if (state.showColorPicker) {
+            dispatch(toggleColorPicker({ value: false }))
+          }
+        } else {
+          // prevent focus to allow navigation with mobile keyboard down
+          setCursorOnThought()
         }
       } else {
-        // prevent focus to allow navigation with mobile keyboard down
-        setCursorOnThought()
+        // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
+        setIsTapped(true)
       }
-    } else {
-      // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
-      setIsTapped(true)
-    }
-  }
+    },
+    [disabled, isVisible, path],
+  )
 
   // strip formatting tags for clearThought placeholder
   const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
