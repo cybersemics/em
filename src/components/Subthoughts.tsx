@@ -684,7 +684,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             re-renders.
           */
                   return child ? (
-                    <ul className='children' key={`${child.id}-${child.rank}`}>
+                    <ul className='children' key={child.id}>
                       <Thought
                         allowSingleContext={allowSingleContextParent}
                         depth={depth + 1}
@@ -945,7 +945,7 @@ const Subthought = ({
         // if thought is a zoomed cursor then it is visible
         (isChildCursor && zoomCursor) || actualDistance < 2 || (distance === 2 && isEditingChildPath())
       }
-      key={`${child.id}-${child.rank}`}
+      key={child.id}
       path={appendedChildPath}
       prevChildId={prevChildId}
       rank={child.rank}
