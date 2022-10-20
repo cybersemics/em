@@ -99,7 +99,6 @@ export interface ThoughtContainerProps {
 }
 
 export interface ThoughtProps {
-  cursorOffset?: number | null
   debugIndex?: number
   editing?: boolean | null
   // When context view is activated, some contexts may be pending
@@ -163,7 +162,7 @@ const useAutofocusPlaceholder = (autofocus?: Autofocus) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
+  const { cursor, expanded, expandedContextThought, search, expandHoverTopPath } = state
 
   const { path, simplePath, depth } = props
 
@@ -197,7 +196,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   return {
     contextBinding,
-    cursorOffset,
     expandedContextThought,
     isCursorGrandparent,
     isCursorParent,
@@ -225,7 +223,6 @@ const ThoughtContainer = ({
   childrenForced,
   contextBinding,
   cursor,
-  cursorOffset,
   debugIndex,
   depth = 0,
   dragPreview,
@@ -387,7 +384,6 @@ const ThoughtContainer = ({
   //   childrenForced,
   //   contextBinding,
   //   cursor,
-  //   cursorOffset,
   //   debugIndex,
   //   depth,
   //   dragPreview,
@@ -555,7 +551,6 @@ const ThoughtContainer = ({
           />
 
           <StaticThought
-            cursorOffset={cursorOffset}
             isContextPending={isContextPending}
             isEditing={isEditing}
             isPublishChild={isPublishChild}

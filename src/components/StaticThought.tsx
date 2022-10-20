@@ -17,7 +17,6 @@ import HomeIcon from './icons/HomeIcon'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
-  cursorOffset,
   editing,
   // See: ThoughtProps['isContextPending']
   isContextPending,
@@ -32,6 +31,7 @@ const StaticThought = ({
 }: ThoughtProps) => {
   const isParentRoot = simplePath.length === 1
 
+  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const homeContext = showContexts && isParentRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)

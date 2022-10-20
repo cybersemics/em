@@ -20,20 +20,12 @@ import Superscript from './Superscript'
 import { ThoughtProps } from './Thought'
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
-const StaticThought = ({
-  cursorOffset,
-  isEditing,
-  path,
-  rank,
-  showContextBreadcrumbs,
-  style,
-  simplePath,
-  onEdit,
-}: ThoughtProps) => {
+const StaticThought = ({ isEditing, path, rank, showContextBreadcrumbs, style, simplePath, onEdit }: ThoughtProps) => {
   const isRoot = simplePath.length === 1
 
   const state = store.getState()
 
+  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
   const homeContext = showContexts && isRoot

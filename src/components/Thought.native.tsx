@@ -75,7 +75,6 @@ export interface ThoughtContainerProps {
 }
 
 interface ThoughtProps {
-  cursorOffset?: number | null
   env?: Index<Context>
   hideBullet?: boolean
   isDragging?: boolean
@@ -103,7 +102,7 @@ export type ConnectedThoughtDispatchProps = Record<string, never>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
+  const { cursor, expanded, expandedContextThought, search, expandHoverTopPath } = state
 
   const { path, simplePath, depth } = props
 
@@ -140,7 +139,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   return {
     contextBinding,
-    cursorOffset,
     distance,
     expandedContextThought,
     isCursorGrandparent,
@@ -171,7 +169,6 @@ const ThoughtContainer = ({
   childrenForced,
   contextBinding,
   cursor,
-  cursorOffset,
   depth = 0,
   dragPreview,
   dragSource,
@@ -282,7 +279,6 @@ const ThoughtContainer = ({
 
         <StaticThought
           path={path}
-          cursorOffset={cursorOffset}
           isVisible={isVisible}
           isPublishChild={isPublishChild}
           isEditing={isEditing}
