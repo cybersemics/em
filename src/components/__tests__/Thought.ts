@@ -148,7 +148,7 @@ describe('React Testing Library', () => {
   })
 
   // TODO: Optimize to only render once
-  // Note: This seems to be producing different results depending on whether it is run with the other describe block or only this describe block
+  // Note: This seems to be producing different results depending on whether it is run with the other describe block or only this describe block. It is not fixed no matter where jest.restoreAllMocks is placed.
   it.skip('do not re-render ContentEditable additional times on load', () => {
     const Editable = jest.spyOn(ContentEditableModule, 'default')
 

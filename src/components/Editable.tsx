@@ -281,7 +281,6 @@ const Editable = ({
     return () => {
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
-      // showDuplicationAlert(false, dispatch)
     }
   }, [isTapped])
 
