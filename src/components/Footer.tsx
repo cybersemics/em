@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
+import State from '../@types/State'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
@@ -9,11 +10,43 @@ import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 
+/** Show the user's login and saving status. */
+const Status = () => {
+  const isPushingOrQueued = useSelector((state: State) => state.isPushing || state.pushQueue.length > 0)
+  const status = useSelector((state: State) => state.status)
+  return (
+    <>
+      <span className='dim'>Status: </span>
+      <span
+        className={status === 'offline' ? 'dim' : status === 'loading' || status === 'loaded' ? 'online' : undefined}
+      >
+        {
+          // pushQueue will be empty after all updates have been flushed to Firebase.
+          // isPushing is set back to true only when all updates have been committed.
+          // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
+          isPushingOrQueued && (status === 'loading' || status === 'loaded')
+            ? 'Saving'
+            : status === 'loaded'
+            ? 'Online'
+            : status[0].toUpperCase() + status.substring(1)
+        }
+      </span>
+    </>
+  )
+}
+
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, user, status, tutorialStep, isPushing, isTutorialOn, isPushQueueEmpty, fontSize } =
-    useFooterUseSelectors()
+  const { authenticated, user, tutorialStep, isTutorialOn, fontSize } = useFooterUseSelectors()
+
+  // useWhyDidYouUpdate('<Footer>', {
+  //   authenticated,
+  //   user,
+  //   tutorialStep,
+  //   isTutorialOn,
+  //   fontSize,
+  // })
 
   const firstUpdate = useRef(true)
 
@@ -85,23 +118,7 @@ const Footer = () => {
       {user && (
         <>
           <li>
-            <span className='dim'>Status: </span>
-            <span
-              className={
-                status === 'offline' ? 'dim' : status === 'loading' || status === 'loaded' ? 'online' : undefined
-              }
-            >
-              {
-                // pushQueue will be empty after all updates have been flushed to Firebase.
-                // isPushing is set back to true only when all updates have been committed.
-                // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
-                (!isPushQueueEmpty || isPushing) && (status === 'loading' || status === 'loaded')
-                  ? 'Saving'
-                  : status === 'loaded'
-                  ? 'Online'
-                  : status[0].toUpperCase() + status.substring(1)
-              }
-            </span>
+            <Status />
           </li>
           <li>
             <span className='dim'>Logged in as: </span>

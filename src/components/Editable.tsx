@@ -64,7 +64,7 @@ import useMultiline from './Editable/useMultiline'
 // the amount of time in milliseconds since lastUpdated before the thought placeholder changes to something more facetious
 const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Stops propagation of an event. */
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 /** Change position:fixed top nav to position:absolute in order to fix Safari position:fixed browser behavior when keyboard is up. */

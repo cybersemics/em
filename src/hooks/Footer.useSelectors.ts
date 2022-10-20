@@ -10,12 +10,9 @@ export const useFooterUseSelectors = () => {
     (state: State) => ({
       authenticated: state.authenticated,
       user: state.user,
-      status: state.status,
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-      isPushing: state.isPushing,
       isTutorialOn: isTutorial(state),
       fontSize: state.fontSize,
-      isPushQueueEmpty: state.pushQueue.length === 0,
     }),
     shallowEqual,
   )

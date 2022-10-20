@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
+import State from '../@types/State'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
@@ -12,10 +13,28 @@ import { Text } from './Text.native'
 
 const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContentEnd, flexItemsEndRow } = commonStyles
 
+/** Show the user's login and saving status. */
+const Status = () => {
+  const isPushingOrQueued = useSelector((state: State) => state.isPushing || state.pushQueue.length > 0)
+  const status = useSelector((state: State) => state.status)
+  return (
+    <>
+      <Text style={textOpacityWhite}>Status: </Text>
+      <Text style={textOpacityWhite}>
+        {isPushingOrQueued && (status === 'loading' || status === 'loaded')
+          ? 'Saving'
+          : status === 'loaded'
+          ? 'Online'
+          : status[0].toUpperCase() + status.substring(1)}
+      </Text>
+    </>
+  )
+}
+
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, user, status, isPushing, isPushQueueEmpty, fontSize } = useFooterUseSelectors()
+  const { authenticated, user, fontSize } = useFooterUseSelectors()
 
   // alert when font size changes
   const firstUpdate = useRef(true)
@@ -66,14 +85,7 @@ const Footer = () => {
       {user && (
         <>
           <View>
-            <Text style={textOpacityWhite}>Status: </Text>
-            <Text style={textOpacityWhite}>
-              {(!isPushQueueEmpty || isPushing) && (status === 'loading' || status === 'loaded')
-                ? 'Saving'
-                : status === 'loaded'
-                ? 'Online'
-                : status[0].toUpperCase() + status.substring(1)}
-            </Text>
+            <Status />
           </View>
           <View>
             <Text style={styles.textOpacityWhite}>Logged in as: {user?.email} </Text>
