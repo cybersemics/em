@@ -407,95 +407,100 @@ const Editable = ({
   }, [isEditing, cursorOffset, hasNoteFocus, state.dragInProgress, editing])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
-  const onChangeHandler = (e: ContentEditableEvent) => {
-    // make sure to get updated state
-    const state = store.getState()
+  const onChangeHandler = useCallback(
+    (e: ContentEditableEvent) => {
+      // make sure to get updated state
+      const state = store.getState()
 
-    // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
-    const oldValue = oldValueRef.current
+      // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
+      const oldValue = oldValueRef.current
 
-    // If the target value (innerHTML) contains divs, then it is either Optical Character Recognition (OCR) or Speech-to-text (STT).
-    // Only detect OCR into an empty thought, otherwise it will cause a false positive for STT with multiple newlines.
-    // <div><br> only occurs in STT, so exclude it.
-    // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
-    const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
+      // If the target value (innerHTML) contains divs, then it is either Optical Character Recognition (OCR) or Speech-to-text (STT).
+      // Only detect OCR into an empty thought, otherwise it will cause a false positive for STT with multiple newlines.
+      // <div><br> only occurs in STT, so exclude it.
+      // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
+      const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
 
-    const newValue = e.target
-      ? stripEmptyFormattingTags(
-          addEmojiSpace(
-            unescape(
-              // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
-              // Therefore, when OCR is detected, join the lines together with spaes.
-              // Otherwise the multiline STT handler in onBlur will separate them into separate thoughts.
-              strip(ocrDetected ? e.target.value.replace(/<div>/g, ' ') : e.target.value, { preserveFormatting: true }),
+      const newValue = e.target
+        ? stripEmptyFormattingTags(
+            addEmojiSpace(
+              unescape(
+                // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
+                // Therefore, when OCR is detected, join the lines together with spaes.
+                // Otherwise the multiline STT handler in onBlur will separate them into separate thoughts.
+                strip(ocrDetected ? e.target.value.replace(/<div>/g, ' ') : e.target.value, {
+                  preserveFormatting: true,
+                }),
+              ),
             ),
-          ),
-        )
-      : oldValue
+          )
+        : oldValue
 
-    // TODO: Disable keypress
-    // e.preventDefault() does not work
-    // disabled={readonly} removes contenteditable property
+      // TODO: Disable keypress
+      // e.preventDefault() does not work
+      // disabled={readonly} removes contenteditable property
 
-    dispatch(setEditingValue(newValue))
+      dispatch(setEditingValue(newValue))
 
-    if (newValue === oldValue) {
+      if (newValue === oldValue) {
+        if (contentRef.current) {
+          contentRef.current.style.opacity = '1.0'
+        }
+
+        if (readonly || uneditable || options) invalidStateError(null)
+
+        // if we cancel the edit, we have to cancel pending its
+        // this can occur for example by editing a value away from and back to its
+        throttledChangeRef.current.cancel()
+
+        return
+      }
+
+      const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+
       if (contentRef.current) {
         contentRef.current.style.opacity = '1.0'
       }
 
-      if (readonly || uneditable || options) invalidStateError(null)
+      if (readonly) {
+        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+        throttledChangeRef.current.cancel() // see above
+        return
+      } else if (uneditable) {
+        dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+        throttledChangeRef.current.cancel() // see above
+        return
+      } else if (options && !options.includes(newValue.toLowerCase())) {
+        invalidStateError(newValue)
+        throttledChangeRef.current.cancel() // see above
+        return
+      }
 
-      // if we cancel the edit, we have to cancel pending its
-      // this can occur for example by editing a value away from and back to its
-      throttledChangeRef.current.cancel()
+      const newNumContext = getContexts(state, newValue).length
+      const isNewValueURL = isURL(newValue)
 
-      return
-    }
+      const contextLengthChange =
+        newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
+      const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
 
-    const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
+      const isEmpty = newValue.length === 0
 
-    if (contentRef.current) {
-      contentRef.current.style.opacity = '1.0'
-    }
+      // Safari adds <br> to empty contenteditables after editing, so strip them out.
+      // Make sure empty thoughts are truly empty.
+      // Also update the ContentEditable with the joined OCR result, otherwise onBlur will split it into separate lines.
+      if (contentRef.current && (isEmpty || ocrDetected)) {
+        contentRef.current.innerHTML = newValue
+      }
 
-    if (readonly) {
-      dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
-      throttledChangeRef.current.cancel() // see above
-      return
-    } else if (uneditable) {
-      dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
-      throttledChangeRef.current.cancel() // see above
-      return
-    } else if (options && !options.includes(newValue.toLowerCase())) {
-      invalidStateError(newValue)
-      throttledChangeRef.current.cancel() // see above
-      return
-    }
-
-    const newNumContext = getContexts(state, newValue).length
-    const isNewValueURL = isURL(newValue)
-
-    const contextLengthChange =
-      newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-    const urlChange = isNewValueURL || isNewValueURL !== isURL(oldValueRef.current)
-
-    const isEmpty = newValue.length === 0
-
-    // Safari adds <br> to empty contenteditables after editing, so strip them out.
-    // Make sure empty thoughts are truly empty.
-    // Also update the ContentEditable with the joined OCR result, otherwise onBlur will split it into separate lines.
-    if (contentRef.current && (isEmpty || ocrDetected)) {
-      contentRef.current.innerHTML = newValue
-    }
-
-    // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
-    if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
-      // update new supercript value and url boolean
-      throttledChangeRef.current.flush()
-      thoughtChangeHandler(newValue, { rank, simplePath })
-    } else throttledChangeRef.current(newValue, { rank, simplePath })
-  }
+      // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
+      if (transient || contextLengthChange || urlChange || isEmpty || isDivider(newValue)) {
+        // update new supercript value and url boolean
+        throttledChangeRef.current.flush()
+        thoughtChangeHandler(newValue, { rank, simplePath })
+      } else throttledChangeRef.current(newValue, { rank, simplePath })
+    },
+    [readonly, uneditable /* TODO: options */],
+  )
 
   /** Imports text that is pasted onto the thought. */
   const onPaste = useCallback(
