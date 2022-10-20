@@ -178,19 +178,20 @@ const DragAndDropFavorite = DragAndDropThought(
         // Set overflow:auto so the drop target fully wraps its contents.
         // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
         <div {...dragHoldResult.props} style={{ overflow: 'auto' }}>
-          <span
-            className={classNames({
-              'drop-hover': true,
-              pressed: !disableDragAndDrop && dragHoldResult.isPressed,
-            })}
-            style={{
-              backgroundColor: colors.highlight,
-              display: !disableDragAndDrop && isHovering ? 'inline' : 'none',
-              marginLeft: 0,
-              marginTop: '-0.4em',
-              width: 'calc(100% - 4em)',
-            }}
-          />
+          {!disableDragAndDrop && isHovering && (
+            <span
+              className={classNames({
+                'drop-hover': true,
+                pressed: !disableDragAndDrop && dragHoldResult.isPressed,
+              })}
+              style={{
+                backgroundColor: colors.highlight,
+                marginLeft: 0,
+                marginTop: '-0.4em',
+                width: 'calc(100% - 4em)',
+              }}
+            />
+          )}
           <ThoughtLink
             hideContext={hideContext}
             simplePath={simplePath}
@@ -215,21 +216,21 @@ const DropEnd = DropTarget(
   'thought',
   { drop },
   dropCollect,
-)(({ dropTarget, isHovering }: ReturnType<typeof dropCollect>) =>
-  dropTarget(
+)(({ dropTarget, isHovering }: ReturnType<typeof dropCollect>) => {
+  if (!isHovering) return null
+  return dropTarget(
     <div style={{ height: '4em' }}>
       <span
         className='drop-hover'
         style={{
-          display: isHovering ? 'inline' : 'none',
           marginLeft: 0,
           marginTop: 0,
           width: 'calc(100% - 4em)',
         }}
       />
     </div>,
-  ),
-)
+  )
+})
 
 /** Favorites Options toggle link and list of options. */
 const FavoritesOptions = ({
