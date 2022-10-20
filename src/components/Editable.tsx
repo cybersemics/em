@@ -645,7 +645,7 @@ const Editable = ({
    * Sets the cursor on focus.
    * Prevented by mousedown event above for hidden thoughts.
    */
-  const onFocus = () => {
+  const onFocus = useCallback(() => {
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
 
@@ -660,7 +660,7 @@ const Editable = ({
       setCursorOnThought({ editing: true })
       dispatch(setEditingValue(value))
     }
-  }
+  }, [value, setCursorOnThought])
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
