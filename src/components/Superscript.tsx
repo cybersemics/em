@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
@@ -27,6 +27,7 @@ interface SuperscriptProps {
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
 const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript = true, thoughts }) => {
   const [numContexts, setNumContexts] = useState(0)
+  const ref = useRef<HTMLElement>(null)
 
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
 
@@ -58,12 +59,13 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
   // Note: This results in a total running time for all superscripts of O(totalNumberOfContexts * depth)
   useEffect(() => {
     window.requestAnimationFrame(() => {
+      if (!ref.current) return
       setNumContexts(contexts.filter(id => isVisibleContext(store.getState(), id)).length)
     })
   }, [contexts, showHiddenThoughts])
 
   return (
-    <span className='superscript-container'>
+    <span ref={ref} className='superscript-container'>
       {
         show ? (
           <span className='num-contexts'> {numContexts ? <sup>{numContexts}</sup> : null}</span>
