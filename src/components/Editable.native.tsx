@@ -59,7 +59,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 interface EditableProps {
   path: Path
-  cursorOffset?: number | null
   disabled?: boolean
   isEditing?: boolean
   rank: number
@@ -82,6 +81,7 @@ let blurring = false
 const mapStateToProps = (state: State, props: EditableProps) => {
   const thought = getThoughtById(state, head(props.simplePath))
   return {
+    cursorOffset: state.cursorOffset,
     isCursorCleared: props.isEditing && state.cursorCleared,
     value: thought.value,
     rank: thought.rank,

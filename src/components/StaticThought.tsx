@@ -31,7 +31,6 @@ const StaticThought = ({
 }: ThoughtProps) => {
   const isParentRoot = simplePath.length === 1
 
-  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const homeContext = showContexts && isParentRoot && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
@@ -48,7 +47,6 @@ const StaticThought = ({
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
-  //   cursorOffset,
   //   editing,
   //   isContextPending,
   //   isEditing,
@@ -78,7 +76,6 @@ const StaticThought = ({
         ) : (
           <Editable
             path={path}
-            cursorOffset={cursorOffset}
             disabled={!isDocumentEditable()}
             isEditing={isEditing}
             isVisible={isVisible}

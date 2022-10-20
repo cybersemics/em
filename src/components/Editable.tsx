@@ -65,7 +65,6 @@ const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 interface EditableProps {
   path: Path
-  cursorOffset?: number | null
   disabled?: boolean
   isEditing?: boolean
   isVisible?: boolean
@@ -90,7 +89,6 @@ let blurring = false
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
-  cursorOffset,
   disabled,
   isEditing,
   isVisible,
@@ -114,6 +112,7 @@ const Editable = ({
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
   const editableNonceRef = useRef(state.editableNonce)
   const fontSize = useSelector((state: State) => state.fontSize)
+  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)

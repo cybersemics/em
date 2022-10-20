@@ -25,7 +25,6 @@ const StaticThought = ({ isEditing, path, rank, showContextBreadcrumbs, style, s
 
   const state = store.getState()
 
-  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
   const homeContext = showContexts && isRoot
@@ -64,7 +63,6 @@ const StaticThought = ({ isEditing, path, rank, showContextBreadcrumbs, style, s
         // cannot use simplePathLive here else Editable gets re-rendered during editing
         <Editable
           path={path}
-          cursorOffset={cursorOffset}
           disabled={!isDocumentEditable()}
           isEditing={isEditing}
           rank={rank}
