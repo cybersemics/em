@@ -1239,20 +1239,8 @@ h1 .num-contexts {
   transition: transform 0.1s ease-out, fill-opacity 0.5s ease-out;
 }
 
-@keyframes overlay-opacity {
-  from {
-    fill-opacity: 0.15;
-  }
-}
-.dark .child.editing > .thought-container .glyph .bullet-cursor-overlay {
-  fill-opacity: 0.247;
-  animation-name: overlay-opacity;
-  animation-duration: 0.75s;
-}
-.child.editing > .thought-container .glyph .bullet-cursor-overlay {
+.bullet-cursor-overlay {
   fill-opacity: 0.25;
-  animation-name: overlay-opacity;
-  animation-duration: 0.75s;
 }
 
 .child > .thought-container > .bullet .glyph.glyph-highlighted {

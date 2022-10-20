@@ -236,7 +236,7 @@ const Bullet = ({
         ref={svgElement}
       >
         <g>
-          {!(publish && (isRoot || isRootChildLeaf)) && (
+          {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
             <ellipse
               className='bullet-cursor-overlay'
               fillOpacity='0'
