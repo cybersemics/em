@@ -39,6 +39,7 @@ const ThoughtDropHover = ({
     const parentId = getThoughtById(state, head(simplePath))?.parentId
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
     if (!isParentSorted) return globals.simulateDrag || isHovering
+    else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought
       ? getThoughtById(state, headId(state.draggingThought))?.value
@@ -60,8 +61,6 @@ const ThoughtDropHover = ({
     // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
     return (
-      // if alphabetical sort is enabled check if drag is in progress and parent element is hovering
-      state.dragInProgress &&
       (isThoughtHovering || isSubthoughtsHovering) &&
       draggingThoughtValue &&
       // check if it's alphabetically previous to current thought
@@ -72,13 +71,17 @@ const ThoughtDropHover = ({
   })
 
   return (
-    <span
-      className='drop-hover'
-      style={{
-        display: showDropHover ? 'inline' : 'none',
-        backgroundColor: simplePath.length % 2 ? colors.highlight2 : colors.highlight,
-      }}
-    ></span>
+    <>
+      {showDropHover && (
+        <span
+          className='drop-hover'
+          style={{
+            display: 'inline',
+            backgroundColor: simplePath.length % 2 ? colors.highlight2 : colors.highlight,
+          }}
+        />
+      )}
+    </>
   )
 }
 
