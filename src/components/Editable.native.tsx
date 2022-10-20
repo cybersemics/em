@@ -81,7 +81,6 @@ let blurring = false
 const mapStateToProps = (state: State, props: EditableProps) => {
   const thought = getThoughtById(state, head(props.simplePath))
   return {
-    cursorOffset: state.cursorOffset,
     isCursorCleared: props.isEditing && state.cursorCleared,
     value: thought.value,
     rank: thought.rank,
@@ -98,7 +97,6 @@ const Editable = ({
   isEditing,
   simplePath,
   path,
-  cursorOffset,
   rank,
   value,
   style,
@@ -290,7 +288,7 @@ const Editable = ({
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
     }
-  }, [isEditing, cursorOffset, state.dragInProgress])
+  }, [isEditing, state.dragInProgress])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = (e: ContentEditableEvent) => {

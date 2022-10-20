@@ -112,7 +112,6 @@ const Editable = ({
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
   const editableNonceRef = useRef(state.editableNonce)
   const fontSize = useSelector((state: State) => state.fontSize)
-  const cursorOffset = useSelector((state: State) => state.cursorOffset)
   const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
@@ -265,7 +264,7 @@ const Editable = ({
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  useEditMode({ contentRef, cursorOffset, disabled: isTapped, isEditing, path, style, transient })
+  useEditMode({ contentRef, disabled: isTapped, isEditing, path, style, transient })
 
   useEffect(() => {
     if (isTapped) {

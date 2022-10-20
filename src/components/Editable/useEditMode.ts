@@ -12,7 +12,6 @@ import equalPath from '../../util/equalPath'
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
-  cursorOffset,
   disabled,
   isEditing,
   path,
@@ -22,7 +21,6 @@ const useEditMode = ({
   // expect all arguments to be passed, even if undefined
   // otherwise the hook will not be able to determine all conditions
   contentRef: React.RefObject<HTMLInputElement>
-  cursorOffset: number | null | undefined
   disabled?: boolean
   isEditing: boolean | undefined
   path: Path
@@ -34,6 +32,7 @@ const useEditMode = ({
   const editing = useSelector((state: State) => state.editing)
   const dispatch = useDispatch()
   const noteFocus = useSelector((state: State) => state.noteFocus)
+  const editingCursorOffset = useSelector((state: State) => isEditing && state.cursorOffset)
   const dragHold = useSelector((state: State) => state.dragHold)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
 
@@ -41,8 +40,6 @@ const useEditMode = ({
   const editMode = !isTouch || editing
 
   useEffect(() => {
-    const { cursorOffset: cursorOffsetState } = store.getState()
-
     /** Set the selection to the current Editable at the cursor offset. */
     const setSelectionToCursorOffset = () => {
       // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
@@ -50,12 +47,12 @@ const useEditMode = ({
       if (style?.visibility === 'hidden') {
         selection.clear()
       } else {
-        selection.set(contentRef.current, { offset: cursorOffset || cursorOffsetState || 0 })
+        selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
       }
     }
 
     // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = cursorOffsetState !== null || !selection.isActive()
+    const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
 
     // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
     // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
@@ -98,7 +95,7 @@ const useEditMode = ({
         setSelectionToCursorOffset()
       }
     }
-  }, [isEditing, cursorOffset, hasNoteFocus, dragInProgress, editing, transient])
+  }, [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, transient])
 
   useEffect(() => {
     // Set editing to false after unmount
