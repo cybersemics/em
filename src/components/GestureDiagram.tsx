@@ -177,6 +177,7 @@ const GestureDiagram = ({
         return (
           <path
             d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
+            // segments do not change independently, so we can use index as the key
             key={i}
             stroke={highlight != null && i < highlight ? colors.vividHighlight : color}
             strokeWidth={strokeWidth * 1.5}
