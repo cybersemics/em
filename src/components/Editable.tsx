@@ -12,7 +12,6 @@ import cursorCleared from '../action-creators/cursorCleared'
 import editThought from '../action-creators/editThought'
 import editingAction from '../action-creators/editing'
 import error from '../action-creators/error'
-import importText from '../action-creators/importText'
 import insertMultipleThoughts from '../action-creators/insertMultipleThoughts'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
@@ -50,7 +49,6 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import headId from '../util/headId'
 import isDivider from '../util/isDivider'
-import isHTML from '../util/isHTML'
 import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import strip from '../util/strip'
@@ -59,6 +57,7 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useMultiline from './Editable/useMultiline'
+import useOnPaste from './Editable/useOnPaste'
 import usePlaceholder from './Editable/usePlaceholder'
 
 /** Stops propagation of an event. */
@@ -393,75 +392,7 @@ const Editable = ({
   )
 
   /** Imports text that is pasted onto the thought. */
-  const onPaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      // mobile Safari copies URLs as 'text/uri-list' when the share button is used
-      const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
-      const htmlText = e.clipboardData.getData('text/html')
-
-      // import raw thoughts: confirm before overwriting state
-      if (
-        typeof window !== 'undefined' &&
-        plainText.startsWith(`{
-  "thoughtIndex": {
-    "__ROOT__": {`) &&
-        !window.confirm('Import raw thought state? Current state will be overwritten.')
-      ) {
-        e.preventDefault()
-        return
-      }
-
-      // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
-      // the text will still be pasted if we do not preventDefault, it just won't get stripped of html properly
-      // See: https://github.com/cybersemics/em/issues/286
-      if (plainText || htmlText) {
-        e.preventDefault()
-        throttledChangeRef.current.flush()
-
-        // import into the live thoughts
-        // neither ref.current is set here nor can newValue be stored from onChange
-        // not sure exactly why, but it appears that the DOM node has been removed before the paste handler is called
-        const { cursor } = store.getState()
-        const path = cursor && equalPath(cursor, simplePath) ? cursor : simplePath
-
-        // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
-        // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
-        const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-
-        // If transient first add new thought and then import the text
-        if (transient) {
-          dispatch(
-            newThought({
-              at: rootedParentOf(state, path),
-              value: '',
-            }),
-          )
-        }
-
-        dispatch(
-          importText({
-            path,
-            text: isHTML(plainText) ? plainText : htmlText || plainText,
-            rawDestValue,
-            // pass selection start and end for importText to replace (if the imported thoughts are one line)
-            ...(selection.isActive() && !selection.isCollapsed()
-              ? {
-                  replaceStart: selection.offsetStart()!,
-                  replaceEnd: selection.offsetEnd()!,
-                }
-              : null),
-            // pass caret position to correctly track the last navigated point for caret
-            // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keeps track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
-            caretPosition: (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0,
-          }),
-        )
-
-        // TODO: When importText was converted to a reducer, it no longer reducers newValue
-        // if (newValue) oldValueRef.current = newValue
-      }
-    },
-    [simplePath, transient],
-  )
+  const onPaste = useOnPaste({ contentRef, simplePath, transient })
 
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(e => {
