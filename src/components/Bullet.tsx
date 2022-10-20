@@ -229,13 +229,18 @@ const Bullet = ({
       }}
     >
       <svg
-        className={classNames('glyph', {
-          'glyph-highlighted': isHighlighted,
-        })}
+        className='glyph'
         viewBox='0 0 600 600'
         style={{
           ...svgSizeStyle,
           marginBottom: vendorSpecificData.glyphMarginBottom,
+          ...(isHighlighted
+            ? {
+                fillOpacity: 1,
+                fill: colors.highlight,
+                stroke: colors.highlight,
+              }
+            : null),
         }}
         ref={svgElement}
       >
