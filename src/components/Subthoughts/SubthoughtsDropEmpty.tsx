@@ -24,11 +24,10 @@ const SubthoughtsDropEmpty = ({
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const colors = useSelector(themeColors)
 
+  if (!globals.simulateDrag && !globals.simulateDrop && !dragInProgress) return null
+
   return (
-    <ul
-      className='empty-children'
-      style={{ display: globals.simulateDrag || globals.simulateDrop || dragInProgress ? 'block' : 'none' }}
-    >
+    <ul className='empty-children'>
       {dropTarget(
         <li
           className={classNames({
@@ -57,13 +56,12 @@ const SubthoughtsDropEmpty = ({
               {isHovering ? '*' : ''}
             </span>
           )}
-          <span
-            className='drop-hover'
-            style={{
-              display: globals.simulateDrag || isHovering ? 'inline' : 'none',
-              backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2,
-            }}
-          ></span>
+          {(globals.simulateDrag || isHovering) && (
+            <span
+              className='drop-hover'
+              style={{ backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2 }}
+            />
+          )}
         </li>,
       )}
     </ul>
