@@ -563,7 +563,7 @@ const Editable = ({
   }
 
   /** Flushes edits and updates certain state variables on blur. */
-  const onBlur: FocusEventHandler<HTMLElement> = e => {
+  const onBlur: FocusEventHandler<HTMLElement> = useCallback(e => {
     blurring = true
 
     if (isTouch && isSafari()) {
@@ -639,7 +639,7 @@ const Editable = ({
         }
       }
     })
-  }
+  }, [])
 
   /**
    * Sets the cursor on focus.
