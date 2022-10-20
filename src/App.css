@@ -572,7 +572,7 @@ a.text-link {
   box-sizing: border-box;
 }
 
-.thought-annotation .editable-annotation {
+.editable-annotation {
   display: inline-block;
   transition: color 0.4s ease-in-out, background-color 0.4s ease-in-out;
 }
@@ -1646,47 +1646,47 @@ h1 .num-contexts {
 }
 
 /* function */
-.autofocus-show > .function > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-show > .function > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 1);
 }
-.autofocus-dim > .function > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-dim > .function > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 0.5);
 }
-.autofocus-dim > .function.editing > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-dim > .function.editing > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 1);
 }
-.autofocus-dim > .function.cursor-parent > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-dim > .function.cursor-parent > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 1);
 }
-.autofocus-hide > .function > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-hide > .function > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 0);
 }
-.autofocus-hide > .function.cursor-parent > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-hide > .function.cursor-parent > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 0.5);
 }
-.autofocus-hide-parent > .function > .thought-container > .thought-annotation > .editable-annotation {
+.autofocus-hide-parent > .function > .thought-container > .editable-annotation {
   background-color: rgba(230, 230, 230, 0);
 }
 
-.dark .autofocus-show > .function > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-show > .function > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 1);
 }
-.dark .autofocus-dim > .function > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-dim > .function > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 0.5);
 }
-.dark .autofocus-dim > .function.editing > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-dim > .function.editing > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 1);
 }
-.dark .autofocus-dim > .function.cursor-parent > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-dim > .function.cursor-parent > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 1);
 }
-.dark .autofocus-hide > .function > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-hide > .function > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 0);
 }
-.dark .autofocus-hide > .function.cursor-parent > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-hide > .function.cursor-parent > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 0.5);
 }
-.dark .autofocus-hide-parent > .function > .thought-container > .thought-annotation > .editable-annotation {
+.dark .autofocus-hide-parent > .function > .thought-container > .editable-annotation {
   background-color: rgba(50, 50, 50, 0);
 }
 
@@ -2970,12 +2970,12 @@ code,
   font-family: monospace;
 }
 
-.function > .thought-container > .thought-annotation > .editable-annotation {
+.function > .thought-container > .editable-annotation {
   background-color: #ddd;
   font-family: monospace;
 }
 
-.dark .function > .thought-container > .thought-annotation > .editable-annotation {
+.dark .function > .thought-container > .editable-annotation {
   background-color: #222;
 }
 
