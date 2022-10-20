@@ -10,6 +10,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
@@ -33,6 +34,7 @@ import alpha from '../util/alpha'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import equalPath from '../util/equalPath'
+import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -123,6 +125,11 @@ export interface ThoughtProps {
 }
 
 export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
+
+/** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
+const equalChildren = (a: Thought[], b: Thought[]) =>
+  a === b ||
+  (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
 /** Returns a unique className and injectStyle function that can be used to style pseudo elements. Apply the className to the desired element and render injectStyle() nearby. The pseudo selector, e.g. ::before, will be appended to the unique className, styling a pseudo element directly, or a descendant pseudo element, as determined by the selector. */
 const pseudo = (pseudoSelector: string, style: Index<string>) => {
@@ -263,8 +270,10 @@ const ThoughtContainer = ({
   const children = useSelector(
     (state: State) =>
       childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
-    _.isEqual,
+    // only compare id, value, and rank for re-renders
+    equalChildren,
   )
+
   // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
   // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
   useEffect(() => {
@@ -297,7 +306,7 @@ const ThoughtContainer = ({
     _.isEqual,
   )
   const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
-  const thought = useSelector((state: State) => getThoughtById(state, thoughtId), _.isEqual)
+  const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
@@ -434,9 +443,8 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
-  if (!thought) return null
-
-  const value = thought.value
+  // thought does not exist
+  if (value == null) return null
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { View } from 'moti'
 import React, { useEffect } from 'react'
 import { StyleSheet } from 'react-native'
@@ -11,6 +10,7 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import dragInProgress from '../action-creators/dragInProgress'
 import setCursor from '../action-creators/setCursor'
@@ -25,6 +25,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
 import { commonStyles } from '../style/commonStyles'
 import equalPath from '../util/equalPath'
+import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
@@ -99,6 +100,11 @@ export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<
 
 // placeholder since mobile Thought component does not have mapDispatchToProps
 export type ConnectedThoughtDispatchProps = Record<string, never>
+
+/** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
+const equalChildren = (a: Thought[], b: Thought[]) =>
+  a === b ||
+  (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -199,13 +205,14 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const state = store.getState()
-  const thought = getThoughtById(state, head(simplePath))
+  const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const thoughtId = head(simplePath)
 
   const children = useSelector(
     (state: State) =>
       childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
-    _.isEqual,
+    // only compare id, value, and rank for re-renders
+    equalChildren,
   )
 
   useEffect(() => {
@@ -229,7 +236,8 @@ const ThoughtContainer = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })
 
-  if (!thought) return null
+  // thought does not exist
+  if (value == null) return null
 
   // prevent fading out cursor parent
   // there is a special case here for the cursor grandparent when the cursor is a leaf
