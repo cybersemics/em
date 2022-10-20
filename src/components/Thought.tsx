@@ -163,7 +163,7 @@ const useAutofocusPlaceholder = (autofocus?: Autofocus) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath, editing } = state
+  const { cursor, cursorOffset, expanded, expandedContextThought, search, expandHoverTopPath } = state
 
   const { path, simplePath, depth } = props
 
@@ -198,7 +198,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   return {
     contextBinding,
     cursorOffset,
-    editing,
     expandedContextThought,
     isCursorGrandparent,
     isCursorParent,
@@ -232,7 +231,6 @@ const ThoughtContainer = ({
   dragPreview,
   dragSource,
   dropTarget,
-  editing,
   env,
   expandedContextThought,
   hideBullet: hideBulletProp,
@@ -395,7 +393,6 @@ const ThoughtContainer = ({
   //   dragPreview,
   //   dragSource,
   //   dropTarget,
-  //   editing,
   //   env,
   //   expandedContextThought,
   //   hideBulletProp,
@@ -559,7 +556,6 @@ const ThoughtContainer = ({
 
           <StaticThought
             cursorOffset={cursorOffset}
-            editing={editing}
             isContextPending={isContextPending}
             isEditing={isEditing}
             isPublishChild={isPublishChild}

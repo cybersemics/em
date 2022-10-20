@@ -79,7 +79,6 @@ const StaticThought = ({
           <Editable
             path={path}
             cursorOffset={cursorOffset}
-            editing={editing}
             disabled={!isDocumentEditable()}
             isEditing={isEditing}
             isVisible={isVisible}

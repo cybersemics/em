@@ -83,7 +83,6 @@ interface EditableProps {
   */
   transient?: boolean
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
-  editing?: boolean | null
 }
 
 // track if a thought is blurring so that we can avoid an extra dispatch of setEditingValue in onFocus
@@ -98,7 +97,6 @@ let blurring = false
 const Editable = ({
   cursorOffset,
   disabled,
-  editing,
   isEditing,
   isVisible,
   onEdit,
