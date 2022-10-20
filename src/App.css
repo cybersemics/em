@@ -1239,10 +1239,6 @@ h1 .num-contexts {
   transition: transform 0.1s ease-out, fill-opacity 0.5s ease-out;
 }
 
-.bullet-cursor-overlay {
-  fill-opacity: 0.25;
-}
-
 .child > .thought-container > .bullet .glyph.glyph-highlighted {
   fill-opacity: 1;
   fill: lightblue;
@@ -1360,15 +1356,6 @@ h1 .num-contexts {
     font-size: 19px;
   }
 
-  /* overlay bullet for drag */
-  /* specificity to beat ".dark .child.editing > .thought .bullet-cursor-overlay" */
-  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
-  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
-    fill-opacity: 1;
-    fill: lightblue;
-    stroke: lightblue;
-  }
-
   .android .children-new .child > .thought-container > .bullet .glyph {
     content: '+';
     left: -0.15em;
@@ -1453,15 +1440,6 @@ h1 .num-contexts {
     top: -5.1px;
   }
 
-  /* overlay bullet for drag */
-  /* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
-  .android .child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
-    fill-opacity: 1;
-    fill: lightblue;
-    stroke: lightblue;
-  }
-
   .android
     .child.show-contexts:first-of-type
     > .thought-container
@@ -1536,15 +1514,6 @@ h1 .num-contexts {
 */
 
 /* overlay bullet for cursor */
-
-/* overlay bullet for drag */
-/* specificity to beat ".dark .child.editing > .thought-container > .thought .bullet-cursor-overlay" */
-.child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .bullet-cursor-overlay,
-.child.child.child > .thought-container > .bullet .glyph.glyph-highlighted .glyph-fg {
-  fill-opacity: 1;
-  fill: lightblue;
-  stroke: lightblue;
-}
 
 .children-new .child > .thought-container > .bullet .glyph {
   content: '+';

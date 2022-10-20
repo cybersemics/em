@@ -156,6 +156,10 @@ const Bullet = ({
         rx={ellipseRadius}
         cy='298'
         cx='297'
+        style={{
+          fill: isHighlighted ? colors.highlight : colors.fg,
+          stroke: isHighlighted ? colors.highlight : undefined,
+        }}
         {...foregroundShapeProps}
       />
     ) : (
@@ -239,12 +243,15 @@ const Bullet = ({
           {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
             <ellipse
               className='bullet-cursor-overlay'
-              fillOpacity='0'
               ry={vendorSpecificData.bulletOverlayRadius}
               rx={vendorSpecificData.bulletOverlayRadius}
               cy='300'
               cx='300'
-              fill={colors.fg}
+              style={{
+                fillOpacity: isHighlighted ? 1 : 0.25,
+                fill: isHighlighted ? colors.highlight : colors.fg,
+                stroke: isHighlighted ? colors.highlight : undefined,
+              }}
             />
           )}
           {foregroundShape({
