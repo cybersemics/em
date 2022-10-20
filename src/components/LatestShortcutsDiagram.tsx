@@ -41,7 +41,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         >
           {shortcutsList.map((shortcut, index) => {
             return (
-              <div key={index} className='shortcut-tab-wrapper'>
+              <div key={shortcut.id} className='shortcut-tab-wrapper'>
                 <div className='shortcut-tab'>
                   <GestureDiagram path={shortcut.gesture as GesturePath} size={30} color='white' strokeWidth={2} />
                 </div>
