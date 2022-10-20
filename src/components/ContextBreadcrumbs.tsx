@@ -30,7 +30,6 @@ export interface ContextBreadcrumbProps {
 
 /** Renders single BreadCrumb. If isDeleting and no overflow, only renders divider dot. */
 const BreadCrumb: FC<{
-  id: string
   isDeleting?: boolean
   isOverflow?: boolean
   label?: string
@@ -38,7 +37,7 @@ const BreadCrumb: FC<{
   simplePath: SimplePath
   showDivider?: boolean
   staticText?: boolean
-}> = ({ isOverflow, simplePath, label, isDeleting, id, showDivider, onClickEllipsis, staticText }) => {
+}> = ({ isOverflow, simplePath, label, isDeleting, showDivider, onClickEllipsis, staticText }) => {
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
   return !isOverflow ? (
     <span style={{ fontSize: staticText ? '0.8em' : undefined }}>
@@ -117,10 +116,12 @@ const ContextBreadcrumbs = ({
           {ellipsizedThoughts.map(({ isOverflow, id, label }, i) => {
             const ancestor = simplePath.slice(0, i + 1) as SimplePath
 
+            // Use index as key because we actually want all segments to the right to re-render.
+            // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
+            // This way it will only animate when the length of the cursor changes.
             return (
               <CSSTransition key={i} timeout={600} classNames='fade-600'>
                 <BreadCrumb
-                  id={id}
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
