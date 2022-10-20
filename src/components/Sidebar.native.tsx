@@ -10,7 +10,7 @@ import { Text } from './Text.native'
 import ThoughtLink from './ThoughtLink'
 
 /** Displays recently edited thoughts with a header. */
-const RecentEdited = () => {
+const RecentlyEdited = () => {
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
 
@@ -40,7 +40,7 @@ const RecentEdited = () => {
 
 /** The Recently Edited sidebar component. */
 const Sidebar = () => {
-  return <RecentEdited />
+  return <RecentlyEdited />
 }
 
 const styles = StyleSheet.create({

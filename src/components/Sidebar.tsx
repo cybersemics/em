@@ -8,6 +8,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
 import simplifyPath from '../selectors/simplifyPath'
+import hashPath from '../util/hashPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import Favorites from './Favorites'
 import ThoughtLink from './ThoughtLink'
@@ -19,7 +20,7 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 
 /** Displays recently edited thoughts with a header. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const RecentEdited = () => {
+const RecentlyEdited = () => {
   const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
 
@@ -39,7 +40,7 @@ const RecentEdited = () => {
       <div style={{ padding: '0 2em' }}>
         {recentlyEdited.map((recentlyEditedThought, i) => {
           const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
-          return <ThoughtLink key={i} simplePath={simplePath} />
+          return <ThoughtLink key={hashPath(recentlyEditedThought.path)} simplePath={simplePath} />
         })}
       </div>
     </div>
@@ -79,7 +80,7 @@ const Sidebar = () => {
       }}
       open={showSidebar}
     >
-      {/* <RecentEdited /> */}
+      {/* <RecentlyEdited /> */}
       <div
         // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
         // Unfortunately, MUI SwipeableDrawer does provide an API for its animation or swipe state, or final open/close.
