@@ -1239,12 +1239,6 @@ h1 .num-contexts {
   transition: transform 0.1s ease-out, fill-opacity 0.5s ease-out;
 }
 
-.child > .thought-container > .bullet .glyph.glyph-highlighted {
-  fill-opacity: 1;
-  fill: lightblue;
-  stroke: lightblue;
-}
-
 .search-container > .bullet-search {
   position: absolute;
   margin-top: -2px;
