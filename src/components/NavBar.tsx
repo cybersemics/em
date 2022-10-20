@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React from 'react'
-import { connect, useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -23,34 +23,24 @@ const navBreadcrumbsClass = {
   'nav-breadcrumbs': true,
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { cursor, showBreadcrumbs, authenticated } = state
-  return {
-    cursor,
-    showBreadcrumbs,
-    authenticated,
-  }
-}
-
 /** A navigation bar that contains a link to home and breadcrumbs. */
-const NavBar = ({
-  cursor,
-  position,
-  showBreadcrumbs,
-  authenticated,
-}: {
-  cursor: Path | null
-  position: string
-  showBreadcrumbs: boolean
-  authenticated: boolean
-}) => {
+const NavBar = ({ position }: { position: string }) => {
   const isTutorialOn = useSelector(isTutorial)
   const colors = useSelector(themeColors)
+  const authenticated = useSelector((state: State) => state.authenticated)
+  const showBreadcrumbs = useSelector((state: State) => state.showBreadcrumbs)
 
   // avoid re-rendering from simplePath's new object reference
-  const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length) : []) as Path
-  const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
+  const breadcrumbSimplePath = useSelector((state: State) => {
+    const breadcrumbPath = (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path
+    return simplifyPath(store.getState(), breadcrumbPath)
+  }, shallowEqual)
+  const showHomeLink = useSelector(
+    (state: State) => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2),
+  )
+  const backgroundColor = useSelector((state: State) =>
+    state.cursor && state.cursor.length > 0 ? colors.bg : undefined,
+  )
 
   return (
     <div
@@ -59,7 +49,7 @@ const NavBar = ({
         ['nav-' + position]: true,
       })}
       style={{
-        backgroundColor: cursor && cursor.length > 0 ? colors.bg : undefined,
+        backgroundColor,
       }}
     >
       <div className='nav-inset'>
@@ -67,7 +57,7 @@ const NavBar = ({
           {!isTutorialOn && (
             <>
               {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
-              {isDocumentEditable() || (cursor && cursor.length > 2) ? <HomeLink size={24} /> : null}
+              {showHomeLink ? <HomeLink size={24} /> : null}
               <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
                   <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
@@ -90,4 +80,4 @@ const NavBar = ({
   )
 }
 
-export default connect(mapStateToProps)(NavBar)
+export default NavBar
