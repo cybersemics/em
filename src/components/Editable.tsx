@@ -284,16 +284,6 @@ const Editable = ({
     }
   }, [isTapped])
 
-  useEffect(() => {
-    // Set editing to false after unmount
-    return () => {
-      const { cursor, editing } = store.getState()
-      if (editing && equalPath(cursor, path)) {
-        dispatch(editingAction({ value: false }))
-      }
-    }
-  }, [])
-
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
     (e: ContentEditableEvent) => {

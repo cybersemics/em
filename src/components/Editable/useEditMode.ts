@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
+import editingAction from '../../action-creators/editing'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import * as selection from '../../device/selection'
@@ -31,6 +32,7 @@ const useEditMode = ({
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector((state: State) => state.editing)
+  const dispatch = useDispatch()
   const noteFocus = useSelector((state: State) => state.noteFocus)
   const dragHold = useSelector((state: State) => state.dragHold)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
@@ -97,6 +99,16 @@ const useEditMode = ({
       }
     }
   }, [isEditing, cursorOffset, hasNoteFocus, dragInProgress, editing, transient])
+
+  useEffect(() => {
+    // Set editing to false after unmount
+    return () => {
+      const { cursor, editing } = store.getState()
+      if (editing && equalPath(cursor, path)) {
+        dispatch(editingAction({ value: false }))
+      }
+    }
+  }, [])
 }
 
 export default useEditMode
