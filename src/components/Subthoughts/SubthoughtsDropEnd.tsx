@@ -129,6 +129,7 @@ const SubthoughtsDropEnd = ({
   )
 }
 
-SubthoughtsDropEnd.displayName = 'SubthoughtsDropEnd'
+const SubthoughtsDropEndMemo = React.memo(SubthoughtsDropEnd)
+SubthoughtsDropEndMemo.displayName = 'SubthoughtsDropEnd'
 
-export default SubthoughtsDropEnd
+export default SubthoughtsDropEndMemo
