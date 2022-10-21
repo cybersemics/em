@@ -1,5 +1,4 @@
 import Path from '../@types/Path'
-import equalPath from './equalPath'
 
 /** Returns true if thoughts subset is contained within superset (inclusive). */
 export const isDescendantPath = (
@@ -11,7 +10,7 @@ export const isDescendantPath = (
     return false
   if (descendant === ancestor || (descendant.length === 0 && ancestor.length === 0)) return !exclusive
 
-  return !!descendant.find((_, i) => equalPath(descendant.slice(0, i + ancestor.length) as Path, ancestor))
+  return ancestor.every((id, i) => descendant[i] === id)
 }
 
 /** Returns the index of the first element in list that starts with thoughts. */
