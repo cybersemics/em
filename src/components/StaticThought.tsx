@@ -92,4 +92,7 @@ const StaticThought = ({
   )
 }
 
-export default StaticThought
+const StaticThoughtMemo = React.memo(StaticThought)
+StaticThoughtMemo.displayName = 'StaticThought'
+
+export default StaticThoughtMemo
