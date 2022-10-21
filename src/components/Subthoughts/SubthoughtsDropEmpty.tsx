@@ -68,6 +68,7 @@ const SubthoughtsDropEmpty = ({
   )
 }
 
-SubthoughtsDropEmpty.displayName = 'SubthoughtsDropEmpty'
+const SubthoughtsDropEmptyMemo = React.memo(SubthoughtsDropEmpty)
+SubthoughtsDropEmptyMemo.displayName = 'SubthoughtsDropEmpty'
 
-export default SubthoughtsDropEmpty
+export default SubthoughtsDropEmptyMemo
