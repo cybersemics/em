@@ -85,4 +85,7 @@ const ThoughtDropHover = ({
   )
 }
 
-export default ThoughtDropHover
+const ThoughtDropHoverMemo = React.memo(ThoughtDropHover)
+ThoughtDropHoverMemo.displayName = 'ThoughtDropHover'
+
+export default ThoughtDropHoverMemo
