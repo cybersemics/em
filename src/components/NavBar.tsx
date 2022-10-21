@@ -8,7 +8,6 @@ import { isTouch } from '../browser'
 import isTutorial from '../selectors/isTutorial'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import { store } from '../store'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -18,9 +17,19 @@ import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import QuickAddButton from './QuickAddButton'
 
-// avoid changing object reference
+// define at top-level for stable object reference
 const navBreadcrumbsClass = {
   'nav-breadcrumbs': true,
+}
+
+/** Renders ContextBreadcrumbs for the cursor. */
+const CursorBreadcrumbs = () => {
+  const breadcrumbSimplePath = useSelector((state: State) => {
+    const breadcrumbPath = (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path
+    return simplifyPath(state, breadcrumbPath)
+  }, shallowEqual)
+
+  return <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
@@ -30,11 +39,6 @@ const NavBar = ({ position }: { position: string }) => {
   const authenticated = useSelector((state: State) => state.authenticated)
   const showBreadcrumbs = useSelector((state: State) => state.showBreadcrumbs)
 
-  // avoid re-rendering from simplePath's new object reference
-  const breadcrumbSimplePath = useSelector((state: State) => {
-    const breadcrumbPath = (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path
-    return simplifyPath(store.getState(), breadcrumbPath)
-  }, shallowEqual)
   const showHomeLink = useSelector(
     (state: State) => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2),
   )
@@ -60,7 +64,7 @@ const NavBar = ({ position }: { position: string }) => {
               {showHomeLink ? <HomeLink size={24} /> : null}
               <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
-                  <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
+                  <CursorBreadcrumbs />
                 </div>
               </CSSTransition>
 
