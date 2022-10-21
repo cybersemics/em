@@ -75,4 +75,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
   )
 }
 
-export default Superscript
+const SuperscriptMemo = React.memo(Superscript)
+SuperscriptMemo.displayName = 'Superscript'
+
+export default SuperscriptMemo
