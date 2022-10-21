@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -15,14 +16,6 @@ type OverflowChild = {
 
 type OverflowPath = OverflowChild[]
 
-const SEPARATOR_TOKEN = '__SEP__'
-
-/** Encode an array of strings with a simple delimeter. */
-const encode = (values: string[]) => values.join(SEPARATOR_TOKEN)
-
-/** Decode an array of strings encoded by the encode function. */
-const decode = (encodedString: string) => encodedString.split(SEPARATOR_TOKEN)
-
 /** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Re-renders when simplePath values change, including live edits. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
   simplePath: SimplePath,
@@ -35,18 +28,15 @@ const useEllipsizedThoughts = (
 
   // convert the SimplePath to a list of thought values
   // if editing, use the live editing value
-  // return a string-encoded value for a stable object reference to avoid re-renders
-  const thoughtValuesLiveEncoded = useSelector((state: State) =>
-    encode(
+  const thoughtValuesLive = useSelector(
+    (state: State) =>
       simplePath.map(id =>
         state.editingValue && state.cursor && id === head(state.cursor)
           ? state.editingValue
           : getThoughtById(state, id)?.value,
       ),
-    ),
+    _.isEqual,
   )
-
-  const thoughtValuesLive = decode(thoughtValuesLiveEncoded)
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = simplePath.map((id, i) => {
