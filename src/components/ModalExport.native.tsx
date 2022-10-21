@@ -58,8 +58,10 @@ const exportOptions: ExportOption[] = [
  *****************************************************************************/
 
 const PullStatusContext = createContext<boolean>(false)
+PullStatusContext.displayName = 'PullStatusContext'
 
 const DescendantNumberContext = createContext<number | null>(null)
+DescendantNumberContext.displayName = 'DescendantNumberContext'
 
 /******************************************************************************
  * Context Providers
