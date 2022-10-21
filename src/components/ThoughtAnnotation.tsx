@@ -70,7 +70,7 @@ const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
 
 /** A Url icon that links to the url. */
-const UrlIconLink = ({ url }: { url: string }) => {
+const UrlIconLink = React.memo(({ url }: { url: string }) => {
   const dispatch = useDispatch()
   return (
     <a
@@ -95,7 +95,8 @@ const UrlIconLink = ({ url }: { url: string }) => {
       <UrlIcon />
     </a>
   )
-}
+})
+UrlIconLink.displayName = 'UrlIconLink'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
