@@ -2,8 +2,7 @@ import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
-import Connected from '../@types/Connected'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -88,16 +87,7 @@ let blurring = false
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({
-  disabled,
-  isEditing,
-  isVisible,
-  onEdit,
-  path,
-  simplePath,
-  style,
-  transient,
-}: Connected<EditableProps>) => {
+const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, style, transient }: EditableProps) => {
   const state = store.getState()
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -556,6 +546,7 @@ const Editable = ({
   )
 }
 
-// Use connect to prevent Editable from being re-rendered when its parent Thought re-rerenders.
-// TODO: Is there a better way?
-export default connect()(Editable)
+const EditableMemo = React.memo(Editable)
+EditableMemo.displayName = 'Editable'
+
+export default EditableMemo
