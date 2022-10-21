@@ -179,6 +179,8 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
   const isExpandedHoverTopPath = expandHoverTopPath && equalPath(path, expandHoverTopPath)
+  const cursorParent = cursor && parentOf(cursor)
+  const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
 
   // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
   const isCursorParent =
@@ -186,17 +188,16 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     (!!cursor &&
       (distance === 2
         ? // grandparent
-          equalPath(rootedParentOf(state, parentOf(cursor)), path) && getChildren(state, head(cursor)).length === 0
+          equalPath(cursorGrandparent, path) && getChildren(state, head(cursor)).length === 0
         : // parent
-          equalPath(parentOf(cursor), path)))
+          equalPath(cursorParent, path)))
 
   const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as
     | SimplePath
     | undefined
 
   // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
-  const isCursorGrandparent =
-    !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
+  const isCursorGrandparent = !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
 
   const isExpanded = !!expanded[hashPath(path)]
   const isLeaf = !hasChildren(state, head(simplePath))
