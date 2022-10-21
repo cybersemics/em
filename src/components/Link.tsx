@@ -23,7 +23,7 @@ interface LinkProps {
 }
 
 /** Renders a link to a thought. */
-const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
+const Link = React.memo(({ simplePath, label, charLimit = 32, style }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const value = useSelector((state: State) => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
@@ -56,6 +56,8 @@ const Link = ({ simplePath, label, charLimit = 32, style }: LinkProps) => {
       {!isEM ? ellipsize(decodeCharacterEntities(value), charLimit) : null}
     </a>
   )
-}
+})
+
+Link.displayName = 'Link'
 
 export default Link
