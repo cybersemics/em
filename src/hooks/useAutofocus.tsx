@@ -14,7 +14,6 @@ import { isDescendantPath } from '../util/isDescendantPath'
 /** Applies alpha transparency to colors (or default foreground color) for autofocus. */
 const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: React.CSSProperties) => {
   const timerRef = useRef<number | undefined>(undefined)
-  const disableTransitionTimer = useRef<number | undefined>(undefined)
   const [noHeight, setNoHeight] = useState<boolean>(false)
 
   const colors = useSelector(themeColors)
@@ -43,22 +42,17 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
   )
 
   // By default, App.css will apply a slow (0.75s ease-out) color and backgroundColor transition for smooth autofocus animations while navigating. See .children > .child styles.
-  // However, we need to disable the transition when clicking a color swatch in order to provide snappier feedback to the user.
-  const [disableTransition, setDisableTransition] = useState<boolean>(false)
+  // However, we need to disable the transition when clicking a color swatch since we want to change the thought's color instantly in that case. We change reset the transition whenever the alpha changes without a color change (i.e. autofocus)
 
   const styleColors = useMemo(() => {
-    if (
-      color !== style?.color &&
-      (!color || !style?.color || alpha(style.color as `rgb${string}`, 1) !== alpha(color, 1))
-    ) {
+    // compare color independent of alpha
+    const colorChange =
+      color !== style?.color && (!color || !style?.color || alpha(style.color as `rgb${string}`, 1) !== alpha(color, 1))
+    if (colorChange) {
       setColor(style?.color as `rgb${string}`)
-      setDisableTransition(true)
-      clearTimeout(disableTransitionTimer.current)
-      disableTransitionTimer.current = setTimeout(() => {
-        setDisableTransition(false)
-      }) as unknown as number
     }
 
+    // compare background color independent of alpha
     if (
       backgroundColor !== style?.backgroundColor &&
       (!backgroundColor ||
@@ -66,11 +60,6 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
         alpha(style.backgroundColor as `rgb${string}`, 1) !== alpha(backgroundColor, 1))
     ) {
       setBackgroundColor(style?.backgroundColor as `rgb${string}`)
-      setDisableTransition(true)
-      clearTimeout(disableTransitionTimer.current)
-      disableTransitionTimer.current = setTimeout(() => {
-        setDisableTransition(false)
-      }) as unknown as number
     }
 
     const styles: React.CSSProperties = {
@@ -90,7 +79,7 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
       ),
       // set height:0 instead of display:none as display:none breads the CSS autofocus animation for fade-in
       ...(noHeight ? { height: 0 } : null),
-      ...(disableTransition
+      ...(colorChange
         ? {
             transition: 'color 0s, background-color 0s',
           }
@@ -98,7 +87,7 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
     }
 
     return styles
-  }, [autofocus, colors, noHeight, style?.color, style?.backgroundColor, disableTransition])
+  }, [autofocus, colors, noHeight, style?.color, style?.backgroundColor])
 
   // set display:none after the autofocus fade out transition completes (750ms)
   if (isHidden && isBelowCursor && !noHeight) {
@@ -118,7 +107,6 @@ const useAutofocus = (simplePath: SimplePath, autofocus?: Autofocus, style?: Rea
   useEffect(() => {
     return () => {
       clearTimeout(timerRef.current)
-      clearTimeout(disableTransitionTimer.current)
     }
   }, [])
 
