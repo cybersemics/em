@@ -23,7 +23,7 @@ import useDragHold from '../hooks/useDragHold'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -188,7 +188,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     (!!cursor &&
       (distance === 2
         ? // grandparent
-          equalPath(cursorGrandparent, path) && getChildren(state, head(cursor)).length === 0
+          equalPath(cursorGrandparent, path) && !hasChildren(state, head(cursor))
         : // parent
           equalPath(cursorParent, path)))
 
