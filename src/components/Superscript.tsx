@@ -1,12 +1,13 @@
-import _ from 'lodash'
 import React, { FC, useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
 import getContexts from '../selectors/getContexts'
+import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import { store } from '../store'
 import equalArrays from '../util/equalArrays'
@@ -24,35 +25,33 @@ interface SuperscriptProps {
   thoughts?: Context
 }
 
+const NO_CONTEXTS: ThoughtId[] = []
+
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
 const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript = true, thoughts }) => {
   const [numContexts, setNumContexts] = useState(0)
   const ref = useRef<HTMLElement>(null)
 
   const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+  const simplePathLive = useSelector((state: State) => {
+    const cursorContext = state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]
+    const editing =
+      state.cursor &&
+      equalArrays(cursorContext, pathToContext(state, simplePath || [])) &&
+      hasLexeme(state, headValue(state, state.cursor))
+    return editing ? (parentOf(simplePath).concat(head(state.cursor!)) as SimplePath) : simplePath
+  }, shallowEqual)
 
   const show = useSelector((state: State) => {
-    const cursorContext = state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]
-    const editing =
-      state.cursor &&
-      equalArrays(cursorContext, pathToContext(state, simplePath || [])) &&
-      hasLexeme(state, headValue(state, state.cursor))
-
-    const thoughtsLive = editing ? cursorContext : thoughts || pathToContext(state, simplePath)
-    const empty = thoughtsLive.length > 0 ? head(thoughtsLive).length === 0 : true
-    return !empty && superscript && numContexts! > (showSingle ? 0 : 1)
+    const value = getThoughtById(state, head(simplePathLive))?.value || ''
+    const emptyThought = value.length === 0
+    return !emptyThought && superscript && numContexts! > (showSingle ? 0 : 1)
   })
 
-  const contexts = useSelector((state: State) => {
-    const cursorContext = state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]
-    const editing =
-      state.cursor &&
-      equalArrays(cursorContext, pathToContext(state, simplePath || [])) &&
-      hasLexeme(state, headValue(state, state.cursor))
-
-    const simplePathLive = editing ? (parentOf(simplePath).concat(head(state.cursor!)) as SimplePath) : simplePath
-    return getContexts(state, head(simplePathLive || simplePath))
-  }, _.isEqual)
+  const contexts = useSelector(
+    (state: State) => (show ? getContexts(state, head(simplePathLive || simplePath)) : NO_CONTEXTS),
+    shallowEqual,
+  )
 
   // delay filtering for performance
   // recalculate when Lexeme contexts are loaded
@@ -66,11 +65,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
 
   return (
     <span ref={ref} className='superscript-container'>
-      {
-        show ? (
-          <span className='num-contexts'> {numContexts ? <sup>{numContexts}</sup> : null}</span>
-        ) : null /* <DepthBar/> */
-      }
+      {show && numContexts && <span className='num-contexts'> {numContexts && <sup>{numContexts}</sup>}</span>}
     </span>
   )
 }
