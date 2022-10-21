@@ -100,7 +100,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
-  const editableNonceRef = useRef(state.editableNonce)
   const fontSize = useSelector((state: State) => state.fontSize)
   const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
@@ -126,10 +125,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   //   hasNoteFocus,
   //   isCursorCleared,
   // })
-
-  useEffect(() => {
-    editableNonceRef.current = state.editableNonce
-  }, [state.editableNonce])
 
   const labelId = findDescendant(state, parentId, '=label')
   const childrenLabel = getAllChildrenAsThoughts(state, labelId)
@@ -516,7 +511,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         ['editable-' + headId(path)]: true,
         empty: value.length === 0,
       })}
-      forceUpdate={editableNonceRef.current !== state.editableNonce}
       html={
         value === EM_TOKEN
           ? '<b>em</b>'
