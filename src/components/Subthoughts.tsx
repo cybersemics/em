@@ -722,7 +722,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
           {filteredChildren.map(
             (child, i) =>
               i < proposedPageSize && (
-                <Subthought
+                <SubthoughtMemo
                   actualDistance={actualDistance()}
                   allowSingleContext={allowSingleContextParent}
                   child={child}
@@ -956,6 +956,9 @@ const Subthought = ({
     />
   ) : null
 }
+
+const SubthoughtMemo = React.memo(Subthought)
+SubthoughtMemo.displayName = 'Subthought'
 
 const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))
 
