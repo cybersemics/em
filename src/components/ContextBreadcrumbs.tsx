@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
@@ -37,7 +37,7 @@ const BreadCrumb: FC<{
   simplePath: SimplePath
   showDivider?: boolean
   staticText?: boolean
-}> = ({ isOverflow, simplePath, label, isDeleting, showDivider, onClickEllipsis, staticText }) => {
+}> = React.memo(({ isOverflow, simplePath, label, isDeleting, showDivider, onClickEllipsis, staticText }) => {
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
   return !isOverflow ? (
     <span style={{ fontSize: staticText ? '0.8em' : undefined }}>
@@ -55,7 +55,9 @@ const BreadCrumb: FC<{
       </span>
     </span>
   )
-}
+})
+
+BreadCrumb.displayName = 'BreadCrumb'
 
 /** Breadcrumbs for contexts within the context views. */
 const ContextBreadcrumbs = ({
@@ -79,6 +81,10 @@ const ContextBreadcrumbs = ({
 
     return React.cloneElement(child, { ...child.props }, updatedGrandChild)
   }
+
+  const ancestors = useMemo(() => {
+    return simplePath.map((id, i) => simplePath.slice(0, i + 1) as SimplePath)
+  }, [simplePath])
 
   return (
     <div
@@ -114,8 +120,6 @@ const ContextBreadcrumbs = ({
       ) : (
         <TransitionGroup childFactory={factoryManager}>
           {ellipsizedThoughts.map(({ isOverflow, id, label }, i) => {
-            const ancestor = simplePath.slice(0, i + 1) as SimplePath
-
             // Use index as key because we actually want all segments to the right to re-render.
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
@@ -125,7 +129,7 @@ const ContextBreadcrumbs = ({
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
-                  simplePath={ancestor}
+                  simplePath={ancestors[i]}
                   showDivider={i > 0}
                   staticText={staticText}
                 />
