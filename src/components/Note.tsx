@@ -52,7 +52,7 @@ const noteValue = (state: State, id: ThoughtId) => {
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = ({ path }: NoteProps) => {
+const Note = React.memo(({ path }: NoteProps) => {
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
@@ -150,6 +150,8 @@ const Note = ({ path }: NoteProps) => {
       />
     </div>
   )
-}
+})
+
+Note.displayName = 'Note'
 
 export default Note
