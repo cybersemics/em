@@ -525,6 +525,7 @@ const ThoughtContainer = ({
 
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
+              autofocus={autofocus || 'show'}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}

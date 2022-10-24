@@ -236,14 +236,13 @@ const VirtualThought = ({
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
-  // const allVisibleChildren =
+  const fontSize = useSelector((state: State) => state.fontSize)
 
-  // return <pre style={{ fontSize: 10 }}>{JSON.stringify(virtualThoughts, null, 2)}</pre>
   return (
     <div>
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, simplePath, thought }, i) => {
         return (
-          <div key={thought.id} style={{ transform: `translateX(${depth * 25}px)` }}>
+          <div key={thought.id} style={{ marginLeft: '1.5em', transform: `translateX(${depth * fontSize * 1.2}px)` }}>
             <VirtualThought
               depth={depth}
               indexChild={indexChild}

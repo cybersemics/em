@@ -258,6 +258,8 @@ const ThoughtContainer = ({
       <View style={[directionRow, alignItemsCenter]}>
         {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
+            // TODO: autofocus
+            autofocus={'show'}
             isEditing={isEditing}
             thoughtId={thoughtId}
             leaf={isLeaf}

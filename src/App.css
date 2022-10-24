@@ -1729,29 +1729,6 @@ h1 .num-contexts {
   color: rgba(255, 255, 255, 0);
 }
 
-/* glyph-fg */
-.autofocus-show > .child > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 1;
-}
-.autofocus-dim > .child > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 0.45;
-}
-.autofocus-dim > .child.editing > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 1;
-}
-.autofocus-dim > .child.cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 1;
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 0;
-}
-.autofocus-hide > .child:not(.editing).cursor-parent > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 0.5;
-}
-.autofocus-hide-parent > .child > .thought-container > .bullet .glyph .glyph-fg {
-  fill-opacity: 0;
-}
-
 /* shift thoughts over as cursor navigates deeper */
 .autofocus-hide,
 .autofocus-hide-parent {
