@@ -31,7 +31,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import { store } from '../store'
 import alpha from '../util/alpha'
-import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -51,7 +50,6 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts'
 import useHideBullet from './Thought.useHideBullet'
 import useStyle from './Thought.useStyle'
 import useStyleContainer from './Thought.useStyleContainer'
@@ -578,7 +576,7 @@ const ThoughtContainer = ({
 
         {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 
-        {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row. */}
+        {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row.
         {isMultiColumnTable ? (
           children.map((child, i) => {
             const childPath = appendToPath(path, child.id)
@@ -606,7 +604,7 @@ const ThoughtContainer = ({
             showContexts={allowSingleContext}
             simplePath={simplePath}
           />
-        )}
+        )} */}
       </li>,
     ),
   )

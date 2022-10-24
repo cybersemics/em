@@ -19,9 +19,9 @@ import isAbsolute from '../util/isAbsolute'
 import publishMode from '../util/publishMode'
 import storage from '../util/storage'
 import Editable from './Editable'
+import LayoutTree from './LayoutTree'
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
-import Subthoughts from './Subthoughts'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
@@ -123,7 +123,8 @@ const Content: ContentComponent = props => {
             ) : isAbsoluteContext ? (
               TransientEditable
             ) : (
-              <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} />
+              /* <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} /> */
+              <LayoutTree />
             )}
           </>
         )}
