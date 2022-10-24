@@ -1706,29 +1706,6 @@ h1 .num-contexts {
   opacity: 0;
 }
 
-/* dark note */
-.dark .autofocus-show > .child > .thought-container > .note {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-dim > .child > .thought-container > .note {
-  color: rgba(255, 255, 255, 0.25);
-}
-.dark .autofocus-dim > .child.editing > .thought-container > .note {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-dim > .child.cursor-parent > .thought-container > .note {
-  color: rgba(255, 255, 255, 0.5);
-}
-.dark .autofocus-hide > .child:not(.editing) > .thought-container > .note {
-  color: rgba(255, 255, 255, 0);
-}
-.dark .autofocus-hide > .child:not(.editing).cursor-parent > .thought-container > .note {
-  color: rgba(255, 255, 255, 0.25);
-}
-.dark .autofocus-hide-parent > .child > .thought-container > .note {
-  color: rgba(255, 255, 255, 0);
-}
-
 /* shift thoughts over as cursor navigates deeper */
 .autofocus-hide,
 .autofocus-hide-parent {
@@ -3006,13 +2983,6 @@ code,
 
 .invalid-option {
   color: tomato !important;
-}
-
-.note {
-  /* negative margin to compensate for line-height. See .thought-container. */
-  margin-top: -3px;
-  transition: color 0.75s ease-in-out;
-  line-height: 1.25;
 }
 
 /* Publish */

@@ -572,7 +572,7 @@ const ThoughtContainer = ({
             view={view}
           />
 
-          <Note path={simplePath} />
+          <Note autofocus={autofocus || 'show'} path={simplePath} />
         </div>
 
         {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}

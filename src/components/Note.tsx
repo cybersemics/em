@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -24,6 +25,7 @@ import head from '../util/head'
 import strip from '../util/strip'
 
 interface NoteProps {
+  autofocus: Autofocus
   path: Path
 }
 
@@ -52,7 +54,7 @@ const noteValue = (state: State, id: ThoughtId) => {
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = React.memo(({ path }: NoteProps) => {
+const Note = React.memo(({ autofocus, path }: NoteProps) => {
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
@@ -129,8 +131,13 @@ const Note = React.memo(({ path }: NoteProps) => {
     <div
       className='note children-subheading text-note text-small'
       style={{
+        color: `rgba(255, 255, 255, ${autofocus === 'show' ? 0.5 : autofocus === 'dim' ? 0.25 : 0})`,
+        lineHeight: 1.25,
+        // negative margin to compensate for line-height. See .thought-container
+        marginTop: -3,
         // offset editable's margin-left, which is dynamically set based on font size
         marginLeft: fontSize - 14,
+        transition: 'color 0.75s ease-in-out',
       }}
     >
       <ContentEditable
