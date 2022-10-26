@@ -23,9 +23,15 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 
+interface DroppableSubthoughts {
+  path?: Path
+  simplePath: SimplePath
+  showContexts?: boolean
+}
+
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
-const canDrop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
@@ -123,7 +129,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** A droppable Subthoughts component. */
-const DragAndDropSubthoughts = (virtualThoughtComponent: FC<VirtualThoughtProps>) =>
-  DropTarget('thought', { canDrop, drop }, dropCollect)(virtualThoughtComponent)
+const DragAndDropSubthoughts = <T extends VirtualThoughtProps>(virtualThoughtComponent: FC<T>) =>
+  DropTarget('thought', { canDrop, drop }, dropCollect)(virtualThoughtComponent as FC<VirtualThoughtProps>)
 
 export default DragAndDropSubthoughts

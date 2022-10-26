@@ -8,6 +8,8 @@ interface VirtualThoughtProps {
   dropTarget?: ConnectDropTarget
   indexChild: number
   indexDescendant: number
+  last?: boolean
+  leaf: boolean
   path?: Path
   prevChildId: ThoughtId
   nextChildId: ThoughtId

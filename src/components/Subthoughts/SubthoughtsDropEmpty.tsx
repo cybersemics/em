@@ -11,24 +11,24 @@ import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import isDivider from '../../util/isDivider'
 import strip from '../../util/strip'
+import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
 
 /** A drop target when there are no children or the thought is collapsed. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEmpty = ({
   depth,
   dropTarget,
+  isHovering,
   simplePath,
 }: {
   depth?: number
   dropTarget?: ConnectDropTarget
+  isHovering?: boolean
   simplePath: SimplePath
 }) => {
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const draggingThought = useSelector((state: State) => state.draggingThought)
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const colors = useSelector(themeColors)
-
-  // TODO
-  const isHovering = true
 
   // Why do we bail if the thought is being dragged?
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
@@ -40,9 +40,9 @@ const SubthoughtsDropEmpty = ({
     return null
 
   return (
-    <ul className='empty-children'>
+    <li className='empty-children' style={{ position: 'relative', left: '1em' }}>
       {dropTarget(
-        <li
+        <span
           className={classNames({
             child: true,
             'drop-end': true,
@@ -75,13 +75,15 @@ const SubthoughtsDropEmpty = ({
               style={{ backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2 }}
             />
           )}
-        </li>,
+        </span>,
       )}
-    </ul>
+    </li>
   )
 }
 
-const SubthoughtsDropEmptyMemo = React.memo(SubthoughtsDropEmpty)
+const DragAndDropSubthoughtsDropEmpty = DragAndDropSubthoughts(SubthoughtsDropEmpty)
+
+const SubthoughtsDropEmptyMemo = React.memo(DragAndDropSubthoughtsDropEmpty)
 SubthoughtsDropEmptyMemo.displayName = 'SubthoughtsDropEmpty'
 
 export default SubthoughtsDropEmptyMemo

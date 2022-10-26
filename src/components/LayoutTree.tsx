@@ -28,6 +28,7 @@ import once from '../util/once'
 import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
 import { SubthoughtMemo } from './Subthoughts'
+import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
 type TreeThought = {
@@ -36,11 +37,12 @@ type TreeThought = {
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
+  leaf: boolean
   simplePath: SimplePath
   thought: Thought
 }
 
-/** Calculates a tree of visible thoughts in order represented as a flat list of thoughts with tree layout information. */
+/** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const virtualTree = (
   state: State,
   simplePath: SimplePath,
@@ -57,16 +59,20 @@ const virtualTree = (
     const childPath = unroot(appendToPath(simplePath, child.id))
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
+    const descendants = virtualTree(state, childPath, { depth: depth + 1, indexDescendant: virtualIndexNew })
     return [
       ...accum,
       {
         depth,
         indexChild: i,
         indexDescendant: virtualIndexNew,
+        // true if the thought has no visible children.
+        // It may still have hidden children.
+        leaf: descendants.length === 0,
         simplePath: childPath,
         thought: child,
       },
-      ...virtualTree(state, childPath, { depth: depth + 1, indexDescendant: virtualIndexNew }),
+      ...descendants,
     ]
   }, [])
 
@@ -76,14 +82,13 @@ const virtualTree = (
 /** A thought that is rendered in a flat list but positioned like a node in a tree. */
 const VirtualThought = ({
   depth,
-  dropTarget,
   indexChild,
   indexDescendant,
-  isHovering,
+  leaf,
   prevChildId,
   nextChildId,
   simplePath,
-}: VirtualThoughtProps & { isHovering?: boolean }) => {
+}: VirtualThoughtProps) => {
   const thought = useSelector(
     (state: State) => getThoughtById(state, head(simplePath)),
     (a, b) => a === b || a.id === b.id,
@@ -236,9 +241,7 @@ const VirtualThought = ({
             depth={depth}
             indexChild={indexChild}
             indexDescendant={indexDescendant}
-            // distance={distance}
-            // dropTarget={dropTarget}
-            // isHovering={isHovering}
+            leaf={leaf}
             prevChildId={prevChildId}
             nextChildId={nextChildId}
             simplePath={parentPath}
@@ -246,13 +249,21 @@ const VirtualThought = ({
             // Always extend the root subthught drop target.
             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-            // last={isRoot(simplePath) || (distance === 1 && autofocus === 'dim')}
+            // last={isRoot(parentPath) || (distance === 1 && autofocus === 'dim')}
           />
         )}
 
-      {/* {(autofocus === 'show' || autofocus === 'dim' || globals.simulateDrop) && (
-        <SubthoughtsDropEmpty depth={depth} dropTarget={dropTarget} simplePath={simplePath} />
-      )} */}
+      {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
+        <SubthoughtsDropEmpty
+          depth={depth}
+          indexChild={indexChild}
+          indexDescendant={indexDescendant}
+          leaf={leaf}
+          prevChildId={prevChildId}
+          nextChildId={nextChildId}
+          simplePath={simplePath}
+        />
+      )}
     </>
   )
 }
@@ -264,13 +275,24 @@ const LayoutTree = () => {
 
   return (
     <div>
-      {virtualThoughts.map(({ depth, indexChild, indexDescendant, simplePath, thought }, i) => {
+      {virtualThoughts.map(({ depth, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
         return (
-          <div key={thought.id} style={{ marginLeft: '1.5em', transform: `translateX(${depth * fontSize * 1.2}px)` }}>
+          <div
+            key={thought.id}
+            style={{
+              marginLeft: '1.5em',
+              position: 'relative',
+              // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
+              // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
+              left: depth * fontSize * 1.2,
+              transition: 'left 0.15s ease-out',
+            }}
+          >
             <VirtualThought
               depth={depth}
               indexChild={indexChild}
               indexDescendant={indexDescendant}
+              leaf={leaf}
               prevChildId={virtualThoughts[i - 1]?.thought.id}
               nextChildId={virtualThoughts[i + 1]?.thought.id}
               simplePath={simplePath}

@@ -59,7 +59,6 @@ import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import GestureDiagram from './GestureDiagram'
-import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import useZoom from './Subthoughts/useZoom'
 import Thought from './Thought'
 
@@ -758,14 +757,7 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
               />
             ) */}
         </ul>
-      ) : (
-        dropTarget &&
-        (autofocus() === 'show' || autofocus() === 'dim') &&
-        // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
-        !equalPath(state.draggingThought, simplePath) && (
-          <SubthoughtsDropEmpty depth={depth} dropTarget={dropTarget} simplePath={simplePath} />
-        )
-      )}
+      ) : null}
       {isPaginated && distance !== 2 && (
         <a className='indent text-note' onClick={() => setPage(page + 1)}>
           More...
