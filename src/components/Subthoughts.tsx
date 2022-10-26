@@ -939,7 +939,7 @@ const Subthought = ({
   ) : null
 }
 
-export const SubthoughtMemo = React.memo(Subthought)
+const SubthoughtMemo = React.memo(Subthought)
 SubthoughtMemo.displayName = 'Subthought'
 
 // const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))

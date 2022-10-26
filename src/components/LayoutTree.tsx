@@ -27,7 +27,7 @@ import isRoot from '../util/isRoot'
 import once from '../util/once'
 import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
-import { SubthoughtMemo } from './Subthoughts'
+import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
@@ -207,7 +207,7 @@ const VirtualThought = ({
 
   return (
     <>
-      <SubthoughtMemo
+      <Subthought
         // allowSingleContext={allowSingleContextParent}
         allowSingleContext={false}
         autofocus={autofocus}
