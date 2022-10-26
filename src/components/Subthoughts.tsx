@@ -804,7 +804,7 @@ const Subthought = ({
   zoomCursor?: boolean
   parentPath: SimplePath
   path?: Path
-  prevChildId: ThoughtId
+  prevChildId?: ThoughtId
   showContexts: boolean
   styleChildren?: React.CSSProperties
   styleContainerChildren?: React.CSSProperties

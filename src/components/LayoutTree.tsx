@@ -234,9 +234,9 @@ const VirtualThought = ({
         // zoomCursor={zoomCursor}
       />
 
-      {(autofocus === 'show' || autofocus === 'dim') &&
-        (globals.simulateDrag || globals.simulateDrop || dragInProgress) &&
-        !nextChildId && (
+      {
+        // show drop-end when autofocus === 'hide' in order to allow dropping after the last dimmed thought (whose parent is hidden)
+        autofocus !== 'hide-parent' && (globals.simulateDrag || globals.simulateDrop || dragInProgress) && !nextChildId && (
           <SubthoughtsDropEnd
             depth={depth}
             indexChild={indexChild}
@@ -246,12 +246,12 @@ const VirtualThought = ({
             nextChildId={nextChildId}
             simplePath={parentPath}
             // Extend the click area of the drop target when there is nothing below.
-            // Always extend the root subthught drop target.
             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-            // last={isRoot(parentPath) || (distance === 1 && autofocus === 'dim')}
+            last={!nextChildId}
           />
-        )}
+        )
+      }
 
       {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
         <SubthoughtsDropEmpty
@@ -268,19 +268,45 @@ const VirtualThought = ({
   )
 }
 
+/** A drop target at the end of the ROOT context. */
+const RootDropEnd = () => {
+  // Only allow dropping on the root when the root children are visible.
+  // It would be confusing to allow dropping on the root when there are intervening hidden ancestors that can't be dropped on.
+  const isVisible = useSelector((state: State) => !state.cursor || state.cursor.length < 3)
+  return (
+    <div>
+      {isVisible && (
+        <SubthoughtsDropEnd
+          depth={0}
+          indexChild={0}
+          indexDescendant={0}
+          leaf={false}
+          simplePath={HOME_PATH}
+          // Extend the click area of the drop target when there is nothing below.
+          // Always extend the root subthught drop target.
+          last={true}
+        />
+      )}
+    </div>
+  )
+}
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
   const fontSize = useSelector((state: State) => state.fontSize)
 
   return (
-    <div>
+    <div
+      style={{
+        marginLeft: '1.5em',
+      }}
+    >
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
         return (
           <div
             key={thought.id}
             style={{
-              marginLeft: '1.5em',
               position: 'relative',
               // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
               // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
@@ -293,13 +319,15 @@ const LayoutTree = () => {
               indexChild={indexChild}
               indexDescendant={indexDescendant}
               leaf={leaf}
-              prevChildId={virtualThoughts[i - 1]?.thought.id}
+              prevChildId={indexChild !== 0 ? virtualThoughts[i - 1]?.thought.id : undefined}
               nextChildId={virtualThoughts[i + 1]?.thought.id}
               simplePath={simplePath}
             />
           </div>
         )
       })}
+
+      <RootDropEnd />
     </div>
   )
 }

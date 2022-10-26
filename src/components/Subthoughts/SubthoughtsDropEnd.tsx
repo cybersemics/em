@@ -17,6 +17,7 @@ import { compareReasonable } from '../../util/compareThought'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import headId from '../../util/headId'
+import isRoot from '../../util/isRoot'
 import strip from '../../util/strip'
 import unroot from '../../util/unroot'
 import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
@@ -96,11 +97,15 @@ const SubthoughtsDropEnd = ({
       style={{
         display: 'list-item',
         backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: last ? '4em' : undefined,
+        height: last ? (isRoot(simplePath) ? '8em' : '4em') : undefined,
         marginLeft: last ? '-4em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: last ? (isTouch ? '9em' : '3em') : undefined,
+        // The ROOT drop end can be set to static since there are now following siblings that would be obscured.
+        // This ensures that previous thoughts are stacked on top (as this element doesn't create a new stacking context).
+        // Otherwise, the ROOT drop end will cover the last child's drop end.
+        position: isRoot(simplePath) ? 'static' : 'absolute',
       }}
     >
       {globals.simulateDrop && (
@@ -115,6 +120,7 @@ const SubthoughtsDropEnd = ({
         >
           {strip(value)}
           {isHovering ? '*' : ''}
+          {last ? '$' : ''}
         </span>
       )}
       {(showDropHover || globals.simulateDrag) && (

@@ -11,8 +11,8 @@ interface VirtualThoughtProps {
   last?: boolean
   leaf: boolean
   path?: Path
-  prevChildId: ThoughtId
-  nextChildId: ThoughtId
+  prevChildId?: ThoughtId
+  nextChildId?: ThoughtId
   simplePath: SimplePath
   showContexts?: boolean
 }
