@@ -43,15 +43,18 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
   // const resolvedPath = path ?? simplePath
   const resolvedPath = simplePath
 
-  const isDescendantOfFirstVisiblePath =
-    !firstVisiblePath ||
-    isRoot(firstVisiblePath) ||
-    (firstVisiblePath.length < resolvedPath.length && firstVisiblePath.every((value, i) => resolvedPath[i] === value))
-
   const cursorSubthoughtIndex = once(() => (state.cursor ? checkIfPathShareSubcontext(state.cursor, resolvedPath) : -1))
 
   const isAncestorOfCursor =
     state.cursor && state.cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
+
+  const isDescendantOfFirstVisiblePath = once(
+    () =>
+      !firstVisiblePath ||
+      isRoot(firstVisiblePath) ||
+      (firstVisiblePath.length < resolvedPath.length &&
+        firstVisiblePath.every((value, i) => resolvedPath[i] === value)),
+  )
 
   const isCursor =
     state.cursor && resolvedPath.length === cursorSubthoughtIndex() + 1 && resolvedPath.length === state.cursor?.length
@@ -61,16 +64,16 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
     state.cursor && resolvedPath.length > state.cursor.length && state.cursor.length === cursorSubthoughtIndex() + 1
 
   // thoughts that are not the ancestor of state.cursor or the descendants of first visible thought should be shifted left and hidden.
-  const hide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
+  const hide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath()
 
   const isCursorParent = state.cursor && isAncestorOfCursor && state.cursor.length - resolvedPath.length === 1
 
   /** Returns true if the children should be dimmed by the autofocus. */
   const dim = () =>
     state.cursor &&
-    isDescendantOfFirstVisiblePath &&
-    !(isCursorParent && isCursorLeaf) &&
     !isCursor &&
+    isDescendantOfFirstVisiblePath() &&
+    !(isCursorParent && isCursorLeaf) &&
     !isDescendantOfCursor()
 
   const actualDistance = hide /* || zoom */ ? 2 : dim() ? 1 : estimatedDistance
