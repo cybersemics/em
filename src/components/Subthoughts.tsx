@@ -50,7 +50,6 @@ import isAbsolute from '../util/isAbsolute'
 import isAttribute from '../util/isAttribute'
 import isDescendant from '../util/isDescendant'
 import isDescendantPath from '../util/isDescendantPath'
-import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -61,7 +60,6 @@ import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import GestureDiagram from './GestureDiagram'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
-import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 import useZoom from './Subthoughts/useZoom'
 import Thought from './Thought'
 
@@ -746,13 +744,12 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 />
               ),
           )}
-          {(autofocus() === 'show' || autofocus() === 'dim') &&
+          {/* (autofocus() === 'show' || autofocus() === 'dim') &&
             (dropTarget || globals.simulateDrag || globals.simulateDrop) && (
               <SubthoughtsDropEnd
                 depth={depth}
                 distance={distance}
                 dropTarget={dropTarget}
-                isHovering={isHovering}
                 simplePath={simplePath}
                 // Extend the click area of the drop target when there is nothing below.
                 // Always extend the root subthught drop target.
@@ -760,20 +757,14 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
                 // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
                 last={isRoot(simplePath) || (distance === 1 && autofocus() === 'dim')}
               />
-            )}
+            ) */}
         </ul>
       ) : (
         dropTarget &&
         (autofocus() === 'show' || autofocus() === 'dim') &&
         // even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets
         !equalPath(state.draggingThought, simplePath) && (
-          <SubthoughtsDropEmpty
-            isThoughtDivider={isDivider(value)}
-            depth={depth}
-            dropTarget={dropTarget}
-            isHovering={isHovering}
-            debugValue={globals.simulateDrop ? value : undefined}
-          />
+          <SubthoughtsDropEmpty depth={depth} dropTarget={dropTarget} simplePath={simplePath} />
         )
       )}
       {isPaginated && distance !== 2 && (

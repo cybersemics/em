@@ -5,7 +5,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { HOME_PATH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
@@ -28,7 +27,6 @@ import isRoot from '../util/isRoot'
 import once from '../util/once'
 import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
-import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import { SubthoughtMemo } from './Subthoughts'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
@@ -41,9 +39,6 @@ type TreeThought = {
   simplePath: SimplePath
   thought: Thought
 }
-
-/** Check if the given thought is a leaf. */
-const isLeaf = (state: State, id: ThoughtId) => hasChildren(state, id)
 
 /** Calculates a tree of visible thoughts in order represented as a flat list of thoughts with tree layout information. */
 const virtualTree = (
@@ -84,14 +79,17 @@ const VirtualThought = ({
   dropTarget,
   indexChild,
   indexDescendant,
+  isHovering,
   prevChildId,
+  nextChildId,
   simplePath,
-}: VirtualThoughtProps) => {
+}: VirtualThoughtProps & { isHovering?: boolean }) => {
   const thought = useSelector(
     (state: State) => getThoughtById(state, head(simplePath)),
     (a, b) => a === b || a.id === b.id,
   )
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
 
   const distance = useSelector((state: State) =>
     state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0,
@@ -121,7 +119,7 @@ const VirtualThought = ({
     Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
     */
 
-    const isCursorLeaf = state.cursor && isLeaf(state, head(state.cursor))
+    const isCursorLeaf = state.cursor && hasChildren(state, head(state.cursor))
 
     const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
 
@@ -232,25 +230,33 @@ const VirtualThought = ({
         // zoomCursor={zoomCursor}
       />
 
-      {(autofocus === 'show' || autofocus === 'dim') && (dropTarget || globals.simulateDrag || globals.simulateDrop) && (
-        <SubthoughtsDropEnd
-          depth={depth}
-          distance={distance}
-          dropTarget={dropTarget}
-          // isHovering={isHovering}
-          simplePath={simplePath}
-          // Extend the click area of the drop target when there is nothing below.
-          // Always extend the root subthught drop target.
-          // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-          // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-          last={isRoot(simplePath) || (distance === 1 && autofocus === 'dim')}
-        />
-      )}
+      {(autofocus === 'show' || autofocus === 'dim') &&
+        (globals.simulateDrag || globals.simulateDrop || dragInProgress) &&
+        !nextChildId && (
+          <SubthoughtsDropEnd
+            depth={depth}
+            indexChild={indexChild}
+            indexDescendant={indexDescendant}
+            // distance={distance}
+            // dropTarget={dropTarget}
+            // isHovering={isHovering}
+            prevChildId={prevChildId}
+            nextChildId={nextChildId}
+            simplePath={parentPath}
+            // Extend the click area of the drop target when there is nothing below.
+            // Always extend the root subthught drop target.
+            // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+            // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+            // last={isRoot(simplePath) || (distance === 1 && autofocus === 'dim')}
+          />
+        )}
+
+      {/* {(autofocus === 'show' || autofocus === 'dim' || globals.simulateDrop) && (
+        <SubthoughtsDropEmpty depth={depth} dropTarget={dropTarget} simplePath={simplePath} />
+      )} */}
     </>
   )
 }
-
-const DroppableVirtualThought = DragAndDropSubthoughts(VirtualThought)
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
@@ -262,11 +268,12 @@ const LayoutTree = () => {
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, simplePath, thought }, i) => {
         return (
           <div key={thought.id} style={{ marginLeft: '1.5em', transform: `translateX(${depth * fontSize * 1.2}px)` }}>
-            <DroppableVirtualThought
+            <VirtualThought
               depth={depth}
               indexChild={indexChild}
               indexDescendant={indexDescendant}
               prevChildId={virtualThoughts[i - 1]?.thought.id}
+              nextChildId={virtualThoughts[i + 1]?.thought.id}
               simplePath={simplePath}
             />
           </div>

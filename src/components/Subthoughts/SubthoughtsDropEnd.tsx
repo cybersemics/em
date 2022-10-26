@@ -19,6 +19,7 @@ import head from '../../util/head'
 import headId from '../../util/headId'
 import strip from '../../util/strip'
 import unroot from '../../util/unroot'
+import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
 
 /** The drop target at the end of the Subthoughts. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEnd = ({
@@ -32,7 +33,7 @@ const SubthoughtsDropEnd = ({
   simplePath,
 }: {
   depth: number
-  distance: number
+  distance?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
   last?: boolean
@@ -84,7 +85,7 @@ const SubthoughtsDropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  if (!globals.simulateDrag && !dragInProgress) return null
+  if (!globals.simulateDrag && !globals.simulateDrop && !dragInProgress) return null
 
   return (dropTarget || ID)(
     <li
@@ -116,7 +117,7 @@ const SubthoughtsDropEnd = ({
           {isHovering ? '*' : ''}
         </span>
       )}
-      {showDropHover && (
+      {(showDropHover || globals.simulateDrag) && (
         <span
           className='drop-hover'
           style={{
@@ -129,7 +130,9 @@ const SubthoughtsDropEnd = ({
   )
 }
 
-const SubthoughtsDropEndMemo = React.memo(SubthoughtsDropEnd)
+const DragAndDropSubthoughtsDropEnd = DragAndDropSubthoughts(SubthoughtsDropEnd)
+
+const SubthoughtsDropEndMemo = React.memo(DragAndDropSubthoughtsDropEnd)
 SubthoughtsDropEndMemo.displayName = 'SubthoughtsDropEnd'
 
 export default SubthoughtsDropEndMemo

@@ -10,6 +10,7 @@ interface VirtualThoughtProps {
   indexDescendant: number
   path?: Path
   prevChildId: ThoughtId
+  nextChildId: ThoughtId
   simplePath: SimplePath
   showContexts?: boolean
 }
