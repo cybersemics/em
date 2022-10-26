@@ -720,7 +720,6 @@ Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapSt
             (child, i) =>
               i < proposedPageSize && (
                 <SubthoughtMemo
-                  actualDistance={actualDistance()}
                   allowSingleContext={allowSingleContextParent}
                   child={child}
                   depth={depth}
@@ -780,7 +779,6 @@ SubthoughtsComponent.displayName = 'SubthoughtsComponent'
 
 /** Wraps a Thought component and calculates the child Path, style, etc. */
 const Subthought = ({
-  actualDistance,
   allowSingleContext,
   autofocus,
   child,
@@ -801,7 +799,6 @@ const Subthought = ({
   styleContainerChildren,
   styleContainerGrandchildren,
 }: {
-  actualDistance: number
   allowSingleContext?: boolean
   autofocus?: Autofocus
   child: ThoughtType
@@ -933,7 +930,10 @@ const Subthought = ({
       isMultiColumnTable={isMultiColumnTable}
       isVisible={
         // if thought is a zoomed cursor then it is visible
-        (isChildCursor && zoomCursor) || actualDistance < 2 || (distance === 2 && isEditingChildPath())
+        (isChildCursor && zoomCursor) ||
+        autofocus === 'show' ||
+        autofocus === 'dim' ||
+        (distance === 2 && isEditingChildPath())
       }
       key={child.id}
       path={appendedChildPath}

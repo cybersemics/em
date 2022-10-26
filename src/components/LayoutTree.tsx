@@ -203,7 +203,6 @@ const VirtualThought = ({
   return (
     <>
       <SubthoughtMemo
-        actualDistance={actualDistance}
         // allowSingleContext={allowSingleContextParent}
         allowSingleContext={false}
         autofocus={autofocus}
