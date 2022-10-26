@@ -14,7 +14,6 @@ import storage from '../util/storage'
 import Editable from './Editable'
 import NewThoughtInstructions from './NewThoughtInstructions'
 import Search from './Search'
-import Subthoughts from './Subthoughts'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
@@ -78,9 +77,8 @@ const Content: ContentComponent = props => {
             ) : (
               <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
             )
-          ) : (
-            <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} />
-          )}
+          ) : // TODO: VirtualTree
+          null}
         </>
       )}
     </ScrollView>

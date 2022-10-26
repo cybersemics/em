@@ -9,7 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import error from '../action-creators/error'
 import searchContexts from '../action-creators/searchContexts'
 import setSearchLimit from '../action-creators/searchLimit'
-import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import getFirebaseProvider from '../data-providers/firebase'
 import { getRemoteSearch } from '../search/algoliaSearch'
 import localSearch from '../search/localSearch'
@@ -21,7 +21,6 @@ import isArchived from '../util/isArchived'
 import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
 import NewThought from './NewThought'
-import Subthoughts from './Subthoughts'
 
 interface SearchSubthoughtsProps {
   search?: string | null
@@ -147,12 +146,13 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
       <span className='text-note text-small'>
         {formatNumber(children.length)} match{children.length === 1 ? '' : 'es'} for "{search}"
       </span>
-      <Subthoughts
+      {/* TODO: VirtualTree */}
+      {/* <Subthoughts
         childrenForced={children.slice(0, searchLimit).map(({ id }) => id)}
         simplePath={HOME_PATH}
         allowSingleContextParent={true}
         expandable={true}
-      />
+      /> */}
       {children.length > DEFAULT_SEARCH_LIMIT ? (
         <a
           className='indent text-note'

@@ -2,6 +2,7 @@ import { FC } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
 import { AlertType, HOME_TOKEN } from '../constants'
@@ -21,13 +22,10 @@ import isDivider from '../util/isDivider'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
-import { ConnectedSubthoughtsProps, SubthoughtsProps } from './Subthoughts'
-
-export type ConnectedDragAndDropSubthoughtsProps = ConnectedSubthoughtsProps & ReturnType<typeof dropCollect>
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
-const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
+const canDrop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
@@ -59,7 +57,7 @@ const canDrop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
+const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   const state = store.getState()
 
   // no bubbling
@@ -125,7 +123,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** A droppable Subthoughts component. */
-const DragAndDropSubthoughts = (subthoughtsComponent: FC<ConnectedDragAndDropSubthoughtsProps>) =>
-  DropTarget('thought', { canDrop, drop }, dropCollect)(subthoughtsComponent)
+const DragAndDropSubthoughts = (virtualThoughtComponent: FC<VirtualThoughtProps>) =>
+  DropTarget('thought', { canDrop, drop }, dropCollect)(virtualThoughtComponent)
 
 export default DragAndDropSubthoughts

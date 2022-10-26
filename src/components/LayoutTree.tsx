@@ -6,7 +6,9 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { HOME_PATH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import globals from '../globals'
 import attribute from '../selectors/attribute'
 import {
   childrenFilterPredicate,
@@ -26,7 +28,9 @@ import isRoot from '../util/isRoot'
 import once from '../util/once'
 import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
+import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import { SubthoughtMemo } from './Subthoughts'
+import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
 type TreeThought = {
   depth: number
@@ -77,17 +81,12 @@ const virtualTree = (
 /** A thought that is rendered in a flat list but positioned like a node in a tree. */
 const VirtualThought = ({
   depth,
+  dropTarget,
   indexChild,
   indexDescendant,
   prevChildId,
   simplePath,
-}: {
-  depth: number
-  indexChild: number
-  indexDescendant: number
-  prevChildId: ThoughtId
-  simplePath: SimplePath
-}) => {
+}: VirtualThoughtProps) => {
   const thought = useSelector(
     (state: State) => getThoughtById(state, head(simplePath)),
     (a, b) => a === b || a.id === b.id,
@@ -200,38 +199,58 @@ const VirtualThought = ({
     _.isEqual,
   )
 
+  const autofocus =
+    actualDistance === 0 ? 'show' : actualDistance === 1 ? 'dim' : actualDistance === 2 ? 'hide' : 'hide-parent'
+
   return (
-    <SubthoughtMemo
-      actualDistance={actualDistance}
-      // allowSingleContext={allowSingleContextParent}
-      allowSingleContext={false}
-      autofocus={
-        actualDistance === 0 ? 'show' : actualDistance === 1 ? 'dim' : actualDistance === 2 ? 'hide' : 'hide-parent'
-      }
-      child={thought}
-      depth={depth}
-      distance={distance}
-      // env={env}
-      env={''}
-      hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
-      index={indexChild}
-      // isHeader={isHeader}
-      isHeader={false}
-      // isMultiColumnTable={isMultiColumnTable}
-      isMultiColumnTable={false}
-      parentPath={parentPath}
-      path={parentPath}
-      prevChildId={prevChildId}
-      // showContexts={showContexts}
-      showContexts={false}
-      styleChildren={styleChildren || undefined}
-      styleContainerChildren={styleContainerChildren || undefined}
-      styleContainerGrandchildren={styleContainerGrandchildren || undefined}
-      styleGrandchildren={styleGrandchildren || undefined}
-      // zoomCursor={zoomCursor}
-    />
+    <>
+      <SubthoughtMemo
+        actualDistance={actualDistance}
+        // allowSingleContext={allowSingleContextParent}
+        allowSingleContext={false}
+        autofocus={autofocus}
+        child={thought}
+        depth={depth}
+        distance={distance}
+        // env={env}
+        env={''}
+        hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
+        index={indexChild}
+        // isHeader={isHeader}
+        isHeader={false}
+        // isMultiColumnTable={isMultiColumnTable}
+        isMultiColumnTable={false}
+        parentPath={parentPath}
+        path={parentPath}
+        prevChildId={prevChildId}
+        // showContexts={showContexts}
+        showContexts={false}
+        styleChildren={styleChildren || undefined}
+        styleContainerChildren={styleContainerChildren || undefined}
+        styleContainerGrandchildren={styleContainerGrandchildren || undefined}
+        styleGrandchildren={styleGrandchildren || undefined}
+        // zoomCursor={zoomCursor}
+      />
+
+      {(autofocus === 'show' || autofocus === 'dim') && (dropTarget || globals.simulateDrag || globals.simulateDrop) && (
+        <SubthoughtsDropEnd
+          depth={depth}
+          distance={distance}
+          dropTarget={dropTarget}
+          // isHovering={isHovering}
+          simplePath={simplePath}
+          // Extend the click area of the drop target when there is nothing below.
+          // Always extend the root subthught drop target.
+          // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+          // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+          last={isRoot(simplePath) || (distance === 1 && autofocus === 'dim')}
+        />
+      )}
+    </>
   )
 }
+
+const DroppableVirtualThought = DragAndDropSubthoughts(VirtualThought)
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
@@ -243,7 +262,7 @@ const LayoutTree = () => {
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, simplePath, thought }, i) => {
         return (
           <div key={thought.id} style={{ marginLeft: '1.5em', transform: `translateX(${depth * fontSize * 1.2}px)` }}>
-            <VirtualThought
+            <DroppableVirtualThought
               depth={depth}
               indexChild={indexChild}
               indexDescendant={indexDescendant}

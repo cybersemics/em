@@ -2,7 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
-import { connect, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -59,7 +59,6 @@ import parseLet from '../util/parseLet'
 import pathToContext from '../util/pathToContext'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
-import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import GestureDiagram from './GestureDiagram'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
@@ -960,6 +959,7 @@ const Subthought = ({
 export const SubthoughtMemo = React.memo(Subthought)
 SubthoughtMemo.displayName = 'Subthought'
 
-const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))
+// const Subthoughts = connect(mapStateToProps)(DragAndDropSubthoughts(SubthoughtsComponent))
+// export default Subthoughts
 
-export default Subthoughts
+export default SubthoughtsComponent
