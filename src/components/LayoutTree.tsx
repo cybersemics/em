@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
-import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -9,23 +8,14 @@ import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { HOME_PATH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import attribute from '../selectors/attribute'
-import {
-  childrenFilterPredicate,
-  getAllChildrenAsThoughts,
-  getAllChildrenSorted,
-  hasChildren,
-} from '../selectors/getChildren'
+import calculateAutofocus from '../selectors/calculateAutofocus'
+import { childrenFilterPredicate, getAllChildrenAsThoughts, getAllChildrenSorted } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
-import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isDescendant from '../util/isDescendant'
-import isRoot from '../util/isRoot'
-import once from '../util/once'
-import pathToContext from '../util/pathToContext'
 import unroot from '../util/unroot'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
@@ -108,71 +98,7 @@ const VirtualThought = ({
    * - autofocus-hide-parent shiifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
-  const actualDistance = useSelector((state: State) => {
-    /*
-    Note:
-
-    # Thoughts that should not be dimmed
-      - Cursor and its descendants.
-      - Thoughts that are both descendant of the first visible thought and ancestor of the cursor.
-      - Siblings of the cursor if the cursor is a leaf thought.
-
-    # Thoughts that should be dimmed
-      - first visible thought should be dimmed if it is not direct parent of the cursor.
-      - Besides the above mentioned thoughts in the above "should not dim section", all the other thoughts that are descendants of the first visible thought should be dimmed.
-
-    Note: `shouldShiftAndHide` and `shouldDim` needs to be calculated here because autofocus implementation takes only depth into account. But some thoughts needs to be shifted, hidden or dimmed due to their position relative to the cursor.
-    */
-
-    const isCursorLeaf = state.cursor && hasChildren(state, head(state.cursor))
-
-    const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
-
-    // first visible thought at the top
-    const firstVisiblePath =
-      state.expandHoverTopPath ||
-      (state.cursor && state.cursor.length - maxDistance > 0 ? (state.cursor.slice(0, -maxDistance) as Path) : null)
-
-    // const resolvedPath = path ?? simplePath
-    const resolvedPath = simplePath
-
-    const isDescendantOfFirstVisiblePath =
-      !firstVisiblePath ||
-      isRoot(firstVisiblePath) ||
-      // TODO: Why doesn't isDescendantPath work here? Even when excluding equality.
-      isDescendant(pathToContext(state, firstVisiblePath), pathToContext(state, resolvedPath))
-
-    const cursorSubthoughtIndex = once(() =>
-      state.cursor ? checkIfPathShareSubcontext(state.cursor, resolvedPath) : -1,
-    )
-
-    const isAncestorOfCursor =
-      state.cursor && state.cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
-
-    const isCursor =
-      state.cursor &&
-      resolvedPath.length === cursorSubthoughtIndex() + 1 &&
-      resolvedPath.length === state.cursor?.length
-
-    /** Returns true if the resolvedPath is a descendant of the state.cursor. */
-    const isDescendantOfCursor = () =>
-      state.cursor && resolvedPath.length > state.cursor.length && state.cursor.length === cursorSubthoughtIndex() + 1
-
-    // thoughts that are not the ancestor of state.cursor or the descendants of first visible thought should be shifted left and hidden.
-    const shouldShiftAndHide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath
-
-    const isCursorParent = state.cursor && isAncestorOfCursor && state.cursor.length - resolvedPath.length === 1
-
-    /** Returns true if the children should be dimmed by the autofocus. */
-    const shouldDim = () =>
-      state.cursor &&
-      isDescendantOfFirstVisiblePath &&
-      !(isCursorParent && isCursorLeaf) &&
-      !isCursor &&
-      !isDescendantOfCursor()
-
-    return shouldShiftAndHide /* || zoom */ ? 2 : shouldDim() ? 1 : distance
-  })
+  const autofocus = useSelector((state: State) => calculateAutofocus(state, simplePath))
 
   const childrenAttributeId = useSelector(
     (state: State) =>
@@ -201,9 +127,6 @@ const VirtualThought = ({
     (state: State) => getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
     _.isEqual,
   )
-
-  const autofocus =
-    actualDistance === 0 ? 'show' : actualDistance === 1 ? 'dim' : actualDistance === 2 ? 'hide' : 'hide-parent'
 
   return (
     <>
