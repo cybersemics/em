@@ -4,10 +4,8 @@ import State from '../@types/State'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
 import head from '../util/head'
-import isDescendant from '../util/isDescendant'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
-import pathToContext from '../util/pathToContext'
 import { hasChildren } from './getChildren'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
@@ -48,8 +46,7 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
   const isDescendantOfFirstVisiblePath =
     !firstVisiblePath ||
     isRoot(firstVisiblePath) ||
-    // TODO: Why doesn't isDescendantPath work here? Even when excluding equality.
-    isDescendant(pathToContext(state, firstVisiblePath), pathToContext(state, resolvedPath))
+    (firstVisiblePath.length < resolvedPath.length && firstVisiblePath.every((value, i) => resolvedPath[i] === value))
 
   const cursorSubthoughtIndex = once(() => (state.cursor ? checkIfPathShareSubcontext(state.cursor, resolvedPath) : -1))
 
