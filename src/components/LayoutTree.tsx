@@ -212,42 +212,10 @@ const LayoutTree = () => {
         const prev = virtualThoughts[i - 1]
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
         // This is used to determine how many SubthoughtsDropEnd to insert before the next thought (one for each level dropped).
-        const cliff = prev ? Math.min(0, depth - prev.depth) : 0
+        const cliff = next ? Math.min(0, next.depth - depth) : -depth
         return (
-          <>
-            {cliff < 0 &&
-              Array(-cliff)
-                .fill(0)
-                .map((x, i) => {
-                  const simplePathEnd = prev.simplePath.slice(0, cliff + i) as SimplePath
-                  const depthEnd = depth - cliff + i - 1
-                  return (
-                    <div
-                      key={i}
-                      className='z-index-subthoughts-drop-end'
-                      style={{
-                        left: depthEnd * fontSize * 1.2,
-                        transition: 'left 0.15s ease-out',
-                        position: 'relative',
-                      }}
-                    >
-                      <SubthoughtsDropEnd
-                        depth={depthEnd}
-                        indexChild={indexChild}
-                        indexDescendant={indexDescendant}
-                        leaf={false}
-                        simplePath={simplePathEnd}
-                        // Extend the click area of the drop target when there is nothing below.
-                        // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                        // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                        // last={!nextChildId}
-                      />
-                    </div>
-                  )
-                })}
-
+          <React.Fragment key={thought.id}>
             <div
-              key={thought.id}
               style={{
                 position: 'relative',
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
@@ -266,7 +234,37 @@ const LayoutTree = () => {
                 simplePath={simplePath}
               />
             </div>
-          </>
+
+            {cliff < 0 &&
+              Array(-cliff)
+                .fill(0)
+                .map((x, i) => {
+                  const simplePathEnd = simplePath.slice(0, cliff + i) as SimplePath
+                  return (
+                    <div
+                      key={`${head(simplePathEnd)}`}
+                      className='z-index-subthoughts-drop-end'
+                      style={{
+                        position: 'relative',
+                        left: simplePathEnd.length * fontSize * 1.2,
+                        transition: 'left 0.15s ease-out',
+                      }}
+                    >
+                      <SubthoughtsDropEnd
+                        depth={simplePathEnd.length}
+                        indexChild={indexChild}
+                        indexDescendant={indexDescendant}
+                        leaf={false}
+                        simplePath={simplePathEnd}
+                        // Extend the click area of the drop target when there is nothing below.
+                        // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                        // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                        // last={!nextChildId}
+                      />
+                    </div>
+                  )
+                })}
+          </React.Fragment>
         )
       })}
 
