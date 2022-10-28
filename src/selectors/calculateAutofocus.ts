@@ -1,11 +1,11 @@
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
-import checkIfPathShareSubcontext from '../util/checkIfPathShareSubcontext'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
+import { isDescendantPath } from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
-import once from '../util/once'
+import parentOf from '../util/parentOf'
 import { hasChildren } from './getChildren'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
@@ -25,60 +25,31 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
 
   */
 
-  if (isRoot(simplePath)) return 'show'
-
-  const depth = simplePath.length
-  const estimatedDistance = state.cursor
-    ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!))
-    : 0
-  const isCursorLeaf = state.cursor && hasChildren(state, head(state.cursor))
-
-  const maxDistance = MAX_DISTANCE_FROM_CURSOR - (isCursorLeaf ? 1 : 2)
-
-  // first visible thought at the top
-  const firstVisiblePath =
-    state.expandHoverTopPath ||
-    (state.cursor && state.cursor.length - maxDistance > 0 ? (state.cursor.slice(0, -maxDistance) as Path) : null)
+  if (!state.cursor || isRoot(simplePath)) return 'show'
 
   // const resolvedPath = path ?? simplePath
-  const resolvedPath = simplePath
+  const resolvedPath = simplePath as Path
 
-  const cursorSubthoughtIndex = once(() => (state.cursor ? checkIfPathShareSubcontext(state.cursor, resolvedPath) : -1))
+  /** Returns true if the thought is the parent of the cursor. */
+  const isCursorParent = () => equalPath(parentOf(state.cursor!), resolvedPath)
 
-  const isAncestorOfCursor =
-    state.cursor && state.cursor.length > resolvedPath.length && resolvedPath.length === cursorSubthoughtIndex() + 1
+  /** Returns true if the thought is a sibling of the cursor. */
+  const isCursorSibling = () => equalPath(parentOf(state.cursor!), parentOf(resolvedPath))
 
-  const isDescendantOfFirstVisiblePath = once(
-    () =>
-      !firstVisiblePath ||
-      isRoot(firstVisiblePath) ||
-      (firstVisiblePath.length < resolvedPath.length &&
-        firstVisiblePath.every((value, i) => resolvedPath[i] === value)),
-  )
-
-  const isCursor =
-    state.cursor && resolvedPath.length === cursorSubthoughtIndex() + 1 && resolvedPath.length === state.cursor?.length
+  const isCursorLeaf = !hasChildren(state, head(state.cursor))
 
   /** Returns true if the resolvedPath is a descendant of the state.cursor. */
-  const isDescendantOfCursor = () =>
-    state.cursor && resolvedPath.length > state.cursor.length && state.cursor.length === cursorSubthoughtIndex() + 1
+  const isDescendantOfCursor = () => isDescendantPath(resolvedPath, state.cursor)
+  // state.cursor && resolvedPath.length > state.cursor.length && state.cursor.length === cursorSubthoughtIndex() + 1
 
-  // thoughts that are not the ancestor of state.cursor or the descendants of first visible thought should be shifted left and hidden.
-  const hide = !isAncestorOfCursor && !isDescendantOfFirstVisiblePath()
+  // const isAncestor = () => isDescendantPath(state.cursor, resolvedPath)
+  const distance = state.cursor.length - resolvedPath.length
 
-  const isCursorParent = state.cursor && isAncestorOfCursor && state.cursor.length - resolvedPath.length === 1
-
-  /** Returns true if the children should be dimmed by the autofocus. */
-  const dim = () =>
-    state.cursor &&
-    !isCursor &&
-    isDescendantOfFirstVisiblePath() &&
-    !(isCursorParent && isCursorLeaf) &&
-    !isDescendantOfCursor()
-
-  const actualDistance = hide /* || zoom */ ? 2 : dim() ? 1 : estimatedDistance
-
-  return actualDistance === 0 ? 'show' : actualDistance === 1 ? 'dim' : actualDistance === 2 ? 'hide' : 'hide-parent'
+  return ((isCursorParent() || isCursorSibling()) && isCursorLeaf) || isDescendantOfCursor()
+    ? 'show'
+    : distance < (isCursorLeaf ? 3 : 2)
+    ? 'dim'
+    : 'hide'
 }
 
 export default calculateAutofocus

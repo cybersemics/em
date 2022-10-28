@@ -13,13 +13,11 @@ import findDescendant from '../selectors/findDescendant'
 import getChildPath from '../selectors/getChildPath'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
-import rootedParentOf from '../selectors/rootedParentOf'
 import { store } from '../store'
 import equalPath from '../util/equalPath'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
-import parentOf from '../util/parentOf'
 import safeRefMerge from '../util/safeRefMerge'
 import Thought from './Thought'
 
@@ -115,8 +113,6 @@ const Subthought = ({
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
   const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
-  const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
-  const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
 
   /*
               simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -158,13 +154,7 @@ const Subthought = ({
 
   return child ? (
     <Thought
-      autofocus={
-        isChildCursor || (isParentCursor && distance === 1)
-          ? 'show'
-          : isParentCursor || (isGrandparentCursor && distance === 2)
-          ? 'dim'
-          : autofocus || 'show'
-      }
+      autofocus={autofocus}
       debugIndex={globals.simulateDrop ? index : undefined}
       depth={depth + 1}
       env={env}

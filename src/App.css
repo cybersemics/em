@@ -1233,6 +1233,7 @@ h1 .num-contexts {
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding-left: 100px;
+  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
 }
 
 .child > .thought-container > .bullet .glyph {

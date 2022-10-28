@@ -46,7 +46,7 @@ interface BulletProps {
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   const thought = getThoughtById(state, props.thoughtId)
-  const lexeme = getLexeme(state, thought.value)
+  const lexeme = getLexeme(state, thought?.value)
   const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(props.simplePath)
   return {
     // if being edited and meta validation error has occured
@@ -239,6 +239,7 @@ const Bullet = ({
         viewBox='0 0 600 600'
         style={{
           ...svgSizeStyle,
+          fillOpacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
           marginBottom: vendorSpecificData.glyphMarginBottom,
           ...(isHighlighted
             ? {

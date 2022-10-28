@@ -16,6 +16,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 import unroot from '../util/unroot'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
@@ -38,7 +39,7 @@ const virtualTree = (
   simplePath: SimplePath,
   { depth, indexDescendant } = { depth: 0, indexDescendant: 0 },
 ): TreeThought[] => {
-  if (!state.expanded[hashPath(simplePath)]) return []
+  if (!isRoot(simplePath) && !state.expanded[hashPath(simplePath)]) return []
 
   const thoughtId = head(simplePath)
   const children = getAllChildrenSorted(state, thoughtId)
@@ -200,11 +201,15 @@ const RootDropEnd = () => {
 const LayoutTree = () => {
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
   const fontSize = useSelector((state: State) => state.fontSize)
+  const cursorDistance = useSelector((state: State) =>
+    state.cursor && state.cursor.length > 1 ? state.cursor.length - 1 : 0,
+  )
 
   return (
     <div
       style={{
-        marginLeft: '1.5em',
+        marginLeft: `${1.5 - cursorDistance * 1}em`,
+        transition: 'margin-left 0.75s ease-out',
       }}
     >
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
