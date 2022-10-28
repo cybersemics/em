@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React from 'react'
+import React, { FC } from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../../@types/DropThoughtZone'
@@ -22,6 +22,12 @@ import strip from '../../util/strip'
 import unroot from '../../util/unroot'
 import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
 
+/** A container fragment that only renders its children when dragInProgress is true. Useful for short circuiting child components with more expensive selectors. */
+const DragOnly: FC = ({ children }) => {
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  return <>{globals.simulateDrag || globals.simulateDrop || dragInProgress ? children : null}</>
+}
+
 /** The drop target at the end of the Subthoughts. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEnd = ({
   depth,
@@ -43,7 +49,6 @@ const SubthoughtsDropEnd = ({
   const thoughtId = head(simplePath)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   // const parentId = useSelector((state: State) => getThoughtById(state, thoughtId)?.parentId)
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const colors = useSelector(themeColors)
 
   // a boolean indicating if the drop-hover component is shown
@@ -86,8 +91,6 @@ const SubthoughtsDropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  if (!globals.simulateDrag && !globals.simulateDrop && !dragInProgress) return null
-
   return (dropTarget || ID)(
     <li
       className={classNames({
@@ -97,7 +100,7 @@ const SubthoughtsDropEnd = ({
       style={{
         display: 'list-item',
         backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: last ? (isRoot(simplePath) ? '8em' : '4em') : undefined,
+        height: last ? (isRoot(simplePath) ? '8em' : '4em') : '1.9em',
         marginLeft: last ? '-4em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
@@ -141,4 +144,11 @@ const DragAndDropSubthoughtsDropEnd = DragAndDropSubthoughts(SubthoughtsDropEnd)
 const SubthoughtsDropEndMemo = React.memo(DragAndDropSubthoughtsDropEnd)
 SubthoughtsDropEndMemo.displayName = 'SubthoughtsDropEnd'
 
-export default SubthoughtsDropEndMemo
+/** SubthoughtsDropEnd that is only rendered when a drag-and-drop is in progress.. */
+const SubthoughtsDropEndDragOnly = (props: Parameters<typeof SubthoughtsDropEndMemo>[0]) => (
+  <DragOnly>
+    <SubthoughtsDropEndMemo {...props} />
+  </DragOnly>
+)
+
+export default SubthoughtsDropEndDragOnly

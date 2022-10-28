@@ -12,13 +12,15 @@
   --z-index-latest-shortcuts: 10;
   /* above .children */
   --z-index-tutorial-trace-gesture: 5;
+  /* above normal .drop-hover and subthoughts-drop-end */
+  --z-index-drop-end: 6;
+  /* above thought and bullet. */
+  --z-index-subthoughts-drop-end: 5;
   /* above .children */
   --z-index-tutorial: 3;
   --z-index-toolbar-arrow: 2;
   /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
   --z-index-thought-annotation-link: 2;
-  /* above normal .drop-hover */
-  --z-index-drop-end: 2;
   --z-index-resizer: 2;
   /* place above .thought-container to preserve click area of bullet
    otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
@@ -30,6 +32,9 @@
 
 .z-index-alert {
   z-index: var(--z-index-alert);
+}
+.z-index-subthoughts-drop-end {
+  z-index: var(--z-index-subthoughts-drop-end);
 }
 .z-index-hamburger-menu {
   z-index: var(--z-index-hamburger-menu);
@@ -2281,9 +2286,6 @@ code,
 }
 
 /* last drop-end needs to be less wide */
-.drop-end:not(.child) {
-  height: 1.5em;
-}
 .drop-end:not(.child) .drop-hover {
   width: calc(80vw - 4.7em - 60px);
 }

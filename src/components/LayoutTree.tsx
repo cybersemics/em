@@ -49,7 +49,10 @@ const virtualTree = (
     const childPath = unroot(appendToPath(simplePath, child.id))
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const descendants = virtualTree(state, childPath, { depth: depth + 1, indexDescendant: virtualIndexNew })
+    const descendants = virtualTree(state, childPath, {
+      depth: depth + 1,
+      indexDescendant: virtualIndexNew,
+    })
     return [
       ...accum,
       {
@@ -84,7 +87,6 @@ const VirtualThought = ({
     (a, b) => a === b || a.id === b.id,
   )
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
 
   const distance = useSelector((state: State) =>
     state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0,
@@ -156,26 +158,6 @@ const VirtualThought = ({
         styleGrandchildren={styleGrandchildren || undefined}
         // zoomCursor={zoomCursor}
       />
-
-      {
-        // show drop-end when autofocus === 'hide' in order to allow dropping after the last dimmed thought (whose parent is hidden)
-        autofocus !== 'hide-parent' && (globals.simulateDrag || globals.simulateDrop || dragInProgress) && !nextChildId && (
-          <SubthoughtsDropEnd
-            depth={depth}
-            indexChild={indexChild}
-            indexDescendant={indexDescendant}
-            leaf={leaf}
-            prevChildId={prevChildId}
-            nextChildId={nextChildId}
-            simplePath={parentPath}
-            // Extend the click area of the drop target when there is nothing below.
-            // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-            // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-            last={!nextChildId}
-          />
-        )
-      }
-
       {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
         <SubthoughtsDropEmpty
           depth={depth}
@@ -197,7 +179,7 @@ const RootDropEnd = () => {
   // It would be confusing to allow dropping on the root when there are intervening hidden ancestors that can't be dropped on.
   const isVisible = useSelector((state: State) => !state.cursor || state.cursor.length < 3)
   return (
-    <div>
+    <>
       {isVisible && (
         <SubthoughtsDropEnd
           depth={0}
@@ -210,7 +192,7 @@ const RootDropEnd = () => {
           last={true}
         />
       )}
-    </div>
+    </>
   )
 }
 
@@ -226,27 +208,65 @@ const LayoutTree = () => {
       }}
     >
       {virtualThoughts.map(({ depth, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
+        const next = virtualThoughts[i + 1]
+        const prev = virtualThoughts[i - 1]
+        // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
+        // This is used to determine how many SubthoughtsDropEnd to insert before the next thought (one for each level dropped).
+        const cliff = prev ? Math.min(0, depth - prev.depth) : 0
         return (
-          <div
-            key={thought.id}
-            style={{
-              position: 'relative',
-              // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
-              // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
-              left: depth * fontSize * 1.2,
-              transition: 'left 0.15s ease-out',
-            }}
-          >
-            <VirtualThought
-              depth={depth}
-              indexChild={indexChild}
-              indexDescendant={indexDescendant}
-              leaf={leaf}
-              prevChildId={indexChild !== 0 ? virtualThoughts[i - 1]?.thought.id : undefined}
-              nextChildId={virtualThoughts[i + 1]?.thought.id}
-              simplePath={simplePath}
-            />
-          </div>
+          <>
+            {cliff < 0 &&
+              Array(-cliff)
+                .fill(0)
+                .map((x, i) => {
+                  const simplePathEnd = prev.simplePath.slice(0, cliff + i) as SimplePath
+                  const depthEnd = depth - cliff + i - 1
+                  return (
+                    <div
+                      key={i}
+                      className='z-index-subthoughts-drop-end'
+                      style={{
+                        left: depthEnd * fontSize * 1.2,
+                        transition: 'left 0.15s ease-out',
+                        position: 'relative',
+                      }}
+                    >
+                      <SubthoughtsDropEnd
+                        depth={depthEnd}
+                        indexChild={indexChild}
+                        indexDescendant={indexDescendant}
+                        leaf={false}
+                        simplePath={simplePathEnd}
+                        // Extend the click area of the drop target when there is nothing below.
+                        // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                        // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                        // last={!nextChildId}
+                      />
+                    </div>
+                  )
+                })}
+
+            <div
+              key={thought.id}
+              style={{
+                position: 'relative',
+                // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
+                // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
+                left: depth * fontSize * 1.2,
+                transition: 'left 0.15s ease-out',
+              }}
+            >
+              <VirtualThought
+                depth={depth}
+                indexChild={indexChild}
+                indexDescendant={indexDescendant}
+                leaf={leaf}
+                prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
+                nextChildId={next?.depth < depth ? next?.thought.id : undefined}
+                simplePath={simplePath}
+              />
+            </div>
+          </>
         )
       })}
 
