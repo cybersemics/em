@@ -449,7 +449,7 @@ const ThoughtContainer = ({
 
   return dropTarget(
     dragSource(
-      <li
+      <div
         {...dragHoldResult.props}
         aria-label='thought-container'
         style={{
@@ -599,7 +599,7 @@ const ThoughtContainer = ({
             simplePath={simplePath}
           />
         )} */}
-      </li>,
+      </div>,
     ),
   )
 }
