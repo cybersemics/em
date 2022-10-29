@@ -523,7 +523,6 @@ const ThoughtContainer = ({
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
-              isVisible={isVisible}
               leaf={isLeaf}
               path={path}
               publish={publish}
