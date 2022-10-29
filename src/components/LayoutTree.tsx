@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
+import { isTouch } from '../browser'
 import { HOME_PATH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import attribute from '../selectors/attribute'
@@ -228,8 +229,11 @@ const LayoutTree = () => {
   return (
     <div
       style={{
-        marginLeft: `${1.5 - cursorDistance * 1}em`,
-        transition: 'margin-left 0.75s ease-out',
+        // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
+        // Add a negative marginRight by the same amount to ensure the thought takes up the full width. Not animated for a more stable visual experience.
+        transform: `translateX(${1.5 - cursorDistance}em)`,
+        transition: 'transform 0.75s ease-out',
+        marginRight: `${-cursorDistance + (isTouch ? 2 : -1)}em`,
       }}
     >
       {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
@@ -245,7 +249,8 @@ const LayoutTree = () => {
                 position: 'relative',
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
                 // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
-                left: depth * fontSize * 1.2,
+                left: `${depth}em`,
+                marginRight: `${depth}em`,
                 transition: 'left 0.15s ease-out',
               }}
             >
