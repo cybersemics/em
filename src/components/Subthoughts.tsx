@@ -68,7 +68,7 @@ export interface SubthoughtsProps {
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
   depth?: number
-  env?: string
+  env?: LazyEnv
   expandable?: boolean
   isHeader?: boolean
   showContexts?: boolean
@@ -238,8 +238,7 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
-  const envParsed: LazyEnv = JSON.parse(props.env || '{}')
-  const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
+  const env = Object.keys(envSelf).length > 0 ? { ...props.env, ...envSelf } : props.env || EMPTY_OBJECT
 
   /*
     Note: The following properties are applied to the immediate children with given class.
@@ -405,7 +404,7 @@ export const SubthoughtsComponent = ({
   sortDirection: contextSortDirection,
   sortType: contextSortType,
 }: // omit env since it is stringified
-Omit<SubthoughtsProps, 'env'> & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) => {
+SubthoughtsProps & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) => {
   // <Subthoughts> render
   const state = store.getState()
   const [page, setPage] = useState(1)
@@ -796,7 +795,7 @@ const Subthought = ({
   child: ThoughtType
   depth: number
   distance: number
-  env: string
+  env: LazyEnv
   hideBullet?: boolean
   index?: number
   isHeader?: boolean
@@ -831,8 +830,7 @@ const Subthought = ({
     [child.id, parentPath, showContexts, showContexts && childPathUnstable.length],
   )
 
-  const envParsed = JSON.parse(env || '{}')
-  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
+  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
 
   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))

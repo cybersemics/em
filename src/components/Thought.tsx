@@ -66,7 +66,7 @@ export interface ThoughtContainerProps {
   // used by globals.simulateDrop
   debugIndex?: number
   depth?: number
-  env?: string
+  env?: LazyEnv
   expandedContextThought?: Path
   hideBullet?: boolean
   // See: ThoughtProps['isContextPending']
@@ -246,7 +246,6 @@ const ThoughtContainer = ({
   styleContainer: styleContainerProp,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
-  const envParsed = JSON.parse(env || '{}') as LazyEnv
   const dispatch = useDispatch()
 
   const thoughtId = head(simplePath)
@@ -276,8 +275,8 @@ const ThoughtContainer = ({
     }
   }, [isBeingHoveredOver])
 
-  const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
-  const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
+  const style = useStyle({ children, env, styleProp, thoughtId })
   const styleAnnotation = useSelector(
     (state: State) =>
       safeRefMerge(
@@ -288,7 +287,7 @@ const ThoughtContainer = ({
       ),
     _.isEqual,
   )
-  const styleContainer = useStyleContainer({ children, env: envParsed, styleContainerProp, thoughtId, path })
+  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
 

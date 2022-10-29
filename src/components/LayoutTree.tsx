@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -17,6 +18,7 @@ import appendToPath from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
+import parseLet from '../util/parseLet'
 import unroot from '../util/unroot'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
@@ -24,6 +26,7 @@ import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
 type TreeThought = {
   depth: number
+  env: LazyEnv
   // index among visible siblings at the same level
   indexChild: number
   // index among all visible thoughts in the tree
@@ -37,7 +40,7 @@ type TreeThought = {
 const virtualTree = (
   state: State,
   simplePath: SimplePath,
-  { depth, indexDescendant } = { depth: 0, indexDescendant: 0 },
+  { depth, env, indexDescendant } = { depth: 0, env: {}, indexDescendant: 0 },
 ): TreeThought[] => {
   if (!isRoot(simplePath) && !state.expanded[hashPath(simplePath)]) return []
 
@@ -50,14 +53,19 @@ const virtualTree = (
     const childPath = unroot(appendToPath(simplePath, child.id))
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
+    const envNew = { ...env, ...parseLet(state, simplePath) }
+
     const descendants = virtualTree(state, childPath, {
       depth: depth + 1,
+      env: envNew,
       indexDescendant: virtualIndexNew,
     })
+
     return [
       ...accum,
       {
         depth,
+        env: envNew,
         indexChild: i,
         indexDescendant: virtualIndexNew,
         // true if the thought has no visible children.
@@ -76,6 +84,7 @@ const virtualTree = (
 /** A thought that is rendered in a flat list but positioned like a node in a tree. */
 const VirtualThought = ({
   depth,
+  env,
   indexChild,
   indexDescendant,
   leaf,
@@ -102,17 +111,19 @@ const VirtualThought = ({
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
   const autofocus = useSelector(calculateAutofocus(simplePath))
+  const parentId = thought.parentId
+  const grandparentId = simplePath[simplePath.length - 3]
 
   const childrenAttributeId = useSelector(
     (state: State) =>
       (thought.value !== '=children' &&
-        getAllChildrenAsThoughts(state, thought.id).find(child => child.value === '=children')?.id) ||
+        getAllChildrenAsThoughts(state, parentId).find(child => child.value === '=children')?.id) ||
       null,
   )
   const grandchildrenAttributeId = useSelector(
     (state: State) =>
-      (thought.value !== '=grandchildren' &&
-        getAllChildrenAsThoughts(state, thought.parentId).find(child => child.value === '=grandchildren')?.id) ||
+      (thought.value !== '=style' &&
+        getAllChildrenAsThoughts(state, grandparentId).find(child => child.value === '=grandchildren')?.id) ||
       null,
   )
   const hideBulletsChildren = useSelector((state: State) => attribute(state, childrenAttributeId, '=bullet') === 'None')
@@ -140,6 +151,8 @@ const VirtualThought = ({
     [autofocus, styleContainerChildren, styleContainerGrandchildren],
   )
 
+  const envMemo = useSelector(() => env, _.isEqual)
+
   return (
     <>
       <Subthought
@@ -149,8 +162,7 @@ const VirtualThought = ({
         child={thought}
         depth={depth}
         distance={distance}
-        // env={env}
-        env={''}
+        env={envMemo}
         hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
         index={indexChild}
         // isHeader={isHeader}
@@ -220,7 +232,7 @@ const LayoutTree = () => {
         transition: 'margin-left 0.75s ease-out',
       }}
     >
-      {virtualThoughts.map(({ depth, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
+      {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
         const next = virtualThoughts[i + 1]
         const prev = virtualThoughts[i - 1]
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -239,6 +251,7 @@ const LayoutTree = () => {
             >
               <VirtualThought
                 depth={depth}
+                env={env}
                 indexChild={indexChild}
                 indexDescendant={indexDescendant}
                 leaf={leaf}

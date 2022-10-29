@@ -3,6 +3,7 @@ import moize from 'moize'
 import React, { useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import Connected from '../@types/Connected'
+import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -35,7 +36,7 @@ import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
   editingValue?: string | null
-  env?: string
+  env?: LazyEnv
   focusOffset?: number
   homeContext?: boolean
   invalidState?: boolean

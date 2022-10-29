@@ -63,7 +63,7 @@ interface SubthoughtsProps {
   allowSingleContextParent?: boolean
   childrenForced?: ThoughtId[]
   depth?: number
-  env?: string
+  env?: LazyEnv
   expandable?: boolean
   showContexts?: boolean
   sortType?: string
@@ -81,7 +81,6 @@ if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
 // if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 const PAGINATION_SIZE = 100
-const EMPTY_OBJECT = {}
 
 /** Check if the given path is a leaf. */
 const isLeaf = (state: State, id: ThoughtId) => getChildren(state, id).length === 0
@@ -153,17 +152,16 @@ const mapStateToProps = (state: State, props: SubthoughtsProps) => {
       getContexts(state, headValue(state, thoughtToPath(state, head(simplePath))))
     : getAllChildren(state, idLive)
 
-  // merge ancestor env into self env
+  // TODO: merge ancestor env into self env
   // only update the env object reference if there are new additions to the environment
   // otherwise props changes and causes unnecessary re-renders
   const envSelf = parseLet(state, simplePath)
-  const envParsed = JSON.parse(props.env || '{}')
-  const env = Object.keys(envSelf).length > 0 ? { ...envParsed, ...envSelf } : envParsed || EMPTY_OBJECT
+  const env = { ...props.env, ...envSelf }
 
   return {
     contextBinding,
     distance,
-    env: JSON.stringify(env),
+    env,
     isEditing,
     isEditingPath,
     isEditingAncestor: isEditingPath && !isEditing,
@@ -420,8 +418,7 @@ export const SubthoughtsComponent = ({
   const isEditingAncestor = isEditingPath && !isEditing
   const show = depth < MAX_DEPTH && (isEditingAncestor || isExpanded)
 
-  const envParsed = JSON.parse(env || '{}') as LazyEnv
-  const { zoom } = useZoom({ env: envParsed, isEditing, isEditingPath, simplePath })
+  const { zoom } = useZoom({ env, isEditing, isEditingPath, simplePath })
 
   // useEffect(() => {
   //   if (isHovering) {
@@ -586,7 +583,7 @@ export const SubthoughtsComponent = ({
             }
 
             const childPath = getChildPath(state, child.id, simplePath, showContexts)
-            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
+            const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
 
             /** Returns true if the cursor in in the child path. */
             const isEditingChildPath = () => isDescendantPath(state.cursor, childPath)

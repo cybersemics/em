@@ -1,4 +1,5 @@
 import { ConnectDropTarget } from 'react-dnd'
+import LazyEnv from './LazyEnv'
 import Path from './Path'
 import SimplePath from './SimplePath'
 import ThoughtId from './ThoughtId'
@@ -6,6 +7,7 @@ import ThoughtId from './ThoughtId'
 interface VirtualThoughtProps {
   depth: number
   dropTarget?: ConnectDropTarget
+  env?: LazyEnv
   indexChild: number
   indexDescendant: number
   last?: boolean

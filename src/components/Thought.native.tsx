@@ -6,7 +6,6 @@ import Context from '../@types/Context'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Index from '../@types/IndexType'
-import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -229,9 +228,8 @@ const ThoughtContainer = ({
     }
   }, [isBeingHoveredOver])
 
-  const envParsed = JSON.parse(env || '{}') as LazyEnv
-  const hideBullet = useHideBullet({ children, env: envParsed, hideBulletProp, isEditing, simplePath, thoughtId })
-  const style = useStyle({ children, env: envParsed, styleProp, thoughtId })
+  const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
+  const style = useStyle({ children, env, styleProp, thoughtId })
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })

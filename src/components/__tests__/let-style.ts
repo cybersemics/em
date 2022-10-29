@@ -24,7 +24,7 @@ it('define =style in a =let expressions and apply it to a child of the parent co
   ])
 
   const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
-  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 0.5)' })
+  expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')
   expect(thoughtNuzzle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })

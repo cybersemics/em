@@ -21,7 +21,8 @@ import once from '../util/once'
 import Thought from './Thought'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
-const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env?: LazyEnv }): ThoughtId | null => {
+  if (!env) return null
   const children = getAllChildrenAsThoughts(state, id)
   const child = children.find(
     child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
@@ -55,7 +56,7 @@ const Subthought = ({
   child: ThoughtType
   depth: number
   distance: number
-  env: string
+  env?: LazyEnv
   hideBullet?: boolean
   index?: number
   isHeader?: boolean
@@ -89,20 +90,19 @@ const Subthought = ({
     [child.id, parentPath, showContexts, showContexts && childPathUnstable.length],
   )
 
-  const envParsed = JSON.parse(env || '{}')
-  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env: envParsed }))
+  const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: child.id, env }))
 
   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
 
-  const style = useMemo(
-    () => ({
-      ...styleGrandchildren,
+  const style = useMemo(() => {
+    const styleMerged: React.CSSProperties = {
       ...(child.value !== '=children' ? styleChildren : null),
+      ...(child.value !== '=style' ? styleGrandchildren : null),
       ...(isEditingChildPath() ? getStyle(state, childEnvZoomId()) : null),
-    }),
-    [styleGrandchildren, styleChildren, child.value !== '=children', isEditingChildPath()],
-  )
+    }
+    return styleMerged
+  }, [styleGrandchildren, styleChildren, child.value !== '=children', isEditingChildPath()])
 
   // TODO: ROOT gets appended when isContextPending
   // What should appendedChildPath be?
@@ -168,7 +168,7 @@ const Subthought = ({
       rank={child.rank}
       showContexts={showContexts}
       simplePath={childPath}
-      style={Object.keys(style).length > 0 ? style : undefined}
+      style={style}
       styleContainer={styleContainer}
     />
   ) : null
