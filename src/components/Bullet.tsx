@@ -46,7 +46,7 @@ interface BulletProps {
 const mapStateToProps = (state: State, props: BulletProps) => {
   const { invalidState } = state
   const thought = getThoughtById(state, props.thoughtId)
-  const lexeme = getLexeme(state, thought?.value)
+  const lexeme = thought ? getLexeme(state, thought.value) : null
   const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(props.simplePath)
   return {
     // if being edited and meta validation error has occured
