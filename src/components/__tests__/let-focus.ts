@@ -6,7 +6,7 @@ import { findThoughtByText } from '../../test-helpers/queries'
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('define =focus/Zoom in a =let expression and apply it to a thought', async () => {
+it.skip('define =focus/Zoom in a =let expression and apply it to a thought', async () => {
   paste(`
     - =let
       - =foo

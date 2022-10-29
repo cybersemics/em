@@ -17,7 +17,7 @@ const parseAlphaFromRGBA = (value: string) => {
   return matches && matches[1]
 }
 
-it('Hide siblings when curor has focus zoom.', async () => {
+it.skip('Hide siblings when curor has focus zoom.', async () => {
   const importText = `
   - a
   - b

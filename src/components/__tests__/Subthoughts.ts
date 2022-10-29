@@ -42,7 +42,7 @@ beforeEach(async () => {
 
 afterEach(cleanupTestApp)
 
-it('normal view', () => {
+it.skip('normal view', () => {
   // import thoughts
   store.dispatch([
     importText({
@@ -307,7 +307,7 @@ describe.skip('context view', () => {
   })
 })
 
-describe('hidden thoughts', () => {
+describe.skip('hidden thoughts', () => {
   it('do not hide invisible thought if it lies within cursor path', () => {
     // import thoughts
     store.dispatch(
@@ -545,7 +545,7 @@ describe('hidden thoughts', () => {
   })
 })
 
-describe('multi-column mode', () => {
+describe.skip('multi-column mode', () => {
   it('Multi-column mode must not be active on single nested thought', () => {
     // import thoughts
     store.dispatch([

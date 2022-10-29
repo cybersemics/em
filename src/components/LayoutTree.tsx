@@ -117,7 +117,7 @@ const VirtualThought = ({
   )
   const hideBulletsChildren = useSelector((state: State) => attribute(state, childrenAttributeId, '=bullet') === 'None')
   const hideBulletsGrandchildren = useSelector(
-    (state: State) => attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
+    (state: State) => thought.value !== '=bullet' && attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
   )
 
   const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId), _.isEqual)
