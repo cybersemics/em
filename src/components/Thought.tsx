@@ -5,7 +5,6 @@ import { connect, useDispatch, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
-import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -29,7 +28,6 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import { store } from '../store'
-import alpha from '../util/alpha'
 import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -129,7 +127,7 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
 
 /** Returns a unique className and injectStyle function that can be used to style pseudo elements. Apply the className to the desired element and render injectStyle() nearby. The pseudo selector, e.g. ::before, will be appended to the unique className, styling a pseudo element directly, or a descendant pseudo element, as determined by the selector. */
-const pseudo = (pseudoSelector: string, style: Index<string>) => {
+const pseudo = (pseudoSelector: string, style: React.CSSProperties) => {
   const className = `pseudo-${createId()}`
 
   // simple encoding of style dictionary
@@ -149,19 +147,6 @@ const pseudo = (pseudoSelector: string, style: Index<string>) => {
     className,
     injectStyle: styleElement,
   }
-}
-
-/** Returns placeholder pseudo styles that animate with autofocus. */
-const useAutofocusPlaceholder = (autofocus?: Autofocus) => {
-  const colors = useSelector(themeColors)
-  return useMemo(
-    () =>
-      pseudo(' [placeholder]:empty::before', {
-        color: alpha(colors.fg, autofocus === 'hide' || autofocus === 'hide-parent' ? 0 : 0.5),
-        transition: 'color 0.75s ease-out',
-      }),
-    [autofocus, colors],
-  )
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -371,7 +356,11 @@ const ThoughtContainer = ({
   }, [])
 
   // placeholder style animates with autofocus
-  const placeholder = useAutofocusPlaceholder(autofocus)
+  const colors = useSelector(themeColors)
+  const placeholder = useMemo(
+    () => pseudo(' [placeholder]:empty::before', { color: colors.fg, opacity: 0.5 }),
+    [colors],
+  )
 
   // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
   const styleWithoutColors = useMemo((): React.CSSProperties => {
