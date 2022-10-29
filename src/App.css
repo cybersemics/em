@@ -1233,7 +1233,7 @@ h1 .num-contexts {
   margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
   padding-left: 100px;
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
+  transition: transform 0.75s ease-out, opacity 0.75s ease-out;
 }
 
 .child > .thought-container > .bullet .glyph {
@@ -1529,194 +1529,6 @@ h1 .num-contexts {
 }
 
 /* autofocus */
-/* NOTE: autofocus-hide > .child:not(.editing) is for =focus/Zoom; */
-
-.autofocus-hide,
-.autofocus-hide a,
-.autofocus-hide-parent,
-.autofocus-hide-parent a,
-.children-new.autofocus-dim a,
-.children-new.autofocus-hide a,
-.children-new.autofocus-hide-parent a {
-  cursor: default;
-}
-
-.autofocus-show,
-.autofocus-dim,
-.autofocus-hide > .child:not(.editing).cursor-parent {
-  cursor: auto;
-}
-
-.autofocus-show a,
-.autofocus-dim a,
-.autofocus-hide > .child:not(.editing).cursor-parent a {
-  cursor: pointer;
-}
-
-.autofocus-hide > .child:not(.editing):not(.cursor-parent) > .thought-container > .bullet .glyph,
-.autofocus-hide-parent > .child:not(.cursor-parent) > .thought-container > .bullet .glyph {
-  opacity: 0;
-  pointer-events: none; /* prevent hidden bullets from being "selected", causing the focus to be lost and a subsequent tab to select a hidden thought */
-}
-
-/* sibling of cursor in =focus Zoom */
-.autofocus-hide.zoomCursor > .child:not(.editing).cursor-parent > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
-.autofocus-hide.zoomParent > .child:not(.editing).cursor-grandparent > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
-.autofocus-hide.zoomCursor > .child:not(.editing) > .thought-container > .note {
-  color: rgba(0, 0, 0, 0);
-}
-.dark .autofocus-hide.zoomCursor > .child:not(.editing).cursor-parent > .thought-container > .note {
-  color: rgba(0, 0, 0, 0);
-}
-
-/* =focus Zoom in table column 1 */
-/* hide nieces when cursor is in column 1 */
-.autofocus-dim.zoomCursor > .child:not(.editing) > .thought-container {
-  color: rgba(0, 0, 0, 0);
-}
-
-/* note */
-.autofocus-show > .child > .thought-container > .note {
-  color: rgba(7, 7, 7, 0.5);
-}
-.autofocus-dim > .child > .thought-container > .note {
-  color: rgba(7, 7, 7, 0.25);
-}
-.autofocus-dim > .child.editing > .thought-container > .note {
-  color: rgba(7, 7, 7, 0.5);
-}
-.autofocus-dim > .child.cursor-parent > .thought-container > .note {
-  color: rgba(7, 7, 7, 0.5);
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .note {
-  color: rgba(0, 0, 0, 0);
-}
-.autofocus-hide > .child:not(.editing).cursor-parent > .thought-container > .note {
-  color: rgba(7, 7, 7, 0.25);
-}
-.autofocus-hide-parent > .child > .thought-container > .note {
-  color: rgba(7, 7, 7, 0);
-}
-
-/* function */
-.autofocus-show > .function > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 1);
-}
-.autofocus-dim > .function > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 0.5);
-}
-.autofocus-dim > .function.editing > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 1);
-}
-.autofocus-dim > .function.cursor-parent > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 1);
-}
-.autofocus-hide > .function > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 0);
-}
-.autofocus-hide > .function.cursor-parent > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 0.5);
-}
-.autofocus-hide-parent > .function > .thought-container > .editable-annotation {
-  background-color: rgba(230, 230, 230, 0);
-}
-
-.dark .autofocus-show > .function > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 1);
-}
-.dark .autofocus-dim > .function > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 0.5);
-}
-.dark .autofocus-dim > .function.editing > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 1);
-}
-.dark .autofocus-dim > .function.cursor-parent > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 1);
-}
-.dark .autofocus-hide > .function > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 0);
-}
-.dark .autofocus-hide > .function.cursor-parent > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 0.5);
-}
-.dark .autofocus-hide-parent > .function > .thought-container > .editable-annotation {
-  background-color: rgba(50, 50, 50, 0);
-}
-
-/* divider */
-.divider {
-  transition: opacity 0.2s ease-in-out;
-}
-.autofocus-dim > .child > .thought-container > .thought .divider {
-  opacity: 0.5;
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .thought .divider {
-  opacity: 0;
-}
-.autofocus-hide-parent > .child > .thought-container > .thought .divider {
-  opacity: 0;
-}
-
-/* external-link */
-.external-link {
-  transition: opacity 0.2s ease-in-out;
-}
-.autofocus-dim > .child > .thought-container > .thought-annotation .external-link {
-  opacity: 0.5;
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .thought-annotation .external-link {
-  opacity: 0;
-}
-.autofocus-hide-parent > .child > .thought-container > .thought-annotation .external-link {
-  opacity: 0;
-}
-
-/* children-subheading */
-.children-subheading {
-  transition: opacity 0.2s ease-in-out;
-}
-.autofocus-show > .child > .children-subheading {
-  opacity: 1;
-}
-.autofocus-dim > .child > .children-subheading {
-  opacity: 0.5;
-}
-.autofocus-dim > .child.editing > .children-subheading {
-  opacity: 1;
-}
-.autofocus-dim > .child.cursor-parent > .children-subheading {
-  opacity: 1;
-}
-.autofocus-hide > .child:not(.editing) > .children-subheading {
-  opacity: 0;
-}
-.autofocus-hide > .child:not(.editing).cursor-parent > .children-subheading {
-  opacity: 0.5;
-}
-.autofocus-hide-parent > .child > .children-subheading {
-  opacity: 0;
-}
-
-/* home icon */
-.home {
-  transition: opacity 0.75s ease-out;
-}
-.autofocus-hide > .child:not(.editing) > .thought-container > .thought .home {
-  opacity: 0;
-}
-.autofocus-hide-parent > .child > .thought-container > .thought .home {
-  opacity: 0;
-}
-
-/* shift thoughts over as cursor navigates deeper */
-.autofocus-hide,
-.autofocus-hide-parent {
-  transform: translate3d(-1.2em, 0, 0);
-}
 
 /*
   At deeper depths, the available width becomes smaller and smaller. Due to the left-translate (above), the left edge will be kept relatively close to the left edge of the screen as one navigates deeper. However its bounding box is the same, so its width will still get smaller and smaller, although it will appear that it is getting compressed from the right. See: https://github.com/cybersemics/em/issues/752.
@@ -1725,18 +1537,13 @@ h1 .num-contexts {
 
   This has the downside of causing multi-line text to reflow as one navigates deeper, as its bounding box is now dependent on its depth in the hierarchy. See: https://github.com/cybersemics/em/issues/251. Only apply this to .autofocus-hide-parent instead of both 2 & 3 so that this side effect is less pronounced. Ultimately there is a natural tradeoff, and it's more important that the full width is preserved.
 */
-.autofocus-hide-parent {
+/*.autofocus-hide-parent {
   margin-right: -1.2em;
-}
+}*/
 
 /* new thought */
 .children-new {
   transition: all 0.75s ease-out;
-}
-.children-new.autofocus-dim,
-.children-new.autofocus-hide,
-.children-new.autofocus-hide-parent {
-  opacity: 0;
 }
 
 /* overflow:hidden breaks sticky header */
@@ -2298,10 +2105,6 @@ code,
 /* the drop-target is to the right (see above), but the drop-hover needs to be positioned normally where the thought will be inserted, so offset the drop-target offset. */
 .mobile .drop-end:not(.child) .drop-hover {
   margin-left: calc(-5.4em - 13px);
-}
-
-.children.autofocus-dim > .child.drop-end {
-  margin-top: 0.4em;
 }
 
 /*.child.expanded:not(.leaf) + .child > .thought-container .drop-hover {

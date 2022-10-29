@@ -18,7 +18,6 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import { isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
-import useAutofocus from '../hooks/useAutofocus'
 import useDragHold from '../hooks/useDragHold'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
@@ -371,9 +370,6 @@ const ThoughtContainer = ({
     }
   }, [])
 
-  // colors that are applied to the container
-  const styleAutofocus = useAutofocus(simplePath, autofocus, style)
-
   // placeholder style animates with autofocus
   const placeholder = useAutofocusPlaceholder(autofocus)
 
@@ -436,7 +432,6 @@ const ThoughtContainer = ({
   //   isTable,
   //   invalidOption,
   //   isChildHovering,
-  //   styleAutofocus,
   //   placeholder,
   //   styleWithoutColors,
   //   ...dragHoldResult.props,
@@ -458,7 +453,7 @@ const ThoughtContainer = ({
         {...dragHoldResult.props}
         aria-label='thought-container'
         style={{
-          ...styleAutofocus,
+          ...style,
           ...styleContainer,
           ...(globals.simulateDrop
             ? {
@@ -525,7 +520,6 @@ const ThoughtContainer = ({
 
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
-              autofocus={autofocus || 'show'}
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
@@ -548,7 +542,6 @@ const ThoughtContainer = ({
           {placeholder.injectStyle()}
 
           <ThoughtAnnotation
-            autofocus={autofocus}
             env={env}
             minContexts={allowSingleContext ? 0 : 2}
             path={path}
@@ -572,7 +565,7 @@ const ThoughtContainer = ({
             view={view}
           />
 
-          <Note autofocus={autofocus || 'show'} path={simplePath} />
+          <Note path={simplePath} />
         </div>
 
         {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}

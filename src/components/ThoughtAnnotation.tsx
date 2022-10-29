@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import moize from 'moize'
 import React, { useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import Autofocus from '../@types/Autofocus'
 import Connected from '../@types/Connected'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -11,7 +10,6 @@ import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
 import { EM_TOKEN, REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
 import { isInternalLink } from '../device/router'
-import useAutofocus from '../hooks/useAutofocus'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -36,7 +34,6 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  autofocus?: Autofocus
   editingValue?: string | null
   env?: string
   focusOffset?: number
@@ -119,7 +116,6 @@ const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
-  autofocus,
   path,
   simplePath,
   isEditing,
@@ -203,7 +199,6 @@ const ThoughtAnnotation = ({
     setCalculateContexts(true)
   }, [])
 
-  const styleAutofocus = useAutofocus(simplePath, autofocus, styleAnnotation)
   const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
   const showSuperscript =
     !hideSuperscriptsSetting &&
@@ -236,7 +231,6 @@ const ThoughtAnnotation = ({
             padding: '0 3px',
             marginLeft: -3,
             ...styleAnnotation,
-            ...styleAutofocus,
           }}
         >
           <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />

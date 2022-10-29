@@ -18,7 +18,6 @@ import equalPath from '../util/equalPath'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
-import safeRefMerge from '../util/safeRefMerge'
 import Thought from './Thought'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
@@ -49,8 +48,7 @@ const Subthought = ({
   showContexts,
   styleChildren,
   styleGrandchildren,
-  styleContainerChildren,
-  styleContainerGrandchildren,
+  styleContainer,
 }: {
   allowSingleContext?: boolean
   autofocus?: Autofocus
@@ -68,9 +66,8 @@ const Subthought = ({
   prevChildId?: ThoughtId
   showContexts: boolean
   styleChildren?: React.CSSProperties
-  styleContainerChildren?: React.CSSProperties
+  styleContainer?: React.CSSProperties
   styleGrandchildren?: React.CSSProperties
-  styleContainerGrandchildren?: React.CSSProperties
 }) => {
   const state = store.getState()
   const { cursor } = state
@@ -98,15 +95,13 @@ const Subthought = ({
   /** Returns true if the cursor is contained within the child path, i.e. the child is a descendant of the cursor. */
   const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
 
-  const style = {
-    ...styleGrandchildren,
-    ...(child.value !== '=children' ? styleChildren : null),
-    ...(isEditingChildPath() ? getStyle(state, childEnvZoomId()) : null),
-  }
-
-  const styleContainer = useMemo(
-    () => safeRefMerge(styleContainerGrandchildren, styleContainerChildren),
-    [styleContainerChildren, styleContainerGrandchildren],
+  const style = useMemo(
+    () => ({
+      ...styleGrandchildren,
+      ...(child.value !== '=children' ? styleChildren : null),
+      ...(isEditingChildPath() ? getStyle(state, childEnvZoomId()) : null),
+    }),
+    [styleGrandchildren, styleChildren, child.value !== '=children', isEditingChildPath()],
   )
 
   // TODO: ROOT gets appended when isContextPending
@@ -144,12 +139,10 @@ const Subthought = ({
   //   showContexts,
   //   styleChildren,
   //   styleGrandchildren,
-  //   styleContainerChildren,
-  //   styleContainerGrandchildren,
+  //   styleContainer,
   //   // hooks
   //   childPathUnstable,
   //   childPath,
-  //   styleContainer,
   // })
 
   return child ? (
@@ -176,7 +169,7 @@ const Subthought = ({
       showContexts={showContexts}
       simplePath={childPath}
       style={Object.keys(style).length > 0 ? style : undefined}
-      styleContainer={styleContainer || undefined}
+      styleContainer={styleContainer}
     />
   ) : null
 }

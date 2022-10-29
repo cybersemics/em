@@ -258,8 +258,6 @@ const ThoughtContainer = ({
       <View style={[directionRow, alignItemsCenter]}>
         {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
           <Bullet
-            // TODO: autofocus
-            autofocus={'show'}
             isEditing={isEditing}
             thoughtId={thoughtId}
             leaf={isLeaf}
@@ -299,11 +297,7 @@ const ThoughtContainer = ({
           view={view}
         />
       </View>
-      <Note
-        // TOOD: autofocus
-        autofocus={'show'}
-        path={simplePath}
-      />
+      <Note path={simplePath} />
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 

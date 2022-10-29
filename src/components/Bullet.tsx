@@ -1,7 +1,6 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import Autofocus from '../@types/Autofocus'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -27,7 +26,6 @@ import parentOf from '../util/parentOf'
 // •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
-  autofocus: Autofocus
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
@@ -62,7 +60,6 @@ const mapStateToProps = (state: State, props: BulletProps) => {
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
-  autofocus,
   dark,
   fontSize,
   invalid,
@@ -169,7 +166,6 @@ const Bullet = ({
       <path
         className={classNames({ 'glyph-fg': true, triangle: true, ...classes })}
         style={{
-          fillOpacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
           transformOrigin: calculateTransformOrigin(),
         }}
         d={path}
@@ -239,7 +235,6 @@ const Bullet = ({
         viewBox='0 0 600 600'
         style={{
           ...svgSizeStyle,
-          fillOpacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
           marginBottom: vendorSpecificData.glyphMarginBottom,
           ...(isHighlighted
             ? {

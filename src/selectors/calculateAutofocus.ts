@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -52,4 +53,4 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
     : 'hide'
 }
 
-export default calculateAutofocus
+export default _.curryRight(calculateAutofocus)

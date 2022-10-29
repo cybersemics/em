@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -95,13 +95,13 @@ const VirtualThought = ({
 
   /** Calculates the autofocus state to hide or dim thoughts.
    * Note: The following properties are applied to the immediate children with given class.
-   * - autofocus-show fully visible
-   * - autofocus-dim dimmed
-   * - autofocus-hide shifted left and hidden
-   * - autofocus-hide-parent shiifted left and hidden
+   * - show fully visible
+   * - dim dimmed
+   * - hide shifted left and hidden
+   * - hide-parent shifted left and hidden
    * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
    */
-  const autofocus = useSelector((state: State) => calculateAutofocus(state, simplePath))
+  const autofocus = useSelector(calculateAutofocus(simplePath))
 
   const childrenAttributeId = useSelector(
     (state: State) =>
@@ -131,6 +131,15 @@ const VirtualThought = ({
     _.isEqual,
   )
 
+  const styleContainer = useMemo(
+    () => ({
+      opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+      ...styleContainerChildren,
+      ...styleContainerGrandchildren,
+    }),
+    [autofocus, styleContainerChildren, styleContainerGrandchildren],
+  )
+
   return (
     <>
       <Subthought
@@ -154,8 +163,7 @@ const VirtualThought = ({
         // showContexts={showContexts}
         showContexts={false}
         styleChildren={styleChildren || undefined}
-        styleContainerChildren={styleContainerChildren || undefined}
-        styleContainerGrandchildren={styleContainerGrandchildren || undefined}
+        styleContainer={styleContainer}
         styleGrandchildren={styleGrandchildren || undefined}
         // zoomCursor={zoomCursor}
       />

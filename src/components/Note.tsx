@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
-import Autofocus from '../@types/Autofocus'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -23,11 +22,6 @@ import { store } from '../store'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
-
-interface NoteProps {
-  autofocus: Autofocus
-  path: Path
-}
 
 /** Sets the cursor on the note's thought as it is being edited. */
 const setCursorOnLiveThought = ({ path }: { path: Path }) => {
@@ -54,7 +48,7 @@ const noteValue = (state: State, id: ThoughtId) => {
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
-const Note = React.memo(({ autofocus, path }: NoteProps) => {
+const Note = React.memo(({ path }: { path: Path }) => {
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
@@ -131,7 +125,6 @@ const Note = React.memo(({ autofocus, path }: NoteProps) => {
     <div
       className='note children-subheading text-note text-small'
       style={{
-        color: `rgba(255, 255, 255, ${autofocus === 'show' ? 0.5 : autofocus === 'dim' ? 0.25 : 0})`,
         lineHeight: 1.25,
         // negative margin to compensate for line-height. See .thought-container
         marginTop: -3,
