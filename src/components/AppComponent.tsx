@@ -3,10 +3,9 @@ import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react
 import { connect, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import State from '../@types/State'
-import alert from '../action-creators/alert'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
-import { AlertType, BASE_FONT_SIZE } from '../constants'
+import { BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import isTutorial from '../selectors/isTutorial'
@@ -41,7 +40,7 @@ import Tutorial from './Tutorial'
 const Content = React.lazy(() => import('./Content'))
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
-const { handleGestureEnd, handleGestureSegment } = inputHandlers(store)
+const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {
   dark?: boolean
@@ -98,15 +97,6 @@ type Props = StateProps & DispatchProps
 
 /** Cancel gesture if there is an active text selection or active drag. */
 const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress
-
-/** Dismiss gesture hint that is shown by alert. */
-const handleGestureCancel = () => {
-  store.dispatch((dispatch, getState) => {
-    if (getState().alert?.alertType === AlertType.GestureHintExtended) {
-      dispatch(alert(null))
-    }
-  })
-}
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.

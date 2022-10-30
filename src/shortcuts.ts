@@ -228,6 +228,19 @@ export const inputHandlers = (store: Store<State, any>) => ({
     })
   },
 
+  /** Dismiss gesture hint that is shown by alert. */
+  handleGestureCancel: () => {
+    clearTimeout(gestureHintExtendedTimeout)
+    store.dispatch((dispatch, getState) => {
+      if (
+        getState().alert?.alertType === AlertType.GestureHint ||
+        getState().alert?.alertType === AlertType.GestureHintExtended
+      ) {
+        dispatch(alert(null))
+      }
+    })
+  },
+
   /** Global keyUp handler. */
   keyUp: (e: KeyboardEvent) => {
     // track meta key for expansion algorithm
