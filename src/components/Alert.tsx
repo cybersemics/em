@@ -43,7 +43,7 @@ const ShortcutGestureHint = ({
         highlight={gestureInProgress.length}
         path={gestureString(shortcut)}
         strokeWidth={4}
-        style={{ position: 'absolute', left: -size, top: -size / 3.2 }}
+        style={{ position: 'absolute', left: '-2.2em', top: '-0.75em' }}
         width={45}
         height={45}
       />{' '}
