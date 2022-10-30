@@ -239,11 +239,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
       // In rare cases release won't be called. See touchend above.
       onPanResponderRelease: (e: GestureResponderEvent, gestureState: GestureState) => {
-        const clientEnd = {
-          x: gestureState.moveX,
-          y: gestureState.moveY,
+        if (!this.abandon) {
+          const clientEnd = {
+            x: gestureState.moveX,
+            y: gestureState.moveY,
+          }
+          this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
-        this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         this.reset()
       },
 
