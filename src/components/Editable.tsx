@@ -396,8 +396,11 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       // if related target is not editable wait until the next render to determine if we have really blurred
       // otherwise editing may be incorrectly set to false when clicking on another thought from edit mode (which results in a blur and focus in quick succession)
       setTimeout(() => {
+        // detect speech-to-text
         // needs to be deferred to the next tick, otherwise causes store.getState() to be invoked in a reducer (???)
-        dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
+        if (value.split(/<div>/g).length > 1) {
+          dispatch(importSpeechToText({ simplePath, value: (e.target as HTMLInputElement).value }))
+        }
 
         if (blurring) {
           blurring = false
