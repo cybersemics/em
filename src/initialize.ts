@@ -211,6 +211,27 @@ const windowEm = {
   }),
   hashThought,
   moize,
+  // subscribe state changes for debugging
+  // e.g. em.onStateChange(state => state.editingValue)
+  onStateChange: <T>(
+    select: (state: State) => T,
+    // default logging function
+    f: (prev: T | null, current: T) => void = (prev: T | null, current: T) => console.info(`${prev} → ${current}`),
+  ) => {
+    let current: T
+    /** Store listener. */
+    const onState = () => {
+      const prev = current
+      current = select(store.getState())
+
+      if (prev !== current) {
+        f(prev, current)
+      }
+    }
+
+    // return unsubscribe function
+    return store.subscribe(onState)
+  },
   prettyPath,
   store,
   // helper functions that will be used by puppeteer tests
