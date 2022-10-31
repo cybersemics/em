@@ -19,7 +19,6 @@ describe('all platforms', () => {
     refresh,
     waitForEditable,
     waitUntil,
-    waitForState,
     waitForThoughtExistInDb,
   } = helpers()
 
@@ -137,7 +136,6 @@ describe('all platforms', () => {
     // Set cursor to null
     await click('#content')
 
-    await waitForState('isPushing', false)
     await waitForThoughtExistInDb('a')
     await waitForThoughtExistInDb('b')
 

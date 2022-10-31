@@ -34,7 +34,7 @@ From jest-image-snapshot README:
 */
 // jest.retryTimes(3)
 
-const { click, paste, press, screenshot, scroll, type, waitForState } = helpers()
+const { click, paste, press, screenshot, scroll, type } = helpers()
 
 /** Set up the snapshot tests. These are defined in a function so they can be run at different font sizes (via adjusting the font size in beforeEach). */
 const testSuite = () => {
@@ -178,8 +178,6 @@ const testSuite = () => {
 
 describe('Font Size: 18 (default)', () => {
   beforeEach(async () => {
-    await waitForState('isPushing', false)
-
     // TODO: identify what needs to be waited for specifically
     await delay(1000)
   })
@@ -190,8 +188,6 @@ describe('Font Size: 18 (default)', () => {
 
 describe('Font Size: 14', () => {
   beforeEach(async () => {
-    await waitForState('isPushing', false)
-
     // TODO: identify what needs to be waited for specifically
     await delay(1000)
 
@@ -216,8 +212,6 @@ describe('Font Size: 14', () => {
 
 describe('Font Size: 13', () => {
   beforeEach(async () => {
-    await waitForState('isPushing', false)
-
     // TODO: identify what needs to be waited for specifically
     await delay(1000)
 
@@ -243,8 +237,6 @@ describe('Font Size: 13', () => {
 
 describe('Font Size: 22', () => {
   beforeEach(async () => {
-    await waitForState('isPushing', false)
-
     // TODO: identify what needs to be waited for specifically
     await delay(1000)
 

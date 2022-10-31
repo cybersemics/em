@@ -5,12 +5,15 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import clearPushQueue from '../action-creators/clearPushQueue'
 import deleteThought from '../action-creators/deleteThought'
-import isPushing from '../action-creators/isPushing'
 import pull from '../action-creators/pull'
 import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import push from '../action-creators/push'
 import getThoughtById from '../selectors/getThoughtById'
+import ministore from '../util/ministore'
 import parentOf from '../util/parentOf'
+
+// debounce pushQueue updates to avoid pushing on every action
+const DEBOUNCE_DELAY = 100
 
 /** Merges multiple push batches into a single batch. Uses the last value of local/remote. You may also pass partial batches, such as an object that contains only lexemeIndexUpdates. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
@@ -49,6 +52,10 @@ const pushBatch = (batch: PushBatch) => {
     updates: batch.updates,
   })
 }
+
+export const syncStore = ministore({
+  isPushing: false,
+})
 
 /** Pull all descendants of pending deletes and dispatch deleteThought to fully delete. */
 const flushDeletes =
@@ -101,7 +108,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
 
   if (pushQueue.length === 0) return Promise.resolve()
 
-  dispatch(isPushing({ value: true }))
+  syncStore.update({ isPushing: true })
 
   const combinedBatch = pushQueue.reduce(mergeBatch)
 
@@ -161,38 +168,23 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   ])
 
   // turn off isPushing at the end
-  dispatch((dispatch, getState) => {
-    if (getState().isPushing) {
-      dispatch(isPushing({ value: false }))
-    }
-  })
+  syncStore.update({ isPushing: false })
 }
-
-// debounce pushQueue updates to avoid pushing on every action
-const debounceDelay = 100
 
 /** Flushes the push queue when updates are detected. */
 const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
-  const flushQueueDebounced = _.debounce(
-    // clear queue immediately to prevent pushing more than once
-    // then flush the queue
-    () => {
-      dispatch(flushPushQueue()).catch((e: Error) => {
-        console.error('flushPushQueue error', e)
-      })
-      dispatch(clearPushQueue())
-    },
-    debounceDelay,
-  )
+  const flushQueueDebounced = _.debounce(() => {
+    dispatch(flushPushQueue()).catch((e: Error) => {
+      console.error('flushPushQueue error', e)
+    })
+    dispatch(clearPushQueue())
+  }, DEBOUNCE_DELAY)
 
   return next => action => {
     next(action)
 
     // if state has queued updates, flush the queue
-    // do not trigger on isPushing to prevent infinite loop
-    const state = getState()
-
-    if (state.pushQueue.length > 0 && action.type !== 'isPushing') {
+    if (getState().pushQueue.length > 0) {
       flushQueueDebounced()
     }
   }

@@ -61,7 +61,6 @@ interface State {
   hoverZone?: DropThoughtZone
   invalidState: boolean
   isLoading: boolean
-  isPushing?: boolean
   // History of edit points that can be navigated with the jump command.
   // Cannot use undoHistory because it omits the cursor from some edits.
   // i.e. It causes the 'jump after new subthought' to fail.

@@ -121,7 +121,6 @@ export const initialState = (created: Timestamp = timestamp()) => {
     expandHoverBottomPaths: {},
     invalidState: false,
     isLoading: true,
-    isPushing: false,
     jumpHistory: [],
     jumpIndex: 0,
     latestShortcuts: [],

@@ -9,10 +9,12 @@ import showModal from '../action-creators/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
+import { syncStore } from '../redux-middleware/pushQueue'
 
 /** Show the user's login and saving status. */
 const Status = () => {
-  const isPushingOrQueued = useSelector((state: State) => state.isPushing || state.pushQueue.length > 0)
+  const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
+  const isPushing = syncStore.useSelector(({ isPushing }) => isPushing)
   const status = useSelector((state: State) => state.status)
   return (
     <>
@@ -24,7 +26,7 @@ const Status = () => {
           // pushQueue will be empty after all updates have been flushed to Firebase.
           // isPushing is set back to true only when all updates have been committed.
           // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
-          isPushingOrQueued && (status === 'loading' || status === 'loaded')
+          (isPushing || isQueued) && (status === 'loading' || status === 'loaded')
             ? 'Saving'
             : status === 'loaded'
             ? 'Online'
