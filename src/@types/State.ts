@@ -73,6 +73,9 @@ interface State {
   modals: Index<{ complete?: boolean }>
   // noteFocus is true if the caret is on the note
   noteFocus: boolean
+  // NOTE: Clearing the pushQueue is delayed until the *next* action to avoid an extra dispatch.
+  // It will be cleared by the time any other reducer runs, but do not assume it is up to date if you access it directly from store.getState().
+  // See: /redux-enhancers/clearPushQueue
   pushQueue: PushBatch[]
   recentlyEdited: RecentlyEditedTree
   redoPatches: Patch[]

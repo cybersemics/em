@@ -7,6 +7,7 @@ import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import appReducer from './reducers/app'
+import clearPushQueueEnhancer from './redux-enhancers/clearPushQueue'
 import cursorChangedEnhancer from './redux-enhancers/cursorChanged'
 import undoRedoEnhancer from './redux-enhancers/undoRedoEnhancer'
 import multi from './redux-middleware/multi'
@@ -27,5 +28,7 @@ export const store = createStore(
     applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory, sessionManager),
     undoRedoEnhancer,
     cursorChangedEnhancer,
+    // must go at the end to ensure it clears the pushQueue before other enhancers
+    clearPushQueueEnhancer,
   ),
 )
