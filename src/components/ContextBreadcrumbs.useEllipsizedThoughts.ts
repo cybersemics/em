@@ -4,6 +4,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
+import editingValueStore from '../stores/editingValue'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -26,14 +27,14 @@ const useEllipsizedThoughts = (
   const thoughtsOverflow =
     thoughtsLimit && simplePath.length > thoughtsLimit ? simplePath.length - thoughtsLimit + 1 : 0
 
+  const editingValue = editingValueStore.useState()
+
   // convert the SimplePath to a list of thought values
   // if editing, use the live editing value
   const thoughtValuesLive = useSelector(
     (state: State) =>
       simplePath.map(id =>
-        state.editingValue && state.cursor && id === head(state.cursor)
-          ? state.editingValue
-          : getThoughtById(state, id)?.value,
+        editingValue && state.cursor && id === head(state.cursor) ? editingValue : getThoughtById(state, id)?.value,
       ),
     _.isEqual,
   )

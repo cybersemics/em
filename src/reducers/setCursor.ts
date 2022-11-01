@@ -19,6 +19,7 @@ import expandThoughts from '../selectors/expandThoughts'
 import { getAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import simplifyPath from '../selectors/simplifyPath'
+import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -124,7 +125,8 @@ const setCursor = (
       thoughtsResolved.length >= 1 &&
       value!.toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
-  const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
+  // non-pure
+  const updatedOffset = offset ?? (editingValueStore.getState() !== null ? 0 : null)
 
   // only change editing status and expanded but do not move the cursor if cursor has not changed
   const stateNew = {
@@ -149,7 +151,6 @@ const setCursor = (
           // set cursorOffset to null if editingValue is null
           // (prevents Editable from calling selection.set on click since we want the default cursor placement in that case)
           contextViews: newContextViews,
-          editingValue: thoughtsResolved ? value : null,
         }
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear

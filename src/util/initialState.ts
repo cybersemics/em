@@ -115,7 +115,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     dragInProgress: false,
     editableNonce: 0,
     editing: null,
-    editingValue: null,
     enableLatestShortcutsDiagram: false,
     error: null,
     expanded: {},

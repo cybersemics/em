@@ -45,7 +45,6 @@ interface State {
   //   Is there a state value we can subscribe to re-render only thoughts that are needed?
   editableNonce: number
   editing: boolean | null
-  editingValue: string | null
   // show the latest activated shortcuts at the bottom of the screen for webcasts.
   enableLatestShortcutsDiagram: boolean
   error?: string | null

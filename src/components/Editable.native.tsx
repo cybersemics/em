@@ -14,7 +14,6 @@ import error from '../action-creators/error'
 import importText from '../action-creators/importText'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
-import setEditingValue from '../action-creators/setEditingValue'
 import setInvalidState from '../action-creators/setInvalidState'
 import tutorialNext from '../action-creators/tutorialNext'
 import {
@@ -39,6 +38,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
+import editingValueStore from '../stores/editingValue'
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -303,7 +303,7 @@ const Editable = ({
     // e.preventDefault() does not work
     // disabled={readonly} removes contenteditable property
 
-    dispatch(setEditingValue(newValue))
+    editingValueStore.update(value)
 
     if (newValue === oldValue) {
       if (readonly || uneditable || options) invalidStateError(null)
@@ -431,7 +431,7 @@ const Editable = ({
       // only setEditingValue if blur is not immediately followed by focus
       if (blurring) {
         blurring = false
-        dispatch(setEditingValue(null))
+        editingValueStore.update(null)
         // temporary states such as duplicate error states and cursorCleared are reset on blur
         dispatch(cursorCleared({ value: false }))
       }
@@ -447,7 +447,7 @@ const Editable = ({
     blurring = false
 
     setCursorOnThought({ editing: true })
-    dispatch(setEditingValue(value))
+    editingValueStore.update(value)
   }
 
   return (

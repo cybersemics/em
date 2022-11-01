@@ -10,6 +10,7 @@ import getSetting from '../selectors/getSetting'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
+import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 
@@ -39,7 +40,7 @@ const newThought =
   }): Thunk =>
   (dispatch, getState) => {
     const state = getState()
-    const { cursor, editingValue } = state
+    const { cursor } = state
     const tutorial = getSetting(state, 'Tutorial') !== 'Off'
     const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
@@ -63,11 +64,11 @@ const newThought =
       path &&
       !showContexts &&
       !value &&
-      editingValue &&
+      editingValueStore.getState() &&
       splitResult &&
       splitResult.left.length > 0 &&
       splitResult.right.length > 0 &&
-      splitResult.left.length < editingValue?.length
+      splitResult.left.length < (editingValueStore.getState() ?? '').length
 
     if ((!split || !uneditable) && isTouch && isSafari()) {
       asyncFocus()

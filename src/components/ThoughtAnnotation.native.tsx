@@ -20,14 +20,13 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
+import editingValueStore from '../stores/editingValue'
 import { fadeIn } from '../style/animations'
 import { commonStyles } from '../style/commonStyles'
-import appendToPath from '../util/appendToPath'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import once from '../util/once'
@@ -60,7 +59,7 @@ interface ThoughtAnnotationProps {
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
   const labelId = findDescendant(state, id, '=label')
   const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
-  const { editingValue } = state
+  const editingValue = editingValueStore.getState()
   return {
     __html: isEditing
       ? editingValue && value !== editingValue
@@ -99,20 +98,14 @@ const UrlIconLink = ({ url }: { url: string }) => (
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
-  const { cursor, invalidState, editingValue, showHiddenThoughts } = state
+  const { cursor, invalidState, showHiddenThoughts } = state
 
   const isEditing = equalPath(cursor, props.path)
-  const simplePathLive = isEditing
-    ? (appendToPath(parentOf(props.simplePath), head(cursor!)) as SimplePath)
-    : props.simplePath
 
   return {
-    editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,
     showHiddenThoughts,
-    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    isThoughtValueEditing: editingValue === headValue(state, simplePathLive),
   }
 }
 
@@ -125,13 +118,18 @@ const ThoughtAnnotation = ({
   minContexts = 2,
   dispatch,
   invalidState,
-  editingValue,
   style,
   showHiddenThoughts,
 }: Connected<ThoughtAnnotationProps>) => {
+  const valueLiveIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
+    isEditing ? editingValue : null,
+  )
   // only show real time update if being edited while having meta validation error
   // do not increase numContexts when in an invalid state since the thought has not been updated in state
-  const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
+  const isRealTimeContextUpdate = isEditing && invalidState && valueLiveIfEditing !== null
+
+  // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
+  editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
   const state = store.getState()
   const showContextsParent = useSelector((state: State) => {
@@ -153,7 +151,9 @@ const ThoughtAnnotation = ({
     return showContexts && isRoot(pathParent)
   })
 
-  const contexts = useSelector((state: State) => getContexts(state, isRealTimeContextUpdate ? editingValue! : value))
+  const contexts = useSelector((state: State) =>
+    getContexts(state, isRealTimeContextUpdate ? valueLiveIfEditing! : value),
+  )
 
   // delay rendering of superscript for performance
   // recalculate when Lexemes are loaded

@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import getThoughtById from '../../selectors/getThoughtById'
+import editingValueStore from '../../stores/editingValue'
 import head from '../../util/head'
 
 /** Returns true if the element has more than one line of text. */
@@ -11,7 +12,8 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const fontSize = useSelector((state: State) => state.fontSize)
 
   // re-render when live value changes
-  useSelector((state: State) => (isEditing ? state.editingValue : getThoughtById(state, head(simplePath))?.value))
+  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
+  editingValueStore.useSelector((editingValue: string | null) => (isEditing ? editingValue : value))
 
   useEffect(() => {
     if (contentRef.current) {

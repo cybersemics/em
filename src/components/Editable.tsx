@@ -14,7 +14,6 @@ import error from '../action-creators/error'
 import importSpeechToText from '../action-creators/importSpeechToText'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
-import setEditingValue from '../action-creators/setEditingValue'
 import setInvalidState from '../action-creators/setInvalidState'
 import toggleColorPicker from '../action-creators/toggleColorPicker'
 import tutorialNext from '../action-creators/tutorialNext'
@@ -40,6 +39,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
+import editingValueStore from '../stores/editingValue'
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -143,8 +143,8 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(() => {
     oldValueRef.current = value
-    if (isEditing && selection.isThought() && state.editingValue !== value) {
-      dispatch(setEditingValue(value))
+    if (isEditing && selection.isThought() && editingValueStore.getState() !== value) {
+      editingValueStore.update(value)
     }
   }, [value])
 
@@ -296,8 +296,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       // e.preventDefault() does not work
       // disabled={readonly} removes contenteditable property
 
-      dispatch(setEditingValue(newValue))
-
       if (newValue === oldValue) {
         if (contentRef.current) {
           contentRef.current.style.opacity = '1.0'
@@ -311,6 +309,8 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
 
         return
       }
+
+      editingValueStore.update(newValue)
 
       const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
@@ -407,14 +407,14 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           // reset editingValue on mobile if we have really blurred to avoid a spurious duplicate thought error (#895)
           // if enabled on desktop, it will break "clicking a bullet, the caret should move to the beginning of the thought" test)
           if (isTouch) {
-            dispatch(setEditingValue(null))
+            editingValueStore.update(null)
           }
           // temporary states such as duplicate error states and cursorCleared are reset on blur
           dispatch(cursorCleared({ value: false }))
         }
 
         if (isTouch) {
-          // Set editing value to false if user exits editing mode by tapping on a non-editable element.
+          // Set editing to false if user exits editing mode by tapping on a non-editable element.
           if (!selection.isThought()) {
             dispatch(editingAction({ value: false }))
           }

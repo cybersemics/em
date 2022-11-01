@@ -18,7 +18,7 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import appendToPath from '../util/appendToPath'
+import editingValueStore from '../stores/editingValue'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -53,7 +53,7 @@ interface ThoughtAnnotationProps {
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId): string => {
   const labelId = findDescendant(state, id, '=label')
   const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
-  const { editingValue } = state
+  const editingValue = editingValueStore.getState()
   return isEditing
     ? editingValue && value !== editingValue
       ? editingValue
@@ -98,20 +98,13 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
-  const { cursor, invalidState, editingValue } = state
+  const { cursor, invalidState } = state
 
   const isEditing = equalPath(cursor, props.path)
-  const simplePathLive = isEditing
-    ? (appendToPath(parentOf(props.simplePath), head(cursor!)) as SimplePath)
-    : props.simplePath
-  const thought = getThoughtById(state, head(simplePathLive))
 
   return {
-    editingValue: isEditing ? editingValue : null,
     invalidState: isEditing ? invalidState : false,
     isEditing,
-    // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
-    isThoughtValueEditing: editingValue === thought?.value,
   }
 }
 
@@ -123,7 +116,6 @@ const ThoughtAnnotation = ({
   minContexts = 2,
   dispatch,
   invalidState,
-  editingValue,
   style,
   // only applied to the .subthought container
   styleAnnotation,
@@ -133,6 +125,13 @@ const ThoughtAnnotation = ({
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
+
+  const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
+    isEditing ? editingValue : null,
+  )
+
+  // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
+  editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
   const fontSize = useSelector((state: State) => state.fontSize)
   const hideSuperscriptsSetting = useSelector(
@@ -178,9 +177,9 @@ const ThoughtAnnotation = ({
 
         // only show real time update if being edited while having meta validation error
         // do not increase numContexts when in an invalid state since the thought has not been updated in state
-        const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
+        const isRealTimeContextUpdate = isEditing && invalidState && liveValueIfEditing !== null
 
-        const contexts = getContexts(state, isRealTimeContextUpdate ? editingValue! : value)
+        const contexts = getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value)
         return value === ''
           ? 0
           : contexts.filter(id => isVisibleContext(state, id)).length + (isRealTimeContextUpdate ? 1 : 0)
@@ -189,8 +188,8 @@ const ThoughtAnnotation = ({
         maxSize: 1000,
         profileName: 'numContexts',
         transformArgs: ([state]) => {
-          const isRealTimeContextUpdate = isEditing && invalidState && editingValue !== null
-          return [resolveArray(getContexts(state, isRealTimeContextUpdate ? editingValue! : value))]
+          const isRealTimeContextUpdate = isEditing && invalidState && liveValueIfEditing !== null
+          return [resolveArray(getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value))]
         },
       },
     ),
