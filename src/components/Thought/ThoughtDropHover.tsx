@@ -1,6 +1,5 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import Autofocus from '../../@types/Autofocus'
 import DropThoughtZone from '../../@types/DropThoughtZone'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -18,12 +17,10 @@ import parentOf from '../../util/parentOf'
 
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const ThoughtDropHover = ({
-  autofocus,
   isHovering,
   prevChildId,
   simplePath,
 }: {
-  autofocus?: Autofocus
   isHovering: boolean
   prevChildId?: ThoughtId
   simplePath: SimplePath
@@ -33,8 +30,6 @@ const ThoughtDropHover = ({
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector((state: State) => {
-    if (autofocus !== 'show' && autofocus !== 'dim') return false
-
     // if alphabetical sort is disabled just check if current thought is hovering
     const parentId = getThoughtById(state, head(simplePath))?.parentId
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'

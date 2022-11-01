@@ -519,12 +519,7 @@ const ThoughtContainer = ({
             />
           )}
 
-          <ThoughtDropHover
-            autofocus={autofocus}
-            isHovering={isHovering}
-            prevChildId={prevChildId}
-            simplePath={simplePath}
-          />
+          <ThoughtDropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
           {placeholder.injectStyle()}
 
