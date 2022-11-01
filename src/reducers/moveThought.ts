@@ -139,7 +139,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         preventExpandThoughts: true,
       })
     },
-    // update cursor
+    // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state
 

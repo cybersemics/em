@@ -9,6 +9,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
+import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
 // actions representing any cursor movements.
@@ -101,6 +102,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   const oldStateWithUpdatedCursor = {
     ...oldState,
     cursor: state.cursor,
+    editingValue: state.cursor ? headValue(state, state.cursor) : null,
   }
 
   return {

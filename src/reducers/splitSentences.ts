@@ -3,7 +3,6 @@ import State from '../@types/State'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
-import editingValue from '../reducers/editingValue'
 import newThought from '../reducers/newThought'
 import setCursor from '../reducers/setCursor'
 import getThoughtById from '../selectors/getThoughtById'
@@ -26,7 +25,6 @@ const splitSentences = (state: State) => {
   }
 
   const [firstSentence, ...otherSentences] = sentences
-  const newCursor = cursor
 
   const reducers = [
     editThought({
@@ -36,8 +34,7 @@ const splitSentences = (state: State) => {
       rankInContext: rank,
     }),
     ...otherSentences.map(sentence => newThought({ value: sentence })),
-    setCursor({ path: newCursor, offset: getTextContentFromHTML(firstSentence).length }),
-    editingValue({ value: firstSentence }),
+    setCursor({ path: cursor, offset: getTextContentFromHTML(firstSentence).length }),
     editableRender,
   ]
 

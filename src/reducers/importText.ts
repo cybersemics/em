@@ -8,7 +8,6 @@ import Timestamp from '../@types/Timestamp'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
-import editingValue from '../reducers/editingValue'
 import setCursor from '../reducers/setCursor'
 import updateThoughts from '../reducers/updateThoughts'
 import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -131,10 +130,6 @@ const importText = (
         oldValue: destValue,
         newValue,
         path: simplePath,
-      }),
-
-      editingValue({
-        value: newValue,
       }),
 
       !preventSetCursor && path

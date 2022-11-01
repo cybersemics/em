@@ -16,6 +16,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashThought from '../util/hashThought'
+import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
@@ -212,6 +213,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
       ...state,
       contextViews: contextViewsNew,
       cursor: cursorNew,
+      editingValue: cursorNew ? headValue(state, cursorNew) : null,
     }),
     updateThoughts({
       thoughtIndexUpdates,

@@ -441,7 +441,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
 
     if (!dragHold && !dragInProgress) {
       setCursorOnThought({ editing: true })
-      dispatch(setEditingValue(value))
     }
   }, [value, setCursorOnThought])
 

@@ -66,6 +66,7 @@ const setCursor = (
   const simplePath = path ? simplifyPath(state, path) : HOME_PATH
   const context = pathToContext(state, simplePath)
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
+  const value = thoughtsResolved && headValue(state, thoughtsResolved)
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
@@ -121,8 +122,7 @@ const setCursor = (
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      headValue(state, thoughtsResolved).toLowerCase().replace(/"/g, '') ===
-        TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      value!.toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
   const updatedOffset = offset ?? (state.editingValue !== null ? 0 : null)
 
@@ -149,6 +149,7 @@ const setCursor = (
           // set cursorOffset to null if editingValue is null
           // (prevents Editable from calling selection.set on click since we want the default cursor placement in that case)
           contextViews: newContextViews,
+          editingValue: thoughtsResolved ? value : null,
         }
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear

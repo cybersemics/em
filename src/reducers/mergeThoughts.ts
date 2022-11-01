@@ -117,6 +117,7 @@ const mergeThoughts = (
         ? {
             ...state,
             cursor: targetThoughtPath,
+            editingValue: targetThought.value,
           }
         : state,
   ])(state)
