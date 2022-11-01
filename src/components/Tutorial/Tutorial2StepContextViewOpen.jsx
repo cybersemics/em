@@ -4,7 +4,7 @@ import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } 
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
-import { store } from '../../store'
+import store from '../../stores/app'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = ({ cursor, tutorialChoice, contextViews }) => {

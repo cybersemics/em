@@ -5,7 +5,7 @@ import {
   SCHEMA_HASHKEYS as SCHEMA_FROM,
   SCHEMA_META_SETTINGS as SCHEMA_TO,
 } from '../constants'
-import { store } from '../store'
+import store from '../stores/app'
 import push from '../util/push'
 import storage from '../util/storage'
 

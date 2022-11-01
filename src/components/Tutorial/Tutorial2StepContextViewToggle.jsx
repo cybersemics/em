@@ -4,7 +4,7 @@ import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
 import { formatKeyboardShortcut, shortcutById } from '../../shortcuts'
-import { store } from '../../store'
+import store from '../../stores/app'
 import headValue from '../../util/headValue'
 
 /** Returns true if the current tutorialStep is a hint. */

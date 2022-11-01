@@ -17,7 +17,7 @@ import State from '../@types/State'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
-import { store } from '../store'
+import store from '../stores/app'
 import HamburgerMenu from './HamburgerMenu'
 
 /**

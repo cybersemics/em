@@ -3,7 +3,7 @@ import Shortcut from '../@types/Shortcut'
 import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
 import { NOOP } from '../constants'
-import { store as globalStore } from '../store'
+import globalStore from '../stores/app'
 
 interface Options {
   store?: Store<State, any>

@@ -1,6 +1,6 @@
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughts from '../../action-creators/toggleHiddenThoughts'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
 

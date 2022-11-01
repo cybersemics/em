@@ -1,6 +1,6 @@
 import importText from './action-creators/importText'
 import { EM_TOKEN, INITIAL_SETTINGS } from './constants'
-import { store } from './store'
+import store from './stores/app'
 import never from './util/never'
 
 /**

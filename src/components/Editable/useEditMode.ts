@@ -6,7 +6,7 @@ import editingAction from '../../action-creators/editing'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import * as selection from '../../device/selection'
-import { store } from '../../store'
+import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */

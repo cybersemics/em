@@ -1,5 +1,5 @@
 import { HOME_TOKEN } from '../constants'
-import { store } from '../store'
+import store from '../stores/app'
 import importToContext from './importToContext'
 
 function paste(text: string): void

@@ -2,7 +2,7 @@ import { ReactWrapper } from 'enzyme'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import importText from '../../action-creators/importText'
 import contextToPath from '../../selectors/contextToPath'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NewThoughtInstructions from '../NewThoughtInstructions'
 

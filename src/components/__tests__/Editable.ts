@@ -1,7 +1,7 @@
 import { ReactWrapper } from 'enzyme'
 import importText from '../../action-creators/importText'
 import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'

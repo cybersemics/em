@@ -2,7 +2,7 @@ import { findAllByLabelText, findByLabelText, queryByLabelText, screen } from '@
 import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import toggleContextView from '../../action-creators/toggleContextView'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findAllThoughtsByText } from '../../test-helpers/queries/findAllThoughtsByText'
 import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'

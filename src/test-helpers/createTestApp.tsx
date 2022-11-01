@@ -10,7 +10,7 @@ import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
 import * as db from '../data-providers/dexie'
 import { initialize } from '../initialize'
-import { store } from '../store'
+import store from '../stores/app'
 import storage from '../util/storage'
 import testTimer from './testTimer'
 

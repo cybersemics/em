@@ -1,7 +1,7 @@
 import React, { Fragment } from 'react'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
-import { store } from '../../store'
+import store from '../../stores/app'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
 

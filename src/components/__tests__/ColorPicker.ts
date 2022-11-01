@@ -3,7 +3,7 @@ import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
 beforeEach(createTestApp)

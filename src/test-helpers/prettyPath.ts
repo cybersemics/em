@@ -1,6 +1,6 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { store } from '../store'
+import store from '../stores/app'
 import pathToContext from '../util/pathToContext'
 
 // overloaded function signatures

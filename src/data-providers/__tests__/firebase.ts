@@ -1,4 +1,4 @@
-import { store } from '../../store'
+import store from '../../stores/app'
 import dataProviderTest from '../../test-helpers/dataProviderTest'
 import getFirebaseProvider from '../firebase'
 

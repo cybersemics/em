@@ -4,7 +4,7 @@ import ThoughtId from '../@types/ThoughtId'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import { store } from '../store'
+import store from '../stores/app'
 
 /** An author byline to a published article. */
 const Byline = ({ id }: { id: ThoughtId }) => {

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom'
 import newThought from '../../action-creators/newThought'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import testTimer from '../../test-helpers/testTimer'
 

@@ -1,5 +1,5 @@
 import importText from '../../action-creators/importText'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'

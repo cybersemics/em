@@ -2,7 +2,7 @@ import Index from '../../@types/IndexType'
 import cursorBack from '../../action-creators/cursorBack'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import newThought from '../../action-creators/newThought'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
 // mock debounce and throttle so debounced updateUrlHistory will trigger

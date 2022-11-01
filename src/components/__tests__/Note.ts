@@ -2,7 +2,7 @@ import { screen } from '@testing-library/dom'
 import SimplePath from '../../@types/SimplePath'
 import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 

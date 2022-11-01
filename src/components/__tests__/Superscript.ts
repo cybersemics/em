@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughtsActionCreator from '../../action-creators/toggleHiddenThoughts'
-import { store } from '../../store'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
 beforeEach(createTestApp)
