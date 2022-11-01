@@ -117,6 +117,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     editing: null,
     editingValue: null,
     enableLatestShortcutsDiagram: false,
+    error: null,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 18),
     expandedBottom: {},
