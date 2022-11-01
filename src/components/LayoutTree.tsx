@@ -88,9 +88,9 @@ const virtualTree = (
 
 /** A thought that is rendered in a flat list but positioned like a node in a tree. */
 const VirtualThought = ({
+  debugIndex,
   depth,
   env,
-  indexChild,
   indexDescendant,
   leaf,
   prevChildId,
@@ -174,7 +174,7 @@ const VirtualThought = ({
         distance={distance}
         env={envMemo}
         hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
-        index={indexChild}
+        debugIndex={debugIndex}
         // isHeader={isHeader}
         isHeader={false}
         // isMultiColumnTable={isMultiColumnTable}
@@ -192,7 +192,6 @@ const VirtualThought = ({
       {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
         <SubthoughtsDropEmpty
           depth={depth}
-          indexChild={indexChild}
           indexDescendant={indexDescendant}
           leaf={leaf}
           prevChildId={prevChildId}
@@ -214,7 +213,6 @@ const RootDropEnd = () => {
       {isVisible && (
         <SubthoughtsDropEnd
           depth={0}
-          indexChild={0}
           indexDescendant={0}
           leaf={false}
           simplePath={HOME_PATH}
@@ -264,9 +262,9 @@ const LayoutTree = () => {
               }}
             >
               <VirtualThought
+                debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
                 env={env}
-                indexChild={indexChild}
                 indexDescendant={indexDescendant}
                 leaf={leaf}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
@@ -292,7 +290,6 @@ const LayoutTree = () => {
                     >
                       <SubthoughtsDropEnd
                         depth={simplePathEnd.length}
-                        indexChild={indexChild}
                         indexDescendant={indexDescendant}
                         leaf={false}
                         simplePath={simplePathEnd}

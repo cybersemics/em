@@ -720,6 +720,7 @@ SubthoughtsProps & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) 
                 <SubthoughtMemo
                   allowSingleContext={allowSingleContextParent}
                   child={child}
+                  debugIndex={i}
                   depth={depth}
                   distance={distance}
                   env={env}
@@ -729,7 +730,6 @@ SubthoughtsProps & SubthoughtsDropCollect & ReturnType<typeof mapStateToProps>) 
                   styleContainerChildren={styleContainerChildren || undefined}
                   styleContainerGrandchildren={styleContainerGrandchildren || undefined}
                   autofocus={autofocus()}
-                  index={i}
                   isHeader={isHeader}
                   isMultiColumnTable={isMultiColumnTable}
                   zoomCursor={zoomCursor}
@@ -773,11 +773,11 @@ const Subthought = ({
   allowSingleContext,
   autofocus,
   child,
+  debugIndex,
   depth,
   distance,
   env,
   hideBullet,
-  index,
   isHeader,
   isMultiColumnTable,
   zoomCursor,
@@ -793,11 +793,11 @@ const Subthought = ({
   allowSingleContext?: boolean
   autofocus?: Autofocus
   child: ThoughtType
+  debugIndex?: number
   depth: number
   distance: number
   env: LazyEnv
   hideBullet?: boolean
-  index?: number
   isHeader?: boolean
   isMultiColumnTable?: boolean
   zoomCursor?: boolean
@@ -878,11 +878,11 @@ const Subthought = ({
   //   allowSingleContext,
   //   autofocus,
   //   child,
+  //   debugIndex,
   //   depth,
   //   distance,
   //   env,
   //   hideBullet,
-  //   index,
   //   isHeader,
   //   isMultiColumnTable,
   //   zoomCursor,
@@ -902,7 +902,7 @@ const Subthought = ({
 
   return child ? (
     <Thought
-      debugIndex={globals.simulateDrop ? index : undefined}
+      debugIndex={globals.simulateDrop ? debugIndex : undefined}
       depth={depth + 1}
       env={env}
       hideBullet={hideBullet}

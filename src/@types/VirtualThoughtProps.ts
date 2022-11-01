@@ -5,10 +5,10 @@ import SimplePath from './SimplePath'
 import ThoughtId from './ThoughtId'
 
 interface VirtualThoughtProps {
+  debugIndex?: number
   depth: number
   dropTarget?: ConnectDropTarget
   env?: LazyEnv
-  indexChild: number
   indexDescendant: number
   last?: boolean
   leaf: boolean

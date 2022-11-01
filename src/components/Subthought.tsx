@@ -6,7 +6,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtType from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import globals from '../globals'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
@@ -35,11 +34,11 @@ const Subthought = ({
   allowSingleContext,
   autofocus,
   child,
+  debugIndex,
   depth,
   distance,
   env,
   hideBullet,
-  index,
   isHeader,
   isMultiColumnTable,
   zoomCursor,
@@ -54,11 +53,11 @@ const Subthought = ({
   allowSingleContext?: boolean
   autofocus?: Autofocus
   child: ThoughtType
+  debugIndex?: number
   depth: number
   distance: number
   env?: LazyEnv
   hideBullet?: boolean
-  index?: number
   isHeader?: boolean
   isMultiColumnTable?: boolean
   zoomCursor?: boolean
@@ -147,7 +146,7 @@ const Subthought = ({
 
   return child ? (
     <Thought
-      debugIndex={globals.simulateDrop ? index : undefined}
+      debugIndex={debugIndex}
       depth={depth + 1}
       env={env}
       hideBullet={hideBullet}
