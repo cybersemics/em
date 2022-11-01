@@ -11,11 +11,11 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import { AlertType } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import { syncStore } from '../redux-middleware/pushQueue'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
+import pushStore from '../stores/push'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
@@ -169,7 +169,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    const shouldConfirmReload = syncStore.getState().isPushing
+    const shouldConfirmReload = pushStore.getState().isPushing
 
     if (shouldConfirmReload) {
       // Note: Showing confirmation dialog can vary between browsers.

@@ -8,7 +8,7 @@ import pull from '../action-creators/pull'
 import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import push from '../action-creators/push'
 import getThoughtById from '../selectors/getThoughtById'
-import ministore from '../util/ministore'
+import pushStore from '../stores/push'
 import parentOf from '../util/parentOf'
 
 // debounce pushQueue updates to avoid pushing on every action
@@ -51,14 +51,6 @@ const pushBatch = (batch: PushBatch) => {
     updates: batch.updates,
   })
 }
-
-export const syncStore = ministore({
-  // Tracks if the pushQueue is currently pushing to local or remote.
-  isPushing: false,
-  // Tracks if the pushQueue should be cleared on the next action.
-  // See: /redux-enhancers/clearPushQueue
-  invalidated: false,
-})
 
 /** Pull all descendants of pending deletes and dispatch deleteThought to fully delete. */
 const flushDeletes =
@@ -111,7 +103,7 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
 
   if (pushQueue.length === 0) return Promise.resolve()
 
-  syncStore.update({ isPushing: true })
+  pushStore.update({ isPushing: true })
 
   const combinedBatch = pushQueue.reduce(mergeBatch)
 
@@ -181,7 +173,7 @@ const pushQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // Invalidate the pushQueue so that it can be cleared on the next action.
     // Must go after dispatching flushPushQueue, otherwise pullPendingLexemes breaks for some reason.
     // See /redux-enhancers/clearPushQueue
-    syncStore.update({ invalidated: true, isPushing: false })
+    pushStore.update({ invalidated: true, isPushing: false })
   }, DEBOUNCE_DELAY)
 
   return next => action => {

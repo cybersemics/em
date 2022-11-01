@@ -9,12 +9,12 @@ import showModal from '../action-creators/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
-import { syncStore } from '../redux-middleware/pushQueue'
+import pushStore from '../stores/push'
 
 /** Show the user's login and saving status. */
 const Status = () => {
   const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
-  const isPushing = syncStore.useSelector(({ isPushing }) => isPushing)
+  const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
   const status = useSelector((state: State) => state.status)
   return (
     <>

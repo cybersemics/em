@@ -8,7 +8,7 @@ import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
-import { syncStore } from '../redux-middleware/pushQueue'
+import pushStore from '../stores/push'
 import { commonStyles } from '../style/commonStyles'
 import { Text } from './Text.native'
 
@@ -17,7 +17,7 @@ const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContent
 /** Show the user's login and saving status. */
 const Status = () => {
   const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
-  const isPushing = syncStore.useSelector(({ isPushing }) => isPushing)
+  const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
   const status = useSelector((state: State) => state.status)
   return (
     <>

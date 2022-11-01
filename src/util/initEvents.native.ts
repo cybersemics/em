@@ -8,10 +8,10 @@ import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControl
 import * as db from '../data-providers/dexie'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
-import { syncStore } from '../redux-middleware/pushQueue'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
+import pushStore from '../stores/push'
 import equalPath from './equalPath'
 import isRoot from './isRoot'
 import pathToContext from './pathToContext'
@@ -68,7 +68,7 @@ export const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    const shouldConfirmReload = syncStore.getState().isPushing
+    const shouldConfirmReload = pushStore.getState().isPushing
 
     if (shouldConfirmReload) {
       // Note: Showing confirmation dialog can vary between browsers. https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
