@@ -20,7 +20,6 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
-import { safeRefMerge } from '../util/safeRefMerge'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
@@ -57,7 +56,9 @@ const virtualTree = (
     const childPath = appendToPathMemo(simplePath, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const envNew = safeRefMerge(env, parseLet(state, simplePath)) || undefined
+    const envParsed = parseLet(state, simplePath)
+    const envNew =
+      env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
     const descendants = virtualTree(state, childPath, {
       depth: depth + 1,
@@ -69,7 +70,7 @@ const virtualTree = (
       ...accum,
       {
         depth,
-        env: envNew,
+        env: envNew || undefined,
         indexChild: i,
         indexDescendant: virtualIndexNew,
         // true if the thought has no visible children.
@@ -154,8 +155,6 @@ const VirtualThought = ({
     [styleContainerChildren, styleContainerGrandchildren],
   )
 
-  const envMemo = useSelector(() => env, _.isEqual)
-
   return (
     <div
       style={{
@@ -171,7 +170,7 @@ const VirtualThought = ({
         child={thought}
         depth={depth}
         distance={distance}
-        env={envMemo}
+        env={env}
         hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
         debugIndex={debugIndex}
         // isHeader={isHeader}

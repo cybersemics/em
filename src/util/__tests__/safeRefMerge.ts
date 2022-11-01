@@ -66,3 +66,10 @@ it('if one object is empty, returns the other', () => {
   expect(safeRefMerge(a, {})).toEqual(a)
   expect(safeRefMerge({}, a)).toEqual(a)
 })
+
+it('if both objects are empty, returns the first', () => {
+  const a = {}
+  const b = {}
+  expect(safeRefMerge(a, b)).toEqual(a)
+  expect(safeRefMerge(b, a)).toEqual(b)
+})
