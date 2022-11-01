@@ -20,6 +20,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
+import { safeRefMerge } from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
@@ -27,7 +28,7 @@ import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
 type TreeThought = {
   depth: number
-  env: LazyEnv
+  env?: LazyEnv
   // index among visible siblings at the same level
   indexChild: number
   // index among all visible thoughts in the tree
@@ -41,7 +42,10 @@ type TreeThought = {
 const virtualTree = (
   state: State,
   simplePath: SimplePath,
-  { depth, env, indexDescendant } = { depth: 0, env: {}, indexDescendant: 0 },
+  { depth, env, indexDescendant }: { depth: number; env?: LazyEnv; indexDescendant: number } = {
+    depth: 0,
+    indexDescendant: 0,
+  },
 ): TreeThought[] => {
   if (!isRoot(simplePath) && !state.expanded[hashPath(simplePath)]) return []
 
@@ -54,7 +58,7 @@ const virtualTree = (
     const childPath = unroot(appendToPath(simplePath, child.id))
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const envNew = { ...env, ...parseLet(state, simplePath) }
+    const envNew = safeRefMerge(env, parseLet(state, simplePath)) || undefined
 
     const descendants = virtualTree(state, childPath, {
       depth: depth + 1,
