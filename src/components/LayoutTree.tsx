@@ -166,17 +166,17 @@ const VirtualThought = ({
       <Subthought
         // allowSingleContext={allowSingleContextParent}
         allowSingleContext={false}
-        autofocus={autofocus}
         child={thought}
+        debugIndex={debugIndex}
         depth={depth}
         distance={distance}
         env={env}
         hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
-        debugIndex={debugIndex}
         // isHeader={isHeader}
         isHeader={false}
         // isMultiColumnTable={isMultiColumnTable}
         isMultiColumnTable={false}
+        isVisible={autofocus === 'show' || autofocus === 'dim'}
         parentPath={parentPath}
         path={parentPath}
         prevChildId={prevChildId}

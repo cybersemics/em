@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react'
-import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -32,7 +31,6 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
 /** Wraps a Thought component and calculates the child Path, style, etc. */
 const Subthought = ({
   allowSingleContext,
-  autofocus,
   child,
   debugIndex,
   depth,
@@ -41,6 +39,7 @@ const Subthought = ({
   hideBullet,
   isHeader,
   isMultiColumnTable,
+  isVisible,
   zoomCursor,
   parentPath,
   path,
@@ -51,7 +50,6 @@ const Subthought = ({
   styleContainer,
 }: {
   allowSingleContext?: boolean
-  autofocus?: Autofocus
   child: ThoughtType
   debugIndex?: number
   depth: number
@@ -60,6 +58,7 @@ const Subthought = ({
   hideBullet?: boolean
   isHeader?: boolean
   isMultiColumnTable?: boolean
+  isVisible?: boolean
   zoomCursor?: boolean
   parentPath: SimplePath
   path?: Path
@@ -122,7 +121,6 @@ const Subthought = ({
   // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, childPath), {
   //   actualDistance,
   //   allowSingleContext,
-  //   autofocus,
   //   child,
   //   depth,
   //   distance,
@@ -131,6 +129,7 @@ const Subthought = ({
   //   index,
   //   isHeader,
   //   isMultiColumnTable,
+  //   isVisible,
   //   zoomCursor,
   //   parentPath,
   //   path,
@@ -155,10 +154,7 @@ const Subthought = ({
       isMultiColumnTable={isMultiColumnTable}
       isVisible={
         // if thought is a zoomed cursor then it is visible
-        (isChildCursor && zoomCursor) ||
-        autofocus === 'show' ||
-        autofocus === 'dim' ||
-        (distance === 2 && isEditingChildPath())
+        (isChildCursor && zoomCursor) || isVisible || (distance === 2 && isEditingChildPath())
       }
       key={child.id}
       path={appendedChildPath}
