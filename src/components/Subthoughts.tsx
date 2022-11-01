@@ -861,8 +861,6 @@ const Subthought = ({
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
   const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
-  const isParentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, cursor))
-  const isGrandparentCursor = cursor && equalPath(appendedChildPath, rootedParentOf(state, parentOf(cursor)))
 
   /*
               simply using index i as key will result in very sophisticated rerendering when new Empty thoughts are added.
@@ -904,13 +902,6 @@ const Subthought = ({
 
   return child ? (
     <Thought
-      autofocus={
-        isChildCursor || (isParentCursor && distance === 1)
-          ? 'show'
-          : isParentCursor || (isGrandparentCursor && distance === 2)
-          ? 'dim'
-          : autofocus || 'show'
-      }
       debugIndex={globals.simulateDrop ? index : undefined}
       depth={depth + 1}
       env={env}

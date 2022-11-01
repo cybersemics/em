@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import Autofocus from '../@types/Autofocus'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
@@ -59,7 +58,6 @@ import ThoughtAnnotation from './ThoughtAnnotation'
 
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
-  autofocus?: Autofocus
   childrenForced?: ThoughtId[]
   contextBinding?: Path
   cursor?: Path | null
@@ -209,7 +207,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
  */
 const ThoughtContainer = ({
   allowSingleContext,
-  autofocus,
   childrenForced,
   contextBinding,
   cursor,
@@ -296,7 +293,6 @@ const ThoughtContainer = ({
 
   const dragHoldResult = useDragHold({
     isDragging,
-    disabled: autofocus === 'hide' || autofocus === 'hide-parent',
     simplePath,
     sourceZone: DragThoughtZone.Thoughts,
   })
@@ -372,7 +368,6 @@ const ThoughtContainer = ({
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
   //   allowSingleContext,
-  //   autofocus,
   //   childrenForced,
   //   contextBinding,
   //   cursor,
@@ -485,10 +480,6 @@ const ThoughtContainer = ({
             // ensure that ThoughtAnnotation is positioned correctly
             position: 'relative',
             ...(hideBullet ? { marginLeft: -12 } : null),
-            // Disable pointer-events on hidden thoughts to prevent activating the drag-and-drop alert.
-            // This is needed in addition to manually disabling dragHold.
-            // Apply to div. not outer li, to ensure that visible children can still be interacted with.
-            ...(autofocus === 'hide' || autofocus === 'hide-parent' ? { pointerEvents: 'none' } : null),
           }}
         >
           {showContexts && simplePath.length > 1 ? (

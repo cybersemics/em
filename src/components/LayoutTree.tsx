@@ -147,9 +147,10 @@ const VirtualThought = ({
     _.isEqual,
   )
 
-  const styleContainer = useMemo(
+  const styleContainer: React.CSSProperties = useMemo(
     () => ({
       opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+      pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
       ...styleContainerChildren,
       ...styleContainerGrandchildren,
     }),

@@ -147,7 +147,6 @@ const Subthought = ({
 
   return child ? (
     <Thought
-      autofocus={autofocus}
       debugIndex={globals.simulateDrop ? index : undefined}
       depth={depth + 1}
       env={env}
