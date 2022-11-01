@@ -1,5 +1,6 @@
 // import moize from 'moize'
 // import { resolveArray } from './memoizeResolvers'
+import moize from 'moize'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
@@ -11,13 +12,12 @@ const appendToPath = <T extends Path | SimplePath>(path: T | null, ...children: 
   // also needed for Branding to SimplePath
   !path || isRoot(path) ? (children as T) : ([...path, ...children] as unknown as T)
 
-// TODO: How to memoize? Using appendToPathMemoized causes the context view to disapppear.
+// TODO: Using appendToPathMemoized causes the context view to disapppear.
 // e.g. Activate the context view on /Virtual Assistance/Onboarding/Start
 // We need to memoize to to avoid unnecessary child Thought re-renders.
-// const appendToPathMemoized = moize(appendToPath, {
-//   maxSize: 1000,
-//   profileName: 'appendToPath',
-//   transformArgs: ([path, ...children]) => [path && resolveArray(path), resolveArray(children)],
-// })
+export const appendToPathMemo = moize(appendToPath, {
+  maxSize: 100,
+  profileName: 'appendToPath',
+})
 
 export default appendToPath

@@ -15,13 +15,12 @@ import { childrenFilterPredicate, getAllChildrenAsThoughts, getAllChildrenSorted
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
-import appendToPath from '../util/appendToPath'
+import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
 import { safeRefMerge } from '../util/safeRefMerge'
-import unroot from '../util/unroot'
 import Subthought from './Subthought'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
@@ -55,7 +54,7 @@ const virtualTree = (
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, child, i) => {
-    const childPath = unroot(appendToPath(simplePath, child.id))
+    const childPath = appendToPathMemo(simplePath, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
     const envNew = safeRefMerge(env, parseLet(state, simplePath)) || undefined
