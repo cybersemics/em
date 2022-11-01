@@ -149,18 +149,22 @@ const VirtualThought = ({
 
   const styleContainer: React.CSSProperties = useMemo(
     () => ({
-      opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-      pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
       ...styleContainerChildren,
       ...styleContainerGrandchildren,
     }),
-    [autofocus, styleContainerChildren, styleContainerGrandchildren],
+    [styleContainerChildren, styleContainerGrandchildren],
   )
 
   const envMemo = useSelector(() => env, _.isEqual)
 
   return (
-    <>
+    <div
+      style={{
+        opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+        pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
+        transition: 'opacity 0.75s ease-out',
+      }}
+    >
       <Subthought
         // allowSingleContext={allowSingleContextParent}
         allowSingleContext={false}
@@ -196,7 +200,7 @@ const VirtualThought = ({
           simplePath={simplePath}
         />
       )}
-    </>
+    </div>
   )
 }
 
