@@ -223,17 +223,18 @@ const LayoutTree = () => {
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
   const fontSize = useSelector((state: State) => state.fontSize)
   const cursorDistance = useSelector((state: State) =>
-    state.cursor && state.cursor.length > 1 ? state.cursor.length - 1 : 0,
+    state.cursor && state.cursor.length > 2 ? state.cursor.length - 1 : 0,
   )
 
   return (
     <div
       style={{
         // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-        // Add a negative marginRight by the same amount to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-        transform: `translateX(${1.5 - cursorDistance}em)`,
+        // The cursorDistance multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+        transform: `translateX(${1.5 - cursorDistance * 0.9}em)`,
         transition: 'transform 0.75s ease-out',
-        marginRight: `${-cursorDistance + (isTouch ? 2 : -1)}em`,
+        // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
+        marginRight: `${-cursorDistance * 0.9 + (isTouch ? 2 : -1)}em`,
       }}
     >
       {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
