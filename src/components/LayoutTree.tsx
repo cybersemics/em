@@ -15,6 +15,7 @@ import { childrenFilterPredicate, getAllChildrenAsThoughts, getAllChildrenSorted
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -226,6 +227,12 @@ const LayoutTree = () => {
     state.cursor && state.cursor.length > 2 ? state.cursor.length - 1 : 0,
   )
 
+  // setup list virtualization
+  const viewport = viewportStore.useState()
+  const overshoot = fontSize / 3.6 // the number of additional thoughts below the bottom of the screen that are rendered
+  const estimatedYStart = 80
+  const estimatedHeight = fontSize * 1.87
+
   return (
     <div
       style={{
@@ -243,6 +250,15 @@ const LayoutTree = () => {
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
         // This is used to determine how many SubthoughtsDropEnd to insert before the next thought (one for each level dropped).
         const cliff = next ? Math.min(0, next.depth - depth) : -depth
+
+        // List Virtualization
+        // Hide thoughts that are below the viewport.
+        // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
+        // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
+        const estimatedY = i * estimatedHeight + estimatedYStart
+        const hide = estimatedY > viewport.bottom + estimatedHeight * overshoot
+        if (hide) return <div key={thought.id} style={{ height: estimatedHeight }} />
+
         return (
           <React.Fragment key={thought.id}>
             <div
