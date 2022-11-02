@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
@@ -12,7 +12,6 @@ import equalPath from '../../util/equalPath'
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
-  disabled,
   isEditing,
   path,
   style,
@@ -21,7 +20,6 @@ const useEditMode = ({
   // expect all arguments to be passed, even if undefined
   // otherwise the hook will not be able to determine all conditions
   contentRef: React.RefObject<HTMLInputElement>
-  disabled?: boolean
   isEditing: boolean | undefined
   path: Path
   style: React.CSSProperties | undefined
@@ -35,6 +33,7 @@ const useEditMode = ({
   const editingCursorOffset = useSelector((state: State) => isEditing && state.cursorOffset)
   const dragHold = useSelector((state: State) => state.dragHold)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  const disabledRef = useRef(false)
 
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
@@ -68,7 +67,7 @@ const useEditMode = ({
         contentRef.current &&
         (cursorWithoutSelection || isAtBeginning) &&
         !dragHold &&
-        !disabled)
+        !disabledRef.current)
 
     /* DEBUGGING
       There are many different values that determine if we set the selection.
@@ -114,6 +113,19 @@ const useEditMode = ({
       }
     }
   }, [])
+
+  // Provide an escape hatch to allow the next default selection rather than setting it.
+  // This allows the user to set the selection in the middle of a non-cursor thought when in edit mode.
+  // Otherwise the caret is moved to the beginning of the thought.
+  const allowDefaultSelection = useCallback(() => {
+    disabledRef.current = true
+    // enable on next tick, which is long enough to skip the next setSelectionToCursorOffset
+    setTimeout(() => {
+      disabledRef.current = false
+    })
+  }, [])
+
+  return allowDefaultSelection
 }
 
 export default useEditMode

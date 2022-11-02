@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import { unescape } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -104,7 +104,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   const isCursorCleared = useSelector((state: State) => !!isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  const [isTapped, setIsTapped] = useState(false)
   const placeholder = usePlaceholder({ isEditing, simplePath })
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
@@ -249,18 +248,9 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   // using useRef hook to store throttled function so that it can persist even between component re-renders, so that throttle.flush method can be used properly
   const throttledChangeRef = useRef(_.throttle(thoughtChangeHandler, EDIT_THROTTLE, { leading: false }))
 
-  useEditMode({ contentRef, disabled: isTapped, isEditing, path, style, transient })
+  const allowDefaultSelection = useEditMode({ contentRef, isEditing, path, style, transient })
 
   useEffect(() => {
-    if (isTapped) {
-      // Delay until after the effect in useEditMode.
-      // Otherwise, isTapped will be reset to false too early and cause a false positive on the useEditMode condition that calls setSelectionToCursorOffset.
-      // For some reason the order of the effects does not matter.
-      setTimeout(() => {
-        setIsTapped(false)
-      })
-    }
-
     /** Flushes pending edits. */
     const flush = () => throttledChangeRef.current.flush()
     shortcutEmitter.on('shortcut', flush)
@@ -270,7 +260,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
     }
-  }, [isTapped])
+  }, [])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
@@ -489,8 +479,8 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           setCursorOnThought()
         }
       } else {
-        // We need to know that user clicked the editable to not set caret programmatically, because caret will be already set by browser. Issue: #981
-        setIsTapped(true)
+        // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
+        allowDefaultSelection()
       }
     },
     [disabled, isVisible, path],
