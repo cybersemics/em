@@ -59,20 +59,8 @@ const useEditMode = ({
     // disable on mobile to avoid infinite loop (#908)
     const isAtBeginning = !isTouch && selection.offset() === 0
 
-    // // there are many different values that determine if we set the selection
-    // // use this to help debug selection issues
-    // if (isEditing) {
-    //   console.info('These values are false, preventing the selection from being set on', value)
-    //   if (!editMode) console.info('  - editMode')
-    //   if (!contentRef.current) console.info('  - contentRef.current')
-    //   if (noteFocus) console.info('  - !noteFocus')
-    //   if (!(cursorWithoutSelection || isAtBeginning)) console.info('  - cursorWithoutSelection || isAtBeginning')
-    //   if (dragHold) console.info('  - !dragHold')
-    //   if (isTapped) console.info('  - !isTapped')
-    // }
-
-    if (
-      // allow transient editable to have focus on render
+    // allow transient editable to have focus on render
+    const shouldSetSelection =
       transient ||
       (isEditing &&
         editMode &&
@@ -81,7 +69,27 @@ const useEditMode = ({
         (cursorWithoutSelection || isAtBeginning) &&
         !dragHold &&
         !disabled)
-    ) {
+
+    /* DEBUGGING
+      There are many different values that determine if we set the selection.
+      Use this to help debug selection issues.
+    */
+    // if (isEditing) {
+    //   const value = headValue(store.getState(), path)
+    //   if (shouldSetSelection) {
+    //     console.info('Selection set on', value, editingCursorOffset)
+    //   } else {
+    //     console.info('These values are false, preventing the selection from being set on', value)
+    //     if (!editMode) console.info('  editMode')
+    //     if (!contentRef.current) console.info('  contentRef.current')
+    //     if (noteFocus) console.info('  - !noteFocus')
+    //     if (!(cursorWithoutSelection || isAtBeginning)) console.info('  cursorWithoutSelection || isAtBeginning')
+    //     if (dragHold) console.info('  !dragHold')
+    //     if (disabled) console.info('  !disabled')
+    //   }
+    // }
+
+    if (shouldSetSelection) {
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).

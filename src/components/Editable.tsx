@@ -101,7 +101,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
   const fontSize = useSelector((state: State) => state.fontSize)
-  const isCursorCleared = useSelector((state: State) => isEditing && state.cursorCleared)
+  const isCursorCleared = useSelector((state: State) => !!isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const [isTapped, setIsTapped] = useState(false)
@@ -253,7 +253,12 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
 
   useEffect(() => {
     if (isTapped) {
-      setIsTapped(false)
+      // Delay until after the effect in useEditMode.
+      // Otherwise, isTapped will be reset to false too early and cause a false positive on the useEditMode condition that calls setSelectionToCursorOffset.
+      // For some reason the order of the effects does not matter.
+      setTimeout(() => {
+        setIsTapped(false)
+      })
     }
 
     /** Flushes pending edits. */
