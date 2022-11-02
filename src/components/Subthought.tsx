@@ -34,7 +34,6 @@ const Subthought = ({
   child,
   debugIndex,
   depth,
-  distance,
   env,
   hideBullet,
   isHeader,
@@ -53,7 +52,6 @@ const Subthought = ({
   child: ThoughtType
   debugIndex?: number
   depth: number
-  distance: number
   env?: LazyEnv
   hideBullet?: boolean
   isHeader?: boolean
@@ -119,11 +117,9 @@ const Subthought = ({
 
   // console.log('One <Subthought>', prettyPath(childPath))
   // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, childPath), {
-  //   actualDistance,
   //   allowSingleContext,
   //   child,
   //   depth,
-  //   distance,
   //   env,
   //   hideBullet,
   //   index,
@@ -154,7 +150,7 @@ const Subthought = ({
       isMultiColumnTable={isMultiColumnTable}
       isVisible={
         // if thought is a zoomed cursor then it is visible
-        (isChildCursor && zoomCursor) || isVisible || (distance === 2 && isEditingChildPath())
+        (isChildCursor && zoomCursor) || isVisible
       }
       key={child.id}
       path={appendedChildPath}

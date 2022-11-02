@@ -7,7 +7,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { isTouch } from '../browser'
-import { HOME_PATH, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { HOME_PATH } from '../constants'
 import globals from '../globals'
 import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -103,10 +103,6 @@ const VirtualThought = ({
   )
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
-  const distance = useSelector((state: State) =>
-    state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0,
-  )
-
   /** Calculates the autofocus state to hide or dim thoughts.
    * Note: The following properties are applied to the immediate children with given class.
    * - show fully visible
@@ -169,7 +165,6 @@ const VirtualThought = ({
         child={thought}
         debugIndex={debugIndex}
         depth={depth}
-        distance={distance}
         env={env}
         hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
         // isHeader={isHeader}
