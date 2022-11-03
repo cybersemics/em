@@ -7,7 +7,9 @@ const ministore = <T = any>(initialState: T) => {
   const emitter = new Emitter()
 
   /** Updates state. Only overwrites the given keys and preserves the rest. */
-  const update = (updates: Partial<T>) => {
+  const update = (updatesOrUpdater: Partial<T> | ((state: T) => Partial<T>)) => {
+    const updates = typeof updatesOrUpdater === 'function' ? updatesOrUpdater(state) : updatesOrUpdater
+
     // short circuit if value(s) are unchanged
     if (
       updates && typeof updates === 'object'
@@ -31,9 +33,9 @@ const ministore = <T = any>(initialState: T) => {
     const unmounted = useRef(false)
 
     useEffect(() => {
-      emitter.on('change', value => {
+      emitter.on('change', () => {
         if (!unmounted.current) {
-          setLocalState(value)
+          setLocalState(state)
         }
       })
       return () => {
