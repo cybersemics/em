@@ -7,12 +7,12 @@ const useDelayedAutofocus = (autofocus: Autofocus, delay = 750) => {
   const lastAutofocusRef = useRef(autofocus)
   const autofocusTimerRef = useRef<number>(0)
   useEffect(() => {
+    clearTimeout(autofocusTimerRef.current)
     if (
       autofocus !== 'show' &&
       autofocus !== 'dim' &&
       (lastAutofocusRef.current === 'show' || lastAutofocusRef.current === 'dim')
     ) {
-      clearTimeout(autofocusTimerRef.current)
       autofocusTimerRef.current = setTimeout(() => {
         setAutofocusDelayed(autofocus)
         lastAutofocusRef.current = autofocus
