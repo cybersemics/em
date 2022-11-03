@@ -7,7 +7,7 @@ import Thought from '../@types/Thought'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
-import { childrenFilterPredicate, getAllChildrenSorted } from '../selectors/getChildren'
+import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
@@ -105,8 +105,11 @@ const RootDropEnd = () => {
 const LayoutTree = () => {
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
   const fontSize = useSelector((state: State) => state.fontSize)
-  const cursorDistance = useSelector((state: State) =>
-    state.cursor && state.cursor.length > 2 ? state.cursor.length - 1 : 0,
+  const indent = useSelector((state: State) =>
+    state.cursor && state.cursor.length > 2
+      ? // when the cursor is on a leaf, the indention level should not change
+        state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
+      : 0,
   )
 
   // setup list virtualization
@@ -119,11 +122,11 @@ const LayoutTree = () => {
     <div
       style={{
         // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-        // The cursorDistance multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-        transform: `translateX(${1.5 - cursorDistance * 0.9}em)`,
+        // The indent multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+        transform: `translateX(${1.5 - indent * 0.9}em)`,
         transition: 'transform 0.75s ease-out',
         // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-        marginRight: `${-cursorDistance * 0.9 + (isTouch ? 2 : -1)}em`,
+        marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
       }}
     >
       {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
