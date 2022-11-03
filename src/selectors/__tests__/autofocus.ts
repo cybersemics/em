@@ -236,7 +236,7 @@ describe('normal view', () => {
     })
   })
 
-  it('dim uncle of non-leaf', () => {
+  it('hide uncle of non-leaf', () => {
     const text = `
     - a
       - b
@@ -252,11 +252,11 @@ describe('normal view', () => {
       a: 'dim',
       'a/b': 'show',
       'a/b/c': 'show',
-      x: 'dim',
+      x: 'hide',
     })
   })
 
-  it('hide great uncle', () => {
+  it('hide great great uncle of leaf', () => {
     const text = `
     - a
       - b
@@ -278,15 +278,16 @@ describe('normal view', () => {
     })
   })
 
-  it('show great uncle', () => {
+  it('hide great uncle of non-leaf', () => {
     const text = `
     - a
       - b
         - c
           - d
-      - e
+            - e
+      - f
   `
-    const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
+    const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
     const stateNew = reducerFlow(steps)(initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
@@ -297,12 +298,85 @@ describe('normal view', () => {
       'a/b': 'dim',
       'a/b/c': 'show',
       'a/b/c/d': 'show',
-      'a/e': 'dim',
+      'a/b/c/d/e': 'show',
+      'a/f': 'hide',
+    })
+  })
+
+  it('dim descendants of pinned uncle', () => {
+    const text = `
+      - a
+        - b
+          - =pin
+            - true
+          - c
+        - d
+    `
+    const steps = [importText({ text }), setCursor(['a', 'd'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'show',
+      'a/b': 'show',
+      'a/b/c': 'dim',
+      'a/d': 'show',
+    })
+  })
+
+  it('dim descendants of pinned second cousin', () => {
+    const text = `
+      - a
+        - b
+          - =pin
+            - true
+          - c
+        - d
+          - e
+    `
+    const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'dim',
+      'a/b': 'dim',
+      'a/b/c': 'dim',
+      'a/d': 'show',
+      'a/d/e': 'show',
+    })
+  })
+
+  it('hide descendants of pinned great cousins', () => {
+    const text = `
+      - a
+        - b
+          - =pin
+            - true
+          - c
+        - d
+          - e
+            - f
+     `
+    const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide',
+      'a/b': 'hide',
+      'a/b/c': 'hide',
+      'a/d': 'dim',
+      'a/d/e': 'show',
+      'a/d/e/f': 'show',
     })
   })
 })
 
-describe('table view', () => {
+describe.skip('table view', () => {
   it('when the cursor is on a table grandchild leaf (column 2), other grandchildren of the table should be visible and dimmed', () => {
     const text = `
       - a
