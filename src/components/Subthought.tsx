@@ -16,7 +16,6 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
-import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -59,7 +58,6 @@ const Subthought = ({
   zoomCursor?: boolean
 }) => {
   const state = store.getState()
-  const { cursor } = state
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
   const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
@@ -152,7 +150,6 @@ const Subthought = ({
   // TODO: ROOT gets appended when isContextPending
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
-  const isChildCursor = cursor && equalPath(appendedChildPath, cursor)
 
   // console.log('One <Subthought>', prettyPath(childPath))
   // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, childPath), {
@@ -198,7 +195,7 @@ const Subthought = ({
         isMultiColumnTable={isMultiColumnTable}
         isVisible={
           // if thought is a zoomed cursor then it is visible
-          (isChildCursor && zoomCursor) || autofocus === 'show' || autofocus === 'dim'
+          zoomCursor || autofocus === 'show' || autofocus === 'dim'
         }
         key={thought.id}
         path={appendedChildPath}
