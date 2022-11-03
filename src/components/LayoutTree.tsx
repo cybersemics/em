@@ -98,20 +98,9 @@ const VirtualThought = ({
   nextChildId,
   simplePath,
 }: VirtualThoughtProps) => {
-  const thought = useSelector(
-    (state: State) => getThoughtById(state, head(simplePath)),
-    (a, b) => a === b || a.id === b.id,
-  )
+  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
-  /** Calculates the autofocus state to hide or dim thoughts.
-   * Note: The following properties are applied to the immediate children with given class.
-   * - show fully visible
-   * - dim dimmed
-   * - hide shifted left and hidden
-   * - hide-parent shifted left and hidden
-   * Note: This doesn't fully account for the visibility. There are other additional classes that can affect opacity. For example cursor and its expanded descendants are always visible with full opacity.
-   */
   const autofocus = useSelector(calculateAutofocus(simplePath))
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
