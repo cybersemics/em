@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
@@ -21,6 +21,7 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
+import useDelayedAutofocus from './Subthoughts/useDelayedAutofocus'
 import Thought from './Thought'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
@@ -60,6 +61,7 @@ const Subthought = ({
   const state = store.getState()
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
   const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
+  const [height, setHeight] = useState<number | null>(null)
 
   // TODO
   const showContexts = false
@@ -72,6 +74,8 @@ const Subthought = ({
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
   const autofocus = useSelector(calculateAutofocus(simplePath))
+  const autofocusAfterAnimation = useDelayedAutofocus(autofocus)
+
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
 
@@ -172,41 +176,57 @@ const Subthought = ({
   //   childPath,
   // })
 
+  const onMeasure = useCallback(setHeight, [])
+
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
 
+  // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
+  // Wait until the fade out animation has completed before removing.
+  const shimHiddenThought =
+    autofocus !== 'show' &&
+    autofocus !== 'dim' &&
+    autofocusAfterAnimation !== 'show' &&
+    autofocusAfterAnimation !== 'dim' &&
+    !!height
+
   return (
     <div
       style={{
+        // fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM
+        height: shimHiddenThought ? height! : undefined,
         opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
         pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
         transition: 'opacity 0.75s ease-out',
       }}
     >
-      <Thought
-        debugIndex={debugIndex}
-        depth={depth + 1}
-        env={env}
-        hideBullet={hideBullet}
-        isContextPending={thought.value === '__PENDING__'}
-        // isHeader={isHeader}
-        isHeader={false}
-        isMultiColumnTable={isMultiColumnTable}
-        isVisible={
-          // if thought is a zoomed cursor then it is visible
-          zoomCursor || autofocus === 'show' || autofocus === 'dim'
-        }
-        key={thought.id}
-        path={appendedChildPath}
-        prevChildId={prevChildId}
-        rank={thought.rank}
-        // showContexts={showContexts}
-        showContexts={false}
-        simplePath={childPath}
-        style={style}
-        styleContainer={styleContainer}
-      />
+      {!shimHiddenThought && (
+        <Thought
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          env={env}
+          hideBullet={hideBullet}
+          isContextPending={thought.value === '__PENDING__'}
+          // isHeader={isHeader}
+          isHeader={false}
+          isMultiColumnTable={isMultiColumnTable}
+          isVisible={
+            // if thought is a zoomed cursor then it is visible
+            zoomCursor || autofocus === 'show' || autofocus === 'dim'
+          }
+          key={thought.id}
+          onMeasure={onMeasure}
+          path={appendedChildPath}
+          prevChildId={prevChildId}
+          rank={thought.rank}
+          // showContexts={showContexts}
+          showContexts={false}
+          simplePath={childPath}
+          style={style}
+          styleContainer={styleContainer}
+        />
+      )}
       {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
         <SubthoughtsDropEmpty
           depth={depth}

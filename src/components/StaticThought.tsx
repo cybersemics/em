@@ -23,6 +23,7 @@ const StaticThought = ({
   isEditing,
   isVisible,
   onEdit,
+  onMeasure,
   path,
   rank,
   showContextBreadcrumbs,
@@ -79,6 +80,7 @@ const StaticThought = ({
             disabled={!isDocumentEditable()}
             isEditing={isEditing}
             isVisible={isVisible}
+            onMeasure={onMeasure}
             rank={rank}
             style={style}
             simplePath={simplePathLive}

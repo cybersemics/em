@@ -65,6 +65,7 @@ const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 interface EditableProps {
   path: Path
   disabled?: boolean
+  onMeasure?: (height: number) => void
   isEditing?: boolean
   isVisible?: boolean
   rank?: number
@@ -87,7 +88,17 @@ let blurring = false
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, style, transient }: EditableProps) => {
+const Editable = ({
+  disabled,
+  isEditing,
+  isVisible,
+  onEdit,
+  onMeasure,
+  path,
+  simplePath,
+  style,
+  transient,
+}: EditableProps) => {
   const state = store.getState()
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -134,7 +145,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
     contentRef.current.style.opacity = '1.0'
   }
 
-  const multiline = useMultiline(contentRef, simplePath, isEditing)
+  const multiline = useMultiline(contentRef, simplePath, isEditing, onMeasure)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>

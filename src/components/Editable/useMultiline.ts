@@ -7,7 +7,13 @@ import editingValueStore from '../../stores/editingValue'
 import head from '../../util/head'
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
+const useMultiline = (
+  contentRef: React.RefObject<HTMLElement>,
+  simplePath: SimplePath,
+  isEditing?: boolean,
+  // TODO: Can the height be calculated upstream and then a heightRef passed down instead?
+  onMeasure?: (height: number) => void,
+) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector((state: State) => state.fontSize)
 
@@ -18,6 +24,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   useEffect(() => {
     if (contentRef.current) {
       const height = contentRef.current.clientHeight
+      onMeasure?.(height)
       // 1.72 must match line-height as defined in .thought-container
       const singleLineHeight = fontSize * 1.72
       // .editable.multiline gets 5px of padding-top to offset the collapsed line-height
