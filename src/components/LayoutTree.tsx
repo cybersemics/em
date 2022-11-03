@@ -115,6 +115,7 @@ const LayoutTree = () => {
   // setup list virtualization
   const viewport = viewportStore.useState()
   const overshoot = fontSize / 3.6 // the number of additional thoughts below the bottom of the screen that are rendered
+  const top = viewport.scrollTop + viewport.innerHeight + overshoot
   const estimatedYStart = 80
   const estimatedHeight = fontSize * 1.87
 
@@ -141,7 +142,7 @@ const LayoutTree = () => {
         // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
         // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
         const estimatedY = i * estimatedHeight + estimatedYStart
-        const hide = estimatedY > viewport.bottom + estimatedHeight * overshoot
+        const hide = estimatedY > top + estimatedHeight
         if (hide) return <div key={thought.id} style={{ height: estimatedHeight }} />
 
         return (

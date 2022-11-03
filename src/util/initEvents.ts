@@ -16,7 +16,7 @@ import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import pushStore from '../stores/push'
-import { updateViewport } from '../stores/viewport'
+import { updateHeight, updateScrollTop } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
@@ -214,8 +214,8 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
-  window.addEventListener('resize', updateViewport)
-  window.addEventListener('scroll', updateViewport)
+  window.addEventListener('resize', updateHeight)
+  window.addEventListener('scroll', updateScrollTop)
   window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
 
   // clean up on app switch in PWA
@@ -231,8 +231,8 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
-    window.removeEventListener('resize', updateViewport)
-    window.removeEventListener('scroll', updateViewport)
+    window.removeEventListener('resize', updateHeight)
+    window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
     lifecycle.removeEventListener('statechange', onStateChange)
   }

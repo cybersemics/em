@@ -3,16 +3,27 @@ import ministore from './ministore'
 
 /** A store that tracks the top and bottom of the viewport. */
 const viewportStore = ministore({
-  top: document.documentElement.scrollTop,
-  bottom: window.innerHeight + document.documentElement.scrollTop,
+  scrollTop: document.documentElement.scrollTop,
+  innerHeight: window.innerHeight,
 })
 
-/** Update viewport dimensions on scroll for list virtualization. See: viewportStore and LayoutTree. */
-export const updateViewport = _.throttle(
+/** Throttled update of viewport height. */
+export const updateHeight = _.throttle(
   () => {
     viewportStore.update({
-      top: document.documentElement.scrollTop,
-      bottom: window.innerHeight + document.documentElement.scrollTop,
+      innerHeight: window.innerHeight,
+    })
+  },
+  // lock to 60 fps
+  16.666,
+  { leading: true },
+)
+
+/** Throttled update of scrollTop. */
+export const updateScrollTop = _.throttle(
+  () => {
+    viewportStore.update({
+      scrollTop: document.documentElement.scrollTop,
     })
   },
   // lock to 60 fps
