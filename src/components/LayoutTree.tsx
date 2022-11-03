@@ -1,20 +1,13 @@
-import _ from 'lodash'
-import React, { useMemo } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import React from 'react'
+import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
-import attribute from '../selectors/attribute'
-import calculateAutofocus from '../selectors/calculateAutofocus'
-import { childrenFilterPredicate, getAllChildrenAsThoughts, getAllChildrenSorted } from '../selectors/getChildren'
-import getStyle from '../selectors/getStyle'
-import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
+import { childrenFilterPredicate, getAllChildrenSorted } from '../selectors/getChildren'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
@@ -22,7 +15,6 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
 import Subthought from './Subthought'
-import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
 
 type TreeThought = {
@@ -85,105 +77,6 @@ const virtualTree = (
   }, [])
 
   return thoughts
-}
-
-/** A thought that is rendered in a flat list but positioned like a node in a tree. */
-const VirtualThought = ({
-  debugIndex,
-  depth,
-  env,
-  indexDescendant,
-  leaf,
-  prevChildId,
-  nextChildId,
-  simplePath,
-}: VirtualThoughtProps) => {
-  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
-  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
-
-  const autofocus = useSelector(calculateAutofocus(simplePath))
-  const parentId = thought.parentId
-  const grandparentId = simplePath[simplePath.length - 3]
-
-  const childrenAttributeId = useSelector(
-    (state: State) =>
-      (thought.value !== '=children' &&
-        getAllChildrenAsThoughts(state, parentId).find(child => child.value === '=children')?.id) ||
-      null,
-  )
-  const grandchildrenAttributeId = useSelector(
-    (state: State) =>
-      (thought.value !== '=style' &&
-        getAllChildrenAsThoughts(state, grandparentId).find(child => child.value === '=grandchildren')?.id) ||
-      null,
-  )
-  const hideBulletsChildren = useSelector((state: State) => attribute(state, childrenAttributeId, '=bullet') === 'None')
-  const hideBulletsGrandchildren = useSelector(
-    (state: State) => thought.value !== '=bullet' && attribute(state, grandchildrenAttributeId, '=bullet') === 'None',
-  )
-
-  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId), _.isEqual)
-  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId), _.isEqual)
-  const styleContainerChildren = useSelector(
-    (state: State) => getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
-    _.isEqual,
-  )
-  const styleContainerGrandchildren = useSelector(
-    (state: State) => getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
-    _.isEqual,
-  )
-
-  const styleContainer: React.CSSProperties = useMemo(
-    () => ({
-      ...styleContainerChildren,
-      ...styleContainerGrandchildren,
-    }),
-    [styleContainerChildren, styleContainerGrandchildren],
-  )
-
-  return (
-    <div
-      style={{
-        opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-        pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
-        transition: 'opacity 0.75s ease-out',
-      }}
-    >
-      <Subthought
-        // allowSingleContext={allowSingleContextParent}
-        allowSingleContext={false}
-        child={thought}
-        debugIndex={debugIndex}
-        depth={depth}
-        env={env}
-        hideBullet={hideBulletsChildren || hideBulletsGrandchildren}
-        // isHeader={isHeader}
-        isHeader={false}
-        // isMultiColumnTable={isMultiColumnTable}
-        isMultiColumnTable={false}
-        isVisible={autofocus === 'show' || autofocus === 'dim'}
-        parentPath={parentPath}
-        path={parentPath}
-        prevChildId={prevChildId}
-        // showContexts={showContexts}
-        showContexts={false}
-        styleChildren={styleChildren || undefined}
-        styleContainer={styleContainer}
-        styleGrandchildren={styleGrandchildren || undefined}
-        // zoomCursor={zoomCursor}
-      />
-      {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
-        <SubthoughtsDropEmpty
-          depth={depth}
-          indexDescendant={indexDescendant}
-          leaf={leaf}
-          prevChildId={prevChildId}
-          nextChildId={nextChildId}
-          simplePath={simplePath}
-        />
-      )}
-    </div>
-  )
 }
 
 /** A drop target at the end of the ROOT context. */
@@ -260,11 +153,13 @@ const LayoutTree = () => {
                 transition: 'left 0.15s ease-out',
               }}
             >
-              <VirtualThought
+              <Subthought
                 debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
                 env={env}
                 indexDescendant={indexDescendant}
+                // isMultiColumnTable={isMultiColumnTable}
+                isMultiColumnTable={false}
                 leaf={leaf}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 nextChildId={next?.depth < depth ? next?.thought.id : undefined}
