@@ -80,7 +80,6 @@ export interface ThoughtContainerProps {
   isPublishChild?: boolean
   // See: ThoughtProps['isVisible']
   isVisible?: boolean
-  onMeasure?: (height: number) => void
   path: Path
   prevChildId?: ThoughtId
   publish?: boolean
@@ -106,7 +105,6 @@ export interface ThoughtProps {
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
-  onMeasure?: (height: number) => void
   path: Path
   rank: number
   showContextBreadcrumbs?: boolean
@@ -209,7 +207,6 @@ const ThoughtContainer = ({
   isContextPending,
   isPublishChild,
   isVisible,
-  onMeasure,
   parentView,
   path,
   prevChildId,
@@ -498,7 +495,6 @@ const ThoughtContainer = ({
             isPublishChild={isPublishChild}
             isVisible={isVisible}
             onEdit={!isTouch ? onEdit : undefined}
-            onMeasure={onMeasure}
             path={path}
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}

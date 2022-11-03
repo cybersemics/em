@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
@@ -62,6 +62,7 @@ const Subthought = ({
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
   const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
   const [height, setHeight] = useState<number | null>(null)
+  const ref = useRef<HTMLDivElement>(null)
 
   // TODO
   const showContexts = false
@@ -176,7 +177,11 @@ const Subthought = ({
   //   childPath,
   // })
 
-  const onMeasure = useCallback(setHeight, [])
+  useEffect(() => {
+    if (ref.current) {
+      setHeight(ref.current.clientHeight)
+    }
+  }, [])
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
@@ -193,6 +198,7 @@ const Subthought = ({
 
   return (
     <div
+      ref={ref}
       style={{
         // fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM
         height: shimHiddenThought ? height! : undefined,
@@ -216,7 +222,6 @@ const Subthought = ({
             zoomCursor || autofocus === 'show' || autofocus === 'dim'
           }
           key={thought.id}
-          onMeasure={onMeasure}
           path={appendedChildPath}
           prevChildId={prevChildId}
           rank={thought.rank}
