@@ -25,9 +25,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
-import createId from '../util/createId'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
@@ -123,29 +121,6 @@ export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
-
-/** Returns a unique className and injectStyle function that can be used to style pseudo elements. Apply the className to the desired element and render injectStyle() nearby. The pseudo selector, e.g. ::before, will be appended to the unique className, styling a pseudo element directly, or a descendant pseudo element, as determined by the selector. */
-const pseudo = (pseudoSelector: string, style: React.CSSProperties) => {
-  const className = `pseudo-${createId()}`
-
-  // simple encoding of style dictionary
-  // unlike React.CSSProperties, assumes that keys are already in slug case and units have been added
-  const styleCSS =
-    '{' +
-    Object.entries(style)
-      .map(([name, value]) => `${name}: ${value};`)
-      .join('') +
-    '}'
-
-  /** Style element. */
-  const styleElement = () => <style>{`.${className}${pseudoSelector} ${styleCSS}`}</style>
-  styleElement.displayName = className
-
-  return {
-    className,
-    injectStyle: styleElement,
-  }
-}
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
@@ -350,13 +325,6 @@ const ThoughtContainer = ({
     }
   }, [])
 
-  // placeholder style animates with autofocus
-  const colors = useSelector(themeColors)
-  const placeholder = useMemo(
-    () => pseudo(' [placeholder]:empty::before', { color: colors.fg, opacity: 0.5 }),
-    [colors],
-  )
-
   // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
   const styleWithoutColors = useMemo((): React.CSSProperties => {
     return {
@@ -446,7 +414,6 @@ const ThoughtContainer = ({
         }}
         className={classNames({
           child: true,
-          [placeholder.className]: true,
           'child-divider': isDivider(value),
           'cursor-parent': isCursorParent,
           'cursor-grandparent': isCursorGrandparent,
@@ -511,8 +478,6 @@ const ThoughtContainer = ({
           )}
 
           <ThoughtDropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
-
-          {placeholder.injectStyle()}
 
           <ThoughtAnnotation
             env={env}
