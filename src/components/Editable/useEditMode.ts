@@ -53,11 +53,6 @@ const useEditMode = ({
     // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
     const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
 
-    // if the selection is at the beginning of the thought, ignore cursorWithoutSelection and allow the selection to be set
-    // otherwise clicking on empty space to activate cursorBack will not set the selection properly on desktop
-    // disable on mobile to avoid infinite loop (#908)
-    const isAtBeginning = !isTouch && selection.offset() === 0
-
     // allow transient editable to have focus on render
     const shouldSetSelection =
       transient ||
@@ -65,7 +60,7 @@ const useEditMode = ({
         editMode &&
         !noteFocus &&
         contentRef.current &&
-        (cursorWithoutSelection || isAtBeginning) &&
+        cursorWithoutSelection &&
         !dragHold &&
         !disabledRef.current)
 
@@ -82,7 +77,7 @@ const useEditMode = ({
     //     if (!editMode) console.info('  editMode')
     //     if (!contentRef.current) console.info('  contentRef.current')
     //     if (noteFocus) console.info('  - !noteFocus')
-    //     if (!(cursorWithoutSelection || isAtBeginning)) console.info('  cursorWithoutSelection || isAtBeginning')
+    //     if (!(cursorWithoutSelection)) console.info('  cursorWithoutSelection')
     //     if (dragHold) console.info('  !dragHold')
     //     if (disabledRef.current) console.info('  !disabledRef.current')
     //   }
