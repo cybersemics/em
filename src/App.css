@@ -637,7 +637,7 @@ a.text-link {
 */
 .safari .child .editable:empty {
   padding-top: 0.2em;
-  margin-bottom: -0.4em; /* offset padding-top, otherwise next sibling will be bumped down */
+  margin-bottom: -0.2em; /* offset padding-top, otherwise next sibling will be bumped down */
 }
 /* shift placeholder up to offset padding-top */
 .safari .child .editable:empty::before {
