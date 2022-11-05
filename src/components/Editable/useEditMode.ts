@@ -84,7 +84,7 @@ const useEditMode = ({
     //     if (noteFocus) console.info('  - !noteFocus')
     //     if (!(cursorWithoutSelection || isAtBeginning)) console.info('  cursorWithoutSelection || isAtBeginning')
     //     if (dragHold) console.info('  !dragHold')
-    //     if (disabled) console.info('  !disabled')
+    //     if (disabledRef.current) console.info('  !disabledRef.current')
     //   }
     // }
 

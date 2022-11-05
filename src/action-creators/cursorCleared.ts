@@ -1,4 +1,5 @@
 import Thunk from '../@types/Thunk'
+import asyncFocus from '../device/asyncFocus'
 
 /** Temporary clear the cursor in response to the clearThought. NOOP if value is no different than current state. See reducers/cursorCleared. */
 const cursorCleared =
@@ -8,6 +9,7 @@ const cursorCleared =
     // This can occur when switching windows which triggers onBlur.
     // See: https://github.com/cybersemics/em/issues/1556
     if (getState().cursorCleared !== value) {
+      asyncFocus()
       dispatch({ type: 'cursorCleared', value })
     }
   }

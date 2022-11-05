@@ -5,6 +5,8 @@ import State from '../@types/State'
  */
 const cursorCleared = (state: State, { value }: { value: boolean }): State => ({
   ...state,
+  // set cursor offset to 0, otherwise useEditMode will fail to set the selection when cursorCleared is activated
+  cursorOffset: 0,
   cursorCleared: value,
   // ContentEditable does not re-render while editing
   // Use editableNonce to force re-render
