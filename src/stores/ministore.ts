@@ -1,5 +1,5 @@
 import Emitter from 'emitter20'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** Creates a mini store that tracks state and can update consumers. */
 const ministore = <T = any>(initialState: T) => {
@@ -32,14 +32,16 @@ const ministore = <T = any>(initialState: T) => {
     const [localState, setLocalState] = useState(state)
     const unmounted = useRef(false)
 
+    const onChange = useCallback(() => {
+      if (!unmounted.current) {
+        setLocalState(state)
+      }
+    }, [])
+
     useEffect(() => {
-      emitter.on('change', () => {
-        if (!unmounted.current) {
-          setLocalState(state)
-        }
-      })
+      emitter.on('change', onChange)
       return () => {
-        emitter.clear('change')
+        emitter.off('change', onChange)
         unmounted.current = true
       }
     }, [])
