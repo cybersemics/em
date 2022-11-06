@@ -8,6 +8,7 @@ const toggleTextItalicStyle: Shortcut = {
   label: 'Italic Toggle',
   description: 'Toggles italic font style of selected thought.',
   svg: Icon,
+  keyboard: { key: 'i', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()

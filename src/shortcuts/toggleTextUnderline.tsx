@@ -8,6 +8,7 @@ const toggleTextUnderline: Shortcut = {
   label: 'Underline Toggle',
   description: 'Toggles underline of selected thought.',
   svg: Icon,
+  keyboard: { key: 'u', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()

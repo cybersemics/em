@@ -8,6 +8,7 @@ const toggleTextBoldness: Shortcut = {
   label: 'Boldness Toggle',
   description: 'Toggles bold font weight of selected thought.',
   svg: Icon,
+  keyboard: { key: 'b', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
