@@ -230,6 +230,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'exportContext',
   'toggleTextBoldness',
   'toggleTextItalicStyle',
+  'toggleTextUnderline',
   // 'bindContext',
   // 'bumpThoughtDown',
   // 'clearThought',
