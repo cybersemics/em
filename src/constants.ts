@@ -228,6 +228,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'splitSentences',
   'toggleHiddenThoughts',
   'exportContext',
+  'toggleTextBoldness',
   // 'bindContext',
   // 'bumpThoughtDown',
   // 'clearThought',
