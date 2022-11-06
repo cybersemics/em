@@ -2,10 +2,11 @@ import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/BoldTextIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
+/** Toolbars shortcut instance of toggleTextBoldness, which toggles bold font weight of the cursor. */
 const toggleTextBoldness: Shortcut = {
   id: 'toggleTextBoldness',
-  label: 'Text Bold',
-  description: 'Set bold font weight to selected text.',
+  label: 'Boldness Toggle',
+  description: 'Toggles bold font weight of selected thought.',
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {

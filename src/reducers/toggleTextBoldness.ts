@@ -2,7 +2,7 @@ import { toggleAttribute } from '.'
 import _ from 'lodash'
 import State from '../@types/State'
 
-/** Sets the text color or background color of the cursor. */
+/** Toggles the bold font weight of the cursor. */
 const toggleTextBoldness = (state: State) => {
   if (!state.cursor) return state
   const path = state.cursor

@@ -2,7 +2,7 @@ import { toggleAttribute } from '.'
 import _ from 'lodash'
 import State from '../@types/State'
 
-/** Sets the text color or background color of the cursor. */
+/** Toggles the underline decoration of the cursor. */
 const toggleTextUnderline = (state: State) => {
   if (!state.cursor) return state
   const path = state.cursor
