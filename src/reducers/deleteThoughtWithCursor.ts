@@ -1,3 +1,4 @@
+import { applyPatch } from 'fast-json-patch'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -85,14 +86,40 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       const missingIndex = pathParent.findIndex(id => !getThoughtById(state, id))
       const closestAncestor = missingIndex !== -1 ? (pathParent.slice(0, missingIndex) as Path) : pathParent
 
+      // If the last action was newThought (above), restore the cursor to the next thought rather than the previous.
+      // If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
+      // Restoring thec ursor and making the delete action an exact inverse to newThought is more intuitive than moving the cursor elsewhere, and helps the user with error correction.
+      const revertedCursor = once(() => {
+        if (!state.cursor) return null
+
+        const lastPatches = state.undoPatches[state.undoPatches.length - 1]
+        const lastCursorOps = lastPatches?.filter(
+          patch => patch.actions[0] === 'newThought' && patch.path.startsWith('/cursor/'),
+        )
+
+        if (!lastCursorOps || lastCursorOps.length === 0) return null
+
+        // remove /cursor from the patch since we are applying it directly to state.cursor, not the full state
+        const revertCursorPatch = lastCursorOps.map(patch => ({
+          op: patch.op,
+          path: patch.path.replace('/cursor', ''),
+          value: patch.value,
+        }))
+        const cursorNew = applyPatch([...state.cursor], revertCursorPatch).newDocument as Path
+        return cursorNew
+      })
+
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
       return setCursorOrBack.apply(
         null,
-        // Case I: set cursor on next thought
-        next
+        revertedCursor()
+          ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
+          : // Case I: set cursor on next thought
+          next
           ? [appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
+          // allow revertNewSubthought to fall through to Case III (parent)
           prev
           ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
           : // Case III: delete last thought in context; set cursor on parent
