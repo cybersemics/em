@@ -229,6 +229,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'toggleHiddenThoughts',
   'exportContext',
   'toggleTextBoldness',
+  'toggleTextItalicStyle',
   // 'bindContext',
   // 'bumpThoughtDown',
   // 'clearThought',
