@@ -3,11 +3,11 @@ import _ from 'lodash'
 import State from '../@types/State'
 
 /** Sets the text color or background color of the cursor. */
-const textUnderline = (state: State) => {
+const toggleTextBoldness = (state: State) => {
   if (!state.cursor) return state
   const path = state.cursor
 
   return toggleAttribute(state, { path, values: ['=style', 'fontWeight', '700'] })
 }
 
-export default _.curryRight(textUnderline)
+export default _.curryRight(toggleTextBoldness)
