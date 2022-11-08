@@ -48,25 +48,21 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
   /** Returns true if the thought is a descendant of the cursor. */
   const isDescendantOfCursor = () => isDescendantPath(resolvedPath, state.cursor)
 
-  /** Returns true if the thought is a descendant of the uncle. */
+  /** Returns true if the thought is a descendant of a great uncle of the leaf cursor. */
   const isDescendantOfUncle = () => isDescendantPath(resolvedPath, cursorParent)
+
+  /** Returns true if the thought is a descendant of the uncle. */
+  const isDescendantOfGreatUncle = () => isCursorLeaf && isDescendantPath(resolvedPath, cursorGrandparent)
 
   /** Returns true if the thought is a descendant of an uncle. */
   const isCousin = () => resolvedPath.length >= state.cursor!.length && isDescendantOfUncle()
-
-  // console.log(prettyPath(state, simplePath), {
-  //   isParentOrSiblingOfCursor,
-  //   isGrandparentOfCursor: isGrandparentOfCursor(),
-  //   isUncleOfCursor: isUncleOfCursor(),
-  //   isDescendantOfUncle: isDescendantOfUncle(),
-  //   isCousin: isCousin(),
-  // })
 
   return (isCursorLeaf && isParentOrSiblingOfCursor) || isDescendantOfCursor()
     ? 'show'
     : isParentOrSiblingOfCursor ||
       (isCursorLeaf && (isGrandparentOfCursor() || isUncleOfCursor())) ||
       isDescendantOfUncle() ||
+      isDescendantOfGreatUncle() ||
       isCousin()
     ? 'dim'
     : 'hide'

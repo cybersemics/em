@@ -349,7 +349,7 @@ describe('normal view', () => {
     })
   })
 
-  it('hide descendants of pinned great cousins', () => {
+  it('hide descendants of pinned great cousins (1)', () => {
     const text = `
       - a
         - b
@@ -372,6 +372,39 @@ describe('normal view', () => {
       'a/d': 'dim',
       'a/d/e': 'show',
       'a/d/e/f': 'show',
+    })
+  })
+
+  it('hide descendants of pinned great cousins (2)', () => {
+    const text = `
+      - a
+        - =children
+          - =pin
+            - true
+        - b
+          - c
+            - d
+        - e
+          - f
+            - g
+              - h
+                - i
+    `
+    const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'hide',
+      'a/b': 'dim',
+      'a/b/c': 'show',
+      'a/b/c/d': 'show',
+      'a/e': 'hide',
+      'a/e/f': 'hide',
+      'a/e/f/g': 'hide',
+      'a/e/f/g/h': 'hide',
+      'a/e/f/g/h/i': 'hide',
     })
   })
 })
