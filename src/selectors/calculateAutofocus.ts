@@ -30,28 +30,37 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
 
   // const resolvedPath = path ?? simplePath
   const resolvedPath = simplePath as Path
-  const pathParent = parentOf(state.cursor!)
-  const pathGrandparent = parentOf(pathParent)
+  const cursorParent = parentOf(state.cursor!)
+  const cursorGrandparent = parentOf(cursorParent)
 
   /** Returns true if the thought is the parent of the cursor. */
-  const isGrandparentOfCursor = () => equalPath(parentOf(pathParent), resolvedPath)
+  const isGrandparentOfCursor = () => equalPath(parentOf(cursorParent), resolvedPath)
 
   /** Returns true if the thought is the parent or sibling of the cursor. */
-  const isParentOrSiblingOfCursor = equalPath(pathParent, resolvedPath) || equalPath(pathParent, parentOf(resolvedPath))
+  const isParentOrSiblingOfCursor =
+    equalPath(cursorParent, resolvedPath) || equalPath(cursorParent, parentOf(resolvedPath))
 
   const isCursorLeaf = !hasChildren(state, head(state.cursor))
 
   /** Returns true if the thought is the parent of the cursor. */
-  const isUncleOfCursor = () => equalPath(pathGrandparent, parentOf(resolvedPath))
+  const isUncleOfCursor = () => equalPath(cursorGrandparent, parentOf(resolvedPath))
 
   /** Returns true if the thought is a descendant of the cursor. */
   const isDescendantOfCursor = () => isDescendantPath(resolvedPath, state.cursor)
 
   /** Returns true if the thought is a descendant of the uncle. */
-  const isDescendantOfUncle = () => isDescendantPath(resolvedPath, pathParent)
+  const isDescendantOfUncle = () => isDescendantPath(resolvedPath, cursorParent)
 
   /** Returns true if the thought is a descendant of an uncle. */
-  const isCousin = () => resolvedPath.length >= state.cursor!.length && (isCursorLeaf || isDescendantOfUncle())
+  const isCousin = () => resolvedPath.length >= state.cursor!.length && isDescendantOfUncle()
+
+  // console.log(prettyPath(state, simplePath), {
+  //   isParentOrSiblingOfCursor,
+  //   isGrandparentOfCursor: isGrandparentOfCursor(),
+  //   isUncleOfCursor: isUncleOfCursor(),
+  //   isDescendantOfUncle: isDescendantOfUncle(),
+  //   isCousin: isCousin(),
+  // })
 
   return (isCursorLeaf && isParentOrSiblingOfCursor) || isDescendantOfCursor()
     ? 'show'
