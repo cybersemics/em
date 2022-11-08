@@ -7,8 +7,6 @@ import Thunk from '../@types/Thunk'
 import deleteEmptyThoughtActionCreator from '../action-creators/deleteEmptyThought'
 import error from '../action-creators/error'
 import outdent from '../action-creators/outdent'
-import { isTouch } from '../browser'
-import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
@@ -58,7 +56,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
 /** A thunk that dispatches deleteEmptyThought. */
 const deleteEmptyThought: Thunk = (dispatch, getState) => {
   const state = getState()
-  const { cursor, editing } = state
+  const { cursor } = state
   if (!cursor) return
 
   const simplePath = simplifyPath(state, cursor)
@@ -66,20 +64,10 @@ const deleteEmptyThought: Thunk = (dispatch, getState) => {
   // Determine if thought at cursor is uneditable
   const contextOfCursor = pathToContext(state, cursor)
   const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
-  const children = getChildren(state, head(cursor))
 
   if (prevThought && uneditable) {
     dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
     return
-  }
-
-  // empty thought on mobile
-  if (
-    isTouch &&
-    editing &&
-    ((headValue(state, cursor) === '' && children.length === 0) || isDivider(headValue(state, cursor)))
-  ) {
-    asyncFocus()
   }
 
   dispatch(deleteEmptyThoughtActionCreator())
