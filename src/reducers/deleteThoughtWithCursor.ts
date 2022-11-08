@@ -116,7 +116,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          next
+          next && value !== ''
           ? [appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)
