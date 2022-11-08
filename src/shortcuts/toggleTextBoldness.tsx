@@ -5,7 +5,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 /** Toolbars shortcut instance of toggleTextBoldness, which toggles bold font weight of the cursor. */
 const toggleTextBoldness: Shortcut = {
   id: 'toggleTextBoldness',
-  label: 'Boldness Toggle',
+  label: 'Bold',
   description: 'Toggles bold font weight of selected thought.',
   svg: Icon,
   keyboard: { key: 'b', meta: true },

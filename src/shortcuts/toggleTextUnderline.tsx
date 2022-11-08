@@ -5,7 +5,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 /** Toolbars shortcut instance of toggleTextUnderline, which toggles underline decoration of the cursor. */
 const toggleTextUnderline: Shortcut = {
   id: 'toggleTextUnderline',
-  label: 'Underline Toggle',
+  label: 'Underline',
   description: 'Toggles underline of selected thought.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
