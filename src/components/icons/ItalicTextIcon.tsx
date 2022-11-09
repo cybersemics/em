@@ -1,7 +1,7 @@
 import React from 'react'
 import Icon from '../../@types/Icon'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Italic icon. */
 const ItalicTextIcon = ({ style, size }: Icon) => {
   return (
     <svg
@@ -13,7 +13,7 @@ const ItalicTextIcon = ({ style, size }: Icon) => {
       className='icon'
       width={size}
       height={size}
-      style={{ ...style, width: 18, height: 22 }}
+      style={{ ...style, width: style?.width ? parseInt(style.width.toString()) * 0.875 : undefined }}
     >
       <path d='m16 1h-6a1 1 0 0 0 0 2h1.557l-5.25 14h-2.307a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-1.557l5.25-14h2.307a1 1 0 0 0 0-2z'></path>
     </svg>

@@ -1,7 +1,7 @@
 import React from 'react'
 import Icon from '../../@types/Icon'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Underline icon. */
 const UnderlineIcon = ({ style, size }: Icon) => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
@@ -12,7 +12,7 @@ const UnderlineIcon = ({ style, size }: Icon) => (
     className='icon'
     width={size}
     height={size}
-    style={{ ...style, width: 20, height: 22 }}
+    style={{ ...style, width: style?.width ? parseInt(style.width.toString()) * 0.9 : undefined }}
   >
     <path
       d='M230,0c-8.284,0-15,6.716-15,15v130c0,35.841-29.16,65-65.002,65c-17.362,0-33.684-6.762-45.961-19.038
