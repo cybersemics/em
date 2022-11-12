@@ -1,33 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getThoughtById from '../../selectors/getThoughtById'
-import store from '../../stores/app'
 import editingValueStore from '../../stores/editingValue'
 import head from '../../util/head'
-
-/** Invokes a callback when a slice of the state changes without re-rendering the component. Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render. */
-const useSelectorEffect = <T>(
-  select: (state: State) => T,
-  callback: () => void,
-  equalityFn?: (a: T, b: T) => boolean,
-) => {
-  const prev = useRef<T>(select(store.getState()))
-  useEffect(
-    () =>
-      // Returns unsubscribe which is called on unmount.
-      store.subscribe(() => {
-        const current = select(store.getState())
-        if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-          // Wait till the next tick, otherwise the callback will be called before components are re-rendered.
-          setTimeout(callback)
-        }
-        prev.current = current
-      }),
-    [],
-  )
-}
 
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {

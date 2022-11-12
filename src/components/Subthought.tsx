@@ -1,11 +1,12 @@
 import _ from 'lodash'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import globals from '../globals'
+import useSelectorEffect from '../hooks/useSelectorEffect'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
@@ -61,7 +62,7 @@ const Subthought = ({
   const state = store.getState()
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
   const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
-  const [height, setHeight] = useState<number | null>(null)
+  const heightRef = useRef<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   // TODO
@@ -177,11 +178,16 @@ const Subthought = ({
   //   childPath,
   // })
 
-  useEffect(() => {
+  const updateHeight = useCallback(() => {
     if (ref.current) {
-      setHeight(ref.current.clientHeight)
+      heightRef.current = ref.current.clientHeight
     }
   }, [])
+
+  // Read height on cursor change, but do not re-render.
+  // shimHiddenThought will re-render as needed.
+  useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
+  useEffect(updateHeight)
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
@@ -194,14 +200,14 @@ const Subthought = ({
     autofocus !== 'dim' &&
     autofocusAfterAnimation !== 'show' &&
     autofocusAfterAnimation !== 'dim' &&
-    !!height
+    !!heightRef.current
 
   return (
     <div
       ref={ref}
       style={{
         // fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM
-        height: shimHiddenThought ? height! : undefined,
+        height: shimHiddenThought ? heightRef.current! : undefined,
         opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
         pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
         transition: 'opacity 0.75s ease-out',
