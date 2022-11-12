@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -75,8 +76,18 @@ const Subthought = ({
    ***************************/
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
+  // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
+  // Wait until the fade out animation has completed before removing.
   const autofocus = useSelector(calculateAutofocus(simplePath))
-  const autofocusAfterAnimation = useDelayedAutofocus(autofocus)
+  const shimHiddenThought = useDelayedAutofocus(autofocus, {
+    delay: 750,
+    selector: (autofocusAfterAnimation: Autofocus) =>
+      autofocus !== 'show' &&
+      autofocus !== 'dim' &&
+      autofocusAfterAnimation !== 'show' &&
+      autofocusAfterAnimation !== 'dim' &&
+      !!heightRef.current,
+  })
 
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
@@ -169,6 +180,7 @@ const Subthought = ({
   //   parentPath,
   //   path,
   //   prevChildId,
+  //   shimHiddenThought
   //   showContexts,
   //   styleChildren,
   //   styleGrandchildren,
@@ -184,7 +196,7 @@ const Subthought = ({
     }
   }, [])
 
-  // Read height on cursor change, but do not re-render.
+  // Read the element's height from the DOM on cursor change, but do not re-render.
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
   useEffect(updateHeight)
@@ -192,15 +204,6 @@ const Subthought = ({
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
-
-  // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
-  // Wait until the fade out animation has completed before removing.
-  const shimHiddenThought =
-    autofocus !== 'show' &&
-    autofocus !== 'dim' &&
-    autofocusAfterAnimation !== 'show' &&
-    autofocusAfterAnimation !== 'dim' &&
-    !!heightRef.current
 
   return (
     <div
