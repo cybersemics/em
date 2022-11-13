@@ -39,14 +39,14 @@ const ministore = <T = any>(initialState: T) => {
 
   /** A hook that subscribes to a slice of the state. If no selector is given, subscribes to the whole state. */
   const useSelector = <U>(selector?: (state: T) => U) => {
-    const [localState, setLocalState] = useState(state)
+    const [localState, setLocalState] = useState(selector ? selector(state) : state)
     const unmounted = useRef(false)
 
     useEffect(() => {
       /** Updates local state on store state change. */
       const onChange = (stateNew: T) => {
         if (!unmounted.current) {
-          setLocalState(state)
+          setLocalState(selector ? selector(state) : state)
         }
       }
       emitter.on('change', onChange)
@@ -56,7 +56,7 @@ const ministore = <T = any>(initialState: T) => {
       }
     }, [])
 
-    return selector ? selector(localState) : localState
+    return localState
   }
 
   /** Subscribe directly to the state. */
