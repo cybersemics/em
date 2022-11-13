@@ -6,7 +6,6 @@ import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import globals from '../globals'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -205,43 +204,50 @@ const Subthought = ({
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
 
+  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+
   return (
     <div
       ref={ref}
       style={{
-        // fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM
+        // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
+        // Must include SubthoughtsDropEmpty, or it will shift when the cursor moves.
         height: shimHiddenThought ? heightRef.current! : undefined,
-        opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-        pointerEvents: autofocus !== 'show' && autofocus !== 'dim' ? 'none' : undefined,
-        transition: 'opacity 0.75s ease-out',
       }}
     >
       {!shimHiddenThought && (
-        <Thought
-          debugIndex={debugIndex}
-          depth={depth + 1}
-          env={env}
-          hideBullet={hideBullet}
-          isContextPending={thought.value === '__PENDING__'}
-          // isHeader={isHeader}
-          isHeader={false}
-          isMultiColumnTable={isMultiColumnTable}
-          isVisible={
-            // if thought is a zoomed cursor then it is visible
-            zoomCursor || autofocus === 'show' || autofocus === 'dim'
-          }
-          key={thought.id}
-          path={appendedChildPath}
-          prevChildId={prevChildId}
-          rank={thought.rank}
-          // showContexts={showContexts}
-          showContexts={false}
-          simplePath={childPath}
-          style={style}
-          styleContainer={styleContainer}
-        />
+        <div
+          style={{
+            // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains SubthoughtsDropEmpty.
+            // Otherwise subsequent SubthoughtsDropEmpty will be obscured.
+            opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+            transition: 'opacity 0.75s ease-out',
+            pointerEvents: !isVisible ? 'none' : undefined,
+          }}
+        >
+          <Thought
+            debugIndex={debugIndex}
+            depth={depth + 1}
+            env={env}
+            hideBullet={hideBullet}
+            isContextPending={thought.value === '__PENDING__'}
+            // isHeader={isHeader}
+            isHeader={false}
+            isMultiColumnTable={isMultiColumnTable}
+            isVisible={isVisible}
+            key={thought.id}
+            path={appendedChildPath}
+            prevChildId={prevChildId}
+            rank={thought.rank}
+            // showContexts={showContexts}
+            showContexts={false}
+            simplePath={childPath}
+            style={style}
+            styleContainer={styleContainer}
+          />
+        </div>
       )}
-      {leaf && (autofocus === 'show' || autofocus === 'dim' || globals.simulateDrag || globals.simulateDrop) && (
+      {isVisible && leaf && (
         <SubthoughtsDropEmpty
           depth={depth}
           indexDescendant={indexDescendant}
