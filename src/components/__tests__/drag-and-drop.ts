@@ -1,15 +1,21 @@
 import { ReactWrapper } from 'enzyme'
+import { DropTargetMonitor } from 'react-dnd'
 import Context from '../../@types/Context'
+import DragThoughtZone from '../../@types/DragThoughtZone'
+import DropThoughtZone from '../../@types/DropThoughtZone'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import dragInProgress from '../../action-creators/dragInProgress'
 import importText from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import equalArrays from '../../util/equalArrays'
 import pathToContext from '../../util/pathToContext'
+import { canDrop } from '../DragAndDropSubthoughts'
 import Subthoughts from '../Subthoughts'
 import Thought from '../Thought'
 
@@ -84,6 +90,33 @@ const simulateDragAndDrop = ({
 
   backend.simulateDrop()
   backend.simulateEndDrag([sourceId])
+}
+
+/** A reducer that emulates a drag in progress and returns props and monitor for canDrop. Dispatches dragInProgress to the app store. */
+const drag = ({ from, to }: { from: Context; to: Context }) => {
+  const state = store.getState()
+  const fromPath = contextToPath(state, from)!
+  const toPath = contextToPath(state, to)!
+
+  store.dispatch(
+    dragInProgress({
+      value: true,
+      draggingThought: fromPath,
+      hoveringPath: toPath,
+      hoverZone: DropThoughtZone.ThoughtDrop,
+      sourceZone: DragThoughtZone.Thoughts,
+    }),
+  )
+
+  // return the two arguments that are used by canDrop
+  return {
+    props: {
+      path: toPath,
+      simplePath: toPath,
+    },
+    // force the type since canDrop only uses monitor.getItem()
+    monitor: { getItem: () => fromPath } as unknown as DropTargetMonitor,
+  }
 }
 
 // TODO: Selectors not longer work after LayoutTree
@@ -275,5 +308,90 @@ describe.skip('drag-and-drop', () => {
     - b`
 
     expect(exported).toEqual(expectedExport)
+  })
+})
+
+describe('DragAndDropSubthoughts', () => {
+  describe('canDrop', () => {
+    it('Can drop on sibling', () => {
+      const text = `
+        - a
+        - b
+        - c
+      `
+      store.dispatch(importText({ text }))
+
+      const { props, monitor } = drag({ from: ['a'], to: ['c'] })
+      expect(canDrop(props, monitor)).toEqual(true)
+    })
+
+    // descendant check must be done elsewhere since this returns true?
+    // it('Cannot drop on descendant', () => {
+    //   const text = `
+    //     - a
+    //       - b
+    //   `
+    //   store.dispatch(importText({ text }))
+
+    //   const { props, monitor } = drag({ from: ['a'], to: ['a', 'b'] })
+    //   expect(canDrop(props, monitor)).toEqual(false)
+    // })
+
+    it('Can drop at the end of the closest hidden parent (cursor on leaf)', () => {
+      const text = `
+        - a
+          - b
+            - c
+              - d
+              - e
+            - f
+      `
+      store.dispatch([importText({ text }), setCursor(['a', 'b', 'c', 'd'])])
+
+      const { props, monitor } = drag({ from: ['a', 'b', 'c', 'd'], to: ['a'] })
+      expect(canDrop(props, monitor)).toEqual(true)
+    })
+
+    it('Cannot drop at the end of the closest hidden parent (cursor on non-leaf)', () => {
+      const text = `
+        - a
+          - b
+            - c
+              - d
+                - x
+              - e
+            - f
+      `
+      store.dispatch([importText({ text }), setCursor(['a', 'b', 'c', 'd'])])
+
+      const { props, monitor } = drag({ from: ['a', 'b', 'c', 'd'], to: ['a'] })
+      expect(canDrop(props, monitor)).toEqual(false)
+    })
+
+    it('Can drop on root when cursor is on a root grandchild', () => {
+      const text = `
+        - a
+          - b
+            - c
+      `
+      store.dispatch([importText({ text }), setCursor(['a', 'b', 'c'])])
+
+      const { props, monitor } = drag({ from: ['a', 'b', 'c'], to: [HOME_TOKEN] })
+      expect(canDrop(props, monitor)).toEqual(true)
+    })
+
+    it('Cannot drop on root when cursor is on a great-grandchild of the root', () => {
+      // 'a' is hidden, so it doesn't make sense to be able to drop before/after 'a'
+      const text = `
+        - a
+          - b
+            - c
+              - d
+      `
+      store.dispatch([importText({ text }), setCursor(['a', 'b', 'c'])])
+
+      const { props, monitor } = drag({ from: ['a', 'b', 'c'], to: [HOME_TOKEN] })
+      expect(canDrop(props, monitor)).toEqual(false)
+    })
   })
 })

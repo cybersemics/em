@@ -31,7 +31,7 @@ interface DroppableSubthoughts {
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
-const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
+export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
@@ -51,7 +51,7 @@ const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
   const firstVisible =
     state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
 
-  const isClosestHiddenParent = equalPath(firstVisible, rootedParentOf(state, thoughtsTo))
+  const isClosestHiddenParent = !!firstVisible && equalPath(rootedParentOf(state, firstVisible), thoughtsTo)
   // Note: The distance calculation for SubthoughtsDrop is 1 less than the ThoughtDrop (in DragAndDropThought.canDrop)
   const distance = state.cursor ? state.cursor.length - thoughtsTo.length - 1 : 0
   const isHidden = distance >= visibleDistanceAboveCursor(state) && !isExpandedTop()
