@@ -3,18 +3,12 @@ import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
-import getThoughtById from '../../selectors/getThoughtById'
 import editingValueStore from '../../stores/editingValue'
-import head from '../../util/head'
 
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector((state: State) => state.fontSize)
-
-  // re-render when live value changes
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
-  editingValueStore.useSelector((editingValue: string | null) => (isEditing ? editingValue : value))
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
@@ -30,9 +24,19 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     setMultiline(height - paddingTop > singleLineHeight * 1.5)
   }, [fontSize])
 
-  // subscribe to cursosr change, but only re-render if multiline actually changes
-  useSelectorEffect((state: State) => state.cursor?.length, updateMultiline, shallowEqual)
-  useEffect(updateMultiline)
+  // Recalculate multiline when the cursor changes.
+  // This is necessary because the width of thoughts change as the autofocus indent changes.
+  // (do not re-render component unless multiline changes)
+  useSelectorEffect((state: State) => state.cursor, updateMultiline, shallowEqual)
+
+  // Recalculate multiline on mount, when the font size changes, and on edit.
+  useEffect(() => {
+    updateMultiline()
+    if (isEditing) {
+      // return the unsubscribe function
+      return editingValueStore.subscribe(updateMultiline)
+    }
+  }, [fontSize, isEditing])
 
   return multiline
 }

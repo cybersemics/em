@@ -1,12 +1,12 @@
 import Emitter from 'emitter20'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /** Creates a mini store that tracks state and can update consumers. */
 const ministore = <T = any>(initialState: T) => {
   let state: T = initialState
   const emitter = new Emitter()
 
-  /** Updates state. Only overwrites the given keys and preserves the rest. */
+  /** Updates one or more values in state. */
   const update = (updatesOrUpdater: Partial<T> | ((state: T) => Partial<T>)) => {
     const updates = typeof updatesOrUpdater === 'function' ? updatesOrUpdater(state) : updatesOrUpdater
 
@@ -27,18 +27,28 @@ const ministore = <T = any>(initialState: T) => {
     })
   }
 
+  /** A hook that invokes a callback when the state changes. */
+  const useChangeEffect = (cb: (state: T) => void) => {
+    useEffect(() => {
+      emitter.on('change', cb)
+      return () => {
+        emitter.off('change', cb)
+      }
+    }, [])
+  }
+
   /** A hook that subscribes to a slice of the state. If no selector is given, subscribes to the whole state. */
   const useSelector = <U>(selector?: (state: T) => U) => {
     const [localState, setLocalState] = useState(state)
     const unmounted = useRef(false)
 
-    const onChange = useCallback(() => {
-      if (!unmounted.current) {
-        setLocalState(state)
-      }
-    }, [])
-
     useEffect(() => {
+      /** Updates local state on store state change. */
+      const onChange = (stateNew: T) => {
+        if (!unmounted.current) {
+          setLocalState(state)
+        }
+      }
       emitter.on('change', onChange)
       return () => {
         emitter.off('change', onChange)
@@ -49,18 +59,20 @@ const ministore = <T = any>(initialState: T) => {
     return selector ? selector(localState) : localState
   }
 
+  /** Subscribe directly to the state. */
+  const subscribe = (f: (state: T) => void) => {
+    emitter.on('change', f)
+    return () => emitter.off('change', f)
+  }
+
   return {
-    /** Gets the state. */
     getState: () => state,
-
-    /** Updates one or more values in state and trigger a change. */
     update,
-
+    subscribe,
+    useEffect: useChangeEffect,
+    useSelector,
     /** A hook that subscribes to the entire state. */
     useState: useSelector as () => T,
-
-    /** A hook that subscribes to a slice of the state. */
-    useSelector,
   }
 }
 
