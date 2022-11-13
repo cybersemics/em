@@ -2099,11 +2099,11 @@ code,
 
 /* move drop-end to the right so that the user's finger does not obscure the drop target */
 .mobile .drop-end:not(.child) {
-  margin-left: 5em;
+  margin-left: 2em;
 }
 /* the drop-target is to the right (see above), but the drop-hover needs to be positioned normally where the thought will be inserted, so offset the drop-target offset. */
 .mobile .drop-end:not(.child) .drop-hover {
-  margin-left: calc(-5.4em - 13px);
+  margin-left: calc(-2.4em - 13px);
 }
 
 /*.child.expanded:not(.leaf) + .child > .thought-container .drop-hover {
