@@ -21,6 +21,7 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
+import SubthoughtsDropCliff from './Subthoughts/SubthoughtsDropCliff'
 import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
 import useDelayedAutofocus from './Subthoughts/useDelayedAutofocus'
 import Thought from './Thought'
@@ -39,6 +40,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
 const Subthought = ({
   debugIndex,
   depth,
+  dropCliff,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -50,6 +52,7 @@ const Subthought = ({
 }: {
   debugIndex?: number
   depth: number
+  dropCliff?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
@@ -215,6 +218,21 @@ const Subthought = ({
         height: shimHiddenThought ? heightRef.current! : undefined,
       }}
     >
+      {
+        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert SubthoughtsDropCliff when e would not be rendered.
+             - a
+              - b
+                - c [cursor]
+                  - x
+                - d
+              - e
+         */
+        !isVisible && dropCliff && (
+          <SubthoughtsDropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
+        )
+      }
+
       {!shimHiddenThought && (
         <div
           style={{
@@ -247,6 +265,7 @@ const Subthought = ({
           />
         </div>
       )}
+
       {isVisible && leaf && (
         <SubthoughtsDropEmpty
           depth={depth}

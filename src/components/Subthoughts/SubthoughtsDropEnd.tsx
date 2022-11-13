@@ -121,9 +121,9 @@ const SubthoughtsDropEnd = ({
             color: '#ff7bc3' /* mid pink */,
           }}
         >
-          {strip(value)}
           {isHovering ? '*' : ''}
           {last ? '$' : ''}
+          {strip(value)}
         </span>
       )}
       {(showDropHover || globals.simulateDrag) && (

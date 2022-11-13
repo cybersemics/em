@@ -173,6 +173,7 @@ const LayoutTree = () => {
               <Subthought
                 debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
+                dropCliff={cliff < 0 && !!prev}
                 env={env}
                 indexDescendant={indexDescendant}
                 // isMultiColumnTable={isMultiColumnTable}

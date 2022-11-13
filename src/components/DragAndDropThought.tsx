@@ -29,7 +29,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isBefore from '../selectors/isBefore'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
-import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -106,38 +105,15 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
   const thoughtsTo = props.simplePath!
+
   return canDropPath(thoughtsFrom, thoughtsTo, state.cursor, props.path, state.expandHoverTopPath)
 }
 
-/** Memoized function that returns true if the thought can be dropped at the destination path. This will be called in a continuous loop by react-dnd so it needs to be fast. */
-// do not drop on descendants (exclusive) or thoughts hidden by autofocus
-// allow drop on itself or after itself even  though it is a noop so that drop-hover appears consistently
-// allow drop if thought is the nearest visible though to the root
-// allow drop if the thought is the active expanded top context or it's direct children
+/** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
 const canDropPath = moize(
   (from: SimplePath, to: SimplePath, cursor: Path | null, path: Path, expandHoverTopPath: Path | null | undefined) => {
-    const state = store.getState()
-
-    /** If the expand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
-    const isExpandedTop = () =>
-      expandHoverTopPath && path.length > expandHoverTopPath.length && isDescendantPath(path, expandHoverTopPath)
-
-    const distance = cursor ? cursor.length - to.length : 0
-    // visible distance above cursor only depends on the cursor and if the cursor has children
-    // thus, is does not need to be given to moize as a parameter even though it uses live state
-    const visibleDistance = visibleDistanceAboveCursor(state)
-    const isHidden = distance >= visibleDistance && !isExpandedTop()
-
-    // first visible thought not hidden by autofocus
-    const firstVisible = expandHoverTopPath || (cursor && (cursor.slice(0, -visibleDistance) as Path))
-
-    const isClosestHiddenParent = equalPath(firstVisible, to)
-    if (isHidden && !isClosestHiddenParent) return false
-
     const isSelf = equalPath(from, to)
-    const isDescendantOfFrom = isDescendantPath(to, from) && !isSelf
-
-    return !isDescendantOfFrom
+    return !isSelf && !isDescendantPath(to, from)
   },
   {
     // only needs to be big enough to cache the calls within a single drag
