@@ -112,6 +112,19 @@ const LayoutTree = () => {
       : 0,
   )
 
+  // only set during drag-and-drop to avoid re-renders
+  const isCursorLeaf = useSelector(
+    (state: State) =>
+      (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) &&
+      state.cursor &&
+      !hasChildren(state, head(state.cursor)),
+  )
+
+  // only set during drag-and-drop to avoid re-renders
+  const cursorDepth = useSelector((state: State) =>
+    (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) && state.cursor ? state.cursor.length : 0,
+  )
+
   // setup list virtualization
   const viewport = viewportStore.useState()
   const overshoot = fontSize / 3.6 // the number of additional thoughts below the bottom of the screen that are rendered
@@ -171,7 +184,11 @@ const LayoutTree = () => {
               />
             </div>
 
+            {/* SubthoughtsDropEnd (cliff) */}
             {cliff < 0 &&
+              // do not render hidden cliffs
+              // rough autofocus estimate
+              cursorDepth - depth < (isCursorLeaf ? 3 : 2) &&
               Array(-cliff)
                 .fill(0)
                 .map((x, i) => {
