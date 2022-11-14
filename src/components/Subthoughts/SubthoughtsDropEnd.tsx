@@ -34,7 +34,7 @@ const SubthoughtsDropEnd = ({
   distance,
   dropTarget,
   isHovering,
-  // specifies if this is the last drop component in a list
+  // specifies if this is the last thought
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
   simplePath,
@@ -95,7 +95,7 @@ const SubthoughtsDropEnd = ({
     <li
       className={classNames({
         'drop-end': true,
-        last: depth === 0,
+        last,
       })}
       style={{
         display: 'list-item',
@@ -104,7 +104,7 @@ const SubthoughtsDropEnd = ({
         marginLeft: last ? '-4em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
-        paddingLeft: last ? (isTouch ? '9em' : '3em') : undefined,
+        paddingLeft: last ? (isTouch ? '6em' : '3em') : undefined,
         // The ROOT drop end can be set to static since there are now following siblings that would be obscured.
         // This ensures that previous thoughts are stacked on top (as this element doesn't create a new stacking context).
         // Otherwise, the ROOT drop end will cover the last child's drop end.

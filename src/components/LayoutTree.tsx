@@ -200,13 +200,15 @@ const LayoutTree = () => {
                       className='z-index-subthoughts-drop-end'
                       style={{
                         position: 'relative',
-                        left: simplePathEnd.length * fontSize * 1.2,
+                        top: '-0.2em',
+                        left: `calc(${simplePathEnd.length}em + ${isTouch ? -1 : 1}px)`,
                         transition: 'left 0.15s ease-out',
                       }}
                     >
                       <SubthoughtsDropEnd
                         depth={simplePathEnd.length}
                         indexDescendant={indexDescendant}
+                        last={!next}
                         leaf={false}
                         simplePath={simplePathEnd}
                         // Extend the click area of the drop target when there is nothing below.

@@ -2060,7 +2060,12 @@ code,
 /* only add a margin on the Thought drop hover since Subthought drop hover does not need to offset the bullet */
 .thought-container .drop-hover {
   /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
-  margin-left: calc(-0.4em - 13px);
+  margin-left: calc(-0.4em - 12px);
+  margin-top: -0.2em;
+}
+.mobile .thought-container .drop-hover {
+  /* Equivalent to -1.2em @ Font Size 18, but scales across Font Sizes 13–24. */
+  margin-left: calc(-0.4em - 14px);
 }
 
 .children .child:first-child > .drop-hover {
@@ -2094,7 +2099,6 @@ code,
 
 /* last drop-end needs to be less wide */
 .drop-end:not(.child) .drop-hover {
-  width: calc(80vw - 4.7em - 60px);
 }
 
 /* move drop-end to the right so that the user's finger does not obscure the drop target */
@@ -2122,17 +2126,17 @@ code,
 
 /* Last drop-end in Subthoughts */
 .drop-end .drop-hover {
-  width: calc(80vw - 6em - 20px);
   margin-left: calc(0.6em - 13px);
+  width: calc(100% - 3em);
 }
 .mobile .drop-end .drop-hover {
-  width: calc(80vw - 4.7em + 25px);
 }
 
 /* bump specificity */
 .empty-children .child.child > .drop-hover {
   margin-top: -0.4em;
   margin-left: calc(-1.8em - 115px);
+  width: calc(100% - 5em);
 }
 
 .empty-children .drop-end {
@@ -2157,8 +2161,6 @@ code,
 
 .mobile .empty-children .drop-end > .drop-hover {
   margin-left: calc(-25% - 103px);
-  /* needs to be wider on mobile to extend beyond ThoughtDrop drop-hover */
-  width: calc(80vw - 3em);
 }
 
 .status-button {

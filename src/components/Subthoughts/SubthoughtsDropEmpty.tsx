@@ -18,11 +18,13 @@ const SubthoughtsDropEmpty = ({
   depth,
   dropTarget,
   isHovering,
+  last,
   simplePath,
 }: {
   depth?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
+  last?: boolean
   simplePath: SimplePath
 }) => {
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
@@ -47,7 +49,7 @@ const SubthoughtsDropEmpty = ({
             child: true,
             'drop-end': true,
             'inside-divider': isDivider(value),
-            last: depth === 0,
+            last,
           })}
           style={{
             backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
