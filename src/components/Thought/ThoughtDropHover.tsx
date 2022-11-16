@@ -8,12 +8,12 @@ import globals from '../../globals'
 import getSortPreference from '../../selectors/getSortPreference'
 import getThoughtById from '../../selectors/getThoughtById'
 import rootedParentOf from '../../selectors/rootedParentOf'
-import themeColors from '../../selectors/themeColors'
 import { compareReasonable } from '../../util/compareThought'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import headId from '../../util/headId'
 import parentOf from '../../util/parentOf'
+import useDropHoverColor from '../Subthoughts/useDropHoverColor'
 
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const ThoughtDropHover = ({
@@ -26,7 +26,7 @@ const ThoughtDropHover = ({
   simplePath: SimplePath
 }) => {
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
-  const colors = useSelector(themeColors)
+  const dropHoverColor = useDropHoverColor(simplePath.length)
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector((state: State) => {
@@ -72,7 +72,7 @@ const ThoughtDropHover = ({
           className='drop-hover'
           style={{
             display: 'inline',
-            backgroundColor: simplePath.length % 2 ? colors.highlight2 : colors.highlight,
+            backgroundColor: dropHoverColor,
           }}
         />
       )}

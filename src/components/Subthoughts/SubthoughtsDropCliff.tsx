@@ -6,10 +6,10 @@ import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import globals from '../../globals'
 import getThoughtById from '../../selectors/getThoughtById'
-import themeColors from '../../selectors/themeColors'
 import head from '../../util/head'
 import strip from '../../util/strip'
 import DragAndDropThought from '../DragAndDropThought'
+import useDropHoverColor from './useDropHoverColor'
 
 /** A drop target for after the hidden parent at a cliff. This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. */
 const SubthoughtsDropCliff = ({
@@ -23,7 +23,7 @@ const SubthoughtsDropCliff = ({
   isHovering?: boolean
   simplePath: SimplePath
 }) => {
-  const colors = useSelector(themeColors)
+  const dropHoverColor = useDropHoverColor(depth || 0)
   const value = useSelector((state: State) =>
     globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
@@ -57,10 +57,7 @@ const SubthoughtsDropCliff = ({
         </span>
       )}
       {(globals.simulateDrag || isHovering) && (
-        <span
-          className='drop-hover'
-          style={{ backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2 }}
-        />
+        <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
       )}
     </span>,
   )

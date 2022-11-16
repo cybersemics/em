@@ -6,12 +6,12 @@ import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import globals from '../../globals'
 import getThoughtById from '../../selectors/getThoughtById'
-import themeColors from '../../selectors/themeColors'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import isDivider from '../../util/isDivider'
 import strip from '../../util/strip'
 import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
+import useDropHoverColor from './useDropHoverColor'
 
 /** A drop target when there are no children or the thought is collapsed. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEmpty = ({
@@ -30,7 +30,7 @@ const SubthoughtsDropEmpty = ({
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const draggingThought = useSelector((state: State) => state.draggingThought)
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
-  const colors = useSelector(themeColors)
+  const dropHoverColor = useDropHoverColor(depth || 0)
 
   // Why do we bail if the thought is being dragged?
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
@@ -72,10 +72,7 @@ const SubthoughtsDropEmpty = ({
             </span>
           )}
           {(globals.simulateDrag || isHovering) && (
-            <span
-              className='drop-hover'
-              style={{ backgroundColor: depth === undefined || depth % 2 ? colors.highlight : colors.highlight2 }}
-            />
+            <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
           )}
         </span>,
       )}

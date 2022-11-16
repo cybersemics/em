@@ -12,15 +12,14 @@ import { getChildrenSorted } from '../../selectors/getChildren'
 import getSortPreference from '../../selectors/getSortPreference'
 import getThoughtById from '../../selectors/getThoughtById'
 import rootedParentOf from '../../selectors/rootedParentOf'
-import themeColors from '../../selectors/themeColors'
 import { compareReasonable } from '../../util/compareThought'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import headId from '../../util/headId'
 import isRoot from '../../util/isRoot'
 import strip from '../../util/strip'
-import unroot from '../../util/unroot'
 import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
+import useDropHoverColor from './useDropHoverColor'
 
 /** A container fragment that only renders its children when dragInProgress is true. Useful for short circuiting child components with more expensive selectors. */
 const DragOnly: FC = ({ children }) => {
@@ -48,8 +47,7 @@ const SubthoughtsDropEnd = ({
 }) => {
   const thoughtId = head(simplePath)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
-  // const parentId = useSelector((state: State) => getThoughtById(state, thoughtId)?.parentId)
-  const colors = useSelector(themeColors)
+  const dropHoverColor = useDropHoverColor(depth + 1)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -130,8 +128,7 @@ const SubthoughtsDropEnd = ({
         <span
           className='drop-hover'
           style={{
-            // unroot the simplePath, otherwise the root thought will have the same depth as the first level
-            backgroundColor: unroot(simplePath).length % 2 ? colors.highlight : colors.highlight2,
+            backgroundColor: dropHoverColor,
           }}
         ></span>
       )}

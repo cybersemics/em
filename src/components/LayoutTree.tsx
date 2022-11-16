@@ -163,7 +163,7 @@ const LayoutTree = () => {
             <div
               style={{
                 position: 'relative',
-                // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
+                // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmp/y to be covered by previous siblings'.
                 // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
                 left: `${depth}em`,
                 marginRight: `${depth}em`,
