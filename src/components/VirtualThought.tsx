@@ -6,6 +6,7 @@ import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
@@ -21,9 +22,8 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
-import SubthoughtsDropCliff from './Subthoughts/SubthoughtsDropCliff'
-import SubthoughtsDropEmpty from './Subthoughts/SubthoughtsDropEmpty'
-import useDelayedAutofocus from './Subthoughts/useDelayedAutofocus'
+import DropCliff from './DropCliff'
+import DropEmpty from './DropEmpty'
 import Thought from './Thought'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
@@ -37,7 +37,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
 }
 
 /** Wraps a Thought component and calculates the child Path, style, etc. */
-const Subthought = ({
+const VirtualThought = ({
   debugIndex,
   depth,
   dropCliff,
@@ -72,7 +72,7 @@ const Subthought = ({
   const showContexts = false
 
   /***************************
-   * Subthought properties
+   * VirtualThought properties
 
    * TODO: These can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
    ***************************/
@@ -170,8 +170,8 @@ const Subthought = ({
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
 
-  // console.log('One <Subthought>', prettyPath(childPath))
-  // useWhyDidYouUpdate('One <Subthought> ' + prettyPath(state, childPath), {
+  // console.log('One <VirtualThought>', prettyPath(childPath))
+  // useWhyDidYouUpdate('One <VirtualThought> ' + prettyPath(state, childPath), {
   //   child,
   //   depth,
   //   env,
@@ -214,13 +214,13 @@ const Subthought = ({
       ref={ref}
       style={{
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
-        // Must include SubthoughtsDropEmpty, or it will shift when the cursor moves.
+        // Must include DropEmpty, or it will shift when the cursor moves.
         height: shimHiddenThought ? heightRef.current! : undefined,
       }}
     >
       {
         /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert SubthoughtsDropCliff when e would not be rendered.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropCliff when e would not be rendered.
              - a
               - b
                 - c [cursor]
@@ -228,16 +228,14 @@ const Subthought = ({
                 - d
               - e
          */
-        !isVisible && dropCliff && (
-          <SubthoughtsDropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
-        )
+        !isVisible && dropCliff && <DropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
         <div
           style={{
-            // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains SubthoughtsDropEmpty.
-            // Otherwise subsequent SubthoughtsDropEmpty will be obscured.
+            // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains DropEmpty.
+            // Otherwise subsequent DropEmpty will be obscured.
             opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
             transition: 'opacity 0.75s ease-out',
             pointerEvents: !isVisible ? 'none' : undefined,
@@ -267,7 +265,7 @@ const Subthought = ({
       )}
 
       {isVisible && leaf && (
-        <SubthoughtsDropEmpty
+        <DropEmpty
           depth={depth}
           indexDescendant={indexDescendant}
           leaf={leaf}
@@ -280,7 +278,7 @@ const Subthought = ({
   )
 }
 
-const SubthoughtMemo = React.memo(Subthought)
-SubthoughtMemo.displayName = 'Subthought'
+const SubthoughtMemo = React.memo(VirtualThought)
+SubthoughtMemo.displayName = 'VirtualThought'
 
 export default SubthoughtMemo

@@ -15,7 +15,7 @@ const EMPTY_OBJECT = {}
 const getGlobalStyle = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.style
 
 /** A hook for the thought style merged from props, self, and env. Avoids re-renders by always returning a stable object reference. */
-const useStyle = ({
+const useThoughtStyle = ({
   children,
   env,
   styleProp,
@@ -68,4 +68,4 @@ const useStyle = ({
   return Object.keys(style || {}).length > 0 ? style : undefined
 }
 
-export default useStyle
+export default useThoughtStyle

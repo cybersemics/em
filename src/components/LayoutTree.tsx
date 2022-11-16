@@ -14,8 +14,8 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
-import Subthought from './Subthought'
-import SubthoughtsDropEnd from './Subthoughts/SubthoughtsDropEnd'
+import DropEnd from './DropEnd'
+import VirtualThought from './VirtualThought'
 
 type TreeThought = {
   depth: number
@@ -87,7 +87,7 @@ const RootDropEnd = () => {
   return (
     <>
       {isVisible && (
-        <SubthoughtsDropEnd
+        <DropEnd
           depth={0}
           indexDescendant={0}
           leaf={false}
@@ -127,7 +127,7 @@ const LayoutTree = () => {
 
   // setup list virtualization
   const viewport = viewportStore.useState()
-  const overshoot = fontSize / 3.6 // the number of additional thoughts below the bottom of the screen that are rendered
+  const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + overshoot
   const estimatedYStart = 80
   const estimatedHeight = fontSize * 1.87
@@ -147,7 +147,7 @@ const LayoutTree = () => {
         const next = virtualThoughts[i + 1]
         const prev = virtualThoughts[i - 1]
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
-        // This is used to determine how many SubthoughtsDropEnd to insert before the next thought (one for each level dropped).
+        // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
         const cliff = next ? Math.min(0, next.depth - depth) : -depth
 
         // List Virtualization
@@ -170,7 +170,7 @@ const LayoutTree = () => {
                 transition: 'left 0.15s ease-out',
               }}
             >
-              <Subthought
+              <VirtualThought
                 debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
                 dropCliff={cliff < 0 && !!prev}
@@ -185,7 +185,7 @@ const LayoutTree = () => {
               />
             </div>
 
-            {/* SubthoughtsDropEnd (cliff) */}
+            {/* DropEnd (cliff) */}
             {cliff < 0 &&
               // do not render hidden cliffs
               // rough autofocus estimate
@@ -205,7 +205,7 @@ const LayoutTree = () => {
                         transition: 'left 0.15s ease-out',
                       }}
                     >
-                      <SubthoughtsDropEnd
+                      <DropEnd
                         depth={simplePathEnd.length}
                         indexDescendant={indexDescendant}
                         last={!next}

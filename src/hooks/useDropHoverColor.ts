@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
-import themeColors from '../../selectors/themeColors'
+import State from '../@types/State'
+import themeColors from '../selectors/themeColors'
 
 /** Returns the color of the drop-hover element.
  * Drop hover color alternates as depth increases.

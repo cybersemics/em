@@ -16,6 +16,8 @@ import setCursor from '../action-creators/setCursor'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
+import useHideBullet from '../hooks/useHideBullet'
+import useThoughtStyle from '../hooks/useThoughtStyle'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -36,9 +38,6 @@ import Byline from './Byline'
 import { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import Subthoughts from './Subthoughts.native'
-import useHideBullet from './Thought.useHideBullet'
-import useStyle from './Thought.useStyle'
 
 /**********************************************************************
  * Redux
@@ -229,7 +228,7 @@ const ThoughtContainer = ({
   }, [isBeingHoveredOver])
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const style = useStyle({ children, env, styleProp, thoughtId })
+  const style = useThoughtStyle({ children, env, styleProp, thoughtId })
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Thoughts })

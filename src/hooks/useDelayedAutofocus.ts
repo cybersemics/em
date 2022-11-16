@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import Autofocus from '../../@types/Autofocus'
+import Autofocus from '../@types/Autofocus'
 
 /** Returns an autofocus delayed by a given amount. Useful for replacing thoughts with placeholders after they have faded out. Takes an optional selector of the delayed autofocus which minimizes re-renders. */
 const useDelayedAutofocus = <T = string>(

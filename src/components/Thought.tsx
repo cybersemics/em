@@ -16,6 +16,10 @@ import { isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
+import useHideBullet from '../hooks/useHideBullet'
+import useHoveringPath from '../hooks/useHoveringPath'
+import useThoughtStyle from '../hooks/useThoughtStyle'
+import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
@@ -44,12 +48,8 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import useHoveringPath from './Subthoughts/useHoveringPath'
-import useHideBullet from './Thought.useHideBullet'
-import useStyle from './Thought.useStyle'
-import useStyleContainer from './Thought.useStyleContainer'
-import ThoughtDropHover from './Thought/ThoughtDropHover'
 import ThoughtAnnotation from './ThoughtAnnotation'
+import ThoughtDropHover from './ThoughtDropHover'
 
 /**********************************************************************
  * Redux
@@ -231,7 +231,7 @@ const ThoughtContainer = ({
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
-  const style = useStyle({ children, env, styleProp, thoughtId })
+  const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const colors = useSelector(themeColors)
   const styleAnnotation = useSelector(
     (state: State) =>
@@ -243,7 +243,7 @@ const ThoughtContainer = ({
       ),
     _.isEqual,
   )
-  const styleContainer = useStyleContainer({ children, env, styleContainerProp, thoughtId, path })
+  const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
 
