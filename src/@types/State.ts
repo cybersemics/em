@@ -54,7 +54,8 @@ interface State {
   expandHoverTopPath?: Path | null
   expandedContextThought?: Path
   fontSize: number
-  // drop target thought currently being hovered over
+  // Thought currently being hovered over.
+  // Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverBottom/Top, and the visibility of drop-hover elements.
   hoveringPath?: Path
   // type of drop target being hovered over
   hoverZone?: DropThoughtZone

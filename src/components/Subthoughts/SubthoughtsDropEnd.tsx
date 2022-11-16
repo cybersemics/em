@@ -20,6 +20,7 @@ import isRoot from '../../util/isRoot'
 import strip from '../../util/strip'
 import DragAndDropSubthoughts from '../DragAndDropSubthoughts'
 import useDropHoverColor from './useDropHoverColor'
+import useHoveringPath from './useHoveringPath'
 
 /** A container fragment that only renders its children when dragInProgress is true. Useful for short circuiting child components with more expensive selectors. */
 const DragOnly: FC = ({ children }) => {
@@ -48,6 +49,7 @@ const SubthoughtsDropEnd = ({
   const thoughtId = head(simplePath)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
+  useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted

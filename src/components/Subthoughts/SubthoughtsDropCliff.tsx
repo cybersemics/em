@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import React from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
+import DropThoughtZone from '../../@types/DropThoughtZone'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import globals from '../../globals'
@@ -10,6 +11,7 @@ import head from '../../util/head'
 import strip from '../../util/strip'
 import DragAndDropThought from '../DragAndDropThought'
 import useDropHoverColor from './useDropHoverColor'
+import useHoveringPath from './useHoveringPath'
 
 /** A drop target for after the hidden parent at a cliff. This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. */
 const SubthoughtsDropCliff = ({
@@ -27,6 +29,7 @@ const SubthoughtsDropCliff = ({
   const value = useSelector((state: State) =>
     globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
+  useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   if (!dropTarget) return null
 

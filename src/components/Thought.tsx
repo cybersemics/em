@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -10,7 +10,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import dragInProgress from '../action-creators/dragInProgress'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
@@ -44,6 +43,7 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
+import useHoveringPath from './Subthoughts/useHoveringPath'
 import useHideBullet from './Thought.useHideBullet'
 import useStyle from './Thought.useStyle'
 import useStyleContainer from './Thought.useStyleContainer'
@@ -227,25 +227,7 @@ const ThoughtContainer = ({
     // only compare id, value, and rank for re-renders
     equalChildren,
   )
-
-  // when Thoughts is hovered over during drag, update the hoveringPath and hoverId
-  // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
-  useEffect(() => {
-    if (isBeingHoveredOver && store.getState().dragInProgress) {
-      store.dispatch((dispatch, getState) => {
-        const state = getState()
-        dispatch(
-          dragInProgress({
-            value: true,
-            draggingThought: state.draggingThought,
-            hoveringPath: path,
-            hoverZone: DropThoughtZone.ThoughtDrop,
-            sourceZone: DragThoughtZone.Thoughts,
-          }),
-        )
-      })
-    }
-  }, [isBeingHoveredOver])
+  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useStyle({ children, env, styleProp, thoughtId })
