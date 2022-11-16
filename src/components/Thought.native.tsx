@@ -298,7 +298,7 @@ const ThoughtContainer = ({
 
       {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
 
-      <Subthoughts
+      {/* <Subthoughts
         allowSingleContext={allowSingleContext}
         childrenForced={childrenForced}
         env={env}
@@ -307,7 +307,7 @@ const ThoughtContainer = ({
         showContexts={allowSingleContext}
         simplePath={simplePath}
         view={view}
-      />
+      /> */}
     </View>
   )
 }

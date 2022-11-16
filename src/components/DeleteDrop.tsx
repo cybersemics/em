@@ -14,11 +14,10 @@ import theme from '../selectors/theme'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
-import { SubthoughtsProps } from './Subthoughts'
 import DeleteIcon from './icons/DeleteIcon'
 
 /** Delete the thought on drop. */
-const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
+const drop = (props: unknown, monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { simplePath, zone } = monitor.getItem() as DragThoughtItem
 

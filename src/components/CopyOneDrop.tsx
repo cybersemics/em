@@ -12,11 +12,10 @@ import theme from '../selectors/theme'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
-import { SubthoughtsProps } from './Subthoughts'
 import CopyClipboard from './icons/CopyClipboard'
 
 /** Copy the thought on drop. */
-const drop = (props: SubthoughtsProps, monitor: DropTargetMonitor) => {
+const drop = (props: unknown, monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { simplePath } = monitor.getItem() as DragThoughtItem
 
