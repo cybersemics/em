@@ -1,6 +1,6 @@
 import Path from '../@types/Path'
 
-/** Returns true if thoughts subset is contained within superset (inclusive). */
+/** Returns true if thoughts subset is contained within superset (inclusive by default). */
 export const isDescendantPath = (
   descendant: Path | null,
   ancestor: Path | null,

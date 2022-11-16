@@ -10,7 +10,6 @@ import {
 } from 'react-dnd'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
@@ -106,22 +105,16 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
   const thoughtsTo = props.simplePath!
 
-  return canDropPath(thoughtsFrom, thoughtsTo, state.cursor, props.path, state.expandHoverTopPath)
+  return canDropPath(thoughtsFrom, thoughtsTo)
 }
 
 /** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
-const canDropPath = moize(
-  (from: SimplePath, to: SimplePath, cursor: Path | null, path: Path, expandHoverTopPath: Path | null | undefined) => {
-    const isSelf = equalPath(from, to)
-    return !isSelf && !isDescendantPath(to, from)
-  },
-  {
-    // only needs to be big enough to cache the calls within a single drag
-    // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
-    maxSize: 50,
-    profileName: 'canDropPath',
-  },
-)
+const canDropPath = moize((from: SimplePath, to: SimplePath) => !isDescendantPath(to, from, { exclusive: true }), {
+  // only needs to be big enough to cache the calls within a single drag
+  // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
+  maxSize: 50,
+  profileName: 'canDropPath',
+})
 
 /** Handles dropping a thought on a DropTarget. */
 const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
