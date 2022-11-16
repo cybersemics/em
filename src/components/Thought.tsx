@@ -24,6 +24,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -231,6 +232,7 @@ const ThoughtContainer = ({
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useStyle({ children, env, styleProp, thoughtId })
+  const colors = useSelector(themeColors)
   const styleAnnotation = useSelector(
     (state: State) =>
       safeRefMerge(
@@ -311,8 +313,10 @@ const ThoughtContainer = ({
   const styleWithoutColors = useMemo((): React.CSSProperties => {
     return {
       ...(style ? _.omit(style, ['color', 'background-color']) : null),
-      // highlight the parent of the current drop target to make it easier to drop in the intended place
-      ...(isChildHovering ? { color: 'lightblue', fontWeight: 'bold' } : null),
+      // Highlight the parent of the current drop target to make it easier to drop in the intended place.
+      // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
+      // See: https://stackoverflow.com/a/46452396/480608
+      ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
     }
   }, [isChildHovering, style])
 
