@@ -7,7 +7,6 @@ import { getChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
 import clearExpandBottom from './clearExpandBottom'
-import expandBottom from './expandBottom'
 
 // eslint-disable-next-line prefer-const
 let expandBottomTimer: Timer | null = null
@@ -30,13 +29,13 @@ const expandHoverBottomDebounced =
       // abort if dragging over quick drop components
       if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
         return
-      dispatch(expandBottom({ path }))
+      dispatch({ type: 'expandHoverBottom', path })
       expandBottomTimer = null
     }, EXPAND_HOVER_DELAY)
   }
 
 /** Handles expansion of the context due to hover on the thought's empty drop. */
-const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
+const expandHoverBottom = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
   const { hoveringPath, hoverZone, expandHoverBottomPaths, dragInProgress } = state
@@ -67,4 +66,4 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   }
 }
 
-export default expandOnHoverBottom
+export default expandHoverBottom

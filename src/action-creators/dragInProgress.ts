@@ -7,8 +7,8 @@ import { DragInProgressPayload } from '../reducers/dragInProgress'
 import store from '../stores/app'
 import head from '../util/head'
 import alert from './alert'
-import expandOnHoverBottom from './expandOnHoverBottom'
-import expandOnHoverTop from './expandOnHoverTop'
+import expandHoverBottom from './expandHoverBottom'
+import expandHoverTop from './expandHoverTop'
 
 /** A utility that shakes if hit too much. Call shaker.hit with a id representing the source of the hit. If the number of unique ids exceeds the SHAKE_THRESHOLD within DEBOUNCE_SHAKING, trigger a shake. */
 const Shaker = (onShake: () => unknown) => {
@@ -88,8 +88,8 @@ const dragInProgress =
       window.scrollTo(0, 1)
     }
 
-    dispatch(expandOnHoverTop())
-    dispatch(expandOnHoverBottom())
+    dispatch(expandHoverTop())
+    dispatch(expandHoverBottom())
   }
 
 export default dragInProgress
