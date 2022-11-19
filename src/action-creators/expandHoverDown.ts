@@ -6,39 +6,39 @@ import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import { getChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
-import clearExpandBottom from './clearExpandBottom'
+import clearExpandDown from './clearExpandDown'
 
 // eslint-disable-next-line prefer-const
-let expandBottomTimer: Timer | null = null
+let expandDownTimer: Timer | null = null
 
 /** Clears active delayed dispatch. */
 const clearTimer = () => {
-  if (expandBottomTimer) {
-    clearTimeout(expandBottomTimer)
-    expandBottomTimer = null
+  if (expandDownTimer) {
+    clearTimeout(expandDownTimer)
+    expandDownTimer = null
   }
 }
 
-/** Delays dispatch of expandHoverBottom. */
-const expandHoverBottomDebounced =
+/** Delays dispatch of expandHoverDown. */
+const expandHoverDownDebounced =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     clearTimer()
-    expandBottomTimer = setTimeout(() => {
+    expandDownTimer = setTimeout(() => {
       const state = getState()
       // abort if dragging over quick drop components
       if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
         return
-      dispatch({ type: 'expandHoverBottom', path })
-      expandBottomTimer = null
+      dispatch({ type: 'expandHoverDown', path })
+      expandDownTimer = null
     }, EXPAND_HOVER_DELAY)
   }
 
 /** Handles expansion of the context due to hover on the thought's empty drop. */
-const expandHoverBottom = (): Thunk => (dispatch, getState) => {
+const expandHoverDown = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, hoverZone, expandHoverBottomPaths, dragInProgress } = state
+  const { hoveringPath, hoverZone, expandHoverDownPaths, dragInProgress } = state
 
   const hoveringContext = hoveringPath && pathToContext(state, hoveringPath)
 
@@ -47,7 +47,7 @@ const expandHoverBottom = (): Thunk => (dispatch, getState) => {
 
   if (!dragInProgress) {
     clearTimer()
-    dispatch(clearExpandBottom())
+    dispatch(clearExpandDown())
     return
   } else if (!shouldExpand) {
     clearTimer()
@@ -58,12 +58,12 @@ const expandHoverBottom = (): Thunk => (dispatch, getState) => {
   const isAlreadyExpanded = () => {
     // hoveringPath truthiness already checked in condition below
     const parentId = head(hoveringPath!)
-    return hoveringContext && expandHoverBottomPaths[parentId]
+    return hoveringContext && expandHoverDownPaths[parentId]
   }
 
   if (shouldExpand && hoveringPath && !isAlreadyExpanded()) {
-    dispatch(expandHoverBottomDebounced(hoveringPath))
+    dispatch(expandHoverDownDebounced(hoveringPath))
   }
 }
 
-export default expandHoverBottom
+export default expandHoverDown

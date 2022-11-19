@@ -4,10 +4,10 @@ import expandThoughts from '../selectors/expandThoughts'
 import hashPath from '../util/hashPath'
 
 /** Calculates the expanded context due to hover expansion on empty child drop. */
-const expandBottom = (state: State, { path }: { path: Path }): State => ({
+const expandDown = (state: State, { path }: { path: Path }): State => ({
   ...state,
   expanded: { ...state.expanded, ...expandThoughts(state, path) },
-  expandHoverBottomPaths: { ...state.expandHoverBottomPaths, [hashPath(path)]: path },
+  expandHoverDownPaths: { ...state.expandHoverDownPaths, [hashPath(path)]: path },
 })
 
-export default expandBottom
+export default expandDown

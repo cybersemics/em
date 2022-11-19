@@ -43,13 +43,13 @@ export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor)
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
     props.path &&
-    state.expandHoverTopPath &&
-    props.path.length >= state.expandHoverTopPath.length &&
-    isDescendantPath(props.path, state.expandHoverTopPath)
+    state.expandHoverUpPath &&
+    props.path.length >= state.expandHoverUpPath.length &&
+    isDescendantPath(props.path, state.expandHoverUpPath)
 
   // first visible thought not hidden by autofocus
   const firstVisible =
-    state.expandHoverTopPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
+    state.expandHoverUpPath || (state.cursor && (state.cursor.slice(0, -visibleDistanceAboveCursor(state)) as Path))
 
   const isClosestHiddenParent = !!firstVisible && equalPath(rootedParentOf(state, firstVisible), thoughtsTo)
   // Note: The distance calculation for SubthoughtsDrop is 1 less than the ThoughtDrop (in DragAndDropThought.canDrop)

@@ -119,7 +119,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     error: null,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 18),
-    expandHoverBottomPaths: {},
+    expandHoverDownPaths: {},
     invalidState: false,
     // Displays a loading screen when the app starts.
     // This is disabled by updateThoughts once it detects that the root thought is loaded.

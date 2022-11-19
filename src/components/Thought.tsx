@@ -125,7 +125,7 @@ const equalChildren = (a: Thought[], b: Thought[]) =>
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, expanded, expandedContextThought, search, expandHoverTopPath } = state
+  const { cursor, expanded, expandedContextThought, search, expandHoverUpPath } = state
 
   const { path, simplePath, depth } = props
 
@@ -134,7 +134,7 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
 
-  const isExpandedHoverTopPath = expandHoverTopPath && equalPath(path, expandHoverTopPath)
+  const isExpandedHoverTopPath = expandHoverUpPath && equalPath(path, expandHoverUpPath)
   const cursorParent = cursor && parentOf(cursor)
   const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
 

@@ -21,8 +21,8 @@ const clearTimer = () => {
   }
 }
 
-/** Delays dispatch of expandHoverTop. */
-const expandHoverTopDebounced =
+/** Delays dispatch of expandHoverUp. */
+const expandHoverUpDebounced =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     clearTimer()
@@ -31,21 +31,21 @@ const expandHoverTopDebounced =
       // abort if dragging over quick drop components
       if (state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
         return
-      dispatch({ type: 'expandHoverTop', path })
+      dispatch({ type: 'expandHoverUp', path })
       expandTopTimer = null
     }, EXPAND_HOVER_DELAY)
   }
 
 /** Checks if the current hovering thought's parent should expand its context. */
 const shouldAllowActiveHoverTop = (state: State) => {
-  const { cursor, expandHoverTopPath, hoveringPath } = state
+  const { cursor, expandHoverUpPath, hoveringPath } = state
 
   if (!hoveringPath || state.hoverZone !== DropThoughtZone.ThoughtDrop) return false
 
   const parentOfHoveringThought = hoveringPath && parentOf(hoveringPath)
 
   // prevent setting expand hover path deeper than the current
-  if (expandHoverTopPath && parentOfHoveringThought.length >= expandHoverTopPath.length) return false
+  if (expandHoverUpPath && parentOfHoveringThought.length >= expandHoverUpPath.length) return false
 
   const depth = parentOfHoveringThought.length
 
@@ -60,17 +60,17 @@ const shouldAllowActiveHoverTop = (state: State) => {
     isDescendantPath(cursor, parentOfHoveringThought)
 
   /** Check if current hovering thought is actually the current expanded hover top path and the given path is its parent. */
-  const isParentOfCurrentExpandedTop = () => expandHoverTopPath && equalPath(hoveringPath, expandHoverTopPath)
+  const isParentOfCurrentExpandedTop = () => expandHoverUpPath && equalPath(hoveringPath, expandHoverUpPath)
 
   const newExpandHoverPath = rootedParentOf(state, hoveringPath)
 
   /** Check if current expand hover top is same as the hovering path. */
-  const isSameExpandHoverTopPath = (newExpandTopPath: Path) =>
-    expandHoverTopPath && equalPath(expandHoverTopPath, newExpandTopPath)
+  const isSameexpandHoverUpPath = (newExpandTopPath: Path) =>
+    expandHoverUpPath && equalPath(expandHoverUpPath, newExpandTopPath)
 
   return (
     newExpandHoverPath &&
-    !isSameExpandHoverTopPath(newExpandHoverPath) &&
+    !isSameexpandHoverUpPath(newExpandHoverPath) &&
     (isParentOfFirstVisibleThought || isParentOfCurrentExpandedTop())
   )
 }
@@ -82,13 +82,13 @@ const shouldAllowActiveHoverTop = (state: State) => {
 const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
-  const { hoveringPath, expandHoverTopPath, dragInProgress } = state
+  const { hoveringPath, expandHoverUpPath, dragInProgress } = state
   const shouldExpand = shouldAllowActiveHoverTop(state)
 
-  // Cancel only when drag is not in progress and there is no active expandHoverTopPath
-  if (!dragInProgress && expandHoverTopPath) {
+  // Cancel only when drag is not in progress and there is no active expandHoverUpPath
+  if (!dragInProgress && expandHoverUpPath) {
     clearTimer()
-    dispatch({ type: 'expandHoverTop', path: null })
+    dispatch({ type: 'expandHoverUp', path: null })
     return
   } else if (!shouldExpand) {
     clearTimer()
@@ -97,7 +97,7 @@ const expandOnHoverTop = (): Thunk => (dispatch, getState) => {
 
   // Note: expandHoverPath is the parent of the hovering path (thought drop)
   // hoveringPath already checked in shouldAllowActiveHoverTop
-  dispatch(expandHoverTopDebounced(rootedParentOf(state, hoveringPath!)))
+  dispatch(expandHoverUpDebounced(rootedParentOf(state, hoveringPath!)))
 }
 
 export default expandOnHoverTop

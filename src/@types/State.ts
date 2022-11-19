@@ -49,12 +49,12 @@ interface State {
   enableLatestShortcutsDiagram: boolean
   error?: string | null
   expanded: Index<Path>
-  expandHoverBottomPaths: Index<Path>
-  expandHoverTopPath?: Path | null
+  expandHoverDownPaths: Index<Path>
+  expandHoverUpPath?: Path | null
   expandedContextThought?: Path
   fontSize: number
   // Thought currently being hovered over.
-  // Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverBottom/Top, and the visibility of drop-hover elements.
+  // Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverDown/Top, and the visibility of drop-hover elements.
   hoveringPath?: Path
   // type of drop target being hovered over
   hoverZone?: DropThoughtZone

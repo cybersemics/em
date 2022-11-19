@@ -57,12 +57,12 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
 
   /** Returns true if the thought is expanded by hovering above the first visible thought. */
   const isExpandedTop = () =>
-    !!state.expandHoverTopPath &&
-    (isRoot(state.expandHoverTopPath) || isDescendantPath(resolvedPath, state.expandHoverTopPath || null))
+    !!state.expandHoverUpPath &&
+    (isRoot(state.expandHoverUpPath) || isDescendantPath(resolvedPath, state.expandHoverUpPath || null))
 
   /** Returns true if the thought is expanded by hovering below a thought. */
   const isExpandedBottom = () =>
-    Object.values(state.expandHoverBottomPaths).some(bottomPath => isDescendantPath(resolvedPath, bottomPath || null))
+    Object.values(state.expandHoverDownPaths).some(bottomPath => isDescendantPath(resolvedPath, bottomPath || null))
 
   return (isCursorLeaf && isParentOrSibling()) || isDescendantOfCursor()
     ? 'show'

@@ -116,7 +116,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     enableLatestShortcutsDiagram: false,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 10),
-    expandHoverBottomPaths: {},
+    expandHoverDownPaths: {},
     invalidState: false,
     isLoading: true,
     jumpHistory: [],
