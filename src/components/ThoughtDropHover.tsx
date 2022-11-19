@@ -12,7 +12,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import headId from '../util/headId'
 import parentOf from '../util/parentOf'
 
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
@@ -37,7 +36,7 @@ const ThoughtDropHover = ({
     else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought
-      ? getThoughtById(state, headId(state.draggingThought))?.value
+      ? getThoughtById(state, head(state.draggingThought))?.value
       : null
 
     // render the drop-hover if hovering over any thought in a sorted list

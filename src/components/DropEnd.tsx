@@ -17,7 +17,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import headId from '../util/headId'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
@@ -66,7 +65,7 @@ const SubthoughtsDropEnd = ({
 
     // only render drop-hover during drag-and-drop
     const draggingThoughtValue = state.draggingThought
-      ? getThoughtById(state, headId(state.draggingThought))?.value
+      ? getThoughtById(state, head(state.draggingThought))?.value
       : null
     if (!draggingThoughtValue) return false
 

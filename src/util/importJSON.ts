@@ -21,7 +21,6 @@ import appendToPath from '../util/appendToPath'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
-import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import pathToContext from '../util/pathToContext'
 import removeContext from '../util/removeContext'
@@ -315,7 +314,7 @@ const importJSON = (
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, parentId, destThought, rankStart)
   const path = rootedParentOf(state, simplePath)
-  const id = headId(path)
+  const id = head(path)
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
@@ -356,7 +355,7 @@ const importJSON = (
   // get the last child imported in the first level so the cursor can be set
   const thought = initialThoughtIndex[id]
   const lastChildIndex = ((thought && Object.values(thought.childrenMap).length) || 0) + blocksNormalized.length - 1
-  const importId = headId(importPath)
+  const importId = head(importPath)
   const lastChildFirstLevel =
     thoughtIndex[importId] && Object.values(thoughtIndex[importId].childrenMap)[lastChildIndex]
 

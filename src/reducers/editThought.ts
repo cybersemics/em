@@ -15,7 +15,6 @@ import addContext from '../util/addContext'
 import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
-import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import normalizeThought from '../util/normalizeThought'
@@ -41,7 +40,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
 
   // thoughts may exist for both the old value and the new value
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
-  const editedThoughtId = headId(path)
+  const editedThoughtId = head(path)
   const oldKey = hashThought(oldValue)
   const newKey = hashThought(newValue)
   const lexemeOld = getLexeme(state, oldValue)

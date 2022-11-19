@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import setCursor from '../action-creators/setCursor'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
-import headId from '../util/headId'
+import head from '../util/head'
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
@@ -51,7 +51,7 @@ const Divider = ({ path }: { path: Path }) => {
         className={classNames({
           divider: true,
           // requires editable-hash className to be selected by the cursor navigation via editableNode
-          ['editable-' + headId(path)]: true,
+          ['editable-' + head(path)]: true,
         })}
       />
     </div>

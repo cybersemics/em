@@ -46,7 +46,6 @@ import ellipsize from '../util/ellipsize'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import headId from '../util/headId'
 import isDivider from '../util/isDivider'
 import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
@@ -505,7 +504,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         multiline,
         preventAutoscroll: true,
         editable: true,
-        ['editable-' + headId(path)]: true,
+        ['editable-' + head(path)]: true,
         empty: value.length === 0,
       })}
       html={

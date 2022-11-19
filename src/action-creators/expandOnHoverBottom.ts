@@ -5,7 +5,6 @@ import Timer from '../@types/Timer'
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
 import { getChildren } from '../selectors/getChildren'
 import head from '../util/head'
-import headId from '../util/headId'
 import pathToContext from '../util/pathToContext'
 import clearExpandBottom from './clearExpandBottom'
 import expandBottom from './expandBottom'
@@ -59,7 +58,7 @@ const expandOnHoverBottom = (): Thunk => (dispatch, getState) => {
   /** Check if current hovering context is already has active expansion. */
   const isAlreadyExpanded = () => {
     // hoveringPath truthiness already checked in condition below
-    const parentId = headId(hoveringPath!)
+    const parentId = head(hoveringPath!)
     return hoveringContext && expandHoverBottomPaths[parentId]
   }
 

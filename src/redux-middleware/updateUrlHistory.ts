@@ -9,7 +9,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import hashPathURL from '../selectors/hashPathURL'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
-import headId from '../util/headId'
+import head from '../util/head'
 
 interface Options {
   // if true, replaces the last history state; otherwise pushes history state
@@ -49,7 +49,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
   pathPrev = path
 
   const decoded = decodeThoughtsUrl(state)
-  const encoded = headId(path || HOME_PATH)
+  const encoded = head(path || HOME_PATH)
 
   // convert decoded root thought to null cursor
   const decodedPath = decoded.path || [HOME_TOKEN]

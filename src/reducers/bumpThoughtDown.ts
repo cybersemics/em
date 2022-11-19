@@ -17,7 +17,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
-import headId from '../util/headId'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
@@ -46,8 +45,8 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
 
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
-  const simplePathWithNewRank: SimplePath = appendToPath(parentPath, headId(simplePath))
-  const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, headId(simplePathWithNewRank))
+  const simplePathWithNewRank: SimplePath = appendToPath(parentPath, head(simplePath))
+  const simplePathWithNewRankAndValue: Path = appendToPath(parentPath, head(simplePathWithNewRank))
 
   return reducerFlow([
     // modify the rank to get the thought to re-render (via the Subthoughts child key)
