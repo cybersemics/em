@@ -55,13 +55,24 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
   /** Returns true if the thought is a descendant of an uncle of the cursor. */
   const isDescendantOfGreatUncle = () => isDescendantPath(resolvedPath, cursorGrandparent)
 
+  /** Returns true if the thought is expanded by hovering above the first visible thought. */
+  const isExpandedTop = () =>
+    !!state.expandHoverTopPath &&
+    (isRoot(state.expandHoverTopPath) || isDescendantPath(resolvedPath, state.expandHoverTopPath || null))
+
+  /** Returns true if the thought is expanded by hovering below a thought. */
+  const isExpandedBottom = () =>
+    Object.values(state.expandHoverBottomPaths).some(bottomPath => isDescendantPath(resolvedPath, bottomPath || null))
+
   return (isCursorLeaf && isParentOrSibling()) || isDescendantOfCursor()
     ? 'show'
     : isParentOrSibling() ||
       isDescendantOfUncle() ||
       (isCursorLeaf && isGrandparent()) ||
       (isCursorLeaf && isUncle()) ||
-      (isCursorLeaf && isDescendantOfGreatUncle())
+      (isCursorLeaf && isDescendantOfGreatUncle()) ||
+      isExpandedBottom() ||
+      isExpandedTop()
     ? 'dim'
     : 'hide'
 }
