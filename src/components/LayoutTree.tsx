@@ -136,6 +136,9 @@ const LayoutTree = () => {
   return (
     <div
       style={{
+        // Set a minimum height that fits all thoughts based on their estimated height.
+        // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
+        minHeight: estimatedHeight * virtualThoughts.length,
         // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
         // The indent multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
         transform: `translateX(${1.5 - indent * 0.9}em)`,
@@ -154,21 +157,22 @@ const LayoutTree = () => {
         // List Virtualization
         // Hide thoughts that are below the viewport.
         // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
-        // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
         const estimatedY = i * estimatedHeight + estimatedYStart
-        const hide = estimatedY > top + estimatedHeight
-        if (hide) return <div key={thought.id} style={{ height: estimatedHeight }} />
+        const isBelowViewport = estimatedY > top + estimatedHeight
+        if (isBelowViewport) return null
 
         return (
           <React.Fragment key={thought.id}>
             <div
               style={{
-                position: 'relative',
-                // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmp/y to be covered by previous siblings'.
+                position: 'absolute',
+                // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
                 // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
                 left: `${depth}em`,
+                top: estimatedHeight * i,
                 marginRight: `${depth}em`,
-                transition: 'left 0.15s ease-out',
+                transition: 'left 0.15s ease-out,top 0.15s ease-out',
+                width: '100%',
               }}
             >
               <VirtualThought
@@ -180,8 +184,8 @@ const LayoutTree = () => {
                 // isMultiColumnTable={isMultiColumnTable}
                 isMultiColumnTable={false}
                 leaf={leaf}
-                prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 nextChildId={next?.depth < depth ? next?.thought.id : undefined}
+                prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 simplePath={simplePath}
               />
             </div>
