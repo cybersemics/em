@@ -36,7 +36,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
 
-/** Wraps a Thought component and calculates the child Path, style, etc. */
+/** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({
   debugIndex,
   depth,
@@ -62,21 +62,14 @@ const VirtualThought = ({
   simplePath: SimplePath
   zoomCursor?: boolean
 }) => {
-  const state = store.getState()
-  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), _.isEqual)
-  const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
+  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const heightRef = useRef<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
-
-  // TODO
-  const showContexts = false
 
   /***************************
    * VirtualThought properties
 
-   * TODO: These can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
    ***************************/
-  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
 
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
@@ -91,8 +84,138 @@ const VirtualThought = ({
       !!heightRef.current,
   })
 
+  // console.log('One <VirtualThought>', prettyPath(childPath))
+  // useWhyDidYouUpdate('One <VirtualThought> ' + prettyPath(state, childPath), {
+  //   child,
+  //   depth,
+  //   env,
+  //   index,
+  //   isHeader,
+  //   isMultiColumnTable,
+  //   zoomCursor,
+  //   parentPath,
+  //   path,
+  //   prevChildId,
+  //   shimHiddenThought
+  //   showContexts,
+  //   styleChildren,
+  //   styleGrandchildren,
+  //   styleContainer,
+  //   // hooks
+  //   childPathUnstable,
+  //   childPath,
+  // })
+
+  const updateHeight = useCallback(() => {
+    if (ref.current) {
+      heightRef.current = ref.current.clientHeight
+    }
+  }, [])
+
+  // Read the element's height from the DOM on cursor change, but do not re-render.
+  // shimHiddenThought will re-render as needed.
+  useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
+  useEffect(updateHeight)
+
+  // Short circuit if thought has already been removed.
+  // This can occur in a re-render even when thought is defined in the parent component.
+  if (!thought) return null
+
+  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
+        // Must include DropEmpty, or it will shift when the cursor moves.
+        height: shimHiddenThought || !isVisible ? heightRef.current! : undefined,
+      }}
+    >
+      {
+        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropCliff when e would not be rendered.
+             - a
+              - b
+                - c [cursor]
+                  - x
+                - d
+              - e
+         */
+        !isVisible && dropCliff && <DropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
+      }
+
+      {!shimHiddenThought && (
+        <Subthought
+          autofocus={autofocus}
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          dropCliff={dropCliff}
+          env={env}
+          indexDescendant={indexDescendant}
+          isMultiColumnTable={isMultiColumnTable}
+          key={thought.id}
+          leaf={leaf}
+          prevChildId={prevChildId}
+          nextChildId={nextChildId}
+          simplePath={simplePath}
+          zoomCursor={zoomCursor}
+        />
+      )}
+
+      {isVisible && leaf && (
+        <DropEmpty
+          depth={depth}
+          indexDescendant={indexDescendant}
+          leaf={leaf}
+          prevChildId={prevChildId}
+          nextChildId={nextChildId}
+          simplePath={simplePath}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Renders a thought with style. */
+// TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
+const Subthought = ({
+  autofocus,
+  debugIndex,
+  depth,
+  dropCliff,
+  env,
+  indexDescendant,
+  isMultiColumnTable,
+  leaf,
+  prevChildId,
+  nextChildId,
+  simplePath,
+  zoomCursor,
+}: {
+  autofocus: Autofocus
+  debugIndex?: number
+  depth: number
+  dropCliff?: boolean
+  env?: LazyEnv
+  indexDescendant: number
+  isMultiColumnTable?: boolean
+  leaf?: boolean
+  prevChildId?: ThoughtId
+  nextChildId?: ThoughtId
+  simplePath: SimplePath
+  zoomCursor?: boolean
+}) => {
+  const state = store.getState()
+  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const parentId = thought.parentId
+  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
+  const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
   const grandparentId = simplePath[simplePath.length - 3]
+  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+
+  // TODO
+  const showContexts = false
 
   const childrenAttributeId = useSelector(
     (state: State) =>
@@ -170,110 +293,40 @@ const VirtualThought = ({
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
 
-  // console.log('One <VirtualThought>', prettyPath(childPath))
-  // useWhyDidYouUpdate('One <VirtualThought> ' + prettyPath(state, childPath), {
-  //   child,
-  //   depth,
-  //   env,
-  //   index,
-  //   isHeader,
-  //   isMultiColumnTable,
-  //   zoomCursor,
-  //   parentPath,
-  //   path,
-  //   prevChildId,
-  //   shimHiddenThought
-  //   showContexts,
-  //   styleChildren,
-  //   styleGrandchildren,
-  //   styleContainer,
-  //   // hooks
-  //   childPathUnstable,
-  //   childPath,
-  // })
-
-  const updateHeight = useCallback(() => {
-    if (ref.current) {
-      heightRef.current = ref.current.clientHeight
-    }
-  }, [])
-
-  // Read the element's height from the DOM on cursor change, but do not re-render.
-  // shimHiddenThought will re-render as needed.
-  useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
-  useEffect(updateHeight)
-
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
 
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
-
   return (
     <div
-      ref={ref}
       style={{
-        // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
-        // Must include DropEmpty, or it will shift when the cursor moves.
-        height: shimHiddenThought ? heightRef.current! : undefined,
+        // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains DropEmpty.
+        // Otherwise subsequent DropEmpty will be obscured.
+        opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
+        transition: 'opacity 0.75s ease-out',
+        pointerEvents: !isVisible ? 'none' : undefined,
       }}
     >
-      {
-        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropCliff when e would not be rendered.
-             - a
-              - b
-                - c [cursor]
-                  - x
-                - d
-              - e
-         */
-        !isVisible && dropCliff && <DropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
-      }
-
-      {!shimHiddenThought && (
-        <div
-          style={{
-            // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains DropEmpty.
-            // Otherwise subsequent DropEmpty will be obscured.
-            opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-            transition: 'opacity 0.75s ease-out',
-            pointerEvents: !isVisible ? 'none' : undefined,
-          }}
-        >
-          <Thought
-            debugIndex={debugIndex}
-            depth={depth + 1}
-            env={env}
-            hideBullet={hideBullet}
-            isContextPending={thought.value === '__PENDING__'}
-            // isHeader={isHeader}
-            isHeader={false}
-            isMultiColumnTable={isMultiColumnTable}
-            isVisible={isVisible}
-            key={thought.id}
-            path={appendedChildPath}
-            prevChildId={prevChildId}
-            rank={thought.rank}
-            // showContexts={showContexts}
-            showContexts={false}
-            simplePath={childPath}
-            style={style}
-            styleContainer={styleContainer}
-          />
-        </div>
-      )}
-
-      {isVisible && leaf && (
-        <DropEmpty
-          depth={depth}
-          indexDescendant={indexDescendant}
-          leaf={leaf}
-          prevChildId={prevChildId}
-          nextChildId={nextChildId}
-          simplePath={simplePath}
-        />
-      )}
+      <Thought
+        debugIndex={debugIndex}
+        depth={depth + 1}
+        env={env}
+        hideBullet={hideBullet}
+        isContextPending={thought.value === '__PENDING__'}
+        // isHeader={isHeader}
+        isHeader={false}
+        isMultiColumnTable={isMultiColumnTable}
+        isVisible={isVisible}
+        key={thought.id}
+        path={appendedChildPath}
+        prevChildId={prevChildId}
+        rank={thought.rank}
+        // showContexts={showContexts}
+        showContexts={false}
+        simplePath={childPath}
+        style={style}
+        styleContainer={styleContainer}
+      />
     </div>
   )
 }
