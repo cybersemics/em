@@ -38,7 +38,8 @@ const virtualTree = (
     indexDescendant: 0,
   },
 ): TreeThought[] => {
-  if (!isRoot(simplePath) && !state.expanded[hashPath(simplePath)]) return []
+  const hashedPath = hashPath(simplePath)
+  if (!isRoot(simplePath) && !state.expanded[hashedPath] && !state.expandedBottom[hashedPath]) return []
 
   const thoughtId = head(simplePath)
   const children = getAllChildrenSorted(state, thoughtId)
