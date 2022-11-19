@@ -159,18 +159,20 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         }),
   )
 
-  const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
-
   // alert user of move to another context
   if (!sameParent) {
     // wait until after MultiGesture has cleared the error so this alert does not get cleared
     setTimeout(() => {
-      const alertFrom = '"' + ellipsize(fromThought.value) + '"'
-      const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
-
-      store.dispatch(
-        alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
-      )
+      store.dispatch((dispatch, getState) => {
+        const state = getState()
+        const parentThought = getThoughtById(state, head(parentOf(thoughtsTo)))
+        if (!parentThought) return
+        const alertFrom = '"' + ellipsize(fromThought.value) + '"'
+        const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
+        dispatch(
+          alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
+        )
+      })
     }, 100)
   }
 }
