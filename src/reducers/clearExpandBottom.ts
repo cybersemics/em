@@ -1,9 +1,10 @@
 import State from '../@types/State'
+import expandThoughts from '../selectors/expandThoughts'
 
 /** Clear expand bottom. */
 const clearExpandBottom = (state: State): State => ({
   ...state,
-  expandedBottom: {},
+  expanded: expandThoughts(state, state.cursor),
   expandHoverBottomPaths: {},
 })
 

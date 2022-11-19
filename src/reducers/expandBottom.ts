@@ -1,27 +1,13 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
 import expandThoughts from '../selectors/expandThoughts'
-import head from '../util/head'
+import hashPath from '../util/hashPath'
 
-interface Options {
-  path: Path
-}
-
-/**
- * Calculates the expanded context due to hover expansion on empty child drop.
- */
-const expandBottom = (state: State, { path }: Options): State => {
-  const id = head(path)
-  const expandHoverBottomPaths = { ...state.expandHoverBottomPaths, [id]: path }
-
-  const expandedBottomPaths = Object.values(expandHoverBottomPaths)
-  // expanded thoughts due to hover expansion
-  const updatedExpandedBottom = expandedBottomPaths.reduce(
-    (acc, path) => ({ ...acc, ...expandThoughts(state, path) }),
-    {},
-  )
-
-  return { ...state, expandHoverBottomPaths, expandedBottom: updatedExpandedBottom }
-}
+/** Calculates the expanded context due to hover expansion on empty child drop. */
+const expandBottom = (state: State, { path }: { path: Path }): State => ({
+  ...state,
+  expanded: { ...state.expanded, ...expandThoughts(state, path) },
+  expandHoverBottomPaths: { ...state.expandHoverBottomPaths, [hashPath(path)]: path },
+})
 
 export default expandBottom

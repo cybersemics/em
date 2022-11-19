@@ -49,7 +49,6 @@ interface State {
   enableLatestShortcutsDiagram: boolean
   error?: string | null
   expanded: Index<Path>
-  expandedBottom: Index<Path>
   expandHoverBottomPaths: Index<Path>
   expandHoverTopPath?: Path | null
   expandedContextThought?: Path

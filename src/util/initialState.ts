@@ -119,7 +119,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     error: null,
     expanded: {},
     fontSize: +(getLocal('fontSize') || 18),
-    expandedBottom: {},
     expandHoverBottomPaths: {},
     invalidState: false,
     // Displays a loading screen when the app starts.
