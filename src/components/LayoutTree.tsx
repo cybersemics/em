@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
+import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
@@ -104,6 +106,8 @@ const RootDropEnd = () => {
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
+  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
+  const [heights, setHeights] = useState<Index<number>>({})
   const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
   const fontSize = useSelector((state: State) => state.fontSize)
   const indent = useSelector((state: State) =>
@@ -130,8 +134,22 @@ const LayoutTree = () => {
   const viewport = viewportStore.useState()
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + overshoot
-  const estimatedYStart = 80
-  const estimatedHeight = fontSize * 1.87
+  const estimatedHeight = fontSize * 1.78
+
+  // accumulate the y position as we iterate the visible thoughts since the heights may vary
+  let y = 0
+
+  /** Update the height record of a single thought. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const updateHeight = (id: ThoughtId, { height }: { height: number }) => {
+    setHeights(heightsOld =>
+      heightsOld[id] !== height
+        ? {
+            ...heightsOld,
+            [id]: height,
+          }
+        : heightsOld,
+    )
+  }
 
   return (
     <div
@@ -154,11 +172,14 @@ const LayoutTree = () => {
         // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
         const cliff = next ? Math.min(0, next.depth - depth) : -depth
 
+        const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
+        const thoughtY = y
+        y += height
+
         // List Virtualization
         // Hide thoughts that are below the viewport.
         // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
-        const estimatedY = i * estimatedHeight + estimatedYStart
-        const isBelowViewport = estimatedY > top + estimatedHeight
+        const isBelowViewport = thoughtY > top + height
         if (isBelowViewport) return null
 
         return (
@@ -169,7 +190,7 @@ const LayoutTree = () => {
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
                 // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
                 left: `${depth}em`,
-                top: estimatedHeight * i,
+                top: thoughtY,
                 marginRight: `${depth}em`,
                 transition: 'left 0.15s ease-out,top 0.15s ease-out',
                 width: '100%',
@@ -185,6 +206,7 @@ const LayoutTree = () => {
                 isMultiColumnTable={false}
                 leaf={leaf}
                 nextChildId={next?.depth < depth ? next?.thought.id : undefined}
+                onResize={updateHeight}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 simplePath={simplePath}
               />
