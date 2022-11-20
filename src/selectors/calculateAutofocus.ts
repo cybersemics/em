@@ -74,6 +74,8 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
       isExpandedBottom() ||
       isExpandedTop()
     ? 'dim'
+    : isGrandparent() || isUncle()
+    ? 'hide-parent'
     : 'hide'
 }
 

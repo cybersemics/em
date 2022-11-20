@@ -75,15 +75,12 @@ const VirtualThought = ({
 
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
+  // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
   const autofocus = useSelector(calculateAutofocus(simplePath))
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
     selector: (autofocusAfterAnimation: Autofocus) =>
-      autofocus !== 'show' &&
-      autofocus !== 'dim' &&
-      autofocusAfterAnimation !== 'show' &&
-      autofocusAfterAnimation !== 'dim' &&
-      !!heightRef.current,
+      autofocus === 'hide' && autofocusAfterAnimation === 'hide' && !!heightRef.current,
   })
 
   // console.log('One <VirtualThought>', prettyPath(childPath))
