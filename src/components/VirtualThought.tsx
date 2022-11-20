@@ -133,7 +133,7 @@ const VirtualThought = ({
       style={{
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
         // Must include DropEmpty, or it will shift when the cursor moves.
-        height: shimHiddenThought || !isVisible ? heightRef.current! : undefined,
+        height: shimHiddenThought ? heightRef.current! : undefined,
       }}
     >
       {
