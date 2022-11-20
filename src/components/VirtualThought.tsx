@@ -60,7 +60,7 @@ const VirtualThought = ({
   leaf?: boolean
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
-  onResize?: (id: ThoughtId, { height }: { height: number }) => void
+  onResize?: (id: ThoughtId, height: number | null) => void
   simplePath: SimplePath
   zoomCursor?: boolean
 }) => {
@@ -110,13 +110,20 @@ const VirtualThought = ({
     const heightNew = ref.current.clientHeight
     if (heightNew === heightRef.current) return
     heightRef.current = ref.current.clientHeight
-    onResize?.(thought.id, { height: heightRef.current })
+    onResize?.(thought.id, heightRef.current)
   }, [])
 
   // Read the element's height from the DOM on cursor change, but do not re-render.
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
   useEffect(updateHeight)
+
+  // trigger onResize with null to allow subscribes to clean up
+  useEffect(() => {
+    return () => {
+      onResize?.(thought.id, null)
+    }
+  }, [])
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.

@@ -140,16 +140,20 @@ const LayoutTree = () => {
   let y = 0
 
   /** Update the height record of a single thought. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const updateHeight = (id: ThoughtId, { height }: { height: number }) => {
-    setHeights(heightsOld =>
-      heightsOld[id] !== height
+  const updateHeight = (id: ThoughtId, height: number | null) =>
+    setHeights(heightsOld => {
+      // Delete height record when thought unmounts, otherwise heights will consume a non-decreasing amount of memory.
+      if (!height && heightsOld[id]) {
+        // eslint-disable-next-line fp/no-delete
+        delete heightsOld[id]
+      }
+      return heightsOld[id] !== height
         ? {
             ...heightsOld,
-            [id]: height,
+            ...(height ? { [id]: height } : null),
           }
-        : heightsOld,
-    )
-  }
+        : heightsOld
+    })
 
   return (
     <div
