@@ -13,8 +13,8 @@ import head from '../util/head'
 import strip from '../util/strip'
 import DragAndDropThought from './DragAndDropThought'
 
-/** A drop target for after the hidden parent at a cliff. This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. */
-const SubthoughtsDropCliff = ({
+/** A drop target for after the hidden parent at a cliff (before the next hidden uncle). This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. DropEnd does not work since it drops at the end of a context, whereas this needs to drop before the next hidden uncle. */
+const DropCliff = ({
   depth,
   dropTarget,
   isHovering,
@@ -39,7 +39,7 @@ const SubthoughtsDropCliff = ({
         'drop-end': true,
       })}
       style={{
-        backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
+        backgroundColor: globals.simulateDrop ? '#52305f' : undefined, // eggplant
         height: '1.9em',
         opacity: 0.9,
       }}
@@ -67,9 +67,9 @@ const SubthoughtsDropCliff = ({
 }
 
 // TODO: Type this correctly so it does not require all the Thought props (which it does not use)
-const DragAndDropSubthoughtsDropCliff = DragAndDropThought(SubthoughtsDropCliff) as any
+const DragAndDropSubthoughtsDropCliff = DragAndDropThought(DropCliff) as any
 
 const SubthoughtsDropEmptyMemo = React.memo(DragAndDropSubthoughtsDropCliff)
-SubthoughtsDropEmptyMemo.displayName = 'SubthoughtsDropCliff'
+SubthoughtsDropEmptyMemo.displayName = 'DropCliff'
 
 export default SubthoughtsDropEmptyMemo

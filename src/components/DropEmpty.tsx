@@ -55,7 +55,7 @@ const SubthoughtsDropEmpty = ({
             last,
           })}
           style={{
-            backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // mid eggplant
+            backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // purple-eggplant
             opacity: 0.9,
           }}
         >

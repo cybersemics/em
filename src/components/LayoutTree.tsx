@@ -10,6 +10,8 @@ import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
 import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
@@ -109,6 +111,16 @@ const LayoutTree = () => {
     (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) && state.cursor ? state.cursor.length : 0,
   )
 
+  // first uncle of the cursor used for DropCliff
+  const cursorUncleId = useSelector((state: State) => {
+    if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
+    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)]
+    const cursorParentThought = getThoughtById(state, cursorParentId)
+    return cursorParentThought
+      ? nextSibling(state, cursorParentThought.parentId, cursorParentThought.value, cursorParentThought.rank)?.id
+      : null
+  })
+
   // setup list virtualization
   const viewport = viewportStore.useState()
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
@@ -182,7 +194,7 @@ const LayoutTree = () => {
               <VirtualThought
                 debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
-                dropCliff={cliff < 0 && !!prev}
+                dropCliff={thought.id === cursorUncleId}
                 env={env}
                 indexDescendant={indexDescendant}
                 // isMultiColumnTable={isMultiColumnTable}
