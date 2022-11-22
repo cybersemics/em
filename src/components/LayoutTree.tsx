@@ -98,22 +98,19 @@ const LayoutTree = () => {
       : 0,
   )
 
-  // only set during drag-and-drop to avoid re-renders
-  const isCursorLeaf = useSelector(
-    (state: State) =>
-      (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) &&
-      state.cursor &&
-      !hasChildren(state, head(state.cursor)),
-  )
-
-  // only set during drag-and-drop to avoid re-renders
-  const cursorDepth = useSelector((state: State) =>
-    (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) && state.cursor ? state.cursor.length : 0,
-  )
+  // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
+  const autofocusDepth = useSelector((state: State) => {
+    // only set during drag-and-drop to avoid re-renders
+    if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return 0
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
+    return state.cursor.length + (isCursorLeaf ? -1 : 0)
+  })
 
   // first uncle of the cursor used for DropBefore
   const cursorUncleId = useSelector((state: State) => {
+    // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
+    const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)]
     const cursorParentThought = getThoughtById(state, cursorParentId)
     return cursorParentThought
@@ -210,7 +207,7 @@ const LayoutTree = () => {
               {cliff < 0 &&
                 // do not render hidden cliffs
                 // rough autofocus estimate
-                cursorDepth - depth < (isCursorLeaf ? 3 : 2) &&
+                autofocusDepth - depth < 2 &&
                 Array(-cliff)
                   .fill(0)
                   .map((x, i) => {
