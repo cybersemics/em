@@ -14,7 +14,7 @@ import strip from '../util/strip'
 import DragAndDropThought from './DragAndDropThought'
 
 /** A drop target for after the hidden parent at a cliff (before the next hidden uncle). This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. DropEnd does not work since it drops at the end of a context, whereas this needs to drop before the next hidden uncle. */
-const DropCliff = ({
+const DropBefore = ({
   depth,
   dropTarget,
   isHovering,
@@ -67,9 +67,9 @@ const DropCliff = ({
 }
 
 // TODO: Type this correctly so it does not require all the Thought props (which it does not use)
-const DragAndDropSubthoughtsDropCliff = DragAndDropThought(DropCliff) as any
+const DragAndDropDropBefore = DragAndDropThought(DropBefore) as any
 
-const SubthoughtsDropEmptyMemo = React.memo(DragAndDropSubthoughtsDropCliff)
-SubthoughtsDropEmptyMemo.displayName = 'DropCliff'
+const SubthoughtsDropEmptyMemo = React.memo(DragAndDropDropBefore)
+SubthoughtsDropEmptyMemo.displayName = 'DropBefore'
 
 export default SubthoughtsDropEmptyMemo

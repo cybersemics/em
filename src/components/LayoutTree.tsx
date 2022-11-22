@@ -111,7 +111,7 @@ const LayoutTree = () => {
     (state.dragInProgress || globals.simulateDrag || globals.simulateDrop) && state.cursor ? state.cursor.length : 0,
   )
 
-  // first uncle of the cursor used for DropCliff
+  // first uncle of the cursor used for DropBefore
   const cursorUncleId = useSelector((state: State) => {
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)]
@@ -194,7 +194,7 @@ const LayoutTree = () => {
               <VirtualThought
                 debugIndex={globals.simulateDrop ? indexChild : undefined}
                 depth={depth}
-                dropCliff={thought.id === cursorUncleId}
+                dropBefore={thought.id === cursorUncleId}
                 env={env}
                 indexDescendant={indexDescendant}
                 // isMultiColumnTable={isMultiColumnTable}

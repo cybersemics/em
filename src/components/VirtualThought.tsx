@@ -22,7 +22,7 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
-import DropCliff from './DropCliff'
+import DropBefore from './DropBefore'
 import DropEmpty from './DropEmpty'
 import Thought from './Thought'
 
@@ -40,7 +40,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
 const VirtualThought = ({
   debugIndex,
   depth,
-  dropCliff,
+  dropBefore,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -53,7 +53,7 @@ const VirtualThought = ({
 }: {
   debugIndex?: number
   depth: number
-  dropCliff?: boolean
+  dropBefore?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
@@ -142,7 +142,7 @@ const VirtualThought = ({
     >
       {
         /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropCliff when e would not be rendered.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropHiddenUncle when e would not be rendered.
              - a
               - b
                 - c [cursor]
@@ -150,7 +150,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropCliff && <DropCliff depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
+        !isVisible && dropBefore && <DropBefore depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
@@ -158,7 +158,7 @@ const VirtualThought = ({
           autofocus={autofocus}
           debugIndex={debugIndex}
           depth={depth + 1}
-          dropCliff={dropCliff}
+          dropBefore={dropBefore}
           env={env}
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
@@ -191,7 +191,7 @@ const Subthought = ({
   autofocus,
   debugIndex,
   depth,
-  dropCliff,
+  dropBefore,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -204,7 +204,7 @@ const Subthought = ({
   autofocus: Autofocus
   debugIndex?: number
   depth: number
-  dropCliff?: boolean
+  dropBefore?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
