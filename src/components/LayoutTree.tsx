@@ -16,6 +16,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
+import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
@@ -80,28 +81,6 @@ const virtualTree = (
   }, [])
 
   return thoughts
-}
-
-/** A drop target at the end of the ROOT context. */
-const RootDropEnd = () => {
-  // Only allow dropping on the root when the root children are visible.
-  // It would be confusing to allow dropping on the root when there are intervening hidden ancestors that can't be dropped on.
-  const isVisible = useSelector((state: State) => !state.cursor || state.cursor.length < 3)
-  return (
-    <>
-      {isVisible && (
-        <DropEnd
-          depth={0}
-          indexDescendant={0}
-          leaf={false}
-          simplePath={HOME_PATH}
-          // Extend the click area of the drop target when there is nothing below.
-          // Always extend the root subthught drop target.
-          last={true}
-        />
-      )}
-    </>
-  )
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -174,7 +153,7 @@ const LayoutTree = () => {
         const prev = virtualThoughts[i - 1]
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
         // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
-        const cliff = next ? Math.min(0, next.depth - depth) : -depth
+        const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
 
         const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
         const thoughtY = y
@@ -214,47 +193,46 @@ const LayoutTree = () => {
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 simplePath={simplePath}
               />
-            </div>
 
-            {/* DropEnd (cliff) */}
-            {cliff < 0 &&
-              // do not render hidden cliffs
-              // rough autofocus estimate
-              cursorDepth - depth < (isCursorLeaf ? 3 : 2) &&
-              Array(-cliff)
-                .fill(0)
-                .map((x, i) => {
-                  const simplePathEnd = simplePath.slice(0, cliff + i) as SimplePath
-                  return (
-                    <div
-                      key={`${head(simplePathEnd)}`}
-                      className='z-index-subthoughts-drop-end'
-                      style={{
-                        position: 'relative',
-                        top: '-0.2em',
-                        left: `calc(${simplePathEnd.length}em + ${isTouch ? -1 : 1}px)`,
-                        transition: 'left 0.15s ease-out',
-                      }}
-                    >
-                      <DropEnd
-                        depth={simplePathEnd.length}
-                        indexDescendant={indexDescendant}
-                        last={!next}
-                        leaf={false}
-                        simplePath={simplePathEnd}
-                        // Extend the click area of the drop target when there is nothing below.
-                        // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                        // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                        // last={!nextChildId}
-                      />
-                    </div>
-                  )
-                })}
+              {/* DropEnd (cliff) */}
+              {cliff < 0 &&
+                // do not render hidden cliffs
+                // rough autofocus estimate
+                cursorDepth - depth < (isCursorLeaf ? 3 : 2) &&
+                Array(-cliff)
+                  .fill(0)
+                  .map((x, i) => {
+                    const simplePathEnd =
+                      -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
+                    const cliffDepth = unroot(simplePathEnd).length
+                    return (
+                      <div
+                        key={`${head(simplePathEnd)}`}
+                        className='z-index-subthoughts-drop-end'
+                        style={{
+                          position: 'relative',
+                          top: '-0.2em',
+                          left: `calc(${cliffDepth - depth}em + ${isTouch ? -1 : 1}px)`,
+                          transition: 'left 0.15s ease-out',
+                        }}
+                      >
+                        <DropEnd
+                          depth={simplePathEnd.length}
+                          indexDescendant={indexDescendant}
+                          leaf={false}
+                          simplePath={simplePathEnd}
+                          // Extend the click area of the drop target when there is nothing below.
+                          // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                          // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                          // last={!nextChildId}
+                        />
+                      </div>
+                    )
+                  })}
+            </div>
           </React.Fragment>
         )
       })}
-
-      <RootDropEnd />
     </div>
   )
 }

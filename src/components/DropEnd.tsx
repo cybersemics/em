@@ -46,6 +46,7 @@ const SubthoughtsDropEnd = ({
   simplePath: SimplePath
 }) => {
   const thoughtId = head(simplePath)
+  const isRootPath = isRoot(simplePath)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
   useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
@@ -99,15 +100,11 @@ const SubthoughtsDropEnd = ({
       style={{
         display: 'list-item',
         backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
-        height: last ? (isRoot(simplePath) ? '8em' : '4em') : '1.9em',
-        marginLeft: last ? '-4em' : undefined,
+        height: isRootPath ? '8em' : '1.9em',
+        marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
-        paddingLeft: last ? (isTouch ? '6em' : '3em') : undefined,
-        // The ROOT drop end can be set to static since there are now following siblings that would be obscured.
-        // This ensures that previous thoughts are stacked on top (as this element doesn't create a new stacking context).
-        // Otherwise, the ROOT drop end will cover the last child's drop end.
-        position: isRoot(simplePath) ? 'static' : 'absolute',
+        paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
       }}
     >
       {globals.simulateDrop && (
