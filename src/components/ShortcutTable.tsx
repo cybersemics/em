@@ -51,7 +51,7 @@ const groups = [
   },
   {
     title: 'Editing thoughts',
-    shortcuts: ['join', 'splitSentences'],
+    shortcuts: ['join', 'splitSentences', 'bold', 'italic', 'underline'],
   },
   {
     title: 'Special Views',
