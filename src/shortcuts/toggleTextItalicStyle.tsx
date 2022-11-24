@@ -1,12 +1,14 @@
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/ItalicTextIcon'
+import findDescendant from '../selectors/findDescendant'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toolbars shortcut instance of toggleTextItalicStyle, which toggles italic font style of the cursor. */
 const toggleTextItalicStyle: Shortcut = {
   id: 'toggleTextItalicStyle',
   label: 'Italic',
-  description: 'Toggles italic font style of selected thought.',
+  description: 'Italicizes a thought.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
@@ -17,7 +19,10 @@ const toggleTextItalicStyle: Shortcut = {
       path: state.cursor,
     })
   },
-  isActive: getState => !!getState().cursor,
+  isActive: getState => {
+    const state = getState()
+    return !!state.cursor && !!findDescendant(state, head(state.cursor), ['=style', 'fontStyle', 'italic'])
+  },
   isDropdownOpen: getState => !!getState().showColorPicker,
 }
 
