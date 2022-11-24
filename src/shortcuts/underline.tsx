@@ -4,9 +4,9 @@ import findDescendant from '../selectors/findDescendant'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-/** Toolbars shortcut instance of toggleTextUnderline, which toggles underline decoration of the cursor. */
-const toggleTextUnderline: Shortcut = {
-  id: 'toggleTextUnderline',
+/** Toolbars shortcut instance of underline, which toggles underline decoration of the cursor. */
+const underline: Shortcut = {
+  id: 'underline',
   label: 'Underline',
   description: 'Underlines a thought.',
   svg: Icon,
@@ -15,7 +15,7 @@ const toggleTextUnderline: Shortcut = {
   exec: (dispatch, getState) => {
     const state = getState()
     dispatch({
-      type: 'toggleTextUnderline',
+      type: 'underline',
       path: state.cursor,
     })
   },
@@ -25,4 +25,4 @@ const toggleTextUnderline: Shortcut = {
   },
 }
 
-export default toggleTextUnderline
+export default underline
