@@ -9,7 +9,7 @@ const ItalicTextIcon = ({ style, size }: Icon) => {
       version='1.1'
       x='0'
       y='0'
-      viewBox='0 0 22 20'
+      viewBox='-5 -0.5 31.5 20'
       className='icon'
       width={size}
       height={size}

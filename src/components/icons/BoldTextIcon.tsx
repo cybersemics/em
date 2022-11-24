@@ -9,7 +9,7 @@ const BoldTextIcon = ({ style, size = 20 }: Icon) => {
       version='1.1'
       x='0'
       y='0'
-      viewBox='0 0 600 500.009'
+      viewBox='-200 -210 900 900'
       className='icon'
       width={size}
       height={size}

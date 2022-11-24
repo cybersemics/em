@@ -8,7 +8,7 @@ const UnderlineIcon = ({ style, size }: Icon) => (
     version='1.1'
     x='0'
     y='0'
-    viewBox='0 0 350 290'
+    viewBox='-110 0 520 290'
     className='icon'
     width={size}
     height={size}
