@@ -8,11 +8,11 @@ const UnderlineIcon = ({ style, size }: Icon) => (
     version='1.1'
     x='0'
     y='0'
-    viewBox='0 0 300 300'
+    viewBox='0 0 350 290'
     className='icon'
     width={size}
     height={size}
-    style={{ ...style, width: style?.width ? parseInt(style.width.toString()) * 0.9 : undefined }}
+    style={{ ...style }}
   >
     <path
       d='M230,0c-8.284,0-15,6.716-15,15v130c0,35.841-29.16,65-65.002,65c-17.362,0-33.684-6.762-45.961-19.038
