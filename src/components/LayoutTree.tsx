@@ -183,9 +183,10 @@ const LayoutTree = () => {
                 // Unfortunately left causes layout recalculation, so we may want to hoist SubthoughtsDropEmpty into a parent and manually control the position.
                 left: `${depth}em`,
                 top: thoughtY,
-                marginRight: `${depth}em`,
                 transition: 'left 0.15s ease-out,top 0.15s ease-out',
-                width: '100%',
+                // If width is auto, it unintentionally animates as left animates and the text wraps.
+                // Therefore, set the width so that is stepped and only changes with depth.
+                width: `calc(100% - ${depth - 1}em)`,
               }}
             >
               <VirtualThought
