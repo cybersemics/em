@@ -13,7 +13,6 @@ import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
-import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
@@ -147,10 +146,7 @@ const LayoutTree = () => {
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)]
-    const cursorParentThought = getThoughtById(state, cursorParentId)
-    return cursorParentThought
-      ? nextSibling(state, cursorParentThought.parentId, cursorParentThought.value, cursorParentThought.rank)?.id
-      : null
+    return nextSibling(state, cursorParentId)?.id
   })
 
   // setup list virtualization

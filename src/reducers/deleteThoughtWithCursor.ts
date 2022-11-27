@@ -33,7 +33,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   // same as in newThought
   const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const simplePath = showContexts ? simplifyPath(state, path) : thoughtToPath(state, head(path))
-  const parentId = head(rootedParentOf(state, simplePath))
   const thoughts = pathToContext(state, simplePath)
   const context = rootedParentOf(state, thoughts)
 
@@ -58,7 +57,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   // prev and next must be calculated before dispatching deleteThought
   const prev = showContexts ? prevContext() : prevSibling(state, value, rootedParentOf(state, simplePath), rank)
-  const next = nextSibling(state, parentId, value, rank)
+  const next = nextSibling(state, simplePath)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>

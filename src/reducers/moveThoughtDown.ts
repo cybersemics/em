@@ -8,9 +8,7 @@ import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtAfter from '../selectors/getThoughtAfter'
-import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -27,10 +25,7 @@ const moveThoughtDown = (state: State) => {
   const thoughtId = head(cursor)
   const pathParent = parentOf(cursor)
   const parentId = head(pathParent)
-  const cursorThought = getThoughtById(state, head(cursor))
-  const { value, rank } = cursorThought
-
-  const nextThought = nextSibling(state, head(rootedParentOf(state, cursor)), value, rank)
+  const nextThought = nextSibling(state, cursor)
 
   // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, simplifyPath(state, pathParent)) : null

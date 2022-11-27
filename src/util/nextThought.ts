@@ -5,7 +5,7 @@ import { firstVisibleChild } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import getNextSibling from '../selectors/nextSibling'
+import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -51,14 +51,6 @@ const nextUncle = (state: State, path: Path) => {
   return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 
-/** Gets the next sibling after the path in normal view. */
-const nextSibling = (state: State, path: Path) => {
-  const simplePath = simplifyPath(state, path)
-  const thought = getThoughtById(state, head(simplePath))
-  const pathParent = rootedParentOf(state, simplePath)
-  return getNextSibling(state, head(pathParent), thought.value, thought.rank)
-}
-
 /** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain.
  *
  * @param ignoreChildren Used to ignore the subthoughts if they have been traversed already. Useful for finding the next uncle.
@@ -90,7 +82,7 @@ const nextThought = (
       ? nextContext(state, path)
       : // in normal view, move to the next sibling
       sibling()
-      ? appendToPath(parentOf(path), sibling().id)
+      ? appendToPath(parentOf(path), sibling()!.id)
       : // otherwise, move to the next uncle
         nextUncle(state, path)
 

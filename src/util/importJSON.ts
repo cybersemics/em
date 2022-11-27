@@ -7,7 +7,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -284,16 +283,8 @@ const getContextsNum = (blocks: Block[]): number => {
 }
 
 /** Calculate rankIncrement value based on rank of next sibling or its absence. */
-const getRankIncrement = (
-  state: State,
-  blocks: Block[],
-  parentId: ThoughtId,
-  destThought: Thought,
-  rankStart: number,
-) => {
-  const destValue = destThought.value
-  const destRank = destThought.rank
-  const next = parentId ? nextSibling(state, parentId, destValue, destRank) : 0 // paste after last child of current thought
+const getRankIncrement = (state: State, blocks: Block[], destThought: Thought, rankStart: number) => {
+  const next = nextSibling(state, destThought.id) // paste after last child of current thought
   const rankIncrement = next ? (next.rank - rankStart) / (getContextsNum(blocks) || 1) : 1 // prevent divide by zero
   return rankIncrement
 }
@@ -307,12 +298,11 @@ const importJSON = (
 ) => {
   const initialLexemeIndex: Index<Lexeme> = {}
   const initialThoughtIndex: Index<Thought> = {}
-  const parentId = head(rootedParentOf(state, simplePath))
   const destThought = state.thoughts.thoughtIndex[head(simplePath)]
   const destEmpty = destThought.value === '' && getAllChildren(state, head(simplePath)).length === 0
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
-  const rankIncrement = getRankIncrement(state, blocks, parentId, destThought, rankStart)
+  const rankIncrement = getRankIncrement(state, blocks, destThought, rankStart)
   const path = rootedParentOf(state, simplePath)
   const id = head(path)
 

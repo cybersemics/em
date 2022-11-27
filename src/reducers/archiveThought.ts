@@ -130,7 +130,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     !prev && showContexts
       ? nextContext()
       : // get first visible thought
-        nextSibling(state, head(pathParent), value, rank)?.id
+        nextSibling(state, simplePath)?.id
 
   const [cursorNew, offset]: [Path | null, number | undefined] =
     // Case I: set cursor on prev thought
