@@ -181,6 +181,9 @@ const VirtualThought = ({
   )
 }
 
+const VirtualThoughtMemo = React.memo(VirtualThought)
+VirtualThoughtMemo.displayName = 'VirtualThought'
+
 /** Renders a thought with style. */
 // TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
 const Subthought = ({
@@ -301,7 +304,6 @@ const Subthought = ({
         isHeader={false}
         isMultiColumnTable={isMultiColumnTable}
         isVisible={isVisible}
-        key={thought.id}
         path={appendedChildPath}
         prevChildId={prevChildId}
         rank={thought.rank}
@@ -314,7 +316,4 @@ const Subthought = ({
   )
 }
 
-const SubthoughtMemo = React.memo(VirtualThought)
-SubthoughtMemo.displayName = 'VirtualThought'
-
-export default SubthoughtMemo
+export default VirtualThoughtMemo
