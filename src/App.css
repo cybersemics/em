@@ -685,46 +685,6 @@ a.text-link {
   padding-bottom: 0;
 }
 
-.children .thought > .editable,
-.children .thought-annotation > .editable {
-  margin-bottom: -0.25em;
-}
-
-.children {
-  font-size: 1em;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* Additional space not needed due to children-subheading */
-.children .child.show-contexts:first-child {
-  padding-top: calc(0.5em - 4px); /* offset top */
-}
-
-.children .children {
-  position: relative;
-  /* create stacking context so modal appears above */
-  z-index: var(--z-index-stack);
-}
-
-.children {
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out,
-    /* prose view */ margin-left 0.4s ease-out, margin-top 0.4s ease-out, margin-bottom 0.4s ease-out;
-
-  backface-visibility: hidden;
-}
-
-.children > .child {
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out, color 0.75s ease-out;
-  /*causes next siblings to overlap z-index*/
-  /*perspective: 1000;*/
-  backface-visibility: hidden;
-  /* left, padding-left, and margin-right work together to make the child extend to the left withut changing the positioning of the content. This ensures the child-as-drop-target is correct left of the bullets. (Cannot use transform as it affects the stacking context.) */
-  padding-left: calc(100px + 10em);
-  margin-right: -10em;
-  left: -10em;
-}
-
 .children-subheading {
   position: relative;
   margin-top: 3px;
@@ -1377,10 +1337,6 @@ h1 .num-contexts {
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
   }
-  .android .children .thought > .editable,
-  .children .thought-annotation > .editable {
-    margin-bottom: 6px;
-  }
 
   .android .thought,
   .android .thought-annotation {
@@ -1467,10 +1423,6 @@ h1 .num-contexts {
     margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
-  }
-  .android .children .thought > .editable,
-  .children .thought-annotation > .editable {
-    margin-bottom: 6px;
   }
 }
 
@@ -2060,10 +2012,6 @@ code,
   margin-left: calc(-0.4em - 14px);
 }
 
-.children .child:first-child > .drop-hover {
-  margin-top: -0.3em;
-}
-
 /* the drop target at the end of a context */
 .drop-end {
   position: absolute;
@@ -2286,58 +2234,6 @@ code,
 
 /* Prose View */
 
-/* prose view transition added to existing .children ruleset */
-/* do not transition line-height or padding, since they are adjusted dynamically when multiline thoughts are mounted. */
-.children > .child > * > * > .superscript-container,
-.children > .child > * > * > .editable {
-  transition: text-indent 0.4s ease-in-out;
-}
-
-/* do not transition top, since it is adjusted dynamically when multiline thoughts are mounted. */
-.children > .child > .thought-container > .bullet {
-  transition: transform 0.1s ease-in-out, text-indent 0.4s ease-in-out, left 0.4s ease-in-out, opacity 0.4s ease-in-out;
-
-  margin-left: -15px;
-  /* necessary for transition start */
-  left: 0;
-  display: inline-block;
-}
-
-.prose > .children {
-  margin-left: -5px;
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-
-.prose > .children > .child > .thought-container > .thought-annotation > .superscript-container {
-  text-indent: 1.7em;
-  top: -2px;
-  position: relative;
-}
-
-.prose > .children > .child > .thought-container > .thought > .editable {
-  text-indent: 1.7em;
-  padding-top: 0;
-  padding-bottom: 0.2em;
-  line-height: 1.5;
-}
-
-.prose > .children > .child > .thought-container > .bullet {
-  position: relative;
-  left: 27px;
-  top: -2px;
-  opacity: 0.5;
-}
-
-.prose > .children > .child.leaf > .thought-container > .bullet {
-  opacity: 0;
-}
-
-.prose > .children > .child > .children {
-  margin-left: 3.5em;
-  margin-bottom: 10px;
-}
-
 .SplitPane,
 .SplitPane .Resizer,
 .SplitPane .Pane {
@@ -2515,148 +2411,6 @@ code,
   top: 10px;
 }
 
-/* Table View */
-
-.table-view > .children {
-  margin: 10px 0 0 -5px;
-}
-
-/* row */
-.table-view > .children > .child {
-  display: table-row;
-  /* override .children > .child */
-  left: 0;
-  /* margin and padding do not work on table-row. Must apply to each cell. */
-}
-
-.table-view > .children > .child > .thought-container > .bullet {
-  display: none;
-}
-
-/* column 1 */
-/* allow auto width so columns adjust to their contents */
-.table-view > .children > .child > .thought-container {
-  display: table-cell;
-  text-align: right;
-  position: relative; /* used to constrain .drop-hover width */
-  padding-bottom: 10px; /* padding must go on column 1 cell since it may be a leaf */
-}
-
-@media screen and (min-width: 600px) {
-  .table-view > .children > .child > .thought-container > .thought,
-  .table-view > .children > .child > .thought-container > .thought-annotation {
-    margin-right: 1rem;
-  }
-}
-
-.table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
-  position: absolute;
-  margin-left: -1em;
-  color: #838283;
-  content: '▸';
-  font-style: normal;
-  vertical-align: middle;
-}
-
-/* leaf */
-.table-view > .children > .child.editing.leaf > .thought-container > .thought > .editable:before {
-  content: '•';
-}
-
-.mobile .table-view > .children > .child.editing > .thought-container > .thought > .editable:before {
-  margin-top: -1px;
-}
-
-.table-view > .children > .child > .thought-container > .thought,
-.table-view > .children > .child > .thought-container > .thought-annotation {
-  width: auto;
-  display: inline-block;
-  min-width: 13vw;
-  margin-left: 0;
-  padding: 3px 0;
-}
-
-/* column 2 */
-/* allow auto width so columns adjust to their contents */
-.table-view > .children > .child > .children {
-  display: table-cell;
-  vertical-align: top;
-  padding-bottom: 15px;
-}
-
-/* multi column does not use full width */
-.table-view > .children > .child.is-multi-column > .children {
-  width: auto;
-}
-
-/* nested table */
-.table-view > .children > .table-view > .children {
-  padding-top: 40px; /* TODO: Calculate dynamically based on column 1 cell height */
-  left: -60px; /* TODO: Calculate dynamically based on column 1 width */
-}
-
-/* nested tables require additional padding-top since they are otherwise interperted as column 2 of the outer table */
-.table-view > .children > .child.table-view:first-child > .children {
-  padding-top: 20px;
-}
-
-.table-view > .children > .child > .children > .child {
-  padding-top: 3px;
-  padding-left: 40px;
-  margin-left: 0;
-  /* override .children > .child */
-  left: 0;
-}
-
-/* pre-thought .drop-hover of column 1 */
-.table-view > .children > .child > .thought-container > .drop-hover {
-  /*background-color: pink;*/
-  margin-left: 0;
-  margin-top: -1px; /* evenly between rows */
-  width: calc(100% + 10px); /* slightly overextended to increase click area of column 1 */
-}
-
-/* post-thought .drop-hover of empty column 2 */
-.table-view > .children > .drop-end > .drop-hover {
-  /*background-color: orange;*/
-  margin-top: -15px;
-  margin-left: 0;
-  width: 33%;
-}
-
-/* pre-thought .drop-hover of column 2 */
-.table-view > .children > .child > .children > .child > .thought-container > .drop-hover {
-  /*background-color: turquoise;*/
-  margin-top: 0;
-  margin-left: -11px;
-}
-
-/* post-thought .drop-hover of column 2 */
-.table-view > .children > .child > .children > .drop-end .drop-hover {
-  /*background-color: seagreen;*/
-  margin-top: -2px;
-  width: calc(100% - 100px);
-}
-
-/* post-thought .drop-hover of empty column 2 */
-.table-view > .children > .child > .empty-children {
-  position: relative; /* constraints width of .drop-hover */
-}
-.table-view > .children > .child > .empty-children .drop-end > .drop-hover {
-  /*background-color: lightgreen;*/
-  margin-top: 5px;
-  margin-left: -97px;
-  width: calc(100% - 104px);
-}
-
-.table-view > .children > .child > .empty-children .drop-end {
-  margin-left: 0;
-}
-
-.table-view > .children > .child:first-child > .thought-container > .drop-hover {
-  margin-top: 10px;
-}
-
 .search-container {
   display: flex;
 }
@@ -2785,41 +2539,6 @@ code,
 }
 
 /* Publish */
-
-.publish > .children > .child {
-  font-family: Lora, Georgia, Times New Roman;
-  left: -1.5em; /* offset parent (ul.children) margin-left */
-}
-
-.publish > .children > .child > .thought-container {
-  font-size: 28px;
-}
-
-/* title */
-.publish > .children > .child > .thought-container > .thought,
-.publish > .children > .child > .thought-container > .thought-annotation {
-  margin-left: 0;
-}
-
-/* subthoughts */
-.publish > .children > .child > .children > .child:not(.leaf) {
-  margin-left: -75px;
-}
-
-.publish > .children > .child > .children > .child.leaf {
-  margin-bottom: 1em;
-  margin-top: 1em;
-  line-height: 1.8;
-}
-
-.publish > .children > .child > .children > .child.leaf > .thought-container > .thought,
-.publish > .children > .child > .children > .child.leaf > .thought-container > .thought-annotation {
-  margin-left: 0;
-}
-
-.publish > .children > .child > .children {
-  margin-left: 0;
-}
 
 .publish-meta {
   margin: 15px 0;
