@@ -7,7 +7,7 @@ import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFi
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('headings should set font weight', async () => {
+it.skip('headings should set font weight', async () => {
   store.dispatch([
     importText({
       text: `

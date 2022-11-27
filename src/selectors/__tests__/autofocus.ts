@@ -129,7 +129,7 @@ describe('normal view', () => {
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
     expect(autofocusMap).toEqual({
-      a: 'hide',
+      a: 'hide-parent',
       'a/b': 'dim',
       'a/b/c': 'show',
       'a/b/c/d': 'show',
@@ -252,7 +252,7 @@ describe('normal view', () => {
       a: 'dim',
       'a/b': 'show',
       'a/b/c': 'show',
-      x: 'hide',
+      x: 'hide-parent',
     })
   })
 
@@ -294,12 +294,12 @@ describe('normal view', () => {
     }))
 
     expect(autofocusMap).toEqual({
-      a: 'hide',
+      a: 'hide-parent',
       'a/b': 'dim',
       'a/b/c': 'show',
       'a/b/c/d': 'show',
       'a/b/c/d/e': 'show',
-      'a/f': 'hide',
+      'a/f': 'hide-parent',
     })
   })
 
@@ -366,8 +366,8 @@ describe('normal view', () => {
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
     expect(autofocusMap).toMatchObject({
-      a: 'hide',
-      'a/b': 'hide',
+      a: 'hide-parent',
+      'a/b': 'hide-parent',
       'a/b/c': 'hide',
       'a/d': 'dim',
       'a/d/e': 'show',
