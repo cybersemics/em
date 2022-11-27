@@ -46,8 +46,9 @@ const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const virtualTree = (
   state: State,
-  simplePath: SimplePath,
   {
+    // Base path to start the traversal. Defaults to HOME_PATH.
+    basePath,
     depth,
     env,
     indexDescendant,
@@ -56,6 +57,7 @@ const virtualTree = (
     // =grandparent styles must be passed separately since they skip a level
     styleFromGrandparent,
   }: {
+    basePath?: SimplePath
     depth: number
     env?: LazyEnv
     indexDescendant: number
@@ -66,6 +68,7 @@ const virtualTree = (
     indexDescendant: 0,
   },
 ): TreeThought[] => {
+  const simplePath = basePath || HOME_PATH
   const hashedPath = hashPath(simplePath)
   if (!isRoot(simplePath) && !state.expanded[hashedPath] && !state.expandHoverDownPaths[hashedPath]) return []
 
@@ -85,7 +88,8 @@ const virtualTree = (
     const envNew =
       env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
-    const descendants = virtualTree(state, childPath, {
+    const descendants = virtualTree(state, {
+      basePath: childPath,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
@@ -123,7 +127,7 @@ const virtualTree = (
 const LayoutTree = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
   const [heights, setHeights] = useState<Index<number>>({})
-  const virtualThoughts = useSelector((state: State) => virtualTree(state, HOME_PATH))
+  const virtualThoughts = useSelector(virtualTree)
   const fontSize = useSelector((state: State) => state.fontSize)
   const indent = useSelector((state: State) =>
     state.cursor && state.cursor.length > 2
