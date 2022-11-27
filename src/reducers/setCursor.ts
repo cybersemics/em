@@ -18,12 +18,12 @@ import chain from '../selectors/chain'
 import expandThoughts from '../selectors/expandThoughts'
 import { getAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
+import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import pathToContext from '../util/pathToContext'
 
@@ -67,7 +67,7 @@ const setCursor = (
   const simplePath = path ? simplifyPath(state, path) : HOME_PATH
   const context = pathToContext(state, simplePath)
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
-  const value = thoughtsResolved && headValue(state, thoughtsResolved)
+  const thought = thoughtsResolved && getThoughtById(state, head(thoughtsResolved))
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
@@ -123,7 +123,7 @@ const setCursor = (
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
       thoughtsResolved.length >= 1 &&
-      value!.toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
+      thought?.value!.toLowerCase().replace(/"/g, '') === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase())
 
   // non-pure
   const updatedOffset = offset ?? (editingValueStore.getState() !== null ? 0 : null)
