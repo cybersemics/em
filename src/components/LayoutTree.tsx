@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
@@ -9,7 +10,9 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
+import findDescendant from '../selectors/findDescendant'
 import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
+import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import viewportStore from '../stores/viewport'
@@ -18,6 +21,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
+import { safeRefMerge } from '../util/safeRefMerge'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
@@ -31,14 +35,34 @@ type TreeThought = {
   indexDescendant: number
   leaf: boolean
   simplePath: SimplePath
+  // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
+  style?: React.CSSProperties | null
   thought: Thought
 }
+
+// style properties that accumulate down the hierarchy.
+// We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
+const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const virtualTree = (
   state: State,
   simplePath: SimplePath,
-  { depth, env, indexDescendant }: { depth: number; env?: LazyEnv; indexDescendant: number } = {
+  {
+    depth,
+    env,
+    indexDescendant,
+    // ancestor styles that accmulate such as marginLeft are applied, merged, and passed to descendants
+    styleAccum,
+    // =grandparent styles must be passed separately since they skip a level
+    styleFromGrandparent,
+  }: {
+    depth: number
+    env?: LazyEnv
+    indexDescendant: number
+    styleAccum?: React.CSSProperties | null
+    styleFromGrandparent?: React.CSSProperties | null
+  } = {
     depth: 0,
     indexDescendant: 0,
   },
@@ -48,8 +72,11 @@ const virtualTree = (
 
   const thoughtId = head(simplePath)
   const children = getAllChildrenSorted(state, thoughtId)
-
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
+  const childrenAttributeId = findDescendant(state, thoughtId, '=children')
+  const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
+  const styleChildren = getStyle(state, childrenAttributeId)
+  const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, child, i) => {
     const childPath = appendToPathMemo(simplePath, child.id)
@@ -63,6 +90,13 @@ const virtualTree = (
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
+      // merge styleGrandchildren so it gets applied to this child's children
+      styleAccum: safeRefMerge(
+        styleAccum,
+        _.pick(styleChildren, ACCUM_STYLE_PROPERTIES),
+        _.pick(getStyle(state, grandchildrenAttributeId), ACCUM_STYLE_PROPERTIES),
+      ),
+      styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
     })
 
     return [
@@ -76,6 +110,7 @@ const virtualTree = (
         // It may still have hidden children.
         leaf: descendants.length === 0,
         simplePath: childPath,
+        style,
         thought: child,
       },
       ...descendants,
@@ -157,7 +192,7 @@ const LayoutTree = () => {
         marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
       }}
     >
-      {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, thought }, i) => {
+      {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, style, thought }, i) => {
         const next = virtualThoughts[i + 1]
         const prev = virtualThoughts[i - 1]
         // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -177,6 +212,7 @@ const LayoutTree = () => {
         return (
           <React.Fragment key={thought.id}>
             <div
+              aria-label='tree-node'
               style={{
                 position: 'absolute',
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
@@ -187,6 +223,7 @@ const LayoutTree = () => {
                 // If width is auto, it unintentionally animates as left animates and the text wraps.
                 // Therefore, set the width so that is stepped and only changes with depth.
                 width: `calc(100% - ${depth - 1}em)`,
+                ...style,
               }}
             >
               <VirtualThought

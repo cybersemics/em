@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
@@ -97,9 +96,6 @@ const VirtualThought = ({
   //   prevChildId,
   //   shimHiddenThought
   //   showContexts,
-  //   styleChildren,
-  //   styleGrandchildren,
-  //   styleContainer,
   //   // hooks
   //   childPathUnstable,
   //   childPath,
@@ -246,24 +242,6 @@ const Subthought = ({
     return false
   })
 
-  const styleChildren = useSelector((state: State) => getStyle(state, childrenAttributeId), _.isEqual)
-  const styleGrandchildren = useSelector((state: State) => getStyle(state, grandchildrenAttributeId), _.isEqual)
-  const styleContainerChildren = useSelector(
-    (state: State) => getStyle(state, childrenAttributeId, { attributeName: '=styleContainer' }),
-    _.isEqual,
-  )
-  const styleContainerGrandchildren = useSelector(
-    (state: State) => getStyle(state, grandchildrenAttributeId, { attributeName: '=styleContainer' }),
-    _.isEqual,
-  )
-
-  const styleContainer: React.CSSProperties = useMemo(
-    () => ({
-      ...styleContainerChildren,
-      ...styleContainerGrandchildren,
-    }),
-    [styleContainerChildren, styleContainerGrandchildren],
-  )
   /****************************/
 
   // getChildPath cannot be trivially memoized since it is not a pure function; its return value depends on which thoughts are loaded.
@@ -286,16 +264,14 @@ const Subthought = ({
   const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: thought.id, env }))
 
   /** Returns true if the cursor is contained within the thought path, i.e. the thought is a descendant of the cursor. */
-  const isEditingChildPath = once(() => isDescendantPath(state.cursor, childPath))
+  const isEditingChildPath = isDescendantPath(state.cursor, childPath)
 
-  const style = useMemo(() => {
-    const styleMerged: React.CSSProperties = {
-      ...(thought.value !== '=children' ? styleChildren : null),
-      ...(thought.value !== '=style' ? styleGrandchildren : null),
-      ...(isEditingChildPath() ? getStyle(state, childEnvZoomId()) : null),
-    }
-    return styleMerged
-  }, [styleGrandchildren, styleChildren, thought.value !== '=children', isEditingChildPath()])
+  const style = useMemo(
+    () => ({
+      ...(isEditingChildPath ? getStyle(state, childEnvZoomId()) : null),
+    }),
+    [isEditingChildPath],
+  )
 
   // TODO: ROOT gets appended when isContextPending
   // What should appendedChildPath be?
@@ -333,7 +309,6 @@ const Subthought = ({
         showContexts={false}
         simplePath={childPath}
         style={style}
-        styleContainer={styleContainer}
       />
     </div>
   )

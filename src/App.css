@@ -1227,14 +1227,6 @@ h1 .num-contexts {
   user-select: none;
 }
 
-.child {
-  position: relative; /* So that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly */
-  margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
-  margin-top: 0.501em; /* Match editable padding */
-  padding-left: 100px;
-  transition: transform 0.75s ease-out, opacity 0.75s ease-out;
-}
-
 .child > .thought-container > .bullet .glyph {
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */

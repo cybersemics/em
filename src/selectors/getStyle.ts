@@ -7,10 +7,11 @@ import keyValueBy from '../util/keyValueBy'
 import { getAllChildrenAsThoughts } from './getChildren'
 import themeColors from './themeColors'
 
-/** Parses the =style or =styleContainer attributes of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
+/** Parses the =style attributes of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
 const getStyle = (
   state: State,
   id: ThoughtId | null,
+  // defaults to =style
   { attributeName }: { attributeName?: string } = {},
 ): CSSProperties | null => {
   if (!id) return null

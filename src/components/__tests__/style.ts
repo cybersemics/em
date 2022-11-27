@@ -49,14 +49,14 @@ it('apply =children/=style to all children', async () => {
   expect(await findThoughtByText('a')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // apply to children (must be pinned open to find elemetns)
-  const b = (await findThoughtByText('b'))?.closest('[aria-label="thought-container"]')
+  const b = (await findThoughtByText('b'))?.closest('[aria-label="tree-node"]')
   expect(b).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
-  const d = (await findThoughtByText('d'))?.closest('[aria-label="thought-container"]')
+  const d = (await findThoughtByText('d'))?.closest('[aria-label="tree-node"]')
   expect(d).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // do not apply to grandchildren
-  const c = (await findThoughtByText('c'))?.closest('[aria-label="thought-container"]')
+  const c = (await findThoughtByText('c'))?.closest('[aria-label="tree-node"]')
   expect(c).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
@@ -101,7 +101,7 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
   expect(await findThoughtByText('b')).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // apply to grandchildren (must be pinned open to find elemetns)
-  const c = (await findThoughtByText('c'))?.closest('[aria-label="thought-container"]')
+  const c = (await findThoughtByText('c'))?.closest('[aria-label="tree-node"]')
   expect(c).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   // do not apply to great grandchildren

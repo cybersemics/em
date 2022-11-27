@@ -309,16 +309,15 @@ const ThoughtContainer = ({
     }
   }, [])
 
-  // all styles excluding colors that are applied to StaticThought and ThoughtAnnotation
-  const styleWithoutColors = useMemo((): React.CSSProperties => {
-    return {
-      ...(style ? _.omit(style, ['color', 'background-color']) : null),
-      // Highlight the parent of the current drop target to make it easier to drop in the intended place.
-      // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
-      // See: https://stackoverflow.com/a/46452396/480608
+  // Highlight the parent of the current drop target to make it easier to drop in the intended place.
+  // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
+  // See: https://stackoverflow.com/a/46452396/480608
+  const styleHover = useMemo(
+    (): React.CSSProperties => ({
       ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
-    }
-  }, [isChildHovering, style])
+    }),
+    [isChildHovering],
+  )
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
   //   allowSingleContext,
@@ -370,7 +369,7 @@ const ThoughtContainer = ({
   //   invalidOption,
   //   isChildHovering,
   //   placeholder,
-  //   styleWithoutColors,
+  //   styleHover,
   //   ...dragHoldResult.props,
   // })
 
@@ -390,8 +389,15 @@ const ThoughtContainer = ({
         {...dragHoldResult.props}
         aria-label='thought-container'
         style={{
+          // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
+          position: 'relative',
+          // match Editable padding
+          marginTop: '0.501em',
+          transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
           ...style,
           ...styleContainer,
+          marginLeft: style?.marginLeft ? `calc(${style.marginLeft} - 100px)` : -100,
+          paddingLeft: style?.paddingLeft ? `calc(${style.paddingLeft} + 100px)` : 100,
           ...(globals.simulateDrop
             ? {
                 backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
@@ -471,7 +477,7 @@ const ThoughtContainer = ({
             path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={styleWithoutColors}
+            style={styleHover}
             styleAnnotation={styleAnnotation || undefined}
           />
 
@@ -485,7 +491,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
-            style={styleWithoutColors}
+            style={styleHover}
             view={view}
           />
 

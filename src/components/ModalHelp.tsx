@@ -155,7 +155,8 @@ const ModalHelp = ({
 
       <code>=style</code>
       <p>
-        Set CSS styles on the thought. You might also consider =styleContainer, =children/=style, =grandchildren/=style.
+        Set CSS styles on the thought. You can set a style on all children or grandchildren with =children/=style or
+        =grandchildren/=style, respectively.
       </p>
 
       <code>=uneditable</code>
