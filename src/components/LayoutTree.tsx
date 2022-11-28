@@ -157,7 +157,16 @@ const LayoutTree = () => {
   const viewport = viewportStore.useState()
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + overshoot
-  const estimatedHeight = fontSize * 1.78
+  // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+  // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
+  const estimatedHeight = fontSize * 2 - 2
+
+  // Sum all the heights to get the total height.
+  // Use estimated single-line height for the thoughts that do not have heights yet.
+  // Not sure why we need +1, but without it the totalHeight changes from list virtualization.
+  const totalHeight =
+    Object.values(heights).reduce((a, b) => a + b, 0) +
+    (virtualThoughts.length - Object.values(heights).length) * estimatedHeight
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
@@ -183,7 +192,7 @@ const LayoutTree = () => {
       style={{
         // Set a minimum height that fits all thoughts based on their estimated height.
         // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
-        minHeight: estimatedHeight * virtualThoughts.length,
+        height: totalHeight,
         // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
         // The indent multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
         transform: `translateX(${1.5 - indent * 0.9}em)`,
