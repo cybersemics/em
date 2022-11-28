@@ -17,6 +17,8 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
+import editingValueStore from '../stores/editingValue'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -64,6 +66,7 @@ const VirtualThought = ({
   zoomCursor?: boolean
 }) => {
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
+  const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
   const heightRef = useRef<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -82,8 +85,8 @@ const VirtualThought = ({
       autofocus === 'hide' && autofocusAfterAnimation === 'hide' && !!heightRef.current,
   })
 
-  // console.log('One <VirtualThought>', prettyPath(childPath))
-  // useWhyDidYouUpdate('One <VirtualThought> ' + prettyPath(state, childPath), {
+  // console.info('<VirtualThought>', prettyPath(childPath))
+  // useWhyDidYouUpdate('<VirtualThought> ' + prettyPath(state, childPath), {
   //   child,
   //   depth,
   //   env,
@@ -113,6 +116,15 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
   useEffect(updateHeight)
+
+  // Recalculate height on edit
+  useEffect(() => {
+    updateHeight()
+    if (isEditing) {
+      // update height when editingValue changes and return the unsubscribe function
+      return editingValueStore.subscribe(updateHeight)
+    }
+  }, [isEditing])
 
   // trigger onResize with null to allow subscribes to clean up
   useEffect(() => {

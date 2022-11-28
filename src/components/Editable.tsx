@@ -291,6 +291,19 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           )
         : oldValue
 
+      /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
+
+        e.g.
+
+          1. user edits a -> aa
+          2. throttledChangeRef is queued.
+          3. editingValueStore is updated in realtime on the first edit.
+          4. user edits aa -> a
+          5. onChangeHandler short circuits since throttledChangeRef has not resolved and newValue === oldValue
+          6. editingValueStore must be updated, otherwise it will retain the stale value aa
+      */
+      editingValueStore.update(newValue)
+
       // TODO: Disable keypress
       // e.preventDefault() does not work
       // disabled={readonly} removes contenteditable property
@@ -308,8 +321,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
 
         return
       }
-
-      editingValueStore.update(newValue)
 
       const oldValueClean = oldValue === EM_TOKEN ? 'em' : ellipsize(oldValue)
 
