@@ -149,8 +149,8 @@ const LayoutTree = () => {
     // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
-    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)]
-    return nextSibling(state, cursorParentId)?.id
+    const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
+    return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 
   // setup list virtualization
