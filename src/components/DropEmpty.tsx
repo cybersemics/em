@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -45,18 +46,21 @@ const SubthoughtsDropEmpty = ({
     return null
 
   return (
-    <li className='empty-children' style={{ position: 'relative', left: '1em' }}>
+    <li className='drop-empty' style={{ position: 'relative' }}>
       {dropTarget(
         <span
           className={classNames({
-            child: true,
             'drop-end': true,
             'inside-divider': isDivider(value),
             last,
           })}
           style={{
             backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // purple-eggplant
+            // shift the drop target to the right
+            marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
             opacity: 0.9,
+            // add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target.
+            paddingBottom: '1em',
           }}
         >
           {globals.simulateDrop && (
@@ -75,7 +79,16 @@ const SubthoughtsDropEmpty = ({
             </span>
           )}
           {(globals.simulateDrag || isHovering) && (
-            <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
+            <span
+              className='drop-hover'
+              style={{
+                backgroundColor: dropHoverColor,
+                // offset drop-end (above) and add 0.25em to slightly  exaggerate the indentation for better drop perception.
+                marginLeft: isTouch ? 'calc(-33% - 8px)' : 'calc(-2em - 10px)',
+                marginTop: '-0.4em',
+                width: '100%',
+              }}
+            />
           )}
         </span>,
       )}

@@ -13,7 +13,7 @@
   /* above .children */
   --z-index-tutorial-trace-gesture: 5;
   /* above normal .drop-hover and subthoughts-drop-end */
-  --z-index-drop-end: 6;
+  --z-index-drop-empty: 6;
   /* above thought and bullet. */
   --z-index-subthoughts-drop-end: 5;
   /* above .children */
@@ -33,11 +33,11 @@
 .z-index-alert {
   z-index: var(--z-index-alert);
 }
-.z-index-subthoughts-drop-end {
-  z-index: var(--z-index-subthoughts-drop-end);
-}
 .z-index-hamburger-menu {
   z-index: var(--z-index-hamburger-menu);
+}
+.z-index-subthoughts-drop-end {
+  z-index: var(--z-index-subthoughts-drop-end);
 }
 .z-index-stack {
   z-index: var(--z-index-stack);
@@ -2037,23 +2037,6 @@ code,
   width: calc(100% - 38px);
 }
 
-/* last drop-end needs to be less wide */
-.drop-end:not(.child) .drop-hover {
-}
-
-/* move drop-end to the right so that the user's finger does not obscure the drop target */
-.mobile .drop-end:not(.child) {
-  margin-left: 2em;
-}
-/* the drop-target is to the right (see above), but the drop-hover needs to be positioned normally where the thought will be inserted, so offset the drop-target offset. */
-.mobile .drop-end:not(.child) .drop-hover {
-  margin-left: calc(-2.4em - 13px);
-}
-
-/*.child.expanded:not(.leaf) + .child > .thought-container .drop-hover {
-  margin-top: 0.3em;
-}*/
-
 .child.drop-end.last {
   margin-top: 0.4em;
   /* extend click area since there are no thoughts below */
@@ -2069,38 +2052,10 @@ code,
   margin-left: calc(0.6em - 13px);
   width: calc(100% - 3em);
 }
-.mobile .drop-end .drop-hover {
-}
 
-/* bump specificity */
-.empty-children .child.child > .drop-hover {
-  margin-top: -0.4em;
-  margin-left: calc(-1.8em - 115px);
-  width: calc(100% - 5em);
-}
-
-.empty-children .drop-end {
-  z-index: var(--z-index-drop-end);
-  margin-left: 1.75em;
-  /* add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target. */
-  padding-bottom: 1em;
-}
-
-.empty-children .drop-end.inside-divider {
-  margin-left: 60px;
-}
-
-/* move drop-end right on mobile so that drop target is not obscured by the user's finger */
-.mobile .empty-children .drop-end {
-  margin-left: 25%;
-}
-
-.empty-children .drop-end > .drop-hover {
-  margin-left: -150px;
-}
-
-.mobile .empty-children .drop-end > .drop-hover {
-  margin-left: calc(-25% - 103px);
+.drop-empty .drop-end {
+  /* override .drop-hover */
+  z-index: var(--z-index-drop-empty);
 }
 
 .status-button {
