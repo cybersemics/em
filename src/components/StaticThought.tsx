@@ -9,6 +9,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
+import isRoot from '../util/isRoot'
 import Divider from './Divider'
 import Editable from './Editable'
 import Superscript from './Superscript'
@@ -29,10 +30,8 @@ const StaticThought = ({
   simplePath,
   style,
 }: ThoughtProps) => {
-  const isParentRoot = simplePath.length === 1
-
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
-  const homeContext = showContexts && isParentRoot && !isContextPending
+  const homeContext = showContexts && isRoot(simplePath) && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
@@ -41,7 +40,7 @@ const StaticThought = ({
   // eventually the complete SimplePath will be loaded
   // TODO: Should this be done in Thought so that Thought is reloaded?
   const simplePathLive = useSelector(
-    (state: State) => (showContexts ? rootedParentOf(state, thoughtToPath(state, head(simplePath))) : simplePath),
+    (state: State) => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
     _.isEqual,
   )
 

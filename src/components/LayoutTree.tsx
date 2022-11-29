@@ -42,6 +42,7 @@ type TreeThought = {
   indexDescendant: number
   leaf: boolean
   path: Path
+  showContexts?: boolean
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
@@ -87,8 +88,8 @@ const virtualTree = (
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
   const simplePath = simplifyPath(state, path)
-  const showContexts = isContextViewActive(state, path)
-  const children = showContexts
+  const contextViewActive = isContextViewActive(state, path)
+  const children = contextViewActive
     ? getContextsSortedAndRanked(state, thought.value).map(thought => getThoughtById(state, thought.parentId))
     : getAllChildrenSorted(state, thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
@@ -123,8 +124,7 @@ const virtualTree = (
     return [
       ...accum,
       {
-        contextChain: showContexts ? [...(contextChain || []), simplePath] : contextChain,
-        context: showContexts,
+        contextChain: contextViewActive ? [...(contextChain || []), simplePath] : contextChain,
         depth,
         env: envNew || undefined,
         indexChild: i,
@@ -133,6 +133,7 @@ const virtualTree = (
         // It may still have hidden children.
         leaf: descendants.length === 0,
         path: childPath,
+        showContexts: contextViewActive,
         simplePath: thoughtToPath(state, child.id),
         style,
         thought: child,
@@ -224,7 +225,22 @@ const LayoutTree = () => {
       }}
     >
       {virtualThoughts.map(
-        ({ contextChain, depth, env, indexChild, indexDescendant, leaf, path, simplePath, style, thought }, i) => {
+        (
+          {
+            contextChain,
+            depth,
+            env,
+            indexChild,
+            indexDescendant,
+            leaf,
+            path,
+            showContexts,
+            simplePath,
+            style,
+            thought,
+          },
+          i,
+        ) => {
           const next = virtualThoughts[i + 1]
           const prev = virtualThoughts[i - 1]
           // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -276,6 +292,7 @@ const LayoutTree = () => {
                 onResize={updateHeight}
                 path={path}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
+                showContexts={showContexts}
                 simplePath={simplePath}
               />
 

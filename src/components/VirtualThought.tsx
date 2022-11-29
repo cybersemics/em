@@ -9,15 +9,12 @@ import ThoughtId from '../@types/ThoughtId'
 import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
-import appendChildPath from '../selectors/appendChildPath'
 import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
-import getChildPath from '../selectors/getChildPath'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -52,6 +49,7 @@ const VirtualThought = ({
   prevChildId,
   nextChildId,
   onResize,
+  showContexts,
   simplePath,
   zoomCursor,
 }: {
@@ -66,6 +64,7 @@ const VirtualThought = ({
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
   onResize?: (id: ThoughtId, height: number | null) => void
+  showContexts?: boolean
   simplePath: SimplePath
   zoomCursor?: boolean
 }) => {
@@ -98,7 +97,6 @@ const VirtualThought = ({
   //   isHeader,
   //   isMultiColumnTable,
   //   zoomCursor,
-  //   parentPath,
   //   path,
   //   prevChildId,
   //   shimHiddenThought
@@ -175,8 +173,10 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
+          path={path}
           prevChildId={prevChildId}
           nextChildId={nextChildId}
+          showContexts={showContexts}
           simplePath={simplePath}
           zoomCursor={zoomCursor}
         />
@@ -210,8 +210,10 @@ const Subthought = ({
   indexDescendant,
   isMultiColumnTable,
   leaf,
+  path,
   prevChildId,
   nextChildId,
+  showContexts,
   simplePath,
   zoomCursor,
 }: {
@@ -223,8 +225,10 @@ const Subthought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
+  path: Path
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
+  showContexts?: boolean
   simplePath: SimplePath
   zoomCursor?: boolean
 }) => {
@@ -232,14 +236,9 @@ const Subthought = ({
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const parentId = thought.parentId
-  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
-  const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
-
-  // TODO
-  const showContexts = false
 
   const childrenAttributeId = useSelector(
     (state: State) =>
@@ -264,27 +263,10 @@ const Subthought = ({
 
   /****************************/
 
-  // getChildPath cannot be trivially memoized since it is not a pure function; its return value depends on which thoughts are loaded.
-  // Memoizing it naively can result in not re-rendering contexts in the context view while they are loading.
-  // There is no way to determine a priori whether a thought id's path to the root is fully loaded without traversing up the tree.
-  // Instead we do a double memoization to minimize re-renders.
-  const childPathUnstable = useMemo(
-    // First, memoize the child path with, in addition to the parameters, the thought index (only if context view is activated, as full paths are guaranteed to be loaded in normal view).
-    // This is O(depth) for each child, but is is only recalculated when the Subthoughts component is re-rendered; it won't trigger any additional re-renders of the child thought (due to the next memoization step).
-    // However, childPathUnstable has a new object reference every time the thought index changes.
-    () => getChildPath(state, thought.id, parentPath, showContexts),
-    [thought.id, parentPath, showContexts, showContexts && state.thoughts.thoughtIndex],
-  )
-  // Second, therefore, memoize childPathUnstable based on its length, since we know that if thoughtToPath returns an array of the same length for the same id, then it is the same path.
-  const childPath = useMemo(
-    () => childPathUnstable,
-    [thought.id, parentPath, showContexts, showContexts && childPathUnstable.length],
-  )
-
   const childEnvZoomId = once(() => findFirstEnvContextWithZoom(state, { id: thought.id, env }))
 
   /** Returns true if the cursor is contained within the thought path, i.e. the thought is a descendant of the cursor. */
-  const isEditingChildPath = isDescendantPath(state.cursor, childPath)
+  const isEditingChildPath = isDescendantPath(state.cursor, path)
 
   const style = useMemo(
     () => ({
@@ -292,10 +274,6 @@ const Subthought = ({
     }),
     [isEditingChildPath],
   )
-
-  // TODO: ROOT gets appended when isContextPending
-  // What should appendedChildPath be?
-  const appendedChildPath = appendChildPath(state, childPath, path)
 
   // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
   // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
@@ -334,12 +312,11 @@ const Subthought = ({
         isHeader={false}
         isMultiColumnTable={isMultiColumnTable}
         isVisible={isVisible}
-        path={appendedChildPath}
+        path={path}
         prevChildId={prevChildId}
         rank={thought.rank}
-        // showContexts={showContexts}
-        showContexts={false}
-        simplePath={childPath}
+        showContexts={showContexts}
+        simplePath={simplePath}
         style={style}
       />
     </div>
