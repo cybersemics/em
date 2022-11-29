@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -10,7 +9,7 @@ import parentOf from '../util/parentOf'
 import { hasChildren } from './getChildren'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
-const calculateAutofocus = (state: State, simplePath: SimplePath) => {
+const calculateAutofocus = (state: State, resolvedPath: Path) => {
   /* Note:
 
   # Thoughts that should not be dimmed
@@ -26,9 +25,8 @@ const calculateAutofocus = (state: State, simplePath: SimplePath) => {
 
   */
 
-  if (!state.cursor || isRoot(simplePath)) return 'show'
+  if (!state.cursor || isRoot(resolvedPath)) return 'show'
 
-  const resolvedPath = simplePath as Path
   const cursorParent = parentOf(state.cursor!)
   const cursorGrandparent = parentOf(cursorParent)
 

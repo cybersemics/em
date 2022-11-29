@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
@@ -47,6 +48,7 @@ const VirtualThought = ({
   indexDescendant,
   isMultiColumnTable,
   leaf,
+  path,
   prevChildId,
   nextChildId,
   onResize,
@@ -60,6 +62,7 @@ const VirtualThought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
+  path: Path
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
   onResize?: (id: ThoughtId, height: number | null) => void
@@ -79,7 +82,7 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const autofocus = useSelector(calculateAutofocus(simplePath))
+  const autofocus = useSelector(calculateAutofocus(path))
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
     selector: (autofocusAfterAnimation: Autofocus) =>
@@ -171,7 +174,6 @@ const VirtualThought = ({
           env={env}
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
-          key={thought.id}
           leaf={leaf}
           prevChildId={prevChildId}
           nextChildId={nextChildId}

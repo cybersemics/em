@@ -14,7 +14,7 @@ import { getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
-import { isContextViewActiveById } from '../selectors/isContextViewActive'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
@@ -52,7 +52,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     missing: !lexeme,
     fontSize: state.fontSize,
     pending: props.isContextPending || isPending(state, thought),
-    showContexts: isContextViewActiveById(state, head(props.path)),
+    showContexts: isContextViewActive(state, props.path),
     dark: theme(state) !== 'Light',
   }
 }

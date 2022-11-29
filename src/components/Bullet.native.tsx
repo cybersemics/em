@@ -1,12 +1,13 @@
 import React from 'react'
 import { StyleSheet, Text, TouchableOpacity } from 'react-native'
 import { connect } from 'react-redux'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { hasChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
-import { isContextViewActiveById } from '../selectors/isContextViewActive'
+import isContextViewActive from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import { commonStyles } from '../style/commonStyles'
 
@@ -18,6 +19,7 @@ interface BulletProps {
   isEditing?: boolean
   leaf?: boolean
   onClick: (event: any) => void
+  path: Path
   showContexts?: boolean
   thoughtId: ThoughtId
 }
@@ -33,7 +35,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     // re-render when leaf status changes
     isLeaf: !hasChildren(state, thought.id),
     pending: isPending(state, thought),
-    showContexts: isContextViewActiveById(state, thought.id),
+    showContexts: isContextViewActive(state, props.path),
   }
 }
 

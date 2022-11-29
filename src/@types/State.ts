@@ -18,6 +18,7 @@ interface State {
   archived?: boolean
   authenticated: boolean
   autologin: boolean
+  // key: hashPath(path)
   contextViews: Index<boolean>
   cursor: Path | null
   // set to true when clearThought is activated

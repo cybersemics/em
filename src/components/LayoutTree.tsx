@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -12,8 +13,13 @@ import { HOME_PATH } from '../constants'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
+import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
+import simplifyPath from '../selectors/simplifyPath'
+import thoughtToPath from '../selectors/thoughtToPath'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import hashPath from '../util/hashPath'
@@ -26,6 +32,8 @@ import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
 type TreeThought = {
+  // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
+  contextChain?: SimplePath[]
   depth: number
   env?: LazyEnv
   // index among visible siblings at the same level
@@ -33,6 +41,7 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   leaf: boolean
+  path: Path
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
@@ -49,6 +58,8 @@ const virtualTree = (
   {
     // Base path to start the traversal. Defaults to HOME_PATH.
     basePath,
+    // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
+    contextChain,
     depth,
     env,
     indexDescendant,
@@ -57,7 +68,8 @@ const virtualTree = (
     // =grandparent styles must be passed separately since they skip a level
     styleFromGrandparent,
   }: {
-    basePath?: SimplePath
+    basePath?: Path
+    contextChain?: SimplePath[]
     depth: number
     env?: LazyEnv
     indexDescendant: number
@@ -68,12 +80,17 @@ const virtualTree = (
     indexDescendant: 0,
   },
 ): TreeThought[] => {
-  const simplePath = basePath || HOME_PATH
-  const hashedPath = hashPath(simplePath)
-  if (!isRoot(simplePath) && !state.expanded[hashedPath] && !state.expandHoverDownPaths[hashedPath]) return []
+  const path = basePath || HOME_PATH
+  const hashedPath = hashPath(path)
+  if (!isRoot(path) && !state.expanded[hashedPath] && !state.expandHoverDownPaths[hashedPath]) return []
 
-  const thoughtId = head(simplePath)
-  const children = getAllChildrenSorted(state, thoughtId)
+  const thoughtId = head(path)
+  const thought = getThoughtById(state, thoughtId)
+  const simplePath = simplifyPath(state, path)
+  const showContexts = isContextViewActive(state, path)
+  const children = showContexts
+    ? getContextsSortedAndRanked(state, thought.value).map(thought => getThoughtById(state, thought.parentId))
+    : getAllChildrenSorted(state, thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
@@ -81,15 +98,16 @@ const virtualTree = (
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, child, i) => {
-    const childPath = appendToPathMemo(simplePath, child.id)
+    const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const envParsed = parseLet(state, simplePath)
+    const envParsed = parseLet(state, path)
     const envNew =
       env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
     const descendants = virtualTree(state, {
       basePath: childPath,
+      contextChain,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
@@ -105,6 +123,8 @@ const virtualTree = (
     return [
       ...accum,
       {
+        contextChain: showContexts ? [...(contextChain || []), simplePath] : contextChain,
+        context: showContexts,
         depth,
         env: envNew || undefined,
         indexChild: i,
@@ -112,7 +132,8 @@ const virtualTree = (
         // true if the thought has no visible children.
         // It may still have hidden children.
         leaf: descendants.length === 0,
-        simplePath: childPath,
+        path: childPath,
+        simplePath: thoughtToPath(state, child.id),
         style,
         thought: child,
       },
@@ -129,6 +150,7 @@ const LayoutTree = () => {
   const [heights, setHeights] = useState<Index<number>>({})
   const virtualThoughts = useSelector(virtualTree)
   const fontSize = useSelector((state: State) => state.fontSize)
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const indent = useSelector((state: State) =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
@@ -201,28 +223,33 @@ const LayoutTree = () => {
         marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
       }}
     >
-      {virtualThoughts.map(({ depth, env, indexChild, indexDescendant, leaf, simplePath, style, thought }, i) => {
-        const next = virtualThoughts[i + 1]
-        const prev = virtualThoughts[i - 1]
-        // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
-        // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
-        const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
+      {virtualThoughts.map(
+        ({ contextChain, depth, env, indexChild, indexDescendant, leaf, path, simplePath, style, thought }, i) => {
+          const next = virtualThoughts[i + 1]
+          const prev = virtualThoughts[i - 1]
+          // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
+          // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
+          // TODO: Fix cliff across context view boundary
+          const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
 
-        const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
-        const thoughtY = y
-        // add a tiny bit of space after a cliff to give nested lists some breathing room
-        y += height + (cliff < 0 ? fontSize / 4 : 0)
+          const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
+          const thoughtY = y
 
-        // List Virtualization
-        // Hide thoughts that are below the viewport.
-        // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
-        const isBelowViewport = thoughtY > top + height
-        if (isBelowViewport) return null
+          // add a tiny bit of space after a cliff to give nested lists some breathing room
+          y += height + (cliff < 0 ? fontSize / 4 : 0)
 
-        return (
-          <React.Fragment key={thought.id}>
+          // List Virtualization
+          // Hide thoughts that are below the viewport.
+          // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
+          const isBelowViewport = thoughtY > top + height
+          if (isBelowViewport) return null
+
+          return (
             <div
               aria-label='tree-node'
+              // The key must be unique to the thought, and unique for same thought rendered in the context view.
+              // It should not be based on its Path, otherwise moving the thought would make it seem like a completely new thought to React.
+              key={[...(contextChain || []).map(head), thought.id].join('|')}
               style={{
                 position: 'absolute',
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
@@ -247,12 +274,14 @@ const LayoutTree = () => {
                 leaf={leaf}
                 nextChildId={next?.depth < depth ? next?.thought.id : undefined}
                 onResize={updateHeight}
+                path={path}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 simplePath={simplePath}
               />
 
               {/* DropEnd (cliff) */}
-              {cliff < 0 &&
+              {dragInProgress &&
+                cliff < 0 &&
                 // do not render hidden cliffs
                 // rough autofocus estimate
                 autofocusDepth - depth < 2 &&
@@ -264,7 +293,8 @@ const LayoutTree = () => {
                     const cliffDepth = unroot(simplePathEnd).length
                     return (
                       <div
-                        key={`${head(simplePathEnd)}`}
+                        // TODO: Fix cliff across context view boundary
+                        key={head(simplePathEnd)}
                         className='z-index-subthoughts-drop-end'
                         style={{
                           position: 'relative',
@@ -287,9 +317,9 @@ const LayoutTree = () => {
                     )
                   })}
             </div>
-          </React.Fragment>
-        )
-      })}
+          )
+        },
+      )}
     </div>
   )
 }
