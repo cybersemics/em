@@ -59,7 +59,12 @@ const virtualTree = (
   {
     // Base path to start the traversal. Defaults to HOME_PATH.
     basePath,
-    // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
+    // The id of a specific context within the context view.
+    // This allows the contexts to render the children of their Lexeme instance rather than their own children.
+    // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
+    // If we rendered the children as usual, the Lexeme would be repeated in each context, i.e. a/~m/a/m/x and a/~m/b/m/y. There is no need to render m a second time since we know the context view is activated on m.
+    contextId,
+    // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
     contextChain,
     depth,
     env,
@@ -70,6 +75,7 @@ const virtualTree = (
     styleFromGrandparent,
   }: {
     basePath?: Path
+    contextId?: ThoughtId
     contextChain?: SimplePath[]
     depth: number
     env?: LazyEnv
@@ -89,16 +95,22 @@ const virtualTree = (
   const thought = getThoughtById(state, thoughtId)
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
+  const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
-    ? getContextsSortedAndRanked(state, thought.value).map(thought => getThoughtById(state, thought.parentId))
-    : getAllChildrenSorted(state, thoughtId)
+    ? getContextsSortedAndRanked(state, thought.value)
+    : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
+      // See: contextId (above)
+      getAllChildrenSorted(state, contextId || thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
   const styleChildren = getStyle(state, childrenAttributeId)
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
 
-  const thoughts = filteredChildren.reduce<TreeThought[]>((accum, child, i) => {
+  const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
+    // If the context view is active, render the context's parent instead of the context itself.
+    // This allows the path to be accumulated correctly across the context view
+    const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
@@ -108,7 +120,8 @@ const virtualTree = (
 
     const descendants = virtualTree(state, {
       basePath: childPath,
-      contextChain,
+      contextId: contextViewActive ? filteredChild.id : undefined,
+      contextChain: contextChainNew,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
@@ -124,7 +137,7 @@ const virtualTree = (
     return [
       ...accum,
       {
-        contextChain: contextViewActive ? [...(contextChain || []), simplePath] : contextChain,
+        contextChain: contextChainNew,
         depth,
         env: envNew || undefined,
         indexChild: i,
@@ -134,7 +147,7 @@ const virtualTree = (
         leaf: descendants.length === 0,
         path: childPath,
         showContexts: contextViewActive,
-        simplePath: thoughtToPath(state, child.id),
+        simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
         style,
         thought: child,
       },
@@ -263,8 +276,8 @@ const LayoutTree = () => {
           return (
             <div
               aria-label='tree-node'
-              // The key must be unique to the thought, and unique for same thought rendered in the context view.
-              // It should not be based on its Path, otherwise moving the thought would make it seem like a completely new thought to React.
+              // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+              // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
               key={[...(contextChain || []).map(head), thought.id].join('|')}
               style={{
                 position: 'absolute',
