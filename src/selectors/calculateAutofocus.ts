@@ -9,7 +9,7 @@ import parentOf from '../util/parentOf'
 import { hasChildren } from './getChildren'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
-const calculateAutofocus = (state: State, resolvedPath: Path) => {
+const calculateAutofocus = (state: State, path: Path) => {
   /* Note:
 
   # Thoughts that should not be dimmed
@@ -25,7 +25,7 @@ const calculateAutofocus = (state: State, resolvedPath: Path) => {
 
   */
 
-  if (!state.cursor || isRoot(resolvedPath)) return 'show'
+  if (!state.cursor || isRoot(path)) return 'show'
 
   const cursorParent = parentOf(state.cursor!)
   const cursorGrandparent = parentOf(cursorParent)
@@ -35,32 +35,31 @@ const calculateAutofocus = (state: State, resolvedPath: Path) => {
   const isCursorLeaf = !hasChildren(state, head(state.cursor))
 
   /** Returns true if the thought is the parent or sibling of the cursor. */
-  const isParentOrSibling = () =>
-    equalPath(cursorParent, resolvedPath) || equalPath(cursorParent, parentOf(resolvedPath))
+  const isParentOrSibling = () => equalPath(cursorParent, path) || equalPath(cursorParent, parentOf(path))
 
   /** Returns true if the thought is the grandparent of the cursor. */
-  const isGrandparent = () => equalPath(cursorGrandparent, resolvedPath)
+  const isGrandparent = () => equalPath(cursorGrandparent, path)
 
   /** Returns true if the thought is the parent of the cursor. */
-  const isUncle = () => equalPath(cursorGrandparent, parentOf(resolvedPath))
+  const isUncle = () => equalPath(cursorGrandparent, parentOf(path))
 
   /** Returns true if the thought is a descendant of the cursor. */
-  const isDescendantOfCursor = () => isDescendantPath(resolvedPath, state.cursor)
+  const isDescendantOfCursor = () => isDescendantPath(path, state.cursor)
 
   /** Returns true if the thought is a descendant of a great uncle of the cursor. */
-  const isDescendantOfUncle = () => isDescendantPath(resolvedPath, cursorParent)
+  const isDescendantOfUncle = () => isDescendantPath(path, cursorParent)
 
   /** Returns true if the thought is a descendant of an uncle of the cursor. */
-  const isDescendantOfGreatUncle = () => isDescendantPath(resolvedPath, cursorGrandparent)
+  const isDescendantOfGreatUncle = () => isDescendantPath(path, cursorGrandparent)
 
   /** Returns true if the thought is expanded by hovering above the first visible thought. */
   const isExpandedTop = () =>
     !!state.expandHoverUpPath &&
-    (isRoot(state.expandHoverUpPath) || isDescendantPath(resolvedPath, state.expandHoverUpPath || null))
+    (isRoot(state.expandHoverUpPath) || isDescendantPath(path, state.expandHoverUpPath || null))
 
   /** Returns true if the thought is expanded by hovering below a thought. */
   const isExpandedBottom = () =>
-    Object.values(state.expandHoverDownPaths).some(bottomPath => isDescendantPath(resolvedPath, bottomPath || null))
+    Object.values(state.expandHoverDownPaths).some(bottomPath => isDescendantPath(path, bottomPath || null))
 
   return (isCursorLeaf && isParentOrSibling()) || isDescendantOfCursor()
     ? 'show'
