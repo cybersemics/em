@@ -210,7 +210,8 @@ const LayoutTree = () => {
 
         const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
         const thoughtY = y
-        y += height
+        // add a tiny bit of space after a cliff to give nested lists some breathing room
+        y += height + (cliff < 0 ? fontSize / 4 : 0)
 
         // List Virtualization
         // Hide thoughts that are below the viewport.
