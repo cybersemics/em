@@ -96,8 +96,10 @@ const setCursor = (
   //   }
   // })
 
+  // If expansion is suppressed, use existing expansion.
+  // setCursor will be re-triggered after expansion is unsuppressed.
   const expanded = globals.suppressExpansion
-    ? {}
+    ? state.expanded
     : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
