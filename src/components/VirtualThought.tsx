@@ -5,6 +5,7 @@ import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import appendChildPath from '../selectors/appendChildPath'
@@ -226,12 +227,14 @@ const Subthought = ({
   zoomCursor?: boolean
 }) => {
   const state = store.getState()
+  const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const parentId = thought.parentId
   const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
   const path = useSelector((state: State) => rootedParentOf(state, simplePath), shallowEqual)
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+  const autofocusChanged = useChangeRef(autofocus)
 
   // TODO
   const showContexts = false
@@ -292,17 +295,30 @@ const Subthought = ({
   // What should appendedChildPath be?
   const appendedChildPath = appendChildPath(state, childPath, path)
 
+  // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
+  // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
+  // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
+  const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
+  const opacityTransition = autofocusChanged ? 'opacity 0.75s ease-out' : 'opacity 0.15s ease-in'
+  useEffect(() => {
+    if (!ref.current) return
+    // start opacity at 0 and set to actual opacity in useEffect
+    ref.current.style.opacity = opacity
+  })
+
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
 
   return (
     <div
+      ref={ref}
       style={{
-        // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer div which contains DropEmpty.
-        // Otherwise subsequent DropEmpty will be obscured.
-        opacity: autofocus === 'show' ? 1 : autofocus === 'dim' ? 0.5 : 0,
-        transition: 'opacity 0.75s ease-out',
+        // Start opacity at 0 and set to actual opacity in useEffect.
+        // Do not fade in empty thoughts. An instant snap in feels better here.
+        // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropEmpty. Otherwise subsequent DropEmpty will be obscured.
+        opacity: thought.value === '' ? opacity : '0',
+        transition: opacityTransition,
         pointerEvents: !isVisible ? 'none' : undefined,
       }}
     >
