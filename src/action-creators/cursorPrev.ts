@@ -37,7 +37,9 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   const isTable = attributeEquals(state, parentId, '=view', 'Table')
 
   // just long enough to keep the expansion suppressed during cursor movement in rapid succession
-  if (!isCursorPinned && !isTable) dispatch(suppressExpansion({ duration: 100 }))
+  if (!isCursorPinned && !isTable) {
+    dispatch(suppressExpansion())
+  }
 
   dispatch(setCursor({ path }))
   scrollCursorIntoView()

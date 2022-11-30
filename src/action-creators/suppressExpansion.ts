@@ -4,41 +4,39 @@ import globals from '../globals'
 
 let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
 
-interface Options {
-  cancel?: boolean
-  duration?: number
-}
-
-/** Supress context expansion for a given duration. */
+/** Supress context expansion for a short duration (default: 100ms). This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. The state can be accessed with globals.suppressExpansion. If value is false, disables suppressExpansion immediately, cancels, the timer, and dispatches setCursor to re-trigger expandThoughts. */
+// duration of 66.666ms (4 frames) is low enough to be unnoticeable and high enough to cover the default key repeat rate on most machines (30ms)
 const suppressExpansion =
-  ({ cancel, duration }: Options = {}): Thunk =>
+  (value?: boolean, { duration }: { duration: number } = { duration: 66.666 }): Thunk =>
   (dispatch, getState) => {
-    /** Cancels suppressExpansion and sets the cursor to re-trigger expandThoughts. */
-    const disableSuppressExpansion = () => {
+    // suppress expansion by default
+    value = value ?? true
+
+    /** Disables suppressExpansion and sets the cursor to re-trigger expandThoughts. */
+    const unsuppress = () => {
       globals.suppressExpansion = false
       const { cursor, noteFocus } = getState()
-      dispatch(setCursor({ path: cursor, noteFocus: noteFocus })) // preserve noteFocus
+      dispatch(setCursor({ path: cursor, noteFocus })) // preserve noteFocus
     }
 
     /** Enables the global suppressExpansion flag. */
-    const enableSuppressExpansion = () => {
+    const suppress = () => {
       globals.suppressExpansion = true
     }
 
     clearTimeout(timer)
-    if (cancel) {
-      disableSuppressExpansion()
-    } else {
-      enableSuppressExpansion()
 
-      // if a duration was specified, re-enable expansion after short delay
-      if (duration) {
-        timer = setTimeout(() => {
-          if (globals.suppressExpansion) {
-            disableSuppressExpansion()
-          }
-        }, duration)
-      }
+    if (!value) {
+      unsuppress()
+    } else {
+      suppress()
+
+      // re-enable expansion after short delay
+      timer = setTimeout(() => {
+        if (globals.suppressExpansion) {
+          unsuppress()
+        }
+      }, duration)
     }
   }
 

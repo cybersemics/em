@@ -18,7 +18,7 @@ let offlineTimer = 0
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
 let errorTimer = 0
 
-/** When the Meta/Control key is held for more than SUPPRESS_EXPANSION_DELAY milliseconds, then subthoughts will not be expanded. It is also immediately activated on cursorNext or cursorPrev. This allows desktop users to navigate siblings easier when they have lots of subthoughts. */
+/** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
 let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */

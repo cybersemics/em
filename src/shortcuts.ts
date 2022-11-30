@@ -244,10 +244,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
   /** Global keyUp handler. */
   keyUp: (e: KeyboardEvent) => {
     // track meta key for expansion algorithm
-    if (e.key === (isMac ? 'Meta' : 'Control')) {
-      if (globals.suppressExpansion) {
-        store.dispatch(suppressExpansion({ cancel: true }))
-      }
+    if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
+      store.dispatch(suppressExpansion(false))
     }
   },
 
