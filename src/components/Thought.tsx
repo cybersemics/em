@@ -433,6 +433,21 @@ const ThoughtContainer = ({
           }
         }}
       >
+        {showContexts && simplePath.length > 1 ? (
+          <ContextBreadcrumbs simplePath={grandparent} homeContext={homeContext} />
+        ) : showContexts && simplePath.length > 2 ? (
+          <span className='ellipsis'>
+            <a
+              tabIndex={-1}
+              onClick={() => {
+                store.dispatch(expandContextThought(path))
+              }}
+            >
+              ...{' '}
+            </a>
+          </span>
+        ) : null}
+
         <div
           className='thought-container'
           style={{
@@ -441,21 +456,6 @@ const ThoughtContainer = ({
             ...(hideBullet ? { marginLeft: -12 } : null),
           }}
         >
-          {showContexts && simplePath.length > 1 ? (
-            <ContextBreadcrumbs simplePath={grandparent} homeContext={homeContext} />
-          ) : showContexts && simplePath.length > 2 ? (
-            <span className='ellipsis'>
-              <a
-                tabIndex={-1}
-                onClick={() => {
-                  store.dispatch(expandContextThought(path))
-                }}
-              >
-                ...{' '}
-              </a>
-            </span>
-          ) : null}
-
           {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isContextPending={isContextPending}

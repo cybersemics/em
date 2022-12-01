@@ -331,6 +331,14 @@ a.text-link {
   min-height: 1em;
 }
 
+.child .context-breadcrumbs {
+  /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
+  margin-bottom: -0.25em;
+  /* Use padding-top instead of margin-top to ensure this gets included in the dynamic height of each thought.
+     Otherwise the accumulated y value will not be correct. */
+  padding-top: 0.5em;
+}
+
 .favorites .context-breadcrumbs {
   margin-top: 1em;
   margin-left: 0;

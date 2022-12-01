@@ -111,6 +111,8 @@ const virtualTree = (
     // If the context view is active, render the context's parent instead of the context itself.
     // This allows the path to be accumulated correctly across the context view
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
+    // Context thought may still be pending
+    if (!child) return []
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
