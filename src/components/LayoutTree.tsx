@@ -207,18 +207,18 @@ const LayoutTree = () => {
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
 
-  /** Update the height record of a single thought. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const updateHeight = (id: ThoughtId, height: number | null) =>
+  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const updateHeight = (key: string, height: number | null) =>
     setHeights(heightsOld => {
       // Delete height record when thought unmounts, otherwise heights will consume a non-decreasing amount of memory.
-      if (!height && heightsOld[id]) {
+      if (!height && heightsOld[key]) {
         // eslint-disable-next-line fp/no-delete
-        delete heightsOld[id]
+        delete heightsOld[key]
       }
-      return heightsOld[id] !== height
+      return heightsOld[key] !== height
         ? {
             ...heightsOld,
-            ...(height ? { [id]: height } : null),
+            ...(height ? { [key]: height } : null),
           }
         : heightsOld
     })
@@ -254,6 +254,8 @@ const LayoutTree = () => {
           },
           i,
         ) => {
+          // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
+          const key = [...(contextChain || []).map(head), thought.id].join('|')
           const next = virtualThoughts[i + 1]
           const prev = virtualThoughts[i - 1]
           // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -261,7 +263,7 @@ const LayoutTree = () => {
           // TODO: Fix cliff across context view boundary
           const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
 
-          const height = heights[thought.id] ? heights[thought.id] : estimatedHeight
+          const height = heights[key] ?? estimatedHeight
           const thoughtY = y
 
           // add a tiny bit of space after a cliff to give nested lists some breathing room
@@ -278,7 +280,7 @@ const LayoutTree = () => {
               aria-label='tree-node'
               // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
               // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-              key={[...(contextChain || []).map(head), thought.id].join('|')}
+              key={key}
               style={{
                 position: 'absolute',
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' SubthoughtsDropEmpty to be covered by previous siblings'.
@@ -302,7 +304,7 @@ const LayoutTree = () => {
                 isMultiColumnTable={false}
                 leaf={leaf}
                 nextChildId={next?.depth < depth ? next?.thought.id : undefined}
-                onResize={updateHeight}
+                onResize={(id, height) => updateHeight(key, height)}
                 path={path}
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 showContexts={showContexts}
