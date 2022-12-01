@@ -220,7 +220,7 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
-
+  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), _.isEqual)
   const thoughtId = head(simplePath)
   const children = useSelector(
     (state: State) =>
@@ -245,7 +245,6 @@ const ThoughtContainer = ({
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
-  const grandparent = useSelector((state: State) => rootedParentOf(state, rootedParentOf(state, simplePath)), _.isEqual)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
   const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
@@ -434,7 +433,7 @@ const ThoughtContainer = ({
         }}
       >
         {showContexts && simplePath.length > 1 ? (
-          <ContextBreadcrumbs simplePath={grandparent} homeContext={homeContext} />
+          <ContextBreadcrumbs simplePath={parentPath} homeContext={homeContext} />
         ) : showContexts && simplePath.length > 2 ? (
           <span className='ellipsis'>
             <a
