@@ -37,7 +37,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const context = rootedParentOf(state, thoughts)
 
   const thought = getThoughtById(state, head(simplePath))
-  const { value, rank } = thought
 
   /** Calculates the previous context within a context view. */
   // TODO: Refactor into prevThought (cf nextThought)
@@ -47,7 +46,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
       const removedThoughtIndex = contexts.findIndex(({ id }) => {
         const parentThought = parentOfThought(state, id)
-        return parentThought?.value === value
+        return parentThought?.value === thought.value
       })
       return contexts[removedThoughtIndex - 1]
     })
@@ -56,7 +55,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   }
 
   // prev and next must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSibling(state, value, rootedParentOf(state, simplePath), rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, simplePath)
   const next = nextSibling(state, simplePath)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
@@ -115,7 +114,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          next && value !== ''
+          next && thought.value !== ''
           ? [appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)

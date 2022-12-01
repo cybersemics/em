@@ -1,48 +1,34 @@
 import State from '../@types/State'
-import { HOME_PATH } from '../constants'
+import { HOME_PATH, HOME_TOKEN } from '../constants'
 import setCursor from '../reducers/setCursor'
-import getThoughtById from '../selectors/getThoughtById'
+import { getChildrenSorted } from '../selectors/getChildren'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
-import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import unroot from '../util/unroot'
 
-/** Moves the cursor to the previous sibling. */
+/** Moves the cursor to the previous sibling. Works in normal or context view. If there is no cursor, sets the cursor on the last thought of in the home context. */
 const cursorUp = (state: State) => {
   const { cursor } = state
   const path = cursor || HOME_PATH
   const pathParent = rootedParentOf(state, path)
 
-  const cursorThought = getThoughtById(state, head(path))
+  const prevThought = cursor
+    ? // if cursor exists, get the previous sibling
+      prevSibling(state, cursor)
+    : // otherwise, get the last thought in the home context
+      getChildrenSorted(state, HOME_TOKEN).slice(-1)[0]
 
-  if (!cursorThought) {
-    console.error('Cursor thought not found!')
-    return state
-  }
+  const prevPath = prevThought
+    ? // non-first child path
+      appendToPath(parentOf(path), prevThought.id)
+    : // when the cursor is on the first child in a context, move up a level
+    !isRoot(pathParent)
+    ? pathParent
+    : null
 
-  const { value, rank } = cursorThought
-
-  const thoughtBefore = prevSibling(state, value, pathParent, rank)
-  const pathBefore = thoughtBefore && unroot(appendToPath(parentOf(path), thoughtBefore.id))
-  // const prevNieces = thoughtBefore && getChildrenRanked(pathBefore)
-  // const prevNiece = prevNieces && prevNieces[prevNieces.length - 1]
-
-  // TODO: Select deepest previous sibling's descendant (not just previous niece)
-
-  const prevPath =
-    // select prev sibling
-    thoughtBefore
-      ? pathBefore
-      : // select parent
-      !isRoot(pathParent)
-      ? pathParent
-      : // previous niece
-        // prevNiece ? unroot(pathBefore.concat(prevNiece))
-        null // see TODO
-
+  // noop if there is no previous path, i.e. the cursor is on the very first thought
   return prevPath ? setCursor(state, { path: prevPath }) : state
 }
 

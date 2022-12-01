@@ -4,9 +4,7 @@ import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
-import getThoughtById from '../selectors/getThoughtById'
 import prevSibling from '../selectors/prevSibling'
-import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -21,10 +19,7 @@ const indent = (state: State) => {
 
   if (!cursor) return state
 
-  const headCursorThought = getThoughtById(state, head(cursor))
-
-  const { value, rank } = headCursorThought
-  const prev = prevSibling(state, value, rootedParentOf(state, cursor), rank)
+  const prev = prevSibling(state, cursor)
 
   if (!prev) return state
 

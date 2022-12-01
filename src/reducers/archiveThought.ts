@@ -79,16 +79,15 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   if (!thought) {
     console.error(`achiveThought: Thought not found for id ${head(simplePath)}`)
   }
-  const { value, rank } = thought
   const thoughts = pathToContext(state, simplePath)
 
-  const isEmpty = value === ''
-  const isArchive = value === '=archive'
+  const isEmpty = thought.value === ''
+  const isArchive = thought.value === '=archive'
   const isArchived = isThoughtArchived(state, path)
   const hasDescendants = getAllChildren(state, head(path)).length !== 0
   const allChildren = getAllChildrenAsThoughts(state, head(simplePath))
-  const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(value)
-  const alertLabel = ellipsize(value === '=note' ? 'note ' + allChildren[0]?.value || '' : value)
+  const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(thought.value)
+  const alertLabel = ellipsize(thought.value === '=note' ? 'note ' + allChildren[0]?.value || '' : thought.value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {
@@ -124,7 +123,7 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   }
 
   // prev must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSibling(state, value, pathParent, rank)
+  const prev = showContexts ? prevContext() : prevSibling(state, path)
 
   const next =
     !prev && showContexts

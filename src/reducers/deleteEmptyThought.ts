@@ -76,8 +76,8 @@ const deleteEmptyThought = (state: State): State => {
   }
   // delete from beginning and merge with previous sibling
   else if (offset === 0 && !showContexts) {
-    const { value, rank, splitSource } = cursorThought
-    const prev = prevSibling(state, value, rootedParentOf(state, cursor), rank)
+    const { value, splitSource } = cursorThought
+    const prev = prevSibling(state, cursor)
 
     // only if there is a previous sibling
     if (prev) {
