@@ -6,14 +6,16 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
 import setCursor from '../reducers/setCursor'
+import getContexts from '../selectors/getContexts'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
+import nextThought from '../selectors/nextThought'
 import parentOfThought from '../selectors/parentOfThought'
+import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 import appendToPath from '../util/appendToPath'
@@ -21,20 +23,24 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
+
+/** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
+const getContext = (state: State, path: Path) =>
+  getContexts(state, headValue(state, parentOf(path))).find(
+    cxid => getThoughtById(state, cxid)?.parentId === head(path),
+  )
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
 
   const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
+  const parentPath = rootedParentOf(state, path)
 
   // same as in newThought
-  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
-  const simplePath = showContexts ? simplifyPath(state, path) : thoughtToPath(state, head(path))
-  const thoughts = pathToContext(state, simplePath)
-  const context = rootedParentOf(state, thoughts)
+  const showContexts = isContextViewActive(state, parentPath)
+  const simplePath = thoughtToPath(state, head(path))
 
   const thought = getThoughtById(state, head(simplePath))
 
@@ -56,7 +62,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   // prev and next must be calculated before dispatching deleteThought
   const prev = showContexts ? prevContext() : prevSibling(state, simplePath)
-  const next = nextSibling(state, simplePath)
+  const nextPath = showContexts ? nextThought(state) : null
+  const next = showContexts ? pathToThought(state, nextPath!) : nextSibling(state, simplePath)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
@@ -69,12 +76,23 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
           })
       : cursorBack
 
+  // In the context view we need to iterate through the contexts to find the correct instance. This is a problem specifically for tangential contexts, which have a different parent from the cursor.
+  // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
+  const contextId = (showContexts && getContext(state, path)) || null
+
   return reducerFlow([
     // delete thought
-    deleteThought({
-      pathParent: parentOf(simplePath),
-      thoughtId: head(simplePath),
-    }),
+    deleteThought(
+      contextId
+        ? {
+            pathParent: simplePath,
+            thoughtId: contextId,
+          }
+        : {
+            pathParent: parentOf(simplePath),
+            thoughtId: head(simplePath),
+          },
+    ),
 
     // move cursor
     state => {
@@ -107,6 +125,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         return cursorNew
       })
 
+      if (showContexts) return state
+
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
       return setCursorOrBack.apply(
@@ -114,15 +134,15 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          next && thought.value !== ''
-          ? [appendToPath(parentOf(path), next.id)]
+          next && (thought.value !== '' || showContexts)
+          ? [nextPath || appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)
           prev
           ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
           : // Case III: delete last thought in context; set cursor on parent
-          thoughts.length > 1
-          ? [closestAncestor, { offset: getTextContentFromHTML(head(context)).length }]
+          simplePath.length > 1
+          ? [closestAncestor, { offset: getTextContentFromHTML(thought.value).length }]
           : // Case IV: delete last thought in thoughtspace; remove cursor
             [null],
       )(state)

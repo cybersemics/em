@@ -11,11 +11,8 @@ import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtBefore from '../selectors/getThoughtBefore'
-import isContextViewActive from '../selectors/isContextViewActive'
-import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import splitChain from '../selectors/splitChain'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -38,13 +35,7 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   // can delete if the current thought is a divider
   if (isDivider(headValue(state, cursor))) return true
 
-  // can't delete in context view (TODO)
-  const showContexts = isContextViewActive(state, rootedParentOf(state, cursor))
-  if (showContexts) return false
-
-  const contextChain = splitChain(state, cursor)
-  const path = lastThoughtsFromContextChain(state, contextChain)
-  const hasChildren = getChildrenRanked(state, head(path)).length > 0
+  const hasChildren = getChildrenRanked(state, head(simplePath)).length > 0
   const prevThought = getThoughtBefore(state, simplePath)
   const hasChildrenAndPrevDivider = prevThought && isDivider(prevThought.value) && hasChildren
 

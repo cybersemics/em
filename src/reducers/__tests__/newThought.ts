@@ -115,7 +115,7 @@ describe('context view', () => {
       importText({ text }),
       setCursor(['a', 'm']),
       toggleContextView,
-      newThought({ value: '', insertNewSubthought: true }),
+      newThought({ insertNewSubthought: true }),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

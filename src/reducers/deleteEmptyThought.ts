@@ -5,7 +5,7 @@ import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
 import editThought from '../reducers/editThought'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
-import { getAllChildrenAsThoughts, getChildren, getChildrenRanked } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -38,7 +38,12 @@ const deleteEmptyThought = (state: State): State => {
   const isEmpty = headValue(state, cursor) === '' || state.cursorCleared
 
   // delete an empty thought with no children
-  if ((isEmpty && allChildren.length === 0) || isDivider(value)) {
+  // or delete an empty context with an only-child and no grandchildren
+  // e.g. delete a/m~/_ if ABS/_ has no other children (besides m) and ABS/_/m has no children
+  if (
+    (isEmpty || isDivider(value)) &&
+    (showContexts ? allChildren.length === 1 && !hasChildren(state, allChildren[0].id) : allChildren.length === 0)
+  ) {
     return deleteThoughtWithCursor(state, {})
   }
   // archive an empty thought with only hidden children

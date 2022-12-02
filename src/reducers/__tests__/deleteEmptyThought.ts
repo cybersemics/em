@@ -1,9 +1,12 @@
 import importTextActionCreator from '../../action-creators/importText'
-import { HOME_TOKEN } from '../../constants'
+import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import { getAllChildren } from '../../selectors/getChildren'
+import { getLexeme } from '../../selectors/getLexeme'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import prettyPath from '../../test-helpers/prettyPath'
 import setCursor, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -15,6 +18,7 @@ import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
+import toggleContextView from '../toggleContextView'
 
 describe('normal view', () => {
   it('delete empty thought', () => {
@@ -197,6 +201,40 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
+  })
+})
+
+describe('context view', () => {
+  it(`delete empty context`, () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y
+        `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      newThought({ insertNewSubthought: true }),
+      deleteEmptyThought,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // empty context should be deleted from the Lexeme
+    const lexeme = getLexeme(stateNew, 'm')
+    expect(lexeme?.contexts).toHaveLength(2)
+
+    // absolute context should be empty
+    const children = getAllChildren(stateNew, ABSOLUTE_TOKEN)
+    expect(children).toHaveLength(0)
+
+    // cursor should be on the next context
+    expect(prettyPath(stateNew, stateNew.cursor)).toEqual('a/m/a')
   })
 })
 

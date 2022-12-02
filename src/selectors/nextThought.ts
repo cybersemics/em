@@ -51,15 +51,12 @@ const nextUncle = (state: State, path: Path) => {
   return isRoot(pathParent) ? null : nextThought(state, pathParent, { ignoreChildren: true })
 }
 
-/** Gets the next thought whether it is a child, sibling, or uncle, and its respective contextChain.
+/** Gets the next thought after a given path (default: cursor) whether it is a child, sibling, or uncle, and its respective contextChain.
  *
  * @param ignoreChildren Used to ignore the subthoughts if they have been traversed already. Useful for finding the next uncle.
  */
-const nextThought = (
-  state: State,
-  path: Path = HOME_PATH,
-  { ignoreChildren }: { ignoreChildren?: boolean } = {},
-): Path | null => {
+const nextThought = (state: State, path?: Path, { ignoreChildren }: { ignoreChildren?: boolean } = {}): Path | null => {
+  path = path || state.cursor || HOME_PATH
   const pathParent = rootedParentOf(state, path)
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, pathParent)
@@ -68,7 +65,7 @@ const nextThought = (
 
   const onContextView = showContexts && !ignoreChildren
   const isEmptyContext = showContextsParent && !firstChild
-  const sibling = once(() => nextSibling(state, path))
+  const sibling = once(() => nextSibling(state, path!))
 
   const next =
     // on a thought with the context view activated, move to the first context
