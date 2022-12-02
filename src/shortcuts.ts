@@ -12,8 +12,9 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { AlertType, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, EM_TOKEN, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import globals from './globals'
+import findDescendant from './selectors/findDescendant'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
@@ -140,13 +141,15 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
+    const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
 
     if (toolbarOverlay || scrollPrioritized || state.showModal || state.dragInProgress) return
 
     const shortcut = shortcutGestureIndex[sequence as string]
 
-    // basic gesture hint
+    // basic gesture hint (training mode only)
     if (
+      !experienceMode &&
       // only show basic gesture hint if the extended gesture hint is not already being shown
       state.alert?.alertType !== AlertType.GestureHintExtended &&
       // ignore back
@@ -209,17 +212,22 @@ export const inputHandlers = (store: Store<State, any>) => ({
     clearTimeout(gestureHintExtendedTimeout)
     gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
 
-    // Convert gestureHintExtended to gestureHint on gesture end
-    // needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
+    // In experienced mode, close the alert.
+    // In training mode, convert gestureHintExtended to gestureHint on gesture end.
+    // This needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
-        const alertType = getState().alert?.alertType
+        const state = getState()
+        const alertType = state.alert?.alertType
+        const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
         if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
           dispatch(
             alert(
               // clear alert if gesture is cancelled (no shortcut)
               // clear alert if back/forward
-              shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack' ? shortcut.label : null,
+              !experienceMode && shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack'
+                ? shortcut.label
+                : null,
               { alertType: AlertType.GestureHint, clearDelay: 5000 },
             ),
           )

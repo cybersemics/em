@@ -4,7 +4,7 @@ import alert from '../action-creators/alert'
 import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
 import Icon from '../components/icons/DeleteIcon'
-import { AlertType } from '../constants'
+import { AlertType, EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -29,13 +29,14 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    // delete the thought
     dispatch(deleteThoughtWithCursor({ path: cursor }))
 
-    // undo alert
-    if (value) {
+    // Alert which thought was deleted.
+    // Only show alert for empty thought in training mode.
+    const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+    if (value || !experienceMode) {
       dispatch(
-        alert(`Deleted ${ellipsize(value)}`, {
+        alert(`Deleted ${value ? ellipsize(value) : 'empty thought'}`, {
           alertType: AlertType.ThoughtDeleted,
           clearDelay: 8000,
           showCloseLink: true,
