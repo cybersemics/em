@@ -1,43 +1,33 @@
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import contextToPath from '../selectors/contextToPath'
-import getContexts from '../selectors/getContexts'
 import isContextViewActive from '../selectors/isContextViewActive'
-import childIdsToThoughts from './childIdsToThoughts'
-import thoughtToContext from './thoughtToContext'
 
 /**
- * Splits a path into a contextChain based on contextViews.
- *
- * @example (shown without ranks): splitChain(['A', 'B', 'A'], { B: true }) === [['A', 'B'], ['A']]
+ * Splits a Path into a context chain that contains each of its SimplePaths. For eample, if the Path crosses two context views A and B, the context chain will have length SimplePaths: [ROOT, ...] -> [A, ...] -> [B, ...].
  */
 const splitChain = (state: State, path: Path): SimplePath[] => {
-  const contextChain: SimplePath[] = [[] as unknown as SimplePath]
+  const contextChain: SimplePath[] = []
 
-  const pathThoughts = childIdsToThoughts(state, path)
-  const pathThoughtsValidated = pathThoughts.length === path.length ? pathThoughts : []
-
-  pathThoughtsValidated.forEach((value, i) => {
-    // push thought onto the last component of the context chain
-    contextChain[contextChain.length - 1].push(path[i]) // eslint-disable-line fp/no-mutating-methods
-
-    // push an empty array when we encounter a contextView so that the next thought gets pushed onto a new component of the context chain
-    // or if crossing context view boundary, push the SimplePath of the context
-    const showContexts = isContextViewActive(state, path.slice(0, i + 1) as Path)
+  // Iterate through path. Whenever a context view is found, add the current SimplePath to the contextChain and advance indexSimplePathStart to the starting index of the next SimplePath in the chain.
+  let indexSimplePathStart = 0
+  path.forEach((value, i) => {
+    const ancestor = path.slice(0, i + 1) as Path
+    const showContexts = isContextViewActive(state, ancestor)
     if (showContexts && i < path.length - 1) {
-      const contexts =
-        (i > 0 && childIdsToThoughts(state, getContexts(state, pathThoughtsValidated[i + 1].value))) || []
-      const matchingContext = contexts.find(cx => cx.id === pathThoughtsValidated[i + 1].id)
-
-      const context = matchingContext && thoughtToContext(state, matchingContext.id)
-      // NOTE: contextToPath will call splitChain, creating indirect recursion
-      // Since we are only passing a SimplePath to contextToPath, it will not create an infinite loop (hopefully)
-
       // eslint-disable-next-line fp/no-mutating-methods
-      contextChain.push((context ? contextToPath(state, context.slice(0, -1)) : []) as SimplePath)
+      contextChain.push(path.slice(indexSimplePathStart, i + 1) as SimplePath)
+      indexSimplePathStart = i + 1
     }
   })
+
+  // if no context views were encountered, path must be a SimplePath and we can return it as the sole context in the chain
+  if (contextChain.length === 0) return [path as SimplePath]
+
+  // Add the final SimplePath to the contextChain.
+  // If no context views, are active, this will add the
+  // eslint-disable-next-line fp/no-mutating-methods
+  contextChain.push(path.slice(indexSimplePathStart, path.length) as SimplePath)
 
   return contextChain
 }

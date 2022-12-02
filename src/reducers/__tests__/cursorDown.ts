@@ -136,6 +136,32 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
   })
 
+  it("move cursor to cyclic context's first child (deep)", () => {
+    const text = `
+      - one
+        - two
+          - three
+            - a
+              - m
+                - x
+            - b
+              - m
+                - y
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['one', 'two', 'three', 'a', 'm']),
+      toggleContextView,
+      setCursor(['one', 'two', 'three', 'a', 'm', 'a']),
+      cursorDown,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['one', 'two', 'three', 'a', 'm', 'a', 'x'])
+  })
+
   it("move cursor to tangential context's first child", () => {
     const text = `
       - a
