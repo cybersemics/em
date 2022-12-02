@@ -19,7 +19,7 @@ export const createChildrenMapFromThoughts = (children: Thought[]): Index<Though
     return { [key]: child.id }
   })
 
-/** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal or missing thoughts are keyed by id. */
+/** Generates an object for O(1) lookup of a thought's children. Meta attributes are keyed by value and normal are keyed by id. Missing thoughts are excluded. */
 export const createChildrenMap = (state: State, childrenIds: ThoughtId[]): Index<ThoughtId> =>
   createChildrenMapFromThoughts(childIdsToThoughts(state, childrenIds))
 

@@ -56,7 +56,7 @@ const mapStateToProps = (state: State, props: NewThoughtProps) => {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapDispatchToProps = (dispatch: Dispatch) => ({
-  onClick: ({ distance, showContexts, path, value }: OnClickOptions) => {
+  onClick: ({ distance, path, value }: OnClickOptions) => {
     const state = store.getState()
 
     // do not preventDefault or stopPropagation as it prevents cursor
@@ -74,7 +74,6 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
     dispatch(
       createThought({
         path,
-        addAsContext: showContexts,
         rank: newRank,
         value,
         id: newThoughtId,

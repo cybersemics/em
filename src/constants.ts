@@ -124,7 +124,7 @@ export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
 // token for hidden system context
 export const EM_TOKEN = '__EM__' as ThoughtId
 
-export const ABSOLUTE_TOKEN = '__ABSOLUTE__'
+export const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 

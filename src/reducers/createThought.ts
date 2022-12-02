@@ -8,18 +8,19 @@ import ThoughtId from '../@types/ThoughtId'
 import updateThoughts from '../reducers/updateThoughts'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
-import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import createChildrenMap from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 
 interface Payload {
-  addAsContext?: boolean
+  // directly adds children to thought.childrenMap with no additional validation
+  children?: ThoughtId[]
   id?: ThoughtId
   path: Path
   rank: number
@@ -31,8 +32,10 @@ interface Payload {
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const createThought = (state: State, { path, value, rank, addAsContext, id, splitSource }: Payload) => {
-  // create thought if non-existent
+const createThought = (state: State, { path, value, rank, id, children, splitSource }: Payload) => {
+  id = id || createId()
+
+  // create Lexeme if it does not exist
   const lexeme: Lexeme = {
     ...(getLexeme(state, value) || {
       lemma: normalizeThought(value),
@@ -43,33 +46,25 @@ const createThought = (state: State, { path, value, rank, addAsContext, id, spli
     }),
   }
 
-  id = id || createId()
-
-  // const contextActual = addAsContext ? [value] : context
-
-  // store children indexed by the encoded context for O(1) lookup of children
-  // @MIGRATION_NOTE: getThought cannot find paths with context views.
-  // const parentId = contextToThoughtId(state, contextActual)
   const parentId = head(path)
   const parent = getThoughtById(state, parentId)
 
   const thoughtIndexUpdates: Index<Thought> = {}
 
   if (path.length > 0) {
-    // @MIGRATION_NOTE: Context View
-    // const newValue = addAsContext ? head(context) : value
     const newValue = value
 
-    const children = getAllChildren(state, parentId)
+    const siblings = getAllChildren(state, parentId)
       .filter(child => child !== id)
       .concat(id)
 
     const thoughtNew: Thought = {
       id,
       parentId: parentId,
-      childrenMap: {},
+      // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
+      childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
       lastUpdated: timestamp(),
-      rank: addAsContext ? getNextRank(state, id) : rank,
+      rank,
       value: newValue,
       updatedBy: getSessionId(),
       ...(splitSource ? { splitSource } : null),
@@ -86,7 +81,7 @@ const createThought = (state: State, { path, value, rank, addAsContext, id, spli
     thoughtIndexUpdates[parentId] = {
       ...parent,
       id: parentId,
-      childrenMap: createChildrenMap(stateWithNewThought, children),
+      childrenMap: createChildrenMap(stateWithNewThought, siblings),
       lastUpdated: timestamp(),
       updatedBy: getSessionId(),
     }
@@ -94,23 +89,23 @@ const createThought = (state: State, { path, value, rank, addAsContext, id, spli
 
   // if adding as the context of an existing thought
   let lexemeNew: Lexeme | undefined // eslint-disable-line fp/no-let
-  if (addAsContext) {
-    const lexemeOld = getLexeme(state, parent.value)
-    lexemeNew = {
-      ...lexemeOld!,
-      contexts: (lexemeOld?.contexts || []).concat(id),
-      created: lexemeOld?.created || timestamp(),
-      lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
-    }
-  } else {
-    lexeme.contexts = !lexeme.contexts
-      ? []
-      : // floating thought (no context)
-      path.length > 0
-      ? [...lexeme.contexts, id]
-      : lexeme.contexts
-  }
+  // if (addAsContext) {
+  //   const lexemeOld = getLexeme(state, parent.value)
+  //   lexemeNew = {
+  //     ...lexemeOld!,
+  //     contexts: (lexemeOld?.contexts || []).concat(id),
+  //     created: lexemeOld?.created || timestamp(),
+  //     lastUpdated: timestamp(),
+  //     updatedBy: getSessionId(),
+  //   }
+  // } else {
+  lexeme.contexts = !lexeme.contexts
+    ? []
+    : // floating thought (no context)
+    path.length > 0
+    ? [...lexeme.contexts, id]
+    : lexeme.contexts
+  // }
 
   const lexemeIndexUpdates = {
     [hashThought(lexeme.lemma)]: lexeme,
