@@ -15,10 +15,12 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
+import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
+import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import { getSessionId } from '../util/sessionManager'
@@ -31,6 +33,7 @@ interface Payload {
 }
 
 interface ThoughtUpdates {
+  path: Path
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
   pendingDeletes?: PushBatch['pendingDeletes']
@@ -69,7 +72,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  const path = thoughtToPath(state, deletedThought.id)
+  const simplePath = thoughtToPath(state, deletedThought.id)
 
   // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -94,7 +97,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
   // remove thought from contextViews
   const contextViewsNew = { ...state.contextViews }
-  if (parent) delete contextViewsNew[parent.id] // eslint-disable-line fp/no-delete
+  if (parent) delete contextViewsNew[hashPath(parentOf(simplePath))] // eslint-disable-line fp/no-delete
 
   const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
     id !== deletedThought.id ? { [key]: id } : null,
@@ -145,11 +148,14 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           return thoughtUpdate
         }
 
+        delete contextViewsNew[hashPath(accum.path)] // eslint-disable-line fp/no-delete
+
         // RECURSION
         const recursiveResults = recursiveDeletes(child, accum)
 
         return {
           ...accum,
+          path: [...accum.path, child.id],
           pendingDeletes: _.uniq([
             ...(accum.pendingDeletes || []),
             ...(accumRecursive.pendingDeletes || []),
@@ -167,6 +173,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
         }
       },
       {
+        path: pathParent,
         lexemeIndex: accumRecursive.lexemeIndex,
         thoughtIndex: {
           ...accumRecursive.thoughtIndex,
@@ -200,13 +207,13 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     ...descendantUpdatesResult.thoughtIndex,
   }
 
-  const isDeletedThoughtCursor = equalPathHead(path, state.cursor)
+  const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
-  const isCursorDescendantOfDeletedThought = !!path && !!state.cursor && isDescendant(path, state.cursor)
+  const isCursorDescendantOfDeletedThought = !!simplePath && !!state.cursor && isDescendant(simplePath, state.cursor)
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
   const cursorNew =
-    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, path!) : state.cursor
+    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, simplePath!) : state.cursor
 
   return reducerFlow([
     state => ({
