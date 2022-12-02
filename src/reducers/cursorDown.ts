@@ -2,7 +2,7 @@ import State from '../@types/State'
 import { HOME_TOKEN } from '../constants'
 import setCursor from '../reducers/setCursor'
 import { getChildrenSorted } from '../selectors/getChildren'
-import nextThought from '../util/nextThought'
+import nextThought from '../selectors/nextThought'
 
 /** Moves the cursor to the next child, sibling, or nearest uncle. */
 const cursorDown = (state: State) => {

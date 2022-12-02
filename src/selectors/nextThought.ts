@@ -10,9 +10,9 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
+import once from '../util/once'
 import parentOf from '../util/parentOf'
-import isRoot from './isRoot'
-import once from './once'
 
 /** Gets the next context in a context view. */
 const nextContext = (state: State, path: Path) => {
