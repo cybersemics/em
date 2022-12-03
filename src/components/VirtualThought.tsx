@@ -308,6 +308,7 @@ const Subthought = ({
         env={env}
         hideBullet={hideBullet}
         isContextPending={thought.value === '__PENDING__'}
+        leaf={leaf}
         // isHeader={isHeader}
         isHeader={false}
         isMultiColumnTable={isMultiColumnTable}

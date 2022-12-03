@@ -20,7 +20,7 @@ import useHideBullet from '../hooks/useHideBullet'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import attribute from '../selectors/attribute'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
-import { getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
@@ -63,6 +63,7 @@ export interface ThoughtContainerProps {
   isExpanded?: boolean
   isHovering?: boolean
   isVisible?: boolean
+  leaf?: boolean
   prevChildId?: ThoughtId
   publish?: boolean
   rank: number
@@ -79,8 +80,8 @@ interface ThoughtProps {
   isDragging?: boolean
   isPublishChild?: boolean
   isEditing?: boolean
-  isLeaf?: boolean
   isVisible?: boolean
+  leaf?: boolean
   path: Path
   publish?: boolean
   rank: number
@@ -139,7 +140,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     !isExpandedHoverTopPath && !!cursor && equalPath(rootedParentOf(state, parentOf(cursor)), path)
 
   const isExpanded = !!expanded[hashPath(path)]
-  const isLeaf = !hasChildren(state, head(simplePath))
 
   return {
     contextBinding,
@@ -150,7 +150,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isEditing,
     isEditingPath,
     isExpanded,
-    isLeaf,
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     publish: !search && publishMode(),
     simplePath,
@@ -189,9 +188,9 @@ const ThoughtContainer = ({
   isEditingPath,
   isExpanded,
   isHovering,
-  isLeaf,
   isPublishChild,
   isVisible,
+  leaf,
   path,
   prevChildId,
   publish,
@@ -253,11 +252,11 @@ const ThoughtContainer = ({
   return (
     <View style={marginBottom}>
       <View style={[directionRow, alignItemsCenter]}>
-        {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+        {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
           <Bullet
             isEditing={isEditing}
             thoughtId={thoughtId}
-            leaf={isLeaf}
+            leaf={leaf}
             onClick={() => {
               if (!isEditing || children.length === 0) {
                 store.dispatch(setCursor({ path: simplePath }))

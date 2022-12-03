@@ -81,6 +81,7 @@ export interface ThoughtContainerProps {
   isPublishChild?: boolean
   // See: ThoughtProps['isVisible']
   isVisible?: boolean
+  leaf?: boolean
   path: Path
   prevChildId?: ThoughtId
   publish?: boolean
@@ -105,6 +106,7 @@ export interface ThoughtProps {
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
   isVisible?: boolean
+  leaf?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
   path: Path
   rank: number
@@ -156,7 +158,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
   const isCursorGrandparent = !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
 
   const isExpanded = !!expanded[hashPath(path)]
-  const isLeaf = !hasChildren(state, head(simplePath))
 
   return {
     contextBinding,
@@ -165,7 +166,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
     isCursorParent,
     isEditing,
     isExpanded,
-    isLeaf,
     isPublishChild: !search && publishMode() && simplePath.length === 2,
     parentView: attribute(state, head(parentOf(simplePath)), '=view'),
     publish: !search && publishMode(),
@@ -203,11 +203,11 @@ const ThoughtContainer = ({
   isExpanded,
   isHeader,
   isHovering,
-  isLeaf,
   isMultiColumnTable,
   isContextPending,
   isPublishChild,
   isVisible,
+  leaf,
   parentView,
   path,
   prevChildId,
@@ -340,11 +340,11 @@ const ThoughtContainer = ({
   //   isExpanded,
   //   isHeader,
   //   isHovering,
-  //   isLeaf,
   //   isMultiColumnTable,
   //   isContextPending,
   //   isPublishChild,
   //   isVisible,
+  //   leaf,
   //   parentView,
   //   path,
   //   prevChildId,
@@ -415,10 +415,7 @@ const ThoughtContainer = ({
           'has-only-child': children.length === 1,
           'invalid-option': invalidOption,
           'is-multi-column': isMultiColumnTable,
-          // if editing and expansion is suppressed, mark as a leaf so that bullet does not show expanded
-          // this is a bit of a hack since the bullet transform checks leaf instead of expanded
-          // TODO: Consolidate with isLeaf if possible
-          leaf: isLeaf || (isEditing && globals.suppressExpansion),
+          leaf: leaf || (isEditing && globals.suppressExpansion),
           pressed: dragHoldResult.isPressed,
           // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
           prose: view === 'Prose',
@@ -455,12 +452,12 @@ const ThoughtContainer = ({
             ...(hideBullet ? { marginLeft: -12 } : null),
           }}
         >
-          {!(publish && simplePath.length === 0) && (!isLeaf || !isPublishChild) && !hideBullet && (
+          {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
             <Bullet
               isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
-              leaf={isLeaf}
+              leaf={leaf}
               path={path}
               publish={publish}
               simplePath={simplePath}

@@ -40,7 +40,7 @@ type TreeThought = {
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
-  leaf: boolean
+  leaf?: boolean
   path: Path
   showContexts?: boolean
   simplePath: SimplePath
@@ -109,7 +109,8 @@ const virtualTree = (
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
     // If the context view is active, render the context's parent instead of the context itself.
-    // This allows the path to be accumulated correctly across the context view
+    // This allows the path to be accumulated correctly across the context view.
+    // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
     if (!child) return []
@@ -144,9 +145,8 @@ const virtualTree = (
         env: envNew || undefined,
         indexChild: i,
         indexDescendant: virtualIndexNew,
-        // true if the thought has no visible children.
-        // It may still have hidden children.
-        leaf: descendants.length === 0,
+        // must filteredChild.id to work for both normal view and context view
+        leaf: !hasChildren(state, filteredChild.id),
         path: childPath,
         showContexts: contextViewActive,
         simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
@@ -312,7 +312,6 @@ const LayoutTree = () => {
                 showContexts={showContexts}
                 simplePath={simplePath}
               />
-
               {/* DropEnd (cliff) */}
               {dragInProgress &&
                 cliff < 0 &&

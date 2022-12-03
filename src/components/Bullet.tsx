@@ -143,7 +143,8 @@ const Bullet = ({
 
     const { ellipseRadius, path } = vendorSpecificData.bullet
 
-    return leaf ? (
+    // when context view is activated, render non-leaf bullet
+    return leaf && !showContexts ? (
       <ellipse
         aria-label='bullet-glyph'
         className={classNames({
