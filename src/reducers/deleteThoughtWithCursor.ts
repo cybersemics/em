@@ -2,6 +2,7 @@ import { applyPatch } from 'fast-json-patch'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { ABSOLUTE_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
@@ -76,17 +77,20 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
           })
       : cursorBack
 
-  // In the context view we need to iterate through the contexts to find the correct instance. This is a problem specifically for tangential contexts, which have a different parent from the cursor.
+  // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
+  // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
   const contextId = (showContexts && getContext(state, path)) || null
 
   return reducerFlow([
     // delete thought
     deleteThought(
-      contextId
+      // If the context is in the ABSOLUTE context, then use the normal deletion logic to delete the context instance as well, i.e. delete ABS/one, not just ABS/one/m
+      // TODO: Wouldn't this remove other children in ABS/one?
+      showContexts && thought.parentId !== ABSOLUTE_TOKEN
         ? {
             pathParent: simplePath,
-            thoughtId: contextId,
+            thoughtId: contextId!,
           }
         : {
             pathParent: parentOf(simplePath),
@@ -125,8 +129,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         return cursorNew
       })
 
-      if (showContexts) return state
-
       // Typescript validates with apply but not spread operator here
       // eslint-disable-next-line prefer-spread
       return setCursorOrBack.apply(
@@ -134,14 +136,16 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          next && (thought.value !== '' || showContexts)
-          ? [nextPath || appendToPath(parentOf(path), next.id)]
+          // Do not set cursor on next context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists
+          next && (showContexts ? thought.id !== head(parentOf(parentOf(path))) : thought.value !== '')
+          ? [appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)
           prev
           ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
           : // Case III: delete last thought in context; set cursor on parent
-          simplePath.length > 1
+          // if showContexts falls through here, it means either the last context was deleted or a cyclic context was deleted
+          showContexts || simplePath.length > 1
           ? [closestAncestor, { offset: getTextContentFromHTML(thought.value).length }]
           : // Case IV: delete last thought in thoughtspace; remove cursor
             [null],
