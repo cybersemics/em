@@ -186,4 +186,37 @@ describe('context view', () => {
     // cursor should be on the new context
     expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
   })
+
+  it('new subthought of context', () => {
+    const text = `
+    - a
+      - m
+        - x
+    - b
+      - m
+        - y
+  `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      newThought({ insertNewSubthought: true }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+      - ${''}
+  - b
+    - m
+      - y`)
+
+    // cursor should be on the new context
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a', ''])
+  })
 })

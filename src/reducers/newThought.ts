@@ -127,14 +127,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
-  // use the live-edited value
-  // const thoughtsLive = showContextsParent
-  //   ? parentOf(parentOf(thoughts)).concat().concat(head(thoughts))
-  //   : thoughts
-  // const pathLive = showContextsParent
-  //   ? parentOf(parentOf(path).concat({ value: innerTextRef, rank })).concat(head(path))
-  //   : path
-
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
   const newRank = insertContext
@@ -159,7 +151,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     // createThought
     createThought({
       ...(insertContext ? { children: [newContextId!] } : null),
-      path: insertContext ? ABSOLUTE_PATH : insertNewSubthought ? path : parentPath,
+      path: insertContext ? ABSOLUTE_PATH : insertNewSubthought ? simplePath : parentPath,
       rank: newRank,
       value,
       id: newThoughtId,
