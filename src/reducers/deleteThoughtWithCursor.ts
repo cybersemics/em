@@ -44,6 +44,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   const simplePath = thoughtToPath(state, head(path))
 
   const thought = getThoughtById(state, head(simplePath))
+  const cursor = state.cursor
 
   /** Calculates the previous context within a context view. */
   // TODO: Refactor into prevThought (cf nextThought)
@@ -59,7 +60,10 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   // prev and next must be calculated before dispatching deleteThought
   const prev = showContexts ? prevContext() : prevSibling(state, simplePath)
-  const nextContextPath = showContexts && getContexts(state, thought.value).length > 2 ? nextThought(state) : null
+  const nextContextPath =
+    showContexts && getContexts(state, getThoughtById(state, head(parentPath)).value).length > 2
+      ? nextThought(state)
+      : null
   const next = nextContextPath ? pathToThought(state, nextContextPath) : nextSibling(state, simplePath)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
@@ -106,7 +110,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       // If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
       // Restoring thec ursor and making the delete action an exact inverse to newThought is more intuitive than moving the cursor elsewhere, and helps the user with error correction.
       const revertedCursor = once(() => {
-        if (!state.cursor) return null
+        // check cursor prior to deleteThought, not state.cursor
+        if (!cursor) return null
 
         const lastPatches = state.undoPatches[state.undoPatches.length - 1]
         const lastCursorOps = lastPatches?.filter(
@@ -115,13 +120,14 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
         if (!lastCursorOps || lastCursorOps.length === 0) return null
 
-        // remove /cursor from the patch since we are applying it directly to state.cursor, not the full state
+        // remove /cursor from the patch since we are applying it directly to cursor, not the full state
         const revertCursorPatch = lastCursorOps.map(patch => ({
           op: patch.op,
           path: patch.path.replace('/cursor', ''),
           value: patch.value,
         }))
-        const cursorNew = applyPatch([...state.cursor], revertCursorPatch).newDocument as Path
+        // apply to the cursor prior to deleteThought, not state.cursor
+        const cursorNew = applyPatch([...cursor], revertCursorPatch).newDocument as Path
         return cursorNew
       })
 
