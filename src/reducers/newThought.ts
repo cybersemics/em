@@ -118,7 +118,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   }
 
   const showContexts = isContextViewActive(state, path)
-  const showContextsParent = isContextViewActive(state, rootedParentOf(state, simplePath))
+  const showContextsParent = isContextViewActive(state, rootedParentOf(state, path))
   const insertContext = (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought)
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
@@ -171,7 +171,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       ? createThought({
           path: [ABSOLUTE_TOKEN, newThoughtId] as unknown as SimplePath,
           rank: 0,
-          value: headValue(state, showContexts ? path : parentPath),
+          value: headValue(state, insertNewSubthought ? path : parentOf(path)),
           id: newContextId!,
           splitSource,
         })
@@ -206,8 +206,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   ]
 
   return reducerFlow(reducers)(state)
-  // reducerFlow(reducers)(state)
-  // return state
 }
 
 export default _.curryRight(newThought)

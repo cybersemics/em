@@ -143,4 +143,47 @@ describe('context view', () => {
     // cursor should be on the new context
     expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
   })
+
+  it('new thought on a context adds a a new sibling context in the absolute context', () => {
+    const text = `
+    - a
+      - m
+        - x
+    - b
+      - m
+        - y
+  `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      newThought({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // Lexeme should be properly updated
+    const lexeme = getLexeme(stateNew, 'm')
+    expect(lexeme?.contexts).toHaveLength(3)
+
+    // root export will not contain the new thought created in the absolute context
+    const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y`)
+
+    // absolute context should contain the new thought with m as a child
+    const exportedAbs = exportContext(stateNew, [ABSOLUTE_TOKEN], 'text/plain')
+    expect(exportedAbs).toBe(`- ${ABSOLUTE_TOKEN}
+  - ${''}
+    - m`)
+
+    // cursor should be on the new context
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', ''])
+  })
 })
