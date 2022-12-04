@@ -111,6 +111,9 @@ describe('context view', () => {
         - b
           - m
             - y
+        - c
+          - m
+            - z
       `,
       }),
       setCursor(['a', 'm']),
@@ -127,7 +130,10 @@ describe('context view', () => {
     - m
       - x
   - b
-    - m`)
+    - m
+  - c
+    - m
+      - z`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
@@ -142,6 +148,9 @@ describe('context view', () => {
         - b
           - m
             - y
+        - c
+          - m
+            - z
       `,
       }),
       setCursor(['a', 'm']),
@@ -158,7 +167,10 @@ describe('context view', () => {
     - m
   - b
     - m
-      - y`)
+      - y
+  - c
+    - m
+      - z`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
@@ -170,6 +182,8 @@ describe('context view', () => {
         - a
           - m
         - b
+          - m
+        - c
           - m
       `,
       }),
@@ -185,9 +199,11 @@ describe('context view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - m
-  - b`)
+  - b
+  - c
+    - m`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
   })
 
   it('delete leaf from within cyclic context', () => {
@@ -215,5 +231,32 @@ describe('context view', () => {
     - m`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+  })
+
+  it('delete second-to-last context from within tangential context', () => {
+    const steps = [
+      importText({
+        text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b']),
+      deleteThoughtWithCursor({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+  - b`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 })

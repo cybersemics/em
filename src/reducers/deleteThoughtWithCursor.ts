@@ -49,22 +49,18 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   // TODO: Refactor into prevThought (cf nextThought)
   const prevContext = () => {
     const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
-    const prevContext = once(() => {
-      const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
-      const removedThoughtIndex = contexts.findIndex(({ id }) => {
-        const parentThought = parentOfThought(state, id)
-        return parentThought?.value === thought.value
-      })
-      return contexts[removedThoughtIndex - 1]
+    const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
+    const removedThoughtIndex = contexts.findIndex(({ id }) => {
+      const parentThought = parentOfThought(state, id)
+      return parentThought?.value === thought.value
     })
-    const context = prevContext()
-    return context
+    return contexts[removedThoughtIndex - 1]
   }
 
   // prev and next must be calculated before dispatching deleteThought
   const prev = showContexts ? prevContext() : prevSibling(state, simplePath)
-  const nextPath = showContexts ? nextThought(state) : null
-  const next = showContexts ? pathToThought(state, nextPath!) : nextSibling(state, simplePath)
+  const nextContextPath = showContexts && getContexts(state, thought.value).length > 2 ? nextThought(state) : null
+  const next = nextContextPath ? pathToThought(state, nextContextPath) : nextSibling(state, simplePath)
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
