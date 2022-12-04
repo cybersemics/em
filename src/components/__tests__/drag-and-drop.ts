@@ -16,7 +16,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import equalArrays from '../../util/equalArrays'
 import pathToContext from '../../util/pathToContext'
 import { canDrop } from '../DragAndDropSubthoughts'
-import Subthoughts from '../Subthoughts'
+// import Subthoughts from '../Subthoughts'
 import Thought from '../Thought'
 
 // type for Thoughts or Subthoughts component that has a simplePath prop
@@ -50,11 +50,12 @@ const findThoughtSource = (state: State, context: Context) =>
   wrapper.find(Thought).filterWhere(whereContext(state, context)).at(0).childAt(0)
 
 /** Find DropTarget inside Thoughts component. */
-const findThoughtSiblingTarget = (state: State, context: Context) => findThoughtSource(state, context).childAt(0)
+// const findThoughtSiblingTarget = (state: State, context: Context) => findThoughtSource(state, context).childAt(0)
 
+// TODO
 /** Find DropTarget used for child drop inside Subthoughts. */
-const findDropEndTarget = (state: State, context: Context) =>
-  wrapper.find(Subthoughts).filterWhere(whereContext(state, context)).at(0).childAt(0)
+// const findDropEndTarget = (state: State, context: Context) =>
+//   wrapper.find(Subthoughts).filterWhere(whereContext(state, context)).at(0).childAt(0)
 
 /** Simulate Drag And Drop.
  *
@@ -78,13 +79,14 @@ const simulateDragAndDrop = ({
   backend.simulateBeginDrag([sourceId])
   wrapper.update()
 
-  const targetFunction = {
-    child: findDropEndTarget,
-    sibling: findThoughtSiblingTarget,
-  }
+  // TODO
+  // const targetFunction = {
+  //   child: findDropEndTarget,
+  //   sibling: findThoughtSiblingTarget,
+  // }
 
-  const targetId = targetFunction[type](state, drop).instance().getHandlerId()
-  backend.simulateHover([targetId])
+  // const targetId = targetFunction[type](state, drop).instance().getHandlerId()
+  // backend.simulateHover([targetId])
 
   wrapper.update()
 
