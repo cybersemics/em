@@ -1,21 +1,19 @@
-import { Thunk } from '../../@types'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
-import setCursor from '../../action-creators/setCursor'
 import { HOME_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import clearThoughtShortcut from '../clearThought'
 import deleteEmptyThoughtOrOutdent from '../deleteEmptyThoughtOrOutdent'
 
 it('do nothing when there is no cursor', () => {
   const store = createTestStore()
 
-  store.dispatch([{ type: 'newThought', value: 'a' }, setCursor({ path: null })])
+  store.dispatch([{ type: 'newThought', value: 'a' }, setCursor(null)])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -31,17 +29,16 @@ it('outdent on pressing backspace at the beginning of the thought', () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(
+  store.dispatch([
     importText({
       text: `
-      - a
-        - b
-          - c
-  `,
+        - a
+          - b
+            - c
+      `,
     }),
-  )
-
-  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'c']) }))
+    setCursor(['a', 'b', 'c']),
+  ])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -59,7 +56,7 @@ it('do not outdent thought with siblings', () => {
   const store = createTestStore()
 
   // import thoughts
-  store.dispatch(
+  store.dispatch([
     importText({
       text: `
       - a
@@ -67,9 +64,8 @@ it('do not outdent thought with siblings', () => {
           - c
           - d`,
     }),
-  )
-
-  store.dispatch(setCursor({ path: contextToPath(store.getState(), ['a', 'b', 'd']) }))
+    setCursor(['a', 'b', 'd']),
+  ])
 
   executeShortcut(deleteEmptyThoughtOrOutdent, { store })
 
@@ -94,7 +90,7 @@ describe('DOM', () => {
     store.dispatch([
       newThought({ value: 'a' }),
       newThought({ value: 'b', insertNewSubthought: true }),
-      (): Thunk => (_, getState) => setCursor({ path: contextToPath(getState(), ['a', 'b']) }),
+      setCursor(['a', 'b']),
     ])
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.
