@@ -27,7 +27,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
-  it('move to first root child when there is no cursor', () => {
+  it('move to last root child when there is no cursor', () => {
     const store = createTestStore()
 
     store.dispatch([
@@ -41,7 +41,7 @@ describe('normal view', () => {
     ])
 
     const stateNew = store.getState()
-    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
   it('do nothing when the cursor on the first sibling', () => {

@@ -22,7 +22,7 @@ const cursorPrev = (): Thunk => (dispatch, getState) => {
   if (!cursor) {
     const children = getChildrenSorted(state, HOME_TOKEN)
     if (children.length > 0) {
-      dispatch(setCursor({ path: [children[0].id] }))
+      dispatch(setCursor({ path: [children[children.length - 1].id] }))
       scrollCursorIntoView()
     }
     return
