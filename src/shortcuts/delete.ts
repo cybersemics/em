@@ -7,11 +7,14 @@ import Icon from '../components/icons/DeleteIcon'
 import { AlertType, EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {
@@ -29,6 +32,8 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
+    const parentPath = parentOf(cursor)
+    const showContexts = isContextViewActive(state, parentPath)
     dispatch(deleteThoughtWithCursor({ path: cursor }))
 
     // Alert which thought was deleted.
@@ -36,11 +41,16 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
     if (value || !experienceMode) {
       dispatch(
-        alert(`Deleted ${value ? ellipsize(value) : 'empty thought'}`, {
-          alertType: AlertType.ThoughtDeleted,
-          clearDelay: 8000,
-          showCloseLink: true,
-        }),
+        alert(
+          `Deleted ${value ? ellipsize(value) : 'empty thought'}${
+            showContexts ? ' from ' + ellipsize(headValue(state, cursor)) : ''
+          }`,
+          {
+            alertType: AlertType.ThoughtDeleted,
+            clearDelay: 8000,
+            showCloseLink: true,
+          },
+        ),
       )
     }
   }
@@ -49,7 +59,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 const deleteShortcut: Shortcut = {
   id: 'delete',
   label: 'Delete',
-  description: 'Say goodbye to the current thought... forever.',
+  description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
   exec,
