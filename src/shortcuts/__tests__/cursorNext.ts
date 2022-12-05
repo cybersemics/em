@@ -1,12 +1,11 @@
 import cursorNext from '../../action-creators/cursorNext'
 import importText from '../../action-creators/importText'
-import setCursor from '../../action-creators/setCursor'
 import toggleAttribute from '../../action-creators/toggleAttribute'
 import globals from '../../globals'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
@@ -19,13 +18,12 @@ describe('normal view', () => {
             - a1
           - b`,
       }),
-      setCursorFirstMatchActionCreator(['a']),
+      setCursor(['a']),
       cursorNext(),
     ])
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject([{ value: 'b' }])
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
   it('move to first root child when there is no cursor', () => {
@@ -37,13 +35,12 @@ describe('normal view', () => {
           - a
           - b`,
       }),
-      setCursor({ path: null }),
+      setCursor(null),
       cursorNext(),
     ])
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject([{ value: 'a' }])
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
   it('do nothing when the cursor on the last sibling', () => {
@@ -55,13 +52,12 @@ describe('normal view', () => {
           - a
           - b`,
       }),
-      setCursorFirstMatchActionCreator(['b']),
+      setCursor(['b']),
       cursorNext(),
     ])
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject([{ value: 'b' }])
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
   it('do nothing when there are no thoughts', () => {
@@ -91,13 +87,12 @@ describe('normal view', () => {
             values: ['=sort', 'Alphabetical'],
           }),
         ),
-      setCursorFirstMatchActionCreator(['SORT', 'a']),
+      setCursor(['SORT', 'a']),
       cursorNext(),
     ])
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject([{ value: 'SORT' }, { value: 'b' }])
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['SORT', 'b'])
   })
 
   it('skip descendants', () => {
@@ -110,13 +105,12 @@ describe('normal view', () => {
             - a1
           - b`,
       }),
-      setCursorFirstMatchActionCreator(['a']),
+      setCursor(['a']),
       cursorNext(),
     ])
 
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject([{ value: 'b' }])
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 })
 
@@ -141,7 +135,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorNext(),
     ])
 
@@ -166,7 +160,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorNext(),
     ])
 
@@ -192,7 +186,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorNext(),
     ])
 
