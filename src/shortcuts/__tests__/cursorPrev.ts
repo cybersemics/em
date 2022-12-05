@@ -5,7 +5,7 @@ import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import setCursorFirstMatch, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {
@@ -18,7 +18,7 @@ describe('normal view', () => {
           - a1
         - b`,
       }),
-      setCursorFirstMatchActionCreator(['b']),
+      setCursor(['b']),
       cursorPrev(),
     ])
 
@@ -35,7 +35,7 @@ describe('normal view', () => {
           - a
           - b`,
       }),
-      setCursorFirstMatchActionCreator(null),
+      setCursor(null),
       cursorPrev(),
     ])
 
@@ -52,7 +52,7 @@ describe('normal view', () => {
           - a
           - b`,
       }),
-      setCursorFirstMatchActionCreator(['a']),
+      setCursor(['a']),
       cursorPrev(),
     ])
 
@@ -87,30 +87,12 @@ describe('normal view', () => {
             values: ['=sort', 'Alphabetical'],
           }),
         ),
-      setCursorFirstMatchActionCreator(['SORT', 'c']),
+      setCursor(['SORT', 'c']),
       cursorPrev(),
     ])
 
     const stateNew = store.getState()
     expectPathToEqual(stateNew, stateNew.cursor, ['SORT', 'b'])
-  })
-
-  it('skip descendants', () => {
-    const store = createTestStore()
-
-    store.dispatch(
-      importText({
-        text: `
-          - a
-            - a1
-          - b`,
-      }),
-    )
-    setCursorFirstMatch(['b'])(store.getState())
-    store.dispatch(cursorPrev())
-
-    const stateNew = store.getState()
-    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 })
 
@@ -135,7 +117,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorPrev(),
     ])
 
@@ -160,7 +142,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorPrev(),
     ])
 
@@ -186,7 +168,7 @@ describe('global suppress expansion', () => {
       importText({
         text,
       }),
-      setCursorFirstMatchActionCreator(['a', 'd']),
+      setCursor(['a', 'd']),
       cursorPrev(),
     ])
 
