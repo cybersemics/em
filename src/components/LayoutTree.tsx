@@ -41,7 +41,9 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   leaf: boolean
+  nextChild: Thought
   path: Path
+  prevChild: Thought
   showContexts?: boolean
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
@@ -147,7 +149,9 @@ const virtualTree = (
         indexDescendant: virtualIndexNew,
         // must filteredChild.id to work for both normal view and context view
         leaf: !hasChildren(state, filteredChild.id),
+        nextChild: filteredChildren[i + 1],
         path: childPath,
+        prevChild: filteredChildren[i - 1],
         showContexts: contextViewActive,
         simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
         style,
@@ -256,7 +260,9 @@ const LayoutTree = () => {
             indexChild,
             indexDescendant,
             leaf,
+            nextChild,
             path,
+            prevChild,
             showContexts,
             simplePath,
             style,
@@ -267,7 +273,6 @@ const LayoutTree = () => {
           // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
           const key = [...(contextChain || []).map(head), thought.id].join('|')
           const next = virtualThoughts[i + 1]
-          const prev = virtualThoughts[i - 1]
           // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
           // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
           // TODO: Fix cliff across context view boundary
@@ -312,10 +317,10 @@ const LayoutTree = () => {
                 // isMultiColumnTable={isMultiColumnTable}
                 isMultiColumnTable={false}
                 leaf={leaf}
-                nextChildId={next?.depth < depth ? next?.thought.id : undefined}
+                nextChildId={nextChild?.id}
                 onResize={(id, height) => updateHeight(key, height)}
                 path={path}
-                prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
+                prevChildId={prevChild?.id}
                 showContexts={showContexts}
                 simplePath={simplePath}
                 // Add a bit of space after a cliff to give nested lists some breathing room.
