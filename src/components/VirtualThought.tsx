@@ -47,7 +47,6 @@ const VirtualThought = ({
   leaf,
   path,
   prevChildId,
-  nextChildId,
   onResize,
   showContexts,
   simplePath,
@@ -63,7 +62,6 @@ const VirtualThought = ({
   leaf: boolean
   path: Path
   prevChildId?: ThoughtId
-  nextChildId?: ThoughtId
   onResize?: (id: ThoughtId, height: number | null) => void
   showContexts?: boolean
   simplePath: SimplePath
@@ -162,7 +160,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropBefore && <DropBefore depth={depth} prevChildId={prevChildId} simplePath={simplePath} />
+        !isVisible && dropBefore && <DropBefore depth={depth} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
@@ -177,7 +175,6 @@ const VirtualThought = ({
           leaf={leaf}
           path={path}
           prevChildId={prevChildId}
-          nextChildId={nextChildId}
           showContexts={showContexts}
           simplePath={simplePath}
           style={style}
@@ -185,16 +182,7 @@ const VirtualThought = ({
         />
       )}
 
-      {isVisible && (
-        <DropEmpty
-          depth={depth}
-          indexDescendant={indexDescendant}
-          leaf={leaf}
-          prevChildId={prevChildId}
-          nextChildId={nextChildId}
-          simplePath={simplePath}
-        />
-      )}
+      {isVisible && <DropEmpty depth={depth} indexDescendant={indexDescendant} leaf={leaf} simplePath={simplePath} />}
     </div>
   )
 }
@@ -215,7 +203,6 @@ const Subthought = ({
   leaf,
   path,
   prevChildId,
-  nextChildId,
   showContexts,
   simplePath,
   style,
@@ -231,7 +218,6 @@ const Subthought = ({
   leaf?: boolean
   path: Path
   prevChildId?: ThoughtId
-  nextChildId?: ThoughtId
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties

@@ -41,7 +41,6 @@ type TreeThought = {
   // index among all visible thoughts in the tree
   indexDescendant: number
   leaf: boolean
-  nextChild: Thought
   path: Path
   prevChild: Thought
   showContexts?: boolean
@@ -149,7 +148,6 @@ const virtualTree = (
         indexDescendant: virtualIndexNew,
         // must filteredChild.id to work for both normal view and context view
         leaf: !hasChildren(state, filteredChild.id),
-        nextChild: filteredChildren[i + 1],
         path: childPath,
         prevChild: filteredChildren[i - 1],
         showContexts: contextViewActive,
@@ -260,7 +258,6 @@ const LayoutTree = () => {
             indexChild,
             indexDescendant,
             leaf,
-            nextChild,
             path,
             prevChild,
             showContexts,
@@ -317,7 +314,6 @@ const LayoutTree = () => {
                 // isMultiColumnTable={isMultiColumnTable}
                 isMultiColumnTable={false}
                 leaf={leaf}
-                nextChildId={nextChild?.id}
                 onResize={(id, height) => updateHeight(key, height)}
                 path={path}
                 prevChildId={prevChild?.id}
