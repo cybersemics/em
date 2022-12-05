@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -225,6 +225,14 @@ const LayoutTree = () => {
         : heightsOld
     })
 
+  // memoized style for padding at a cliff
+  const cliffPaddingStyle = useMemo(
+    () => ({
+      paddingBottom: fontSize / 4,
+    }),
+    [fontSize],
+  )
+
   return (
     <div
       style={{
@@ -268,8 +276,7 @@ const LayoutTree = () => {
           const height = heights[key] ?? estimatedHeight
           const thoughtY = y
 
-          // add a tiny bit of space after a cliff to give nested lists some breathing room
-          y += height + (cliff < 0 ? fontSize / 4 : 0)
+          y += height
 
           // List Virtualization
           // Hide thoughts that are below the viewport.
@@ -311,6 +318,9 @@ const LayoutTree = () => {
                 prevChildId={indexChild !== 0 ? prev?.thought.id : undefined}
                 showContexts={showContexts}
                 simplePath={simplePath}
+                // Add a bit of space after a cliff to give nested lists some breathing room.
+                // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+                style={cliff < 0 ? cliffPaddingStyle : undefined}
               />
               {/* DropEnd (cliff) */}
               {dragInProgress &&

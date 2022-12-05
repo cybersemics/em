@@ -51,6 +51,7 @@ const VirtualThought = ({
   onResize,
   showContexts,
   simplePath,
+  style,
   zoomCursor,
 }: {
   debugIndex?: number
@@ -66,6 +67,7 @@ const VirtualThought = ({
   onResize?: (id: ThoughtId, height: number | null) => void
   showContexts?: boolean
   simplePath: SimplePath
+  style?: React.CSSProperties
   zoomCursor?: boolean
 }) => {
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
@@ -178,6 +180,7 @@ const VirtualThought = ({
           nextChildId={nextChildId}
           showContexts={showContexts}
           simplePath={simplePath}
+          style={style}
           zoomCursor={zoomCursor}
         />
       )}
@@ -215,6 +218,7 @@ const Subthought = ({
   nextChildId,
   showContexts,
   simplePath,
+  style,
   zoomCursor,
 }: {
   autofocus: Autofocus
@@ -230,6 +234,7 @@ const Subthought = ({
   nextChildId?: ThoughtId
   showContexts?: boolean
   simplePath: SimplePath
+  style?: React.CSSProperties
   zoomCursor?: boolean
 }) => {
   const state = store.getState()
@@ -268,11 +273,12 @@ const Subthought = ({
   /** Returns true if the cursor is contained within the thought path, i.e. the thought is a descendant of the cursor. */
   const isEditingChildPath = isDescendantPath(state.cursor, path)
 
-  const style = useMemo(
+  const styleSelf = useMemo(
     () => ({
       ...(isEditingChildPath ? getStyle(state, childEnvZoomId()) : null),
+      ...style,
     }),
-    [isEditingChildPath],
+    [isEditingChildPath, style],
   )
 
   // When autofocus changes, use a slow (750ms) ease-out to provide a gentle transition to non-focal thoughts.
@@ -318,7 +324,7 @@ const Subthought = ({
         rank={thought.rank}
         showContexts={showContexts}
         simplePath={simplePath}
-        style={style}
+        style={styleSelf}
       />
     </div>
   )
