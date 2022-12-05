@@ -7,7 +7,6 @@ import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getSortPreference from '../selectors/getSortPreference'
-import getThoughtAfter from '../selectors/getThoughtAfter'
 import nextSibling from '../selectors/nextSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -28,7 +27,7 @@ const moveThoughtDown = (state: State) => {
   const nextThought = nextSibling(state, cursor)
 
   // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
-  const nextUncleThought = pathParent.length > 0 ? getThoughtAfter(state, simplifyPath(state, pathParent)) : null
+  const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
   const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
   if (!nextThought && !nextUnclePath) return state
