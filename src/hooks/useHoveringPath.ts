@@ -9,7 +9,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThoughtZone) => {
   const dispatch = useDispatch()
 
-  // When SubthoughtsDropEmpty is hovered over during drag, update the hoveringPath.
+  // When DropEmpty is hovered over during drag, update the hoveringPath.
   useEffect(() => {
     if (isHovering) {
       dispatch((dispatch, getState) => {

@@ -27,8 +27,8 @@ const DragOnly: FC = ({ children }) => {
   return <>{globals.simulateDrag || globals.simulateDrop || dragInProgress ? children : null}</>
 }
 
-/** The drop target at the end of the Subthoughts. The drop-hover components are DropThought, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
-const SubthoughtsDropEnd = ({
+/** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
+const DropEnd = ({
   depth,
   distance,
   dropTarget,
@@ -134,16 +134,16 @@ const SubthoughtsDropEnd = ({
   )
 }
 
-const DragAndDropSubthoughtsDropEnd = DragAndDropSubthoughts(SubthoughtsDropEnd)
+const DragAndDropDropEnd = DragAndDropSubthoughts(DropEnd)
 
-const SubthoughtsDropEndMemo = React.memo(DragAndDropSubthoughtsDropEnd)
-SubthoughtsDropEndMemo.displayName = 'SubthoughtsDropEnd'
+const DropEndMemo = React.memo(DragAndDropDropEnd)
+DropEndMemo.displayName = 'DropEnd'
 
-/** SubthoughtsDropEnd that is only rendered when a drag-and-drop is in progress.. */
-const SubthoughtsDropEndDragOnly = (props: Parameters<typeof SubthoughtsDropEndMemo>[0]) => (
+/** DropEnd that is only rendered when a drag-and-drop is in progress.. */
+const DropEndDragOnly = (props: Parameters<typeof DropEndMemo>[0]) => (
   <DragOnly>
-    <SubthoughtsDropEndMemo {...props} />
+    <DropEndMemo {...props} />
   </DragOnly>
 )
 
-export default SubthoughtsDropEndDragOnly
+export default DropEndDragOnly

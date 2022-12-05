@@ -16,8 +16,8 @@ import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 
-/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropThought, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
-const SubthoughtsDropEmpty = ({
+/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
+const DropEmpty = ({
   depth,
   dropTarget,
   isHovering,
@@ -96,9 +96,9 @@ const SubthoughtsDropEmpty = ({
   )
 }
 
-const DragAndDropSubthoughtsDropEmpty = DragAndDropSubthoughts(SubthoughtsDropEmpty)
+const DragAndDropDropEmpty = DragAndDropSubthoughts(DropEmpty)
 
-const SubthoughtsDropEmptyMemo = React.memo(DragAndDropSubthoughtsDropEmpty)
-SubthoughtsDropEmptyMemo.displayName = 'SubthoughtsDropEmpty'
+const DropEmptyMemo = React.memo(DragAndDropDropEmpty)
+DropEmptyMemo.displayName = 'DropEmpty'
 
-export default SubthoughtsDropEmptyMemo
+export default DropEmptyMemo

@@ -69,7 +69,7 @@ const DropBefore = ({
 // TODO: Type this correctly so it does not require all the Thought props (which it does not use)
 const DragAndDropDropBefore = DragAndDropThought(DropBefore) as any
 
-const SubthoughtsDropEmptyMemo = React.memo(DragAndDropDropBefore)
-SubthoughtsDropEmptyMemo.displayName = 'DropBefore'
+const DropBeforeMemo = React.memo(DragAndDropDropBefore)
+DropBeforeMemo.displayName = 'DropBefore'
 
-export default SubthoughtsDropEmptyMemo
+export default DropBeforeMemo
