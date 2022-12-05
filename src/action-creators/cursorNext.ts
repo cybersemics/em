@@ -6,11 +6,13 @@ import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
-import getThoughtAfter from '../selectors/getThoughtAfter'
+import isContextViewActive from '../selectors/isContextViewActive'
+import nextContext from '../selectors/nextContext'
+import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
 const cursorNext = (): Thunk => (dispatch, getState) => {
@@ -26,7 +28,8 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
     return
   }
 
-  const next = getThoughtAfter(state, simplifyPath(state, cursor))
+  const showContexts = isContextViewActive(state, parentOf(cursor))
+  const next = showContexts ? nextContext(state, cursor) : nextSibling(state, cursor)
   if (!next) return
 
   const path = appendToPath(rootedParentOf(state, cursor), next.id)

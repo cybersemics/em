@@ -7,10 +7,11 @@ import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
 import setCursor from '../reducers/setCursor'
 import getContexts from '../selectors/getContexts'
-import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import nextContext from '../selectors/nextContext'
 import nextSibling from '../selectors/nextSibling'
+import prevContext from '../selectors/prevContext'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -26,28 +27,6 @@ const getContext = (state: State, path: Path) =>
   getContexts(state, headValue(state, parentOf(path))).find(
     cxid => getThoughtById(state, cxid)?.parentId === head(path),
   )
-
-/** Calculates the next context in the context view. */
-const nextContext = (state: State, path: Path) => {
-  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
-  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = getContextsSortedAndRanked(state, parent.value)
-  // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
-  const context = contexts[index + 1]
-  return context ? getThoughtById(state, context.parentId) : null
-}
-
-/** Calculates the previous context in a context view. */
-const prevContext = (state: State, path: Path) => {
-  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
-  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contexts = getContextsSortedAndRanked(state, parent.value)
-  // find the thought in the context view
-  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
-  const context = contexts[index - 1]
-  return context ? getThoughtById(state, context.parentId) : null
-}
 
 /** Returns true if a path is a cyclic context, e.g. a/m~/a. */
 const isCyclic = (state: State, path: Path) => head(path) === head(parentOf(parentOf(path)))

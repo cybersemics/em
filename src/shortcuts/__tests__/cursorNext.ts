@@ -1,6 +1,7 @@
 import cursorNext from '../../action-creators/cursorNext'
 import importText from '../../action-creators/importText'
 import toggleAttribute from '../../action-creators/toggleAttribute'
+import toggleContextView from '../../action-creators/toggleContextView'
 import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -111,6 +112,54 @@ describe('normal view', () => {
 
     const stateNew = store.getState()
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
+  })
+})
+
+describe('context view', () => {
+  it('move cursor to next context', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+      setCursor(['a', 'm', 'a']),
+      cursorNext(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
+  it('noop if on last context', () => {
+    const store = createTestStore()
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+      setCursor(['a', 'm', 'b']),
+      cursorNext(),
+    ])
+
+    const stateNew = store.getState()
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 })
 
