@@ -40,7 +40,7 @@ type TreeThought = {
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
-  leaf?: boolean
+  leaf: boolean
   path: Path
   showContexts?: boolean
   simplePath: SimplePath

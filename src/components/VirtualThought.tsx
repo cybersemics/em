@@ -59,7 +59,7 @@ const VirtualThought = ({
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
-  leaf?: boolean
+  leaf: boolean
   path: Path
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
@@ -182,7 +182,7 @@ const VirtualThought = ({
         />
       )}
 
-      {isVisible && leaf && (
+      {isVisible && (
         <DropEmpty
           depth={depth}
           indexDescendant={indexDescendant}
