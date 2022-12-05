@@ -31,7 +31,7 @@ const getContext = (state: State, path: Path) =>
 /** Returns true if a path is a cyclic context, e.g. a/m~/a. */
 const isCyclic = (state: State, path: Path) => head(path) === head(parentOf(parentOf(path)))
 
-/** Deletes a thought and moves the cursor to a nearby valid thought. */
+/** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
 

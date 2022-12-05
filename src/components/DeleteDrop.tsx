@@ -5,24 +5,28 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
-import deleteThought from '../action-creators/deleteThought'
+import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { AlertText, AlertType } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
+import isContextViewActive from '../selectors/isContextViewActive'
 import theme from '../selectors/theme'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import headValue from '../util/headValue'
+import parentOf from '../util/parentOf'
 import DeleteIcon from './icons/DeleteIcon'
 
 /** Delete the thought on drop. */
 const drop = (props: unknown, monitor: DropTargetMonitor) => {
   const state = store.getState()
-  const { simplePath, zone } = monitor.getItem() as DragThoughtItem
+  const { path, simplePath, zone } = monitor.getItem() as DragThoughtItem
+
+  const showContexts = isContextViewActive(state, parentOf(path || simplePath))
+  const value = getThoughtById(state, head(showContexts ? parentOf(path || simplePath) : simplePath))?.value
 
   if (zone === DragThoughtZone.Favorites) {
-    const value = getThoughtById(state, head(simplePath))?.value
     store.dispatch([
       toggleAttribute({ path: simplePath, values: ['=favorite', 'true'] }),
       alert(`Removed ${ellipsize(value)} from favorites`, {
@@ -32,17 +36,18 @@ const drop = (props: unknown, monitor: DropTargetMonitor) => {
       }),
     ])
   } else if (zone === DragThoughtZone.Thoughts) {
-    const value = getThoughtById(state, head(simplePath))?.value
     store.dispatch([
-      deleteThought({
-        pathParent: rootedParentOf(state, simplePath),
-        thoughtId: head(simplePath),
-      }),
-      alert(`Deleted ${ellipsize(value)}`, {
-        alertType: AlertType.DeleteThoughtComplete,
-        clearDelay: 8000,
-        showCloseLink: true,
-      }),
+      deleteThoughtWithCursor({ path }),
+      alert(
+        `Deleted ${value ? ellipsize(value) : 'empty thought'}${
+          showContexts ? ' from ' + ellipsize(headValue(state, path || simplePath)) : ''
+        }`,
+        {
+          alertType: AlertType.DeleteThoughtComplete,
+          clearDelay: 8000,
+          showCloseLink: true,
+        },
+      ),
     ])
   } else {
     console.error(`Unsupported DragThoughtZone: ${zone}`)

@@ -64,7 +64,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: ConnectedThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -74,7 +74,7 @@ const beginDrag = ({ simplePath }: ConnectedThoughtContainerProps): DragThoughtI
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath, zone: DragThoughtZone.Thoughts }
+  return { path, simplePath, zone: DragThoughtZone.Thoughts }
 }
 
 /** Handles drag end. */

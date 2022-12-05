@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import DragThoughtItem from '../@types/DragThoughtItem'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
@@ -37,7 +38,7 @@ export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor)
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
+  const { simplePath: thoughtsFrom }: DragThoughtItem = monitor.getItem()
   const thoughtsTo = props.simplePath!
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
@@ -69,7 +70,7 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { simplePath: thoughtsFrom } = monitor.getItem() as { simplePath: SimplePath }
+  const { simplePath: thoughtsFrom }: DragThoughtItem = monitor.getItem()
 
   const pathTo = appendToPath(props.simplePath, head(thoughtsFrom))
 
