@@ -68,25 +68,27 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   const thought = getThoughtById(state, head(simplePath))
 
-  // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists.
-  // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view should be collapsed.
-  const isContextViewStillOpen = showContexts && !isCyclic(state, path) && numContexts > 2
-
   // prev and next must be calculated before dispatching deleteThought
-  const prev = showContexts
-    ? isContextViewStillOpen
-      ? prevContext(state, path)
-      : null
-    : prevSibling(state, simplePath)
-  const next = showContexts
-    ? isContextViewStillOpen
-      ? nextContext(state, path)
-      : null
-    : // never move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor
-    // this does not apply to context view or when there is a reverted cursor
-    thought.value !== ''
-    ? nextSibling(state, simplePath)
-    : null
+  const prev = once(() =>
+    showContexts
+      ? // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists.
+        // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view should be collapsed.
+        !isCyclic(state, path) && numContexts > 2
+        ? prevContext(state, path)
+        : null
+      : prevSibling(state, simplePath),
+  )
+  const next = once(() =>
+    showContexts
+      ? !isCyclic(state, path) && numContexts > 2
+        ? nextContext(state, path)
+        : null
+      : // never move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor
+      // this does not apply to context view or when there is a reverted cursor
+      thought.value !== ''
+      ? nextSibling(state, simplePath)
+      : null,
+  )
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
@@ -160,12 +162,12 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          next
-          ? [appendToPath(parentOf(path), next.id)]
+          next()
+          ? [appendToPath(parentOf(path), next()!.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)
-          prev
-          ? [appendToPath(closestAncestor, prev.id), { offset: prev.value.length }]
+          prev()
+          ? [appendToPath(closestAncestor, prev()!.id), { offset: prev()!.value.length }]
           : // Case III: delete last thought in context; set cursor on parent
           // if showContexts falls through here, it means either the last context was deleted or a cyclic context was deleted
           showContexts || simplePath.length > 1
