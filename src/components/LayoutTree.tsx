@@ -103,6 +103,10 @@ const virtualTree = (
       // See: contextId (above)
       getAllChildrenSorted(state, contextId || thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
+
+  // short circuit if the context view only has one context and the NoOtherContexts component will be displayed
+  if (contextViewActive && filteredChildren.length === 1) return []
+
   const childrenAttributeId = findDescendant(state, thoughtId, '=children')
   const grandchildrenAttributeId = findDescendant(state, thoughtId, '=grandchildren')
   const styleChildren = getStyle(state, childrenAttributeId)
@@ -323,6 +327,7 @@ const LayoutTree = () => {
                 // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                 style={cliff < 0 ? cliffPaddingStyle : undefined}
               />
+
               {/* DropEnd (cliff) */}
               {dragInProgress &&
                 cliff < 0 &&

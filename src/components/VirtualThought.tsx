@@ -13,8 +13,10 @@ import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -24,6 +26,7 @@ import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
 import DropBefore from './DropBefore'
 import DropEmpty from './DropEmpty'
+import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
@@ -226,6 +229,9 @@ const Subthought = ({
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
+  const noOtherContexts = useSelector(
+    (state: State) => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+  )
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
@@ -283,36 +289,40 @@ const Subthought = ({
   if (!thought) return null
 
   return (
-    <div
-      ref={ref}
-      style={{
-        // Start opacity at 0 and set to actual opacity in useEffect.
-        // Do not fade in empty thoughts. An instant snap in feels better here.
-        // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropEmpty. Otherwise subsequent DropEmpty will be obscured.
-        opacity: thought.value === '' ? opacity : '0',
-        transition: opacityTransition,
-        pointerEvents: !isVisible ? 'none' : undefined,
-      }}
-    >
-      <Thought
-        debugIndex={debugIndex}
-        depth={depth + 1}
-        env={env}
-        hideBullet={hideBullet}
-        isContextPending={thought.value === '__PENDING__'}
-        leaf={leaf}
-        // isHeader={isHeader}
-        isHeader={false}
-        isMultiColumnTable={isMultiColumnTable}
-        isVisible={isVisible}
-        path={path}
-        prevChildId={prevChildId}
-        rank={thought.rank}
-        showContexts={showContexts}
-        simplePath={simplePath}
-        style={styleSelf}
-      />
-    </div>
+    <>
+      <div
+        ref={ref}
+        style={{
+          // Start opacity at 0 and set to actual opacity in useEffect.
+          // Do not fade in empty thoughts. An instant snap in feels better here.
+          // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropEmpty. Otherwise subsequent DropEmpty will be obscured.
+          opacity: thought.value === '' ? opacity : '0',
+          transition: opacityTransition,
+          pointerEvents: !isVisible ? 'none' : undefined,
+        }}
+      >
+        <Thought
+          debugIndex={debugIndex}
+          depth={depth + 1}
+          env={env}
+          hideBullet={hideBullet}
+          isContextPending={thought.value === '__PENDING__'}
+          leaf={leaf}
+          // isHeader={isHeader}
+          isHeader={false}
+          isMultiColumnTable={isMultiColumnTable}
+          isVisible={isVisible}
+          path={path}
+          prevChildId={prevChildId}
+          rank={thought.rank}
+          showContexts={showContexts}
+          simplePath={simplePath}
+          style={styleSelf}
+        />
+      </div>
+
+      {noOtherContexts && <NoOtherContexts simplePath={simplePath} />}
+    </>
   )
 }
 
