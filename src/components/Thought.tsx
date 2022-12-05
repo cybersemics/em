@@ -46,10 +46,10 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import DropThought from './DropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
 import ThoughtAnnotation from './ThoughtAnnotation'
-import ThoughtDropHover from './ThoughtDropHover'
 
 /**********************************************************************
  * Redux
@@ -465,7 +465,7 @@ const ThoughtContainer = ({
             />
           )}
 
-          <ThoughtDropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
+          <DropThought isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
           <ThoughtAnnotation
             env={env}

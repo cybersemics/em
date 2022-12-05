@@ -27,7 +27,7 @@ const DragOnly: FC = ({ children }) => {
   return <>{globals.simulateDrag || globals.simulateDrop || dragInProgress ? children : null}</>
 }
 
-/** The drop target at the end of the Subthoughts. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
+/** The drop target at the end of the Subthoughts. The drop-hover components are DropThought, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEnd = ({
   depth,
   distance,
@@ -61,7 +61,7 @@ const SubthoughtsDropEnd = ({
     if (isHovering && !isParentSorted) return true
 
     // If sorted and hovering, only show the drop-hover if the thought would be dropped to the end of the list.
-    // Otherwise, asssume the ThoughtDropHover component will be rendered at the place of insertion.
+    // Otherwise, asssume the DropThought component will be rendered at the place of insertion.
     if (!isParentSorted) return false
 
     // only render drop-hover during drag-and-drop

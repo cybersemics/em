@@ -16,7 +16,7 @@ import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 
-/** A drop target when there are no children or the thought is collapsed. The drop-hover components are ThoughtDropHover, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
+/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropThought, SubthoughtsDropEnd, and SubthoughtsDropEmpty. */
 const SubthoughtsDropEmpty = ({
   depth,
   dropTarget,
