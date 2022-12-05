@@ -12,13 +12,9 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
-import nextThought from '../selectors/nextThought'
-import parentOfThought from '../selectors/parentOfThought'
-import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
-import thoughtsEditingFromChain from '../selectors/thoughtsEditingFromChain'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -32,39 +28,65 @@ const getContext = (state: State, path: Path) =>
     cxid => getThoughtById(state, cxid)?.parentId === head(path),
   )
 
+/** Calculates the next context in the context view. */
+const nextContext = (state: State, path: Path) => {
+  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
+  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
+  const contexts = getContextsSortedAndRanked(state, parent.value)
+  // find the thought in the context view
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const context = contexts[index + 1]
+  return context ? getThoughtById(state, context.parentId) : null
+}
+
+/** Calculates the previous context in a context view. */
+const prevContext = (state: State, path: Path) => {
+  // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
+  const parent = getThoughtById(state, head(rootedParentOf(state, path)))
+  const contexts = getContextsSortedAndRanked(state, parent.value)
+  // find the thought in the context view
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const context = contexts[index - 1]
+  return context ? getThoughtById(state, context.parentId) : null
+}
+
+/** Returns true if a path is a cyclic context, e.g. a/m~/a. */
+const isCyclic = (state: State, path: Path) => head(path) === head(parentOf(parentOf(path)))
+
 /** Deletes a thought and moves the cursor to a nearby valid thought. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
 
-  const path = (payload.path || state.cursor)! // eslint-disable-line fp/no-let
+  const cursor = state.cursor
+  const path = (payload.path || cursor)! // eslint-disable-line fp/no-let
   const parentPath = rootedParentOf(state, path)
 
   // same as in newThought
   const showContexts = isContextViewActive(state, parentPath)
+  const numContexts = showContexts ? getContexts(state, getThoughtById(state, head(parentPath)).value).length : 0
   const simplePath = thoughtToPath(state, head(path))
 
   const thought = getThoughtById(state, head(simplePath))
-  const cursor = state.cursor
 
-  /** Calculates the previous context within a context view. */
-  // TODO: Refactor into prevThought (cf nextThought)
-  const prevContext = () => {
-    const thoughtsContextView = thoughtsEditingFromChain(state, simplePath)
-    const contexts = getContextsSortedAndRanked(state, headValue(state, thoughtsContextView))
-    const removedThoughtIndex = contexts.findIndex(({ id }) => {
-      const parentThought = parentOfThought(state, id)
-      return parentThought?.value === thought.value
-    })
-    return contexts[removedThoughtIndex - 1]
-  }
+  // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists.
+  // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view should be collapsed.
+  const isContextViewStillOpen = showContexts && !isCyclic(state, path) && numContexts > 2
 
   // prev and next must be calculated before dispatching deleteThought
-  const prev = showContexts ? prevContext() : prevSibling(state, simplePath)
-  const nextContextPath =
-    showContexts && getContexts(state, getThoughtById(state, head(parentPath)).value).length > 2
-      ? nextThought(state)
+  const prev = showContexts
+    ? isContextViewStillOpen
+      ? prevContext(state, path)
       : null
-  const next = nextContextPath ? pathToThought(state, nextContextPath) : nextSibling(state, simplePath)
+    : prevSibling(state, simplePath)
+  const next = showContexts
+    ? isContextViewStillOpen
+      ? nextContext(state, path)
+      : null
+    : // never move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor
+    // this does not apply to context view or when there is a reverted cursor
+    thought.value !== ''
+    ? nextSibling(state, simplePath)
+    : null
 
   /** Sets the cursor or moves it back if it doesn't exist. */
   const setCursorOrBack = (path: Path | null, { offset }: { offset?: number } = {}) =>
@@ -138,8 +160,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         revertedCursor()
           ? [revertedCursor(), { offset: getTextContentFromHTML(headValue(state, revertedCursor()!)).length }]
           : // Case I: set cursor on next thought
-          // Do not set cursor on next context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists
-          next && (showContexts ? thought.id !== head(parentOf(parentOf(path))) : thought.value !== '')
+          next
           ? [appendToPath(parentOf(path), next.id)]
           : // Case II: set cursor on first thought
           // allow revertNewSubthought to fall through to Case III (parent)

@@ -18,11 +18,11 @@ import parentOf from '../util/parentOf'
 const nextContext = (state: State, path: Path) => {
   // use rootedParentOf(path) instead of thought.parentId since we need to cross the context view
   const parent = getThoughtById(state, head(rootedParentOf(state, path)))
-  const contextIds = getContextsSortedAndRanked(state, parent.value)
+  const contexts = getContextsSortedAndRanked(state, parent.value)
   // find the thought in the context view
-  const index = contextIds.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
+  const index = contexts.findIndex(cx => getThoughtById(state, cx.id).parentId === head(path))
   // get the next context
-  const nextContextId = contextIds[index + 1]?.id
+  const nextContextId = contexts[index + 1]?.id
   const nextContext = nextContextId ? getThoughtById(state, nextContextId) : null
   // if next does not exist (i.e. path is the last context), call nextThought on the parent and ignore the context view to move to the next uncle in the normal view
   return nextContext

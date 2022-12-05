@@ -101,7 +101,79 @@ describe('delete', () => {
 })
 
 describe('context view', () => {
-  it('delete thought from within tangential context', () => {
+  it('delete non-leaf tangential context', () => {
+    const steps = [
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+        - c
+          - m
+            - z
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b']),
+      deleteThoughtWithCursor({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+  - c
+    - m
+      - z`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
+  })
+
+  it('delete non-leaf cyclic context', () => {
+    const steps = [
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - m
+            - y
+        - c
+          - m
+            - z
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      deleteThoughtWithCursor({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - m
+      - y
+  - c
+    - m
+      - z`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+  })
+
+  it('delete subthought of tangential context', () => {
     const steps = [
       importText({
         text: `
@@ -138,7 +210,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
-  it('delete thought from within cyclic context', () => {
+  it('delete subthought of cyclic context', () => {
     const steps = [
       importText({
         text: `
@@ -175,7 +247,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
-  it('delete leaf from within tangential context', () => {
+  it('delete leaf tangential context', () => {
     const steps = [
       importText({
         text: `
@@ -206,7 +278,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
   })
 
-  it('delete leaf from within cyclic context', () => {
+  it('delete leaf cyclic context', () => {
     const steps = [
       importText({
         text: `
@@ -233,7 +305,7 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
-  it('delete second-to-last context from within tangential context', () => {
+  it('delete second-to-last tangential context', () => {
     const steps = [
       importText({
         text: `
