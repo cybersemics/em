@@ -2,6 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import toggleNote from '../action-creators/toggleNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
+import asyncFocus from '../device/asyncFocus'
 import attribute from '../selectors/attribute'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -22,6 +23,7 @@ const noteShortcut: Shortcut = {
     // check cursor in exec rather than short-circuiting in canExecute so that the default browser behavior is always prevented
     if (!cursor) return
 
+    asyncFocus()
     dispatch(toggleNote())
   },
   isActive: getState => {
