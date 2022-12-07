@@ -32,6 +32,12 @@ export const clear = (): void => {
     focusElement.blur()
   }
   window.getSelection()?.removeAllRanges()
+
+  // On mobile safari it is possible that the keyboard stays up even when there is no selection.
+  // Blur the active document element to close the keyboard.
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur()
+  }
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
