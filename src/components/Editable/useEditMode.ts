@@ -87,11 +87,15 @@ const useEditMode = ({
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
-        Only breaks on Enter or Backspace, not gesture. Even stranger, the issue only showed up when newThought was converted to a reducer (ecc3b3be).
-        For some reason, setTimeout fixes it.
+        Only breaks on Enter or Backspace, not gesture.
+
+        setTimeout fixes it, however it introduces an infinite loop when a nested empty thought is created.
+        Not calling asyncFocus when the selection is already on a thought prevents the infinite loop.
       */
       if (isTouch && isSafari()) {
-        asyncFocus()
+        if (!selection.isThought()) {
+          asyncFocus()
+        }
         setTimeout(setSelectionToCursorOffset)
       } else {
         setSelectionToCursorOffset()
