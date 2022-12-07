@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import React from 'react'
 import { ConnectDropTarget } from 'react-dnd'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -11,39 +11,58 @@ import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import getThoughtById from '../selectors/getThoughtById'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
+import DragOnly from './DragOnly'
 
-/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
-const DropEmpty = ({
-  depth,
-  dropTarget,
-  isHovering,
-  last,
-  simplePath,
-}: {
+interface DropEmptyProps {
   depth?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
   last?: boolean
   simplePath: SimplePath
-}) => {
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
-  const draggingThought = useSelector((state: State) => state.draggingThought)
+}
+
+/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. Only renders if there is a valid dropTarget and a drag is in progress. */
+const DropEmptyContainer = ({ depth, dropTarget, isHovering, last, simplePath }: DropEmptyProps) => {
+  if (!dropTarget) return null
+  return (
+    <DragOnly>
+      <DropEmptyInnerContainer
+        depth={depth}
+        dropTarget={dropTarget}
+        isHovering={isHovering}
+        last={last}
+        simplePath={simplePath}
+      />
+    </DragOnly>
+  )
+}
+
+/** Only render the DropEmpty component if not expanded. */
+const DropEmptyInnerContainer = ({ depth, dropTarget, isHovering, last, simplePath }: DropEmptyProps) => {
+  const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
+  const draggingThought = useSelector((state: State) => state.draggingThought, shallowEqual)
+
+  // Do not render DropEmpty on expanded thoughts or on the dragging thought.
+  // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
+  if (isExpanded || equalPath(draggingThought, simplePath)) return null
+
+  return <DropEmpty depth={depth} dropTarget={dropTarget} isHovering={isHovering} last={last} simplePath={simplePath} />
+}
+
+/** The actual DropEmpty component. */
+const DropEmpty = ({ depth, dropTarget, isHovering, last, simplePath }: DropEmptyProps) => {
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
   useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
-  // Why do we bail if the thought is being dragged?
-  // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
-  if (
-    (!globals.simulateDrag && !globals.simulateDrop && !dragInProgress) ||
-    !dropTarget ||
-    equalPath(draggingThought, simplePath)
-  )
-    return null
+  // dropTarget should always be truthy here since it would have short circuited in DropEmptyContainer.
+  // Just do a check here for type safety in order to reuse DropEmptyProps and avoid a more complex type.
+  if (!dropTarget) return null
 
   return (
     <li className='drop-empty' style={{ position: 'relative' }}>
@@ -96,7 +115,7 @@ const DropEmpty = ({
   )
 }
 
-const DragAndDropDropEmpty = DragAndDropSubthoughts(DropEmpty)
+const DragAndDropDropEmpty = DragAndDropSubthoughts(DropEmptyContainer)
 
 const DropEmptyMemo = React.memo(DragAndDropDropEmpty)
 DropEmptyMemo.displayName = 'DropEmpty'

@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { FC } from 'react'
+import React from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -20,12 +20,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
-
-/** A container fragment that only renders its children when dragInProgress is true. Useful for short circuiting child components with more expensive selectors. */
-const DragOnly: FC = ({ children }) => {
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
-  return <>{globals.simulateDrag || globals.simulateDrop || dragInProgress ? children : null}</>
-}
+import DragOnly from './DragOnly'
 
 /** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
 const DropEnd = ({
