@@ -49,8 +49,8 @@ const ModalSettings = () => {
     >
       <form>
         <Setting settingKey='experienceMode' title={'Training Mode'} invert={true}>
-          Shows a small alert with the name of the last gesture executed. This is helpful when you are learning gestures
-          and want an extra bit of feedback.
+          Shows a notification each time a gesture is executed. This is helpful when you are learning gestures and want
+          an extra bit of feedback.
         </Setting>
 
         <Setting settingKey='hideSuperscripts' title={'Hide Superscripts'}>
