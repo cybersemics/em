@@ -29,7 +29,7 @@ const cursorForward = (state: State) => {
   else {
     const firstChild = firstVisibleChild(state, head(cursor))
     isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor)).childrenMap[head(cursorFromHistory)]
-    cursorNew = isValidChild ? cursorFromHistory : unroot([...cursor, firstChild!.id])
+    cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
   }
 
   return cursorNew ? setCursor(state, { path: cursorNew, cursorHistoryPop: isValidChild }) : state
