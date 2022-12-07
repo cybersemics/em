@@ -41,14 +41,12 @@ import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import addEmojiSpace from '../util/addEmojiSpace'
-import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isURL from '../util/isURL'
-import parentOf from '../util/parentOf'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -166,10 +164,6 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       // do not set cursor if it is unchanged and we are not entering edit mode
       if ((!editing || editingMode) && equalPath(cursor, path)) return
 
-      const isEditing = equalPath(cursor, path)
-
-      const pathLive = cursor && isEditing ? appendToPath(parentOf(path), head(cursor)) : path
-
       dispatch(
         setCursor({
           cursorHistoryClear: true,
@@ -178,7 +172,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           // to use the existing offset after a user clicks or touches the screent
           // when cursor is changed through another method, such as cursorDown, offset will be reset
           offset: null,
-          path: pathLive,
+          path,
         }),
       )
     },
