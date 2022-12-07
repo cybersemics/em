@@ -1,5 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import cursorCleared from '../action-creators/cursorCleared'
+import * as selection from '../device/selection'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const clearThoughtShortcut: Shortcut = {
@@ -10,7 +11,14 @@ const clearThoughtShortcut: Shortcut = {
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
-    dispatch(cursorCleared({ value: !getState().cursorCleared }))
+    const isCursorCleared = getState().cursorCleared
+
+    dispatch(cursorCleared({ value: !isCursorCleared }))
+
+    // if toggling off, remove the browser selection
+    if (isCursorCleared) {
+      selection.clear()
+    }
   },
 }
 
