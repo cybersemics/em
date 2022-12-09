@@ -114,4 +114,20 @@ describe('context view', () => {
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'x'])
   })
+
+  it('move from context child to grandchild if there is no history', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [importText({ text }), setCursor(['b', 'm']), toggleContextView, cursorForward, cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'a', 'x'])
+  })
 })

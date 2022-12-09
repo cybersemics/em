@@ -6,6 +6,7 @@ import { firstVisibleChild } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -27,7 +28,8 @@ const cursorForward = (state: State) => {
   }
   // normal view
   else {
-    const firstChild = firstVisibleChild(state, head(cursor))
+    const simplePath = simplifyPath(state, cursor)
+    const firstChild = firstVisibleChild(state, head(simplePath))
     isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor)).childrenMap[head(cursorFromHistory)]
     cursorNew = isValidChild ? cursorFromHistory : firstChild ? unroot([...cursor, firstChild.id]) : cursor
   }
