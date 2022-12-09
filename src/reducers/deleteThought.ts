@@ -20,7 +20,6 @@ import hashThought from '../util/hashThought'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
-import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
 import { getSessionId } from '../util/sessionManager'
@@ -73,6 +72,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
   const simplePath = thoughtToPath(state, deletedThought.id)
+  const path = [...pathParent, thoughtId] as Path
 
   // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
@@ -95,9 +95,9 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
   }
 
-  // remove thought from contextViews
+  // disable context view
   const contextViewsNew = { ...state.contextViews }
-  if (parent) delete contextViewsNew[hashPath(parentOf(simplePath))] // eslint-disable-line fp/no-delete
+  delete contextViewsNew[hashPath(path)] // eslint-disable-line fp/no-delete
 
   const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
     id !== deletedThought.id ? { [key]: id } : null,
