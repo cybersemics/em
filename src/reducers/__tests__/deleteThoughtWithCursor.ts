@@ -2,6 +2,7 @@ import { importText } from '..'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -134,6 +135,7 @@ describe('context view', () => {
     - m
       - z`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
   })
 
@@ -170,6 +172,7 @@ describe('context view', () => {
     - m
       - z`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeFalsy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
@@ -207,6 +210,7 @@ describe('context view', () => {
     - m
       - z`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
@@ -244,6 +248,7 @@ describe('context view', () => {
     - m
       - z`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
 
@@ -275,6 +280,7 @@ describe('context view', () => {
   - c
     - m`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
   })
 
@@ -302,6 +308,7 @@ describe('context view', () => {
   - b
     - m`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeFalsy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
@@ -329,6 +336,7 @@ describe('context view', () => {
     - m
   - b`)
 
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeFalsy()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
 })

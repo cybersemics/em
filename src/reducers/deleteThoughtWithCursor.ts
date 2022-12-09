@@ -16,6 +16,7 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import once from '../util/once'
@@ -28,9 +29,6 @@ const getContext = (state: State, path: Path) =>
     cxid => getThoughtById(state, cxid)?.parentId === head(path),
   )
 
-/** Returns true if a path is a cyclic context, e.g. a/m~/a. */
-const isCyclic = (state: State, path: Path) => head(path) === head(parentOf(parentOf(path)))
-
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
 const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
@@ -41,24 +39,32 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
 
   // same as in newThought
   const showContexts = isContextViewActive(state, parentPath)
-  const numContexts = showContexts ? getContexts(state, getThoughtById(state, head(parentPath)).value).length : 0
   const simplePath = thoughtToPath(state, head(path))
 
   const thought = getThoughtById(state, head(simplePath))
+
+  /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
+  const shouldCloseContextView = once(() => {
+    const parentPath = rootedParentOf(state, path)
+    const showContexts = isContextViewActive(state, parentPath)
+    const numContexts = showContexts ? getContexts(state, getThoughtById(state, head(parentPath)).value).length : 0
+    const isCyclic = head(path) === head(parentOf(parentOf(path)))
+    return isCyclic || numContexts <= 2
+  })
 
   // prev and next must be calculated before dispatching deleteThought
   const prev = once(() =>
     showContexts
       ? // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists.
-        // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view should be collapsed.
-        !isCyclic(state, path) && numContexts > 2
+        // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view will be collapsed.
+        !shouldCloseContextView()
         ? prevContext(state, path)
         : null
       : prevSibling(state, simplePath),
   )
   const next = once(() =>
     showContexts
-      ? !isCyclic(state, path) && numContexts > 2
+      ? !shouldCloseContextView()
         ? nextContext(state, path)
         : null
       : // never move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor
@@ -80,11 +86,11 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       // TODO: Wouldn't this remove other children in ABS/one?
       showContexts && thought.parentId !== ABSOLUTE_TOKEN
         ? {
-            pathParent: simplePath,
+            pathParent: path,
             thoughtId: contextId!,
           }
         : {
-            pathParent: parentOf(simplePath),
+            pathParent: parentPath,
             thoughtId: head(simplePath),
           },
     ),
@@ -146,6 +152,27 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
           })
         : cursorBack(state)
     },
+
+    /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
+       Other cases are handled by deleteThought.
+
+      e.g. Activate the context view on a/m and delete a/m~/b/m`
+
+        - a
+          - m
+        - b
+          - m
+    */
+    shouldCloseContextView()
+      ? state => {
+          const contextViewsNew = { ...state.contextViews }
+          // eslint-disable-next-line fp/no-delete
+          delete contextViewsNew[hashPath(parentPath)]
+          return {
+            contextViews: contextViewsNew,
+          }
+        }
+      : null,
   ])(state)
 }
 
