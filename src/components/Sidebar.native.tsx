@@ -29,10 +29,9 @@ const RecentlyEdited = () => {
       <Text style={styles.headerText}>Recently Edited Thoughts</Text>
 
       <View style={styles.padding}>
-        {recentlyEdited.map((recentlyEditedThought, i) => {
-          const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
-          return <ThoughtLink key={i} simplePath={simplePath} />
-        })}
+        {recentlyEdited.map((recentlyEditedThought, i) => (
+          <ThoughtLink key={i} path={recentlyEditedThought.path} />
+        ))}
       </View>
     </View>
   )

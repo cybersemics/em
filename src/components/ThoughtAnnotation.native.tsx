@@ -181,9 +181,7 @@ const ThoughtAnnotation = ({
       animate={animate}
       transition={{ type: 'timing' }}
     >
-      {showContextsParent && (
-        <ContextBreadcrumbs simplePath={rootedParentOf(state, rootedParentOf(state, simplePath))} />
-      )}
+      {showContextsParent && <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, path))} />}
 
       {homeContext ? (
         <HomeLink />

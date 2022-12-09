@@ -39,10 +39,7 @@ const StaticThought = ({ isEditing, path, rank, showContextBreadcrumbs, style, s
   return (
     <View>
       {showContextBreadcrumbs && !isRoot ? (
-        <ContextBreadcrumbs
-          simplePath={rootedParentOf(state, rootedParentOf(state, simplePathLive))}
-          homeContext={homeContext}
-        />
+        <ContextBreadcrumbs path={rootedParentOf(state, rootedParentOf(state, path))} homeContext={homeContext} />
       ) : showContexts && simplePathLive.length > 2 ? (
         <Text>
           <Text

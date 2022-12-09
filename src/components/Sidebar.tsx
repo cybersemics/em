@@ -7,7 +7,6 @@ import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
-import simplifyPath from '../selectors/simplifyPath'
 import hashPath from '../util/hashPath'
 import { findTreeDescendants } from '../util/recentlyEditedTree'
 import Favorites from './Favorites'
@@ -38,10 +37,9 @@ const RecentlyEdited = () => {
     <div className='sidebar'>
       <div className='header'>Recently Edited Thoughts</div>
       <div style={{ padding: '0 2em' }}>
-        {recentlyEdited.map((recentlyEditedThought, i) => {
-          const simplePath = simplifyPath(store.getState(), recentlyEditedThought.path)
-          return <ThoughtLink key={hashPath(recentlyEditedThought.path)} simplePath={simplePath} />
-        })}
+        {recentlyEdited.map((recentlyEditedThought, i) => (
+          <ThoughtLink key={hashPath(recentlyEditedThought.path)} path={recentlyEditedThought.path} />
+        ))}
       </div>
     </div>
   )

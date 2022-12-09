@@ -3,8 +3,6 @@ import { StyleSheet, View } from 'react-native'
 import { connect } from 'react-redux'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import simplifyPath from '../selectors/simplifyPath'
-import store from '../stores/app'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import FeedbackButton from './FeedbackButton'
@@ -30,13 +28,11 @@ interface IComponentProps {
 const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
   const breadcrumbPath = (cursor ? cursor.slice(publishMode() ? 1 : 0, cursor.length - 1) : []) as Path
 
-  const breadcrumbSimplePath = simplifyPath(store.getState(), breadcrumbPath)
-
   return (
     <View style={styles.container}>
       <HomeLink />
 
-      <ContextBreadcrumbs simplePath={breadcrumbSimplePath} />
+      <ContextBreadcrumbs path={breadcrumbPath} />
 
       <View style={styles.buttonsContainer}>
         <FeedbackButton />

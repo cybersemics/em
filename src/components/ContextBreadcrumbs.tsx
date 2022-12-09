@@ -1,15 +1,18 @@
 import classNames from 'classnames'
 import React, { FC, useMemo } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
-import SimplePath from '../@types/SimplePath'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
+import simplifyPath from '../selectors/simplifyPath'
 import decodeCharacterEntities from '../util/decodeCharacterEntities'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
 import useEllipsizedThoughts from './ContextBreadcrumbs.useEllipsizedThoughts'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -22,7 +25,7 @@ export interface ContextBreadcrumbProps {
   // useful for ThoughtAnnotation spacing
   hidden?: boolean
   homeContext?: boolean
-  simplePath: SimplePath
+  path: Path
   // disables click on breadcrumb fragments
   staticText?: boolean
   thoughtsLimit?: number
@@ -34,21 +37,31 @@ const BreadCrumb: FC<{
   isOverflow?: boolean
   label?: string
   onClickEllipsis: () => void
-  simplePath: SimplePath
+  path: Path
   showDivider?: boolean
   staticText?: boolean
-}> = React.memo(({ isOverflow, simplePath, label, isDeleting, showDivider, onClickEllipsis, staticText }) => {
+}> = React.memo(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText }) => {
+  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
+  const showContexts = useSelector((state: State) => isContextViewActive(state, parentOf(path)))
+  const delimiterStyle: React.CSSProperties = {
+    fontSize: '0.8em',
+    lineHeight: '16px',
+    margin: '0 3px',
+    verticalAlign: 1,
+    userSelect: 'none',
+  }
   return !isOverflow ? (
     <span style={{ fontSize: staticText ? '0.8em' : undefined }}>
-      {showDivider ? <span className='breadcrumb-divider'> • </span> : null}
+      {/* possible delimiter symbols: ⇢ */}
+      {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
       {!isDeleting &&
         (staticText ? ellipsize(decodeCharacterEntities(value)) : <Link simplePath={simplePath} label={label} />)}
       {!isDeleting && <Superscript simplePath={simplePath} />}
     </span>
   ) : (
     <span>
-      <span className='breadcrumb-divider'> • </span>
+      <span style={delimiterStyle}> • </span>
       <span onClick={onClickEllipsis} style={{ cursor: 'pointer' }}>
         {' '}
         ...{' '}
@@ -65,12 +78,13 @@ const ContextBreadcrumbs = ({
   classNamesObject,
   hidden,
   homeContext,
-  simplePath,
+  path,
   staticText,
   thoughtsLimit,
 }: ContextBreadcrumbProps) => {
   const [disabled, setDisabled] = React.useState(false)
-  const ellipsizedThoughts = useEllipsizedThoughts(simplePath, { charLimit, disabled, thoughtsLimit })
+  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
+  const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   const factoryManager = (child: React.ReactElement) => {
@@ -83,8 +97,8 @@ const ContextBreadcrumbs = ({
   }
 
   const ancestors = useMemo(() => {
-    return simplePath.map((id, i) => simplePath.slice(0, i + 1) as SimplePath)
-  }, [simplePath])
+    return path.map((id, i) => path.slice(0, i + 1) as Path)
+  }, [path])
 
   return (
     <div
@@ -129,7 +143,7 @@ const ContextBreadcrumbs = ({
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
-                  simplePath={ancestors[i]}
+                  path={ancestors[i]}
                   showDivider={i > 0}
                   staticText={staticText}
                 />

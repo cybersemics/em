@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { useSelector } from 'react-redux'
-import SimplePath from '../@types/SimplePath'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
@@ -17,30 +17,29 @@ type OverflowChild = {
 
 type OverflowPath = OverflowChild[]
 
-/** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Re-renders when simplePath values change, including live edits. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
+/** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
-  simplePath: SimplePath,
+  path: Path,
   { disabled, thoughtsLimit, charLimit }: { disabled?: boolean; thoughtsLimit?: number; charLimit?: number },
 ): OverflowPath => {
   // calculate if overflow occurs during ellipsized view
   // 0 if thoughtsLimit is not defined
-  const thoughtsOverflow =
-    thoughtsLimit && simplePath.length > thoughtsLimit ? simplePath.length - thoughtsLimit + 1 : 0
+  const thoughtsOverflow = thoughtsLimit && path.length > thoughtsLimit ? path.length - thoughtsLimit + 1 : 0
 
   const editingValue = editingValueStore.useState()
 
-  // convert the SimplePath to a list of thought values
+  // convert the path to a list of thought values
   // if editing, use the live editing value
   const thoughtValuesLive = useSelector(
     (state: State) =>
-      simplePath.map(id =>
+      path.map(id =>
         editingValue && state.cursor && id === head(state.cursor) ? editingValue : getThoughtById(state, id)?.value,
       ),
     _.isEqual,
   )
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
-  const charLimitedThoughts: OverflowPath = simplePath.map((id, i) => {
+  const charLimitedThoughts: OverflowPath = path.map((id, i) => {
     const value = thoughtValuesLive[i]
     return {
       value,

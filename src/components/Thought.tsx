@@ -1,7 +1,6 @@
 import classNames from 'classnames'
-import _ from 'lodash'
 import React, { useCallback, useMemo } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
+import { connect, shallowEqual, useDispatch, useSelector } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
@@ -220,7 +219,7 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
-  const parentPath = useSelector((state: State) => rootedParentOf(state, simplePath), _.isEqual)
+  const parentPath = useSelector((state: State) => rootedParentOf(state, path), shallowEqual)
   const thoughtId = head(simplePath)
   const children = useSelector(
     (state: State) =>
@@ -241,7 +240,7 @@ const ThoughtContainer = ({
         // apply annotation style (mainly used for background color)
         getStyle(state, head(simplePath), { attributeName: '=styleAnnotation' }),
       ),
-    _.isEqual,
+    shallowEqual,
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
@@ -430,7 +429,7 @@ const ThoughtContainer = ({
         }}
       >
         {showContexts && simplePath.length > 1 ? (
-          <ContextBreadcrumbs simplePath={parentPath} homeContext={homeContext} />
+          <ContextBreadcrumbs path={parentPath} homeContext={homeContext} />
         ) : showContexts && simplePath.length > 2 ? (
           <span className='ellipsis'>
             <a

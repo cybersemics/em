@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react'
-import { useSelector } from 'react-redux'
-import SimplePath from '../@types/SimplePath'
+import React from 'react'
+import { shallowEqual, useSelector } from 'react-redux'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
@@ -13,7 +14,7 @@ interface ThoughtLinkProps {
   charLimit?: number
   hideContext?: boolean
   staticBreadcrumbs?: boolean
-  simplePath: SimplePath
+  path: Path
   styleLink?: React.CSSProperties
   thoughtsLimit?: number
 }
@@ -22,21 +23,21 @@ interface ThoughtLinkProps {
 const ThoughtLink = ({
   charLimit,
   hideContext,
-  simplePath,
+  path,
   styleLink,
   thoughtsLimit,
   staticBreadcrumbs,
 }: ThoughtLinkProps) => {
-  // create a stable object reference to avoid re-rendering ContextBreadcrumbs when simplePath hasn't changed
-  const parentSimplePath = useMemo(() => parentOf(simplePath), [simplePath])
+  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
+  const parentPath = useSelector((state: State) => rootedParentOf(state, path), shallowEqual)
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
   return (
     <div>
       {!hideContext && (
         <ContextBreadcrumbs
+          path={parentPath}
           staticText={staticBreadcrumbs}
-          simplePath={parentSimplePath}
           charLimit={charLimit || 32}
           thoughtsLimit={thoughtsLimit || 10}
         />

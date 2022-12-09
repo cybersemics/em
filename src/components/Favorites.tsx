@@ -194,7 +194,7 @@ const DragAndDropFavorite = DragAndDropThought(
           )}
           <ThoughtLink
             hideContext={hideContext}
-            simplePath={simplePath}
+            path={simplePath}
             styleLink={{
               ...(!disableDragAndDrop &&
                 (isDragging || dragHoldResult.isPressed

@@ -6,7 +6,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import isTutorial from '../selectors/isTutorial'
-import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
@@ -24,12 +23,12 @@ const navBreadcrumbsClass = {
 
 /** Renders ContextBreadcrumbs for the cursor. */
 const CursorBreadcrumbs = () => {
-  const breadcrumbSimplePath = useSelector((state: State) => {
-    const breadcrumbPath = (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path
-    return simplifyPath(state, breadcrumbPath)
-  }, shallowEqual)
+  const breadcrumbSimplePath = useSelector(
+    (state: State) => (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path,
+    shallowEqual,
+  )
 
-  return <ContextBreadcrumbs simplePath={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
+  return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
