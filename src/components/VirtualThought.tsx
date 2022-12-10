@@ -17,7 +17,6 @@ import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -73,10 +72,6 @@ const VirtualThought = ({
   zoomCursor?: boolean
 }) => {
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
-  const simplePathSource = useSelector(
-    (state: State) => (showContexts ? simplifyPath(state, path) : null),
-    shallowEqual,
-  )
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
   const heightRef = useRef<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
@@ -198,8 +193,9 @@ const VirtualThought = ({
           // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
           // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
           // TODO: DragAndDropSubthoughts should be able to handle this.
-          path={showContexts ? simplePathSource! : path}
-          simplePath={showContexts ? simplePathSource! : simplePath}
+          path={path}
+          simplePath={simplePath}
+          showContexts={showContexts}
         />
       )}
     </div>

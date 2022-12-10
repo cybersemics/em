@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
+import moveThought from '../action-creators/moveThought'
 import { AlertType, HOME_TOKEN } from '../constants'
 import attribute from '../selectors/attribute'
 import getNextRank from '../selectors/getNextRank'
@@ -13,17 +14,18 @@ import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import headValue from '../util/headValue'
 import { isDescendantPath } from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
-import pathToContext from '../util/pathToContext'
 
 interface DroppableSubthoughts {
   path: Path
@@ -83,10 +85,10 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
     return
   }
 
-  const pathTo = appendToPath(props.path, head(thoughtsFrom))
+  const pathTo = appendToPath(props.showContexts ? simplifyPath(state, props.path) : props.path, head(thoughtsFrom))
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
-  const thoughtTo = getThoughtById(state, head(props.simplePath))
+  const thoughtTo = getThoughtById(state, head(rootedParentOf(state, pathTo)))
   const thoughtFrom = getThoughtById(state, head(thoughtsFrom))
   const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
   const parentIdTo = head(rootedParentOf(state, pathTo))
@@ -105,19 +107,11 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   }
 
   store.dispatch(
-    props.showContexts
-      ? {
-          type: 'createThought',
-          value: thoughtTo.value,
-          context: pathToContext(state, thoughtsFrom),
-          rank: (dropTop ? getPrevRank : getNextRank)(state, head(thoughtsFrom)),
-        }
-      : {
-          type: 'moveThought',
-          oldPath: thoughtsFrom,
-          newPath: pathTo,
-          newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
-        },
+    moveThought({
+      oldPath: thoughtsFrom,
+      newPath: pathTo,
+      newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
+    }),
   )
 
   // alert user of move to another context
@@ -126,9 +120,13 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
     setTimeout(() => {
       const alertFrom = '"' + ellipsize(thoughtFrom.value) + '"'
       const alertTo = parentIdTo === HOME_TOKEN ? 'home' : '"' + ellipsize(thoughtTo.value) + '"'
+      const inContext = props.showContexts ? ` in the context of ${ellipsize(headValue(state, props.simplePath))}` : ''
 
       store.dispatch(
-        alert(`${alertFrom} moved to ${alertTo}.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
+        alert(`${alertFrom} moved to ${alertTo}${inContext}.`, {
+          alertType: AlertType.ThoughtMoved,
+          clearDelay: 5000,
+        }),
       )
     }, 100)
   }
