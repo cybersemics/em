@@ -3,6 +3,7 @@ import React from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
+import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import globals from '../globals'
@@ -18,18 +19,20 @@ const DropBefore = ({
   depth,
   dropTarget,
   isHovering,
+  path,
   simplePath,
 }: {
   depth?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
+  path: Path
   simplePath: SimplePath
 }) => {
   const dropHoverColor = useDropHoverColor(depth || 0)
   const value = useSelector((state: State) =>
     globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
-  useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   if (!dropTarget) return null
 
