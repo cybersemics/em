@@ -5,6 +5,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { HOME_TOKEN } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -56,7 +57,13 @@ const BreadCrumb: FC<{
       {/* possible delimiter symbols: ⇢ */}
       {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
       {!isDeleting &&
-        (staticText ? ellipsize(decodeCharacterEntities(value)) : <Link simplePath={simplePath} label={label} />)}
+        (staticText ? (
+          ellipsize(decodeCharacterEntities(value))
+        ) : label === HOME_TOKEN ? (
+          <HomeLink color='gray' size={16} />
+        ) : (
+          <Link simplePath={simplePath} label={label} />
+        ))}
       {!isDeleting && <Superscript simplePath={simplePath} />}
     </span>
   ) : (

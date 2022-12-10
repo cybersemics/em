@@ -841,6 +841,18 @@ body.dark {
   left: -2px;
 }
 
+.breadcrumbs .home {
+  /* override .nav-bottom .home */
+  position: static;
+}
+
+.breadcrumbs .home .logo-wrapper {
+  /* override .home .logo-wrapper */
+  display: inline;
+  position: relative;
+  top: 3px;
+}
+
 .thought-annotation .home {
   display: none;
 }
