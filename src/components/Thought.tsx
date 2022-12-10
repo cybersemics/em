@@ -219,7 +219,6 @@ const ThoughtContainer = ({
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
-  const parentPath = useSelector((state: State) => rootedParentOf(state, path), shallowEqual)
   const thoughtId = head(simplePath)
   const children = useSelector(
     (state: State) =>
@@ -429,7 +428,7 @@ const ThoughtContainer = ({
         }}
       >
         {showContexts && simplePath.length > 1 ? (
-          <ContextBreadcrumbs path={parentPath} homeContext={homeContext} />
+          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
         ) : showContexts && simplePath.length > 2 ? (
           <span className='ellipsis'>
             <a
