@@ -3,7 +3,7 @@ import React from 'react'
 import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
-import SimplePath from '../@types/SimplePath'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { ID } from '../constants'
@@ -31,20 +31,23 @@ const DropEnd = ({
   // specifies if this is the last thought
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
-  simplePath,
+  path,
 }: {
   depth: number
   distance?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
   last?: boolean
-  simplePath: SimplePath
+  path?: Path
 }) => {
-  const thoughtId = head(simplePath)
-  const isRootPath = isRoot(simplePath)
+  if (!path) {
+    throw new Error('path required')
+  }
+  const thoughtId = head(path)
+  const isRootPath = isRoot(path)
   const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
-  useHoveringPath(simplePath, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -68,14 +71,12 @@ const DropEnd = ({
     // render the drop-hover if hovering over any thought in a sorted list
     const isThoughtHovering =
       state.hoveringPath &&
-      equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
+      equalPath(rootedParentOf(state, state.hoveringPath), path) &&
       state.hoverZone === DropThoughtZone.ThoughtDrop
 
     // render the drop-hover if hovering over sorted Subthoughts
     const isSubthoughtsHovering =
-      state.hoveringPath &&
-      equalPath(state.hoveringPath, simplePath) &&
-      state.hoverZone === DropThoughtZone.SubthoughtsDrop
+      state.hoveringPath && equalPath(state.hoveringPath, path) && state.hoverZone === DropThoughtZone.SubthoughtsDrop
 
     // only rendner drop-hover if hovering over the appropriate ThoughtDrop or SubthoughtsDrop
     if (!isThoughtHovering && !isSubthoughtsHovering) return false

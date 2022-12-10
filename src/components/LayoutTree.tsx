@@ -337,13 +337,13 @@ const LayoutTree = () => {
                 Array(-cliff)
                   .fill(0)
                   .map((x, i) => {
+                    const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
                     const simplePathEnd =
                       -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
-                    const cliffDepth = unroot(simplePathEnd).length
+                    const cliffDepth = unroot(pathEnd).length
                     return (
                       <div
-                        // TODO: Fix cliff across context view boundary
-                        key={head(simplePathEnd)}
+                        key={'DropEnd-' + head(pathEnd)}
                         className='z-index-subthoughts-drop-end'
                         style={{
                           position: 'relative',
@@ -353,9 +353,10 @@ const LayoutTree = () => {
                         }}
                       >
                         <DropEnd
-                          depth={simplePathEnd.length}
+                          depth={pathEnd.length}
                           indexDescendant={indexDescendant}
                           leaf={false}
+                          path={pathEnd}
                           simplePath={simplePathEnd}
                           // Extend the click area of the drop target when there is nothing below.
                           // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
