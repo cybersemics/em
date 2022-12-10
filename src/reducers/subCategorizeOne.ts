@@ -5,6 +5,7 @@ import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import getRankBefore from '../selectors/getRankBefore'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -46,19 +47,20 @@ const subCategorizeOne = (state: State) => {
         cursor,
       )}" cannot be subcategorized.`,
     })
+  } else if (isContextViewActive(state, parentOf(cursor))) {
+    return alert(state, {
+      value: `Contexts may not be subcategorized in the context view.`,
+    })
   }
 
   const simplePath = simplifyPath(state, cursor)
   const newRank = getRankBefore(state, simplePath)
-
-  const value = ''
-
   const newThoughtId = createId()
 
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
-      value,
+      value: '',
       rank: newRank,
       id: newThoughtId,
     }),
@@ -67,12 +69,11 @@ const subCategorizeOne = (state: State) => {
       offset: 0,
       editing: true,
     }),
-    state =>
-      moveThought(state, {
-        oldPath: cursor,
-        newPath: appendToPath(cursorParent, newThoughtId, head(cursor)),
-        newRank,
-      }),
+    moveThought({
+      oldPath: simplePath,
+      newPath: appendToPath(cursorParent, newThoughtId, head(simplePath)),
+      newRank,
+    }),
   ])(state)
 }
 
