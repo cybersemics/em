@@ -6,6 +6,7 @@ import toggleContextView from '../../reducers/toggleContextView'
 import toggleHiddenThoughts from '../../reducers/toggleHiddenThoughts'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
@@ -116,5 +117,23 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'm', 'a'])
+  })
+
+  it('move cursor from context view to normal sibling', () => {
+    const text = `
+      - a
+        - z
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, cursorUp]
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
+    expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'z'])
   })
 })
