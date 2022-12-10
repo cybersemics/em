@@ -127,8 +127,17 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
   const state = store.getState()
 
-  const { simplePath: thoughtsFrom } = monitor.getItem()
-  const thoughtsTo = props.simplePath!
+  const { path: thoughtsFrom } = monitor.getItem()
+
+  if (!thoughtsFrom) {
+    console.warn('item.path not defined')
+    return
+  } else if (!props.path) {
+    console.warn('props.path not defined')
+    return
+  }
+
+  const thoughtsTo = props.simplePath
   const toThought = pathToThought(state, thoughtsTo)
   const fromThought = pathToThought(state, thoughtsFrom)
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)

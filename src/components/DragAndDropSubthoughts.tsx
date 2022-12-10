@@ -73,9 +73,17 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { simplePath: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
 
-  const pathTo = appendToPath(props.simplePath, head(thoughtsFrom))
+  if (!thoughtsFrom) {
+    console.warn('item.path not defined')
+    return
+  } else if (!props.path) {
+    console.warn('props.path not defined')
+    return
+  }
+
+  const pathTo = appendToPath(props.path, head(thoughtsFrom))
 
   const isRootOrEM = isRoot(thoughtsFrom) || isEM(thoughtsFrom)
   const thoughtTo = getThoughtById(state, head(props.simplePath))

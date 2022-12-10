@@ -357,6 +357,7 @@ const LayoutTree = () => {
                           indexDescendant={indexDescendant}
                           leaf={false}
                           path={pathEnd}
+                          // not used, just provided since DropEnd props shares the ThoughtProps type
                           simplePath={simplePathEnd}
                           // Extend the click area of the drop target when there is nothing below.
                           // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
