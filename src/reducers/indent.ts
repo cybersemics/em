@@ -4,6 +4,7 @@ import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
+import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -41,6 +42,10 @@ const indent = (state: State) => {
         state,
         cursor,
       )}" may not be indented.`,
+    })
+  } else if (isContextViewActive(state, parentOf(cursor))) {
+    return alert(state, {
+      value: `Contexts may not be indented in the context view.`,
     })
   }
 

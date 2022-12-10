@@ -1,10 +1,12 @@
 import { HOME_TOKEN } from '../../constants'
+import importText from '../../reducers/importText'
 import indent from '../../reducers/indent'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
-import setCursor from '../../reducers/setCursor'
+import toggleContextView from '../../reducers/toggleContextView'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -20,7 +22,7 @@ it('indent within root', () => {
 })
 
 it('indent with no cursor should do nothing ', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), indent]
+  const steps = [newThought('a'), newThought('b'), setCursor(null), indent]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -59,4 +61,27 @@ it('indent on cursor thought should update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a1', 'a2'])!)
+})
+
+it('indent context should do nothing', () => {
+  const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+  const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['a', 'm', 'b']), indent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y`)
 })
