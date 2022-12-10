@@ -1,16 +1,21 @@
 import Path from '../@types/Path'
+import isRoot from './isRoot'
 
-/** Returns true if thoughts subset is contained within superset (inclusive by default). */
+/** Returns true if thoughts subset is contained within superset (inclusive by default). Returns false if either path is null. */
 export const isDescendantPath = (
   descendant: Path | null,
   ancestor: Path | null,
   { exclusive }: { exclusive?: boolean } = {},
 ) => {
-  if (!descendant || !ancestor || !descendant.length || !ancestor.length || descendant.length < ancestor.length)
+  if (
+    !descendant ||
+    !ancestor ||
+    descendant.length < ancestor.length ||
+    (exclusive && descendant.length === ancestor.length)
+  )
     return false
-  if (descendant === ancestor || (descendant.length === 0 && ancestor.length === 0)) return !exclusive
 
-  return ancestor.every((id, i) => descendant[i] === id)
+  return isRoot(ancestor) || ancestor.every((id, i) => descendant[i] === id)
 }
 
 /** Returns the index of the first element in list that starts with thoughts. */

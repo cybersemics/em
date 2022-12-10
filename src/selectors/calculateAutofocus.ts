@@ -5,8 +5,8 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import { isDescendantPath } from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
 import { hasChildren } from './getChildren'
+import rootedParentOf from './rootedParentOf'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
 const calculateAutofocus = (state: State, path: Path) => {
@@ -27,26 +27,26 @@ const calculateAutofocus = (state: State, path: Path) => {
 
   if (!state.cursor || isRoot(path)) return 'show'
 
-  const cursorParent = parentOf(state.cursor!)
-  const cursorGrandparent = parentOf(cursorParent)
+  const cursorParent = rootedParentOf(state, state.cursor!)
+  const cursorGrandparent = rootedParentOf(state, cursorParent)
 
   // Generally if the cursor is on a leaf, the autofocus should be the same as its parent.
   // This avoids a visual shift when there are no additional descendants to focus on.
   const isCursorLeaf = !hasChildren(state, head(state.cursor))
 
   /** Returns true if the thought is the parent or sibling of the cursor. */
-  const isParentOrSibling = () => equalPath(cursorParent, path) || equalPath(cursorParent, parentOf(path))
+  const isParentOrSibling = () => equalPath(cursorParent, path) || equalPath(cursorParent, rootedParentOf(state, path))
 
   /** Returns true if the thought is the grandparent of the cursor. */
   const isGrandparent = () => equalPath(cursorGrandparent, path)
 
   /** Returns true if the thought is the parent of the cursor. */
-  const isUncle = () => equalPath(cursorGrandparent, parentOf(path))
+  const isUncle = () => equalPath(cursorGrandparent, rootedParentOf(state, path))
 
   /** Returns true if the thought is a descendant of the cursor. */
   const isDescendantOfCursor = () => isDescendantPath(path, state.cursor)
 
-  /** Returns true if the thought is a descendant of a great uncle of the cursor. */
+  /** Returns true if the thought is a descendant of an uncle of the cursor. */
   const isDescendantOfUncle = () => isDescendantPath(path, cursorParent)
 
   /** Returns true if the thought is a descendant of an uncle of the cursor. */

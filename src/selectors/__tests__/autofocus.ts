@@ -200,7 +200,7 @@ describe('normal view', () => {
     })
   })
 
-  it('show siblings', () => {
+  it('show leaf siblings', () => {
     const text = `
     - a
     - b
@@ -346,6 +346,28 @@ describe('normal view', () => {
       'a/b/c': 'dim',
       'a/d': 'show',
       'a/d/e': 'show',
+    })
+  })
+
+  it('dim descendants of pinned root child', () => {
+    const text = `
+      - a
+        - =pin
+          - true
+        - b
+      - c
+        - d
+    `
+    const steps = [importText({ text }), setCursor(['c'])]
+    const stateNew = reducerFlow(steps)(initialState())
+    const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
+      [key]: calculateAutofocus(stateNew, simplePath),
+    }))
+    expect(autofocusMap).toMatchObject({
+      a: 'dim',
+      'a/b': 'dim',
+      c: 'show',
+      'c/d': 'show',
     })
   })
 
