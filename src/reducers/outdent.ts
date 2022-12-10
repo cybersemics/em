@@ -5,15 +5,15 @@ import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import getRankAfter from '../selectors/getRankAfter'
-import rootedParentOf from '../selectors/rootedParentOf'
+import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
+import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import unroot from '../util/unroot'
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
 const outdent = (state: State) => {
@@ -41,12 +41,20 @@ const outdent = (state: State) => {
         cursor,
       )}" may not be de-indented.`,
     })
+  } else if (isContextViewActive(state, parentOf(cursor))) {
+    return alert(state, {
+      value: `Contexts may not be de-indented in the context view.`,
+    })
+  } else if (isContextViewActive(state, parentOf(parentOf(cursor)))) {
+    return alert(state, {
+      value: `Subthoughts may not be de-indented from their context in the context view.`,
+    })
   }
 
   // calculate offset value based upon selection node before moveThought is dispatched
   const offset = (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
 
-  const cursorNew: Path = [...unroot(rootedParentOf(state, parentOf(cursor))), head(cursor)]
+  const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), head(cursor))
 
   return moveThought(state, {
     oldPath: cursor,
