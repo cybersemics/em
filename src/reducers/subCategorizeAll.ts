@@ -5,6 +5,7 @@ import moveThought from '../reducers/moveThought'
 import newThought from '../reducers/newThought'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
+import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import simplifyPath from '../selectors/simplifyPath'
 import splitChain from '../selectors/splitChain'
@@ -58,6 +59,10 @@ const subCategorizeAll = (state: State) => {
         cursor,
       )}" cannot be subcategorized.`,
     })
+  } else if (isContextViewActive(state, parentOf(cursor))) {
+    return alert(state, {
+      value: `Contexts may not be subcategorized in the context view.`,
+    })
   }
 
   const contextChain = splitChain(state, cursor)
@@ -95,8 +100,8 @@ const subCategorizeAll = (state: State) => {
     ...filteredChildren.map(
       child => (state: State) =>
         moveThought(state, {
-          oldPath: appendToPath(cursorParent, child.id),
-          newPath: appendToPath(cursorParent, getThoughtNew(state).id, child.id),
+          oldPath: appendToPath(path, child.id),
+          newPath: appendToPath(path, getThoughtNew(state).id, child.id),
           newRank: child.rank,
         }),
     ),
