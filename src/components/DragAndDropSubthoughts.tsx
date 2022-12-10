@@ -11,6 +11,7 @@ import attribute from '../selectors/attribute'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
@@ -25,7 +26,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 
 interface DroppableSubthoughts {
-  path?: Path
+  path: Path
   simplePath: SimplePath
   showContexts?: boolean
 }
@@ -38,8 +39,8 @@ export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor)
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { simplePath: thoughtsFrom }: DragThoughtItem = monitor.getItem()
-  const thoughtsTo = props.simplePath!
+  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const thoughtsTo = props.path
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
   const isExpandedTop = () =>
@@ -59,8 +60,10 @@ export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor)
   const isDescendant = isDescendantPath(thoughtsTo, thoughtsFrom)
   const divider = isDivider(getThoughtById(state, head(thoughtsTo)).value)
 
+  const showContexts = thoughtsTo && isContextViewActive(state, thoughtsTo)
+
   // do not drop on descendants or thoughts hidden by autofocus
-  return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider
+  return (!isHidden || isClosestHiddenParent) && !isDescendant && !divider && !showContexts
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc

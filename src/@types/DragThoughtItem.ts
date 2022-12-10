@@ -4,9 +4,7 @@ import SimplePath from './SimplePath'
 
 /** Represents the currently dragged thought from react-dnd. Returned by monitor.getItem() in the drop handler. */
 interface DragThoughtItem {
-  // path may be included for performance to avoid extraneous calls to simplifyPath.
-  // If not passed, simplePath is used.
-  path?: Path
+  path: Path
   simplePath: SimplePath
   zone: DragThoughtZone
 }

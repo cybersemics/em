@@ -37,7 +37,7 @@ import splice from '../util/splice'
 import ThoughtLink from './ThoughtLink'
 
 /** Handles drag start. */
-const beginDrag = ({ simplePath, zone }: { simplePath: SimplePath; zone: DragThoughtZone }): DragThoughtItem => {
+const beginDrag = ({ path, simplePath, zone }: DragThoughtItem): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -47,7 +47,7 @@ const beginDrag = ({ simplePath, zone }: { simplePath: SimplePath; zone: DragTho
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { simplePath, zone: DragThoughtZone.Favorites }
+  return { path, simplePath, zone: DragThoughtZone.Favorites }
 }
 
 /** Handles drag end. */

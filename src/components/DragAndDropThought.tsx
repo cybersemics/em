@@ -10,7 +10,7 @@ import {
 } from 'react-dnd'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import SimplePath from '../@types/SimplePath'
+import Path from '../@types/Path'
 import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
 import dragHold from '../action-creators/dragHold'
@@ -26,6 +26,7 @@ import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isBefore from '../selectors/isBefore'
+import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
@@ -102,14 +103,17 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { simplePath: thoughtsFrom }: { simplePath: SimplePath } = monitor.getItem()
-  const thoughtsTo = props.simplePath!
+  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const thoughtsTo = props.path
+  const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
 
-  return canDropPath(thoughtsFrom, thoughtsTo)
+  // Disallow dropping on context view.
+  // This must be matched in isChildHovering to correctly highlight the hovering parent.
+  return !showContexts && canDropPath(thoughtsFrom, thoughtsTo)
 }
 
 /** Memoized function that returns true if the thought can be dropped at the destination path. This does not need to account for hidden thoughts since they have pointer-events:none. This function will be called in a continuous loop by react-dnd so it needs to be fast. */
-const canDropPath = moize((from: SimplePath, to: SimplePath) => !isDescendantPath(to, from, { exclusive: true }), {
+const canDropPath = moize((from: Path, to: Path) => !isDescendantPath(to, from, { exclusive: true }), {
   // only needs to be big enough to cache the calls within a single drag
   // i.e. a reasonable number of destation thoughts that will be hovered over during a single drag
   maxSize: 50,

@@ -12,7 +12,7 @@ interface VirtualThoughtProps {
   indexDescendant: number
   last?: boolean
   leaf: boolean
-  path?: Path
+  path: Path
   prevChildId?: ThoughtId
   nextChildId?: ThoughtId
   simplePath: SimplePath

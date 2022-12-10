@@ -278,7 +278,7 @@ const ThoughtContainer = ({
   })
 
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
-  // TODO: it would be nice if we could reuse canDrop
+  // TODO: It would be nice if we could reuse canDrop.
   const isChildHovering = useSelector(
     (state: State) =>
       !!isVisible &&
@@ -286,6 +286,7 @@ const ThoughtContainer = ({
       // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
       // Reordering is a less destructive action that does not need to bring attention to the parent.
       !equalPath(rootedParentOf(state, state.draggingThought!), simplePath) &&
+      !isContextViewActive(state, path) &&
       // SubthoughtsDrop
       // Can drop on SubthoughtsDrop if this thought is being hovered over.
       ((state.hoverZone === DropThoughtZone.SubthoughtsDrop && equalPath(simplePath, state.hoveringPath)) ||

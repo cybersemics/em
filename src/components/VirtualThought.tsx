@@ -185,7 +185,9 @@ const VirtualThought = ({
         />
       )}
 
-      {isVisible && <DropEmpty depth={depth} indexDescendant={indexDescendant} leaf={leaf} simplePath={simplePath} />}
+      {isVisible && (
+        <DropEmpty depth={depth} indexDescendant={indexDescendant} leaf={leaf} path={path} simplePath={simplePath} />
+      )}
     </div>
   )
 }
