@@ -4,9 +4,8 @@ import deleteThought from '../../action-creators/deleteThought'
 import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import { DataProvider } from '../../data-providers/DataProvider'
 import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
-import * as dexie from '../../data-providers/dexie'
+import db from '../../data-providers/yjs'
 import contextToPath from '../../selectors/contextToPath'
 import getLexemeState from '../../selectors/getLexeme'
 import store from '../../stores/app'
@@ -22,8 +21,6 @@ import parentOf from '../../util/parentOf'
 */
 
 const fakeTimer = testTimer()
-
-const db = dexie as DataProvider
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -69,7 +66,6 @@ it('editing a thought should load the lexeme and merge contexts', async () => {
     editThought({
       oldValue: 'h',
       newValue: 'f',
-      context: ['g'],
       path: pathGH,
     }),
   )
@@ -122,7 +118,6 @@ it('inline children of parent should be updated', async () => {
     editThought({
       oldValue: 'c',
       newValue: 'cc',
-      context: ['a', 'b'],
       path: pathABC,
     }),
   )
@@ -161,8 +156,8 @@ it('on delete, inline children of parent and grandparent should be deleted', asy
 
   const pathABC = contextToPath(store.getState(), ['a', 'b', 'c']) as SimplePath
 
-  const dbThoughtABefore = await dexie.db.thoughtIndex.get(thoughtA.id)
-  const dbThoughtBBefore = await dexie.db.thoughtIndex.get(thoughtB.id)
+  const dbThoughtABefore = await db.getThoughtWithChildren(thoughtA.id)
+  const dbThoughtBBefore = await db.getThoughtWithChildren(thoughtB.id)
 
   expect(dbThoughtBBefore?.children).toEqual({
     [thoughtC.id]: thoughtC,
@@ -191,8 +186,8 @@ it('on delete, inline children of parent and grandparent should be deleted', asy
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const dbThoughtAAfter = await dexie.db.thoughtIndex.get(thoughtA.id)
-  const dbThoughtBAfter = await dexie.db.thoughtIndex.get(thoughtB.id)
+  const dbThoughtAAfter = await db.getThoughtWithChildren(thoughtA.id)
+  const dbThoughtBAfter = await db.getThoughtWithChildren(thoughtB.id)
 
   expect(dbThoughtBAfter?.children).toEqual({})
   expect(dbThoughtAAfter?.children[thoughtB.id]?.childrenMap).toEqual({})
@@ -220,9 +215,9 @@ it('on root thought, inline children of parent and grandparent should be deleted
 
   const pathA = contextToPath(store.getState(), ['a']) as SimplePath
 
-  const dbThoughtRootBefore = await dexie.db.thoughtIndex.get(HOME_TOKEN)
-  const dbThoughtABefore = await dexie.db.thoughtIndex.get(thoughtA.id)
-  const dbThoughtBBefore = await dexie.db.thoughtIndex.get(thoughtB.id)
+  const dbThoughtRootBefore = await db.getThoughtWithChildren(HOME_TOKEN)
+  const dbThoughtABefore = await db.getThoughtWithChildren(thoughtA.id)
+  const dbThoughtBBefore = await db.getThoughtWithChildren(thoughtB.id)
 
   expect(dbThoughtBBefore?.children).toEqual({
     [thoughtC.id]: thoughtC,
@@ -254,9 +249,9 @@ it('on root thought, inline children of parent and grandparent should be deleted
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()
 
-  const dbThoughtRootAfter = await dexie.db.thoughtIndex.get(HOME_TOKEN)
-  const dbThoughtAAfter = await dexie.db.thoughtIndex.get(thoughtA.id)
-  const dbThoughtBAfter = await dexie.db.thoughtIndex.get(thoughtB.id)
+  const dbThoughtRootAfter = await db.getThoughtWithChildren(HOME_TOKEN)
+  const dbThoughtAAfter = await db.getThoughtWithChildren(thoughtA.id)
+  const dbThoughtBAfter = await db.getThoughtWithChildren(thoughtB.id)
 
   expect(dbThoughtBAfter).toBeFalsy()
   expect(dbThoughtAAfter).toBeFalsy()

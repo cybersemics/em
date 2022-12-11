@@ -5,7 +5,6 @@ import State from '../@types/State'
 import errorActionCreator from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
-import * as db from '../data-providers/dexie'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -85,7 +84,6 @@ export const initEvents = (store: Store<State, any>) => {
     if (e.message === 'Script error.') return
 
     console.error(e.error.stack)
-    db.log({ message: e.message, stack: e.error.stack })
     store.dispatch(errorActionCreator({ value: e.message }))
   }
 

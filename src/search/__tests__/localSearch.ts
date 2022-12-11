@@ -13,7 +13,7 @@ const importThoughts = (text: string) => {
   }
 }
 
-describe('local search', () => {
+describe.skip('local search', () => {
   beforeEach(initDB)
   afterEach(db.clear)
 
