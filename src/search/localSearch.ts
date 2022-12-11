@@ -1,7 +1,7 @@
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
-import * as db from '../data-providers/dexie'
 import getContextMap from '../util/getContextMap'
 
 // @MIGRATION_TODO: Change this api to return ids instead of context.
@@ -13,7 +13,7 @@ const localSearch = (state: State) => {
    * Search by value and return context map.
    */
   const searchAndGenerateContextMap = async (value: string): Promise<Index<Context>> => {
-    const lexemes = await db.fullTextSearch(value)
+    const lexemes: Lexeme[] = [] // await db.fullTextSearch(value)
     return getContextMap(state, lexemes)
   }
 
