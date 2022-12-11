@@ -12,6 +12,7 @@ import * as db from '../data-providers/dexie'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import storage from '../util/storage'
+import runDispatch from './runDispatch'
 import testTimer from './testTimer'
 
 /**
@@ -114,9 +115,8 @@ export const cleanupTestApp = async () => {
 
 /** Refresh the test app. */
 export const refreshTestApp = async () => {
+  await runDispatch(clear())
   fakeTimer.useFakeTimer()
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
   initialize()
   await fakeTimer.runAllAsync()
   fakeTimer.useRealTimer()

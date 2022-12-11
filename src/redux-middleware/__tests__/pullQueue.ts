@@ -16,6 +16,7 @@ import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/delet
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
+import runDispatch from '../../test-helpers/runDispatch'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 
@@ -49,13 +50,8 @@ it('load thought', async () => {
   const root1 = await getContext(db, [HOME_TOKEN])
   expect(root1).toBeFalsy()
 
-  fakeTimer.useFakeTimer()
-
   // create a thought, which will get persisted to local db
-  store.dispatch(newThought({ value: 'a' }))
-
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
+  await runDispatch(newThought({ value: 'a' }))
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
@@ -64,11 +60,8 @@ it('load thought', async () => {
     childrenMap: { [thoughtA.id]: thoughtA.id },
   })
 
-  fakeTimer.useFakeTimer()
   // clear state
-  store.dispatch(clear())
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
+  await runDispatch(clear())
 
   const children = getAllChildrenByContext(store.getState(), [HOME_TOKEN])
   expect(children).toHaveLength(0)
@@ -88,9 +81,7 @@ it('load thought', async () => {
 })
 
 it('do not repopulate deleted thought', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch([
+  await runDispatch([
     newThought({}),
     deleteThoughtAtFirstMatchActionCreator(['']),
     // Need to setCursor to trigger the pullQueue
@@ -98,9 +89,6 @@ it('do not repopulate deleted thought', async () => {
     // (The cursor is normally set after deleting via the deleteThoughtWithCursor reducer).
     setCursor({ path: null }),
   ])
-
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
 
   const root = contextToThought(store.getState(), [HOME_TOKEN])
   expect(root).toMatchObject({
@@ -112,9 +100,7 @@ it('do not repopulate deleted thought', async () => {
 })
 
 it('load buffered thoughts', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch(
+  await runDispatch(
     importText({
       text: `
       - a
@@ -124,9 +110,6 @@ it('load buffered thoughts', async () => {
               - e`,
     }),
   )
-
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
   const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
@@ -156,9 +139,7 @@ it('load buffered thoughts', async () => {
 })
 
 it('delete thought with buffered descendants', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch([
+  await runDispatch([
     importText({
       text: `
         - x
@@ -171,9 +152,6 @@ it('delete thought with buffered descendants', async () => {
     }),
     setCursorFirstMatchActionCreator(['x']),
   ])
-
-  await fakeTimer.runAllAsync()
-  fakeTimer.useRealTimer()
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'b' }])
@@ -187,7 +165,7 @@ it('delete thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  store.dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
+  runDispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()
@@ -201,9 +179,7 @@ it('delete thought with buffered descendants', async () => {
 })
 
 it('move thought with buffered descendants', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch([
+  await runDispatch([
     importText({
       text: `
         - x
@@ -217,10 +193,6 @@ it('move thought with buffered descendants', async () => {
     }),
     setCursorFirstMatchActionCreator(['x']),
   ])
-
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
 
   const thoughtX = contextToThought(store.getState(), ['x'])!
   const thoughtA = contextToThought(store.getState(), ['a'])!
@@ -244,20 +216,14 @@ it('move thought with buffered descendants', async () => {
 
   await refreshTestApp()
 
-  fakeTimer.useFakeTimer()
-
   // delete thought with buffered descendants
-  store.dispatch(
+  await runDispatch(
     moveThoughtAtFirstMatchActionCreator({
       from: ['a'],
       to: ['x', 'a'],
       newRank: 0,
     }),
   )
-
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
@@ -275,9 +241,7 @@ it('move thought with buffered descendants', async () => {
 })
 
 it('edit thought with buffered descendants', async () => {
-  fakeTimer.useFakeTimer()
-
-  store.dispatch([
+  await runDispatch([
     importText({
       text: `
         - x
@@ -292,10 +256,6 @@ it('edit thought with buffered descendants', async () => {
     setCursorFirstMatchActionCreator(['x']),
   ])
 
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
-
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
   await matchContextsChildren(db, ['a'], [{ value: 'm' }, { value: 'b' }])
   await matchContextsChildren(db, ['a', 'b'], [{ value: 'c' }])
@@ -305,20 +265,15 @@ it('edit thought with buffered descendants', async () => {
   await matchContextsChildren(db, ['a', 'b', 'c', 'd', 'e'], [])
 
   await refreshTestApp()
-  fakeTimer.useFakeTimer()
 
   // edit thought with buffered descendants
-  store.dispatch(
+  await runDispatch(
     editThoughtByContextActionCreator({
       at: ['a'],
       oldValue: 'a',
       newValue: 'k',
     }),
   )
-
-  await fakeTimer.runAllAsync()
-
-  fakeTimer.useRealTimer()
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()
