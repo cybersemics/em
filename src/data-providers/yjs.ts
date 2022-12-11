@@ -1,39 +1,60 @@
 import _ from 'lodash'
 import { IndexeddbPersistence } from 'y-indexeddb'
-// import { WebsocketProvider } from 'y-websocket'
+import { WebsocketProvider } from 'y-websocket'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
+import updateThoughtsActionCreator from '../action-creators/updateThoughts'
+import store from '../stores/app'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import groupObjectBy from '../util/groupObjectBy'
+import keyValueBy from '../util/keyValueBy'
 import { DataProvider } from './DataProvider'
 
 const ydoc = new Y.Doc()
 
 const indexeddbProvider = new IndexeddbPersistence('em', ydoc)
 indexeddbProvider.whenSynced.then(() => {
-  // console.log('loaded data from indexed db', yThoughtIndex.size)
+  // console.info('loaded data from indexed db', yThoughtIndex.size)
 })
 
-// const websocketProvider = new WebsocketProvider('ws://localhost:1234', 'em', ydoc)
-// websocketProvider.on('status', (event: any) => {
-//   console.log(event.status) // logs "connected" or "disconnected"
-// })
+const websocketProvider = new WebsocketProvider('ws://localhost:1234', 'em', ydoc)
+websocketProvider.on('status', (event: any) => {
+  // console.info('websocket', event.status) // logs "connected" or "disconnected"
+})
 
-// array of numbers which produce a sum
-const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('em')
-const yLexemeIndex = ydoc.getMap<Lexeme>('em')
-const yHelpers = ydoc.getMap<string>('em')
+const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
+const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
+const yHelpers = ydoc.getMap<string>('helpers')
 
-// yThoughtIndex.observe(event => {
-//   console.log('thoughtIndex updated', yThoughtIndex.size)
+// Subscribe to yjs thoughts and use as the source of truth.
+// Apply yThoughtIndex and yLexemeIndex changes directly to state.
+yThoughtIndex.observe(async e => {
+  const ids = Array.from(e.keysChanged.keys())
+  const thoughts = await getThoughtsByIds(ids)
+  const thoughtIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: thoughts[i] || null }))
+  store.dispatch(
+    updateThoughtsActionCreator({ thoughtIndexUpdates, lexemeIndexUpdates: {}, local: false, remote: false }),
+  )
+})
+yLexemeIndex.observe(async e => {
+  const ids = Array.from(e.keysChanged.keys())
+  const lexemes = await getLexemesByIds(ids)
+  const lexemeIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: lexemes[i] || null }))
+  store.dispatch(
+    updateThoughtsActionCreator({ thoughtIndexUpdates: {}, lexemeIndexUpdates, local: false, remote: false }),
+  )
+})
+
+// ydoc.on('update', (event, provider, doc, transaction) => {
+//   console.info('update', { event, provider, doc, transaction })
 // })
 
 // yLexemeIndex.observe(event => {
-//   console.log('lexemeIndex updated', yLexemeIndex.size)
+//   console.info('lexemeIndex updated', yLexemeIndex.size)
 // })
 
 /** Atomically updates the thoughtIndex and lexemeIndex. */
@@ -58,21 +79,23 @@ export const updateThoughts = async (
     delete?: Index<null>
   }
 
-  Object.entries(thoughtDeletes || {}).forEach(([id]) => {
-    yThoughtIndex.delete(id)
-  })
+  ydoc.transact(() => {
+    Object.entries(thoughtDeletes || {}).forEach(([id]) => {
+      yThoughtIndex.delete(id)
+    })
 
-  Object.entries(lexemeDeletes || {}).forEach(([id]) => {
-    yLexemeIndex.delete(id)
-  })
+    Object.entries(lexemeDeletes || {}).forEach(([id]) => {
+      yLexemeIndex.delete(id)
+    })
 
-  Object.entries(thoughtUpdates || {}).forEach(([id, thought]) => {
-    yThoughtIndex.set(id, thought)
-  })
+    Object.entries(thoughtUpdates || {}).forEach(([id, thought]) => {
+      yThoughtIndex.set(id, thought)
+    })
 
-  Object.entries(lexemeUpdates || {}).forEach(([id, lexeme]) => {
-    yLexemeIndex.set(id, lexeme)
-  })
+    Object.entries(lexemeUpdates || {}).forEach(([id, lexeme]) => {
+      yLexemeIndex.set(id, lexeme)
+    })
+  }, ydoc.clientID)
 }
 
 // setTimeout(() => {
