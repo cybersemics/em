@@ -25,6 +25,7 @@ indexeddbProvider.whenSynced.then(() => {
 // array of numbers which produce a sum
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('em')
 const yLexemeIndex = ydoc.getMap<Lexeme>('em')
+const yHelpers = ydoc.getMap<string>('em')
 
 // yThoughtIndex.observe(event => {
 //   console.log('thoughtIndex updated', yThoughtIndex.size)
@@ -120,6 +121,13 @@ export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefi
       : undefined,
   )
 }
+
+/** Persists the cursor. */
+export const updateCursor = async (cursor: string | null) =>
+  cursor ? yHelpers.set('cursor', cursor) : yHelpers.delete('cursor')
+
+/** Deletes the cursor. */
+export const deleteCursor = async () => yHelpers.delete('cursor')
 
 const ydb: DataProvider = {
   clear,
