@@ -1,5 +1,6 @@
 import Emitter from 'emitter20'
 import { useEffect, useRef, useState } from 'react'
+import { act } from 'react-dom/test-utils'
 
 /** Creates a mini store that tracks state and can update consumers. */
 const ministore = <T = any>(initialState: T) => {
@@ -49,9 +50,9 @@ const ministore = <T = any>(initialState: T) => {
           setLocalState(selector ? selector(state) : state)
         }
       }
-      emitter.on('change', onChange)
+      const unsubscribe = subscribe(onChange)
       return () => {
-        emitter.off('change', onChange)
+        unsubscribe()
         unmounted.current = true
       }
     }, [])
@@ -61,7 +62,16 @@ const ministore = <T = any>(initialState: T) => {
 
   /** Subscribe directly to the state. */
   const subscribe = (f: (state: T) => void) => {
-    emitter.on('change', f)
+    // We need to wrap the callback in act when the tests are running.
+    // Do this once here rather than in every test.
+    // TODO: Move this to a stubbing function.
+    if (process.env.NODE_ENV === 'test') {
+      emitter.on('change', (state: T) => {
+        act(() => f(state))
+      })
+    } else {
+      emitter.on('change', f)
+    }
     return () => emitter.off('change', f)
   }
 
