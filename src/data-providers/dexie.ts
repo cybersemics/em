@@ -144,7 +144,7 @@ const initDB = async () => {
 }
 
 /** Clears all thoughts and contexts from the indices. */
-export const clearAll = () => Promise.all([db.lexemeIndex.clear(), db.thoughtIndex.clear(), db.helpers.clear()])
+export const clear = () => Promise.all([db.lexemeIndex.clear(), db.thoughtIndex.clear(), db.helpers.clear()])
 
 /** Updates a single lexeme in the lexemeIndex. */
 export const updateLexeme = async (id: string, lexeme: Lexeme) =>
@@ -175,7 +175,7 @@ export const deleteLexeme = (id: string) =>
     return db.lexemeIndex.delete(id)
   })
 
-/** Gets a single thought from the lexemeIndex by its id. */
+/** Gets a single lexeme from the lexemeIndex by its id. */
 export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
   db.lexemeIndex.get(key).then(fromLexemeDb)
 

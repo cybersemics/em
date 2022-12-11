@@ -8,7 +8,7 @@ import { HOME_TOKEN } from '../../constants'
 import { DataProvider } from '../../data-providers/DataProvider'
 import getContext from '../../data-providers/data-helpers/getContext'
 import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtById'
-import * as dexie from '../../data-providers/dexie'
+import db from '../../data-providers/yjs'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
@@ -26,8 +26,6 @@ import testTimer from '../../test-helpers/testTimer'
 */
 
 const fakeTimer = testTimer()
-
-const db = dexie as DataProvider
 
 /**
  * Match given children with for given context.

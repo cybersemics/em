@@ -15,7 +15,7 @@ const importThoughts = (text: string) => {
 
 describe('local search', () => {
   beforeEach(initDB)
-  afterEach(db.clearAll)
+  afterEach(db.clear)
 
   it('full text search with single word', async () => {
     const { lexemeIndex, thoughtIndex } = importThoughts(`

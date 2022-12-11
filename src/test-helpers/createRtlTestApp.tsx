@@ -75,7 +75,7 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    await db.clearAll()
+    await db.clear()
     document.body.innerHTML = ''
 
     // set url back to home
