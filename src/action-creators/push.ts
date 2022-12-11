@@ -10,8 +10,8 @@ import Thunk from '../@types/Thunk'
 import error from '../action-creators/error'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
+import ydb from '../data-providers/yjs'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -77,7 +77,9 @@ const pushLocal = (
   // recentlyEdited
   // const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
 
-  return db.updateThoughts(thoughtUpdates, lexemeIndexUpdates, updates.schemaVersion)
+  ydb.updateThoughts?.(thoughtUpdates, lexemeIndexUpdates, updates.schemaVersion)
+
+  return Promise.resolve()
 }
 
 /** Prepends lexemeIndex and thoughtIndex keys for syncing to Firebase. */

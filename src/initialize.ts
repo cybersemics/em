@@ -17,7 +17,7 @@ import setRemoteSearch from './action-creators/setRemoteSearch'
 import statusActionCreator from './action-creators/status'
 import userAuthenticated from './action-creators/userAuthenticated'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
-import initDB, * as db from './data-providers/dexie'
+import initDB from './data-providers/dexie'
 import * as selection from './device/selection'
 import globals from './globals'
 import initAlgoliaSearch from './search/algoliaSearch'
@@ -182,13 +182,11 @@ const testHelpers = {
   getLexemeFromDB,
   getState: store.getState,
   _: _,
-  clearAll: db.clearAll,
 }
 
 // add useful functions to window.em for debugging
 const windowEm = {
   contextToThoughtId,
-  db,
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {

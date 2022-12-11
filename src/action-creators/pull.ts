@@ -7,8 +7,8 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import * as db from '../data-providers/dexie'
 import getFirebaseProvider from '../data-providers/firebase'
+import ydb from '../data-providers/yjs'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
@@ -84,7 +84,7 @@ const pull =
     const thoughtRemoteChunks: ThoughtIndices[] = []
 
     // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
-    const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
+    const thoughtsLocalIterable = getManyDescendants(ydb, remote ? [] : filteredThoughtIds, getState, {
       maxDepth: maxDepth ?? BUFFER_DEPTH,
       preventLoadingAncestors,
     })

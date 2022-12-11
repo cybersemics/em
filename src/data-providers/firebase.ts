@@ -59,7 +59,7 @@ const getFirebaseProvider = (state: State, dispatch: Dispatch<any>) => ({
   name: 'Firebase',
 
   /** Deletes all data in the data provider. */
-  clearAll: () => {
+  clear: () => {
     throw new Error('NOT IMPLEMENTED')
   },
 

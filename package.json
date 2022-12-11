@@ -108,7 +108,10 @@
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.2",
     "xhtml-purifier": "^0.4.1",
-    "yallist": "^4.0.0"
+    "y-indexeddb": "^9.0.9",
+    "y-websocket": "^1.4.5",
+    "yallist": "^4.0.0",
+    "yjs": "^13.5.43"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

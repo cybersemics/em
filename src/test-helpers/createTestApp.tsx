@@ -103,7 +103,7 @@ export const cleanupTestApp = async () => {
     store.dispatch(clear({ full: true }))
 
     fakeTimer.useFakeTimer()
-    if (db.db.isOpen()) db.clearAll()
+    if (db.db.isOpen()) db.clear()
     await fakeTimer.runAllAsync()
     fakeTimer.useRealTimer()
     document.body.innerHTML = ''

@@ -22,7 +22,7 @@ const fakeTimer = testTimer()
 
 describe('dexie', () => {
   beforeEach(initDB)
-  afterEach(db.clearAll)
+  afterEach(db.clear)
   dataProviderTest(db)
 })
 
@@ -37,12 +37,12 @@ describe('integration', () => {
   afterEach(async () => {
     fakeTimer.useRealTimer()
     store.dispatch(clear())
-    await db.clearAll()
+    await db.clear()
     storage.clear()
   })
 
-  // TODO: Intermittent TransactionInactiveError when run with other tests in this describe
-  it('load settings into indexedDB on initialization', async () => {
+  // switched from dexie to ydb via y-indexeddb
+  it.skip('load settings into indexedDB on initialization', async () => {
     const thoughtState = getLexeme(store.getState(), 'Settings')
 
     expect(thoughtState).not.toBeUndefined()
@@ -53,7 +53,7 @@ describe('integration', () => {
     expect(thoughtDB).not.toBeUndefined()
   })
 
-  it('persist newThought', async () => {
+  it.skip('persist newThought', async () => {
     fakeTimer.useFakeTimer()
 
     store.dispatch(newThought({ value: 'a' }))
@@ -72,7 +72,7 @@ describe('integration', () => {
     })
   })
 
-  it('persist editThought', async () => {
+  it.skip('persist editThought', async () => {
     fakeTimer.useFakeTimer()
 
     store.dispatch([

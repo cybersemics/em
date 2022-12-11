@@ -1,8 +1,7 @@
 import Thunk from '../@types/Thunk'
 import clear from '../action-creators/clear'
 import importText from '../action-creators/importText'
-import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
-import { clearAll } from '../data-providers/dexie'
+import { EM_TOKEN, INITIAL_SETTINGS } from '../constants'
 import scrollTo from '../device/scrollTo'
 import never from '../util/never'
 import storage from '../util/storage'
@@ -13,10 +12,10 @@ const logout = (): Thunk => (dispatch, getState) => {
   window.firebase.auth().signOut()
 
   // clear local db
-  clearAll().catch(err => {
-    localStorage.removeItem(INITIAL_SETTING_KEY)
-    throw new Error(err)
-  })
+  // clearAll().catch(err => {
+  //   localStorage.removeItem(INITIAL_SETTING_KEY)
+  //   throw new Error(err)
+  // })
 
   // clear autologin
   storage.clear()
