@@ -337,12 +337,6 @@ export const updateLastUpdated = async (lastUpdated: Timestamp) => db.helpers.up
 /** Gets all the helper values. */
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
 
-/** Updates the cursor helper. */
-export const updateCursor = async (cursor: string | null) => db.helpers.update('EM', { cursor })
-
-/** Deletes the cursor helper. */
-export const deleteCursor = async () => db.helpers.update('EM', { cursor: null })
-
 /** Gets the full logs. */
 export const getLogs = async () => db.logs.toArray()
 
