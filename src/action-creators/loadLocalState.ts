@@ -2,22 +2,20 @@ import Thunk from '../@types/Thunk'
 import importText from '../action-creators/importText'
 import updateThoughts from '../action-creators/updateThoughts'
 import { EM_TOKEN, INITIAL_SETTINGS, INITIAL_SETTING_KEY } from '../constants'
-import * as db from '../data-providers/dexie'
+import { getLastUpdated } from '../data-providers/yjs'
 import getThoughtById from '../selectors/getThoughtById'
 import never from '../util/never'
 import storage from '../util/storage'
 
 /** Loads the local state from the IndexedDB database. */
 const loadLocalState = (): Thunk<Promise<void>> => async (dispatch, getState) => {
-  // load helpers and settings from local database
-  const { lastUpdated, recentlyEdited } = await (db.getHelpers() as Promise<db.Helper>)
+  const lastUpdated = await getLastUpdated()
 
   dispatch({
     type: 'loadLocalState',
     contextViews: {},
     cursor: null,
     lastUpdated,
-    recentlyEdited: recentlyEdited || {},
   })
 
   const isSettingPopulated = storage.getItem(INITIAL_SETTING_KEY)
