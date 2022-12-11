@@ -139,7 +139,7 @@ export const updateLastUpdated = async (lastUpdated: Timestamp) => yHelpers.set(
 /** Deletes a single lexeme from the lexemeIndex by its id. Only used by deleteData. TODO: How to remove? */
 export const deleteLexeme = async (id: string) => yLexemeIndex.delete(id)
 
-const ydb: DataProvider = {
+const db: DataProvider = {
   clear,
   getLexemeById,
   getLexemesByIds,
@@ -149,4 +149,4 @@ const ydb: DataProvider = {
   updateThoughts,
 }
 
-export default ydb
+export default db
