@@ -8,7 +8,6 @@ import './App.css'
 import authenticate from './action-creators/authenticate'
 import loadFromUrl from './action-creators/loadFromUrl'
 import loadLocalState from './action-creators/loadLocalState'
-import loadPublicThoughts from './action-creators/loadPublicThoughts'
 import logout from './action-creators/logout'
 import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
@@ -66,11 +65,6 @@ export const initFirebase = async (): Promise<void> => {
         store.dispatch(setRemoteSearch({ value: false }))
       }
     })
-
-    // load a public context
-    if (owner() !== '~') {
-      store.dispatch(loadPublicThoughts())
-    }
 
     // on connect change
     // this is called when moving from online to offline and vice versa
