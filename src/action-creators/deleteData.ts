@@ -1,5 +1,5 @@
 import Thunk from '../@types/Thunk'
-import { deleteLexeme, updateLastUpdated } from '../data-providers/dexie'
+import { deleteLexeme, updateLastUpdated } from '../data-providers/yjs'
 import hashThought from '../util/hashThought'
 import timestamp from '../util/timestamp'
 

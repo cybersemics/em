@@ -6,6 +6,7 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import Timestamp from '../@types/Timestamp'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import groupObjectBy from '../util/groupObjectBy'
 import { DataProvider } from './DataProvider'
@@ -128,6 +129,15 @@ export const updateCursor = async (cursor: string | null) =>
 
 /** Deletes the cursor. */
 export const deleteCursor = async () => yHelpers.delete('cursor')
+
+/** Last updated. */
+export const getLastUpdated = async () => yHelpers.get('lastUpdated')
+
+/** Last updated. */
+export const updateLastUpdated = async (lastUpdated: Timestamp) => yHelpers.set('lastUpdated', lastUpdated)
+
+/** Deletes a single lexeme from the lexemeIndex by its id. Only used by deleteData. TODO: How to remove? */
+export const deleteLexeme = async (id: string) => yLexemeIndex.delete(id)
 
 const ydb: DataProvider = {
   clear,

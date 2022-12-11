@@ -168,13 +168,6 @@ export const updateLexemeIndex = async (lexemeIndexMap: Index<Lexeme>) =>
     return db.lexemeIndex.bulkPut(thoughtsArray)
   })
 
-/** Deletes a single thought from the lexemeIndex. */
-export const deleteLexeme = (id: string) =>
-  db.transaction('rw', db.lexemeIndex, (tx: ObservableTransaction) => {
-    tx.source = getSessionId()
-    return db.lexemeIndex.delete(id)
-  })
-
 /** Gets a single lexeme from the lexemeIndex by its id. */
 export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
   db.lexemeIndex.get(key).then(fromLexemeDb)
@@ -268,7 +261,6 @@ export const updateThoughts = async (
         thoughtDeletes ? db.thoughtIndex.bulkDelete(Object.keys(thoughtDeletes)) : null,
         lexemeDeletes ? db.lexemeIndex.bulkDelete(Object.keys(lexemeDeletes)) : null,
         lexemeUpdates ? updateLexemeIndex(lexemeUpdates) : null,
-        updateLastUpdated(timestamp()),
         updateSchemaVersion(schemaVersion),
       ] as Promise<unknown>[])
     },
@@ -330,9 +322,6 @@ export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.
 
 /** Updates the schema version helper. */
 export const updateSchemaVersion = async (schemaVersion: number) => db.helpers.update('EM', { schemaVersion })
-
-/** Updates the lastUpdates helper. */
-export const updateLastUpdated = async (lastUpdated: Timestamp) => db.helpers.update('EM', { lastUpdated })
 
 /** Gets all the helper values. */
 export const getHelpers = async () => db.helpers.get({ id: 'EM' })
