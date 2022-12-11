@@ -51,7 +51,9 @@ const mapStateToProps = (state: State, props: BulletProps) => {
     isHighlighted: isHolding || props.isDragging,
     missing: !lexeme,
     fontSize: state.fontSize,
-    pending: props.isContextPending || isPending(state, thought),
+    // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
+    // (Another approach would be to pre-load the context children as soon as the context view is activated.)
+    pending: props.isContextPending || (!isContextViewActive(state, parentOf(props.path)) && isPending(state, thought)),
     showContexts: isContextViewActive(state, props.path),
     dark: theme(state) !== 'Light',
   }
