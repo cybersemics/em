@@ -11,7 +11,7 @@ import error from '../action-creators/error'
 import { clientId } from '../browser'
 import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
 import getFirebaseProvider from '../data-providers/firebase'
-import ydb from '../data-providers/yjs'
+import db from '../data-providers/yjs'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -77,7 +77,7 @@ const pushLocal = (
   // recentlyEdited
   // const recentlyEditedPromise = recentlyEdited ? db.updateRecentlyEdited(recentlyEdited) : null
 
-  ydb.updateThoughts?.(thoughtUpdates, lexemeIndexUpdates, updates.schemaVersion)
+  db.updateThoughts?.(thoughtUpdates, lexemeIndexUpdates, updates.schemaVersion)
 
   return Promise.resolve()
 }

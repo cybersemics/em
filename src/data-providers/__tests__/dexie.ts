@@ -41,7 +41,7 @@ describe('integration', () => {
     storage.clear()
   })
 
-  // switched from dexie to ydb via y-indexeddb
+  // switched from dexie to yjs via y-indexeddb
   it.skip('load settings into indexedDB on initialization', async () => {
     const thoughtState = getLexeme(store.getState(), 'Settings')
 
