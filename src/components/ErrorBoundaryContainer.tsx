@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useSelector } from 'react-redux'
-import * as db from '../data-providers/dexie'
 import themeColors from '../selectors/themeColors'
 
 /** A triangular toggle component. */
@@ -63,14 +62,9 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
   </div>
 )
 
-/** Logs an error in the local database when it occurs. */
-const onError = (error: Error, componentStack?: any) => db.log({ message: error.message, stack: componentStack })
-
 /** A higher-order component that catches errors of all descendant components. When an error is caught, a fallback component will be rendered. */
 const ErrorBoundaryContainer: FC = ({ children }) => (
-  <ErrorBoundary FallbackComponent={ErrorFallback} onError={onError}>
-    {children}
-  </ErrorBoundary>
+  <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
 )
 
 export default ErrorBoundaryContainer
