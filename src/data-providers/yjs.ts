@@ -16,40 +16,37 @@ import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
-const SEA = (window as any).Gun.SEA
-
 const ydoc = new Y.Doc()
 
-// Define a unique device id that is the default yjs doc id.
-// This can be shared with ?share={deviceId} when connected to a y-websocket server
-let docId = storage.getItem('docId')
-if (!docId) {
-  docId = createId()
-  storage.setItem('docId', docId)
+// Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
+// This can be shared with ?share={docId} when connected to a y-websocket server.
+let tsid = storage.getItem('tsid')
+if (!tsid) {
+  tsid = createId()
+  storage.setItem('tsid', tsid)
 }
 
-// access a shared document when the URL contains share={docId}
-// otherwise use the docId stored on the device
+// Define a secret access token for this device.
+// Used to authenticate a connection to the y-websocket server.
+let accessToken = storage.getItem('accessToken')
+if (!accessToken) {
+  accessToken = createId()
+  storage.setItem('accessToken', accessToken)
+}
+
+// access a shared document when the URL contains share={tsid}
+// otherwise use the tsid stored on the device
 const shareId = new URLSearchParams(window.location.search).get('share')
 
-;(async () => {
-  // Create a public-private key pair for websocket authentication and sharing
-  let pair = JSON.parse(storage.getItem('pair') || 'null')
-  if (!pair) {
-    pair = await SEA.pair()
-    storage.setItem('pair', JSON.stringify(pair))
-  }
+// const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
+// indexeddbProvider.whenSynced.then(() => {
+// console.info('loaded data from indexed db', yThoughtIndex.size)
+// })
 
-  // const indexeddbProvider = new IndexeddbPersistence(docId, ydoc)
-  // indexeddbProvider.whenSynced.then(() => {
-  // console.info('loaded data from indexed db', yThoughtIndex.size)
-  // })
-
-  const websocketProvider = new WebsocketProvider('ws://localhost:1234', shareId || docId, ydoc, { auth: pair.pub })
-  websocketProvider.on('status', (event: any) => {
-    // console.info('websocket', event.status) // logs "connected" or "disconnected"
-  })
-})()
+const websocketProvider = new WebsocketProvider('ws://localhost:1234', shareId || tsid, ydoc, { auth: accessToken })
+websocketProvider.on('status', (event: any) => {
+  // console.info('websocket', event.status) // logs "connected" or "disconnected"
+})
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
 const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
