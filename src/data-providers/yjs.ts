@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { WebsocketProvider } from 'y-websocket'
+import { WebsocketProvider } from 'y-websocket-auth'
 // import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
@@ -45,7 +45,7 @@ const shareId = new URLSearchParams(window.location.search).get('share')
 
 const websocketProvider = new WebsocketProvider('ws://localhost:1234', shareId || tsid, ydoc, { auth: accessToken })
 websocketProvider.on('status', (event: any) => {
-  // console.info('websocket', event.status) // logs "connected" or "disconnected"
+  console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
