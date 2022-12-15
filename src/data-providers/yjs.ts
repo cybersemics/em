@@ -194,4 +194,10 @@ const db: DataProvider = {
   updateThoughts,
 }
 
+export const auth = {
+  share: () => {
+    websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
+  },
+}
+
 export default db

@@ -27,6 +27,7 @@ import ModalGestureHelp from './ModalGestureHelp'
 import ModalHelp from './ModalHelp'
 import ModalInvites from './ModalInvites'
 import ModalSettings from './ModalSettings'
+import ModalShare from './ModalShare'
 import ModalSignup from './ModalSignup'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
@@ -205,6 +206,8 @@ const AppComponent: FC<Props> = props => {
             <ModalSignup />
           ) : showModal === 'settings' ? (
             <ModalSettings />
+          ) : showModal === 'share' ? (
+            <ModalShare />
           ) : showModal === 'invites' ? (
             <ModalInvites />
           ) : (
