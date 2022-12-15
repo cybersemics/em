@@ -275,6 +275,10 @@ const ModalHelp = ({
           Gesture icon by <a href='https://thenounproject.com/icon/gesture-2211316/'>Adrien Coquet</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Download icon by <a href='https://thenounproject.com/icon/download-1000840/'>DinosoftLab</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
     </Modal>
   )
