@@ -53,10 +53,10 @@ permissionsProvider.on('status', (event: any) => {
   // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
 
-const yPermissions = ypermissionsDoc.getMap<any>('permissions')
+const yPermissions = ypermissionsDoc.getMap<Index<'owner'>>('permissions')
 yPermissions.observe(async e => {
   const permissions = yPermissions.toJSON()
-  console.log('yPermissions (observe)', permissions)
+  console.info('yPermissions (observe)', permissions)
 })
 
 // const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
@@ -221,7 +221,7 @@ const db: DataProvider = {
 
 export const auth = {
   share: () => {
-    // websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
+    websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
   },
 }
 

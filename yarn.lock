@@ -19298,10 +19298,10 @@ y-protocols@^1.0.5:
   dependencies:
     lib0 "^0.2.42"
 
-y-websocket-auth@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/y-websocket-auth/-/y-websocket-auth-0.1.1.tgz#fd39ba7e415ae868fc7f66bd927cfe2b150c2da0"
-  integrity sha512-k1GLJiUeGN7Y122dSUSY4jadrSlogo/GxeoYd4jzuyh1dUkCqkBJa3SZJoIWpWMu9oyeYpeKE4MX/LoTyBcwYw==
+y-websocket-auth@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/y-websocket-auth/-/y-websocket-auth-0.1.2.tgz#605c470eb5418b3c99b69ce9a163f841eeca08ae"
+  integrity sha512-eLgHV48M1h/rEKgLKBPK01+tMIp19qiaxt6RwUfNM0OXQyeUOpIpfeV/IIqOYH3FoVjAmeHvbpektHONTW751Q==
   dependencies:
     lib0 "^0.2.52"
     lodash.debounce "^4.0.8"
