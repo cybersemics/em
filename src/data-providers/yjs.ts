@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { useCallback, useEffect, useState } from 'react'
 // import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
@@ -21,34 +22,35 @@ const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
-let accessToken = storage.getItem('accessToken')
-if (!accessToken) {
-  accessToken = createId()
-  storage.setItem('accessToken', accessToken)
+let accessTokenLocal = storage.getItem('accessToken')
+if (!accessTokenLocal) {
+  accessTokenLocal = createId()
+  storage.setItem('accessToken', accessTokenLocal)
 }
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-let tsid = storage.getItem('tsid')
-if (!tsid) {
-  tsid = createId()
-  storage.setItem('tsid', tsid)
+let tsidLocal = storage.getItem('tsid')
+if (!tsidLocal) {
+  tsidLocal = createId()
+  storage.setItem('tsid', tsidLocal)
 }
 
-// access a shared document when the URL contains share={tsid}
+// access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device
-const shareId = new URLSearchParams(window.location.search).get('share')
+const tsidShared = new URLSearchParams(window.location.search).get('share')
+const accessTokenShared = new URLSearchParams(window.location.search).get('auth')
+
+export const tsid = tsidShared || tsidLocal
+const accessToken = accessTokenShared || accessTokenLocal
 
 /*************************************
  * Permissions ydoc
  ************************************/
 
-const permissionsProvider = new WebsocketProvider(
-  'ws://localhost:1234',
-  `${shareId || tsid}/permissions`,
-  ypermissionsDoc,
-  { auth: accessToken },
-)
+const permissionsProvider = new WebsocketProvider('ws://localhost:1234', `${tsid}/permissions`, ypermissionsDoc, {
+  auth: accessToken,
+})
 permissionsProvider.on('status', (event: any) => {
   // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
@@ -68,7 +70,7 @@ yPermissions.observe(async e => {
  * Thoughtspace ydoc
  ************************************/
 
-const websocketProvider = new WebsocketProvider('ws://localhost:1234', shareId || tsid, ydoc, { auth: accessToken })
+const websocketProvider = new WebsocketProvider('ws://localhost:1234', tsid, ydoc, { auth: accessToken })
 websocketProvider.on('status', (event: any) => {
   // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
@@ -221,8 +223,34 @@ const db: DataProvider = {
 
 export const auth = {
   share: () => {
-    websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
+    websocketProvider.send({ type: 'share', docid: tsidLocal, accessToken: createId() })
   },
 }
+
+// Infer the generic type of a specific YEvent such as YMapEvent or YArrayEvent
+// This is needed because YEvent is not generic.
+type ExtractYEvent<T> = T extends Y.YMapEvent<infer U> | Y.YArrayEvent<infer U> ? U : never
+
+/** Subscribes to a yjs shared type, e.g. Y.Map. */
+export const useSharedType = <T>(yobj: Y.AbstractType<T>): ExtractYEvent<T> => {
+  const [state, setState] = useState<ExtractYEvent<T>>(yobj.toJSON())
+
+  const updateState = useCallback(async e => {
+    const value = yobj.toJSON()
+    setState(value)
+  }, [])
+
+  useEffect(() => {
+    yobj.observe(updateState)
+    return () => {
+      yobj.unobserve(updateState)
+    }
+  })
+
+  return state
+}
+
+/** A hook that subscribes to yPermissions. */
+export const usePermissions = () => useSharedType(yPermissions)
 
 export default db
