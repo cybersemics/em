@@ -59,11 +59,6 @@ yPermissions.observe(async e => {
   console.log('yPermissions (observe)', permissions)
 })
 
-setTimeout(() => {
-  const permissions = yPermissions.toJSON()
-  console.log('yPermissions (init)', permissions)
-}, 3000)
-
 // const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
 // indexeddbProvider.whenSynced.then(() => {
 // console.info('loaded data from indexed db', yThoughtIndex.size)
