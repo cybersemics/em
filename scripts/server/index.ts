@@ -18,7 +18,7 @@ const serverId = nanoid()
  *     }
  *   }
  */
-const ydoc = new Y.Doc()
+
 // const PERMISSIONS_DOCID = 'permissions'
 // const LeveldbPersistence = require('y-leveldb').LeveldbPersistence
 // const ldb = new LeveldbPersistence(permissionsDir)
@@ -35,14 +35,23 @@ const ydoc = new Y.Doc()
 /** Authenticates the access token. */
 export const authenticate = (accessToken: string, docid: string, json: any) => {
   if (accessToken === serverId) return true
-  console.log('authenticate', { accessToken, docid, json })
   const permissionsDocId = docid.endsWith('/permissions') ? docid.split('/permissions')[0] : null
+  const ydoc = new Y.Doc()
+  const permissionsProvider = new WebsocketProvider(
+    'ws://localhost:1234',
+    `${permissionsDocId || docid}/permissions`,
+    ydoc,
+    {
+      auth: serverId,
+      WebSocketPolyfill: require('ws'),
+    },
+  )
   const yPermissions = ydoc.getMap<string>('permissions')
+  console.log('authenticate', { accessToken, docid, json, yPermissions: yPermissions.toJSON() })
   const role = yPermissions.get(accessToken)
-  console.log({ role })
 
   // if the document has no owner, automatically assign the current user as owner
-  if (!permissionsDocId && !role) {
+  if (yPermissions.size === 0) {
     console.info('assigning owner')
     yPermissions.set(accessToken, 'owner')
     return true
@@ -50,14 +59,6 @@ export const authenticate = (accessToken: string, docid: string, json: any) => {
 
   return role === 'owner'
 }
-
-const permissionsProvider = new WebsocketProvider('ws://localhost:1234', 'mlWuPseluUoRm_0WDkj_D/permissions', ydoc, {
-  auth: serverId,
-  WebSocketPolyfill: require('ws'),
-})
-permissionsProvider.on('status', (event: any) => {
-  console.info('websocket', event.status) // logs "connected" or "disconnected"
-})
 
 server({ authenticate }).listen(port, host, () => {
   console.info(`server running at '${host}' on port ${port}`)
