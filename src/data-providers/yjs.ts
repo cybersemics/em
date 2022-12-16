@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import { WebsocketProvider } from 'y-websocket-auth'
 // import { IndexeddbPersistence } from 'y-indexeddb'
+import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
@@ -17,14 +17,7 @@ import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
 const ydoc = new Y.Doc()
-
-// Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
-// This can be shared with ?share={docId} when connected to a y-websocket server.
-let tsid = storage.getItem('tsid')
-if (!tsid) {
-  tsid = createId()
-  storage.setItem('tsid', tsid)
-}
+const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
@@ -34,18 +27,55 @@ if (!accessToken) {
   storage.setItem('accessToken', accessToken)
 }
 
+// Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
+// This can be shared with ?share={docId} when connected to a y-websocket server.
+let tsid = storage.getItem('tsid')
+if (!tsid) {
+  tsid = createId()
+  storage.setItem('tsid', tsid)
+}
+
 // access a shared document when the URL contains share={tsid}
 // otherwise use the tsid stored on the device
 const shareId = new URLSearchParams(window.location.search).get('share')
+
+/*************************************
+ * Permissions ydoc
+ ************************************/
+
+const permissionsProvider = new WebsocketProvider(
+  'ws://localhost:1234',
+  `${shareId || tsid}/permissions`,
+  ypermissionsDoc,
+  { auth: accessToken },
+)
+permissionsProvider.on('status', (event: any) => {
+  // console.info('websocket', event.status) // logs "connected" or "disconnected"
+})
+
+const yPermissions = ypermissionsDoc.getMap<any>('permissions')
+yPermissions.observe(async e => {
+  const permissions = yPermissions.toJSON()
+  console.log('yPermissions (observe)', permissions)
+})
+
+setTimeout(() => {
+  const permissions = yPermissions.toJSON()
+  console.log('yPermissions (init)', permissions)
+}, 3000)
 
 // const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
 // indexeddbProvider.whenSynced.then(() => {
 // console.info('loaded data from indexed db', yThoughtIndex.size)
 // })
 
+/*************************************
+ * Thoughtspace ydoc
+ ************************************/
+
 const websocketProvider = new WebsocketProvider('ws://localhost:1234', shareId || tsid, ydoc, { auth: accessToken })
 websocketProvider.on('status', (event: any) => {
-  console.info('websocket', event.status) // logs "connected" or "disconnected"
+  // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
@@ -196,7 +226,7 @@ const db: DataProvider = {
 
 export const auth = {
   share: () => {
-    websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
+    // websocketProvider.send({ type: 'share', docid: tsid, accessToken: createId() })
   },
 }
 
