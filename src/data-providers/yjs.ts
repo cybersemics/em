@@ -1,10 +1,12 @@
 import _ from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
+import { shallowEqual } from 'react-redux'
 // import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
@@ -30,7 +32,7 @@ if (!accessTokenLocal) {
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-let tsidLocal = storage.getItem('tsid')
+export let tsidLocal = storage.getItem('tsid')
 if (!tsidLocal) {
   tsidLocal = createId()
   storage.setItem('tsid', tsidLocal)
@@ -42,24 +44,17 @@ const tsidShared = new URLSearchParams(window.location.search).get('share')
 const accessTokenShared = new URLSearchParams(window.location.search).get('auth')
 
 export const tsid = tsidShared || tsidLocal
-const accessToken = accessTokenShared || accessTokenLocal
+export const accessToken = accessTokenShared || accessTokenLocal
 
 /*************************************
  * Permissions ydoc
  ************************************/
 
-const permissionsProvider = new WebsocketProvider('ws://localhost:1234', `${tsid}/permissions`, ypermissionsDoc, {
+// eslint-disable-next-line no-new
+new WebsocketProvider('ws://localhost:1234', `${tsid}/permissions`, ypermissionsDoc, {
   auth: accessToken,
 })
-permissionsProvider.on('status', (event: any) => {
-  // console.info('websocket', event.status) // logs "connected" or "disconnected"
-})
-
-const yPermissions = ypermissionsDoc.getMap<Index<'owner'>>('permissions')
-yPermissions.observe(async e => {
-  const permissions = yPermissions.toJSON()
-  console.info('yPermissions (observe)', permissions)
-})
+const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
 // const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
 // indexeddbProvider.whenSynced.then(() => {
@@ -221,9 +216,13 @@ const db: DataProvider = {
   updateThoughts,
 }
 
-export const auth = {
-  share: () => {
-    websocketProvider.send({ type: 'share', docid: tsidLocal, accessToken: createId() })
+// websocket RPC for shares
+export const shareServer = {
+  add: ({ name, role }: Share) => {
+    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken: createId(), name, role })
+  },
+  delete: (accessToken: string) => {
+    websocketProvider.send({ type: 'share/delete', docid: tsid, accessToken })
   },
 }
 
@@ -231,13 +230,13 @@ export const auth = {
 // This is needed because YEvent is not generic.
 type ExtractYEvent<T> = T extends Y.YMapEvent<infer U> | Y.YArrayEvent<infer U> ? U : never
 
-/** Subscribes to a yjs shared type, e.g. Y.Map. */
+/** Subscribes to a yjs shared type, e.g. Y.Map. Performs shallow comparison between new and old state and only updates if shallow value has changed. */
 export const useSharedType = <T>(yobj: Y.AbstractType<T>): ExtractYEvent<T> => {
   const [state, setState] = useState<ExtractYEvent<T>>(yobj.toJSON())
 
   const updateState = useCallback(async e => {
-    const value = yobj.toJSON()
-    setState(value)
+    const stateNew: Index<Share> = yobj.toJSON()
+    setState((stateOld: any) => (!shallowEqual(stateNew, stateOld) ? stateNew : stateOld))
   }, [])
 
   useEffect(() => {
