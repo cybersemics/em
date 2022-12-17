@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import Index from '../@types/IndexType'
 import ShareType from '../@types/Share'
 import alert from '../action-creators/alert'
 import { isTouch } from '../browser'
@@ -10,6 +11,14 @@ import { ActionButton } from './ActionButton'
 import Modal from './Modal'
 import CopyClipboard from './icons/CopyClipboard'
 import ShareIcon from './icons/ShareIcon'
+
+/** Gets the next available device name for a new device. Autoincrements by 1. */
+const getNextDeviceName = (permissions: Index<ShareType>, start?: number): string => {
+  const nextDeviceNumber = start ?? Object.keys(permissions).length + 1
+  return Object.values(permissions).some(share => share.name === `Device ${nextDeviceNumber}`)
+    ? getNextDeviceName(permissions, nextDeviceNumber + 1)
+    : `Device ${nextDeviceNumber}`
+}
 
 /** Permissions role label. */
 const Role = ({ role }: { role: string }) => <>{role === 'owner' ? 'Full Access' : role}</>
@@ -127,8 +136,9 @@ const AddDeviceForm = ({
       <div>
         <span style={{ marginRight: '1em' }}>Name: </span>
         <input
+          ref={el => el?.focus()}
           type='text'
-          onChange={e => setName(e.target.value.trim())}
+          onChange={e => setName(e.target.value)}
           value={name}
           style={{ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' }}
         />
@@ -216,10 +226,10 @@ const ModalShare = () => {
           <AddDeviceForm
             onCancel={() => setShowDeviceForm(false)}
             onSubmit={({ name, role }: ShareType) => {
-              shareServer.add({ name, role })
+              shareServer.add({ name: name?.trim(), role })
               setShowDeviceForm(false)
             }}
-            defaultName={`Device ${Object.keys(permissions).length + 1}`}
+            defaultName={getNextDeviceName(permissions)}
           />
         ) : (
           <div style={{ marginTop: '1em' }}>
