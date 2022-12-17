@@ -7,10 +7,12 @@ const colors = {
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(217, 217, 217, 1)', // #d9d9d9
     fg: 'rgba(255, 255, 255, 1)',
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
+    gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
@@ -30,10 +32,12 @@ const colors = {
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
+    darkgray: 'rgba(17, 17, 17, 1)', // #111111
     fg85: 'rgba(39, 39, 39, 1)', // #272727
     fg: 'rgba(0, 0, 0, 1)',
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
+    gray15: 'rgba(38, 38, 38, 1)', // #262626
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9

@@ -1,5 +1,6 @@
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
+import Share from '../../src/@types/Share'
 
 const { getYDoc, createServer } = require('y-websocket-auth/server')
 
@@ -40,36 +41,55 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
   const docName = name.endsWith('/permissions') ? name.split('/permissions')[0] : name
   const permissionsDocName = `${docName}/permissions`
   const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
-  const yPermissionsServer = ydoc.getMap<string>(docName)
-  let role = yPermissionsServer.get(accessToken)
+  const yPermissionsServer = ydoc.getMap<Share>(docName)
+  let share = yPermissionsServer.get(accessToken)
 
   // if the document has no owner, automatically assign the current user as owner
   if (yPermissionsServer.size === 0) {
     console.info('assigning owner')
-    yPermissionsServer.set(accessToken, 'owner')
-    role = 'owner'
+    share = { role: 'owner' }
+    yPermissionsServer.set(accessToken, share)
   }
 
   // Copy permissions from the server-side permissions doc to the client-side permission doc.
   // The server-side permissions doc keeps all permissions for all documents into memory.
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
-  if (role === 'owner' && params.type === 'auth') {
-    const yPermissionsClient = permissionsDoc.getMap<string>(PERMISSIONS_DOCID)
-    yPermissionsServer.forEach((value, key) => {
-      yPermissionsClient.set(key, value)
+  if (share?.role === 'owner' && params.type === 'auth') {
+    const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
+    yPermissionsServer.forEach((share, accessToken) => {
+      yPermissionsClient.set(accessToken, share)
     })
   }
 
-  return role === 'owner'
+  return share?.role === 'owner'
 }
 
 const routes: { [key: string]: (...props: any) => any } = {
-  share: ({ docid, accessToken }: { docid: string; accessToken: string }) => {
-    const permissionsDoc: Y.Doc = getYDoc(docid)
-    const yPermissionsServer = ydoc.getMap<string>(docid)
-    const yPermissionsClient = permissionsDoc.getMap<string>(PERMISSIONS_DOCID)
-    yPermissionsServer.set(accessToken, 'owner')
-    yPermissionsClient.set(accessToken, 'owner')
+  'share/add': ({
+    accessToken,
+    docid,
+    name,
+    role,
+  }: {
+    accessToken: string
+    docid: string
+    name?: string
+    role: 'owner'
+  }) => {
+    const permissionsDocName = `${docid}/permissions`
+    const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
+    const yPermissionsServer = ydoc.getMap<Share>(docid)
+    const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
+    yPermissionsServer.set(accessToken, { name, role })
+    yPermissionsClient.set(accessToken, { name, role })
+  },
+  'share/delete': ({ accessToken, docid }) => {
+    const permissionsDocName = `${docid}/permissions`
+    const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
+    const yPermissionsServer = ydoc.getMap<Share>(docid)
+    const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
+    yPermissionsServer.delete(accessToken)
+    yPermissionsClient.delete(accessToken)
   },
 }
 
