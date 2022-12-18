@@ -32,8 +32,6 @@ const ModalShare = () => {
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
 
-  const isCurrent = selected === accessTokenCurrent
-
   return (
     <Modal
       id='share'
@@ -47,7 +45,6 @@ const ModalShare = () => {
         {selected && permissions[selected] ? (
           <ShareDetail
             accessToken={selected}
-            isCurrent={isCurrent}
             isLastDevice={Object.keys(permissions).length === 1}
             onBack={() => setSelected(null)}
             share={permissions[selected]}
@@ -73,11 +70,17 @@ const ShareList = ({
   const colors = useSelector(themeColors)
   const [showDeviceForm, setShowDeviceForm] = useState(false)
 
+  // sort the owner to the top, then sort by name
+  const permissionsSorted = _.sortBy(
+    Object.entries(permissions),
+    ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+  )
+
   return (
     <>
       <p className='modal-description'>Share your thoughtspace or add a device. Thoughts will be synced in realtime.</p>
 
-      {Object.entries(permissions).map(([accessToken, share]) => {
+      {permissionsSorted.map(([accessToken, share]) => {
         const isCurrent = accessToken === accessTokenCurrent
         return (
           <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
@@ -256,15 +259,12 @@ const AddDeviceForm = ({
 /** Detail view of a share that includes the QR code, url, edit name, and delete. */
 const ShareDetail = ({
   accessToken,
-  // limits sharing and tells the user that they should create a new device share
-  isCurrent,
   // provides a warning about removing the last device
   isLastDevice,
   onBack,
   share,
 }: {
   accessToken: string
-  isCurrent?: boolean
   isLastDevice?: boolean
   onBack: () => void
   share: ShareType
@@ -273,6 +273,8 @@ const ShareDetail = ({
   const ref = useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
   const fontSize = useSelector((state: State) => state.fontSize)
+  // limits sharing and tells the user that they should create a new device share
+  const isCurrent = accessToken === accessTokenCurrent
 
   const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
 
