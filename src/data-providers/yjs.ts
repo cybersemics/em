@@ -11,33 +11,31 @@ import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
 import alert from '../action-creators/alert'
+import clearActionCreator from '../action-creators/clear'
+import importText from '../action-creators/importText'
+import modalComplete from '../action-creators/modalComplete'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
+import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import store from '../stores/app'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import groupObjectBy from '../util/groupObjectBy'
 import keyValueBy from '../util/keyValueBy'
+import never from '../util/never'
 import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
 const ydoc = new Y.Doc()
+const ydocLocal = new Y.Doc()
 const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
-let accessTokenLocal = storage.getItem('accessToken')
-if (!accessTokenLocal) {
-  accessTokenLocal = createId()
-  storage.setItem('accessToken', accessTokenLocal)
-}
+export const accessTokenLocal = storage.getItem('accessToken', () => createId())!
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-export let tsidLocal = storage.getItem('tsid')
-if (!tsidLocal) {
-  tsidLocal = createId()
-  storage.setItem('tsid', tsidLocal)
-}
+export const tsidLocal = storage.getItem('tsid', () => createId())!
 
 // access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device
@@ -61,10 +59,6 @@ const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 // indexeddbProvider.whenSynced.then(() => {
 // console.info('loaded data from indexed db', yThoughtIndex.size)
 // })
-
-/*************************************
- * Thoughtspace ydoc
- ************************************/
 
 const websocketProvider = new WebsocketProvider('ws://localhost:1234', tsid, ydoc, { auth: accessToken })
 websocketProvider.on('status', (event: any) => {
@@ -93,6 +87,42 @@ yLexemeIndex.observe(async e => {
     updateThoughtsActionCreator({ thoughtIndexUpdates: {}, lexemeIndexUpdates, local: false, remote: false }),
   )
 })
+
+/** If the local thoughtspace is empty, save the shared docid and accessToken locally, i.e. make them the default thoughtspace. */
+if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
+  const websocketProviderLocal = new WebsocketProvider('ws://localhost:1234', tsidLocal, ydocLocal, {
+    auth: accessTokenLocal,
+  })
+  websocketProviderLocal.on('synced', (event: any) => {
+    const yThoughtIndexLocal = ydocLocal.getMap<ThoughtWithChildren>('thoughtIndex')
+
+    // The root thought is not always loaded when synced fires (???).
+    // Delaying seems to fix this.
+    // yThoughtIndexLocal.update will not be called with an empty thoughtspace.
+    // If a false positive occurs, the old thoughtspace will be lost (!!!)
+    // Maybe IndexedDB will help eliminate the possibility of a false positive?
+    setTimeout(() => {
+      const rootThought = yThoughtIndexLocal.get(HOME_TOKEN)
+      const isEmptyThoughtspace = Object.keys(rootThought?.children || rootThought?.childrenMap || {}).length === 0
+      if (isEmptyThoughtspace) {
+        // save shared access token and tsid as default
+        console.info('Setting shared thoughtspace as default')
+        storage.setItem('accessToken', accessTokenShared)
+        storage.setItem('tsid', tsidShared)
+
+        // backup tsid and accessToken just in case there is a false positive
+        storage.getItem('tsidBackup', tsidLocal)
+        storage.getItem('accessTokenBackup', accessTokenLocal)
+
+        // close the welcome modal
+        store.dispatch(modalComplete('welcome'))
+
+        // clear share params from URL without refreshing
+        window.history.pushState({}, '', '/')
+      }
+    }, 400)
+  })
+}
 
 // ydoc.on('update', (event, provider, doc, transaction) => {
 //   console.info('update', { event, provider, doc, transaction })
@@ -227,7 +257,32 @@ export const shareServer = {
   },
   delete: (accessToken: string, { name }: { name?: string } = {}) => {
     websocketProvider.send({ type: 'share/delete', docid: tsid, accessToken })
-    store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
+
+    // removed other device
+    if (accessToken !== accessTokenLocal) {
+      store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
+    }
+    // removed current device when there are others
+    else if (yPermissions.size > 1) {
+      store.dispatch([clearActionCreator(), alert(`Removed this device from the thoughtspace`, { clearDelay: 2000 })])
+    }
+    // remove last device
+    else {
+      storage.clear()
+      clear()
+      store.dispatch([
+        clearActionCreator(),
+        importText({
+          path: [EM_TOKEN],
+          text: INITIAL_SETTINGS,
+          lastUpdated: never(),
+          preventSetCursor: true,
+        }),
+      ])
+
+      // TODO: Do a full reset without refreshing the page.
+      window.location.reload()
+    }
   },
   update: (accessToken: string, { name, role }: Share) => {
     websocketProvider.send({ type: 'share/update', docid: tsid, accessToken, name, role })

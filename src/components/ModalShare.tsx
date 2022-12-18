@@ -147,8 +147,6 @@ const ShareRow = ({
   onDelete?: () => void
   role: string
 }) => {
-  // const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
-
   return (
     <div
       style={{
@@ -276,7 +274,7 @@ const ShareDetail = ({
   // limits sharing and tells the user that they should create a new device share
   const isCurrent = accessToken === accessTokenCurrent
 
-  const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
+  const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
 
   /** Copy the share link to the clipboard. */
   const copyShareUrl = () => {

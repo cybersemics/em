@@ -3,8 +3,14 @@ const storage = {
     localStorage.clear()
   },
 
-  getItem(key: string): string | null {
-    return localStorage.getItem(key)
+  /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
+  getItem(key: string, defaultValue?: string | (() => string)): string | null {
+    let value = localStorage.getItem(key)
+    if (value === null && defaultValue !== undefined) {
+      value = typeof defaultValue === 'function' ? defaultValue() : defaultValue
+      localStorage.setItem(key, value)
+    }
+    return value
   },
 
   removeItem(key: string): void {
