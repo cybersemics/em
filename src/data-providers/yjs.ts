@@ -219,15 +219,15 @@ const db: DataProvider = {
 
 // websocket RPC for shares
 export const shareServer = {
-  add: ({ name, role }: Share) => {
+  add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
     websocketProvider.send({ type: 'share/add', docid: tsid, accessToken, name, role })
     store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
     return accessToken
   },
-  delete: (accessToken: string, share: Share) => {
+  delete: (accessToken: string, { name }: { name?: string } = {}) => {
     websocketProvider.send({ type: 'share/delete', docid: tsid, accessToken })
-    store.dispatch(alert(`Removed ${share.name ? `"${share.name}"` : 'device'}`, { clearDelay: 2000 }))
+    store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
   },
   update: (accessToken: string, { name, role }: Share) => {
     websocketProvider.send({ type: 'share/update', docid: tsid, accessToken, name, role })

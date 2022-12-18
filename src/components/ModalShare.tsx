@@ -32,6 +32,8 @@ const ModalShare = () => {
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
 
+  const isCurrent = selected === accessTokenCurrent
+
   return (
     <Modal
       id='share'
@@ -43,7 +45,13 @@ const ModalShare = () => {
     >
       <div className='modal-wrapper'>
         {selected && permissions[selected] ? (
-          <ShareDetail accessToken={selected} onBack={() => setSelected(null)} share={permissions[selected]} />
+          <ShareDetail
+            accessToken={selected}
+            isCurrent={isCurrent}
+            isLastDevice={Object.keys(permissions).length === 1}
+            onBack={() => setSelected(null)}
+            share={permissions[selected]}
+          />
         ) : (
           <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
         )}
@@ -89,9 +97,8 @@ const ShareList = ({
       {showDeviceForm ? (
         <AddDeviceForm
           onCancel={() => setShowDeviceForm(false)}
-          onSubmit={(share: ShareType) => {
-            const shareNew = { name: share.name?.trim(), role: share.role }
-            const accessToken = shareServer.add(shareNew)
+          onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
+            const accessToken = shareServer.add({ role, name: name?.trim() })
             setShowDeviceForm(false)
             onAdd?.(accessToken)
           }}
@@ -179,7 +186,7 @@ const AddDeviceForm = ({
   defaultName,
 }: {
   onCancel: () => void
-  onSubmit: ({ name, role }: ShareType) => void
+  onSubmit: ({ name, role }: Pick<ShareType, 'name' | 'role'>) => void
   defaultName?: string
 }) => {
   const colors = useSelector(themeColors)
@@ -247,7 +254,21 @@ const AddDeviceForm = ({
 }
 
 /** Detail view of a share that includes the QR code, url, edit name, and delete. */
-const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBack: () => void; share: ShareType }) => {
+const ShareDetail = ({
+  accessToken,
+  // limits sharing and tells the user that they should create a new device share
+  isCurrent,
+  // provides a warning about removing the last device
+  isLastDevice,
+  onBack,
+  share,
+}: {
+  accessToken: string
+  isCurrent?: boolean
+  isLastDevice?: boolean
+  onBack: () => void
+  share: ShareType
+}) => {
   const dispatch = useDispatch()
   const ref = useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
@@ -294,20 +315,57 @@ const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBa
         </a>
       </div>
 
-      <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
+      {!isCurrent ? (
+        <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
+      ) : (
+        <div
+          style={{
+            border: 'solid 1px',
+            borderColor: colors.fg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              padding: '20px',
+              width: '100%',
+            }}
+          >
+            This is the current device. It is recommended that you create a separate device when sharing this
+            thoughtspace in order to control access.
+          </div>
+          {/* response spacer square */}
+          <div
+            style={{
+              width: 0,
+              height: 0,
+              paddingBottom: '100%',
+            }}
+          ></div>
+        </div>
+      )}
 
       <div style={{ position: 'relative' }}>
         <span>
           <input
-            type='text'
+            type={isCurrent ? 'password' : 'text'}
             value={url}
             readOnly={true}
-            style={{ margin: '10px', padding: '0.75em 3em 0.75em 1em', minWidth: 0, width: '75%' }}
+            style={{
+              color: isCurrent ? colors.gray : undefined,
+              margin: '10px',
+              padding: '0.75em 3em 0.75em 1em',
+              minWidth: 0,
+              width: '75%',
+            }}
           />
         </span>
         <span
-          onClick={copyShareUrl}
+          onClick={!isCurrent ? copyShareUrl : undefined}
           style={{
+            opacity: isCurrent ? 0.5 : undefined,
             position: 'absolute',
             top: '0.75em',
             right: '1.25em',
@@ -317,6 +375,12 @@ const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBa
           {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
         </span>
       </div>
+
+      <p style={{ color: colors.gray }}>
+        Created: {new Date(share.created).toLocaleString()}
+        <br />
+        Last Accessed: {new Date(share.accessed).toLocaleString()}
+      </p>
 
       {onBack && (
         <a
@@ -338,8 +402,12 @@ const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBa
 
       <div style={{ marginTop: '4em' }}>
         <p style={{ color: colors.gray, marginTop: '0.5em' }}>
-          When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
-          were saved for offline use.
+          {isLastDevice
+            ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
+            : isCurrent
+            ? 'When removed, you will lose access to the thoughtspace on this device.'
+            : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
+          were saved for offline use.`}
         </p>
         <a
           onClick={() => {
@@ -347,7 +415,7 @@ const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBa
           }}
           style={{ color: colors.red }}
         >
-          Remove device
+          {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
         </a>
       </div>
     </div>
