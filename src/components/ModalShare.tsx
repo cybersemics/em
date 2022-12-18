@@ -1,15 +1,20 @@
 import classNames from 'classnames'
-import React, { useState } from 'react'
+import _ from 'lodash'
+import { QRCodeSVG } from 'qrcode.react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import ShareType from '../@types/Share'
+import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { isTouch } from '../browser'
 import { accessToken as accessTokenCurrent, shareServer, tsid, usePermissions } from '../data-providers/yjs'
 import themeColors from '../selectors/themeColors'
 import { ActionButton } from './ActionButton'
+import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import Modal from './Modal'
 import CopyClipboard from './icons/CopyClipboard'
+import PencilIcon from './icons/PencilIcon.native'
 import ShareIcon from './icons/ShareIcon'
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
@@ -20,11 +25,106 @@ const getNextDeviceName = (permissions: Index<ShareType>, start?: number): strin
     : `Device ${nextDeviceNumber}`
 }
 
+/** Modal for Sharing and Device Management. */
+const ModalShare = () => {
+  const permissions = usePermissions()
+
+  // selected accessToken
+  const [selected, setSelected] = useState<string | null>(null)
+
+  return (
+    <Modal
+      id='share'
+      title='Sharing & Device Management'
+      className='popup'
+      center
+      // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
+      actions={({ close }) => (!selected ? <ActionButton key='close' title='Close' onClick={() => close()} /> : null)}
+    >
+      <div className='modal-wrapper'>
+        {selected && permissions[selected] ? (
+          <ShareDetail accessToken={selected} onBack={() => setSelected(null)} share={permissions[selected]} />
+        ) : (
+          <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+        )}
+      </div>
+    </Modal>
+  )
+}
+
+/** The list of device shares for the thoughtspace. */
+const ShareList = ({
+  onAdd,
+  onSelect,
+  permissions,
+}: {
+  onAdd?: (accessToken: string) => void
+  onSelect?: (accessToken: string) => void
+  permissions: Index<ShareType>
+}) => {
+  const colors = useSelector(themeColors)
+  const [showDeviceForm, setShowDeviceForm] = useState(false)
+
+  return (
+    <>
+      <p className='modal-description'>Share your thoughtspace or add a device. Thoughts will be synced in realtime.</p>
+
+      {Object.entries(permissions).map(([accessToken, share]) => {
+        const isCurrent = accessToken === accessTokenCurrent
+        return (
+          <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
+            <ShareRow
+              accessToken={accessToken}
+              isCurrent={isCurrent}
+              name={share.name}
+              onDelete={() => {
+                shareServer.delete(accessToken, share)
+              }}
+              role={share.role}
+            />
+          </div>
+        )
+      })}
+
+      {showDeviceForm ? (
+        <AddDeviceForm
+          onCancel={() => setShowDeviceForm(false)}
+          onSubmit={(share: ShareType) => {
+            const shareNew = { name: share.name?.trim(), role: share.role }
+            const accessToken = shareServer.add(shareNew)
+            setShowDeviceForm(false)
+            onAdd?.(accessToken)
+          }}
+          defaultName={getNextDeviceName(permissions)}
+        />
+      ) : (
+        <div style={{ marginTop: '1em' }}>
+          <a
+            onClick={() => setShowDeviceForm(true)}
+            className={classNames({
+              button: true,
+              'button-outline': true,
+            })}
+            style={{
+              backgroundColor: colors.bg,
+              border: `solid 1px ${colors.fg}`,
+              color: colors.fg,
+              display: 'inline-block',
+            }}
+          >
+            + Add a device
+          </a>
+        </div>
+      )}
+    </>
+  )
+}
+
 /** Permissions role label. */
 const Role = ({ role }: { role: string }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
-/** Renders a share row. */
-const Share = ({
+/** Renders a single device share. */
+const ShareRow = ({
   accessToken,
   isCurrent,
   name,
@@ -37,15 +137,7 @@ const Share = ({
   onDelete?: () => void
   role: string
 }) => {
-  const dispatch = useDispatch()
-  const colors = useSelector(themeColors)
-  const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
-
-  /** Copy the share link to the clipboard. */
-  const copyShareUrl = () => {
-    navigator.clipboard.writeText(url)
-    dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
-  }
+  // const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
 
   return (
     <div
@@ -53,67 +145,29 @@ const Share = ({
         display: 'flex',
         flexDirection: 'row',
         alignSelf: 'start',
-        margin: '3vh auto',
+        margin: '1% auto',
         alignItems: 'center',
       }}
     >
       <div style={{ display: 'inline-flex' }}>
         <span style={{ padding: '0.75em 1em 0.75em 0' }}>
-          <span style={{ fontWeight: 'bold', marginRight: '1em' }}>{name ?? 'Untitled'}</span>
+          <span style={{ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' }}>
+            {name ?? 'Untitled'}
+          </span>
           <Role role={role} />
         </span>{' '}
-        {isCurrent ? (
-          <span
-            style={{
-              textAlign: 'left',
-              fontStyle: 'italic',
-              marginRight: '1em',
-              margin: '0 10px',
-              padding: '0.75em 0',
-            }}
-          >
-            this device
-          </span>
-        ) : (
-          <span style={{ position: 'relative' }}>
-            <span>
-              <input
-                type='text'
-                value={url}
-                readOnly={true}
-                style={{ margin: '0 10px', padding: '0.75em 3em 0.75em 1em', minWidth: isTouch ? 0 : '20em' }}
-              />
-              <span
-                onClick={copyShareUrl}
-                style={{
-                  position: 'absolute',
-                  top: '0.75em',
-                  right: '1.25em',
-                  cursor: 'pointer',
-                }}
-              >
-                {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
-              </span>
-            </span>
-          </span>
-        )}
-      </div>
-      {!isCurrent && (
-        <a
-          onClick={onDelete}
+        <span
           style={{
-            color: colors.fg,
-            fontSize: '1.5em',
-            paddingRight: '0.25em',
-            paddingLeft: '0.25em',
-            marginLeft: '0.25em',
-            marginRight: '-1em',
-            textDecoration: 'none',
+            textAlign: 'left',
+            fontStyle: 'italic',
+            marginRight: '1em',
+            margin: '0 10px',
+            padding: '0.75em 0',
           }}
         >
-          ✕
-        </a>
-      )}
+          {isCurrent ? 'this device' : <a>view</a>}
+        </span>
+      </div>
     </div>
   )
 }
@@ -132,7 +186,7 @@ const AddDeviceForm = ({
   const [name, setName] = useState(defaultName ?? 'Untitled')
   return (
     <div style={{ margin: '0 auto' }}>
-      <div style={{ border: 'solid 1px', borderColor: colors.gray15, marginBottom: '3em' }} />
+      <div style={{ borderBottom: 'solid 1px', borderBottomColor: colors.gray15, margin: '1em 0 3em' }} />
       <div>
         <span style={{ marginRight: '1em' }}>Name: </span>
         <input
@@ -192,66 +246,111 @@ const AddDeviceForm = ({
   )
 }
 
-/** Modal to get gift codes. */
-const ModalShare = () => {
+/** Detail view of a share that includes the QR code, url, edit name, and delete. */
+const ShareDetail = ({ accessToken, onBack, share }: { accessToken: string; onBack: () => void; share: ShareType }) => {
+  const dispatch = useDispatch()
+  const ref = useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
-  const [showDeviceForm, setShowDeviceForm] = useState(false)
-  const permissions = usePermissions()
+  const fontSize = useSelector((state: State) => state.fontSize)
+
+  const url = `${window.location.href}~/?share=${tsid}&auth=${accessToken}`
+
+  /** Copy the share link to the clipboard. */
+  const copyShareUrl = () => {
+    navigator.clipboard.writeText(url)
+    dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
+  }
+
+  const onChangeName = useCallback(
+    _.debounce((e: ContentEditableEvent) => {
+      shareServer.update(accessToken, { ...share, name: e.target.value.trim() })
+    }, 500),
+    [],
+  )
 
   return (
-    <Modal
-      id='share'
-      title='Sharing & Device Management'
-      className='popup'
-      center
-      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
-    >
-      <div className='modal-wrapper'>
-        <p className='modal-description'>
-          Share your thoughtspace or add a device. Thoughts will be synced in realtime.
-        </p>
-
-        {Object.entries(permissions).map(([accessToken, share]) => (
-          <Share
-            key={accessToken}
-            accessToken={accessToken}
-            isCurrent={accessToken === accessTokenCurrent}
-            name={share.name}
-            onDelete={() => shareServer.delete(accessToken)}
-            role={share.role}
-          />
-        ))}
-
-        {showDeviceForm ? (
-          <AddDeviceForm
-            onCancel={() => setShowDeviceForm(false)}
-            onSubmit={({ name, role }: ShareType) => {
-              shareServer.add({ name: name?.trim(), role })
-              setShowDeviceForm(false)
-            }}
-            defaultName={getNextDeviceName(permissions)}
-          />
-        ) : (
-          <div style={{ marginTop: '1em' }}>
-            <a
-              onClick={() => setShowDeviceForm(true)}
-              className={classNames({
-                button: true,
-                'button-outline': true,
-              })}
-              style={{
-                border: `solid 1px ${colors.fg}`,
-                color: colors.fg,
-                backgroundColor: colors.bg,
-                display: 'inline-block',
-              }}
-            >
-              + Add a device
-            </a>
-          </div>
-        )}
+    <div>
+      <div style={{ position: 'relative', marginBottom: '0.5em' }}>
+        <ContentEditable
+          innerRef={ref}
+          html={share.name || 'Untitled'}
+          onChange={onChangeName}
+          placeholder='Untitled'
+          style={{ display: 'inline', fontSize: fontSize * 1.25, marginBottom: '0.5em' }}
+        />
+        <a
+          onClick={() => {
+            ref.current?.focus()
+          }}
+          style={{
+            display: 'inline-block',
+            marginLeft: '1em',
+            position: 'absolute',
+            top: 4,
+            verticalAlign: 'bottom',
+          }}
+        >
+          <PencilIcon fill={colors.gray} size={25} />
+        </a>
       </div>
-    </Modal>
+
+      <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
+
+      <div style={{ position: 'relative' }}>
+        <span>
+          <input
+            type='text'
+            value={url}
+            readOnly={true}
+            style={{ margin: '10px', padding: '0.75em 3em 0.75em 1em', minWidth: 0, width: '75%' }}
+          />
+        </span>
+        <span
+          onClick={copyShareUrl}
+          style={{
+            position: 'absolute',
+            top: '0.75em',
+            right: '1.25em',
+            cursor: 'pointer',
+          }}
+        >
+          {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
+        </span>
+      </div>
+
+      {onBack && (
+        <a
+          onClick={onBack}
+          className={classNames({
+            button: true,
+            'action-button': true,
+          })}
+          style={{
+            color: colors.bg,
+            fontSize: 18,
+            lineHeight: 2,
+            marginBottom: '1em',
+          }}
+        >
+          Back
+        </a>
+      )}
+
+      <div style={{ marginTop: '4em' }}>
+        <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+          When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
+          were saved for offline use.
+        </p>
+        <a
+          onClick={() => {
+            shareServer.delete(accessToken, share)
+          }}
+          style={{ color: colors.red }}
+        >
+          Remove device
+        </a>
+      </div>
+    </div>
   )
 }
 

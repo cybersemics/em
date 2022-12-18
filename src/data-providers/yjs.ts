@@ -10,6 +10,7 @@ import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
+import alert from '../action-creators/alert'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
 import store from '../stores/app'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
@@ -219,10 +220,18 @@ const db: DataProvider = {
 // websocket RPC for shares
 export const shareServer = {
   add: ({ name, role }: Share) => {
-    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken: createId(), name, role })
+    const accessToken = createId()
+    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken, name, role })
+    store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
+    return accessToken
   },
-  delete: (accessToken: string) => {
+  delete: (accessToken: string, share: Share) => {
     websocketProvider.send({ type: 'share/delete', docid: tsid, accessToken })
+    store.dispatch(alert(`Removed ${share.name ? `"${share.name}"` : 'device'}`, { clearDelay: 2000 }))
+  },
+  update: (accessToken: string, { name, role }: Share) => {
+    websocketProvider.send({ type: 'share/update', docid: tsid, accessToken, name, role })
+    store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
 }
 

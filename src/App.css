@@ -566,6 +566,10 @@ a.text-link {
   user-select: text;
 }
 
+[contenteditable]:focus {
+  border-bottom: solid 1px;
+}
+
 .thought,
 .thought-annotation {
   max-width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */

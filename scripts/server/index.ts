@@ -91,6 +91,14 @@ const routes: { [key: string]: (...props: any) => any } = {
     yPermissionsServer.delete(accessToken)
     yPermissionsClient.delete(accessToken)
   },
+  'share/update': ({ accessToken, docid, name, role }) => {
+    const permissionsDocName = `${docid}/permissions`
+    const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
+    const yPermissionsServer = ydoc.getMap<Share>(docid)
+    const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
+    yPermissionsServer.set(accessToken, { name, role })
+    yPermissionsClient.set(accessToken, { name, role })
+  },
 }
 
 createServer({ authenticate, routes }).listen(port, host, () => {
