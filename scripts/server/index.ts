@@ -47,7 +47,7 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
   // if the document has no owner, automatically assign the current user as owner
   if (yPermissionsServer.size === 0) {
     console.info('assigning owner')
-    share = { role: 'owner' }
+    share = { accessed: new Date().toISOString(), created: new Date().toISOString(), name: 'Owner', role: 'owner' }
     yPermissionsServer.set(accessToken, share)
   }
 
@@ -55,6 +55,8 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
   // The server-side permissions doc keeps all permissions for all documents into memory.
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
   if (share?.role === 'owner' && params.type === 'auth') {
+    // update last accessed time on auth
+    yPermissionsServer.set(accessToken, { ...share, accessed: new Date().toISOString() })
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
     yPermissionsServer.forEach((share, accessToken) => {
       yPermissionsClient.set(accessToken, share)
@@ -76,12 +78,13 @@ const routes: { [key: string]: (...props: any) => any } = {
     name?: string
     role: 'owner'
   }) => {
+    const share = { accessed: new Date().toISOString(), created: new Date().toISOString(), name, role }
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
-    yPermissionsServer.set(accessToken, { name, role })
-    yPermissionsClient.set(accessToken, { name, role })
+    yPermissionsServer.set(accessToken, share)
+    yPermissionsClient.set(accessToken, share)
   },
   'share/delete': ({ accessToken, docid }) => {
     const permissionsDocName = `${docid}/permissions`
@@ -96,8 +99,16 @@ const routes: { [key: string]: (...props: any) => any } = {
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
-    yPermissionsServer.set(accessToken, { name, role })
-    yPermissionsClient.set(accessToken, { name, role })
+    const share = yPermissionsServer.get(accessToken)
+    if (!share) {
+      console.error('Error: Thoughtspace no longer exists', { docid, accessToken })
+      return {
+        error: `Thoughtspace no longer exists: ${accessToken}`,
+      }
+    }
+    const shareNew = { ...share, name, role }
+    yPermissionsServer.set(accessToken, shareNew)
+    yPermissionsClient.set(accessToken, shareNew)
   },
 }
 
