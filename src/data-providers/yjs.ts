@@ -25,6 +25,11 @@ import never from '../util/never'
 import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
+const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws'
+const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
+const port = process.env.REACT_APP_WEBSOCKET_PORT || 4000
+const websocketUrl = `${protocol}://${host}:${port}`
+
 const ydoc = new Y.Doc()
 const ydocLocal = new Y.Doc()
 const ypermissionsDoc = new Y.Doc()
@@ -50,7 +55,7 @@ export const accessToken = accessTokenShared || accessTokenLocal
  ************************************/
 
 // eslint-disable-next-line no-new
-new WebsocketProvider('ws://localhost:1234', `${tsid}/permissions`, ypermissionsDoc, {
+new WebsocketProvider(websocketUrl, `${tsid}/permissions`, ypermissionsDoc, {
   auth: accessToken,
 })
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
@@ -60,7 +65,7 @@ const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 // console.info('loaded data from indexed db', yThoughtIndex.size)
 // })
 
-const websocketProvider = new WebsocketProvider('ws://localhost:1234', tsid, ydoc, { auth: accessToken })
+const websocketProvider = new WebsocketProvider(websocketUrl, tsid, ydoc, { auth: accessToken })
 websocketProvider.on('status', (event: any) => {
   // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
