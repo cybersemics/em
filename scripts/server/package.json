@@ -6,5 +6,8 @@
   },
   "dependencies": {
     "yjs": "13.5.41"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
   }
 }
