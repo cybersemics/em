@@ -2,7 +2,7 @@
   "scripts": {
     "build": "rm -rf build ; tsc",
     "clear": "rm -rf ./.thoughts.level ; rm -rf ./.permissions.level",
-    "start": "HOST=localhost PORT=1234 YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level node build/scripts/server/index.js"
+    "start": "HOST=localhost PORT=4000 YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level node build/scripts/server/index.js"
   },
   "dependencies": {
     "yjs": "13.5.41"
