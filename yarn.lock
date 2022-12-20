@@ -13881,7 +13881,7 @@ p-try@^2.0.0:
 
 "page-lifecycle@git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types":
   version "0.1.2"
-  resolved "git+https://git@github.com/magic-akari/page-lifecycle.git#50b50421bdeab3d211a57e81a277f699638373b0"
+  resolved "git+https://git@github.com/magic-akari/page-lifecycle#50b50421bdeab3d211a57e81a277f699638373b0"
 
 pako@^1.0.5, pako@~1.0.5:
   version "1.0.11"
@@ -17582,7 +17582,7 @@ symbol-tree@^3.2.2, symbol-tree@^3.2.4:
 
 "sync-promise@git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features":
   version "1.0.1"
-  resolved "git+ssh://git@github.com/brettz9/sync-promise.git#25845a49a00aa2d2c985a5149b97c86a1fcdc75a"
+  resolved "https://github.com/brettz9/sync-promise.git#25845a49a00aa2d2c985a5149b97c86a1fcdc75a"
 
 table@^6.0.9:
   version "6.7.1"
@@ -18831,7 +18831,7 @@ websql@^2.0.0:
 
 "websql@git+https://github.com/brettz9/node-websql.git#configurable-secure2":
   version "1.0.0"
-  resolved "git+ssh://git@github.com/brettz9/node-websql.git#5149bc0763376ca757fc32dc74345ada0467bfbb"
+  resolved "https://github.com/brettz9/node-websql.git#5149bc0763376ca757fc32dc74345ada0467bfbb"
   dependencies:
     argsarray "^0.0.1"
     immediate "^3.2.2"

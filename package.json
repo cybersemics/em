@@ -35,6 +35,7 @@
     "postinstall": "husky install",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
+    "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:functions": "cd ./functions && npm run lint",
     "servebuild": "npx serve -s build -l 3001",
@@ -42,6 +43,19 @@
     "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer",
     "websocket-server": "cd ./scripts/server && npm run build && npm run start"
+  },
+  "lockfile-lint": {
+    "allowed-schemes": [
+      "https:"
+    ],
+    "allowed-hosts": [
+      "github.com",
+      "node.bit.dev",
+      "npm",
+      "yarn"
+    ],
+    "empty-hostname": false,
+    "path": "yarn.lock"
   },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
