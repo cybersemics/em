@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { shallowEqual } from 'react-redux'
-// import { IndexeddbPersistence } from 'y-indexeddb'
+import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
@@ -33,7 +33,8 @@ type WebsocketServerRPC = { [key in RouteOp<keyof Routes>]: any }
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
 const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
 const protocol = host === 'localhost' ? 'ws' : 'wss'
-const websocketUrl = `${protocol}://${host}:${port}`
+// public host must end with '/' or the websocket connection will not open
+const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
 
 const ydoc = new Y.Doc()
 const ydocLocal = new Y.Doc()
@@ -65,16 +66,16 @@ new WebsocketProvider(websocketUrl, `${tsid}/permissions`, ypermissionsDoc, {
 })
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
-// const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
-// indexeddbProvider.whenSynced.then(() => {
-// console.info('loaded data from indexed db', yThoughtIndex.size)
-// })
+const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
+indexeddbProvider.whenSynced.then(() => {
+  // console.info('loaded data from indexed db', yThoughtIndex.size)
+})
 
 const websocketProvider: WebsocketProviderType = new WebsocketProvider(websocketUrl, tsid, ydoc, {
   auth: accessToken,
 })
 websocketProvider.on('status', (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
-  console.info('websocket', event.status)
+  // console.info('websocket', event.status)
 })
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
