@@ -95,7 +95,7 @@ yLexemeIndex.observe(async e => {
 
 /** If the local thoughtspace is empty, save the shared docid and accessToken locally, i.e. make them the default thoughtspace. */
 if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
-  const websocketProviderLocal = new WebsocketProvider('ws://localhost:1234', tsidLocal, ydocLocal, {
+  const websocketProviderLocal = new WebsocketProvider(websocketUrl, tsidLocal, ydocLocal, {
     auth: accessTokenLocal,
   })
   websocketProviderLocal.on('synced', (event: any) => {
