@@ -6,10 +6,12 @@ import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
+import WebsocketProviderType from '../@types/WebsocketProviderType'
 import alert from '../action-creators/alert'
 import clearActionCreator from '../action-creators/clear'
 import importText from '../action-creators/importText'
@@ -24,6 +26,9 @@ import keyValueBy from '../util/keyValueBy'
 import never from '../util/never'
 import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
+
+type RouteOp<T> = T extends `share/${infer U}` ? U : never
+type WebsocketServerRPC = { [key in RouteOp<keyof Routes>]: any }
 
 const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws'
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
@@ -65,7 +70,9 @@ const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 // console.info('loaded data from indexed db', yThoughtIndex.size)
 // })
 
-const websocketProvider = new WebsocketProvider(websocketUrl, tsid, ydoc, { auth: accessToken })
+const websocketProvider: WebsocketProviderType = new WebsocketProvider(websocketUrl, tsid, ydoc, {
+  auth: accessToken,
+})
 websocketProvider.on('status', (event: any) => {
   // console.info('websocket', event.status) // logs "connected" or "disconnected"
 })
@@ -253,10 +260,10 @@ const db: DataProvider = {
 }
 
 // websocket RPC for shares
-export const shareServer = {
+export const shareServer: WebsocketServerRPC = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
-    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken, name, role })
+    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken, name: name || '', role })
     store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
     return accessToken
   },

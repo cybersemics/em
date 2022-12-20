@@ -1,5 +1,5 @@
-import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
+import Routes from '../../src/@types/Routes'
 import Share from '../../src/@types/Share'
 
 const { getYDoc, createServer } = require('y-websocket-auth/server')
