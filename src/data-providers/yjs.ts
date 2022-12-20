@@ -30,9 +30,9 @@ import { DataProvider } from './DataProvider'
 type RouteOp<T> = T extends `share/${infer U}` ? U : never
 type WebsocketServerRPC = { [key in RouteOp<keyof Routes>]: any }
 
-const protocol = window.location.protocol.includes('https') ? 'wss' : 'ws'
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
-const port = process.env.REACT_APP_WEBSOCKET_PORT || 4000
+const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
+const protocol = host === 'localhost' ? 'ws' : 'wss'
 const websocketUrl = `${protocol}://${host}:${port}`
 
 const ydoc = new Y.Doc()
@@ -73,8 +73,8 @@ const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 const websocketProvider: WebsocketProviderType = new WebsocketProvider(websocketUrl, tsid, ydoc, {
   auth: accessToken,
 })
-websocketProvider.on('status', (event: any) => {
-  // console.info('websocket', event.status) // logs "connected" or "disconnected"
+websocketProvider.on('status', (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
+  console.info('websocket', event.status)
 })
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')

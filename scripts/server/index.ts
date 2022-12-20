@@ -5,7 +5,7 @@ import Share from '../../src/@types/Share'
 const { getYDoc, createServer } = require('y-websocket-auth/server')
 
 const host = process.env.HOST || 'localhost'
-const port = process.env.PORT || 4000
+const port = process.env.PORT || 8080
 const PERMISSIONS_DOCID = 'permissions'
 
 /**
