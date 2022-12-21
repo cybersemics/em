@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual } from 'react-redux'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
@@ -359,6 +359,83 @@ export const useStatus = () => {
       websocketProvider.off('status', updateState)
     }
   })
+
+  return state
+}
+
+/** Creates a promise that resolves in the given number of milliseconds. */
+const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+
+// Global flag indicating if the websocketProvider has loaded.
+// Set to true when the status is synced, otherwise turns true after a reasonable delay (i.e. connection attempts).
+let loaded = false
+const preload = delay(500)
+const offline = preload.then(() => delay(1000))
+
+/** A hook that subscribes to the websocketProvider's connection status, and adds preload, loading, and offline statuses (see below).
+ *
+ * - preload: Initial value (unless already synced). Provides a very short delay before entering "loading". This is helpful for delaying the loading indicator until it is warranted (i.e. 400-500ms) and avoid an unnecessary flash of the loader.
+ * - connected    The connected status is initially set only after synced fires.
+ * - connecting   If the client is disconnected, it can go back into the connecting status.
+ * - loading      Preload status has ended and a loading indicator should be shown.
+ * - offline      Offline mode after failing to connect to the websocket server. The status will stay offline until/if it becomes connected. After it has connected once, it will not enter offline mode.
+ *
+ * */
+export const useOfflineStatus = () => {
+  const unmounted = useRef(false)
+
+  const [state, setState] = useState<Status | 'preload' | 'loading' | 'offline'>(
+    websocketProvider.wsconnected ? 'connected' : loaded ? 'disconnected' : 'preload',
+  )
+
+  // when synced, immediately set loaded to true
+  const onSynced = useCallback(() => {
+    loaded = true
+    setState('connected')
+  }, [])
+
+  const updateState = useCallback((e: { status: Status }) => {
+    if (unmounted.current) return
+    // when connected, immediately set loaded to true, but wait till synced to set the status to connected
+    if (e.status === 'connected') {
+      // setState('connected')
+      loaded = true
+    }
+    // do not update state until loaded or connected
+    else if (loaded) {
+      setState(e.status)
+    }
+  }, [])
+
+  // set timers for loading and offline status if we have yet to connect to the websocket server
+  useEffect(() => {
+    // if the websocket is already connected by the time we mount, immediately set loaded
+    if (websocketProvider.synced && !loaded) {
+      loaded = true
+    } else {
+      // preload -> loading
+      preload.then(() => {
+        if (loaded || unmounted.current) return
+        setState('loading')
+      })
+
+      // loading -> offline
+      offline.then(() => {
+        if (loaded || unmounted.current) return
+        setState('offline')
+        loaded = true
+      })
+    }
+
+    websocketProvider.on('status', updateState)
+    websocketProvider.on('synced', onSynced)
+
+    return () => {
+      unmounted.current = true
+      websocketProvider.off('status', updateState)
+      websocketProvider.off('synced', onSynced)
+    }
+  }, [])
 
   return state
 }
