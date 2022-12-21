@@ -309,6 +309,7 @@ const ShareDetail = React.memo(
     share: ShareType
   }) => {
     const dispatch = useDispatch()
+    const fontSize = useSelector((state: State) => state.fontSize)
     const colors = useSelector(themeColors)
     // limits sharing and tells the user that they should create a new device share
     const isCurrent = accessToken === accessTokenCurrent
@@ -339,61 +340,42 @@ const ShareDetail = React.memo(
         ) : (
           <div
             style={{
-              border: 'solid 1px',
-              borderColor: colors.fg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              fontSize,
+              margin: '3em 0 4em',
             }}
           >
-            <div
-              style={{
-                padding: '20px',
-                width: '100%',
-              }}
-            >
-              This is the current device. It is recommended that you create a separate device when sharing this
-              thoughtspace in order to control access.
-            </div>
-            {/* response spacer square */}
-            <div
-              style={{
-                width: 0,
-                height: 0,
-                paddingBottom: '100%',
-              }}
-            ></div>
+            <p>This is the current device.</p>
           </div>
         )}
 
-        <div style={{ position: 'relative' }}>
-          <span>
-            <input
-              type={isCurrent ? 'password' : 'text'}
-              value={url}
-              readOnly={true}
+        {!isCurrent && (
+          <div style={{ position: 'relative' }}>
+            <span>
+              <input
+                type={'text'}
+                value={url}
+                readOnly={true}
+                style={{
+                  margin: '10px',
+                  padding: '0.75em 3em 0.75em 1em',
+                  minWidth: 0,
+                  width: '75%',
+                }}
+              />
+            </span>
+            <span
+              onClick={copyShareUrl}
               style={{
-                color: isCurrent ? colors.gray : undefined,
-                margin: '10px',
-                padding: '0.75em 3em 0.75em 1em',
-                minWidth: 0,
-                width: '75%',
+                position: 'absolute',
+                top: '0.75em',
+                right: '1.25em',
+                cursor: 'pointer',
               }}
-            />
-          </span>
-          <span
-            onClick={!isCurrent ? copyShareUrl : undefined}
-            style={{
-              opacity: isCurrent ? 0.5 : undefined,
-              position: 'absolute',
-              top: '0.75em',
-              right: '1.25em',
-              cursor: 'pointer',
-            }}
-          >
-            {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
-          </span>
-        </div>
+            >
+              {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
+            </span>
+          </div>
+        )}
 
         <p style={{ color: colors.gray }}>
           Created: {new Date(share.created).toLocaleString()}
@@ -410,7 +392,7 @@ const ShareDetail = React.memo(
             })}
             style={{
               color: colors.bg,
-              fontSize: 18,
+              fontSize,
               lineHeight: 2,
               marginBottom: '1em',
             }}
