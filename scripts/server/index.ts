@@ -40,7 +40,7 @@ if (process.env.YPERMISSIONS) {
   })()
 }
 
-/** Logs a message to the console with an ISO timestamp. */
+/** Logs a message to the console with an optional ISO timestamp. */
 const log = (...args: any) => {
   // default to console.info
   // override the method by passing { method: 'error' } as the last argument
@@ -50,7 +50,11 @@ const log = (...args: any) => {
     args = args.slice(0, -1)
     method = lastArg
   }
-  ;(console as any)[method](gray(new Date().toISOString()), ...args)
+  if (process.env.LOG_TIMESTAMPS) {
+    ;(console as any)[method](gray(new Date().toISOString()), ...args)
+  } else {
+    ;(console as any)[method](...args)
+  }
 }
 
 /** Logs an error to the console with an ISO timestamp. */
