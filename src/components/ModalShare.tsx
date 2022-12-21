@@ -9,6 +9,7 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { isTouch } from '../browser'
 import { accessToken as accessTokenCurrent, shareServer, tsid, usePermissions } from '../data-providers/yjs'
+import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
 import { ActionButton } from './ActionButton'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
@@ -32,6 +33,8 @@ const ModalShare = () => {
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
 
+  const onBack = useCallback(() => setSelected(null), [])
+
   return (
     <Modal
       id='share'
@@ -46,7 +49,7 @@ const ModalShare = () => {
           <ShareDetail
             accessToken={selected}
             isLastDevice={Object.keys(permissions).length === 1}
-            onBack={() => setSelected(null)}
+            onBack={onBack}
             share={permissions[selected]}
           />
         ) : (
@@ -84,15 +87,7 @@ const ShareList = ({
         const isCurrent = accessToken === accessTokenCurrent
         return (
           <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
-            <ShareRow
-              accessToken={accessToken}
-              isCurrent={isCurrent}
-              name={share.name}
-              onDelete={() => {
-                shareServer.delete(accessToken, share)
-              }}
-              role={share.role}
-            />
+            <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
           </div>
         )
       })}
@@ -134,51 +129,52 @@ const ShareList = ({
 const Role = ({ role }: { role: string }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
 /** Renders a single device share. */
-const ShareRow = ({
-  accessToken,
-  isCurrent,
-  name,
-  onDelete,
-  role,
-}: {
-  accessToken: string
-  isCurrent?: boolean
-  name?: string
-  onDelete?: () => void
-  role: string
-}) => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignSelf: 'start',
-        margin: '1% auto',
-        alignItems: 'center',
-      }}
-    >
-      <div style={{ display: 'inline-flex' }}>
-        <span style={{ padding: '0.75em 1em 0.75em 0' }}>
-          <span style={{ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' }}>
-            {name ?? 'Untitled'}
+const ShareRow = React.memo(
+  ({
+    accessToken,
+    isCurrent,
+    role,
+    share,
+  }: {
+    accessToken: string
+    isCurrent?: boolean
+    share: ShareType
+    role: string
+  }) => {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignSelf: 'start',
+          margin: '1% auto',
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'inline-flex' }}>
+          <span style={{ padding: '0.75em 1em 0.75em 0' }}>
+            <span style={{ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' }}>
+              {share?.name || 'Untitled'}
+            </span>
+            <Role role={role} />
+          </span>{' '}
+          <span
+            style={{
+              textAlign: 'left',
+              fontStyle: 'italic',
+              marginRight: '1em',
+              margin: '0 10px',
+              padding: '0.75em 0',
+            }}
+          >
+            {isCurrent ? 'this device' : <a>view</a>}
           </span>
-          <Role role={role} />
-        </span>{' '}
-        <span
-          style={{
-            textAlign: 'left',
-            fontStyle: 'italic',
-            marginRight: '1em',
-            margin: '0 10px',
-            padding: '0.75em 0',
-          }}
-        >
-          {isCurrent ? 'this device' : <a>view</a>}
-        </span>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  },
+)
+ShareRow.displayName = 'ShareRow'
 
 /** The form that allows the user to add a new device. */
 const AddDeviceForm = ({
@@ -254,54 +250,24 @@ const AddDeviceForm = ({
   )
 }
 
-/** Detail view of a share that includes the QR code, url, edit name, and delete. */
-const ShareDetail = ({
-  accessToken,
-  // provides a warning about removing the last device
-  isLastDevice,
-  onBack,
-  share,
-}: {
-  accessToken: string
-  isLastDevice?: boolean
-  onBack: () => void
-  share: ShareType
-}) => {
-  const dispatch = useDispatch()
-  const ref = useRef<HTMLDivElement>(null)
-  const colors = useSelector(themeColors)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  // limits sharing and tells the user that they should create a new device share
-  const isCurrent = accessToken === accessTokenCurrent
-
-  const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
-
-  /** Copy the share link to the clipboard. */
-  const copyShareUrl = () => {
-    navigator.clipboard.writeText(url)
-    dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
-  }
-
-  const onChangeName = useCallback(
-    _.debounce((e: ContentEditableEvent) => {
-      shareServer.update(accessToken, { ...share, name: e.target.value.trim() })
-    }, 500),
-    [],
-  )
-
-  return (
-    <div>
-      <div style={{ position: 'relative', marginBottom: '0.5em' }}>
+/** Renders an editable name with a pencil icon to focus. */
+const EditableName = React.memo(
+  ({ onChange, value }: { onChange: (e: ContentEditableEvent) => void; value: string }) => {
+    const colors = useSelector(themeColors)
+    const fontSize = useSelector((state: State) => state.fontSize)
+    const ref = useRef<HTMLDivElement>(null)
+    return (
+      <div style={{ position: 'relative' }}>
         <ContentEditable
           innerRef={ref}
-          html={share.name || 'Untitled'}
-          onChange={onChangeName}
+          html={value}
+          onChange={onChange}
           placeholder='Untitled'
           style={{ display: 'inline', fontSize: fontSize * 1.25, marginBottom: '0.5em' }}
         />
         <a
           onClick={() => {
-            ref.current?.focus()
+            selection.set(ref.current, { end: true })
           }}
           style={{
             display: 'inline-block',
@@ -314,113 +280,159 @@ const ShareDetail = ({
           <PencilIcon fill={colors.gray} size={25} />
         </a>
       </div>
+    )
+  },
+)
+EditableName.displayName = 'EditableName'
 
-      {!isCurrent ? (
-        <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
-      ) : (
-        <div
-          style={{
-            border: 'solid 1px',
-            borderColor: colors.fg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+/** Detail view of a share that includes the QR code, url, edit name, and delete. */
+const ShareDetail = React.memo(
+  ({
+    accessToken,
+    // provides a warning about removing the last device
+    isLastDevice,
+    onBack,
+    share,
+  }: {
+    accessToken: string
+    isLastDevice?: boolean
+    onBack: () => void
+    share: ShareType
+  }) => {
+    const dispatch = useDispatch()
+    const colors = useSelector(themeColors)
+    // limits sharing and tells the user that they should create a new device share
+    const isCurrent = accessToken === accessTokenCurrent
+
+    const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
+
+    /** Copy the share link to the clipboard. */
+    const copyShareUrl = () => {
+      navigator.clipboard.writeText(url)
+      dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
+    }
+
+    const onChangeName = useCallback(
+      _.debounce((e: ContentEditableEvent) => {
+        shareServer.update(accessToken, { ...share, name: e.target.value.trim() })
+      }, 500),
+      [],
+    )
+
+    return (
+      <div>
+        <div style={{ marginBottom: '0.5em' }}>
+          <EditableName onChange={onChangeName} value={share?.name || 'Untitled'} />
+        </div>
+
+        {!isCurrent ? (
+          <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
+        ) : (
           <div
             style={{
-              padding: '20px',
-              width: '100%',
+              border: 'solid 1px',
+              borderColor: colors.fg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            This is the current device. It is recommended that you create a separate device when sharing this
-            thoughtspace in order to control access.
+            <div
+              style={{
+                padding: '20px',
+                width: '100%',
+              }}
+            >
+              This is the current device. It is recommended that you create a separate device when sharing this
+              thoughtspace in order to control access.
+            </div>
+            {/* response spacer square */}
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                paddingBottom: '100%',
+              }}
+            ></div>
           </div>
-          {/* response spacer square */}
-          <div
+        )}
+
+        <div style={{ position: 'relative' }}>
+          <span>
+            <input
+              type={isCurrent ? 'password' : 'text'}
+              value={url}
+              readOnly={true}
+              style={{
+                color: isCurrent ? colors.gray : undefined,
+                margin: '10px',
+                padding: '0.75em 3em 0.75em 1em',
+                minWidth: 0,
+                width: '75%',
+              }}
+            />
+          </span>
+          <span
+            onClick={!isCurrent ? copyShareUrl : undefined}
             style={{
-              width: 0,
-              height: 0,
-              paddingBottom: '100%',
+              opacity: isCurrent ? 0.5 : undefined,
+              position: 'absolute',
+              top: '0.75em',
+              right: '1.25em',
+              cursor: 'pointer',
             }}
-          ></div>
+          >
+            {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
+          </span>
         </div>
-      )}
 
-      <div style={{ position: 'relative' }}>
-        <span>
-          <input
-            type={isCurrent ? 'password' : 'text'}
-            value={url}
-            readOnly={true}
-            style={{
-              color: isCurrent ? colors.gray : undefined,
-              margin: '10px',
-              padding: '0.75em 3em 0.75em 1em',
-              minWidth: 0,
-              width: '75%',
-            }}
-          />
-        </span>
-        <span
-          onClick={!isCurrent ? copyShareUrl : undefined}
-          style={{
-            opacity: isCurrent ? 0.5 : undefined,
-            position: 'absolute',
-            top: '0.75em',
-            right: '1.25em',
-            cursor: 'pointer',
-          }}
-        >
-          {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
-        </span>
-      </div>
-
-      <p style={{ color: colors.gray }}>
-        Created: {new Date(share.created).toLocaleString()}
-        <br />
-        Last Accessed: {new Date(share.accessed).toLocaleString()}
-      </p>
-
-      {onBack && (
-        <a
-          onClick={onBack}
-          className={classNames({
-            button: true,
-            'action-button': true,
-          })}
-          style={{
-            color: colors.bg,
-            fontSize: 18,
-            lineHeight: 2,
-            marginBottom: '1em',
-          }}
-        >
-          Back
-        </a>
-      )}
-
-      <div style={{ marginTop: '4em' }}>
-        <p style={{ color: colors.gray, marginTop: '0.5em' }}>
-          {isLastDevice
-            ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
-            : isCurrent
-            ? 'When removed, you will lose access to the thoughtspace on this device.'
-            : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
-          were saved for offline use.`}
+        <p style={{ color: colors.gray }}>
+          Created: {new Date(share.created).toLocaleString()}
+          <br />
+          Last Accessed: {new Date(share.accessed).toLocaleString()}
         </p>
-        <a
-          onClick={() => {
-            shareServer.delete(accessToken, share)
-          }}
-          style={{ color: colors.red }}
-        >
-          {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
-        </a>
+
+        {onBack && (
+          <a
+            onClick={onBack}
+            className={classNames({
+              button: true,
+              'action-button': true,
+            })}
+            style={{
+              color: colors.bg,
+              fontSize: 18,
+              lineHeight: 2,
+              marginBottom: '1em',
+            }}
+          >
+            Back
+          </a>
+        )}
+
+        <div style={{ marginTop: '4em' }}>
+          <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+            {isLastDevice
+              ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
+              : isCurrent
+              ? 'When removed, you will lose access to the thoughtspace on this device.'
+              : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
+          were saved for offline use.`}
+          </p>
+          <a
+            onClick={() => {
+              shareServer.delete(accessToken, share)
+            }}
+            style={{ color: colors.red }}
+          >
+            {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
+          </a>
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  },
+)
+ShareDetail.displayName = 'ShareDetail'
 
 const ModalShareMemo = React.memo(ModalShare)
 
