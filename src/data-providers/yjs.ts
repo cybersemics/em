@@ -85,6 +85,7 @@ const yHelpers = ydoc.getMap<string>('helpers')
 // Subscribe to yjs thoughts and use as the source of truth.
 // Apply yThoughtIndex and yLexemeIndex changes directly to state.
 yThoughtIndex.observe(async e => {
+  if (e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const thoughts = await getThoughtsByIds(ids)
   const thoughtIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: thoughts[i] || null }))
@@ -93,6 +94,7 @@ yThoughtIndex.observe(async e => {
   )
 })
 yLexemeIndex.observe(async e => {
+  if (e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const lexemes = await getLexemesByIds(ids)
   const lexemeIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: lexemes[i] || null }))
