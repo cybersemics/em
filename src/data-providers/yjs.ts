@@ -27,6 +27,7 @@ import never from '../util/never'
 import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
+type Status = 'connecting' | 'connected' | 'disconnected'
 type RouteOp<T> = T extends `share/${infer U}` ? U : never
 type WebsocketServerRPC = { [key in RouteOp<keyof Routes>]: any }
 
@@ -74,7 +75,7 @@ indexeddbProvider.whenSynced.then(() => {
 const websocketProvider: WebsocketProviderType = new WebsocketProvider(websocketUrl, tsid, ydoc, {
   auth: accessToken,
 })
-websocketProvider.on('status', (event: { status: 'connecting' | 'connected' | 'disconnected' }) => {
+websocketProvider.on('status', (event: { status: Status }) => {
   // console.info('websocket', event.status)
 })
 
@@ -342,5 +343,24 @@ export const useSharedType = <T>(yobj: Y.AbstractType<T>): ExtractYEvent<T> => {
 
 /** A hook that subscribes to yPermissions. */
 export const usePermissions = () => useSharedType(yPermissions)
+
+/** Returns true if the websocketProvider is currently connected to the server. */
+export const connected = () => websocketProvider.wsconnected
+
+/** A hook that subscribes to the websocketProvider's connection status. */
+export const useStatus = () => {
+  const [state, setState] = useState<Status>(websocketProvider.wsconnected ? 'connected' : 'disconnected')
+
+  const updateState = useCallback((e: { status: Status }) => setState(e.status), [])
+
+  useEffect(() => {
+    websocketProvider.on('status', updateState)
+    return () => {
+      websocketProvider.off('status', updateState)
+    }
+  })
+
+  return state
+}
 
 export default db

@@ -8,7 +8,7 @@ import ShareType from '../@types/Share'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { isTouch } from '../browser'
-import { accessToken as accessTokenCurrent, shareServer, tsid, usePermissions } from '../data-providers/yjs'
+import { accessToken as accessTokenCurrent, shareServer, tsid, usePermissions, useStatus } from '../data-providers/yjs'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
 import { ActionButton } from './ActionButton'
@@ -70,6 +70,7 @@ const ShareList = ({
   onSelect?: (accessToken: string) => void
   permissions: Index<ShareType>
 }) => {
+  const status = useStatus()
   const colors = useSelector(themeColors)
   const [showDeviceForm, setShowDeviceForm] = useState(false)
 
@@ -83,42 +84,50 @@ const ShareList = ({
     <>
       <p className='modal-description'>Share your thoughtspace or add a device. Thoughts will be synced in realtime.</p>
 
-      {permissionsSorted.map(([accessToken, share]) => {
-        const isCurrent = accessToken === accessTokenCurrent
-        return (
-          <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
-            <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
-          </div>
-        )
-      })}
-
-      {showDeviceForm ? (
-        <AddDeviceForm
-          onCancel={() => setShowDeviceForm(false)}
-          onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
-            const accessToken = shareServer.add({ role, name: name?.trim() })
-            setShowDeviceForm(false)
-            onAdd?.(accessToken)
-          }}
-          defaultName={getNextDeviceName(permissions)}
-        />
+      {status === 'connected' ? (
+        <>
+          {permissionsSorted.map(([accessToken, share]) => {
+            const isCurrent = accessToken === accessTokenCurrent
+            return (
+              <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
+                <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
+              </div>
+            )
+          })}
+          {showDeviceForm ? (
+            <AddDeviceForm
+              onCancel={() => setShowDeviceForm(false)}
+              onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
+                const accessToken = shareServer.add({ role, name: name?.trim() })
+                setShowDeviceForm(false)
+                onAdd?.(accessToken)
+              }}
+              defaultName={getNextDeviceName(permissions)}
+            />
+          ) : (
+            <div style={{ marginTop: '1em' }}>
+              <a
+                onClick={() => setShowDeviceForm(true)}
+                className={classNames({
+                  button: true,
+                  'button-outline': true,
+                })}
+                style={{
+                  backgroundColor: colors.bg,
+                  border: `solid 1px ${colors.fg}`,
+                  color: colors.fg,
+                  display: 'inline-block',
+                }}
+              >
+                + Add a device
+              </a>
+            </div>
+          )}
+        </>
       ) : (
-        <div style={{ marginTop: '1em' }}>
-          <a
-            onClick={() => setShowDeviceForm(true)}
-            className={classNames({
-              button: true,
-              'button-outline': true,
-            })}
-            style={{
-              backgroundColor: colors.bg,
-              border: `solid 1px ${colors.fg}`,
-              color: colors.fg,
-              display: 'inline-block',
-            }}
-          >
-            + Add a device
-          </a>
+        <div style={{ color: colors.gray, fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' }}>
+          <p>This device is currently offline</p>
+          <p>Please connect to the Internet to manage sharing.</p>
         </div>
       )}
     </>
