@@ -90,7 +90,13 @@ yThoughtIndex.observe(async e => {
   const thoughts = await getThoughtsByIds(ids)
   const thoughtIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: thoughts[i] || null }))
   store.dispatch(
-    updateThoughtsActionCreator({ thoughtIndexUpdates, lexemeIndexUpdates: {}, local: false, remote: false }),
+    updateThoughtsActionCreator({
+      thoughtIndexUpdates,
+      lexemeIndexUpdates: {},
+      local: false,
+      remote: false,
+      repairCursor: true,
+    }),
   )
 })
 yLexemeIndex.observe(async e => {
@@ -99,7 +105,13 @@ yLexemeIndex.observe(async e => {
   const lexemes = await getLexemesByIds(ids)
   const lexemeIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: lexemes[i] || null }))
   store.dispatch(
-    updateThoughtsActionCreator({ thoughtIndexUpdates: {}, lexemeIndexUpdates, local: false, remote: false }),
+    updateThoughtsActionCreator({
+      thoughtIndexUpdates: {},
+      lexemeIndexUpdates,
+      local: false,
+      remote: false,
+      repairCursor: true,
+    }),
   )
 })
 

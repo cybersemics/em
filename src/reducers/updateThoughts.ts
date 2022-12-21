@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -11,7 +12,11 @@ import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import pathToThought from '../selectors/pathToThought'
+import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
 import equalPath from '../util/equalPath'
+import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
@@ -56,6 +61,41 @@ export type UpdateThoughtsOptions = PushBatch & {
   pendingEdits?: editThoughtPayload[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
   preventExpandThoughts?: boolean
+  // If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.
+  // This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
+  repairCursor?: boolean
+}
+
+/** A reducer that repairs the cursor if it moved or was deleted. */
+const repairCursorReducer = (state: State) => {
+  if (!state.cursor) return state
+
+  let cursorNew: Path | null = state.cursor
+  const cursorThought = pathToThought(state, state.cursor)
+
+  // cursor was moved but still exists
+  // update the cursor to the new path
+  if (cursorThought) {
+    const recalculatedCursor = thoughtToPath(state, head(state.cursor))
+    if (!_.isEqual(recalculatedCursor, state.cursor)) {
+      cursorNew = recalculatedCursor
+    }
+  }
+  // cursor was removed
+  // find the closest existent ancestor
+  else {
+    const closestAncestorIndex = state.cursor.findIndex((id, i) => {
+      const ancestorPath = state.cursor!.slice(0, i + 1) as Path
+      const thought = pathToThought(state, ancestorPath)
+      return !thought || thought.parentId !== head(rootedParentOf(state, ancestorPath))
+    })
+    cursorNew = closestAncestorIndex > 0 ? (state.cursor.slice(0, closestAncestorIndex) as Path) : null
+  }
+
+  return {
+    ...state,
+    cursor: cursorNew,
+  }
 }
 
 /** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
@@ -156,6 +196,7 @@ const updateThoughts = (
     local = true,
     remote = true,
     isLoading,
+    repairCursor,
   }: UpdateThoughtsOptions,
 ) => {
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
@@ -247,7 +288,12 @@ const updateThoughts = (
         lexemeIndex,
       },
     }),
-    // state changes that rely on new state
+
+    // Repair cursor
+    // When getting updates from another device, the cursor may have moved or no longer exist, and needs to be updated.
+    repairCursor ? repairCursorReducer : null,
+
+    // expandThoughts
     state => {
       return {
         ...state,
