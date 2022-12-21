@@ -5,6 +5,7 @@
     "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level node build/scripts/server/index.js"
   },
   "dependencies": {
+    "y-websocket-auth": "^0.1.6",
     "yjs": "13.5.41"
   },
   "devDependencies": {

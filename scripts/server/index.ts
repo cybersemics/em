@@ -1,5 +1,3 @@
-import chalk from 'chalk'
-import { shallowEqual } from 'react-redux'
 import * as Y from 'yjs'
 import Routes from '../../src/@types/Routes'
 import Share from '../../src/@types/Share'
@@ -9,6 +7,10 @@ const { getYDoc, createServer } = require('y-websocket-auth/server')
 const host = process.env.HOST || 'localhost'
 const port = process.env.PORT || 8080
 const PERMISSIONS_DOCID = 'permissions'
+
+/** Make text gray in the console. */
+// can't use chalk because it is an esmodule, and this file needs to be commonjs to import y-websocket-auth/server
+const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
 
 /**
  * All thoughtspace permissions. Mirrors Websocket documents at DOCID/permissions. Must be loaded into memory so that permissions are available for authentication.
@@ -44,11 +46,11 @@ const log = (...args: any) => {
   // override the method by passing { method: 'error' } as the last argument
   let method = 'info'
   const lastArg = args[args.length - 1]
-  if (typeof lastArg === 'object' && shallowEqual(Object.keys(lastArg), ['method'])) {
+  if (typeof lastArg === 'object' && Object.keys(lastArg).length === 1 && lastArg.method) {
     args = args.slice(0, -1)
     method = lastArg
   }
-  ;(console as any)[method](chalk.gray(new Date().toISOString()), ...args)
+  ;(console as any)[method](gray(new Date().toISOString()), ...args)
 }
 
 /** Logs an error to the console with an ISO timestamp. */
@@ -76,7 +78,7 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
     // update last accessed time on auth
     yPermissionsServer.set(accessToken, { ...share, accessed: new Date().toISOString() })
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
-    yPermissionsServer.forEach((share, accessToken) => {
+    yPermissionsServer.forEach((share: Share, accessToken: string) => {
       yPermissionsClient.set(accessToken, share)
     })
   }
