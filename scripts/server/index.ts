@@ -1,3 +1,5 @@
+import chalk from 'chalk'
+import { shallowEqual } from 'react-redux'
 import * as Y from 'yjs'
 import Routes from '../../src/@types/Routes'
 import Share from '../../src/@types/Share'
@@ -36,6 +38,22 @@ if (process.env.YPERMISSIONS) {
   })()
 }
 
+/** Logs a message to the console with an ISO timestamp. */
+const log = (...args: any) => {
+  // default to console.info
+  // override the method by passing { method: 'error' } as the last argument
+  let method = 'info'
+  const lastArg = args[args.length - 1]
+  if (typeof lastArg === 'object' && shallowEqual(Object.keys(lastArg), ['method'])) {
+    args = args.slice(0, -1)
+    method = lastArg
+  }
+  ;(console as any)[method](chalk.gray(new Date().toISOString()), ...args)
+}
+
+/** Logs an error to the console with an ISO timestamp. */
+const logError = (...args: any) => log(...args, 'error')
+
 /** Authenticates the access token. */
 export const authenticate = (accessToken: string, { name, params }: { name: string; params: any }) => {
   const tsid = name.endsWith('/permissions') ? name.split('/permissions')[0] : name
@@ -46,7 +64,7 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
 
   // if the document has no owner, automatically assign the current user as owner
   if (yPermissionsServer.size === 0) {
-    console.info(`assigning owner ${accessToken} to new thoughtspace ${tsid}`, { name })
+    log(`assigning owner ${accessToken} to new thoughtspace ${tsid}`, { name })
     share = { accessed: new Date().toISOString(), created: new Date().toISOString(), name: 'Owner', role: 'owner' }
     yPermissionsServer.set(accessToken, share)
   }
@@ -87,8 +105,8 @@ const routes: { [key: string]: (...props: any) => any } = {
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
     const share = yPermissionsServer.get(auth)
     if (!share) {
-      console.error('Error: Permissions no longer exist', { docid, accessToken })
-      console.error({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
+      logError('Error: Permissions no longer exist', { docid, accessToken })
+      logError({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
       return {
         error: `Thoughtspace no longer exists: ${accessToken}`,
       }
@@ -101,7 +119,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
-    console.error({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
+    logError({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
     yPermissionsServer.delete(accessToken)
     yPermissionsClient.delete(accessToken)
   },
@@ -112,8 +130,8 @@ const routes: { [key: string]: (...props: any) => any } = {
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
     const share = yPermissionsServer.get(accessToken)
     if (!share) {
-      console.error('Error: Permissions no longer exist', { docid, accessToken })
-      console.error({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
+      logError('Error: Permissions no longer exist', { docid, accessToken })
+      logError({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
       return {
         error: `Thoughtspace no longer exists: ${accessToken}`,
       }
@@ -125,5 +143,6 @@ const routes: { [key: string]: (...props: any) => any } = {
 }
 
 createServer({ authenticate, routes }).listen(port, host, () => {
-  console.info(`server running at '${host}' on port ${port}`)
+  console.info('')
+  log(`server running at '${host}' on port ${port}`)
 })
