@@ -21,7 +21,7 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
       // clears the cursor selection if on divider or cursor is null.
       if (
         // selection may still exist after jump to null
-        !updatedState.cursor ||
+        (!updatedState.cursor && selection.isThought()) ||
         // clear selection when cursor is on divider
         (!equalPath(state.cursor, updatedState.cursor) && isDivider(value!))
       ) {
