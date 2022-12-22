@@ -104,7 +104,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     name?: string
     role: 'owner'
   }) => {
-    const shareNew = { accessed: new Date().toISOString(), created: new Date().toISOString(), name, role }
+    const shareNew: Share = { created: new Date().toISOString(), name, role }
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)

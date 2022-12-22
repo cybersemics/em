@@ -95,14 +95,16 @@ const ShareList = ({
       {status === 'connected' ? (
         <>
           {/* Device list */}
-          {permissionsSorted.map(([accessToken, share]) => {
-            const isCurrent = accessToken === accessTokenCurrent
-            return (
-              <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
-                <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
-              </div>
-            )
-          })}
+          <div style={{ marginBottom: '2em' }}>
+            {permissionsSorted.map(([accessToken, share]) => {
+              const isCurrent = accessToken === accessTokenCurrent
+              return (
+                <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
+                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
+                </div>
+              )
+            })}
+          </div>
 
           {/* Add a device */}
           <TransitionGroup>
@@ -225,7 +227,14 @@ const AddDeviceForm = ({
   const [name, setName] = useState(defaultName ?? 'Untitled')
   return (
     <div style={{ margin: '0 auto' }}>
-      <div style={{ borderBottom: 'solid 1px', borderBottomColor: colors.gray15, margin: '1em 0 3em' }} />
+      <div
+        style={{
+          borderBottom: 'solid 1px',
+          borderBottomColor: colors.gray15,
+          margin: '1em auto 3em',
+          width: 'calc(100% - 4em)',
+        }}
+      />
       <div>
         <span style={{ marginRight: '1em' }}>Name: </span>
         <input
@@ -403,7 +412,7 @@ const ShareDetail = React.memo(
         <p style={{ color: colors.gray }}>
           Created: {new Date(share.created).toLocaleString()}
           <br />
-          Last Accessed: {new Date(share.accessed).toLocaleString()}
+          Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
         </p>
 
         {onBack && (
