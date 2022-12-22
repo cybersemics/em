@@ -48,7 +48,7 @@ const log = (...args: any) => {
   const lastArg = args[args.length - 1]
   if (typeof lastArg === 'object' && Object.keys(lastArg).length === 1 && lastArg.method) {
     args = args.slice(0, -1)
-    method = lastArg
+    method = lastArg.method
   }
   if (process.env.LOG_TIMESTAMPS) {
     ;(console as any)[method](gray(new Date().toISOString()), ...args)
@@ -58,7 +58,7 @@ const log = (...args: any) => {
 }
 
 /** Logs an error to the console with an ISO timestamp. */
-const logError = (...args: any) => log(...args, 'error')
+const logError = (...args: any) => log(...args, { method: 'error' })
 
 /** Authenticates the access token. */
 export const authenticate = (accessToken: string, { name, params }: { name: string; params: any }) => {
@@ -125,7 +125,6 @@ const routes: { [key: string]: (...props: any) => any } = {
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
     const yPermissionsClient = permissionsDoc.getMap<Share>(PERMISSIONS_DOCID)
-    logError({ server: yPermissionsServer.toJSON(), client: yPermissionsClient.toJSON() })
     yPermissionsServer.delete(accessToken)
     yPermissionsClient.delete(accessToken)
   },
