@@ -139,9 +139,6 @@ const ShareList = ({
                         'button-outline': true,
                       })}
                       style={{
-                        backgroundColor: colors.bg,
-                        border: `solid 1px ${colors.fg}`,
-                        color: colors.fg,
                         display: 'inline-block',
                       }}
                     >
@@ -266,9 +263,6 @@ const AddDeviceForm = ({
             'button-outline': true,
           })}
           style={{
-            border: `solid 1px ${colors.fg}`,
-            color: colors.fg,
-            backgroundColor: colors.bg,
             display: 'inline-block',
           }}
         >

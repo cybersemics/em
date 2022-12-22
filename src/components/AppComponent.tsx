@@ -1,7 +1,8 @@
 import classNames from 'classnames'
-import React, { FC, Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
@@ -10,6 +11,7 @@ import * as selection from '../device/selection'
 import globals from '../globals'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
+import themeColors from '../selectors/themeColors'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -74,6 +76,45 @@ interface DispatchProps {
 //   )
 // }
 
+/** Converts React.CSSProperties to CSS by injecting a <style> element. Returns the style content on the css callback. */
+const StyleInjector = ({
+  css,
+  selector,
+  style,
+}: {
+  css: (stylesheet: string) => void
+  selector: string
+  style: React.CSSProperties
+}) => {
+  const ref = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (!ref.current) return
+    const styleContent = ref.current.getAttribute('style') || ''
+    ref.current.remove()
+    const ruleset = `${selector}{${styleContent}}`
+    css(ruleset)
+  }, [])
+  return <span ref={ref} style={style} />
+}
+
+/** Injects styles into a <style> element that affects all elements in the document. */
+const GlobalStyles = React.memo(({ styles }: { styles: [string, React.CSSProperties][] }) => {
+  const [globalStyle, setGlobalStyle] = useState<Index<string>>({})
+  const appendGlobalStyle = useCallback(
+    i => (css: string) => setGlobalStyle(globalStyle => ({ ...globalStyle, [i]: css })),
+    [],
+  )
+  return (
+    <>
+      {styles.map(([selector, style], i) => (
+        <StyleInjector key={i} css={appendGlobalStyle(i)} selector={selector} style={style} />
+      ))}
+      <style>{Object.values(globalStyle).join('')}</style>
+    </>
+  )
+})
+GlobalStyles.displayName = 'GlobalStyles'
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
@@ -135,6 +176,7 @@ const AppComponent: FC<Props> = props => {
 
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
+  const colors = useSelector(themeColors)
 
   const tutorialSettings = useSelector(isTutorial)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
@@ -169,8 +211,36 @@ const AppComponent: FC<Props> = props => {
     safari: isSafari(),
   })
 
+  const globalStyles = useMemo<[string, React.CSSProperties][]>(
+    () => [
+      [
+        // increase specificity to override .popup .modal-actions
+        'a.button.button.button:hover, a.button.button.button:active',
+        {
+          backgroundColor: colors.fg85,
+        },
+      ],
+      [
+        'a.button.button-outline',
+        {
+          backgroundColor: colors.bg,
+          border: `solid 1px ${colors.fg}`,
+          color: colors.fg,
+        },
+      ],
+      [
+        'a.button.button.button.button-outline:hover, a.button.button.button.button-outline:active',
+        {
+          backgroundColor: colors.gray15,
+        },
+      ],
+    ],
+    [colors],
+  )
+
   return (
     <div className={componentClassNames}>
+      <GlobalStyles styles={globalStyles} />
       <Alert />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
