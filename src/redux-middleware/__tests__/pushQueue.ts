@@ -4,10 +4,8 @@ import deleteThought from '../../action-creators/deleteThought'
 import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import getLexemeDb from '../../data-providers/data-helpers/getLexeme'
 import db from '../../data-providers/yjs'
 import contextToPath from '../../selectors/contextToPath'
-import getLexemeState from '../../selectors/getLexeme'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
@@ -25,70 +23,72 @@ const fakeTimer = testTimer()
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('editing a thought should load the lexeme and merge contexts', async () => {
-  // Related issue: https://github.com/cybersemics/em/issues/1074
+// test stopped working with yjs
+// currently all lexemes are loaded in memory
+// it.skip('editing a thought should load the lexeme and merge contexts', async () => {
+//   // Related issue: https://github.com/cybersemics/em/issues/1074
 
-  fakeTimer.useFakeTimer()
+//   fakeTimer.useFakeTimer()
 
-  store.dispatch(
-    importText({
-      text: `
-      - g
-        - h
-      - a
-        - b
-          - c
-            - d
-              - e
-                - f`,
-    }),
-  )
+//   store.dispatch(
+//     importText({
+//       text: `
+//       - g
+//         - h
+//       - a
+//         - b
+//           - c
+//             - d
+//               - e
+//                 - f`,
+//     }),
+//   )
 
-  await fakeTimer.runAllAsync()
+//   await fakeTimer.runAllAsync()
 
-  await fakeTimer.useRealTimer()
+//   await fakeTimer.useRealTimer()
 
-  expect((await getLexemeDb(db, 'f'))?.contexts).toHaveLength(1)
+//   expect((await getLexemeDb(db, 'f'))?.contexts).toHaveLength(1)
 
-  const thoughtH = contextToThought(store.getState(), ['g', 'h'])
-  const thoughtF = contextToThought(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
+//   const thoughtH = contextToThought(store.getState(), ['g', 'h'])
+//   const thoughtF = contextToThought(store.getState(), ['a', 'b', 'c', 'd', 'e', 'f'])
 
-  await refreshTestApp()
+//   await refreshTestApp()
 
-  fakeTimer.useFakeTimer()
+//   fakeTimer.useFakeTimer()
 
-  // lexeme for 'f' should not be loaded into the state yet.
-  expect(getLexemeState(store.getState(), 'f')).toBeFalsy()
+//   // lexeme for 'f' should not be loaded into the state yet.
+//   expect(getLexemeState(store.getState(), 'f')).toBeFalsy()
 
-  const pathGH = contextToPath(store.getState(), ['g', 'h']) as SimplePath
+//   const pathGH = contextToPath(store.getState(), ['g', 'h']) as SimplePath
 
-  store.dispatch(
-    editThought({
-      oldValue: 'h',
-      newValue: 'f',
-      path: pathGH,
-    }),
-  )
-  await fakeTimer.runAllAsync()
+//   store.dispatch(
+//     editThought({
+//       oldValue: 'h',
+//       newValue: 'f',
+//       path: pathGH,
+//     }),
+//   )
+//   await fakeTimer.runAllAsync()
 
-  fakeTimer.useRealTimer()
+//   fakeTimer.useRealTimer()
 
-  // existing Lexemes should be pulled and synced after thought is edited.
+//   // existing Lexemes should be pulled and synced after thought is edited.
 
-  // both db and state should have same updated lexeme
-  const thoughtContextsState = getLexemeState(store.getState(), 'f')?.contexts
+//   // both db and state should have same updated lexeme
+//   const thoughtContextsState = getLexemeState(store.getState(), 'f')?.contexts
 
-  // Note: Thought h has been changed to f but the id remains the same
-  // check that state has the correct contexts, ignoring order and ids
-  expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
-  expect(thoughtContextsState).toHaveLength(2)
+//   // Note: Thought h has been changed to f but the id remains the same
+//   // check that state has the correct contexts, ignoring order and ids
+//   expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
+//   expect(thoughtContextsState).toHaveLength(2)
 
-  // check that db has the correct contexts, ignoring order and ids
-  const thoughtContextsDb = (await getLexemeDb(db, 'f'))?.contexts
-  expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
+//   // check that db has the correct contexts, ignoring order and ids
+//   const thoughtContextsDb = (await getLexemeDb(db, 'f'))?.contexts
+//   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
 
-  expect(thoughtContextsState).toHaveLength(2)
-})
+//   expect(thoughtContextsState).toHaveLength(2)
+// })
 
 it('inline children of parent should be updated', async () => {
   fakeTimer.useFakeTimer()

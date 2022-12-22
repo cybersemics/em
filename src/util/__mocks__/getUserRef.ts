@@ -3,18 +3,13 @@ import * as Firebase from '../../@types/Firebase'
 import Index from '../../@types/IndexType'
 
 // eslint-disable-next-line fp/no-let
-let firebaseStore = {}
+const firebaseStore = {}
 
 /** Returns a snapshot that returns the given value. */
 const wrapSnapshot = <T>(val: T): Firebase.Snapshot<T> => ({
   key: 'WRAP_SNAPSHOT_KEY_MOCK',
   val: () => val,
 })
-
-/** Expose a function to clear the mock firebase store. */
-global.clearMockFirebaseStore = () => {
-  firebaseStore = {}
-}
 
 /** Mock ref that uses the mock firebase store. */
 const ref = (refPath: string) => ({

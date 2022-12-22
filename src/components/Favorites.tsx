@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useState } from 'react'
 import {
   DragSource,
   DragSourceConnector,
@@ -19,7 +19,6 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
-import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import updateThoughts from '../action-creators/updateThoughts'
 import { AlertType, EM_TOKEN, NOOP } from '../constants'
@@ -300,15 +299,8 @@ const FavoritesOptions = ({
 
 /** Favorites list. */
 const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
-  const dispatch = useDispatch()
   const [showOptions, setShowOptions] = useState(false)
   const colors = useSelector(themeColors)
-
-  // true if all favorites have been loaded
-  const favoritesLoaded = useSelector((state: State) => {
-    const lexeme = getLexeme(state, '=favorite')
-    return lexeme && lexeme.contexts.every(cxid => getThoughtById(state, cxid))
-  })
 
   const simplePaths = useSelector((state: State) => {
     return (getLexeme(state, '=favorite')?.contexts || [])
@@ -324,22 +316,6 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const hideContexts = useSelector(
     (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
   )
-
-  useEffect(() => {
-    if (favoritesLoaded) return
-    dispatch(
-      pullPendingLexemes(
-        {
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {},
-          pendingLexemes: {
-            [hashThought('=favorite')]: true,
-          },
-        },
-        { skipConflictResolution: true },
-      ),
-    )
-  }, [favoritesLoaded])
 
   return (
     <div

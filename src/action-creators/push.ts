@@ -1,27 +1,20 @@
 /* eslint-disable fp/no-mutating-methods */
 import _ from 'lodash'
-import DatabaseUpdates from '../@types/DatabaseUpdates'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Thunk from '../@types/Thunk'
-import error from '../action-creators/error'
-import { clientId } from '../browser'
-import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
-import getFirebaseProvider from '../data-providers/firebase'
+import { EM_TOKEN } from '../constants'
 import db from '../data-providers/yjs'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import filterObject from '../util/filterObject'
-import { getUserRef } from '../util/getUserRef'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
-import { getSessionId } from '../util/sessionManager'
 import storage from '../util/storage'
-import timestamp from '../util/timestamp'
 
 /** Filter out the properties that should not be saved to thoughts in the database. */
 const thoughtToDb = (thought: Thought) =>
@@ -82,88 +75,6 @@ const pushLocal = (
   return Promise.resolve()
 }
 
-/** Prepends lexemeIndex and thoughtIndex keys for syncing to Firebase. */
-const pushRemote =
-  (
-    thoughtIndexUpdates: Index<Thought | null> = {},
-    lexemeIndexUpdates: Index<Lexeme | null> = {},
-    recentlyEdited: Index | undefined,
-    updates: DatabaseUpdates = {},
-  ): Thunk<Promise<unknown>> =>
-  async (dispatch, getState) => {
-    const state = getState()
-
-    const hasUpdates =
-      Object.keys(lexemeIndexUpdates).length > 0 ||
-      Object.keys(thoughtIndexUpdates).length > 0 ||
-      Object.keys(updates).length > 0
-
-    // prepend lexemeIndex/ and encode key
-    const prependedLexemeUpdates = _.transform(
-      lexemeIndexUpdates,
-      (accum, lexemeUpdate, key) => {
-        if (!key) {
-          console.error('Unescaped empty key', lexemeUpdate, new Error())
-        }
-        accum['lexemeIndex/' + (key || EMPTY_TOKEN)] = lexemeUpdate
-      },
-      {} as Index<Lexeme | null>,
-    )
-
-    const prependedThoughtIndexUpdates = _.transform(
-      thoughtIndexUpdates,
-      (accum, thoughtUpdate, id) => {
-        const children = thoughtUpdate ? getAllChildrenAsThoughts(state, thoughtUpdate.id) : []
-        const thoughtWithChildren: Partial<ThoughtWithChildren> | null = thoughtUpdate
-          ? {
-              ...thoughtToDb(thoughtUpdate),
-              // firebaseProvider.update will flatten the children updates to avoid overwriting existing children
-              // this can be made more efficient by only updating the children have changed
-              children: keyValueBy(children, child => ({
-                [child.id]: childToDb(child),
-              })),
-              lastUpdated: thoughtUpdate.lastUpdated || timestamp(),
-              updatedBy: thoughtUpdate.updatedBy || getSessionId(),
-              ...(thoughtUpdate.archived ? { archived: thoughtUpdate.archived } : null),
-            }
-          : null
-
-        accum[`thoughtIndex/${id}`] = thoughtWithChildren || null
-      },
-      {} as Index<Partial<ThoughtWithChildren> | null>,
-    )
-
-    // add updates to queue appending clientId and timestamp
-    // type of Index<any> because updates are flat, e.g. thoughtIndex/qlr99ebU6zau5s8JVZIam/children, so the type of the value depends on the type at that key
-    const allUpdates: Index<any> = hasUpdates
-      ? {
-          ...updates,
-          ...prependedLexemeUpdates,
-          ...prependedThoughtIndexUpdates,
-          ...(recentlyEdited ? { recentlyEdited } : null),
-          // do not update lastClientId and lastUpdated if there are no lexemeIndex updates (e.g. just a settings update)
-          // there are some trivial settings updates that get pushed to the remote when the app loads, setting lastClientId and lastUpdated, which can cause the client to ignore lexemeIndex updates from the remote thinking it is already up-to-speed
-          // TODO: A root level lastClientId/lastUpdated is an overreaching solution.
-          ...(Object.keys(lexemeIndexUpdates).length > 0
-            ? {
-                lastClientId: clientId,
-                lastUpdated: timestamp(),
-              }
-            : null),
-        }
-      : {}
-
-    if (Object.keys(allUpdates).length > 0) {
-      return getFirebaseProvider(state, dispatch)
-        .update(allUpdates)
-        .catch((e: Error) => {
-          dispatch(error({ value: e.message }))
-          console.error(e.message, allUpdates)
-          throw e
-        })
-    }
-  }
-
 /** Syncs updates to local database and Firebase. */
 const push =
   (
@@ -177,8 +88,6 @@ const push =
     }
 
     const state = getState()
-    const authenticated = { state }
-    const userRef = getUserRef(state)
 
     // include the parents of the updated thoughts, since their inline children will be updated
     // converting childrenMap to children occurs in pushLocal and pushRemote
@@ -225,14 +134,7 @@ const push =
     })
 
     // temporarily disable local push when logged in
-    return remote && authenticated && userRef
-      ? pushRemote(
-          thoughtIndexUpdatesWithParents,
-          lexemeIndexUpdates,
-          recentlyEdited,
-          updatesValidated,
-        )(dispatch, getState)
-      : local
+    return local
       ? pushLocal(
           getState(),
           thoughtIndexUpdatesWithParents,

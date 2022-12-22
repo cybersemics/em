@@ -5,7 +5,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import pull from '../action-creators/pull'
-import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildren } from '../selectors/getChildren'
@@ -13,7 +12,6 @@ import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import equalArrays from '../util/equalArrays'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 
@@ -175,23 +173,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     if (isLoaded) {
       flushPullQueueThrottled({ forceRemote })
     } else {
-      flushPullQueue({ forceRemote }).then(() => {
-        setTimeout(() => {
-          // 200ms after the initial pull, pull all favorites
-          dispatch(
-            pullPendingLexemes(
-              {
-                thoughtIndexUpdates: {},
-                lexemeIndexUpdates: {},
-                pendingLexemes: {
-                  [hashThought('=favorite')]: true,
-                },
-              },
-              { skipConflictResolution: true },
-            ),
-          )
-        }, 200)
-      })
+      flushPullQueue({ forceRemote })
       isLoaded = true
     }
   }

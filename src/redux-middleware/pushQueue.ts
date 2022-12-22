@@ -5,7 +5,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../action-creators/deleteThought'
 import pull from '../action-creators/pull'
-import pullPendingLexemes from '../action-creators/pullPendingLexemes'
 import push from '../action-creators/push'
 import getThoughtById from '../selectors/getThoughtById'
 import pushStore from '../stores/push'
@@ -105,34 +104,6 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
 
   pushStore.update({ isPushing: true })
 
-  const combinedBatch = pushQueue.reduce(mergeBatch)
-
-  // Pull all the pending lexemes that are not available in state yet, merge and update the lexemeIndexUpdates. Prevents local and remote lexemes getting overriden by incomplete application state (due to lazy loading). Dispatched updateThoughts
-  // Related issue: https://github.com/cybersemics/em/issues/1074
-  const pulledLexemes = await dispatch(pullPendingLexemes(combinedBatch))
-  const localMergedLexemeBatches =
-    Object.keys(pulledLexemes).length > 0
-      ? [
-          {
-            lexemeIndexUpdates: pulledLexemes,
-            thoughtIndexUpdates: {},
-            local: true,
-            remote: false,
-          },
-        ]
-      : []
-  const remoteMergedLexemeBatches =
-    Object.keys(pulledLexemes).length > 0
-      ? [
-          {
-            lexemeIndexUpdates: pulledLexemes,
-            thoughtIndexUpdates: {},
-            local: false,
-            remote: true,
-          },
-        ]
-      : []
-
   // Note: pushQueue needs to be passed to the flush action creators as lexemeSyncedPushQueue is asychronous and pushQueue is emptied as soon as dispatched.
   await dispatch(flushDeletes(pushQueue))
 
@@ -147,8 +118,8 @@ const flushPushQueue = (): Thunk<Promise<void>> => async (dispatch, getState) =>
   }
 
   // merge pulled Lexemes into both local and remote batches
-  const localMergedBatch = [...localBatches, ...localMergedLexemeBatches].reduce(mergeBatch, {} as PushBatch)
-  const remoteMergedBatch = [...remoteBatches, ...remoteMergedLexemeBatches].reduce(mergeBatch, {} as PushBatch)
+  const localMergedBatch = localBatches.reduce(mergeBatch, {} as PushBatch)
+  const remoteMergedBatch = remoteBatches.reduce(mergeBatch, {} as PushBatch)
 
   // push local and remote batches
   await Promise.all([

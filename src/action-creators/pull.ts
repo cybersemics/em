@@ -7,7 +7,6 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
-import getFirebaseProvider from '../data-providers/firebase'
 import db from '../data-providers/yjs'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
@@ -120,39 +119,6 @@ const pull =
 
     // get remote thoughts
     const status = getState().status
-    if (status === 'loading' || status === 'loaded') {
-      const thoughtsRemoteIterable = getManyDescendants(
-        getFirebaseProvider(getState(), dispatch),
-        thoughtIds,
-        getState,
-        {
-          maxDepth: maxDepth ?? BUFFER_DEPTH,
-        },
-      )
-
-      await itForEach(thoughtsRemoteIterable, (thoughtsChunk: ThoughtIndices) => {
-        // eslint-disable-next-line fp/no-mutating-methods
-        thoughtRemoteChunks.push(thoughtsChunk)
-        Object.values(thoughtsChunk.thoughtIndex).forEach(thought => {
-          if (!thought.childrenMap) {
-            console.error('thought', thought)
-            throw new Error('childrenMap missing')
-          }
-        })
-
-        dispatch(
-          updateThoughts({
-            thoughtIndexUpdates: thoughtsChunk.thoughtIndex,
-            lexemeIndexUpdates: thoughtsChunk.lexemeIndex,
-            // temporarily disable local replication when logged in
-            local: false,
-            remote: false,
-          }),
-        )
-
-        onRemoteThoughts?.(thoughtsChunk)
-      })
-    }
 
     // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtIndices is expected
     const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {

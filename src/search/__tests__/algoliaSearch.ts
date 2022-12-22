@@ -1,8 +1,6 @@
-import { NOOP } from '../../constants'
-import getFirebaseProvider from '../../data-providers/firebase'
 import { createMockStore } from '../../test-helpers/createMockStore'
 import initialState from '../../util/initialState'
-import initAlgoliaSearch, { getRemoteSearch } from '../algoliaSearch'
+import initAlgoliaSearch from '../algoliaSearch'
 
 jest.mock('../../util/getAlgoliaApiKey')
 
@@ -40,7 +38,7 @@ describe.skip('remote search', () => {
   })
 
   it('return context map from the remote search hits', async () => {
-    const firebaseProvider = getFirebaseProvider(initialState(), NOOP)
+    // const firebaseProvider = getFirebaseProvider(initialState(), NOOP)
     // firebaseProvider.getLexemesByIds = jest.fn().mockReturnValue([
     //   {
     //     value: 'test',
@@ -54,13 +52,12 @@ describe.skip('remote search', () => {
     //     ],
     //   },
     // ] as Lexeme[])
-
-    const contextMap = await getRemoteSearch(initialState(), firebaseProvider).searchAndGenerateContextMap('test')
-    expect(Object.values(contextMap)).toEqual(
-      expect.arrayContaining([
-        ['a', 'b', 'c'],
-        ['k', 'm', 'n'],
-      ]),
-    )
+    // const contextMap = await getRemoteSearch(initialState(), firebaseProvider).searchAndGenerateContextMap('test')
+    // expect(Object.values(contextMap)).toEqual(
+    //   expect.arrayContaining([
+    //     ['a', 'b', 'c'],
+    //     ['k', 'm', 'n'],
+    //   ]),
+    // )
   })
 })
