@@ -11,6 +11,7 @@ import { isTouch } from '../browser'
 import { accessToken as accessTokenCurrent, shareServer, tsid, usePermissions, useStatus } from '../data-providers/yjs'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
+import strip from '../util/strip'
 import { ActionButton } from './ActionButton'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import Modal from './Modal'
@@ -98,7 +99,7 @@ const ShareList = ({
             <AddDeviceForm
               onCancel={() => setShowDeviceForm(false)}
               onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
-                const accessToken = shareServer.add({ role, name: name?.trim() })
+                const accessToken = shareServer.add({ role, name: strip(name || '') })
                 setShowDeviceForm(false)
                 onAdd?.(accessToken)
               }}
