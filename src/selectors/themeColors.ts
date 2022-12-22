@@ -19,6 +19,7 @@ const colors = {
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
+    lightgreen: 'rgba(144, 238, 144)', // #90ee90 (lightgreen)
     orange: 'rgba(255, 136, 0, 1)', // #ff8800
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
@@ -44,6 +45,7 @@ const colors = {
     green: 'rgba(0, 214, 136, 1)', // #00d688
     highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
+    lightgreen: 'rgba(0, 214, 136, 1)', // #00d688 (same as green in the light theme)
     orange: 'rgba(255, 136, 0, 1)', // #ff8800
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
