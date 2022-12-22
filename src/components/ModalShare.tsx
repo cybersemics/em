@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import ShareType from '../@types/Share'
 import State from '../@types/State'
@@ -46,16 +47,22 @@ const ModalShare = () => {
       actions={({ close }) => (!selected ? <ActionButton key='close' title='Close' onClick={() => close()} /> : null)}
     >
       <div className='modal-wrapper'>
-        {selected && permissions[selected] ? (
-          <ShareDetail
-            accessToken={selected}
-            isLastDevice={Object.keys(permissions).length === 1}
-            onBack={onBack}
-            share={permissions[selected]}
-          />
-        ) : (
-          <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
-        )}
+        <TransitionGroup>
+          {selected && permissions[selected] ? (
+            <CSSTransition key='share-detail' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+              <ShareDetail
+                accessToken={selected}
+                isLastDevice={Object.keys(permissions).length === 1}
+                onBack={onBack}
+                share={permissions[selected]}
+              />
+            </CSSTransition>
+          ) : (
+            <CSSTransition key='share-list' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+              <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+            </CSSTransition>
+          )}
+        </TransitionGroup>
       </div>
     </Modal>
   )
@@ -87,6 +94,7 @@ const ShareList = ({
 
       {status === 'connected' ? (
         <>
+          {/* Device list */}
           {permissionsSorted.map(([accessToken, share]) => {
             const isCurrent = accessToken === accessTokenCurrent
             return (
@@ -95,35 +103,55 @@ const ShareList = ({
               </div>
             )
           })}
-          {showDeviceForm ? (
-            <AddDeviceForm
-              onCancel={() => setShowDeviceForm(false)}
-              onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
-                const accessToken = shareServer.add({ role, name: strip(name || '') })
-                setShowDeviceForm(false)
-                onAdd?.(accessToken)
-              }}
-              defaultName={getNextDeviceName(permissions)}
-            />
-          ) : (
-            <div style={{ marginTop: '1em' }}>
-              <a
-                onClick={() => setShowDeviceForm(true)}
-                className={classNames({
-                  button: true,
-                  'button-outline': true,
-                })}
-                style={{
-                  backgroundColor: colors.bg,
-                  border: `solid 1px ${colors.fg}`,
-                  color: colors.fg,
-                  display: 'inline-block',
-                }}
-              >
-                + Add a device
-              </a>
-            </div>
-          )}
+
+          {/* Add a device */}
+          <TransitionGroup>
+            {
+              // form
+              showDeviceForm ? (
+                <CSSTransition
+                  key='add-device-form'
+                  classNames='fade-400'
+                  exit={false}
+                  timeout={400}
+                  unmountOnExit={true}
+                >
+                  <div>
+                    <AddDeviceForm
+                      onCancel={() => setShowDeviceForm(false)}
+                      onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
+                        const accessToken = shareServer.add({ role, name: strip(name || '') })
+                        setShowDeviceForm(false)
+                        onAdd?.(accessToken)
+                      }}
+                      defaultName={getNextDeviceName(permissions)}
+                    />
+                  </div>
+                </CSSTransition>
+              ) : (
+                // "+ Add a device" button
+                <CSSTransition key='add-a-device' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+                  <div style={{ marginTop: '1em' }}>
+                    <a
+                      onClick={() => setShowDeviceForm(true)}
+                      className={classNames({
+                        button: true,
+                        'button-outline': true,
+                      })}
+                      style={{
+                        backgroundColor: colors.bg,
+                        border: `solid 1px ${colors.fg}`,
+                        color: colors.fg,
+                        display: 'inline-block',
+                      }}
+                    >
+                      + Add a device
+                    </a>
+                  </div>
+                </CSSTransition>
+              )
+            }
+          </TransitionGroup>
         </>
       ) : (
         <div style={{ color: colors.gray, fontSize: 18, fontStyle: 'italic', margin: '40px 0 20px 0' }}>
