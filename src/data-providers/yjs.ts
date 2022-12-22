@@ -43,11 +43,11 @@ const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
-export const accessTokenLocal = storage.getItem('accessToken', () => createId())!
+export const accessTokenLocal = storage.getItem('accessToken', () => createId())
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-export const tsidLocal = storage.getItem('tsid', () => createId())!
+export const tsidLocal = storage.getItem('tsid', () => createId())
 
 // access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device
@@ -86,7 +86,8 @@ const yHelpers = ydoc.getMap<string>('helpers')
 // Subscribe to yjs thoughts and use as the source of truth.
 // Apply yThoughtIndex and yLexemeIndex changes directly to state.
 yThoughtIndex.observe(async e => {
-  if (e.transaction.origin === ydoc.clientID) return
+  // TODO: Why is e.transaction.origin null? Is it from IndexedDB syncing
+  if (!e.transaction.origin || e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const thoughts = await getThoughtsByIds(ids)
   const thoughtIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: thoughts[i] || null }))
@@ -101,7 +102,7 @@ yThoughtIndex.observe(async e => {
   )
 })
 yLexemeIndex.observe(async e => {
-  if (e.transaction.origin === ydoc.clientID) return
+  if (!e.transaction.origin || e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const lexemes = await getLexemesByIds(ids)
   const lexemeIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: lexemes[i] || null }))
