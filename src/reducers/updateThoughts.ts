@@ -266,7 +266,7 @@ const updateThoughts = (
       rootThought &&
       !rootThought.pending &&
       // Disable isLoading if the root children have been loaded.
-      // Otherwise NewThoughtInstructions will still be shown since there are no children to render.
+      // Otherwise NoThoughts will still be shown since there are no children to render.
       // If the root has no children and is no longer pending, we can disable isLoading immediately.
       (Object.keys(rootThought.childrenMap).length === 0 ||
         Object.values(rootThought.childrenMap).find(childId => thoughtIndex[childId]))

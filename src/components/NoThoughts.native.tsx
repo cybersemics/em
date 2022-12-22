@@ -11,7 +11,7 @@ import { commonStyles } from '../style/commonStyles'
 import GestureDiagram from './GestureDiagram'
 import { Text } from './Text.native'
 
-interface NewThoughtInstructionsProps {
+interface NoThoughtsProps {
   childrenLength: number
   isTutorial: boolean
 }
@@ -33,7 +33,7 @@ const mapStateToProps = (state: State) => {
   }
 }
 
-type NewThoughtInstructionsComponent = FC<NewThoughtInstructionsProps & ReturnType<typeof mapStateToProps>>
+type NoThoughtsComponent = FC<NoThoughtsProps & ReturnType<typeof mapStateToProps>>
 
 /** An absolutely centered LoadingEllipsis. */
 const CenteredLoadingEllipsis = () => (
@@ -43,13 +43,7 @@ const CenteredLoadingEllipsis = () => (
 )
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
-const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
-  childrenLength,
-  localLoading,
-  isTutorial,
-  status,
-  tutorialStep,
-}) => {
+const NoThoughts: NoThoughtsComponent = ({ childrenLength, localLoading, isTutorial, status, tutorialStep }) => {
   const remoteLoading = status === 'connecting' || status === 'loading'
   const colors = useSelector(themeColors)
 
@@ -82,4 +76,4 @@ const NewThoughtInstructions: NewThoughtInstructionsComponent = ({
   )
 }
 
-export default connect(mapStateToProps)(NewThoughtInstructions)
+export default connect(mapStateToProps)(NoThoughts)

@@ -20,7 +20,7 @@ import publishMode from '../util/publishMode'
 import storage from '../util/storage'
 import Editable from './Editable'
 import LayoutTree from './LayoutTree'
-import NewThoughtInstructions from './NewThoughtInstructions'
+import NoThoughts from './NoThoughts'
 import Search from './Search'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
@@ -119,7 +119,7 @@ const Content: ContentComponent = props => {
         ) : (
           <>
             {rootThoughtsLength === 0 ? (
-              <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
+              <NoThoughts isTutorial={isTutorialLocal} />
             ) : isAbsoluteContext ? (
               TransientEditable
             ) : (

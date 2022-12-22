@@ -11,11 +11,6 @@ import { shortcutById } from '../shortcuts'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 
-interface NewThoughtInstructionsProps {
-  childrenLength: number
-  isTutorial: boolean
-}
-
 // assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
 if (!newThoughtShortcut) {
@@ -32,16 +27,17 @@ const CenteredLoadingEllipsis = () => (
 )
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
-const NewThoughtInstructions = ({ childrenLength, isTutorial }: NewThoughtInstructionsProps) => {
+const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
   /*
     Determining when to show the loader is nontrivial due to many loading states of local and remote, Firebase connection and authentication status, and pending thoughts.
 
-    state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and NewThoughtInstructions.
+    state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and NoThoughts.
 
     Related:
     - https://github.com/cybersemics/em/issues/1344
     - https://github.com/cybersemics/em/pull/1345
   */
+  const isLoading = useSelector((state: State) => state.isLoading)
   const statusWebsocket = useOfflineStatus()
 
   const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 0))
@@ -52,14 +48,13 @@ const NewThoughtInstructions = ({ childrenLength, isTutorial }: NewThoughtInstru
     <div className='new-thought-instructions'>
       {
         // show nothing during the preload phase (See: useOfflineStatus)
-        childrenLength === 0 && statusWebsocket === 'preload' ? null : childrenLength === 0 &&
-          statusWebsocket === 'loading' ? (
+        statusWebsocket === 'preload' ? null : statusWebsocket === 'loading' || isLoading ? (
           // show loading ellipsis when loading
           <CenteredLoadingEllipsis />
         ) : // tutorial no children
         // show special message when there are no children in tutorial
         isTutorial ? (
-          childrenLength === 0 && (tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch) ? (
+          tutorialStep !== TUTORIAL_STEP_FIRSTTHOUGHT || !isTouch ? (
             <div className='center-in-content'>
               <i className='text-note'>Ahhh. Open space. Unlimited possibilities.</i>
             </div>
@@ -86,7 +81,7 @@ const NewThoughtInstructions = ({ childrenLength, isTutorial }: NewThoughtInstru
   )
 }
 
-const NewThoughtInstructionsMemo = React.memo(NewThoughtInstructions)
-NewThoughtInstructionsMemo.displayName = 'NewThoughtInstructions'
+const NoThoughtsMemo = React.memo(NoThoughts)
+NoThoughtsMemo.displayName = 'NoThoughts'
 
-export default NewThoughtInstructionsMemo
+export default NoThoughtsMemo

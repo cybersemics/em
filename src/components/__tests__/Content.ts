@@ -4,7 +4,7 @@ import importText from '../../action-creators/importText'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import NewThoughtInstructions from '../NewThoughtInstructions'
+import NoThoughts from '../NoThoughts'
 
 let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
 
@@ -14,9 +14,9 @@ beforeEach(async () => {
 
 afterEach(cleanupTestApp)
 
-it('show NewThoughtInstructions when there are no visible thoughts in the root context', () => {
-  // NewThoughtInstructions should be visible when there are no thoughts
-  expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
+it('show NoThoughts when there are no visible thoughts in the root context', () => {
+  // NoThoughts should be visible when there are no thoughts
+  expect(wrapper.find(NoThoughts)).toHaveLength(1)
 
   store.dispatch(
     importText({
@@ -30,8 +30,8 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
 
   wrapper.update()
 
-  // NewThoughtInstructions should not be visible when there is at least one visible thought
-  expect(wrapper.find(NewThoughtInstructions)).toHaveLength(0)
+  // NoThoughts should not be visible when there is at least one visible thought
+  expect(wrapper.find(NoThoughts)).toHaveLength(0)
 
   store.dispatch(
     deleteThoughtWithCursor({
@@ -40,7 +40,7 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   )
 
   // still has one visible thought
-  expect(wrapper.find(NewThoughtInstructions)).toHaveLength(0)
+  expect(wrapper.find(NoThoughts)).toHaveLength(0)
 
   store.dispatch(
     deleteThoughtWithCursor({
@@ -51,5 +51,5 @@ it('show NewThoughtInstructions when there are no visible thoughts in the root c
   wrapper.update()
 
   // There are no visible thoughts
-  expect(wrapper.find(NewThoughtInstructions)).toHaveLength(1)
+  expect(wrapper.find(NoThoughts)).toHaveLength(1)
 })

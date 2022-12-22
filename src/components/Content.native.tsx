@@ -12,7 +12,7 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import storage from '../util/storage'
 import Editable from './Editable'
-import NewThoughtInstructions from './NewThoughtInstructions'
+import NoThoughts from './NoThoughts'
 import Search from './Search'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
@@ -75,7 +75,7 @@ const Content: ContentComponent = props => {
             isAbsoluteContext ? (
               TransientEditable
             ) : (
-              <NewThoughtInstructions childrenLength={rootThoughtsLength} isTutorial={isTutorialLocal} />
+              <NoThoughts isTutorial={isTutorialLocal} />
             )
           ) : // TODO: VirtualTree
           null}
