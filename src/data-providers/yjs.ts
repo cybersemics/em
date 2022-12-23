@@ -1,11 +1,12 @@
 import _ from 'lodash'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { shallowEqual } from 'react-redux'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import OfflineStatus from '../@types/OfflineStatus'
 import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import Thought from '../@types/Thought'
@@ -19,6 +20,7 @@ import modalComplete from '../action-creators/modalComplete'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import store from '../stores/app'
+import ministore from '../stores/ministore'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import groupObjectBy from '../util/groupObjectBy'
@@ -86,8 +88,7 @@ const yHelpers = ydoc.getMap<string>('helpers')
 // Subscribe to yjs thoughts and use as the source of truth.
 // Apply yThoughtIndex and yLexemeIndex changes directly to state.
 yThoughtIndex.observe(async e => {
-  // TODO: Why is e.transaction.origin null? Is it from IndexedDB syncing
-  if (!e.transaction.origin || e.transaction.origin === ydoc.clientID) return
+  if (e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const thoughts = await getThoughtsByIds(ids)
   const thoughtIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: thoughts[i] || null }))
@@ -102,7 +103,7 @@ yThoughtIndex.observe(async e => {
   )
 })
 yLexemeIndex.observe(async e => {
-  if (!e.transaction.origin || e.transaction.origin === ydoc.clientID) return
+  if (e.transaction.origin === ydoc.clientID) return
   const ids = Array.from(e.keysChanged.keys())
   const lexemes = await getLexemesByIds(ids)
   const lexemeIndexUpdates = keyValueBy(ids, (id, i) => ({ [id]: lexemes[i] || null }))
@@ -364,81 +365,48 @@ export const useStatus = () => {
   return state
 }
 
-/** Creates a promise that resolves in the given number of milliseconds. */
-const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
+/** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
+export const offlineStatusStore = ministore<OfflineStatus>(
+  websocketProvider.wsconnected ? 'connected' : 'preconnecting',
+)
 
-// Global flag indicating if the websocketProvider has loaded.
-// Set to true when the status is synced, otherwise turns true after a reasonable delay (i.e. connection attempts).
-let loaded = false
-const preload = delay(500)
-const offline = preload.then(() => delay(1000))
-
-/** A hook that subscribes to the websocketProvider's connection status, and adds preload, loading, and offline statuses (see below).
- *
- * - preload: Initial value (unless already synced). Provides a very short delay before entering "loading". This is helpful for delaying the loading indicator until it is warranted (i.e. 400-500ms) and avoid an unnecessary flash of the loader.
- * - connected    The connected status is initially set only after synced fires.
- * - connecting   If the client is disconnected, it can go back into the connecting status.
- * - loading      Preload status has ended and a loading indicator should be shown.
- * - offline      Offline mode after failing to connect to the websocket server. The status will stay offline until/if it becomes connected. After it has connected once, it will not enter offline mode.
- *
- * */
-export const useOfflineStatus = () => {
-  const unmounted = useRef(false)
-
-  const [state, setState] = useState<Status | 'preload' | 'loading' | 'offline'>(
-    websocketProvider.wsconnected ? 'connected' : loaded ? 'disconnected' : 'preload',
+websocketProvider.on('status', (e: { status: Status }) => {
+  offlineStatusStore.update(statusOld =>
+    e.status === 'connecting'
+      ? // preconnecting/connecting/offline (no change)
+        statusOld === 'preconnecting' || statusOld === 'connecting' || statusOld === 'offline'
+        ? statusOld
+        : 'reconnecting'
+      : // connected (stop reconnecting)
+      e.status === 'connected'
+      ? (stopConnecting(), 'connected')
+      : // disconnecting (start reconnecting)
+      e.status === 'disconnected'
+      ? (startConnecting(), 'reconnecting')
+      : (new Error('Unknown connection status: ' + e.status), statusOld),
   )
+})
+websocketProvider.on('synced', () => {
+  stopConnecting()
+  offlineStatusStore.update('synced')
+})
 
-  // when synced, immediately set loaded to true
-  const onSynced = useCallback(() => {
-    loaded = true
-    setState('connected')
-  }, [])
-
-  const updateState = useCallback((e: { status: Status }) => {
-    if (unmounted.current) return
-    // when connected, immediately set loaded to true, but wait till synced to set the status to connected
-    if (e.status === 'connected') {
-      // setState('connected')
-      loaded = true
-    }
-    // do not update state until loaded or connected
-    else if (loaded) {
-      setState(e.status)
-    }
-  }, [])
-
-  // set timers for loading and offline status if we have yet to connect to the websocket server
-  useEffect(() => {
-    // if the websocket is already connected by the time we mount, immediately set loaded
-    if (websocketProvider.synced && !loaded) {
-      loaded = true
-    } else {
-      // preload -> loading
-      preload.then(() => {
-        if (loaded || unmounted.current) return
-        setState('loading')
-      })
-
-      // loading -> offline
-      offline.then(() => {
-        if (loaded || unmounted.current) return
-        setState('offline')
-        loaded = true
-      })
-    }
-
-    websocketProvider.on('status', updateState)
-    websocketProvider.on('synced', onSynced)
-
-    return () => {
-      unmounted.current = true
-      websocketProvider.off('status', updateState)
-      websocketProvider.off('synced', onSynced)
-    }
-  }, [])
-
-  return state
+/** Enter a connecting state and then switch to offline after a delay. */
+const startConnecting = (delay = 3000) => {
+  stopConnecting()
+  offlineStatusStore.update('connecting')
+  offlineTimer = setTimeout(() => {
+    offlineTimer = null
+    offlineStatusStore.update('offline')
+  }, delay)
 }
+
+/** Clears the preconnecting and offline timers, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */
+const stopConnecting = () => {
+  clearTimeout(offlineTimer!)
+  offlineTimer = null
+}
+
+let offlineTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => startConnecting(), 500)
 
 export default db

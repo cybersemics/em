@@ -7,32 +7,29 @@ import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { tsid, useOfflineStatus } from '../data-providers/yjs'
+import { offlineStatusStore, tsid } from '../data-providers/yjs'
 import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import themeColors from '../selectors/themeColors'
 import pushStore from '../stores/push'
-
-/** Capitalizes the first letter in a string. */
-const toSentenceCase = (s: string) => (s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s)
 
 /** Show the user's connection status. */
 const Status = () => {
   const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
   const colors = useSelector(themeColors)
   const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
-  const status = useOfflineStatus()
+  const status = offlineStatusStore.useState()
   return (
     <span
       style={{
         color:
-          status === 'offline' || status === 'disconnected'
+          status === 'preconnecting' || status === 'offline'
             ? colors.gray50
-            : status === 'connecting'
+            : status === 'connecting' || status === 'reconnecting'
             ? colors.yellow
-            : status === 'connected'
+            : status === 'connected' || status === 'synced'
             ? colors.lightgreen
-            : undefined,
+            : (new Error('test'), undefined),
       }}
     >
       {
@@ -41,11 +38,15 @@ const Status = () => {
         // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
         isPushing || isQueued
           ? 'Saving'
-          : status === 'preload'
-          ? 'Loading'
-          : status === 'connected'
+          : status === 'preconnecting'
+          ? 'Initializing'
+          : status === 'connecting' || status === 'reconnecting'
+          ? 'Connecting'
+          : status === 'connected' || status === 'synced'
           ? 'Online'
-          : toSentenceCase(status)
+          : status === 'offline'
+          ? 'Offline'
+          : null
       }
     </span>
   )

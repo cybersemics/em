@@ -4,7 +4,7 @@ import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
-import { useOfflineStatus } from '../data-providers/yjs'
+import { offlineStatusStore } from '../data-providers/yjs'
 import getSetting from '../selectors/getSetting'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
@@ -18,10 +18,10 @@ if (!newThoughtShortcut) {
 }
 
 /** An absolutely centered LoadingEllipsis. */
-const CenteredLoadingEllipsis = () => (
+const CenteredLoadingEllipsis = ({ text }: { text?: string }) => (
   <div className='absolute-center'>
     <i className='text-note'>
-      <LoadingEllipsis />
+      <LoadingEllipsis text={text} />
     </i>
   </div>
 )
@@ -38,7 +38,7 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
     - https://github.com/cybersemics/em/pull/1345
   */
   const isLoading = useSelector((state: State) => state.isLoading)
-  const statusWebsocket = useOfflineStatus()
+  const status = offlineStatusStore.useState()
 
   const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 0))
 
@@ -47,10 +47,10 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
   return (
     <div className='new-thought-instructions'>
       {
-        // show nothing during the preload phase (See: useOfflineStatus)
-        statusWebsocket === 'preload' ? null : statusWebsocket === 'loading' || isLoading ? (
+        // show nothing during the preconnecting phase (See: useOfflineStatus)
+        status === 'preconnecting' ? null : status === 'connecting' || isLoading ? (
           // show loading ellipsis when loading
-          <CenteredLoadingEllipsis />
+          <CenteredLoadingEllipsis text={status === 'connecting' ? 'Connecting' : 'Loading'} />
         ) : // tutorial no children
         // show special message when there are no children in tutorial
         isTutorial ? (
