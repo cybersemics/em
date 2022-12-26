@@ -1,6 +1,7 @@
 import classNames from 'classnames'
+import _ from 'lodash'
 import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { connect, useSelector } from 'react-redux'
+import { connect, useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
@@ -56,10 +57,6 @@ interface StateProps {
   fontSize: number
   enableLatestShortcutsDiagram: boolean
   isUserLoading?: boolean
-}
-
-interface DispatchProps {
-  updateSplitPos: (splitPos: number) => void
 }
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
@@ -133,9 +130,7 @@ const mapStateToProps = (state: State): StateProps => {
   }
 }
 
-const mapDispatchToProps = { updateSplitPos: updateSplitPosition }
-
-type Props = StateProps & DispatchProps
+type Props = StateProps
 
 /** Cancel gesture if there is an active text selection or active drag. */
 const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress
@@ -170,16 +165,21 @@ const AppComponent: FC<Props> = props => {
     scale,
     showSplitView,
     splitPosition,
-    updateSplitPos,
     fontSize,
   } = props
 
+  const dispatch = useDispatch()
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
   const colors = useSelector(themeColors)
 
   const tutorialSettings = useSelector(isTutorial)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
+
+  const onSplitResize = useCallback(
+    _.throttle((n: number) => dispatch(updateSplitPosition(n)), 8),
+    [],
+  )
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
@@ -293,7 +293,7 @@ const AppComponent: FC<Props> = props => {
               split='vertical'
               defaultSize={!splitView ? '100%' : splitPosition || '50%'}
               size={!splitView ? '100%' : splitPosition || '50%'}
-              onDragFinished={updateSplitPos}
+              onChange={onSplitResize}
             >
               <Suspense fallback={<ContentFallback />}>
                 <Content />
@@ -332,4 +332,4 @@ const AppComponent: FC<Props> = props => {
   )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppComponent)
+export default connect(mapStateToProps)(AppComponent)

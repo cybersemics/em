@@ -95,6 +95,8 @@ interface State {
   showSplitView: boolean
   showTopControls: boolean
   showBreadcrumbs: boolean
+  // react-split-pane Size
+  // % or px
   splitPosition: number
   /* status:
       'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.

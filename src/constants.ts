@@ -222,6 +222,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'italic',
   'underline',
   'toggleContextView',
+  'toggleSplitView',
   'note',
   'subcategorizeOne',
   'subcategorizeAll',
@@ -264,7 +265,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   // 'textColor',
   // 'toggleDone',
   // 'toggleSidebar',
-  // 'toggleSplitView',
   // 'toggleTableView',
 ]
 

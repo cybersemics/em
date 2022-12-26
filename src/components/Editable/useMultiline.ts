@@ -9,6 +9,8 @@ import editingValueStore from '../../stores/editingValue'
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector((state: State) => state.fontSize)
+  const showSplitView = useSelector((state: State) => state.showSplitView)
+  const splitPosition = useSelector((state: State) => state.splitPosition)
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
@@ -29,14 +31,14 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // (do not re-render component unless multiline changes)
   useSelectorEffect((state: State) => state.cursor, updateMultiline, shallowEqual)
 
-  // Recalculate multiline on mount, when the font size changes, and on edit.
+  // Recalculate multiline on mount, when the font size changes, edit, and split view resize.
   useEffect(() => {
     updateMultiline()
     if (isEditing) {
       // return the unsubscribe function
       return editingValueStore.subscribe(updateMultiline)
     }
-  }, [fontSize, isEditing])
+  }, [fontSize, isEditing, showSplitView, splitPosition])
 
   return multiline
 }
