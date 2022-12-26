@@ -141,7 +141,7 @@ const importThoughts = (text: string) => {
 
 /** Runs tests for a module that conforms to the data-provider API. */
 const dataProviderTest = (provider: DataProvider) => {
-  test('getThoughtById', async () => {
+  test('getLexemeById', async () => {
     const nothought = await provider.getLexemeById('12345')
     expect(nothought).toBeUndefined()
 
@@ -196,7 +196,7 @@ const dataProviderTest = (provider: DataProvider) => {
     expect(remoteThought).toEqual(lexeme)
   })
 
-  test('getContext', async () => {
+  test('getThoughtById', async () => {
     const nocontext = await getThoughtById(provider, 'test' as ThoughtId)
     expect(nocontext).toBeUndefined()
 
