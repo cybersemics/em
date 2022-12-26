@@ -23,7 +23,7 @@ const childIdsToThoughts = async (provider: DataProvider, childIds: ThoughtId[])
 /**
  * Finds the path for the given unranked path from the given data provider directly.
  */
-const contextToPath = async (provider: DataProvider, pathUnranked: string[]) => {
+const contextToThoughts = async (provider: DataProvider, pathUnranked: string[]): Promise<Thought[] | null> => {
   if (isRoot(pathUnranked)) {
     const rootThought = await provider.getThoughtById(pathUnranked[0] as ThoughtId)
     return rootThought ? [rootThought] : null
@@ -34,7 +34,7 @@ const contextToPath = async (provider: DataProvider, pathUnranked: string[]) => 
 
   if (isEmContext && pathUnranked.length === 1) {
     const emThought = await provider.getThoughtById(EM_TOKEN)
-    return [emThought]
+    return emThought ? [emThought] : null
   }
 
   const startingContext = isEmContext ? EM_TOKEN : HOME_TOKEN
@@ -74,8 +74,8 @@ const contextToPath = async (provider: DataProvider, pathUnranked: string[]) => 
 
 /** Gets the Parent for a context. */
 const getContext = async (provider: DataProvider, context: Context) => {
-  const rankedThoughts = await contextToPath(provider, context)
-  return rankedThoughts ? head(rankedThoughts) : null
+  const path = await contextToThoughts(provider, context)
+  return path ? head(path) : null
 }
 
 export default getContext

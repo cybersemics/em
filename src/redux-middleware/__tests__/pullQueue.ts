@@ -45,9 +45,6 @@ it('disable isLoading after initialize', async () => {
 })
 
 it('load thought', async () => {
-  const root1 = await getContext(db, [HOME_TOKEN])
-  expect(root1).toBeFalsy()
-
   // create a thought, which will get persisted to local db
   await runDispatch(newThought({ value: 'a' }))
 
