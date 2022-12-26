@@ -19,11 +19,13 @@ import importText from '../action-creators/importText'
 import modalComplete from '../action-creators/modalComplete'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import store from '../stores/app'
 import ministore from '../stores/ministore'
 import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import groupObjectBy from '../util/groupObjectBy'
+import initialState from '../util/initialState'
 import keyValueBy from '../util/keyValueBy'
 import never from '../util/never'
 import storage from '../util/storage'
@@ -203,15 +205,33 @@ export const updateThoughts = async (
   }, ydoc.clientID)
 }
 
-// setTimeout(() => {
-//   yThoughtIndex.clear()
-//   yLexemeIndex.clear()
-// }, 1000)
-
-/** Clears all thoughts and lexemes from the indices. */
+/** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  yThoughtIndex.clear()
-  yLexemeIndex.clear()
+  ydoc.transact(() => {
+    yThoughtIndex.clear()
+    yLexemeIndex.clear()
+
+    // reset to initialState, otherwise a missing ROOT error will occur when yThoughtIndex.observe is triggered
+    const state = initialState()
+    const thoughWithChildrentUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => {
+      const children = getAllChildrenAsThoughts(state, thought.id)
+      const hasPendingChildren = children.length < Object.keys(thought.childrenMap).length
+      const thoughtWithChildren: ThoughtWithChildren = {
+        ..._.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
+        children: keyValueBy(children, child => ({
+          [child.id]: _.pick(child, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
+        })),
+        // if any inline children are pending, persist childrenMap instead of children
+        // otherwise empty children are persisted to local when replicating from remote
+        ...(hasPendingChildren ? { childrenMap: thought.childrenMap } : null),
+      }
+
+      return { [id]: thoughtWithChildren }
+    })
+
+    Object.entries(thoughWithChildrentUpdates).forEach(([id, thought]) => yThoughtIndex.set(id, thought))
+    Object.entries(state.thoughts.lexemeIndex).forEach(([key, lexeme]) => yLexemeIndex.set(key, lexeme))
+  })
 }
 
 /** Gets a single lexeme from the lexemeIndex by its id. */

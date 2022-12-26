@@ -8,7 +8,7 @@ import clear from '../action-creators/clear'
 import AppComponent from '../components/AppComponent'
 import ErrorBoundaryContainer from '../components/ErrorBoundaryContainer'
 import TouchMonitor from '../components/TouchMonitor'
-import db from '../data-providers/yjs'
+import * as db from '../data-providers/yjs'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import storage from '../util/storage'
@@ -103,7 +103,7 @@ export const cleanupTestApp = async () => {
     store.dispatch(clear({ full: true }))
 
     fakeTimer.useFakeTimer()
-    db.clear()
+    await db.clear()
     await fakeTimer.runAllAsync()
     fakeTimer.useRealTimer()
     document.body.innerHTML = ''
