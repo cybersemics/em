@@ -32,10 +32,8 @@ import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import ellipsize from '../util/ellipsize'
 import exportPhrase from '../util/exportPhrase'
-import getPublishUrl from '../util/getPublishUrl'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import isDocumentEditable from '../util/isDocumentEditable'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import removeHome from '../util/removeHome'
@@ -270,7 +268,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)
-  const titleMedium = ellipsize(title, 25)
+  // const titleMedium = ellipsize(title, 25)
 
   const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
@@ -369,8 +367,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     }
   }, [exportThoughtsPhrase])
 
-  const [publishing, setPublishing] = useState(false)
-  const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
+  // const [publishing, setPublishing] = useState(false)
+  // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
@@ -395,41 +393,41 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   }
 
   /** Publishes the thoughts to IPFS. */
-  const publish = async () => {
-    setPublishing(true)
-    setPublishedCIDs([])
-    const cids = []
+  // const publish = async () => {
+  //   setPublishing(true)
+  //   setPublishedCIDs([])
+  //   const cids = []
 
-    const { default: IpfsHttpClient } = await import('ipfs-http-client')
-    const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
+  //   const { default: IpfsHttpClient } = await import('ipfs-http-client')
+  //   const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
 
-    // export without =src content
-    const exported = exportContext(store.getState(), context, selected.type, {
-      excludeSrc: true,
-      excludeMeta: !shouldIncludeMetaAttributes,
-      excludeArchived: !shouldIncludeArchived,
-      excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-      title: titleChild ? titleChild.value : undefined,
-    })
+  //   // export without =src content
+  //   const exported = exportContext(store.getState(), context, selected.type, {
+  //     excludeSrc: true,
+  //     excludeMeta: !shouldIncludeMetaAttributes,
+  //     excludeArchived: !shouldIncludeArchived,
+  //     excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
+  //     title: titleChild ? titleChild.value : undefined,
+  //   })
 
-    // eslint-disable-next-line fp/no-loops
-    for await (const result of ipfs.add(exported)) {
-      if (result && result.path) {
-        const cid = result.path
-        // TODO: prependRevision is currently broken
-        // dispatch(prependRevision({ path: cursor, cid }))
-        cids.push(cid) // eslint-disable-line fp/no-mutating-methods
-        setPublishedCIDs(cids)
-      } else {
-        setPublishing(false)
-        setPublishedCIDs([])
-        dispatch(error({ value: 'Publish Error' }))
-        console.error('Publish Error', result)
-      }
-    }
+  //   // eslint-disable-next-line fp/no-loops
+  //   for await (const result of ipfs.add(exported)) {
+  //     if (result && result.path) {
+  //       const cid = result.path
+  //       // TODO: prependRevision is currently broken
+  //       // dispatch(prependRevision({ path: cursor, cid }))
+  //       cids.push(cid) // eslint-disable-line fp/no-mutating-methods
+  //       setPublishedCIDs(cids)
+  //     } else {
+  //       setPublishing(false)
+  //       setPublishedCIDs([])
+  //       dispatch(error({ value: 'Publish Error' }))
+  //       console.error('Publish Error', result)
+  //     }
+  //   }
 
-    setPublishing(false)
-  }
+  //   setPublishing(false)
+  // }
 
   const [advancedSettings, setAdvancedSettings] = useState(false)
 
@@ -520,7 +518,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
           className='modal-btn-export'
           disabled={exportContent === null}
           onClick={onExportClick}
-          style={{ color: colors.fg, backgroundColor: colors.bg }}
+          style={{ color: colors.bg, backgroundColor: colors.fg }}
         >
           {exportWord}
         </button>
@@ -586,7 +584,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       {/* Publish */}
 
-      {isDocumentEditable() && (
+      {/* isDocumentEditable() && (
         <>
           <div className='modal-export-publish'>
             {publishedCIDs.length > 0 ? (
@@ -623,12 +621,12 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
             )}
           </div>
 
-          <div className='modal-export-btns-  '>
+          <div className='modal-export-btns-wrapper'>
             <button
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
               onClick={publish}
-              style={{ color: colors.fg, backgroundColor: colors.bg }}
+              style={{ color: colors.bg, backgroundColor: colors.fg }}
             >
               Publish
             </button>
@@ -649,7 +647,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
             )}
           </div>
         </>
-      )}
+      ) */}
     </Modal>
   )
 }
