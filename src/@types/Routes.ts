@@ -1,7 +1,11 @@
+import Role from './Role'
+
 type Routes = {
-  'share/add': (args: { accessToken: string; docid: string; name?: string; role: string }) => void
-  'share/delete': (args: { accessToken: string; docid: string }) => void
-  'share/update': (args: { accessToken: string; docid: string; name?: string; role: string }) => void
+  share: {
+    add: (args: { accessToken: string; docid: string; name?: string; role: Role }) => void
+    delete: (args: { accessToken: string; docid: string }) => void
+    update: (args: { accessToken: string; docid: string; name?: string; role: Role }) => void
+  }
 }
 
 export default Routes

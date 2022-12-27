@@ -12,6 +12,7 @@ import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
+import WebsocketProviderType from '../@types/WebsocketProviderType'
 import alert from '../action-creators/alert'
 import clearActionCreator from '../action-creators/clear'
 import importText from '../action-creators/importText'
@@ -31,8 +32,6 @@ import storage from '../util/storage'
 import { DataProvider } from './DataProvider'
 
 type Status = 'connecting' | 'connected' | 'disconnected'
-type RouteOp<T> = T extends `share/${infer U}` ? U : never
-type WebsocketServerRPC = { [key in RouteOp<keyof Routes>]: any }
 
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
 const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
@@ -74,9 +73,14 @@ const ypermissionsDoc = new Y.Doc()
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
 const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
-const websocketProviderPermissions = new WebsocketProvider(websocketUrl, `${tsid}/permissions`, ypermissionsDoc, {
-  auth: accessToken,
-})
+const websocketProviderPermissions: WebsocketProviderType = new WebsocketProvider(
+  websocketUrl,
+  `${tsid}/permissions`,
+  ypermissionsDoc,
+  {
+    auth: accessToken,
+  },
+)
 
 indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
 yPermissions.observe(connectThoughtspaceProvider)
@@ -311,7 +315,7 @@ const db: DataProvider = {
 }
 
 // websocket RPC for shares
-export const shareServer: WebsocketServerRPC = {
+export const shareServer: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
     websocketProviderPermissions.send({

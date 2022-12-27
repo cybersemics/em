@@ -5,6 +5,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
+import Role from '../@types/Role'
 import ShareType from '../@types/Share'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
@@ -172,7 +173,7 @@ const ShareList = ({
 }
 
 /** Permissions role label. */
-const Role = ({ role }: { role: string }) => <>{role === 'owner' ? 'Full Access' : role}</>
+const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
 /** Renders a single device share. */
 const ShareRow = React.memo(
@@ -185,7 +186,7 @@ const ShareRow = React.memo(
     accessToken: string
     isCurrent?: boolean
     share: ShareType
-    role: string
+    role: Role
   }) => {
     return (
       <div
@@ -202,7 +203,7 @@ const ShareRow = React.memo(
             <span style={{ display: 'inline-block', fontWeight: 'bold', marginRight: '1em', minWidth: '8em' }}>
               {share?.name || 'Untitled'}
             </span>
-            <Role role={role} />
+            <RoleLabel role={role} />
           </span>{' '}
           <span
             style={{

@@ -1,4 +1,5 @@
 import * as Y from 'yjs'
+import Role from '../../src/@types/Role'
 import Routes from '../../src/@types/Routes'
 import Share from '../../src/@types/Share'
 
@@ -93,7 +94,11 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
   return share?.role === 'owner'
 }
 
-const routes: { [key: string]: (...props: any) => any } = {
+type ServerRoutes = {
+  [key in `share/${keyof Routes['share']}`]: (props: any) => any
+}
+
+const routes: ServerRoutes = {
   'share/add': ({
     auth,
     accessToken,
@@ -105,7 +110,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     accessToken: string
     docid: string
     name?: string
-    role: 'owner'
+    role: Role
   }) => {
     log('share/add', { tsid: docid, accessToken: mask(accessToken) })
     const shareNew: Share = { created: new Date().toISOString(), name, role }
