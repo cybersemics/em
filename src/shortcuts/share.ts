@@ -1,12 +1,12 @@
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
-import ShareIcon from '../components/icons/ShareIcon'
+import DeviceIcon from '../components/icons/DeviceIcon'
 
 const shortcut: Shortcut = {
   id: 'share',
   label: 'Sharing & Device Management',
   description: 'Add and remove devices, and share your thoughtspace with others.',
-  svg: ShareIcon,
+  svg: DeviceIcon,
   exec: dispatch => dispatch(showModal({ id: 'share' })),
 }
 

@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
-import DownloadIcon from '../components/icons/DownloadIcon'
+import ShareIcon from '../components/icons/ShareIcon'
 import { HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
 
@@ -8,7 +8,7 @@ const shortcut: Shortcut = {
   id: 'exportContext',
   label: 'Export Context',
   description: 'Download or copy the current context as plaintext or html',
-  svg: DownloadIcon,
+  svg: ShareIcon,
   canExecute: getState => {
     const state = getState()
     if (state.cursor) return true
