@@ -123,7 +123,7 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
       const inContext = props.showContexts ? ` in the context of ${ellipsize(headValue(state, props.simplePath))}` : ''
 
       store.dispatch(
-        alert(`${alertFrom} moved to ${alertTo}${inContext}.`, {
+        alert(`${alertFrom} moved to${dropTop ? ' top of' : ''} ${alertTo}${inContext}.`, {
           alertType: AlertType.ThoughtMoved,
           clearDelay: 5000,
         }),
