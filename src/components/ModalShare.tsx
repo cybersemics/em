@@ -455,6 +455,7 @@ const ShareDetail = React.memo(
           <a
             onClick={() => {
               shareServer.delete(accessToken, share)
+              onBack()
             }}
             style={{ color: colors.red }}
           >
