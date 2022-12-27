@@ -450,6 +450,14 @@ const stopConnecting = () => {
   offlineTimer = null
 }
 
-let offlineTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => startConnecting(), 500)
+let offlineTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Initializes the yjs data provider. */
+export const init = () => {
+  // Start connecting to populate offlineStatusStore.
+  // This must done in an init function that is called in app initalize, otherwise @sinonjs/fake-timers are not yet set and createTestApp tests break.
+  // TODO: Why does deferring websocketProviderPermissions.connect() to init break tests?
+  offlineTimer = setTimeout(() => startConnecting(), 500)
+}
 
 export default db

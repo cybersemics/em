@@ -195,7 +195,7 @@ describe.skip('drag-and-drop', () => {
           - b
         - c`,
       }),
-      setCursorFirstMatchActionCreator(['a']),
+      setCursor(['a']),
     ])
 
     wrapper.update()
