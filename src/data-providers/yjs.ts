@@ -12,7 +12,6 @@ import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
-import WebsocketProviderType from '../@types/WebsocketProviderType'
 import alert from '../action-creators/alert'
 import clearActionCreator from '../action-creators/clear'
 import importText from '../action-creators/importText'
@@ -43,7 +42,6 @@ const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWi
 
 const ydoc = new Y.Doc()
 const ydocLocal = new Y.Doc()
-const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
@@ -65,27 +63,42 @@ export const accessToken = accessTokenShared || accessTokenLocal
  * Permissions ydoc
  ************************************/
 
-// eslint-disable-next-line no-new
-new WebsocketProvider(websocketUrl, `${tsid}/permissions`, ypermissionsDoc, {
-  auth: accessToken,
-})
+/** If there is more than one device, connects the thoughtspace Websocket provider. */
+const connectThoughtspaceProvider = () => {
+  if (yPermissions.size > 1) {
+    websocketProviderThoughtspace.connect()
+  }
+}
+
+const ypermissionsDoc = new Y.Doc()
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
-const indexeddbProvider = new IndexeddbPersistence(tsid, ydoc)
-indexeddbProvider.whenSynced.then(() => {
-  // console.info('loaded data from indexed db', yThoughtIndex.size)
-})
-
-const websocketProvider: WebsocketProviderType = new WebsocketProvider(websocketUrl, tsid, ydoc, {
+const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
+const websocketProviderPermissions = new WebsocketProvider(websocketUrl, `${tsid}/permissions`, ypermissionsDoc, {
   auth: accessToken,
 })
-websocketProvider.on('status', (event: { status: Status }) => {
-  // console.info('websocket', event.status)
-})
+
+indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
+yPermissions.observe(connectThoughtspaceProvider)
+
+/*************************************
+ * Thoughtspace ydoc
+ ************************************/
 
 const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
 const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
 const yHelpers = ydoc.getMap<string>('helpers')
+
+const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
+indexeddbProviderThoughtspace.whenSynced.then(() => {
+  offlineStatusStore.update('synced')
+})
+
+const websocketProviderThoughtspace = new WebsocketProvider(websocketUrl, tsid, ydoc, {
+  auth: accessToken,
+  // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
+  connect: false,
+})
 
 // Subscribe to yjs thoughts and use as the source of truth.
 // Apply yThoughtIndex and yLexemeIndex changes directly to state.
@@ -301,12 +314,19 @@ const db: DataProvider = {
 export const shareServer: WebsocketServerRPC = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
-    websocketProvider.send({ type: 'share/add', docid: tsid, accessToken, name: name || '', role })
+    websocketProviderPermissions.send({
+      type: 'share/add',
+      docid: tsid,
+      accessToken,
+      name: name || '',
+      role,
+    })
+    // TODO: get success/fail result of share/add
     store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
-    return accessToken
+    return { accessToken }
   },
   delete: (accessToken: string, { name }: { name?: string } = {}) => {
-    websocketProvider.send({ type: 'share/delete', docid: tsid, accessToken })
+    websocketProviderPermissions.send({ type: 'share/delete', docid: tsid, accessToken })
 
     // removed other device
     if (accessToken !== accessTokenLocal) {
@@ -335,7 +355,7 @@ export const shareServer: WebsocketServerRPC = {
     }
   },
   update: (accessToken: string, { name, role }: Share) => {
-    websocketProvider.send({ type: 'share/update', docid: tsid, accessToken, name, role })
+    websocketProviderPermissions.send({ type: 'share/update', docid: tsid, accessToken, name, role })
     store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
 }
@@ -366,19 +386,16 @@ export const useSharedType = <T>(yobj: Y.AbstractType<T>): ExtractYEvent<T> => {
 /** A hook that subscribes to yPermissions. */
 export const usePermissions = () => useSharedType(yPermissions)
 
-/** Returns true if the websocketProvider is currently connected to the server. */
-export const connected = () => websocketProvider.wsconnected
-
-/** A hook that subscribes to the websocketProvider's connection status. */
+/** A hook that subscribes to the permissions WebsocketProvider's connection status. Uses the permissions instead of thoughtspace provider since the thoughtspace provider is only connected if the thoughtspace is shared with more than one device. */
 export const useStatus = () => {
-  const [state, setState] = useState<Status>(websocketProvider.wsconnected ? 'connected' : 'disconnected')
+  const [state, setState] = useState<Status>(websocketProviderPermissions.wsconnected ? 'connected' : 'disconnected')
 
   const updateState = useCallback((e: { status: Status }) => setState(e.status), [])
 
   useEffect(() => {
-    websocketProvider.on('status', updateState)
+    websocketProviderPermissions.on('status', updateState)
     return () => {
-      websocketProvider.off('status', updateState)
+      websocketProviderPermissions.off('status', updateState)
     }
   })
 
@@ -387,10 +404,10 @@ export const useStatus = () => {
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
 export const offlineStatusStore = ministore<OfflineStatus>(
-  websocketProvider.wsconnected ? 'connected' : 'preconnecting',
+  websocketProviderPermissions.wsconnected ? 'connected' : 'preconnecting',
 )
 
-websocketProvider.on('status', (e: { status: Status }) => {
+websocketProviderPermissions.on('status', (e: { status: Status }) => {
   offlineStatusStore.update(statusOld =>
     e.status === 'connecting'
       ? // preconnecting/connecting/offline (no change)
@@ -399,14 +416,16 @@ websocketProvider.on('status', (e: { status: Status }) => {
         : 'reconnecting'
       : // connected (stop reconnecting)
       e.status === 'connected'
-      ? (stopConnecting(), 'connected')
+      ? // Stay preconnecting when the provider becomes connected and wait for synced.
+        // Otherwise the loading indicator will flash.
+        (stopConnecting(), statusOld === 'preconnecting' ? 'preconnecting' : 'connected')
       : // disconnecting (start reconnecting)
       e.status === 'disconnected'
       ? (startConnecting(), 'reconnecting')
       : (new Error('Unknown connection status: ' + e.status), statusOld),
   )
 })
-websocketProvider.on('synced', () => {
+websocketProviderThoughtspace.on('synced', () => {
   stopConnecting()
   offlineStatusStore.update('synced')
 })

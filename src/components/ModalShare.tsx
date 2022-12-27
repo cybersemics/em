@@ -79,6 +79,7 @@ const ShareList = ({
   permissions: Index<ShareType>
 }) => {
   const status = useStatus()
+  const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const [showDeviceForm, setShowDeviceForm] = useState(false)
 
@@ -122,9 +123,17 @@ const ShareList = ({
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
                       onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
-                        const accessToken = shareServer.add({ role, name: strip(name || '') })
-                        setShowDeviceForm(false)
-                        onAdd?.(accessToken)
+                        const result: { accessToken?: string; error?: string } = shareServer.add({
+                          role,
+                          name: strip(name || ''),
+                        })
+                        // TODO: shareServer.add does not yet return { error }
+                        if (!result.error) {
+                          setShowDeviceForm(false)
+                          onAdd?.(result.accessToken!)
+                        } else {
+                          dispatch(alert('Not connected to server. Unable to add device.', { clearDelay: 2000 }))
+                        }
                       }}
                       defaultName={getNextDeviceName(permissions)}
                     />
