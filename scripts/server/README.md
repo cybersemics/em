@@ -8,8 +8,20 @@ npm run build
 
 ## Usage
 
+em will automatically connect to the websocket server when running on the specified host and port.
+
 ```sh
 npm run start
 ```
 
-The app will automatically connect to the websocket server
+With timestamps:
+
+```sh
+LOG_TIMESTAMPS=1 npm run start
+```
+
+Defaults:
+
+- `process.env.LOG_TIMESTAMPS` - Unset
+- `process.env.HOST` - localhost
+- `process.env.POST` - 8080

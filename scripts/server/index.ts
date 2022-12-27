@@ -12,6 +12,9 @@ const PERMISSIONS_DOCID = 'permissions'
 // can't use chalk because it is an esmodule, and this file needs to be commonjs to import y-websocket-auth/server
 const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
 
+/** Shows the first n characters of a string and replaces the rest with an ellipsis. */
+const mask = (s: string, n = 4, ellipsis = '...') => `${s.slice(0, n)}${ellipsis}`
+
 /**
  * All thoughtspace permissions. Mirrors Websocket documents at DOCID/permissions. Must be loaded into memory so that permissions are available for authentication.
  *
@@ -70,7 +73,7 @@ export const authenticate = (accessToken: string, { name, params }: { name: stri
 
   // if the document has no owner, automatically assign the current user as owner
   if (yPermissionsServer.size === 0) {
-    log(`assigning owner ${accessToken} to new thoughtspace ${tsid}`, { name })
+    log(`assigning owner ${mask(accessToken)} to new thoughtspace ${tsid}`)
     share = { accessed: new Date().toISOString(), created: new Date().toISOString(), name: 'Owner', role: 'owner' }
     yPermissionsServer.set(accessToken, share)
   }
@@ -104,6 +107,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     name?: string
     role: 'owner'
   }) => {
+    log('share/add', { tsid: docid, accessToken: mask(accessToken) })
     const shareNew: Share = { created: new Date().toISOString(), name, role }
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
@@ -121,6 +125,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     yPermissionsClient.set(accessToken, shareNew)
   },
   'share/delete': ({ accessToken, docid }) => {
+    log('share/delete', { tsid: docid })
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
@@ -129,6 +134,7 @@ const routes: { [key: string]: (...props: any) => any } = {
     yPermissionsClient.delete(accessToken)
   },
   'share/update': ({ accessToken, docid, name, role }) => {
+    log('share/add', { tsid: docid, accessToken: mask(accessToken), name, role })
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
