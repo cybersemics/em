@@ -2239,7 +2239,7 @@ code,
 }
 
 .Resizer:hover {
-  transition: all 2s ease;
+  transition: all 0.2s ease-out;
 }
 
 .Resizer.horizontal {
@@ -2275,7 +2275,7 @@ code,
   border-color: transparent;
 }
 .SplitPane.animating .Pane {
-  transition: width 0.4s ease;
+  transition: width 0.2s ease;
 }
 
 /* material drawer container css override */

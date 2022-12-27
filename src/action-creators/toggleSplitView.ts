@@ -1,10 +1,18 @@
 import Thunk from '../@types/Thunk'
-import toggleSplitView from '../reducers/toggleSplitView'
+import storage from '../util/storage'
 
 /** Action-creator for toggleSplitView. */
 const toggleSplitViewActionCreator =
-  (payload: Parameters<typeof toggleSplitView>[1]): Thunk =>
-  dispatch =>
-    dispatch({ type: 'toggleSplitView', ...payload })
+  ({ value }: { value?: boolean }): Thunk =>
+  (dispatch, getState) => {
+    const state = getState()
+    const valueNew = value ?? !state.showSplitView
+    if (valueNew) {
+      storage.setItem('showSplitView', 'true')
+    } else {
+      storage.removeItem('showSplitView')
+    }
+    dispatch({ type: 'toggleSplitView', value: valueNew })
+  }
 
 export default toggleSplitViewActionCreator

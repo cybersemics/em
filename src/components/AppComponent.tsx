@@ -288,21 +288,23 @@ const AppComponent: FC<Props> = props => {
           <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             <SplitPane
-              style={{ position: 'relative', fontSize }}
-              className={isSplitting ? 'animating' : ''}
-              split='vertical'
+              className={isSplitting ? 'animating' : undefined}
               defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-              size={!splitView ? '100%' : splitPosition || '50%'}
               onChange={onSplitResize}
+              size={!splitView ? '100%' : splitPosition || '50%'}
+              split='vertical'
+              style={{ position: 'relative', fontSize }}
             >
               <Suspense fallback={<ContentFallback />}>
                 <Content />
               </Suspense>
               {showSplitView ? (
-                <Content />
+                <Suspense fallback={<ContentFallback />}>
+                  <Content />
+                </Suspense>
               ) : (
                 // children required by SplitPane
-                <div />
+                <></>
               )}
             </SplitPane>
 

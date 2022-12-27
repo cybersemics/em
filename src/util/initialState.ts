@@ -17,12 +17,6 @@ import timestamp from '../util/timestamp'
 import { getSessionId } from './sessionManager'
 import storage from './storage'
 
-/** Safely gets a value from localStorage if it is in the environment. */
-const getLocal = (key: string) => {
-  if (typeof storage === 'undefined') return undefined
-  return storage.getItem(key)
-}
-
 /** Generates an initial ThoughtIndices with the root and em contexts. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
@@ -103,7 +97,7 @@ const initialState = (created: Timestamp = timestamp()) => {
   const state: State = {
     authenticated: false,
     // eslint-disable-next-line no-mixed-operators
-    autologin: getLocal('autologin') === 'true',
+    autologin: storage.getItem('autologin') === 'true',
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,
@@ -118,7 +112,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     enableLatestShortcutsDiagram: false,
     error: null,
     expanded: {},
-    fontSize: +(getLocal('fontSize') || 18),
+    fontSize: +(storage.getItem('fontSize') || 18),
     expandHoverDownPaths: {},
     invalidState: false,
     // Displays a loading screen when the app starts.
@@ -141,11 +135,11 @@ const initialState = (created: Timestamp = timestamp()) => {
     searchContexts: null,
     showHiddenThoughts: false,
     showSidebar: false,
-    showSplitView: false,
+    showSplitView: !!storage.getItem('showSplitView'),
     showTopControls: true,
     showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
-    splitPosition: parseJsonSafe(getLocal('splitPosition') || null, 0),
+    splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),
     status: 'disconnected',
     pushQueue: [],
     thoughts: initialThoughts(created),
@@ -156,7 +150,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     // initial modal states
     state.modals[key] = {
       // eslint-disable-next-line no-mixed-operators
-      complete: globals.disableTutorial || JSON.parse(getLocal('modal-complete-' + key) || 'false'),
+      complete: globals.disableTutorial || JSON.parse(storage.getItem('modal-complete-' + key) || 'false'),
     }
   })
 
@@ -174,7 +168,7 @@ const initialState = (created: Timestamp = timestamp()) => {
    * If working offline, modal-to-show is set to an empty string so the welcome dialog is skipped.
    */
   if (!isLocalNetwork) {
-    const showModalLocal = getLocal('modal-to-show')
+    const showModalLocal = storage.getItem('modal-to-show')
     // do not show the modal if it has been permanently dismissed (complete)
     if (showModalLocal !== '' && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
       state.showModal = showModalLocal || 'auth'
