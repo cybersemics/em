@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
@@ -10,7 +9,6 @@ import Thought from '../@types/Thought'
 import ThoughtDb from '../@types/ThoughtDb'
 import Timestamp from '../@types/Timestamp'
 import WebsocketProviderType from '../@types/WebsocketProviderType'
-import WebsocketStatus from '../@types/WebsocketStatus'
 import alert from '../action-creators/alert'
 import clearActionCreator from '../action-creators/clear'
 import importText from '../action-creators/importText'
@@ -319,24 +317,6 @@ export const shareServer: { [key in keyof Routes['share']]: any } = {
     websocketProviderPermissions.send({ type: 'share/update', docid: tsid, accessToken, name, role })
     store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
-}
-
-/** A hook that subscribes to the permissions WebsocketProvider's connection status. Uses the permissions instead of thoughtspace provider since the thoughtspace provider is only connected if the thoughtspace is shared with more than one device. */
-export const useStatus = () => {
-  const [state, setState] = useState<WebsocketStatus>(
-    websocketProviderPermissions.wsconnected ? 'connected' : 'disconnected',
-  )
-
-  const updateState = useCallback((e: { status: WebsocketStatus }) => setState(e.status), [])
-
-  useEffect(() => {
-    websocketProviderPermissions.on('status', updateState)
-    return () => {
-      websocketProviderPermissions.off('status', updateState)
-    }
-  })
-
-  return state
 }
 
 export default db
