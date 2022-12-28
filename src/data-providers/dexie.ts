@@ -6,8 +6,8 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import LexemeDb, { fromLexemeDb, toLexemeDb } from '../@types/LexemeDb'
 import Thought from '../@types/Thought'
+import ThoughtDb from '../@types/ThoughtDb'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
 import { SCHEMA_LATEST } from '../constants'
 import groupObjectBy from '../util/groupObjectBy'
@@ -33,7 +33,7 @@ const schema = {
 /** Extend Dexie class for proper typing. See https://dexie.org/docs/Typescript. */
 // eslint-disable-next-line fp/no-class
 class EM extends Dexie {
-  thoughtIndex: Dexie.Table<ThoughtWithChildren, string>
+  thoughtIndex: Dexie.Table<ThoughtDb, string>
   lexemeIndex: Dexie.Table<LexemeDb, string>
   thoughtWordsIndex: Dexie.Table<ThoughtWordsIndex, string>
   helpers: Dexie.Table<Helper, string>
@@ -178,15 +178,15 @@ export const getLexemesByIds = (keys: string[]) =>
 /** Updates a single thought in the thoughtIndex. */
 export const updateThought = async (
   id: ThoughtId,
-  thoughtOld: ThoughtWithChildren | undefined,
-  { childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
+  thoughtOld: ThoughtDb | undefined,
+  { childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtDb,
 ) => {
   return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
     tx.source = getSessionId()
 
     /** Does a put if the thought does not exist, otherwise update. */
-    const putOrUpdate = (changes: Partial<ThoughtWithChildren>) =>
-      thoughtOld ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtWithChildren)
+    const putOrUpdate = (changes: Partial<ThoughtDb>) =>
+      thoughtOld ? db.thoughtIndex.update(id, changes) : db.thoughtIndex.put(changes as ThoughtDb)
 
     return putOrUpdate({
       id,
@@ -203,7 +203,7 @@ export const updateThought = async (
 
 /** Atomically updates the thoughtIndex and lexemeIndex. */
 export const updateThoughts = async (
-  thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
+  thoughtIndexUpdates: Index<ThoughtDb | null>,
   lexemeIndexUpdates: Index<Lexeme | null>,
   schemaVersion: number,
 ) => {
@@ -211,7 +211,7 @@ export const updateThoughts = async (
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
     thought ? 'update' : 'delete',
   ) as {
-    update?: Index<ThoughtWithChildren>
+    update?: Index<ThoughtDb>
     delete?: Index<null>
   }
 
@@ -256,11 +256,11 @@ export const updateThoughts = async (
 }
 
 /** Updates multiple thoughts in the thoughtIndex. */
-export const updateThoughtIndex = async (thoughtIndexMap: Index<ThoughtWithChildren | null>) =>
+export const updateThoughtIndex = async (thoughtIndexMap: Index<ThoughtDb | null>) =>
   db.transaction('rw', db.thoughtIndex, (tx: ObservableTransaction) => {
     tx.source = getSessionId()
     const thoughtsArray = Object.keys(thoughtIndexMap).map(key => ({
-      ...(thoughtIndexMap[key] as ThoughtWithChildren),
+      ...(thoughtIndexMap[key] as ThoughtDb),
       updatedBy: getSessionId(),
       id: key as ThoughtId,
     }))
@@ -278,8 +278,7 @@ export const deleteThought = async (id: string) =>
 export const getThoughtById = async (id: string): Promise<Thought | undefined> => db.thoughtIndex.get(id)
 
 /** Get a thought and its children. O(1). */
-export const getThoughtWithChildren = async (id: string): Promise<ThoughtWithChildren | undefined> =>
-  db.thoughtIndex.get(id)
+export const getThoughtWithChildren = async (id: string): Promise<ThoughtDb | undefined> => db.thoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => db.thoughtIndex.bulkGet(ids)

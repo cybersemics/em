@@ -2,7 +2,8 @@ import Index from '../@types/IndexType'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'
 
-interface ThoughtWithChildren {
+/** A thought that is persisted to storage. */
+interface ThoughtDb {
   id: ThoughtId
   value: string
   rank: number
@@ -14,4 +15,4 @@ interface ThoughtWithChildren {
   updatedBy: string
 }
 
-export default ThoughtWithChildren
+export default ThoughtDb

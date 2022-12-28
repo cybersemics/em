@@ -2,9 +2,9 @@ import Index from './IndexType'
 import ThoughtId from './ThoughtId'
 import Timestamp from './Timestamp'
 
-/** An single thought in local state that contains a map of children ThoughtIds. A different type, ThoughtWithChildren is persisted to storage. */
+/** An single thought in local state that contains a map of children ThoughtIds. A different type, ThoughtDb is persisted to storage. */
 interface Thought {
-  // persisted properties (See: ThoughtWithChildren)
+  // persisted properties (See: ThoughtDb)
   id: ThoughtId
   value: string
   rank: number

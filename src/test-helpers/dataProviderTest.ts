@@ -4,8 +4,8 @@ import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
+import ThoughtDb from '../@types/ThoughtDb'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
 import { DataProvider } from '../data-providers/DataProvider'
 import getContext from '../data-providers/data-helpers/getContext'
@@ -55,8 +55,8 @@ const getManyDescendantsByContext = async (
   return all(getManyDescendants(provider, thoughtIds, initialState, options))
 }
 
-/** Converts an Index<Thought> to an Index<ThoughtWithChildren>. */
-const toThoughtIndexWithChildren = (thoughtIndex: Index<Thought>): Index<ThoughtWithChildren> =>
+/** Converts an Index<Thought> to an Index<ThoughtDb>. */
+const toThoughtIndexWithChildren = (thoughtIndex: Index<Thought>): Index<ThoughtDb> =>
   keyValueBy(thoughtIndex, (id, thought) => ({ [id]: thoughtToDb(thought) }))
 
 expect.extend({
@@ -189,8 +189,8 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'test',
     }
 
-    const thoughtWithChildren = thoughtToDb(thought)
-    await provider.updateThought?.('test' as ThoughtId, undefined, thoughtWithChildren)
+    const thoughtDb = thoughtToDb(thought)
+    await provider.updateThought?.('test' as ThoughtId, undefined, thoughtDb)
 
     const dbThought = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbThought).toEqual(thought)

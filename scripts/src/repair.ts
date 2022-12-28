@@ -12,8 +12,8 @@ import Lexeme from '../../src/@types/Lexeme'
 import LexemeDb from '../../src/@types/LexemeDb'
 import Path from '../../src/@types/Path'
 import Thought from '../../src/@types/Thought'
+import ThoughtDb from '../../src/@types/ThoughtDb'
 import ThoughtId from '../../src/@types/ThoughtId'
-import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import isAttribute from '../../src/util/isAttribute.js'
 import keyValueBy from '../../src/util/keyValueBy.js'
 import timestamp from '../../src/util/timestamp.js'
@@ -103,7 +103,7 @@ const thoughtToPath = (thoughtId: ThoughtId, { touched }: { touched: ThoughtId[]
 }
 
 /** Moves a thought to a new parent. */
-const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
+const moveThought = (thought: ThoughtDb, parentId: ThoughtId) => {
   // remove thought from old parent (if the parent exists).
   const parentOld = db.thoughtIndex[thought.parentId]
   if (parentOld?.children) {
@@ -143,7 +143,7 @@ const moveThought = (thought: ThoughtWithChildren, parentId: ThoughtId) => {
   }
 }
 
-const moveThoughtToOrphanage = (thought: ThoughtWithChildren) => {
+const moveThoughtToOrphanage = (thought: ThoughtDb) => {
   // create orphanage if it doesn't exist
   if (!db.thoughtIndex.orphanage) {
     db.thoughtIndex.orphanage = {
@@ -209,7 +209,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
   const parent = db.thoughtIndex[thought.parentId]
   if (!parent) {
     if (!isRoot(thought.id)) {
-      moveThoughtToOrphanage(thought as ThoughtWithChildren)
+      moveThoughtToOrphanage(thought as ThoughtDb)
       numOrphans++
     }
     return
@@ -294,7 +294,7 @@ Object.values(db.thoughtIndex).forEach(thought => {
               }
             : null,
         ),
-      } as ThoughtWithChildren
+      } as ThoughtDb
 
       // make sure the child is in the thought's parent's inline children childrenMap
       if (!parent.children) {

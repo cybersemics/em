@@ -9,7 +9,7 @@ import OfflineStatus from '../@types/OfflineStatus'
 import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import Thought from '../@types/Thought'
-import ThoughtWithChildren from '../@types/ThoughtWithChildren'
+import ThoughtDb from '../@types/ThoughtDb'
 import Timestamp from '../@types/Timestamp'
 import WebsocketProviderType from '../@types/WebsocketProviderType'
 import alert from '../action-creators/alert'
@@ -87,7 +87,7 @@ yPermissions.observe(connectThoughtspaceProvider)
  * Thoughtspace ydoc
  ************************************/
 
-const yThoughtIndex = ydoc.getMap<ThoughtWithChildren>('thoughtIndex')
+const yThoughtIndex = ydoc.getMap<ThoughtDb>('thoughtIndex')
 const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
 const yHelpers = ydoc.getMap<string>('helpers')
 
@@ -141,7 +141,7 @@ if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
     auth: accessTokenLocal,
   })
   websocketProviderLocal.on('synced', (event: any) => {
-    const yThoughtIndexLocal = ydocLocal.getMap<ThoughtWithChildren>('thoughtIndex')
+    const yThoughtIndexLocal = ydocLocal.getMap<ThoughtDb>('thoughtIndex')
 
     // The root thought is not always loaded when synced fires (???).
     // Delaying seems to fix this.
@@ -181,7 +181,7 @@ if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
 
 /** Atomically updates the thoughtIndex and lexemeIndex. */
 export const updateThoughts = async (
-  thoughtIndexUpdates: Index<ThoughtWithChildren | null>,
+  thoughtIndexUpdates: Index<ThoughtDb | null>,
   lexemeIndexUpdates: Index<Lexeme | null>,
   schemaVersion: number,
 ) => {
@@ -189,7 +189,7 @@ export const updateThoughts = async (
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
     thought ? 'update' : 'delete',
   ) as {
-    update?: Index<ThoughtWithChildren>
+    update?: Index<ThoughtDb>
     delete?: Index<null>
   }
 
@@ -247,8 +247,7 @@ export const getLexemesByIds = async (keys: string[]) => keys.map(key => yLexeme
 export const getThoughtById = async (id: string): Promise<Thought | undefined> => yThoughtIndex.get(id)
 
 /** Get a thought and its children. O(1). */
-export const getThoughtWithChildren = async (id: string): Promise<ThoughtWithChildren | undefined> =>
-  yThoughtIndex.get(id)
+export const getThoughtWithChildren = async (id: string): Promise<ThoughtDb | undefined> => yThoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> =>
@@ -275,7 +274,6 @@ const db: DataProvider = {
   getLexemeById,
   getLexemesByIds,
   getThoughtById,
-  getThoughtWithChildren,
   getThoughtsByIds,
   updateThoughts,
 }

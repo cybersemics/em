@@ -29,7 +29,7 @@ const pushLocal = (
   }
   const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thought) => {
     if (!thought) return { [id]: null }
-    const thoughtWithChildren = thoughtToDb(thought)
+    const thoughtDb = thoughtToDb(thought)
 
     // some settings are propagated to localStorage for faster load on startup
     const name = localStorageSettingsContexts[id]
@@ -44,7 +44,7 @@ const pushLocal = (
       }
     }
 
-    return { [id]: thoughtWithChildren }
+    return { [id]: thoughtDb }
   })
 
   // recentlyEdited

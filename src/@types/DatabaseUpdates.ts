@@ -1,13 +1,13 @@
 import Index from './IndexType'
 import LexemeDb from './LexemeDb'
-import ThoughtWithChildren from './ThoughtWithChildren'
+import ThoughtDb from './ThoughtDb'
 
 interface DatabaseUpdates {
   lastClientId?: string
   lastUpdated?: string
   lexemeIndex?: Index<LexemeDb | null>
   schemaVersion?: number
-  thoughtIndex?: Index<ThoughtWithChildren | null>
+  thoughtIndex?: Index<ThoughtDb | null>
 }
 
 export default DatabaseUpdates

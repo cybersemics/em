@@ -3,8 +3,8 @@ import { nanoid } from 'nanoid'
 import Index from '../../src/@types/IndexType'
 import Lexeme from '../../src/@types/Lexeme'
 import Thought from '../../src/@types/Thought'
+import ThoughtDb from '../../src/@types/ThoughtDb'
 import ThoughtId from '../../src/@types/ThoughtId'
-import ThoughtWithChildren from '../../src/@types/ThoughtWithChildren'
 import Timestamp from '../../src/@types/Timestamp'
 import { createChildrenMapFromThoughts } from '../../src/util/createChildrenMap'
 import keyValueBy from '../../src/util/keyValueBy.js'
@@ -16,7 +16,7 @@ import FirebaseThought from './types/FirebaseThought'
 const SCHEMA_LATEST = 8
 
 type FirebaseThought6 = Omit<Thought, 'childrenMap'> & { childrenMap?: Index<ThoughtId> }
-type FirebaseThought7 = Omit<ThoughtWithChildren, 'children'> & { children?: Index<Thought> }
+type FirebaseThought7 = Omit<ThoughtDb, 'children'> & { children?: Index<Thought> }
 type FirebaseThought8 = FirebaseThought7
 
 type FirebaseLexeme6 = {
