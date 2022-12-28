@@ -10,7 +10,6 @@ import ThoughtId from '../@types/ThoughtId'
 import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Timestamp from '../@types/Timestamp'
 import { SCHEMA_LATEST } from '../constants'
-import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import groupObjectBy from '../util/groupObjectBy'
 import hashThought from '../util/hashThought'
 import series from '../util/series'
@@ -180,18 +179,10 @@ export const getLexemesByIds = (keys: string[]) =>
 export const updateThought = async (
   id: ThoughtId,
   thoughtOld: ThoughtWithChildren | undefined,
-  { children, childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
+  { childrenMap, lastUpdated, value, parentId, archived, rank }: ThoughtWithChildren,
 ) => {
   return db.transaction('rw', db.thoughtIndex, async (tx: ObservableTransaction) => {
     tx.source = getSessionId()
-    // Do not save children if any are pending.
-    // Pending thoughts should never be persisted.
-    // Since this is an update rather than a put, the thought will retain any children it already has in the database.
-    // This can occur when editing an un-expanded thought whose children are still pending.
-    // When replicating from remote, we need to persist childrenMap, otherwise children of buffered local thoughts will never be saved and thus incorrectly return empty children on pull.
-    const hasPendingChildren =
-      Object.values(children).some(child => child.pending) ||
-      Object.keys(children).length < Object.keys(childrenMap || {}).length
 
     /** Does a put if the thought does not exist, otherwise update. */
     const putOrUpdate = (changes: Partial<ThoughtWithChildren>) =>
@@ -199,11 +190,8 @@ export const updateThought = async (
 
     return putOrUpdate({
       id,
+      childrenMap,
       value,
-      ...(hasPendingChildren
-        ? { childrenMap: childrenMap || thoughtOld?.childrenMap || {} }
-        : // when no children are pending, we can safely delete childrenMap
-          { children, childrenMap: {} }),
       lastUpdated,
       parentId,
       rank,
@@ -287,35 +275,14 @@ export const deleteThought = async (id: string) =>
   })
 
 /** Get a thought by id. */
-export const getThoughtById = async (id: string): Promise<Thought | undefined> => {
-  const thoughtWithChildren: ThoughtWithChildren | undefined = await db.thoughtIndex.get(id)
-  return thoughtWithChildren
-    ? ({
-        ..._.omit(thoughtWithChildren, ['children']),
-        childrenMap: {
-          ...thoughtWithChildren.childrenMap,
-          ...createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-        },
-      } as Thought)
-    : undefined
-}
+export const getThoughtById = async (id: string): Promise<Thought | undefined> => db.thoughtIndex.get(id)
 
 /** Get a thought and its children. O(1). */
 export const getThoughtWithChildren = async (id: string): Promise<ThoughtWithChildren | undefined> =>
   db.thoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
-export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => {
-  const thoughtsWithChildren: (ThoughtWithChildren | undefined)[] = await db.thoughtIndex.bulkGet(ids)
-  return thoughtsWithChildren.map(thoughtWithChildren =>
-    thoughtWithChildren
-      ? ({
-          ..._.omit(thoughtWithChildren, ['children']),
-          childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-        } as Thought)
-      : undefined,
-  )
-}
+export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => db.thoughtIndex.bulkGet(ids)
 
 /** Updates the recentlyEdited helper. */
 export const updateRecentlyEdited = async (recentlyEdited: Index) => db.helpers.update('EM', { recentlyEdited })

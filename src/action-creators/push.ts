@@ -1,28 +1,18 @@
 /* eslint-disable fp/no-mutating-methods */
-import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtWithChildren from '../@types/ThoughtWithChildren'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN } from '../constants'
 import db from '../data-providers/yjs'
 import contextToThoughtId from '../selectors/contextToThoughtId'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import filterObject from '../util/filterObject'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
-
-/** Filter out the properties that should not be saved to thoughts in the database. */
-const thoughtToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
-
-/** Filter out the properties that should not be saved to thought.childrenMap in the database. */
-const childToDb = (thought: Thought) =>
-  _.pick(thought, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
+import thoughtToDb from '../util/thoughtToDb'
 
 /** Syncs thought updates to the local database. Caches updated localStorageSettingsContexts to local storage. */
 const pushLocal = (
@@ -39,17 +29,7 @@ const pushLocal = (
   }
   const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thought) => {
     if (!thought) return { [id]: null }
-    const children = getAllChildrenAsThoughts(state, thought.id)
-    const hasPendingChildren = children.length < Object.keys(thought.childrenMap).length
-    const thoughtWithChildren: ThoughtWithChildren = {
-      ...thoughtToDb(thought),
-      children: keyValueBy(children, child => ({
-        [child.id]: childToDb(child),
-      })),
-      // if any inline children are pending, persist childrenMap instead of children
-      // otherwise empty children are persisted to local when replicating from remote
-      ...(hasPendingChildren ? { childrenMap: thought.childrenMap } : null),
-    }
+    const thoughtWithChildren = thoughtToDb(thought)
 
     // some settings are propagated to localStorage for faster load on startup
     const name = localStorageSettingsContexts[id]

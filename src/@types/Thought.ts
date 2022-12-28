@@ -2,17 +2,21 @@ import Index from './IndexType'
 import ThoughtId from './ThoughtId'
 import Timestamp from './Timestamp'
 
-/** An object that contains a list of children within a context. */
+/** An single thought in local state that contains a map of children ThoughtIds. A different type, ThoughtWithChildren is persisted to storage. */
 interface Thought {
+  // persisted properties (See: ThoughtWithChildren)
   id: ThoughtId
   value: string
   rank: number
   parentId: ThoughtId
-  childrenMap: Index<ThoughtId> // key and value are of type ThoughtId
+  // meta attributes keyed by value, otherwise keyed by ThoughtId
+  childrenMap: Index<ThoughtId>
   lastUpdated: Timestamp
-  pending?: boolean
   archived?: Timestamp
   updatedBy: string
+
+  // non-persisted properties (local state only)
+  pending?: boolean
   // takes precedence over value for sorting purposes
   // used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point
   sortValue?: string

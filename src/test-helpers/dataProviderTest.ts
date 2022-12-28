@@ -21,6 +21,7 @@ import mergeThoughts from '../util/mergeThoughts'
 import never from '../util/never'
 import reducerFlow from '../util/reducerFlow'
 import { getSessionId } from '../util/sessionManager'
+import thoughtToDb from '../util/thoughtToDb'
 import timestamp from '../util/timestamp'
 
 declare global {
@@ -56,33 +57,7 @@ const getManyDescendantsByContext = async (
 
 /** Converts an Index<Thought> to an Index<ThoughtWithChildren>. */
 const toThoughtIndexWithChildren = (thoughtIndex: Index<Thought>): Index<ThoughtWithChildren> =>
-  keyValueBy(thoughtIndex, (id, thought) => {
-    const thoughtPicked = _.pick(thought, ['id', 'value', 'lastUpdated', 'parentId', 'rank', 'updatedBy'])
-    return {
-      [id]: {
-        ...thoughtPicked,
-        children: keyValueBy(thought.childrenMap, (key, childId) => ({
-          [childId]: thoughtIndex[childId],
-        })),
-      },
-    }
-  })
-
-/** Convert a Thought to a ThoughtWithChildren with all leaves. */
-const toThoughtWithChildren = (thought: Thought): ThoughtWithChildren => ({
-  ..._.pick(thought, ['id', 'value', 'lastUpdated', 'parentId', 'rank', 'updatedBy']),
-  children: keyValueBy(Object.values(thought.childrenMap), (childId, i) => ({
-    [childId]: {
-      id: childId as ThoughtId,
-      value: childId,
-      childrenMap: {},
-      rank: i,
-      parentId: thought.id,
-      lastUpdated: thought.lastUpdated,
-      updatedBy: thought.updatedBy,
-    } as Thought,
-  })),
-})
+  keyValueBy(thoughtIndex, (id, thought) => ({ [id]: thoughtToDb(thought) }))
 
 expect.extend({
   /** Passes if a Context appears before another Context in the Thoughts array. */
@@ -214,7 +189,7 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'test',
     }
 
-    const thoughtWithChildren = toThoughtWithChildren(thought)
+    const thoughtWithChildren = thoughtToDb(thought)
     await provider.updateThought?.('test' as ThoughtId, undefined, thoughtWithChildren)
 
     const dbThought = await getThoughtById(provider, 'test' as ThoughtId)
@@ -245,8 +220,8 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2' as ThoughtId,
     }
 
-    const thoughtXWithChildren = toThoughtWithChildren(thoughtX)
-    const thoughtAWithChildren = toThoughtWithChildren(thoughtA)
+    const thoughtXWithChildren = thoughtToDb(thoughtX)
+    const thoughtAWithChildren = thoughtToDb(thoughtA)
 
     await provider.updateThought?.('testIdX' as ThoughtId, undefined, thoughtXWithChildren)
     await provider.updateThought?.('testIdA' as ThoughtId, undefined, thoughtAWithChildren)
@@ -315,75 +290,9 @@ const dataProviderTest = (provider: DataProvider) => {
       updatedBy: getSessionId(),
     } as Thought
 
-    const thoughtXWithChildren = {
-      ...thoughtX,
-      children: {
-        child1: {
-          id: 'child1' as ThoughtId,
-          value: 'child1',
-          childrenMap: {},
-          rank: 0,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-        child2: {
-          id: 'child2' as ThoughtId,
-          value: 'child2',
-          childrenMap: {},
-          rank: 1,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-        child3: {
-          id: 'child3' as ThoughtId,
-          value: 'child3',
-          childrenMap: {},
-          rank: 2,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-      },
-    }
-
-    const thoughtYWithChildren = {
-      ...thoughtY,
-      children: {
-        child1: {
-          id: 'child4' as ThoughtId,
-          value: 'child4',
-          childrenMap: {},
-          rank: 0,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-        child2: {
-          id: 'child5' as ThoughtId,
-          value: 'child5',
-          childrenMap: {},
-          rank: 1,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-        child3: {
-          id: 'child6' as ThoughtId,
-          value: 'child6',
-          childrenMap: {},
-          rank: 2,
-          parentId: 'test' as ThoughtId,
-          lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
-        },
-      },
-    }
-
     await provider.updateThoughtIndex?.({
-      idX: thoughtXWithChildren,
-      idY: thoughtYWithChildren,
+      idX: thoughtX,
+      idY: thoughtY,
     })
 
     const contextX = await getThoughtById(provider, 'idX' as ThoughtId)

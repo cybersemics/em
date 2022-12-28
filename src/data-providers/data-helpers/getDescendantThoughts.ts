@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import Index from '../../@types/IndexType'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -9,8 +8,6 @@ import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
-import { createChildrenMapFromThoughts } from '../../util/createChildrenMap'
-import filterObject from '../../util/filterObject'
 import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
 import head from '../../util/head'
@@ -80,12 +77,6 @@ const isMetaDescendant = (state: State, thought: Thought) =>
 const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
   !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
-/** Convert a ThoughtWithChildren to a Thought. */
-const toThought = (thoughtWithChildren: ThoughtWithChildren): Thought => ({
-  ..._.omit(thoughtWithChildren, 'children'),
-  childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-})
-
 /**
  * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.
  *
@@ -106,10 +97,6 @@ async function* getDescendantThoughts(
   // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
   const accumulatedThoughts = { ...getState().thoughts }
 
-  // cache children fetched with getThoughtWithChildren to avoid additional db calls
-  // TODO: childrenCache can be removed for better memory efficiency yielding the children of getThoughtWithChildren within the same iteration that they are fetched. This is a transitional implementation to minimize risk. Refactoring will likely affect which thoughts are pending and may affect the tests.
-  let childrenCache: Index<Thought> = {}
-
   // eslint-disable-next-line fp/no-loops
   while (thoughtIdQueue.size() > 0) {
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
@@ -127,34 +114,18 @@ async function* getDescendantThoughts(
 
     const ids: ThoughtId[] = [...pendingCursorId, ...thoughtIdQueue.next()]
 
-    // get thoughts from the cache or the database
-    // if database, use the efficient getThoughtWithChildren and cache the thought's children for efficiency
-    // see childrenCache above for more information
-    const providerThoughtsRaw: (Thought | ThoughtWithChildren | undefined)[] = await Promise.all(
+    // get thoughts from the database
+    const providerThoughtsRaw: (ThoughtWithChildren | undefined)[] = await Promise.all(
       // eslint-disable-next-line no-loop-func
       ids.map(async id => {
-        if (childrenCache[id]) {
-          return childrenCache[id]
-        }
-        const thoughtWithChildren = await provider.getThoughtWithChildren(id)
-        if (thoughtWithChildren) {
-          childrenCache = {
-            ...childrenCache,
-            // filter out pending children so that they are fetched normally
-            // See /src/@types/ThoughtWithChildren.ts
-            ...filterObject(thoughtWithChildren.children, (id, child) => !child.pending),
-          }
-        }
-        return thoughtWithChildren
+        return await provider.getThoughtWithChildren(id)
       }),
     )
 
-    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as (Thought | ThoughtWithChildren)[]
+    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as ThoughtWithChildren[]
     const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
-    const pulledThoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({
-      [id]: (providerThoughtsValidated[i] as ThoughtWithChildren).children
-        ? toThought(providerThoughtsValidated[i] as ThoughtWithChildren)
-        : (providerThoughtsValidated[i] as Thought),
+    const pulledThoughtIndex: Index<Thought> = keyValueBy(thoughtIdsValidated, (id, i) => ({
+      [id]: providerThoughtsValidated[i],
     }))
 
     accumulatedThoughts.thoughtIndex = { ...accumulatedThoughts.thoughtIndex, ...pulledThoughtIndex }
@@ -174,10 +145,7 @@ async function* getDescendantThoughts(
           return null
         }
 
-        const isWithChildren = (thoughtWithChildren as ThoughtWithChildren).children
-        const thought = isWithChildren
-          ? toThought(thoughtWithChildren as ThoughtWithChildren)
-          : (thoughtWithChildren as Thought)
+        const thought: Thought = thoughtWithChildren
         const childrenIds = Object.values(thought.childrenMap)
         const isEmDescendant = thoughtId === EM_TOKEN
         const hasChildren = Object.keys(thought.childrenMap || {}).length > 0

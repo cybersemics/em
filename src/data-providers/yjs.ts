@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { useCallback, useEffect, useState } from 'react'
 import { shallowEqual } from 'react-redux'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -19,16 +18,15 @@ import importText from '../action-creators/importText'
 import modalComplete from '../action-creators/modalComplete'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import store from '../stores/app'
 import ministore from '../stores/ministore'
-import { createChildrenMapFromThoughts } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import groupObjectBy from '../util/groupObjectBy'
 import initialState from '../util/initialState'
 import keyValueBy from '../util/keyValueBy'
 import never from '../util/never'
 import storage from '../util/storage'
+import thoughtToDb from '../util/thoughtToDb'
 import { DataProvider } from './DataProvider'
 
 type Status = 'connecting' | 'connected' | 'disconnected'
@@ -152,7 +150,7 @@ if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
     // Maybe IndexedDB will help eliminate the possibility of a false positive?
     setTimeout(() => {
       const rootThought = yThoughtIndexLocal.get(HOME_TOKEN)
-      const isEmptyThoughtspace = Object.keys(rootThought?.children || rootThought?.childrenMap || {}).length === 0
+      const isEmptyThoughtspace = Object.keys(rootThought?.childrenMap || {}).length === 0
       if (isEmptyThoughtspace) {
         // save shared access token and tsid as default
         console.info('Setting shared thoughtspace as default')
@@ -230,21 +228,9 @@ export const clear = async () => {
 
     // reset to initialState, otherwise a missing ROOT error will occur when yThoughtIndex.observe is triggered
     const state = initialState()
-    const thoughWithChildrentUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => {
-      const children = getAllChildrenAsThoughts(state, thought.id)
-      const hasPendingChildren = children.length < Object.keys(thought.childrenMap).length
-      const thoughtWithChildren: ThoughtWithChildren = {
-        ..._.pick(thought, ['id', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
-        children: keyValueBy(children, child => ({
-          [child.id]: _.pick(child, ['id', 'childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value']),
-        })),
-        // if any inline children are pending, persist childrenMap instead of children
-        // otherwise empty children are persisted to local when replicating from remote
-        ...(hasPendingChildren ? { childrenMap: thought.childrenMap } : null),
-      }
-
-      return { [id]: thoughtWithChildren }
-    })
+    const thoughWithChildrentUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => ({
+      [id]: thoughtToDb(thought),
+    }))
 
     Object.entries(thoughWithChildrentUpdates).forEach(([id, thought]) => yThoughtIndex.set(id, thought))
     Object.entries(state.thoughts.lexemeIndex).forEach(([key, lexeme]) => yLexemeIndex.set(key, lexeme))
@@ -258,35 +244,15 @@ export const getLexemeById = async (id: string) => yLexemeIndex.get(id)
 export const getLexemesByIds = async (keys: string[]) => keys.map(key => yLexemeIndex.get(key))
 
 /** Get a thought by id. */
-export const getThoughtById = async (id: string): Promise<Thought | undefined> => {
-  const thoughtWithChildren: ThoughtWithChildren | undefined = yThoughtIndex.get(id)
-  return thoughtWithChildren
-    ? ({
-        ..._.omit(thoughtWithChildren, ['children']),
-        childrenMap: {
-          ...thoughtWithChildren.childrenMap,
-          ...createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-        },
-      } as Thought)
-    : undefined
-}
+export const getThoughtById = async (id: string): Promise<Thought | undefined> => yThoughtIndex.get(id)
 
 /** Get a thought and its children. O(1). */
 export const getThoughtWithChildren = async (id: string): Promise<ThoughtWithChildren | undefined> =>
   yThoughtIndex.get(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
-export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> => {
-  const thoughtsWithChildren: (ThoughtWithChildren | undefined)[] = ids.map(id => yThoughtIndex.get(id))
-  return thoughtsWithChildren.map(thoughtWithChildren =>
-    thoughtWithChildren
-      ? ({
-          ..._.omit(thoughtWithChildren, ['children']),
-          childrenMap: createChildrenMapFromThoughts(Object.values(thoughtWithChildren.children || {})),
-        } as Thought)
-      : undefined,
-  )
-}
+export const getThoughtsByIds = async (ids: string[]): Promise<(Thought | undefined)[]> =>
+  ids.map(id => yThoughtIndex.get(id))
 
 /** Persists the cursor. */
 export const updateCursor = async (cursor: string | null) =>
