@@ -10,7 +10,8 @@ import ShareType from '../@types/Share'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { isTouch } from '../browser'
-import { accessToken as accessTokenCurrent, shareServer, tsid } from '../data-providers/yjs'
+import { accessToken as accessTokenCurrent, tsid } from '../data-providers/yjs'
+import permissionsServer from '../data-providers/yjs/permissionsServer'
 import * as selection from '../device/selection'
 import usePermissions from '../hooks/usePermissions'
 import useStatus from '../hooks/useStatus'
@@ -126,11 +127,11 @@ const ShareList = ({
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
                       onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
-                        const result: { accessToken?: string; error?: string } = shareServer.add({
+                        const result: { accessToken?: string; error?: string } = permissionsServer.add({
                           role,
                           name: strip(name || ''),
                         })
-                        // TODO: shareServer.add does not yet return { error }
+                        // TODO: permissionsServer.add does not yet return { error }
                         if (!result.error) {
                           setShowDeviceForm(false)
                           onAdd?.(result.accessToken!)
@@ -368,7 +369,7 @@ const ShareDetail = React.memo(
 
     const onChangeName = useCallback(
       _.debounce((e: ContentEditableEvent) => {
-        shareServer.update(accessToken, { ...share, name: e.target.value.trim() })
+        permissionsServer.update(accessToken, { ...share, name: e.target.value.trim() })
       }, 500),
       [],
     )
@@ -456,7 +457,7 @@ const ShareDetail = React.memo(
           </p>
           <a
             onClick={() => {
-              shareServer.delete(accessToken, share)
+              permissionsServer.delete(accessToken, share)
               onBack()
             }}
             style={{ color: colors.red }}
