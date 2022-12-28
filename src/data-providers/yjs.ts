@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { shallowEqual } from 'react-redux'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
@@ -64,7 +63,7 @@ const connectThoughtspaceProvider = () => {
   }
 }
 
-const ypermissionsDoc = new Y.Doc()
+export const ypermissionsDoc = new Y.Doc()
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
 export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
@@ -321,32 +320,6 @@ export const shareServer: { [key in keyof Routes['share']]: any } = {
     store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
 }
-
-// Infer the generic type of a specific YEvent such as YMapEvent or YArrayEvent
-// This is needed because YEvent is not generic.
-type ExtractYEvent<T> = T extends Y.YMapEvent<infer U> | Y.YArrayEvent<infer U> ? U : never
-
-/** Subscribes to a yjs shared type, e.g. Y.Map. Performs shallow comparison between new and old state and only updates if shallow value has changed. */
-export const useSharedType = <T>(yobj: Y.AbstractType<T>): ExtractYEvent<T> => {
-  const [state, setState] = useState<ExtractYEvent<T>>(yobj.toJSON())
-
-  const updateState = useCallback(async e => {
-    const stateNew: Index<Share> = yobj.toJSON()
-    setState((stateOld: any) => (!shallowEqual(stateNew, stateOld) ? stateNew : stateOld))
-  }, [])
-
-  useEffect(() => {
-    yobj.observe(updateState)
-    return () => {
-      yobj.unobserve(updateState)
-    }
-  })
-
-  return state
-}
-
-/** A hook that subscribes to yPermissions. */
-export const usePermissions = () => useSharedType(yPermissions)
 
 /** A hook that subscribes to the permissions WebsocketProvider's connection status. Uses the permissions instead of thoughtspace provider since the thoughtspace provider is only connected if the thoughtspace is shared with more than one device. */
 export const useStatus = () => {
