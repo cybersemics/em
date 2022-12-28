@@ -17,7 +17,6 @@ import statusActionCreator from './action-creators/status'
 import userAuthenticated from './action-creators/userAuthenticated'
 import { ALGOLIA_CONFIG, FIREBASE_CONFIG, OFFLINE_TIMEOUT } from './constants'
 import initDB from './data-providers/dexie'
-import { init as initYJS } from './data-providers/yjs'
 import * as selection from './device/selection'
 import globals from './globals'
 import initAlgoliaSearch from './search/algoliaSearch'
@@ -29,6 +28,7 @@ import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
+import { init as initOfflineStatusStore } from './stores/offlineStatusStore'
 import getLexemeFromDB from './test-helpers/getLexemeFromDB'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
@@ -123,7 +123,7 @@ const initializeCursor = async () => {
 
 /** Initilaize local db , firebase and window events. */
 export const initialize = async () => {
-  await initYJS()
+  await initOfflineStatusStore()
 
   // initialize the session id
   sessionManager.init()

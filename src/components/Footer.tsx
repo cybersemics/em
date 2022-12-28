@@ -7,10 +7,11 @@ import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { offlineStatusStore, tsid } from '../data-providers/yjs'
+import { tsid } from '../data-providers/yjs'
 import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import themeColors from '../selectors/themeColors'
+import offlineStatusStore from '../stores/offlineStatusStore'
 import pushStore from '../stores/push'
 
 /** Show the user's connection status. */

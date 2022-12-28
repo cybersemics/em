@@ -5,13 +5,13 @@ import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import OfflineStatus from '../@types/OfflineStatus'
 import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import Thought from '../@types/Thought'
 import ThoughtDb from '../@types/ThoughtDb'
 import Timestamp from '../@types/Timestamp'
 import WebsocketProviderType from '../@types/WebsocketProviderType'
+import WebsocketStatus from '../@types/WebsocketStatus'
 import alert from '../action-creators/alert'
 import clearActionCreator from '../action-creators/clear'
 import importText from '../action-creators/importText'
@@ -19,7 +19,6 @@ import modalComplete from '../action-creators/modalComplete'
 import updateThoughtsActionCreator from '../action-creators/updateThoughts'
 import { EM_TOKEN, HOME_TOKEN, INITIAL_SETTINGS } from '../constants'
 import store from '../stores/app'
-import ministore from '../stores/ministore'
 import createId from '../util/createId'
 import groupObjectBy from '../util/groupObjectBy'
 import initialState from '../util/initialState'
@@ -28,8 +27,6 @@ import never from '../util/never'
 import storage from '../util/storage'
 import thoughtToDb from '../util/thoughtToDb'
 import { DataProvider } from './DataProvider'
-
-type Status = 'connecting' | 'connected' | 'disconnected'
 
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
 const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
@@ -70,8 +67,8 @@ const connectThoughtspaceProvider = () => {
 const ypermissionsDoc = new Y.Doc()
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 
-const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
-const websocketProviderPermissions: WebsocketProviderType = new WebsocketProvider(
+export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
+export const websocketProviderPermissions: WebsocketProviderType = new WebsocketProvider(
   websocketUrl,
   `${tsid}/permissions`,
   ypermissionsDoc,
@@ -91,12 +88,9 @@ const yThoughtIndex = ydoc.getMap<ThoughtDb>('thoughtIndex')
 const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
 const yHelpers = ydoc.getMap<string>('helpers')
 
-const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
-indexeddbProviderThoughtspace.whenSynced.then(() => {
-  offlineStatusStore.update('synced')
-})
+export const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
 
-const websocketProviderThoughtspace = new WebsocketProvider(websocketUrl, tsid, ydoc, {
+export const websocketProviderThoughtspace = new WebsocketProvider(websocketUrl, tsid, ydoc, {
   auth: accessToken,
   // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
   connect: false,
@@ -356,9 +350,11 @@ export const usePermissions = () => useSharedType(yPermissions)
 
 /** A hook that subscribes to the permissions WebsocketProvider's connection status. Uses the permissions instead of thoughtspace provider since the thoughtspace provider is only connected if the thoughtspace is shared with more than one device. */
 export const useStatus = () => {
-  const [state, setState] = useState<Status>(websocketProviderPermissions.wsconnected ? 'connected' : 'disconnected')
+  const [state, setState] = useState<WebsocketStatus>(
+    websocketProviderPermissions.wsconnected ? 'connected' : 'disconnected',
+  )
 
-  const updateState = useCallback((e: { status: Status }) => setState(e.status), [])
+  const updateState = useCallback((e: { status: WebsocketStatus }) => setState(e.status), [])
 
   useEffect(() => {
     websocketProviderPermissions.on('status', updateState)
@@ -368,60 +364,6 @@ export const useStatus = () => {
   })
 
   return state
-}
-
-/** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
-export const offlineStatusStore = ministore<OfflineStatus>(
-  websocketProviderPermissions.wsconnected ? 'connected' : 'preconnecting',
-)
-
-websocketProviderPermissions.on('status', (e: { status: Status }) => {
-  offlineStatusStore.update(statusOld =>
-    e.status === 'connecting'
-      ? // preconnecting/connecting/offline (no change)
-        statusOld === 'preconnecting' || statusOld === 'connecting' || statusOld === 'offline'
-        ? statusOld
-        : 'reconnecting'
-      : // connected (stop reconnecting)
-      e.status === 'connected'
-      ? // Stay preconnecting when the provider becomes connected and wait for synced.
-        // Otherwise the loading indicator will flash.
-        (stopConnecting(), statusOld === 'preconnecting' ? 'preconnecting' : 'connected')
-      : // disconnecting (start reconnecting)
-      e.status === 'disconnected'
-      ? (startConnecting(), 'reconnecting')
-      : (new Error('Unknown connection status: ' + e.status), statusOld),
-  )
-})
-websocketProviderThoughtspace.on('synced', () => {
-  stopConnecting()
-  offlineStatusStore.update('synced')
-})
-
-/** Enter a connecting state and then switch to offline after a delay. */
-const startConnecting = (delay = 3000) => {
-  stopConnecting()
-  offlineStatusStore.update('connecting')
-  offlineTimer = setTimeout(() => {
-    offlineTimer = null
-    offlineStatusStore.update('offline')
-  }, delay)
-}
-
-/** Clears the preconnecting and offline timers, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */
-const stopConnecting = () => {
-  clearTimeout(offlineTimer!)
-  offlineTimer = null
-}
-
-let offlineTimer: ReturnType<typeof setTimeout> | null = null
-
-/** Initializes the yjs data provider. */
-export const init = () => {
-  // Start connecting to populate offlineStatusStore.
-  // This must done in an init function that is called in app initalize, otherwise @sinonjs/fake-timers are not yet set and createTestApp tests break.
-  // TODO: Why does deferring websocketProviderPermissions.connect() to init break tests?
-  offlineTimer = setTimeout(() => startConnecting(), 500)
 }
 
 export default db
