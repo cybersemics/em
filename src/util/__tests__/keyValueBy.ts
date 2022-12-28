@@ -36,6 +36,14 @@ test('generate new object from object using keys and values', () => {
   })
 })
 
+test('non-scalar values', () => {
+  const result = keyValueBy({ a: [1], b: [2] }, (key, [value]) => ({ [key]: [value * 2] }))
+  expect(result).toEqual({
+    a: [2],
+    b: [4],
+  })
+})
+
 test('support multiple key-value pairs per entry', () => {
   const result = keyValueBy({ a: 1, b: 2 }, (key, value) => ({
     [key]: value * 10,
@@ -52,4 +60,20 @@ test('support multiple key-value pairs per entry', () => {
 test('empty object', () => {
   const result = keyValueBy({}, () => null)
   expect(result).toEqual({})
+})
+
+test('generate an object where all the keys have the the same values from an array', () => {
+  const result = keyValueBy(['a', 'b'], true)
+  expect(result).toEqual({
+    a: true,
+    b: true,
+  })
+})
+
+test('generate an object where all the keys have the same values from an object', () => {
+  const result = keyValueBy({ a: 1, b: 2 }, true)
+  expect(result).toEqual({
+    a: true,
+    b: true,
+  })
 })

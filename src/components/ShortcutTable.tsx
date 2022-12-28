@@ -78,7 +78,7 @@ const groups = [
 // assert that groups include all necessary shortcuts
 const shortcutsGroupedMap = keyValueBy(
   groups.flatMap(group => group.shortcuts),
-  shortcutId => ({ [shortcutId]: true }),
+  true,
 )
 const shortcutsUngrouped = globalShortcuts.filter(
   shortcut =>
