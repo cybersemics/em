@@ -104,15 +104,6 @@ const Footer = () => {
         >
           Settings
         </a>
-        <span className='footer-divider'> | </span>
-        <a
-          tabIndex={-1}
-          onClick={() => dispatch(showModal({ id: Modal.feedback }))}
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Feedback
-        </a>
         {window.firebase ? (
           <span>
             <span className='footer-divider'> | </span>

@@ -11,10 +11,8 @@ import themeColors from '../selectors/themeColors'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import FeedbackButton from './FeedbackButton'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
-import QuickAddButton from './QuickAddButton'
 
 // define at top-level for stable object reference
 const navBreadcrumbsClass = {
@@ -93,8 +91,8 @@ const NavBar = ({ position }: { position: string }) => {
                 <>
                   <ManualBUtton />
                   {authenticated && <InvitesButton />}
-                  <FeedbackButton />
-                  <QuickAddButton />
+                  {/* <FeedbackButton /> */}
+                  {/* <QuickAddButton /> */}
                 </>
               </div>
             </>

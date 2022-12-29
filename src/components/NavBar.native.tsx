@@ -5,9 +5,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import FeedbackButton from './FeedbackButton'
 import HomeLink from './HomeLink'
-import QuickAddButton from './QuickAddButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -35,8 +33,8 @@ const NavBar = ({ cursor, position, showBreadcrumbs }: IComponentProps) => {
       <ContextBreadcrumbs path={breadcrumbPath} />
 
       <View style={styles.buttonsContainer}>
-        <FeedbackButton />
-        <QuickAddButton />
+        {/* <FeedbackButton /> */}
+        {/* <QuickAddButton /> */}
       </View>
     </View>
   )
