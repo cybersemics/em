@@ -6,7 +6,6 @@ import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
-import { isLocalNetwork } from '../device/router'
 import globals from '../globals'
 import canShowModal from '../selectors/canShowModal'
 import hashThought from '../util/hashThought'
@@ -167,13 +166,13 @@ const initialState = (created: Timestamp = timestamp()) => {
    * If modal-to-show is unset, default to the signup screen, unless on localhost.
    * If working offline, modal-to-show is set to an empty string so the welcome dialog is skipped.
    */
-  if (!isLocalNetwork) {
-    const showModalLocal: Modal | null = (storage.getItem('modal-to-show') as Modal) || null
-    // do not show the modal if it has been permanently dismissed (complete)
-    if (showModalLocal && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
-      state.showModal = showModalLocal || Modal.auth
-    }
-  }
+  // if (!isLocalNetwork) {
+  //   const showModalLocal: Modal | null = (storage.getItem('modal-to-show') as Modal) || null
+  //   // do not show the modal if it has been permanently dismissed (complete)
+  //   if (showModalLocal && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
+  //     state.showModal = showModalLocal || Modal.auth
+  //   }
+  // }
 
   // show the signup modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {

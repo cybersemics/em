@@ -4,7 +4,6 @@ import * as pkg from '../../package.json'
 import Modal from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
-import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
@@ -57,7 +56,7 @@ const Status = () => {
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, tutorialStep, isTutorialOn, fontSize } = useFooterUseSelectors()
+  const { tutorialStep, isTutorialOn, fontSize } = useFooterUseSelectors()
 
   // useWhyDidYouUpdate('<Footer>', {
   //   authenticated,
@@ -104,20 +103,6 @@ const Footer = () => {
         >
           Settings
         </a>
-        {window.firebase ? (
-          <span>
-            <span className='footer-divider'> | </span>
-            {authenticated ? (
-              <a tabIndex={-1} onClick={() => dispatch(logout())}>
-                Log Out
-              </a>
-            ) : (
-              <a tabIndex={-1} onClick={() => dispatch(showModal({ id: Modal.auth }))}>
-                Log In
-              </a>
-            )}
-          </span>
-        ) : null}
       </li>
       <br />
 
