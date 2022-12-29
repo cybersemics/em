@@ -3,6 +3,7 @@ import React from 'react'
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
 import tutorial from '../action-creators/tutorial'
@@ -63,7 +64,7 @@ const mapStateToProps = (state: State) => {
 // }
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalHelp = ({
+const ModalManual = ({
   tutorialStep,
   showQueue,
   dispatch,
@@ -102,8 +103,8 @@ const ModalHelp = ({
 
   return (
     <Modal
-      id='help'
-      title='Help'
+      id={ModalType.manual}
+      title='The Manual'
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
     >
       <View>
@@ -404,4 +405,4 @@ const styles = StyleSheet.create({
   tutorialButtonText: { fontSize: 6, color: '#000' },
 })
 
-export default connect(mapStateToProps)(ModalHelp)
+export default connect(mapStateToProps)(ModalManual)

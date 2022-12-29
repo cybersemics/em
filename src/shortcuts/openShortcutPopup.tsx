@@ -1,5 +1,6 @@
 import React from 'react'
 import IconType from '../@types/Icon'
+import Modal from '../@types/Modal'
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
 import { isTouch } from '../browser'
@@ -27,13 +28,13 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
 const openShortcutPopupShortcut: Shortcut = {
   id: 'openShortcutPopup',
   label: 'Open Shortcut Popup',
-  description: `Open the help screen which contains the tutorials and a list of all ${
+  description: `Open The Manual which contains the tutorials and a list of all ${
     isTouch ? 'gestures' : 'keyboard shortcuts'
-  }. Yes, this help screen.`,
+  }. Yes, this manual.`,
   keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {
-    dispatch(showModal({ id: 'help' }))
+    dispatch(showModal({ id: Modal.manual }))
     scrollTo('top')
   },
 }

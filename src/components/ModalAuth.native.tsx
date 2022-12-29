@@ -3,6 +3,7 @@ import { NativeSyntheticEvent, TextInputFocusEventData, TouchableOpacity, View }
 import { TextInput } from 'react-native-gesture-handler'
 import { useDispatch } from 'react-redux'
 import Index from '../@types/IndexType'
+import ModalType from '../@types/Modal'
 import alert from '../action-creators/alert'
 import login from '../action-creators/login'
 import { FIREBASE_REDIRECT_URL } from '../constants'
@@ -170,7 +171,7 @@ const ModalAuth = () => {
 
   return (
     <Modal
-      id='auth'
+      id={ModalType.auth}
       title={activeMode.modalTitle}
       actions={({ close: closeModal }) => (
         <View style={alignItemsCenter}>

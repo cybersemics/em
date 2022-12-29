@@ -1,5 +1,4 @@
 /** Defines app-wide constants. */
-import Index from './@types/IndexType'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { emojiRegex } from './emojiRegex'
@@ -296,18 +295,6 @@ export const MODIFIER_KEYS = {
   Ctrl: 1,
   Meta: 1,
   Shift: 1,
-}
-
-// modal states
-export const MODALS: Index<true> = {
-  welcome: true,
-  help: true,
-  home: true,
-  export: true,
-  feedback: true,
-  auth: true,
-  invites: true,
-  signup: true,
 }
 
 export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'

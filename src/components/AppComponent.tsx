@@ -4,6 +4,7 @@ import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, 
 import { connect, useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
+import Modal from '../@types/Modal'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
@@ -26,9 +27,8 @@ import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import ModalAuth from './ModalAuth'
 import ModalExport from './ModalExport'
 import ModalFeedback from './ModalFeedback'
-import ModalGestureHelp from './ModalGestureHelp'
-import ModalHelp from './ModalHelp'
 import ModalInvites from './ModalInvites'
+import ModalManual from './ModalManual'
 import ModalSettings from './ModalSettings'
 import ModalShare from './ModalShare'
 import ModalSignup from './ModalSignup'
@@ -50,7 +50,7 @@ interface StateProps {
   dark?: boolean
   dragInProgress?: boolean
   isLoading?: boolean
-  showModal?: string | null
+  showModal?: Modal | null
   scale?: number
   showSplitView?: boolean
   splitPosition?: number
@@ -244,44 +244,38 @@ const AppComponent: FC<Props> = props => {
       <Alert />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
-
       {isDocumentEditable() && !tutorial && !showModal && (
         <>
           <Sidebar />
           <HamburgerMenu />
         </>
       )}
-
       {!showModal && !tutorial && <Toolbar />}
-
       <QuickDrop />
-
       <MultiGestureIfTouch>
         {showModal ? (
           // modals
           // eslint-disable-next-line @typescript-eslint/no-extra-parens
-          showModal === 'welcome' ? (
+          showModal === Modal.welcome ? (
             <ModalWelcome />
-          ) : showModal === 'help' ? (
-            <ModalHelp />
-          ) : showModal === 'gesture-help' ? (
-            <ModalGestureHelp />
-          ) : showModal === 'export' ? (
+          ) : showModal === Modal.manual ? (
+            <ModalManual />
+          ) : showModal === Modal.export ? (
             <ModalExport />
-          ) : showModal === 'feedback' ? (
+          ) : showModal === Modal.feedback ? (
             <ModalFeedback />
-          ) : showModal === 'auth' ? (
+          ) : showModal === Modal.auth ? (
             <ModalAuth />
-          ) : showModal === 'signup' ? (
+          ) : showModal === Modal.signup ? (
             <ModalSignup />
-          ) : showModal === 'settings' ? (
+          ) : showModal === Modal.settings ? (
             <ModalSettings />
-          ) : showModal === 'share' ? (
+          ) : showModal === Modal.devices ? (
             <ModalShare />
-          ) : showModal === 'invites' ? (
+          ) : showModal === Modal.invites ? (
             <ModalInvites />
           ) : (
-            `Invalid showModal: ${showModal}. Either the id is wrong, or the modal has not been added to AppComponent.ts.`
+            `Missing component for Modal type: ${showModal}`
           )
         ) : (
           // navigation, content, and footer

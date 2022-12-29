@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { AlertType } from '../constants'
@@ -77,7 +78,7 @@ const ModalFeedback = () => {
 
   return (
     <Modal
-      id='feedback'
+      id={ModalType.feedback}
       title='Feedback'
       actions={({ close }) => (
         <View style={styles.actionButtonContainer}>

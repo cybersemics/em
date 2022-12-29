@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
+import Modal from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
@@ -97,7 +98,7 @@ const Footer = () => {
         </span>
         <a
           tabIndex={-1}
-          onClick={() => dispatch(showModal({ id: 'settings' }))}
+          onClick={() => dispatch(showModal({ id: Modal.settings }))}
           target='_blank'
           rel='noopener noreferrer'
         >
@@ -106,15 +107,11 @@ const Footer = () => {
         <span className='footer-divider'> | </span>
         <a
           tabIndex={-1}
-          onClick={() => dispatch(showModal({ id: 'feedback' }))}
+          onClick={() => dispatch(showModal({ id: Modal.feedback }))}
           target='_blank'
           rel='noopener noreferrer'
         >
           Feedback
-        </a>
-        <span className='footer-divider'> | </span>
-        <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'help' }))}>
-          Help
         </a>
         {window.firebase ? (
           <span>
@@ -124,7 +121,7 @@ const Footer = () => {
                 Log Out
               </a>
             ) : (
-              <a tabIndex={-1} onClick={() => dispatch(showModal({ id: 'auth' }))}>
+              <a tabIndex={-1} onClick={() => dispatch(showModal({ id: Modal.auth }))}>
                 Log In
               </a>
             )}

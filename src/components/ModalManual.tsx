@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
 import tutorial from '../action-creators/tutorial'
@@ -22,7 +23,7 @@ const mapStateToProps = (state: State) => {
 }
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalHelp = ({
+const ModalManual = ({
   tutorialStep,
   showQueue,
   dispatch,
@@ -30,8 +31,8 @@ const ModalHelp = ({
 }: Connected<ReturnType<typeof mapStateToProps>>) => {
   return (
     <Modal
-      id='help'
-      title='Help'
+      id={ModalType.manual}
+      title='The Manual'
       className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
     >
@@ -284,4 +285,4 @@ const ModalHelp = ({
   )
 }
 
-export default connect(mapStateToProps)(ModalHelp)
+export default connect(mapStateToProps)(ModalManual)

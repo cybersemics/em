@@ -1,11 +1,12 @@
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import Modal from '../@types/Modal'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MODALS, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import hashThought from './hashThought'
 import never from './never'
@@ -153,7 +154,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     toolbarOverlay: null,
     undoPatches: [],
   }
-  Object.keys(MODALS).forEach(key => {
+  Object.keys(Modal).forEach(key => {
     // initial modal states
     state.modals[key] = {
       // eslint-disable-next-line no-mixed-operators
@@ -162,7 +163,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
   })
 
   // welcome modal
-  state.showModal = 'welcome'
+  state.showModal = Modal.welcome
 
   return state
 }

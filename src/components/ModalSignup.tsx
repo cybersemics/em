@@ -2,6 +2,7 @@ import React, { ChangeEventHandler, useCallback, useEffect, useState } from 'rea
 import { useDispatch } from 'react-redux'
 import Index from '../@types/IndexType'
 import InviteCode from '../@types/InviteCode'
+import ModalType from '../@types/Modal'
 import showModal from '../action-creators/showModal'
 import { getInviteById, updateInviteCode } from '../apis/invites'
 import getQueryParam from '../util/getQueryParam'
@@ -135,7 +136,7 @@ const ModalSignup = () => {
 
   return (
     <Modal
-      id='signup'
+      id={ModalType.signup}
       title={modes.signup.modalTitle}
       className='popup'
       center
@@ -158,7 +159,7 @@ const ModalSignup = () => {
               <button
                 disabled={isSubmitting}
                 className='button'
-                onClick={() => dispatch(showModal({ id: 'auth' }))}
+                onClick={() => dispatch(showModal({ id: ModalType.auth }))}
                 style={{ textDecoration: 'underline', marginTop: 15 }}
               >
                 Log in

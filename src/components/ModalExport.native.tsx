@@ -7,6 +7,7 @@ import RNPickerSelect from 'react-native-picker-select'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import Context from '../@types/Context'
 import ExportOption from '../@types/ExportOption'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -329,7 +330,7 @@ const ModalExport = () => {
   ]
 
   return (
-    <Modal id='export' title='Export' className='popup'>
+    <Modal id={ModalType.export} title='Export' className='popup'>
       <View style={styles.exportContentContainer}>
         <Text style={styles.white}>
           {exportWord} <ExportThoughtsPhrase id={id} numDescendantsFinal={numDescendants} title={title} />

@@ -4,6 +4,7 @@ import { connect, useDispatch, useSelector } from 'react-redux'
 import * as Firebase from '../@types/Firebase'
 import Index from '../@types/IndexType'
 import InviteCode from '../@types/InviteCode'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { getInviteById, updateInviteCode } from '../apis/invites'
@@ -136,7 +137,7 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
 
   return (
     <Modal
-      id='invites'
+      id={ModalType.invites}
       title='Gift codes'
       className='popup'
       center

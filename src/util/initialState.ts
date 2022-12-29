@@ -1,11 +1,11 @@
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
+import Modal from '../@types/Modal'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MODALS, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import { isLocalNetwork } from '../device/router'
 import globals from '../globals'
 import canShowModal from '../selectors/canShowModal'
@@ -24,9 +24,9 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const EM_TOKEN_HASH = EM_TOKEN
   const thoughtIndex: Index<Thought> = {
     [HOME_TOKEN_HASH]: {
-      id: HOME_TOKEN as ThoughtId,
+      id: HOME_TOKEN,
       value: HOME_TOKEN,
-      parentId: ROOT_PARENT_ID as ThoughtId,
+      parentId: ROOT_PARENT_ID,
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -35,9 +35,9 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       updatedBy: getSessionId(),
     },
     [ABSOLUTE_TOKEN_HASH]: {
-      id: ABSOLUTE_TOKEN as ThoughtId,
+      id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
-      parentId: ROOT_PARENT_ID as ThoughtId,
+      parentId: ROOT_PARENT_ID,
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -46,9 +46,9 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       updatedBy: getSessionId(),
     },
     [EM_TOKEN_HASH]: {
-      id: EM_TOKEN as ThoughtId,
+      id: EM_TOKEN,
       value: EM_TOKEN,
-      parentId: ROOT_PARENT_ID as ThoughtId,
+      parentId: ROOT_PARENT_ID,
       childrenMap: {},
       // start pending to trigger pullQueue fetch
       pending: true,
@@ -146,7 +146,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     toolbarOverlay: null,
     undoPatches: [],
   }
-  Object.keys(MODALS).forEach(key => {
+  Object.keys(Modal).forEach(key => {
     // initial modal states
     state.modals[key] = {
       // eslint-disable-next-line no-mixed-operators
@@ -156,7 +156,7 @@ const initialState = (created: Timestamp = timestamp()) => {
 
   // welcome modal
   if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = 'welcome'
+    state.showModal = Modal.welcome
   }
 
   /**
@@ -168,16 +168,16 @@ const initialState = (created: Timestamp = timestamp()) => {
    * If working offline, modal-to-show is set to an empty string so the welcome dialog is skipped.
    */
   if (!isLocalNetwork) {
-    const showModalLocal = storage.getItem('modal-to-show')
+    const showModalLocal: Modal | null = (storage.getItem('modal-to-show') as Modal) || null
     // do not show the modal if it has been permanently dismissed (complete)
-    if (showModalLocal !== '' && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
-      state.showModal = showModalLocal || 'auth'
+    if (showModalLocal && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
+      state.showModal = showModalLocal || Modal.auth
     }
   }
 
   // show the signup modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {
-    state.showModal = 'signup'
+    state.showModal = Modal.signup
   }
 
   return state

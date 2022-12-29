@@ -3,6 +3,7 @@ import * as murmurHash3 from 'murmurhash3js'
 import React, { useState } from 'react'
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
 import { useDispatch } from 'react-redux'
+import ModalType from '../@types/Modal'
 import tutorial from '../action-creators/tutorial'
 import { BETA_HASH } from '../constants'
 import storage from '../util/storage'
@@ -117,7 +118,7 @@ const ModalWelcome = () => {
 
   return (
     <Modal
-      id='welcome'
+      id={ModalType.welcome}
       title='Welcome to em'
       hideModalActions={!invited}
       center

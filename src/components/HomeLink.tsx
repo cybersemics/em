@@ -1,5 +1,6 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
+import ModalType from '../@types/Modal'
 import home from '../action-creators/home'
 import modalComplete from '../action-creators/modalComplete'
 import { MODAL_CLOSE_DURATION } from '../constants'
@@ -30,7 +31,7 @@ const HomeLink = ({ color, showModal, size, style }: HomeLinkProps) => {
       </a>
       {showModal === 'home' ? (
         <Modal
-          id='home'
+          id={ModalType.home}
           title='Tap the "em" icon to return to the home context'
           arrow='arrow arrow-top arrow-topleft'
           actions={({ close }) => (

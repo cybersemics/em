@@ -3,6 +3,7 @@ import Alert from './Alert'
 import Context from './Context'
 import { User } from './Firebase'
 import Index from './IndexType'
+import Modal from './Modal'
 import Patch from './Patch'
 import Path from './Path'
 import PushBatch from './PushBatch'
@@ -89,7 +90,7 @@ interface State {
   searchLimit?: number
   showColorPicker?: boolean
   showHiddenThoughts: boolean
-  showModal?: string | null
+  showModal?: Modal | null
   showQueue?: boolean | null
   showSidebar: boolean
   showSplitView: boolean

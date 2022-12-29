@@ -1,5 +1,6 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { EM_TOKEN } from '../constants'
@@ -42,7 +43,7 @@ const Setting = ({ invert, settingKey, title, children }: any) => {
 const ModalSettings = () => {
   return (
     <Modal
-      id='settings'
+      id={ModalType.settings}
       title='Settings'
       className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}

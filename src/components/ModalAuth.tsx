@@ -1,6 +1,7 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Index from '../@types/IndexType'
+import ModalType from '../@types/Modal'
 import alert from '../action-creators/alert'
 import login from '../action-creators/login'
 import modalComplete from '../action-creators/modalComplete'
@@ -122,7 +123,7 @@ const ModalAuth = () => {
 
   return (
     <Modal
-      id='auth'
+      id={ModalType.auth}
       title={activeMode.modalTitle}
       className='popup'
       center

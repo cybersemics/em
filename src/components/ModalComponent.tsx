@@ -2,6 +2,7 @@
 import classNames from 'classnames'
 import React from 'react'
 import Connected from '../@types/Connected'
+import ModalType from '../@types/Modal'
 import closeModal from '../action-creators/closeModal'
 import modalComplete from '../action-creators/modalComplete'
 import tutorial from '../action-creators/tutorial'
@@ -19,7 +20,7 @@ export interface ModalProps {
   className?: string
   hideClose?: boolean
   hideModalActions?: boolean
-  id: string
+  id: ModalType
   onClose?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   opaque?: boolean

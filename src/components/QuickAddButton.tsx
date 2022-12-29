@@ -20,6 +20,7 @@ const QuickAddButton: React.FC = () => {
         rotate: isAbsolute(rootContext),
       })}
       onClick={() => dispatch(toggleAbsoluteContext())}
+      title='Quick Add'
     >
       <AddIcon size={20} />
     </div>

@@ -1,17 +1,17 @@
 import classNames from 'classnames'
 import React from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import Modal from '../@types/Modal'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import { isTouch } from '../browser'
+import showModal from '../action-creators/showModal'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import FeedbackButton from './FeedbackButton'
-import GestureHintExtendedButton from './GestureHintExtendedButton'
 import HomeLink from './HomeLink'
 import InvitesButton from './InvitesButton'
 import QuickAddButton from './QuickAddButton'
@@ -29,6 +29,28 @@ const CursorBreadcrumbs = () => {
   )
 
   return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
+}
+
+/** A link that opens The Manual. */
+const ManualBUtton: React.FC = () => {
+  const dispatch = useDispatch()
+
+  return (
+    <div
+      onClick={() => dispatch(showModal({ id: Modal.manual }))}
+      title='The Manual'
+      style={{
+        cursor: 'pointer',
+        display: 'inline-flex',
+        fontWeight: 'bold',
+        padding: 10,
+        margin: -10,
+        userSelect: 'none',
+      }}
+    >
+      ?
+    </div>
+  )
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
@@ -69,7 +91,7 @@ const NavBar = ({ position }: { position: string }) => {
 
               <div className='nav-right-button-group'>
                 <>
-                  {isTouch && <GestureHintExtendedButton />}
+                  <ManualBUtton />
                   {authenticated && <InvitesButton />}
                   <FeedbackButton />
                   <QuickAddButton />

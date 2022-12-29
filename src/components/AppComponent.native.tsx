@@ -22,7 +22,7 @@ import Footer from './Footer'
 import ModalAuth from './ModalAuth'
 import ModalExport from './ModalExport'
 import ModalFeedback from './ModalFeedback'
-import ModalHelp from './ModalHelp'
+import ModalManual from './ModalManual'
 import ModalSettings from './ModalSettings'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
@@ -136,7 +136,7 @@ const AppComponent: React.FC = () => {
           <ModalAuth />
           <ModalFeedback />
           <ModalSettings />
-          <ModalHelp />
+          <ModalManual />
           <ModalWelcome />
           <ModalExport />
         </DrawerLayout>
