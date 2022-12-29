@@ -134,7 +134,7 @@ const initDB = async () => {
           'IndexedDB is not responding. Try refreshing the app. If that does not work, try clearing local storage and restarting your browser.',
         ),
       )
-    }, 2000),
+    }, 10000),
   )
   const staticHelpersExist = await Promise.race([timeout, db.helpers.get({ id: 'EM' })])
   if (!staticHelpersExist) {
