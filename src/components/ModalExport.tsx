@@ -160,6 +160,8 @@ interface AdvancedSetting {
   checked: boolean
   title: string
   description: string
+  dim?: boolean
+  indent?: boolean
 }
 
 const exportOptions: ExportOption[] = [
@@ -271,8 +273,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   // const titleMedium = ellipsize(title, 25)
 
   const [exportContent, setExportContent] = useState<string | null>(null)
-  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(true)
-  const [shouldIncludeArchived, setShouldIncludeArchived] = useState(true)
+  const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(false)
+  const [shouldIncludeArchived, setShouldIncludeArchived] = useState(false)
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
@@ -434,8 +436,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   /** Toggles advanced setting when Advanced CTA is clicked. */
   const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
 
-  /** Updates lossless checkbox value when clicked and set the appropriate value in the selected option. */
-  const onChangeLosslessCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+  /** Updates meta checkbox value when clicked and set the appropriate value in the selected option. */
+  const onChangeMetaCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
 
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeArchivedCheckbox = () => setShouldIncludeArchived(!shouldIncludeArchived)
@@ -446,12 +448,12 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = [
     {
-      id: 'lossless',
-      onChangeFunc: onChangeLosslessCheckbox,
+      id: 'meta',
+      onChangeFunc: onChangeMetaCheckbox,
       checked: shouldIncludeMetaAttributes,
-      title: 'Lossless',
+      title: 'Metaprogramming Attributes',
       description:
-        'When checked, include all metaprogramming attributes such as archived thoughts, pins, table view, etc. Check this option for a backup-quality export that can be re-imported with no data loss. Uncheck this option for social sharing or public display. ',
+        'When checked, include all metaprogramming attributes such pins, table view, etc. Check this option if the text is intended to be pasted back into em. Uncheck this option for social sharing or public display. ',
     },
     {
       id: 'archived',
@@ -459,6 +461,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       checked: shouldIncludeArchived,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
+      dim: !shouldIncludeMetaAttributes,
+      indent: true,
     },
     {
       id: 'formatting',
@@ -555,9 +559,14 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       {advancedSettings && (
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, checked, title, description }) => {
+          {advancedSettingsArray.map(({ id, onChangeFunc, checked, title, description, dim, indent }) => {
             return (
-              <label className='checkbox-container' key={`${id}-key-${title}`}>
+              <label
+                className='checkbox-container'
+                key={`${id}-key-${title}`}
+                // marginLeft should match .checkbox-container paddingLeft
+                style={{ opacity: dim ? 0.5 : undefined, marginLeft: indent ? 35 : undefined }}
+              >
                 <div>
                   <p className='advance-setting-label'>{title}</p>
                   <p className='advance-setting-description dim'>{description}</p>
