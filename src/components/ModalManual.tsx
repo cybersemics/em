@@ -6,6 +6,7 @@ import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
 import tutorial from '../action-creators/tutorial'
 import setTutorialStep from '../action-creators/tutorialStep'
+import { isTouch } from '../browser'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import getSetting from '../selectors/getSetting'
 import { ActionButton } from './ActionButton'
@@ -36,10 +37,97 @@ const ModalManual = ({
       className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
     >
+      <div className=''>
+        <p
+          style={{
+            textAlign: 'center',
+            marginTop: -30,
+            marginBottom: 40,
+            opacity: 0.8,
+          }}
+        >
+          Learn all the things.
+        </p>
+        <section className='popup-section'>
+          <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
+            <div
+              style={{
+                maxWidth: '40%',
+              }}
+            >
+              <a className='button'>{isTouch ? '👆 Gestures' : '⌨️ Keyboard Shortcuts'}</a>
+              <p
+                style={{
+                  fontSize: '18px',
+                  opacity: 0.8,
+                  margin: 20,
+                }}
+              >
+                View a complete list of {isTouch ? 'gestures' : 'keyboard shortcuts'} that can be used in em.
+              </p>
+            </div>
+            <div
+              style={{
+                maxWidth: '40%',
+                marginLeft: 20,
+              }}
+            >
+              <a className='button'>🚥 Toolbar</a>
+              <p
+                style={{
+                  fontSize: '18px',
+                  opacity: 0.8,
+                  margin: 20,
+                }}
+              >
+                View a list of toolbar icons with descriptions and corresponding gestures.
+              </p>
+            </div>
+          </div>
+        </section>
+        <section className='popup-section'>
+          <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
+            <div
+              style={{
+                maxWidth: '40%',
+              }}
+            >
+              <a className='button'>👩🏻‍🏫 Tutorials</a>
+              <p
+                style={{
+                  fontSize: '18px',
+                  opacity: 0.8,
+                  margin: 20,
+                }}
+              >
+                Play the interactive tutorials to walk through em's essential functionality.
+              </p>
+            </div>
+            <div
+              style={{
+                maxWidth: '40%',
+                marginLeft: 20,
+              }}
+            >
+              <a className='button'>🧙‍♀️ Metaprogramming</a>
+              <p
+                style={{
+                  fontSize: '18px',
+                  opacity: 0.8,
+                  margin: 20,
+                }}
+              >
+                Explore em's unique metaprogramming functionality to customize the appearance and behavior of em.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <section className='popup-section'>
         <h2 className='modal-subtitle'>Tutorials</h2>
 
-        <div className='modal-actions modal-actions-stack center'>
+        <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
           <div>
             <a
               className='button'
