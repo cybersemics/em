@@ -157,7 +157,6 @@ const useDescendantsNumber = () => useContext(DescendantNumberContext)
 interface AdvancedSetting {
   id: string
   onChangeFunc: () => void
-  defaultChecked: boolean
   checked: boolean
   title: string
   description: string
@@ -449,7 +448,6 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     {
       id: 'lossless',
       onChangeFunc: onChangeLosslessCheckbox,
-      defaultChecked: true,
       checked: shouldIncludeMetaAttributes,
       title: 'Lossless',
       description:
@@ -458,7 +456,6 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     {
       id: 'archived',
       onChangeFunc: onChangeArchivedCheckbox,
-      defaultChecked: true,
       checked: shouldIncludeArchived,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
@@ -466,7 +463,6 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     {
       id: 'formatting',
       onChangeFunc: onChangeFormattingCheckbox,
-      defaultChecked: true,
       checked: shouldIncludeMarkdownFormatting,
       title: 'Formatting Characters',
       description:
@@ -559,7 +555,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       {advancedSettings && (
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, defaultChecked, checked, title, description }) => {
+          {advancedSettingsArray.map(({ id, onChangeFunc, checked, title, description }) => {
             return (
               <label className='checkbox-container' key={`${id}-key-${title}`}>
                 <div>
@@ -569,13 +565,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
                 {/* Note: never preventDefault on a controlled checkbox in React.
                     See: https://stackoverflow.com/a/70030088/4806080 */}
-                <input
-                  type='checkbox'
-                  id={id}
-                  checked={checked}
-                  onChange={onChangeFunc}
-                  defaultChecked={defaultChecked}
-                />
+                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} />
                 <span className='checkmark'></span>
               </label>
             )
