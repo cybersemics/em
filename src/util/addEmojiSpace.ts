@@ -21,7 +21,7 @@ const addEmojiSpace = (text: string): string => {
   const match = text.match(emojiGroupRegex)
 
   if (match && match[0] && match[0].length < text.length) {
-    const replaceRegex = new RegExp(`^${match[0]}`)
+    const replaceRegex = new RegExp(`^\\${match[0]}`)
     const afterEmojis = text.replace(replaceRegex, '')
     const startsWithNonWhiteSpaceCharacter = /^[^\s]/.test(afterEmojis)
     return startsWithNonWhiteSpaceCharacter ? text.replace(replaceRegex, `${match[0]} `) : text
