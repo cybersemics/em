@@ -4,7 +4,6 @@ enum Modal {
   devices = 'devices',
   export = 'export',
   feedback = 'feedback',
-  home = 'home',
   invites = 'invites',
   manual = 'manual',
   settings = 'settings',

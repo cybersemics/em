@@ -53,6 +53,19 @@ const Status = () => {
   )
 }
 
+/** A pipe delimiter for a horizontal list of links. */
+const LinkDivider = () => <span className='footer-divider'> | </span>
+
+/** A link that opens a modal. */
+const ModalLink = ({ id, children }: { id: Modal; children: React.ReactNode }) => {
+  const dispatch = useDispatch()
+  return (
+    <a tabIndex={-1} onClick={() => dispatch(showModal({ id }))}>
+      {children}
+    </a>
+  )
+}
+
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
@@ -95,14 +108,14 @@ const Footer = () => {
             A
           </a>
         </span>
-        <a
-          tabIndex={-1}
-          onClick={() => dispatch(showModal({ id: Modal.settings }))}
-          target='_blank'
-          rel='noopener noreferrer'
-        >
-          Settings
-        </a>
+
+        <ModalLink id={Modal.devices}>Devices</ModalLink>
+        <LinkDivider />
+        <ModalLink id={Modal.export}>Export</ModalLink>
+        <LinkDivider />
+        <ModalLink id={Modal.manual}>The Manual</ModalLink>
+        <LinkDivider />
+        <ModalLink id={Modal.settings}>Settings</ModalLink>
       </li>
       <br />
 
