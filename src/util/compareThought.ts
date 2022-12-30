@@ -5,6 +5,7 @@ import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
 import lower from './lower'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
+const STARTS_WITH_META_ATTRIBUTES_REGEX = /^=/
 const IGNORED_PREFIXES = ['the ']
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -50,6 +51,17 @@ export const compareStringsWithEmoji = (a: string, b: string) => {
   const aStartsWithEmoji = !!a.match(STARTS_WITH_EMOJI_REGEX)
   const bStartsWithEmoji = !!b.match(STARTS_WITH_EMOJI_REGEX)
   return aStartsWithEmoji && !bStartsWithEmoji ? -1 : bStartsWithEmoji && !aStartsWithEmoji ? 1 : 0
+}
+
+/** A comparator that sorts meta-attributes above emojis. */
+export const compareStringsWithMetaAttributes = (a: string, b: string) => {
+  const aStartsWithMetaAttributes = !!a.match(STARTS_WITH_META_ATTRIBUTES_REGEX)
+  const bStartsWithMetaAttributes = !!b.match(STARTS_WITH_META_ATTRIBUTES_REGEX)
+  return aStartsWithMetaAttributes && !bStartsWithMetaAttributes
+    ? -1
+    : bStartsWithMetaAttributes && !aStartsWithMetaAttributes
+    ? 1
+    : 0
 }
 
 /** A comparator that sorts empty thoughts ahead of non-empty thoughts. */
@@ -131,6 +143,7 @@ const compareReadableText = makeOrderedComparator<string>([
 export const compareReasonable = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
+  compareStringsWithMetaAttributes,
   compareStringsWithEmoji,
   (a, b) => compareReadableText(removeUncomparableCharacters(a), removeUncomparableCharacters(b)),
 ])
