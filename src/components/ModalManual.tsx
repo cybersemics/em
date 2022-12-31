@@ -55,7 +55,9 @@ const ModalManual = ({
                 maxWidth: '40%',
               }}
             >
-              <a className='button'>{isTouch ? '👆 Gestures' : '⌨️ Keyboard Shortcuts'}</a>
+              <a className='button' href='#shortcuts'>
+                {isTouch ? '👆 Gestures' : '⌨️ Keyboard Shortcuts'}
+              </a>
               <p
                 style={{
                   fontSize: '18px',
@@ -72,7 +74,9 @@ const ModalManual = ({
                 marginLeft: 20,
               }}
             >
-              <a className='button'>🚥 Toolbar</a>
+              <a className='button' href='#toolbar'>
+                🚥 Toolbar
+              </a>
               <p
                 style={{
                   fontSize: '18px',
@@ -92,7 +96,9 @@ const ModalManual = ({
                 maxWidth: '40%',
               }}
             >
-              <a className='button'>👩🏻‍🏫 Tutorials</a>
+              <a className='button' href='#tutorials'>
+                👩🏻‍🏫 Tutorials
+              </a>
               <p
                 style={{
                   fontSize: '18px',
@@ -109,7 +115,9 @@ const ModalManual = ({
                 marginLeft: 20,
               }}
             >
-              <a className='button'>🧙‍♀️ Metaprogramming</a>
+              <a className='button' href='#meta'>
+                🧙‍♀️ Metaprogramming
+              </a>
               <p
                 style={{
                   fontSize: '18px',
@@ -124,7 +132,7 @@ const ModalManual = ({
         </section>
       </div>
 
-      <section className='popup-section'>
+      <section className='popup-section' id='tutorials'>
         <h2 className='modal-subtitle'>Tutorials</h2>
 
         <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
@@ -162,9 +170,13 @@ const ModalManual = ({
         </div>
       </section>
 
-      <ShortcutTable />
+      <div id='shortcuts'>
+        <ShortcutTable />
+      </div>
 
-      <h2 className='modal-subtitle modal-subtitle-compact'>Metaprogramming</h2>
+      <h2 id='meta' className='modal-subtitle modal-subtitle-compact'>
+        Metaprogramming
+      </h2>
 
       <code>=bullets</code>
       <p>
