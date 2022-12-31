@@ -4,7 +4,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
-import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_DISTANCE_FROM_CURSOR, MAX_EXPAND_DEPTH } from '../constants'
+import { EXPAND_THOUGHT_CHAR, HOME_PATH, HOME_TOKEN, MAX_EXPAND_DEPTH } from '../constants'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import contextToThoughtId from '../selectors/contextToThoughtId'
@@ -78,21 +78,11 @@ function expandThoughts(
   path: Path | null,
   options?: { returnContexts?: boolean },
 ): Index<Path | Context> {
-  const firstVisibleThoughtPath = path && (path.slice(0, -MAX_DISTANCE_FROM_CURSOR) as Path)
-  const expansionBasePath =
-    firstVisibleThoughtPath && firstVisibleThoughtPath.length !== 0 ? firstVisibleThoughtPath : HOME_PATH
-  const ancestors = path ? expansionBasePath.map((id, i) => path.slice(0, i + 1) as Path) : []
-
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return {
-    // expand all ancestors
-    ...keyValueBy(ancestors, ancestor => ({ [hashPath(ancestor)]: ancestor })),
-    // expand from expansionBasePath
-    ...expandThoughtsRecursive(state, path || HOME_PATH, expansionBasePath || HOME_PATH, options),
-  }
+  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH, options)
 }
 
 /**
@@ -107,12 +97,10 @@ function expandThoughtsRecursive(
   path: Path,
   { returnContexts }: { returnContexts?: boolean } = {},
 ): Index<Path | Context> {
-  // Note: depth is relative to the expansion path.
-  const depth = path.length - expansionBasePath.length
-
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-    depth > MAX_EXPAND_DEPTH
+    path.length - 1 >
+    MAX_EXPAND_DEPTH
   )
     return {}
 
