@@ -41,6 +41,9 @@ import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 
+// This can be removed once Split Pane is working.
+const DISABLE_SPLIT_PANE = true
+
 const Content = React.lazy(() => import('./Content'))
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
@@ -281,26 +284,32 @@ const AppComponent: FC<Props> = props => {
           // navigation, content, and footer
           <>
             {tutorial && !isLoading ? <Tutorial /> : null}
-            <SplitPane
-              className={isSplitting ? 'animating' : undefined}
-              defaultSize={!splitView ? '100%' : splitPosition || '50%'}
-              onChange={onSplitResize}
-              size={!splitView ? '100%' : splitPosition || '50%'}
-              split='vertical'
-              style={{ position: 'relative', fontSize }}
-            >
+            {DISABLE_SPLIT_PANE ? (
               <Suspense fallback={<ContentFallback />}>
                 <Content />
               </Suspense>
-              {showSplitView ? (
+            ) : (
+              <SplitPane
+                className={isSplitting ? 'animating' : undefined}
+                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+                onChange={onSplitResize}
+                size={!splitView ? '100%' : splitPosition || '50%'}
+                split='vertical'
+                style={{ position: 'relative', fontSize }}
+              >
                 <Suspense fallback={<ContentFallback />}>
                   <Content />
                 </Suspense>
-              ) : (
-                // children required by SplitPane
-                <></>
-              )}
-            </SplitPane>
+                {showSplitView ? (
+                  <Suspense fallback={<ContentFallback />}>
+                    <Content />
+                  </Suspense>
+                ) : (
+                  // children required by SplitPane
+                  <></>
+                )}
+              </SplitPane>
+            )}
 
             <div
               className='z-index-stack'
