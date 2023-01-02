@@ -188,12 +188,13 @@ const ExportThoughtsPhrase = ({ id, numDescendantsFinal, title }: ExportThoughts
 
   // updates with latest number of descendants
   const numDescendants = useDescendantsNumber()
+  const n = numDescendantsFinal ?? numDescendants
 
   const exportThoughtsPhrase =
     numDescendantsFinal || numDescendants
-      ? exportPhrase(state, id, numDescendantsFinal ?? numDescendants, {
-          value: title,
-        })
+      ? exportPhrase(state, id, n, { value: title })
+      : n === 0 || n === 1
+      ? '1 thought'
       : 'thoughts'
 
   return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />

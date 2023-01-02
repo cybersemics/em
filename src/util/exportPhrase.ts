@@ -15,7 +15,9 @@ const exportPhrase = (state: State, id: ThoughtId, numDescendants: number | null
   const label = ellipsize(value || getThoughtById(state, id)?.value || 'thought')
 
   return isRoot([id])
-    ? ` all ${numDescendants} thoughts`
+    ? numDescendants === 1
+      ? '1 thought'
+      : ` all ${numDescendants} thoughts`
     : `"${label}"${numDescendants ? ` and ${numDescendants} subthought${numDescendants === 1 ? '' : 's'}` : ''}`
 }
 
