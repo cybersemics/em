@@ -475,7 +475,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   ]
 
   return (
-    <Modal id={ModalType.export} title='Export' className='popup'>
+    <Modal id={ModalType.export} title={isTouch ? 'Share' : 'Export'} className='popup'>
       {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
