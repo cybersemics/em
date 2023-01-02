@@ -229,7 +229,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'archive',
   'splitSentences',
   'toggleHiddenThoughts',
-  'share',
+  'devices',
   'exportContext',
   // 'bindContext',
   // 'bumpThoughtDown',

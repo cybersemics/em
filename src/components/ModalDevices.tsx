@@ -34,7 +34,7 @@ const getNextDeviceName = (permissions: Index<ShareType>, start?: number): strin
 }
 
 /** Modal for Sharing and Device Management. */
-const ModalShare = () => {
+const ModalDevices = () => {
   const permissions = usePermissions()
 
   // selected accessToken
@@ -45,7 +45,7 @@ const ModalShare = () => {
   return (
     <Modal
       id={ModalType.devices}
-      title='Sharing & Device Management'
+      title='Device Management'
       className='popup'
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
@@ -96,7 +96,9 @@ const ShareList = ({
 
   return (
     <>
-      <p className='modal-description'>Share your thoughtspace or add a device. Thoughts will be synced in realtime.</p>
+      <p className='modal-description'>
+        Add or remove devices from this thoughtspace. Thoughts will be synced in realtime.
+      </p>
 
       {status === 'connected' ? (
         <>
@@ -473,6 +475,6 @@ const ShareDetail = React.memo(
 )
 ShareDetail.displayName = 'ShareDetail'
 
-const ModalShareMemo = React.memo(ModalShare)
+const ModalShareMemo = React.memo(ModalDevices)
 
 export default ModalShareMemo

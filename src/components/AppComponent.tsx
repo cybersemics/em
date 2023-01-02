@@ -25,12 +25,12 @@ import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import ModalAuth from './ModalAuth'
+import ModalDevices from './ModalDevices'
 import ModalExport from './ModalExport'
 import ModalFeedback from './ModalFeedback'
 import ModalInvites from './ModalInvites'
 import ModalManual from './ModalManual'
 import ModalSettings from './ModalSettings'
-import ModalShare from './ModalShare'
 import ModalSignup from './ModalSignup'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
@@ -274,7 +274,7 @@ const AppComponent: FC<Props> = props => {
           ) : showModal === Modal.settings ? (
             <ModalSettings />
           ) : showModal === Modal.devices ? (
-            <ModalShare />
+            <ModalDevices />
           ) : showModal === Modal.invites ? (
             <ModalInvites />
           ) : (
