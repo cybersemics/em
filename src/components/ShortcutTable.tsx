@@ -126,19 +126,23 @@ const ShortcutRow = (shortcut: Shortcut | null) => {
 const ShortcutTable = () => {
   return (
     <div style={{ textAlign: 'left' }}>
-      {groups.map(group => (
-        <div key={group.title}>
-          <h2 className='modal-subtitle'>{group.title}</h2>
-          <table className='shortcuts'>
-            <tbody>
-              {group.shortcuts
-                .map(shortcutById)
-                .filter(shortcut => shortcut && (isTouch ? shortcut.gesture : shortcut.keyboard))
-                .map(ShortcutRow)}
-            </tbody>
-          </table>
-        </div>
-      ))}
+      {groups.map(group => {
+        const shortcuts = group.shortcuts
+          .map(shortcutById)
+          .filter(shortcut => shortcut && (isTouch ? shortcut.gesture : shortcut.keyboard))
+
+        // do not render groups with no shrotcuts on this platform
+        if (shortcuts.length === 0) return null
+
+        return (
+          <div key={group.title}>
+            <h2 className='modal-subtitle'>{group.title}</h2>
+            <table className='shortcuts'>
+              <tbody>{shortcuts.map(ShortcutRow)}</tbody>
+            </table>
+          </div>
+        )
+      })}
     </div>
   )
 }
