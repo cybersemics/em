@@ -22,7 +22,7 @@ interface Options {
   at?: Path | null
 }
 
-/** Collapses the active thought. */
+/** Deletes a thought and moves all its children to its parent. */
 const collapseContext = (state: State, { at }: Options) => {
   const { cursor } = state
 
@@ -59,6 +59,8 @@ const collapseContext = (state: State, { at }: Options) => {
   }
 
   const thought = getThoughtById(state, head(simplePath))
+  const rankStart = getRankBefore(state, simplePath)
+  const rankIncrement = (thought.rank - rankStart) / children.length
 
   return reducerFlow([
     // first edit the collapsing thought to a unique value
@@ -69,11 +71,11 @@ const collapseContext = (state: State, { at }: Options) => {
       path: simplePath,
     }),
     // outdent each child
-    ...children.map(child =>
+    ...children.map((child, i) =>
       moveThought({
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank: getRankBefore(state, simplePath),
+        newRank: rankStart + rankIncrement * i,
       }),
     ),
     // delete the original cursor

@@ -156,6 +156,28 @@ describe('normal view', () => {
 
     expectPathToEqual(stateNew, stateNew.cursor, [{ value: 'a' }, { value: '' }])
   })
+
+  it('preserve order of children', () => {
+    const text = `
+      - x
+      - y
+        - a
+        - b
+        - c
+      - z
+    `
+    const steps = [importText({ text }), setCursor(['y']), collapseContext({})]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - x
+  - a
+  - b
+  - c
+  - z`)
+  })
 })
 
 describe('context view', () => {
