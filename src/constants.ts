@@ -202,7 +202,7 @@ export const URL_MAX_CHARS = 40
 
 // to expand thought ends with ':'
 export const EXPAND_THOUGHT_CHAR = ':'
-export const MAX_EXPAND_DEPTH = 5
+export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought

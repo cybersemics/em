@@ -99,7 +99,7 @@ function expandThoughtsRecursive(
 ): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
-    path.length - 1 >
+    path.length - expansionBasePath.length + 1 >
     MAX_EXPAND_DEPTH
   )
     return {}
