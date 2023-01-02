@@ -566,7 +566,7 @@ a.text-link {
   user-select: text;
 }
 
-[contenteditable]:focus {
+[contenteditable].active-underline:focus {
   border-bottom: solid 1px;
 }
 
