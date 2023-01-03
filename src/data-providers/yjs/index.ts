@@ -73,30 +73,30 @@ if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
   websocketProviderLocal.on('synced', (event: any) => {
     const yThoughtIndexLocal = ydocLocal.getMap<ThoughtDb>('thoughtIndex')
 
-    // The root thought is not always loaded when synced fires (???).
-    // Delaying seems to fix this.
+    // The root thought is not always loaded when synced fires. Maybe it is still propagating?
+    // Delaying helps but does not eliminate the issue.
     // yThoughtIndexLocal.update will not be called with an empty thoughtspace.
     // If a false positive occurs, the old thoughtspace will be lost (!!!)
     // Maybe IndexedDB will help eliminate the possibility of a false positive?
     setTimeout(() => {
       const rootThought = yThoughtIndexLocal.get(HOME_TOKEN)
-      const isEmptyThoughtspace = Object.keys(rootThought?.childrenMap || {}).length === 0
-      if (isEmptyThoughtspace) {
-        // save shared access token and tsid as default
-        console.info('Setting shared thoughtspace as default')
-        storage.setItem('accessToken', accessTokenShared)
-        storage.setItem('tsid', tsidShared)
+      const isEmptyThoughtspace = rootThought && Object.keys(rootThought?.childrenMap || {}).length === 0
+      if (!isEmptyThoughtspace) return
 
-        // backup tsid and accessToken just in case there is a false positive
-        storage.getItem('tsidBackup', tsidLocal)
-        storage.getItem('accessTokenBackup', accessTokenLocal)
+      // save shared access token and tsid as default
+      console.info('Setting shared thoughtspace as default')
+      storage.setItem('accessToken', accessTokenShared)
+      storage.setItem('tsid', tsidShared)
 
-        // close the welcome modal
-        store.dispatch(modalComplete('welcome'))
+      // backup tsid and accessToken just in case there is a false positive
+      storage.getItem('tsidBackup', tsidLocal)
+      storage.getItem('accessTokenBackup', accessTokenLocal)
 
-        // clear share params from URL without refreshing
-        window.history.pushState({}, '', '/')
-      }
+      // close the welcome modal
+      store.dispatch(modalComplete('welcome'))
+
+      // clear share params from URL without refreshing
+      window.history.pushState({}, '', '/')
     }, 400)
   })
 }
