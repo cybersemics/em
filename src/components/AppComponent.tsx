@@ -285,7 +285,8 @@ const AppComponent: FC<Props> = props => {
           <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
-              <div style={{ position: 'relative', fontSize }}>
+              // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
+              <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>
                 <Suspense fallback={<ContentFallback />}>
                   <Content />
                 </Suspense>
