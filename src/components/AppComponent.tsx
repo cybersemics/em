@@ -285,9 +285,11 @@ const AppComponent: FC<Props> = props => {
           <>
             {tutorial && !isLoading ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
-              <Suspense fallback={<ContentFallback />}>
-                <Content />
-              </Suspense>
+              <div style={{ position: 'relative', fontSize }}>
+                <Suspense fallback={<ContentFallback />}>
+                  <Content />
+                </Suspense>
+              </div>
             ) : (
               <SplitPane
                 className={isSplitting ? 'animating' : undefined}
