@@ -30,7 +30,7 @@ const scrollCursorIntoView = (delay?: number) => {
   // bump scroll on Mobile Safari
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
-  if (isTouch && isSafari()) {
+  if (window.scrollY === 0 && isTouch && isSafari()) {
     window.scrollBy(0, 1)
   }
 
