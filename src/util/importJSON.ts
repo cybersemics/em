@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Block from '../@types/Block'
-import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
@@ -10,10 +9,10 @@ import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
+import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -21,10 +20,8 @@ import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import pathToContext from '../util/pathToContext'
 import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
-import unroot from '../util/unroot'
 import createId from './createId'
 import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
@@ -43,11 +40,6 @@ interface ThoughtPair {
   newThought: Thought
 }
 
-type SaveThoughtsUpdate = ThoughtIndices & {
-  // duplicate index keeps track of number of times a value has appeared in the context
-  duplicateIndex: Index<number>
-}
-
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
@@ -62,15 +54,13 @@ const insertThought = (
   state: State,
   thoughtOld: Thought,
   value: string,
-  context: Context,
   rank: number,
   created: Timestamp = timestamp(),
   lastUpdated: Timestamp = timestamp(),
   updatedBy = getSessionId(),
 ): ThoughtPair => {
-  const rootContext = context.length > 0 ? context : [HOME_TOKEN]
-
   const lexemeOld = getLexeme(state, value)
+  const parent = getThoughtById(state, thoughtOld.id)
 
   const newThoughtId = createId()
 
@@ -86,7 +76,7 @@ const insertThought = (
   const thoughtNew: Thought = {
     // TODO: merging thoughtOld results in pending: true when importing into initialState. Is that correct?
     ...thoughtOld,
-    value: head(rootContext),
+    value: parent.value,
     parentId: thoughtOld.parentId,
     childrenMap: { ...thoughtOld.childrenMap, [isAttribute(value) ? value : newThoughtId]: newThoughtId },
     lastUpdated,
@@ -128,26 +118,19 @@ const saveThoughts = (
       thoughtIndex: {},
     }
 
-  const updates = blocks.reduce<SaveThoughtsUpdate>(
+  const updates = blocks.reduce<ThoughtIndices>(
     (accum, block, index) => {
-      const skipLevel = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
+      const skipLevel: boolean = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
       const rank = startRank + index * rankIncrement
 
       const value = block.scope.trim()
-      const hashedValue = hashThought(value)
-      const duplicateValueCount = accum.duplicateIndex[hashedValue]
-
-      const nonDuplicateValue =
-        duplicateValueCount && duplicateValueCount > 0 ? `${value}(${duplicateValueCount})` : value
 
       const stateNewBeforeInsert: State = {
         ...state,
         thoughts: mergeThoughts(state.thoughts, accum),
       }
 
-      /**
-       * Insert thought and return thought indices updates.
-       */
+      /** Insert thought and return thought indices updates. */
       const insert = () => {
         const existingParent = stateNewBeforeInsert.thoughts.thoughtIndex[id]
 
@@ -159,8 +142,7 @@ const saveThoughts = (
         const { lexeme, thought, newThought } = insertThought(
           stateNewBeforeInsert,
           existingParent,
-          nonDuplicateValue,
-          unroot(pathToContext(state, path)),
+          value,
           rank,
           createdInherited,
           lastUpdatedInherited,
@@ -168,8 +150,9 @@ const saveThoughts = (
         )
 
         return {
+          idNew: newThought.id,
           lexemeIndex: {
-            [hashThought(nonDuplicateValue)]: lexeme,
+            [hashThought(value)]: lexeme,
           },
           thoughtIndex: {
             [id]: thought,
@@ -191,22 +174,7 @@ const saveThoughts = (
           }
         : stateNewBeforeInsert
 
-      const updatedDuplicateIndex = {
-        ...accum.duplicateIndex,
-        [hashedValue]: duplicateValueCount ? duplicateValueCount + 1 : 1,
-      }
-
-      /**
-       * Get the last added child.
-       */
-      const getLastAddedChild = () => {
-        const thought = updatedState.thoughts.thoughtIndex[id]
-        return childIdsToThoughts(updatedState, Object.values(thought.childrenMap)).find(
-          child => child.value === nonDuplicateValue,
-        )!.id
-      }
-
-      const childPath: Path = skipLevel ? path : [...path, getLastAddedChild()]
+      const childPath: Path = skipLevel ? path : [...path, insertUpdates!.idNew]
 
       const updatedAccumulatedThoughtIndex = {
         ...accum.thoughtIndex,
@@ -230,40 +198,20 @@ const saveThoughts = (
             ...updatedAccumulatedThoughtIndex,
             ...updates.thoughtIndex,
           },
-          duplicateIndex: updatedDuplicateIndex,
         }
       } else {
         return {
           ...accum,
           lexemeIndex: updatedAccumulatedLexemeIndex,
           thoughtIndex: updatedAccumulatedThoughtIndex,
-          duplicateIndex: updatedDuplicateIndex,
         }
       }
     },
     {
       thoughtIndex: {},
       lexemeIndex: {},
-      duplicateIndex: {},
     },
   )
-
-  // insert the new thoughtIndex into the state just for createChildrenMap
-  // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
-  // const stateWithNewThoughtIndex = {
-  //   ...state,
-  //   thoughts: {
-  //     ...state.thoughts,
-  //     thoughtIndex: { ...state.thoughts.thoughtIndex, ...updates.thoughtIndex },
-  //   },
-  // }
-
-  // set childrenMap on each thought
-  // this must be done after all thoughts have been inserted, because siblings are not always present when a thought is created, causing them to be omitted from the childrenMap
-  // Object.values(updates.thoughtIndex).forEach(update => {
-  //   if (!update) return
-  //   update.childrenMap = createChildrenMap(stateWithNewThoughtIndex, Object.values(update.childrenMap))
-  // })
 
   return {
     thoughtIndex: updates.thoughtIndex,

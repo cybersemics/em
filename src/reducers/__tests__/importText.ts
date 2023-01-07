@@ -196,7 +196,21 @@ it('initialSettings', () => {
 `)
 })
 
-it('increment duplicates', () => {
+it('simple duplicate', () => {
+  const text = `
+    - a
+    - a
+  `
+
+  const expectedExport = `
+- a
+- a`
+  const exported = importExport(text, false)
+
+  expect(exported.trim()).toBe(expectedExport.trim())
+})
+
+it('multiple duplicates', () => {
   const text = `
     - a
       - b
@@ -214,10 +228,10 @@ it('increment duplicates', () => {
 - a
   - b
     - c
-    - c(1)
+    - c
     - d
-  - b(1)
-- a(1)
+  - b
+- a
   - b
     - d
     - e`
