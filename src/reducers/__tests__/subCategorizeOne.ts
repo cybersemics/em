@@ -81,11 +81,11 @@ describe('normal view', () => {
   - A
     - =sort
       - Alphabetical
-    - D
     - B
     - C
     - ${'' /* prevent trim_trailing_whitespace */}
-      - E`)
+      - E
+    - D`)
   })
 })
 
