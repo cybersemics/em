@@ -9,10 +9,10 @@ const waitForThoughtExistInDb = async (page: Page, value: string) => {
     await new Promise(resolve => {
       const testHelpers = em.testHelpers
 
-      /** Polls for Lexeme in Dexie. */
+      /** Polls for Lexeme in IndexedDB. */
       function pollForLexeme(value: string) {
         setTimeout(async () => {
-          const thoughtFromDB = await testHelpers.getLexemeFromDB(value)
+          const thoughtFromDB = await testHelpers.getLexemeFromIndexedDB(value)
           thoughtFromDB ? resolve(thoughtFromDB) : pollForLexeme(value)
         }, 50)
       }

@@ -33,13 +33,13 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
-  page.on('dialog', async dialog => {
-    await dialog.accept()
-  })
+  page.on('dialog', async dialog => dialog.accept())
 
   await page.goto(url)
 
-  skipTutorial && (await skipTutorialScreen(page))
+  if (skipTutorial) {
+    await skipTutorialScreen(page)
+  }
 
   return page
 }

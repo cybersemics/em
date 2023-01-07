@@ -5,7 +5,7 @@ import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const { paste, press, ref, refresh, waitForEditable, waitForState } = helpers()
+const { paste, press, ref, refresh, waitForEditable } = helpers()
 
 // Original issue: #1394
 it('sort on load', async () => {
@@ -20,7 +20,6 @@ it('sort on load', async () => {
   // set the cursor to null
   await press('Escape')
   await press('Escape')
-  await waitForState('isPushing', false)
 
   // TODO: identify what needs to be waited for specifically
   await new Promise(resolve => setTimeout(resolve, 1000))

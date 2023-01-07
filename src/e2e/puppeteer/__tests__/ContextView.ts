@@ -6,7 +6,7 @@ import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const { click, paste, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought } = helpers()
+const { click, paste, refresh, waitForEditable, waitForThoughtExistInDb, clickThought } = helpers()
 
 // using a puppeteer test since I can't get refresh to work in RTL tests
 it('load buffered ancestors of contexts when context view is activated', async () => {
@@ -21,7 +21,6 @@ it('load buffered ancestors of contexts when context view is activated', async (
   await waitForEditable('m')
   await clickThought('m')
 
-  await waitForState('isPushing', false)
   await waitForThoughtExistInDb('m')
   await waitForThoughtExistInDb('a')
   await refresh()

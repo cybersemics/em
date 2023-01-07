@@ -2,6 +2,7 @@ import { Page } from 'puppeteer'
 import waitForEditable from './waitForEditable'
 
 /** Wait for an editable to become hidden by checking the color alpha. */
+// TODO: Broken after virtualizing thoughts
 async function waitForHiddenEditable(page: Page, value: string) {
   const editableElement = await waitForEditable(page, value)
   await page.waitForFunction(
