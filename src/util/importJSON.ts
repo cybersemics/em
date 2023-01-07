@@ -6,6 +6,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -34,12 +35,6 @@ export interface ImportJSONOptions {
   updatedBy?: string
 }
 
-interface ThoughtPair {
-  lexeme: Lexeme
-  thought: Thought
-  newThought: Thought
-}
-
 /** Replace head block with its children, or drop it, if head has no children. */
 const skipRootThought = (blocks: Block[]) => {
   const head = _.head(blocks)
@@ -52,15 +47,29 @@ const skipRootThought = (blocks: Block[]) => {
 /** Generates a Thought and Lexeme for inserting a new thought into a context. */
 const insertThought = (
   state: State,
-  thoughtOld: Thought,
-  value: string,
-  rank: number,
-  created: Timestamp = timestamp(),
-  lastUpdated: Timestamp = timestamp(),
-  updatedBy = getSessionId(),
-): ThoughtPair => {
+  {
+    block,
+    id,
+    value,
+    rank,
+    lastUpdated,
+    updatedBy = getSessionId(),
+  }: {
+    block: Block
+    id: ThoughtId
+    value: string
+    rank: number
+    lastUpdated?: Timestamp
+    updatedBy: string
+  },
+) => {
+  const thoughtOld = getThoughtById(state, id)
+  const childLastUpdated = block.children[0]?.lastUpdated
+  const childCreated = block.children[0]?.created
+  const lastUpdatedInherited =
+    block.lastUpdated || childLastUpdated || thoughtOld.lastUpdated || lastUpdated || timestamp()
+  const createdInherited = block.created || childCreated || lastUpdated || timestamp()
   const lexemeOld = getLexeme(state, value)
-  const parent = getThoughtById(state, thoughtOld.id)
 
   const newThoughtId = createId()
 
@@ -68,18 +77,15 @@ const insertThought = (
     ...lexemeOld,
     lemma: normalizeThought(value),
     contexts: [...(lexemeOld?.contexts || []), newThoughtId],
-    created: lexemeOld?.created ?? created,
-    lastUpdated,
+    created: lexemeOld?.created ?? createdInherited,
+    lastUpdated: lastUpdatedInherited,
     updatedBy,
   }
 
   const thoughtNew: Thought = {
-    // TODO: merging thoughtOld results in pending: true when importing into initialState. Is that correct?
     ...thoughtOld,
-    value: parent.value,
-    parentId: thoughtOld.parentId,
     childrenMap: { ...thoughtOld.childrenMap, [isAttribute(value) ? value : newThoughtId]: newThoughtId },
-    lastUpdated,
+    lastUpdated: lastUpdatedInherited,
     updatedBy,
   }
 
@@ -88,19 +94,24 @@ const insertThought = (
     value,
     childrenMap: {},
     parentId: thoughtOld.id,
-    lastUpdated,
+    lastUpdated: lastUpdatedInherited,
     updatedBy,
     rank,
   }
 
   return {
-    lexeme: lexemeNew,
-    thought: thoughtNew,
-    newThought,
+    idNew: newThought.id,
+    lexemeIndex: {
+      [hashThought(value)]: lexemeNew,
+    },
+    thoughtIndex: {
+      [id]: thoughtNew,
+      [newThought.id]: newThought,
+    },
   }
 }
 
-/** Recursively iterate through blocks and call insertThought for each block individually to save it. */
+/** Recursively iterate through blocks and generate thought updates to insert each block. */
 const saveThoughts = (
   state: State,
   path: Path,
@@ -130,38 +141,16 @@ const saveThoughts = (
         thoughts: mergeThoughts(state.thoughts, accum),
       }
 
-      /** Insert thought and return thought indices updates. */
-      const insert = () => {
-        const existingParent = stateNewBeforeInsert.thoughts.thoughtIndex[id]
-
-        const childLastUpdated = block.children[0]?.lastUpdated
-        const childCreated = block.children[0]?.created
-        const lastUpdatedInherited = block.lastUpdated || childLastUpdated || existingParent.lastUpdated || lastUpdated
-        const createdInherited = block.created || childCreated || lastUpdated
-
-        const { lexeme, thought, newThought } = insertThought(
-          stateNewBeforeInsert,
-          existingParent,
-          value,
-          rank,
-          createdInherited,
-          lastUpdatedInherited,
-          updatedBy,
-        )
-
-        return {
-          idNew: newThought.id,
-          lexemeIndex: {
-            [hashThought(value)]: lexeme,
-          },
-          thoughtIndex: {
-            [id]: thought,
-            [newThought.id]: newThought,
-          },
-        }
-      }
-
-      const insertUpdates = !skipLevel ? insert() : null
+      const insertUpdates = !skipLevel
+        ? insertThought(stateNewBeforeInsert, {
+            block,
+            id,
+            value,
+            rank,
+            lastUpdated,
+            updatedBy,
+          })
+        : null
 
       const updatedState = insertUpdates
         ? {
