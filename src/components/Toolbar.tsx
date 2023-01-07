@@ -264,7 +264,7 @@ const Toolbar = ({
 
   return (
     <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
-      <div className='toolbar-container'>
+      <div aria-label='toolbar' className='toolbar-container'>
         <div className='toolbar-mask' />
         <div>
           <div

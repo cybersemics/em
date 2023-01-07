@@ -1,4 +1,6 @@
 import { Browser, Device, Page } from 'puppeteer'
+import { WEBSOCKET_CONNECTION_TIME } from '../../../constants'
+import { delay } from '../../../test-helpers/delay'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 
 export interface InitPageOptions {
@@ -40,6 +42,10 @@ const setup = async ({
   if (skipTutorial) {
     await skipTutorialScreen(page)
   }
+
+  // wait for YJS to give up connecting to WebsocketProvider
+  // add 500ms for hamburger-menu animation to complete
+  await delay(WEBSOCKET_CONNECTION_TIME + 500)
 
   return page
 }

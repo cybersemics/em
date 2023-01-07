@@ -67,6 +67,7 @@ const NavBar = ({ position }: { position: string }) => {
 
   return (
     <div
+      aria-label='nav'
       className={classNames({
         nav: true,
         ['nav-' + position]: true,

@@ -29,6 +29,7 @@ const HamburgerMenu = () => {
   return (
     <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
       <div
+        aria-label='menu'
         className={classNames({
           'hamburger-menu': true,
           // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.

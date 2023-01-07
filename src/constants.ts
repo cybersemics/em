@@ -490,3 +490,6 @@ export enum AlertType {
 
 // maximum size of state.jumpHistory
 export const MAX_JUMPS = 100
+
+// max time attempting to connect before moving to offline mode (milliseconds)
+export const WEBSOCKET_CONNECTION_TIME = 3000

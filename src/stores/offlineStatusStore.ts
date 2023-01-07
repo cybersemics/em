@@ -1,5 +1,6 @@
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
+import { WEBSOCKET_CONNECTION_TIME } from '../constants'
 import {
   indexeddbProviderThoughtspace,
   websocketProviderPermissions,
@@ -36,13 +37,13 @@ websocketProviderThoughtspace.on('synced', () => {
 })
 
 /** Enter a connecting state and then switch to offline after a delay. */
-const startConnecting = (delay = 3000) => {
+const startConnecting = () => {
   stopConnecting()
   offlineStatusStore.update('connecting')
   offlineTimer = setTimeout(() => {
     offlineTimer = null
     offlineStatusStore.update('offline')
-  }, delay)
+  }, WEBSOCKET_CONNECTION_TIME)
 }
 
 /** Clears the preconnecting and offline timers, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */

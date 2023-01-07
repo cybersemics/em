@@ -98,7 +98,7 @@ const Footer = () => {
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return (
-    <ul className='footer list-none'>
+    <ul aria-label='footer' className='footer list-none'>
       <li>
         <span className='floatLeft'>
           <a className='increase-font expand-click-area-left no-select' onClick={() => dispatch(scaleFontUp())}>

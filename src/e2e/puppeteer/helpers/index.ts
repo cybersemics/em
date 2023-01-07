@@ -14,6 +14,7 @@ import newThought from './newThought'
 import paste from './paste'
 import press from './press'
 import refresh from './refresh'
+import remove from './remove'
 import screenshot from './screenshot'
 import scroll from './scroll'
 import setup from './setup'
@@ -46,6 +47,7 @@ const helpers = {
   newThought,
   paste,
   press,
+  remove,
   refresh,
   screenshot,
   scroll,
