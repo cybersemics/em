@@ -79,8 +79,14 @@ const importExport = (roamJson: RoamPage[]) => {
     ...initialState(),
     thoughts: {
       ...state.thoughts,
-      thoughtIndex,
-      lexemeIndex,
+      thoughtIndex: {
+        ...state.thoughts.thoughtIndex,
+        ...thoughtIndex,
+      },
+      lexemeIndex: {
+        ...state.thoughts.lexemeIndex,
+        ...lexemeIndex,
+      },
     },
   }
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
