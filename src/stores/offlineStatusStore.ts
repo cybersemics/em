@@ -1,10 +1,12 @@
 import OfflineStatus from '../@types/OfflineStatus'
+import ThoughtDb from '../@types/ThoughtDb'
 import WebsocketStatus from '../@types/WebsocketStatus'
-import { WEBSOCKET_CONNECTION_TIME } from '../constants'
+import { HOME_TOKEN, WEBSOCKET_CONNECTION_TIME } from '../constants'
 import {
   indexeddbProviderThoughtspace,
   websocketProviderPermissions,
   websocketProviderThoughtspace,
+  ydoc,
 } from '../data-providers/yjs'
 import ministore from './ministore'
 
@@ -52,8 +54,12 @@ const stopConnecting = () => {
   offlineTimer = null
 }
 
+// set status to synced when the thoughtspace loads if the root is not empty
 indexeddbProviderThoughtspace.whenSynced.then(() => {
-  offlineStatusStore.update('synced')
+  const yThoughtIndex = ydoc.getMap<ThoughtDb>('thoughtIndex')
+  if (Object.keys(yThoughtIndex.get(HOME_TOKEN)?.childrenMap || {}).length > 0) {
+    offlineStatusStore.update('synced')
+  }
 })
 
 let offlineTimer: ReturnType<typeof setTimeout> | null = null
