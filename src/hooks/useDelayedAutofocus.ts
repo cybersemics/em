@@ -23,7 +23,7 @@ const useDelayedAutofocus = <T = string>(
       (lastAutofocusRef.current === 'show' || lastAutofocusRef.current === 'dim')
     ) {
       autofocusTimerRef.current = setTimeout(() => {
-        if (unmounted) return
+        if (unmounted.current) return
         setAutofocusDelayed(selector(autofocus))
         lastAutofocusRef.current = autofocus
       }, 750) as unknown as number
