@@ -2,10 +2,10 @@ import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
 import Thought from '../@types/Thought'
 import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
+import isAttribute from './isAttribute'
 import lower from './lower'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
-const STARTS_WITH_META_ATTRIBUTES_REGEX = /^=/
 const IGNORED_PREFIXES = ['the ']
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -53,15 +53,11 @@ export const compareStringsWithEmoji = (a: string, b: string) => {
   return aStartsWithEmoji && !bStartsWithEmoji ? -1 : bStartsWithEmoji && !aStartsWithEmoji ? 1 : 0
 }
 
-/** A comparator that sorts meta-attributes above emojis. */
+/** A comparator that sorts meta-attributes above everything. */
 export const compareStringsWithMetaAttributes = (a: string, b: string) => {
-  const aStartsWithMetaAttributes = !!a.match(STARTS_WITH_META_ATTRIBUTES_REGEX)
-  const bStartsWithMetaAttributes = !!b.match(STARTS_WITH_META_ATTRIBUTES_REGEX)
-  return aStartsWithMetaAttributes && !bStartsWithMetaAttributes
-    ? -1
-    : bStartsWithMetaAttributes && !aStartsWithMetaAttributes
-    ? 1
-    : 0
+  const aIsMetaAttribute = isAttribute(a)
+  const bIsMetaAttribute = isAttribute(b)
+  return aIsMetaAttribute && !bIsMetaAttribute ? -1 : bIsMetaAttribute && !aIsMetaAttribute ? 1 : 0
 }
 
 /** A comparator that sorts empty thoughts ahead of non-empty thoughts. */
