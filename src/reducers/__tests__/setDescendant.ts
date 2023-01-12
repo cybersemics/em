@@ -9,13 +9,13 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setAttribute from '../setAttribute'
+import setDescendant from '../setDescendant'
 
 it('set', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
       }),
@@ -34,12 +34,12 @@ it('last value should override existing value', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
       }),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'goodbye'],
       }),
@@ -60,12 +60,12 @@ it('add attribute if key has already been created', () => {
     newSubthought('=test'),
     setCursorFirstMatch(['a']),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
       }),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'goodbye'],
       }),
@@ -85,7 +85,7 @@ it('noop if no values are given', () => {
 
   const steps = [
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: [],
       }),
@@ -101,7 +101,7 @@ it('omit value to set only attribute', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         value: '=test',
       }),
@@ -119,7 +119,7 @@ it('set empty attribute', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', ''],
       }),
@@ -138,7 +138,7 @@ it('set multiple levels', () => {
   const steps = [
     newThought('a'),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
       }),
@@ -165,7 +165,7 @@ it('preserve unrelated siblings', () => {
     `,
     }),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
       }),
@@ -194,7 +194,7 @@ it('preserve existing descendants', () => {
     `,
     }),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
       }),
@@ -231,7 +231,7 @@ it('preserve unrelated descendants', () => {
     `,
     }),
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
       }),

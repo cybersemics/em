@@ -7,8 +7,8 @@ import ThoughtId from '../@types/ThoughtId'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
-import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
+import setDescendant from '../action-creators/setDescendant'
 import setNoteFocus from '../action-creators/setNoteFocus'
 import toggleNote from '../action-creators/toggleNote'
 import { isTouch } from '../browser'
@@ -107,7 +107,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
         e.target.value.replace(/^<br>|<br>$/gi, '')
 
     dispatch(
-      setAttribute({
+      setDescendant({
         path,
         values: ['=note', value],
       }),

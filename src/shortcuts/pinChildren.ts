@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
 import deleteAttribute from '../action-creators/deleteAttribute'
-import setAttribute from '../action-creators/setAttribute'
+import setDescendant from '../action-creators/setDescendant'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import PinChildrenIcon from '../components/icons/PinChildrenIcon'
 import { HOME_PATH } from '../constants'
@@ -59,12 +59,12 @@ const pinChildrenShortcut: Shortcut = {
           )
         : []),
       // set =children/=pin/true
-      // setAttribute does nothing if childrenAttributeIdNew no longer exists?
+      // setDescendant does nothing if childrenAttributeIdNew no longer exists?
       (dispatch, getState) => {
         const childrenAttributeIdNew = findDescendant(getState(), thoughtId, '=children')
         if (!childrenAttributeIdNew) return false
         dispatch(
-          setAttribute({
+          setDescendant({
             path: appendToPath(simplePath, childrenAttributeIdNew),
             values: ['=pin', 'true'],
           }),

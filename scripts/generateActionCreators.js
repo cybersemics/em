@@ -49,7 +49,7 @@ const actionCreators = [
   'searchContexts',
   'searchLimit',
   'selectionChange',
-  'setAttribute',
+  'setDescendant',
   'setCursor',
   'setFirstSubthought',
   'setNoteFocus',

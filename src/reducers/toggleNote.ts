@@ -1,6 +1,6 @@
 import State from '../@types/State'
 import deleteAttribute from '../reducers/deleteAttribute'
-import setAttribute from '../reducers/setAttribute'
+import setDescendant from '../reducers/setDescendant'
 import setNoteFocus from '../reducers/setNoteFocus'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
@@ -15,7 +15,7 @@ const toggleNote = (state: State) => {
   return reducerFlow([
     // create an empty note if it doesn't exist
     !hasNote
-      ? setAttribute({
+      ? setDescendant({
           path: state.cursor!,
           values: ['=note', ''],
         })

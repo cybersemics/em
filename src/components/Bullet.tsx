@@ -6,8 +6,8 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import deleteAttribute from '../action-creators/deleteAttribute'
-import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
+import setDescendant from '../action-creators/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
@@ -221,7 +221,7 @@ const Bullet = ({
             ...(isExpanded &&
             (parentChildren?.length === 1 ||
               findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
-              ? [setAttribute({ path: simplePath, values: ['=pin', 'false'] })]
+              ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
               : [deleteAttribute({ path: simplePath, value: '=pin' })]),
             // move cursor
             setCursor({ path: shouldCollapse ? pathParent : path }),

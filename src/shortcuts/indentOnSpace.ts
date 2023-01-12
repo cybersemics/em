@@ -2,7 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import indent from '../action-creators/indent'
-import setAttribute from '../action-creators/setAttribute'
+import setDescendant from '../action-creators/setDescendant'
 import { AlertType, EM_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
@@ -44,7 +44,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
             '✨ Shortcut discovered! ✨<br/><span style="display: inline-block; font-size: 90%; padding-top: 0.5em;">Type space at the beginning of a thought to indent</span>',
             { alertType: AlertType.SpaceToIndentHint },
           ),
-          setAttribute({ path: [EM_TOKEN], values: ['Flags', 'spaceToIndentHintComplete'] }),
+          setDescendant({ path: [EM_TOKEN], values: ['Flags', 'spaceToIndentHintComplete'] }),
         ]
       : []),
   ])

@@ -5,8 +5,8 @@ import State from '../@types/State'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
-import setAttribute from '../action-creators/setAttribute'
 import setCursor from '../action-creators/setCursor'
+import setDescendant from '../action-creators/setDescendant'
 import setNoteFocus from '../action-creators/setNoteFocus'
 import toggleNote from '../action-creators/toggleNote'
 import attribute from '../selectors/attribute'
@@ -98,7 +98,7 @@ const Note = ({ path }: NoteProps) => {
         e?.replace(/^<br>|<br>$/gi, '')
 
     dispatch(
-      setAttribute({
+      setDescendant({
         path,
         values: ['=note', value],
       }),

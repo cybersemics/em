@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
-import setAttribute from '../reducers/setAttribute'
+import setDescendant from '../reducers/setDescendant'
 import themeColors from '../selectors/themeColors'
 import reducerFlow from '../util/reducerFlow'
 import deleteAttribute from './deleteAttribute'
@@ -17,19 +17,19 @@ const textColor = (
   return reducerFlow([
     // set bullet to text color
     color && color !== 'default'
-      ? setAttribute({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
+      ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
       : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
 
     // set text color
     // clear color if white
     backgroundColor || color !== 'default'
-      ? setAttribute({ path, values: ['=style', 'color', color || 'rgba(0, 0, 0, 1)'] })
+      ? setDescendant({ path, values: ['=style', 'color', color || 'rgba(0, 0, 0, 1)'] })
       : deleteAttribute({ path, values: ['=style', 'color'] }),
 
     // set background color
     // clear background color if default or unset
     backgroundColor && backgroundColor !== colors.bg
-      ? setAttribute({
+      ? setDescendant({
           path,
           values: ['=styleAnnotation', 'backgroundColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor],
         })

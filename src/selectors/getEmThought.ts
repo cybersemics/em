@@ -21,7 +21,7 @@ const saveCache = _.debounce(() => {
   storage.setItem(LOCAL_KEY, JSON.stringify(localStorageCache))
 }, 100)
 
-/** Returns the first subthought (or value if unary) of /em/...context, not including meta thoughts. If the thought is not in state, checks local storage (cached once). Use setAttribute to set. */
+/** Returns the first subthought (or value if unary) of /em/...context, not including meta thoughts. If the thought is not in state, checks local storage (cached once). Use setDescendant to set. */
 const getEmThought = (state: State, context: Context | string): string | undefined => {
   context = ([] as string[]).concat(context)
 

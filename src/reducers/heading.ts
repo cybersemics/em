@@ -1,6 +1,6 @@
 import State from '../@types/State'
 import deleteThought from '../reducers/deleteThought'
-import setAttribute from '../reducers/setAttribute'
+import setDescendant from '../reducers/setDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
 import { HeadingLevel } from '../shortcuts/headings'
@@ -24,7 +24,7 @@ const heading = (state: State, { level }: { level: HeadingLevel }): State => {
     ),
 
     // set new heading
-    level > 0 ? setAttribute({ path, values: [`=heading${level}`] }) : null,
+    level > 0 ? setDescendant({ path, values: [`=heading${level}`] }) : null,
   ])(state)
 }
 

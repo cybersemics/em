@@ -2,7 +2,7 @@ import React from 'react'
 import Svg, { G, Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import setAttribute from '../action-creators/setAttribute'
+import setDescendant from '../action-creators/setDescendant'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
@@ -56,7 +56,7 @@ const pinChildrenShortcut: Shortcut = {
       (dispatch, getState) => {
         const childrenAttributeIdNew = findDescendant(getState(), head(simplePath), '=children')
         dispatch(
-          setAttribute({
+          setDescendant({
             path: appendToPath(simplePath, childrenAttributeIdNew!),
             values: ['=pin', 'true'],
           }),

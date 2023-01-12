@@ -7,7 +7,7 @@ import reducerFlow from '../../util/reducerFlow'
 import deleteAttribute from '../deleteAttribute'
 import importText from '../importText'
 import newThought from '../newThought'
-import setAttribute from '../setAttribute'
+import setDescendant from '../setDescendant'
 
 it('delete attribute', () => {
   const steps = [
@@ -16,7 +16,7 @@ it('delete attribute', () => {
 
     // set attribute
     (state: State) =>
-      setAttribute(state, {
+      setDescendant(state, {
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
       }),

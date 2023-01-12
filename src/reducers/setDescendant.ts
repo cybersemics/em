@@ -9,12 +9,12 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 
-/** Sets a sequence of values as descendants. Preserves existing descendants and unrelated siblings, except for the last value, which always replaces the existing value. */
-const setAttribute = (
+/** Sets a sequence of values as descendants. Preserves existing descendants and unrelated siblings, except for the last value, which always gets replaced by the given value. */
+const setDescendant = (
   state: State,
   { path, value, values }: { path: Path; value?: string; values?: string[] },
 ): State => {
-  // normalize values if user passed single value
+  // normalize values to array
   const _values = values || [value!]
   if (!value && (!values || values.length === 0)) return state
 
@@ -41,10 +41,10 @@ const setAttribute = (
       })
 
   // recursion
-  return setAttribute(stateWithFirstSubthought, {
+  return setDescendant(stateWithFirstSubthought, {
     path: appendToPath(path, firstSubthoughtId || idNew),
     values: _values.slice(1),
   })
 }
 
-export default _.curryRight(setAttribute)
+export default _.curryRight(setDescendant)

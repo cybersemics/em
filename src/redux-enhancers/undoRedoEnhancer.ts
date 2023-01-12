@@ -51,7 +51,7 @@ const UNDOABLE_ACTIONS: Index<true> = {
   createThought: true,
   outdent: true,
   searchLimit: true,
-  setAttribute: true,
+  setDescendant: true,
   setCursor: true,
   setFirstSubthought: true,
   settings: true,
