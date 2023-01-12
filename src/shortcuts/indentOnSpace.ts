@@ -35,7 +35,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
   if (!state.cursor || !prevSibling(state, state.cursor)) return
 
   // show an explanation of space-to-indent the first time they execute it
-  const spaceToIndentHintComplete = getEmThought(state, ['=flags', 'spaceToIndentHintComplete'])
+  const spaceToIndentHintComplete = getEmThought(state, ['Flags', 'spaceToIndentHintComplete'])
   dispatch([
     indent(),
     ...(!spaceToIndentHintComplete
@@ -44,7 +44,7 @@ const exec: Shortcut['exec'] = (dispatch, getState) => {
             '✨ Shortcut discovered! ✨<br/><span style="display: inline-block; font-size: 90%; padding-top: 0.5em;">Type space at the beginning of a thought to indent</span>',
             { alertType: AlertType.SpaceToIndentHint },
           ),
-          setAttribute({ path: [EM_TOKEN], values: ['=flags', 'spaceToIndentHintComplete'] }),
+          setAttribute({ path: [EM_TOKEN], values: ['Flags', 'spaceToIndentHintComplete'] }),
         ]
       : []),
   ])
