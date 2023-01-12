@@ -1,8 +1,8 @@
 import OfflineStatus from '../@types/OfflineStatus'
-import ThoughtDb from '../@types/ThoughtDb'
 import WebsocketStatus from '../@types/WebsocketStatus'
-import { HOME_TOKEN, WEBSOCKET_CONNECTION_TIME } from '../constants'
-import { indexeddbProviderThoughtspace, websocketProviderPermissions, ydoc } from '../data-providers/yjs'
+import { WEBSOCKET_CONNECTION_TIME } from '../constants'
+import { websocketProviderPermissions } from '../data-providers/yjs'
+import { rootSynced } from '../data-providers/yjs/thoughtspace'
 import ministore from './ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
@@ -35,9 +35,8 @@ websocketProviderPermissions.on('status', (e: { status: WebsocketStatus }) => {
 })
 
 // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
-indexeddbProviderThoughtspace.whenSynced.then(() => {
-  const yThoughtIndex = ydoc.getMap<ThoughtDb>('thoughtIndex')
-  if (Object.keys(yThoughtIndex.get(HOME_TOKEN)?.childrenMap || {}).length > 0) {
+rootSynced.then(rootThought => {
+  if (Object.keys(rootThought.childrenMap || {}).length > 0) {
     offlineStatusStore.update(statusOld =>
       statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
     )

@@ -3,11 +3,7 @@ import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
 import Share from '../../@types/Share'
-import ThoughtDb from '../../@types/ThoughtDb'
 import WebsocketProviderType from '../../@types/WebsocketProviderType'
-import modalComplete from '../../action-creators/modalComplete'
-import { HOME_TOKEN } from '../../constants'
-import store from '../../stores/app'
 import createId from '../../util/createId'
 import storage from '../../util/storage'
 
@@ -66,37 +62,37 @@ indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
 yPermissions.observe(connectThoughtspaceProvider)
 
 // If the local thoughtspace is empty, save the shared docid and accessToken locally, i.e. make them the default thoughtspace.
-if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
-  const websocketProviderLocal = new WebsocketProvider(websocketUrl, tsidLocal, ydocLocal, {
-    auth: accessTokenLocal,
-  })
-  websocketProviderLocal.on('synced', (event: any) => {
-    const yThoughtIndexLocal = ydocLocal.getMap<ThoughtDb>('thoughtIndex')
+// if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
+//   const websocketProviderLocal = new WebsocketProvider(websocketUrl, tsidLocal, ydocLocal, {
+//     auth: accessTokenLocal,
+//   })
+//   websocketProviderLocal.on('synced', (event: any) => {
+//     const yThoughtIndexLocal = ydocLocal.getMap<ThoughtDb>('thoughtIndex')
 
-    // The root thought is not always loaded when synced fires. Maybe it is still propagating?
-    // Delaying helps but does not eliminate the issue.
-    // yThoughtIndexLocal.update will not be called with an empty thoughtspace.
-    // If a false positive occurs, the old thoughtspace will be lost (!!!)
-    // Maybe IndexedDB will help eliminate the possibility of a false positive?
-    setTimeout(() => {
-      const rootThought = yThoughtIndexLocal.get(HOME_TOKEN)
-      const isEmptyThoughtspace = rootThought && Object.keys(rootThought?.childrenMap || {}).length === 0
-      if (!isEmptyThoughtspace) return
+//     // The root thought is not always loaded when synced fires. Maybe it is still propagating?
+//     // Delaying helps but does not eliminate the issue.
+//     // yThoughtIndexLocal.update will not be called with an empty thoughtspace.
+//     // If a false positive occurs, the old thoughtspace will be lost (!!!)
+//     // Maybe IndexedDB will help eliminate the possibility of a false positive?
+//     setTimeout(() => {
+//       const rootThought = yThoughtIndexLocal.get(HOME_TOKEN)
+//       const isEmptyThoughtspace = rootThought && Object.keys(rootThought?.childrenMap || {}).length === 0
+//       if (!isEmptyThoughtspace) return
 
-      // save shared access token and tsid as default
-      console.info('Setting shared thoughtspace as default')
-      storage.setItem('accessToken', accessTokenShared)
-      storage.setItem('tsid', tsidShared)
+//       // save shared access token and tsid as default
+//       console.info('Setting shared thoughtspace as default')
+//       storage.setItem('accessToken', accessTokenShared)
+//       storage.setItem('tsid', tsidShared)
 
-      // backup tsid and accessToken just in case there is a false positive
-      storage.getItem('tsidBackup', tsidLocal)
-      storage.getItem('accessTokenBackup', accessTokenLocal)
+//       // backup tsid and accessToken just in case there is a false positive
+//       storage.getItem('tsidBackup', tsidLocal)
+//       storage.getItem('accessTokenBackup', accessTokenLocal)
 
-      // close the welcome modal
-      store.dispatch(modalComplete('welcome'))
+//       // close the welcome modal
+//       store.dispatch(modalComplete('welcome'))
 
-      // clear share params from URL without refreshing
-      window.history.pushState({}, '', '/')
-    }, 400)
-  })
-}
+//       // clear share params from URL without refreshing
+//       window.history.pushState({}, '', '/')
+//     }, 400)
+//   })
+// }
