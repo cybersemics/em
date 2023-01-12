@@ -160,6 +160,14 @@ describe('compareReasonableDescending', () => {
     expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('🍍 b'))).toBe(1)
   })
 
+  it('sort meta-attributes above everything', () => {
+    expect(compareThoughtDescending(buildChild('a'), buildChild('=test'))).toBe(-1)
+    expect(compareThoughtDescending(buildChild('=test'), buildChild('a'))).toBe(1)
+    expect(compareThoughtDescending(buildChild('=test'), buildChild('=test'))).toBe(0)
+    expect(compareThoughtDescending(buildChild('🍍'), buildChild('=test'))).toBe(-1)
+    expect(compareThoughtDescending(buildChild('=test'), buildChild('🍍'))).toBe(1)
+  })
+
   it('sort by removing ignored prefixes in descending order', () => {
     expect(compareThoughtDescending(buildChild('the apple'), buildChild('apple'))).toBe(0)
     expect(compareThoughtDescending(buildChild('the apple'), buildChild('book'))).toBe(1)
