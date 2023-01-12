@@ -2,7 +2,8 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import indent from '../action-creators/indent'
-import { AlertType } from '../constants'
+import setAttribute from '../action-creators/setAttribute'
+import { AlertType, EM_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import getEmThought from '../selectors/getEmThought'
@@ -32,16 +33,20 @@ const canExecute = (getState: () => State) => {
 const exec: Shortcut['exec'] = (dispatch, getState) => {
   const state = getState()
   if (!state.cursor || !prevSibling(state, state.cursor)) return
+
   // show an explanation of space-to-indent the first time they execute it
   const spaceToIndentHintComplete = getEmThought(state, ['=flags', 'spaceToIndentHintComplete'])
   dispatch([
     indent(),
-    !spaceToIndentHintComplete
-      ? alert(
-          '✨ Shortcut discovered! ✨<br/><span style="display: inline-block; font-size: 90%; padding-top: 0.5em;">Type space at the beginning of a thought to indent</span>',
-          { alertType: AlertType.SpaceToIndentHint },
-        )
-      : null,
+    ...(!spaceToIndentHintComplete
+      ? [
+          alert(
+            '✨ Shortcut discovered! ✨<br/><span style="display: inline-block; font-size: 90%; padding-top: 0.5em;">Type space at the beginning of a thought to indent</span>',
+            { alertType: AlertType.SpaceToIndentHint },
+          ),
+          setAttribute({ path: [EM_TOKEN], values: ['=flags', 'spaceToIndentHintComplete'] }),
+        ]
+      : []),
   ])
 }
 

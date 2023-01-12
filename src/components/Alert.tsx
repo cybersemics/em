@@ -6,9 +6,8 @@ import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
-import setAttribute from '../action-creators/setAttribute'
 import GestureDiagram from '../components/GestureDiagram'
-import { AlertType, EM_TOKEN } from '../constants'
+import { AlertType } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { globalShortcuts } from '../shortcuts'
@@ -118,14 +117,7 @@ const AlertWithTransition: FC = ({ children }) => {
   /** Dismiss the alert on close. */
   const onClose = () => {
     setDismiss(true)
-    dispatch([
-      alertActionCreator(null),
-      // dismiss SpaceToIndentHint flag
-      // TODO: Factor out into setEmThought
-      alert?.alertType === AlertType.SpaceToIndentHint
-        ? setAttribute({ path: [EM_TOKEN], values: ['=flags', 'spaceToIndentHintComplete'] })
-        : null,
-    ])
+    dispatch(alertActionCreator(null))
   }
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
