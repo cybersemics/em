@@ -2,9 +2,7 @@ import State from '../@types/State'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 
-/** Emphasize a selection or entire thought.
- * To be used inside shortcuts of bold/italics/underline.
- */
+/** Format the browser selection or cursor thought as bold, italic, or underline. */
 const formatSelection = (state: State, command: 'bold' | 'italic' | 'underline'): void => {
   if (!state.cursor) return
 
@@ -12,18 +10,19 @@ const formatSelection = (state: State, command: 'bold' | 'italic' | 'underline')
 
   const sel = getSelection()
 
+  // if there is no selection, format the entire thought by selecting the whole thought
   if ((sel?.toString() ?? '').length === 0 && thought.value.length !== 0) {
     const thoughtContentEditable = document.querySelector('.editable-' + thought.id)
     if (thoughtContentEditable) {
-      const savedCursorPosition = selection.save()
+      const savedSelection = selection.save()
 
-      // Select Entire Thought Contents
+      // select entire thought contents
       sel?.selectAllChildren(thoughtContentEditable)
 
       document.execCommand(command)
 
       sel?.removeAllRanges()
-      selection.restore(savedCursorPosition)
+      selection.restore(savedSelection)
     }
   } else {
     document.execCommand(command)

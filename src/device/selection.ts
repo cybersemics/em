@@ -12,9 +12,10 @@ interface NodeOffset {
   offset: number
 }
 
-interface SavedSelectionType {
+/** A saved selection object that can restore the browser selection when passed to selection.restore. */
+interface SavedSelection {
   node: Node
-  ancesstor: Element | null | undefined
+  ancestor: Element | null | undefined
   offset: number
 }
 
@@ -165,32 +166,32 @@ const findNodeRecusivelyFromRoot = (
 }
 
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
-export const restore = (savedSelection: SavedSelectionType | null): void => {
+export const restore = (savedSelection: SavedSelection | null): void => {
   if (!savedSelection) return
 
   const sel = window.getSelection()
 
-  const newFocusNode = findNodeRecusivelyFromRoot(savedSelection.ancesstor, savedSelection.node, savedSelection.offset)
+  const newFocusNode = findNodeRecusivelyFromRoot(savedSelection.ancestor, savedSelection.node, savedSelection.offset)
   if (newFocusNode) {
     sel?.removeAllRanges()
     sel?.collapse(newFocusNode, savedSelection.offset)
-  } else if (savedSelection.ancesstor == null) {
+  } else if (savedSelection.ancestor == null) {
     sel?.removeAllRanges()
     sel?.collapse(savedSelection.node, savedSelection.offset)
   }
 }
 
 /** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
-export const save = (): SavedSelectionType | null => {
+export const save = (): SavedSelection | null => {
   const sel = window.getSelection()
 
   if (sel && sel.rangeCount > 0 && sel.focusNode) {
-    const ancesstor = sel.getRangeAt(0).startContainer.parentElement
+    const ancestor = sel.getRangeAt(0).startContainer.parentElement
 
     return {
       node: sel.focusNode,
       offset: sel.focusOffset,
-      ancesstor: ancesstor?.closest('[contenteditable]'),
+      ancestor: ancestor?.closest('[contenteditable]'),
     }
   } else {
     return null
