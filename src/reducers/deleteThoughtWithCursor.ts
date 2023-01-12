@@ -166,7 +166,6 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
     shouldCloseContextView()
       ? state => {
           const contextViewsNew = { ...state.contextViews }
-          // eslint-disable-next-line fp/no-delete
           delete contextViewsNew[hashPath(parentPath)]
           return {
             contextViews: contextViewsNew,

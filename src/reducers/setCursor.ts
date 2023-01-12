@@ -83,7 +83,7 @@ const setCursor = (
     // remove
     Object.keys(state.contextViews).forEach(encoded => {
       if (!(encoded in replaceContextViews)) {
-        delete newContextViews[encoded] // eslint-disable-line fp/no-delete
+        delete newContextViews[encoded]
       }
     })
   }

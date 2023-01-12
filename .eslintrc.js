@@ -105,6 +105,9 @@ module.exports = {
       },
     ],
 
+    // fp
+    'fp/no-delete': 0,
+
     // jsdoc
     'jsdoc/check-tag-names': [
       2,

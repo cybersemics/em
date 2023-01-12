@@ -127,7 +127,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     if (newOldLexeme) {
       lexemeIndex[oldKey] = newOldLexeme
     } else {
-      delete lexemeIndex[oldKey] // eslint-disable-line fp/no-delete
+      delete lexemeIndex[oldKey]
     }
   }
 
@@ -170,7 +170,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
   const contextViewsNew = { ...state.contextViews }
   // if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
   //   contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-  //   delete contextViewsNew[contextEncodedOld] // eslint-disable-line fp/no-delete
+  //   delete contextViewsNew[contextEncodedOld]
   // }
 
   // new state

@@ -92,12 +92,12 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   if (lexemeNew) {
     lexemeIndexNew[key] = lexemeNew
   } else {
-    delete lexemeIndexNew[key] // eslint-disable-line fp/no-delete
+    delete lexemeIndexNew[key]
   }
 
   // disable context view
   const contextViewsNew = { ...state.contextViews }
-  delete contextViewsNew[hashPath(path)] // eslint-disable-line fp/no-delete
+  delete contextViewsNew[hashPath(path)]
 
   const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
     id !== deletedThought.id ? { [key]: id } : null,
@@ -131,7 +131,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
         if (lexemeChildNew) {
           lexemeIndexNew[hashedKey] = lexemeChildNew
         } else {
-          delete lexemeIndexNew[hashedKey] // eslint-disable-line fp/no-delete
+          delete lexemeIndexNew[hashedKey]
         }
 
         // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
@@ -148,7 +148,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
           return thoughtUpdate
         }
 
-        delete contextViewsNew[hashPath(accum.path)] // eslint-disable-line fp/no-delete
+        delete contextViewsNew[hashPath(accum.path)]
 
         // RECURSION
         const recursiveResults = recursiveDeletes(child, accum)

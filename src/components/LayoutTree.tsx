@@ -220,7 +220,6 @@ const LayoutTree = () => {
     setHeights(heightsOld => {
       // Delete height record when thought unmounts, otherwise heights will consume a non-decreasing amount of memory.
       if (!height && heightsOld[key]) {
-        // eslint-disable-next-line fp/no-delete
         delete heightsOld[key]
       }
       return heightsOld[key] !== height

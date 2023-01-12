@@ -126,7 +126,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
 
-    // eslint-disable-next-line fp/no-delete
     delete pullQueuePulling[pullKey]
   }
 

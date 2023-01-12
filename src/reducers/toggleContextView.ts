@@ -21,7 +21,7 @@ const toggleContextView = (state: State) => {
       contextViews: immer.produce(state.contextViews, draft => {
         const key = hashPath(state.cursor)
         if (key in state.contextViews) {
-          delete draft[key] // eslint-disable-line fp/no-delete
+          delete draft[key]
         } else {
           draft[key] = true
         }

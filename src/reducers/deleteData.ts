@@ -12,7 +12,7 @@ import timestamp from '../util/timestamp'
 const deleteData = (state: State, { value }: { value: string }) => {
   const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const lexeme = getLexeme(state, value)
-  delete lexemeIndex[hashThought(value)] // eslint-disable-line fp/no-delete
+  delete lexemeIndex[hashThought(value)]
 
   // delete value from all contexts
   const thoughtIndex = { ...state.thoughts.thoughtIndex }
@@ -31,7 +31,7 @@ const deleteData = (state: State, { value }: { value: string }) => {
 
       // delete the entry if there are no more children
       if (childrenNew.length === 0) {
-        delete thoughtIndex[parent.id] // eslint-disable-line fp/no-delete
+        delete thoughtIndex[parent.id]
       }
       // otherwise update with new children
       else {

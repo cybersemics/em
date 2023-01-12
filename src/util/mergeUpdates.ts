@@ -18,7 +18,7 @@ const mergeUpdates = <T>(mergeInto: Index<T | null>, mergee: Index<T | null>): I
         mergeResult[key] = value
       }
     } else {
-      delete mergeResult[key] // eslint-disable-line fp/no-delete
+      delete mergeResult[key]
     }
   })
 
