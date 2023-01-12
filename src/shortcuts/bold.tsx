@@ -2,7 +2,7 @@ import { head } from 'lodash'
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/BoldTextIcon'
 import findDescendant from '../selectors/findDescendant'
-import emphasizeSelection from '../util/emphasizeSelection'
+import formatSelection from '../util/formatSelection'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toolbars shortcut instance of bold, which toggles bold font weight of the cursor. */
@@ -16,7 +16,7 @@ const bold: Shortcut = {
   exec: (dispatch, getState) => {
     const state = getState()
 
-    emphasizeSelection(state, 'bold')
+    formatSelection(state, 'bold')
   },
   isActive: getState => {
     const state = getState()
