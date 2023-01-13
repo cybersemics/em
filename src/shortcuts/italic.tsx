@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/ItalicTextIcon'
 import findDescendant from '../selectors/findDescendant'
+import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -14,10 +15,7 @@ const italic: Shortcut = {
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
-    dispatch({
-      type: 'italic',
-      path: state.cursor,
-    })
+    formatSelection(state, 'italic')
   },
   isActive: getState => {
     const state = getState()

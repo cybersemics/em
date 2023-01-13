@@ -12,6 +12,12 @@ interface NodeOffset {
   offset: number
 }
 
+/** A saved selection object that can restore the browser selection when passed to selection.restore. */
+interface SavedSelection {
+  node: Node
+  offset: number
+}
+
 /** Gets the padding of an element as an array of numbers. */
 const getElementPaddings = (element: HTMLElement): number[] =>
   window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
@@ -141,18 +147,29 @@ export const offsetStart = (): number | null => {
 }
 
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
-export const restore = (range: Range | null): void => {
-  if (!range) return
+export const restore = (savedSelection: SavedSelection | null): void => {
+  if (!savedSelection) return
+
   const sel = window.getSelection()
-  sel?.removeAllRanges()
-  sel?.addRange(range)
+
+  if (savedSelection.node) {
+    sel?.removeAllRanges()
+    sel?.collapse(savedSelection.node, savedSelection.offset)
+  }
 }
 
-/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. Only supports a rangeCount of 1. */
-export const save = (): Range | null => {
+/** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
+export const save = (): SavedSelection | null => {
   const sel = window.getSelection()
-  const range = sel && sel.rangeCount > 0 ? sel?.getRangeAt(0) : null
-  return range
+
+  if (sel && sel.rangeCount > 0 && sel.focusNode) {
+    return {
+      node: sel.focusNode,
+      offset: sel.focusOffset,
+    }
+  } else {
+    return null
+  }
 }
 
 /**

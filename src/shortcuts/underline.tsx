@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/UnderlineIcon'
 import findDescendant from '../selectors/findDescendant'
+import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -14,10 +15,7 @@ const underline: Shortcut = {
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
-    dispatch({
-      type: 'underline',
-      path: state.cursor,
-    })
+    formatSelection(state, 'underline')
   },
   isActive: getState => {
     const state = getState()
