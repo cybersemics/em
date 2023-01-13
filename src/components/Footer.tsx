@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
 import Modal from '../@types/Modal'
-import State from '../@types/State'
 import alert from '../action-creators/alert'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
@@ -16,7 +15,6 @@ import pushStore from '../stores/push'
 
 /** Show the user's connection status. */
 const Status = () => {
-  const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
   const colors = useSelector(themeColors)
   const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
   const status = offlineStatusStore.useState()
@@ -33,22 +31,17 @@ const Status = () => {
             : (new Error('test'), undefined),
       }}
     >
-      {
-        // pushQueue will be empty after all updates have been flushed to Firebase.
-        // isPushing is set back to true only when all updates have been committed.
-        // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
-        isPushing || isQueued
-          ? 'Saving'
-          : status === 'preconnecting'
-          ? 'Initializing'
-          : status === 'connecting' || status === 'reconnecting'
-          ? 'Connecting'
-          : status === 'connected' || status === 'synced'
-          ? 'Online'
-          : status === 'offline'
-          ? 'Offline'
-          : null
-      }
+      {isPushing
+        ? 'Saving'
+        : status === 'preconnecting'
+        ? 'Initializing'
+        : status === 'connecting' || status === 'reconnecting'
+        ? 'Connecting'
+        : status === 'connected' || status === 'synced'
+        ? 'Online'
+        : status === 'offline'
+        ? 'Offline'
+        : null}
     </span>
   )
 }
