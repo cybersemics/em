@@ -14,7 +14,6 @@ import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import isPending from '../../selectors/isPending'
 import store from '../../stores/app'
 import groupObjectBy from '../../util/groupObjectBy'
-import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -60,10 +59,6 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
     // eslint-disable-next-line no-new
     const persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
 
-    if (id === HOME_TOKEN) {
-      persistence.whenSynced.then(() => resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb))
-    }
-
     thoughtMap.observe(async e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = thoughtMap.toJSON() as ThoughtDb
@@ -91,16 +86,27 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
       })
     })
 
+    // TODO: Why do tests cause a TransactionInactiveError? All promises are properly awaited from what I can tell, and the tests pass. Do the docs need to be destroyed on cleanup?
+    // In the mean time, stifle the errors to avoid cluttering up the tests.
     await persistence.whenSynced
+      .catch(err => {
+        if (err.toString().includes('TransactionInactiveError')) {
+          if (process.env.NODE_ENV !== 'test') {
+            console.warn(err)
+          }
+        } else {
+          throw err
+        }
+      })
+      .then(() => {
+        if (id === HOME_TOKEN) {
+          resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
+        }
+      })
   }
 
   const thoughtMap = thoughtDoc.getMap()
-  if (thoughtMap.size === 0) return undefined
-
-  const thought = thoughtMap.toJSON() as Thought
-  await loadLexeme(hashThought(thought.value))
-
-  return thought
+  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
 }
 
 /** Loads a lexeme from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in lexemeDocs. Lexeme is available on await. */
@@ -135,10 +141,20 @@ const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
     })
 
     await persistence.whenSynced
+      // See: loadThought
+      .catch(err => {
+        if (err.toString().includes('TransactionInactiveError')) {
+          if (process.env.NODE_ENV !== 'test') {
+            console.warn(err)
+          }
+        } else {
+          throw err
+        }
+      })
   }
 
-  const lexeme = lexemeDoc.getMap().toJSON() as Lexeme
-  return Object.keys(lexeme).length > 0 ? lexeme : undefined
+  const lexemeMap = lexemeDoc.getMap()
+  return lexemeMap.size > 0 ? (lexemeMap.toJSON() as Lexeme) : undefined
 }
 
 /** Updates shared thoughts and lexemes. */
@@ -175,25 +191,33 @@ export const updateThoughts = async (
     delete lexemeDocs[id]
   })
 
-  Object.entries(thoughtUpdates || {}).forEach(([id, thought]) => {
-    loadThought(id as ThoughtId)
+  const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
+    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThought before executing the transaction?
+    const loaded = await loadThought(id as ThoughtId)
     const thoughtDoc = thoughtDocs[id]
     thoughtDoc.transact(() => {
       Object.entries(thought).forEach(([key, value]) => {
         thoughtDoc.getMap().set(key, value)
       })
     }, thoughtDoc.clientID)
+    const complete = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
+    return Promise.all([loaded, complete])
   })
 
-  Object.entries(lexemeUpdates || {}).forEach(([id, lexeme]) => {
-    loadLexeme(id)
+  const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([id, lexeme]) => {
+    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThought before executing the transaction?
+    const loaded = await loadLexeme(id)
     const lexemeDoc = lexemeDocs[id]
     lexemeDoc.transact(() => {
       Object.entries(lexeme).forEach(([key, value]) => {
         lexemeDoc.getMap().set(key, value)
       })
     }, lexemeDoc.clientID)
+    const complete = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+    return Promise.all([loaded, complete])
   })
+
+  return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<unknown>[])
 }
 
 /** Clears all thoughts and lexemes from the db. */
@@ -223,12 +247,11 @@ export const clear = async () => {
 export const getLexemeById = async (id: string) => loadLexeme(id)
 
 /** Gets multiple thoughts from the lexemeIndex by Lexeme id. */
-export const getLexemesByIds = async (ids: string[]) => Promise.all(ids.map(getLexemeById))
+export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> =>
+  Promise.all(ids.map(getLexemeById))
 
 /** Get a thought by id. */
-export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  return loadThought(id)
-}
+export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => loadThought(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
