@@ -15,7 +15,6 @@ interface NodeOffset {
 /** A saved selection object that can restore the browser selection when passed to selection.restore. */
 interface SavedSelection {
   node: Node
-  ancestor: Element | null | undefined
   offset: number
 }
 
@@ -147,35 +146,13 @@ export const offsetStart = (): number | null => {
   return range.startOffset || 0
 }
 
-/** Recursively find for saved node. */
-const findNodeRecusivelyFromRoot = (
-  root: Element | ChildNode | Node | null | undefined,
-  savedFocusNode: Node,
-  savedFocusOffset: number,
-): ChildNode | undefined => {
-  if (!root) return undefined
-
-  const childNodes = Array.from(root.childNodes)
-  const hasTextNode = childNodes.some(node => node.nodeType === Node.TEXT_NODE)
-  if (hasTextNode) {
-    const focusNode = childNodes.find(node => node.isSameNode(savedFocusNode))
-    return focusNode
-  } else {
-    return findNodeRecusivelyFromRoot(root.firstChild, savedFocusNode, savedFocusOffset)
-  }
-}
-
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
 export const restore = (savedSelection: SavedSelection | null): void => {
   if (!savedSelection) return
 
   const sel = window.getSelection()
 
-  const newFocusNode = findNodeRecusivelyFromRoot(savedSelection.ancestor, savedSelection.node, savedSelection.offset)
-  if (newFocusNode) {
-    sel?.removeAllRanges()
-    sel?.collapse(newFocusNode, savedSelection.offset)
-  } else if (savedSelection.ancestor == null) {
+  if (savedSelection.node) {
     sel?.removeAllRanges()
     sel?.collapse(savedSelection.node, savedSelection.offset)
   }
@@ -186,12 +163,9 @@ export const save = (): SavedSelection | null => {
   const sel = window.getSelection()
 
   if (sel && sel.rangeCount > 0 && sel.focusNode) {
-    const ancestor = sel.getRangeAt(0).startContainer.parentElement
-
     return {
       node: sel.focusNode,
       offset: sel.focusOffset,
-      ancestor: ancestor?.closest('[contenteditable]'),
     }
   } else {
     return null
