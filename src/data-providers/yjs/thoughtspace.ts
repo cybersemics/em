@@ -10,6 +10,8 @@ import Timestamp from '../../@types/Timestamp'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { tsid, ydoc } from '../../data-providers/yjs/index'
+import getThoughtByIdSelector from '../../selectors/getThoughtById'
+import isPending from '../../selectors/isPending'
 import store from '../../stores/app'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
@@ -47,7 +49,8 @@ export const rootSynced = rootSyncedPromise
 const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
   if (!id) return undefined
 
-  const thoughtDoc = new Y.Doc({ guid: `thought-${id}` })
+  // use the existing Doc if possible, otherwise the map will not be immediately populated
+  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `thought-${id}` })
 
   // set up persistence and subscribe to changes
   if (!thoughtDocs[id]) {
@@ -64,21 +67,28 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
     thoughtMap.observe(async e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = thoughtMap.toJSON() as ThoughtDb
-      Object.values(thought.childrenMap).forEach(childId => {
-        loadThought(childId)
-      })
 
-      store.dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {
-            [thought.id]: thought,
-          },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
+      store.dispatch((dispatch, getState) => {
+        const state = getState()
+        const thoughtState = getThoughtByIdSelector(state, id)
+
+        // Only update the thought if it is loaded into the thoughtIndex.
+        // This always occurs on the first load from IndexedDB before pull completes.
+        // i.e. if thought is missing or pending, bail
+        if (!thoughtState || isPending(state, thoughtState)) return
+
+        dispatch(
+          updateThoughtsActionCreator({
+            thoughtIndexUpdates: {
+              [thought.id]: thought,
+            },
+            lexemeIndexUpdates: {},
+            local: false,
+            remote: false,
+            repairCursor: true,
+          }),
+        )
+      })
     })
 
     await persistence.whenSynced
