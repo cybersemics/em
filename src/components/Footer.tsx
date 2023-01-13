@@ -111,11 +111,9 @@ const Footer = () => {
 
         <ModalLink id={Modal.devices}>Devices</ModalLink>
         <LinkDivider />
-        <ModalLink id={Modal.export}>Export</ModalLink>
+        <ModalLink id={Modal.settings}>Settings</ModalLink>
         <LinkDivider />
         <ModalLink id={Modal.manual}>The Manual</ModalLink>
-        <LinkDivider />
-        <ModalLink id={Modal.settings}>Settings</ModalLink>
       </li>
       <br />
 
