@@ -113,7 +113,7 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
 const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
   if (!key) return undefined
 
-  const lexemeDoc = new Y.Doc({ guid: `lexeme-${key}` })
+  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: `lexeme-${key}` })
 
   // set up persistence and subscribe to changes
   if (!lexemeDocs[key]) {

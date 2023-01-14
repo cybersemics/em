@@ -31,9 +31,9 @@ const fakeTimer = testTimer()
  * Match given children with for given context.
  */
 const matchContextsChildren = async (provider: DataProvider, context: Context, children: Partial<Thought>[]) => {
-  const parentThought = (await getContext(provider, context))!
+  const parentThought = await getContext(provider, context)
   expect(parentThought).toBeTruthy()
-  const childrenThoughts = await provider.getThoughtsByIds(Object.values(parentThought.childrenMap))
+  const childrenThoughts = await provider.getThoughtsByIds(Object.values(parentThought!.childrenMap))
   expect(childrenThoughts).toMatchObject(children)
 }
 
