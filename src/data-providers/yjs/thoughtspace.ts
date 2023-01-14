@@ -50,17 +50,18 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
 
   // use the existing Doc if possible, otherwise the map will not be immediately populated
   const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `thought-${id}` })
+  const thoughtMap = thoughtDoc.getMap()
 
   // set up persistence and subscribe to changes
   if (!thoughtDocs[id]) {
     thoughtDocs[id] = thoughtDoc
-    const thoughtMap = thoughtDoc.getMap()
 
     const persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
-    const websocketProvider = new WebsocketProvider(websocketUrl, `${tsid}-thought-${id}`, thoughtDoc, {
+
+    // eslint-disable-next-line no-new
+    new WebsocketProvider(websocketUrl, `${tsid}-thought-${id}`, thoughtDoc, {
       auth: accessToken,
     })
-    const websocketSynced = new Promise<void>(resolve => websocketProvider.once('synced', resolve))
 
     thoughtMap.observe(async e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
@@ -86,7 +87,7 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
 
     // TODO: Why do tests cause a TransactionInactiveError? All promises are properly awaited from what I can tell, and the tests pass. Do the docs need to be destroyed on cleanup?
     // In the mean time, stifle the errors to avoid cluttering up the tests.
-    const idbSynced = persistence.whenSynced
+    persistence.whenSynced
       .catch(err => {
         if (err.toString().includes('TransactionInactiveError')) {
           if (process.env.NODE_ENV !== 'test') {
@@ -101,12 +102,8 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
           resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
         }
       })
-
-    // TODO: Promise.race? Update thoughtIndex when loser resolves?
-    await Promise.all([idbSynced, websocketSynced])
   }
 
-  const thoughtMap = thoughtDoc.getMap()
   return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
 }
 
