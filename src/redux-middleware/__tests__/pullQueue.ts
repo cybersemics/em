@@ -12,6 +12,7 @@ import db from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import { delay } from '../../test-helpers/delay'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -174,6 +175,9 @@ it('delete thought with buffered descendants', async () => {
 })
 
 it('move thought with buffered descendants', async () => {
+  // There is a timing issue that causes an error "root.setTimeout is not defined" and sometimes causes the test runner to crash when running multiple tests. Only occurring with yjs schema v2. For some reason, delay(0) here seems to fix it.
+  await delay(0)
+
   await runDispatch([
     importText({
       text: `
