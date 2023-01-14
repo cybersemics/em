@@ -11,7 +11,7 @@ const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
 const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
 const protocol = host === 'localhost' ? 'ws' : 'wss'
 // public host must end with '/' or the websocket connection will not open
-const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
+export const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
 
 export const ydoc = new Y.Doc()
 export const ypermissionsDoc = new Y.Doc()

@@ -1,5 +1,6 @@
 import Emitter from 'emitter20'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
@@ -9,11 +10,10 @@ import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
-import { tsid, ydoc } from '../../data-providers/yjs/index'
-import getThoughtByIdSelector from '../../selectors/getThoughtById'
-import isPending from '../../selectors/isPending'
+import { accessToken, tsid, websocketUrl, ydoc } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
 import groupObjectBy from '../../util/groupObjectBy'
+import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -56,21 +56,19 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
     thoughtDocs[id] = thoughtDoc
     const thoughtMap = thoughtDoc.getMap()
 
-    // eslint-disable-next-line no-new
     const persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
+    const websocketProvider = new WebsocketProvider(websocketUrl, `${tsid}-thought-${id}`, thoughtDoc, {
+      auth: accessToken,
+    })
+    const websocketSynced = new Promise<void>(resolve => websocketProvider.once('synced', resolve))
 
     thoughtMap.observe(async e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = thoughtMap.toJSON() as ThoughtDb
 
       store.dispatch((dispatch, getState) => {
-        const state = getState()
-        const thoughtState = getThoughtByIdSelector(state, id)
-
-        // Only update the thought if it is loaded into the thoughtIndex.
-        // This always occurs on the first load from IndexedDB before pull completes.
-        // i.e. if thought is missing or pending, bail
-        if (!thoughtState || isPending(state, thoughtState)) return
+        Object.values(thought.childrenMap).forEach(loadThought)
+        loadLexeme(hashThought(thought.value))
 
         dispatch(
           updateThoughtsActionCreator({
@@ -88,7 +86,7 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
 
     // TODO: Why do tests cause a TransactionInactiveError? All promises are properly awaited from what I can tell, and the tests pass. Do the docs need to be destroyed on cleanup?
     // In the mean time, stifle the errors to avoid cluttering up the tests.
-    await persistence.whenSynced
+    const idbSynced = persistence.whenSynced
       .catch(err => {
         if (err.toString().includes('TransactionInactiveError')) {
           if (process.env.NODE_ENV !== 'test') {
@@ -103,6 +101,9 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
           resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
         }
       })
+
+    // TODO: Promise.race? Update thoughtIndex when loser resolves?
+    await Promise.all([idbSynced, websocketSynced])
   }
 
   const thoughtMap = thoughtDoc.getMap()
@@ -120,8 +121,12 @@ const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
     lexemeDocs[key] = lexemeDoc
     const lexemeMap = lexemeDoc.getMap()
 
-    // eslint-disable-next-line no-new
     const persistence = new IndexeddbPersistence(`${tsid}-lexeme-${key}`, lexemeDoc)
+
+    // eslint-disable-next-line no-new
+    new WebsocketProvider(websocketUrl, `${tsid}-lexeme-${key}`, lexemeDoc, {
+      auth: accessToken,
+    })
 
     lexemeMap.observe(async e => {
       if (e.transaction.origin === lexemeDoc.clientID) return
@@ -196,8 +201,34 @@ export const updateThoughts = async (
     const loaded = await loadThought(id as ThoughtId)
     const thoughtDoc = thoughtDocs[id]
     thoughtDoc.transact(() => {
-      Object.entries(thought).forEach(([key, value]) => {
-        thoughtDoc.getMap().set(key, value)
+      const thoughtMap = thoughtDoc.getMap()
+      Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
+        // childrenMap Y.Map needs to be merged
+        if (key === 'childrenMap') {
+          let childrenMap = thoughtMap.get('childrenMap') as any
+          if (!childrenMap) {
+            childrenMap = new Y.Map()
+            thoughtMap.set('childrenMap', childrenMap)
+          }
+
+          // delete children from the yjs thought that are no longer in the state thought
+          childrenMap.forEach((childKey: string, childId: string) => {
+            if (!value[childId]) {
+              childrenMap.delete(childId)
+            }
+          })
+
+          // add children that are not in the yjs thought
+          Object.entries(thought.childrenMap).forEach(([key, childId]) => {
+            if (!childrenMap.has(key)) {
+              childrenMap.set(key, childId)
+            }
+          })
+        }
+        // other keys
+        else {
+          thoughtMap.set(key, value)
+        }
       })
     }, thoughtDoc.clientID)
     const complete = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))

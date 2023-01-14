@@ -66,7 +66,7 @@ const logError = (...args: any) => log(...args, { method: 'error' })
 
 /** Authenticates the access token. */
 export const authenticate = (accessToken: string, { name, params }: { name: string; params: any }) => {
-  const tsid = name.endsWith('/permissions') ? name.split('/permissions')[0] : name
+  const tsid = name.replace(/\/permissions$/, '').replace(/-(thought|lexeme).*/, '')
   const permissionsDocName = `${tsid}/permissions`
   const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
   const yPermissionsServer = ydoc.getMap<Share>(tsid)
@@ -130,7 +130,7 @@ const routes: ServerRoutes = {
     yPermissionsClient.set(accessToken, shareNew)
   },
   'share/delete': ({ accessToken, docid }) => {
-    log('share/delete', { tsid: docid })
+    log('share/delete', { tsid: docid, accessToken: mask(accessToken) })
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
@@ -139,7 +139,7 @@ const routes: ServerRoutes = {
     yPermissionsClient.delete(accessToken)
   },
   'share/update': ({ accessToken, docid, name, role }) => {
-    log('share/add', { tsid: docid, accessToken: mask(accessToken), name, role })
+    log('share/update', { tsid: docid, accessToken: mask(accessToken), name, role })
     const permissionsDocName = `${docid}/permissions`
     const permissionsDoc: Y.Doc = getYDoc(permissionsDocName)
     const yPermissionsServer = ydoc.getMap<Share>(docid)
