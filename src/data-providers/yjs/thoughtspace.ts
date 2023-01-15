@@ -49,9 +49,11 @@ const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> =>
   thoughtDoc.transact(() => {
     const thoughtMap = thoughtDoc.getMap()
     Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
-      // childrenMap Y.Map needs to be merged
+      // merge childrenMap Y.Map
       if (key === 'childrenMap') {
-        let childrenMap = thoughtMap.get('childrenMap') as Y.Map<string>
+        let childrenMap = thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
+
+        // create new Y.Map for new thought
         if (!childrenMap) {
           childrenMap = new Y.Map()
           thoughtMap.set('childrenMap', childrenMap)
@@ -81,6 +83,47 @@ const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> =>
   return new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
 }
 
+/** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
+const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
+  lexemeDoc.transact(() => {
+    const lexemeMap = lexemeDoc.getMap()
+    Object.entries(lexeme).forEach(([key, value]) => {
+      // merge contexts Y.Map
+      if (key === 'contexts') {
+        const contextsObject = keyValueBy(value as ThoughtId[], cxid => ({ [cxid]: true }))
+        // keyed by context ThoughtId
+        let contextsMap = lexemeMap.get('contexts') as Y.Map<true>
+
+        // create new Y.Map for new lexeme
+        if (!contextsMap) {
+          contextsMap = new Y.Map()
+          lexemeMap.set('contexts', contextsMap)
+        }
+
+        // delete contexts from the yjs lexeme that are no longer in the state lexeme
+        contextsMap.forEach((value: true, cxid: string) => {
+          if (!contextsObject[cxid]) {
+            contextsMap.delete(cxid)
+          }
+        })
+
+        // add children that are not in the yjs lexeme
+        lexeme.contexts.forEach(cxid => {
+          if (!contextsMap.has(cxid)) {
+            contextsMap.set(cxid, true)
+          }
+        })
+      }
+      // other keys
+      else {
+        lexemeMap.set(key, value)
+      }
+    })
+  }, lexemeDoc.clientID)
+
+  return new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+}
+
 /** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists. */
 const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
   // use the existing Doc if possible, otherwise the map will not be immediately populated
@@ -100,7 +143,7 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
 
     thoughtMap.observe(e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
-      const thought = thoughtMap.toJSON() as ThoughtDb
+      const thought = getThought(thoughtDoc)!
 
       store.dispatch((dispatch, getState) => {
         Object.values(thought.childrenMap).forEach(loadThoughtDoc)
@@ -160,7 +203,7 @@ const loadLexemeDoc = (key: string): Y.Doc => {
 
     lexemeMap.observe(e => {
       if (e.transaction.origin === lexemeDoc.clientID) return
-      const lexeme = lexemeMap.toJSON() as Lexeme
+      const lexeme = getLexeme(lexemeDoc)!
 
       store.dispatch(
         updateThoughtsActionCreator({
@@ -189,6 +232,27 @@ const loadLexemeDoc = (key: string): Y.Doc => {
   }
 
   return lexemeDoc
+}
+
+/** Gets a Thought from a thought Y.Doc. */
+const getThought = (thoughtDoc: Y.Doc): Thought | undefined => {
+  const thoughtMap = thoughtDoc.getMap()
+  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
+}
+
+/** Gets a Lexeme from a lexeme Y.Doc. */
+const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
+  const lexemeMap = lexemeDoc.getMap()
+  if (lexemeMap.size === 0) return undefined
+  const lexemeRaw = lexemeMap.toJSON()
+  return {
+    ...lexemeRaw,
+    // convert between yjs contexts and state contexts
+    // contexts are stored as an object { [key: ThoughtId]: true } in yjs
+    // contexts are stored as an array in local state
+    // TODO: Change state contexts to objects for consistency
+    contexts: Object.keys(lexemeRaw.contexts) as ThoughtId[],
+  } as Lexeme
 }
 
 /** Updates shared thoughts and lexemes. */
@@ -227,22 +291,17 @@ export const updateThoughts = async (
 
   const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
-    const doc = loadThoughtDoc(id as ThoughtId)
-    return updateThoughtDoc(doc, thought)
+    const thoughtDoc = loadThoughtDoc(id as ThoughtId)
+    return updateThoughtDoc(thoughtDoc, thought)
   })
 
   const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([id, lexeme]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
     const lexemeDoc = loadLexemeDoc(id)
-    lexemeDoc.transact(() => {
-      Object.entries(lexeme).forEach(([key, value]) => {
-        lexemeDoc.getMap().set(key, value)
-      })
-    }, lexemeDoc.clientID)
-    return new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+    return updateLexemeDoc(lexemeDoc, lexeme)
   })
 
-  return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<unknown>[])
+  return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<void>[])
 }
 
 /** Clears all thoughts and lexemes from the db. */
@@ -271,8 +330,7 @@ export const clear = async () => {
 /** Gets a single lexeme from the lexemeIndex by its id. */
 export const getLexemeById = async (id: string): Promise<Lexeme | undefined> => {
   const lexemeDoc = loadLexemeDoc(id)
-  const lexemeMap = lexemeDoc.getMap<Lexeme>()
-  return lexemeMap.size > 0 ? (lexemeMap.toJSON() as Lexeme) : undefined
+  return getLexeme(lexemeDoc)
 }
 
 /** Gets multiple thoughts from the lexemeIndex by Lexeme id. */
@@ -281,9 +339,8 @@ export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefine
 
 /** Get a thought by id. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  const doc = await loadThoughtDoc(id)
-  const thoughtMap = doc.getMap<ThoughtDb>()
-  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
+  const thoughtDoc = await loadThoughtDoc(id)
+  return getThought(thoughtDoc)
 }
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
