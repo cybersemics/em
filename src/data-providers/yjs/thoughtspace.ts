@@ -45,7 +45,7 @@ const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<ThoughtDb>()
 export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
-const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought) => {
+const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> => {
   thoughtDoc.transact(() => {
     const thoughtMap = thoughtDoc.getMap()
     Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
@@ -81,8 +81,8 @@ const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought) => {
   return new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
 }
 
-/** Loads a thought from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in thoughtDocs. Thought is available on await. */
-const loadThought = async (id: ThoughtId): Promise<Y.Doc> => {
+/** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists. */
+const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
   // use the existing Doc if possible, otherwise the map will not be immediately populated
   const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `thought-${id}` })
   const thoughtMap = thoughtDoc.getMap()
@@ -98,13 +98,13 @@ const loadThought = async (id: ThoughtId): Promise<Y.Doc> => {
       auth: accessToken,
     })
 
-    thoughtMap.observe(async e => {
+    thoughtMap.observe(e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = thoughtMap.toJSON() as ThoughtDb
 
       store.dispatch((dispatch, getState) => {
-        Object.values(thought.childrenMap).forEach(loadThought)
-        loadLexeme(hashThought(thought.value))
+        Object.values(thought.childrenMap).forEach(loadThoughtDoc)
+        loadLexemeDoc(hashThought(thought.value))
 
         dispatch(
           updateThoughtsActionCreator({
@@ -143,9 +143,7 @@ const loadThought = async (id: ThoughtId): Promise<Y.Doc> => {
 }
 
 /** Loads a lexeme from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in lexemeDocs. Lexeme is available on await. */
-const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
-  if (!key) return undefined
-
+const loadLexemeDoc = (key: string): Y.Doc => {
   const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: `lexeme-${key}` })
 
   // set up persistence and subscribe to changes
@@ -160,7 +158,7 @@ const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
       auth: accessToken,
     })
 
-    lexemeMap.observe(async e => {
+    lexemeMap.observe(e => {
       if (e.transaction.origin === lexemeDoc.clientID) return
       const lexeme = lexemeMap.toJSON() as Lexeme
 
@@ -177,8 +175,8 @@ const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
       )
     })
 
-    await persistence.whenSynced
-      // See: loadThought
+    persistence.whenSynced
+      // See: loadThoughtDoc
       .catch(err => {
         if (err.toString().includes('TransactionInactiveError')) {
           if (process.env.NODE_ENV !== 'test') {
@@ -190,8 +188,7 @@ const loadLexeme = async (key?: string): Promise<Lexeme | undefined> => {
       })
   }
 
-  const lexemeMap = lexemeDoc.getMap()
-  return lexemeMap.size > 0 ? (lexemeMap.toJSON() as Lexeme) : undefined
+  return lexemeDoc
 }
 
 /** Updates shared thoughts and lexemes. */
@@ -229,23 +226,20 @@ export const updateThoughts = async (
   })
 
   const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
-    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThought before executing the transaction?
-    // ensure thoughtDocs[id] is loaded
-    loadThought(id as ThoughtId)
-    updateThoughtDoc(thoughtDocs[id], thought)
+    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
+    const doc = loadThoughtDoc(id as ThoughtId)
+    return updateThoughtDoc(doc, thought)
   })
 
   const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([id, lexeme]) => {
-    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThought before executing the transaction?
-    const loaded = await loadLexeme(id)
-    const lexemeDoc = lexemeDocs[id]
+    // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
+    const lexemeDoc = loadLexemeDoc(id)
     lexemeDoc.transact(() => {
       Object.entries(lexeme).forEach(([key, value]) => {
         lexemeDoc.getMap().set(key, value)
       })
     }, lexemeDoc.clientID)
-    const complete = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
-    return Promise.all([loaded, complete])
+    return new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
   })
 
   return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<unknown>[])
@@ -275,7 +269,11 @@ export const clear = async () => {
 }
 
 /** Gets a single lexeme from the lexemeIndex by its id. */
-export const getLexemeById = async (id: string) => loadLexeme(id)
+export const getLexemeById = async (id: string): Promise<Lexeme | undefined> => {
+  const lexemeDoc = loadLexemeDoc(id)
+  const lexemeMap = lexemeDoc.getMap<Lexeme>()
+  return lexemeMap.size > 0 ? (lexemeMap.toJSON() as Lexeme) : undefined
+}
 
 /** Gets multiple thoughts from the lexemeIndex by Lexeme id. */
 export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> =>
@@ -283,8 +281,8 @@ export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefine
 
 /** Get a thought by id. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  const doc = await loadThought(id)
-  const thoughtMap = doc.getMap()
+  const doc = await loadThoughtDoc(id)
+  const thoughtMap = doc.getMap<ThoughtDb>()
   return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
 }
 
