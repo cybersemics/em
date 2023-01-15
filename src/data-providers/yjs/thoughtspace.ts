@@ -44,10 +44,45 @@ const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
 const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<ThoughtDb>()
 export const rootSynced = rootSyncedPromise
 
-/** Loads a thought from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in thoughtDocs. Thought is available on await. */
-const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
-  if (!id) return undefined
+/** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
+const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought) => {
+  thoughtDoc.transact(() => {
+    const thoughtMap = thoughtDoc.getMap()
+    Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
+      // childrenMap Y.Map needs to be merged
+      if (key === 'childrenMap') {
+        let childrenMap = thoughtMap.get('childrenMap') as Y.Map<string>
+        if (!childrenMap) {
+          childrenMap = new Y.Map()
+          thoughtMap.set('childrenMap', childrenMap)
+        }
 
+        // delete children from the yjs thought that are no longer in the state thought
+        childrenMap.forEach((childKey: string, childId: string) => {
+          if (!value[childId]) {
+            childrenMap.delete(childId)
+          }
+        })
+
+        // add children that are not in the yjs thought
+        Object.entries(thought.childrenMap).forEach(([key, childId]) => {
+          if (!childrenMap.has(key)) {
+            childrenMap.set(key, childId)
+          }
+        })
+      }
+      // other keys
+      else {
+        thoughtMap.set(key, value)
+      }
+    })
+  }, thoughtDoc.clientID)
+
+  return new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
+}
+
+/** Loads a thought from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in thoughtDocs. Thought is available on await. */
+const loadThought = async (id: ThoughtId): Promise<Y.Doc> => {
   // use the existing Doc if possible, otherwise the map will not be immediately populated
   const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `thought-${id}` })
   const thoughtMap = thoughtDoc.getMap()
@@ -104,7 +139,7 @@ const loadThought = async (id?: ThoughtId): Promise<Thought | undefined> => {
       })
   }
 
-  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
+  return thoughtDoc
 }
 
 /** Loads a lexeme from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in lexemeDocs. Lexeme is available on await. */
@@ -195,41 +230,9 @@ export const updateThoughts = async (
 
   const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThought before executing the transaction?
-    const loaded = await loadThought(id as ThoughtId)
-    const thoughtDoc = thoughtDocs[id]
-    thoughtDoc.transact(() => {
-      const thoughtMap = thoughtDoc.getMap()
-      Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
-        // childrenMap Y.Map needs to be merged
-        if (key === 'childrenMap') {
-          let childrenMap = thoughtMap.get('childrenMap') as any
-          if (!childrenMap) {
-            childrenMap = new Y.Map()
-            thoughtMap.set('childrenMap', childrenMap)
-          }
-
-          // delete children from the yjs thought that are no longer in the state thought
-          childrenMap.forEach((childKey: string, childId: string) => {
-            if (!value[childId]) {
-              childrenMap.delete(childId)
-            }
-          })
-
-          // add children that are not in the yjs thought
-          Object.entries(thought.childrenMap).forEach(([key, childId]) => {
-            if (!childrenMap.has(key)) {
-              childrenMap.set(key, childId)
-            }
-          })
-        }
-        // other keys
-        else {
-          thoughtMap.set(key, value)
-        }
-      })
-    }, thoughtDoc.clientID)
-    const complete = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
-    return Promise.all([loaded, complete])
+    // ensure thoughtDocs[id] is loaded
+    loadThought(id as ThoughtId)
+    updateThoughtDoc(thoughtDocs[id], thought)
   })
 
   const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([id, lexeme]) => {
@@ -279,7 +282,11 @@ export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefine
   Promise.all(ids.map(getLexemeById))
 
 /** Get a thought by id. */
-export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => loadThought(id)
+export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
+  const doc = await loadThought(id)
+  const thoughtMap = doc.getMap()
+  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
+}
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
