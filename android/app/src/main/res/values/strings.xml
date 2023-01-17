@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">em</string>
+    <string name="title_activity_main">em</string>
+    <string name="package_name">com.emtheapp.em</string>
+    <string name="custom_url_scheme">com.emtheapp.em</string>
+</resources>

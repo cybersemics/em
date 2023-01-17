@@ -1,9 +1,12 @@
 /** Defines client/browser-specific variables that do not change over the course of a session. */
+import { Capacitor } from '@capacitor/core'
 import 'react-native-get-random-values'
 import { v4 as uuid } from 'uuid'
 
-/** Returns true if the user's device is touch screen. */
-export const isTouch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+/** Returns true if the user's device is touch screen. The use of matchMedia('pointer: coarse') did not work for Android webviews, so checking if it is Android Webview using capacitor. */
+export const isTouch =
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
 
 /** Returns true if the navigator platform contains 'Linux armv71'. */
 export const isAndroid = typeof navigator !== 'undefined' && navigator.platform === 'Linux armv7l'

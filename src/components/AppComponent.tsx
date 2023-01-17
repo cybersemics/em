@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -209,16 +211,29 @@ const AppComponent: FC<Props> = props => {
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
     android: isAndroid,
+    native: Capacitor.isNativePlatform(),
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: isSafari(),
   })
 
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: Style.Dark })
+      // Android only, set statusbar color to black.
+      if (Capacitor.getPlatform() === 'android') {
+        StatusBar.setBackgroundColor({
+          color: '#000000',
+        })
+      }
+    }
+  }, [])
+
   const globalStyles = useMemo<[string, React.CSSProperties][]>(
     () => [
       [
         // increase specificity to override .popup .modal-actions
-        'a.button.button.button:hover, a.button.button.button:active',
+        'a.button.button.butt on:hover, a.button.button.button:active',
         {
           backgroundColor: colors.fg85,
         },
