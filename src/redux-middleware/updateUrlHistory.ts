@@ -6,6 +6,7 @@ import State from '../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import { deleteCursor, updateCursor } from '../data-providers/yjs/thoughtspace'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import { hasChildren } from '../selectors/getChildren'
 import hashPathURL from '../selectors/hashPathURL'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
@@ -44,7 +45,21 @@ const updateCursorThrottled = _.throttle((state: State, path: Path) => {
  */
 const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: Options = {}) => {
   // wait until local state has loaded before updating the url
-  // nothing to update if the cursor hasn't changed
+  if (state.isLoading) return
+
+  // if the welcome modal has not been completed and there are no root thoughts, then we can assume that IndexedDB was cleared and clear the obsolete path encoded in the url
+  if (
+    !state.modals.welcome.complete &&
+    typeof window !== undefined &&
+    /\/~\/./.test(window.location.pathname) &&
+    !hasChildren(state, HOME_TOKEN)
+  ) {
+    // preserve the query string
+    const url = window.location.search ? `/~/${window.location.search}` : '/'
+    window.history.pushState({}, '', url)
+  }
+
+  // nothing to update if the cursor has not changed
   if (state.isLoading || equalPath(pathPrev, path)) return
   pathPrev = path
 
