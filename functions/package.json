@@ -1,7 +1,7 @@
 {
   "name": "functions",
   "scripts": {
-    "lint": "eslint \"./src/**/*\"",
+    "lint": "eslint \"./src/**/*\" --cache",
     "build": "tsc --project ./tsconfig.json && cp -R ./src/templates ./lib",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
