@@ -2,15 +2,9 @@
 
 **em** is a beautiful, minimalistic note-taking app for personal sensemaking.
 
-**em** is:
-
 - **cognitively-informed** - Supports focus, nonlinearity, and associative connectivity.
 - **process-oriented** - Facilitates flow and organic thinking.
 - **semiotic** - Mediates concept through a monistic, contextual semiotic web.
-
-https://emtheapp.com
-
-![em screenshot](https://github.com/cybersemics/em-proto/blob/dev/screenshot.gif?raw=true)
 
 ## Documentation
 
@@ -42,6 +36,8 @@ npm run websocket-server
 ## Native App Development
 
 To get started, run `npm run cap:ios` or `npm run cap:android`.
+
+Scripts:
 
 - `cap:ios` - Generates iOS project files with capacitor and opens the project in XCode. Requires XCode and CocoaPods to be installed. Choose your device target and hit Play in XCode to build and run the app.
 - `cap:android` - Generates Android project files with capacitor and opens the project in Android Studio.
