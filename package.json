@@ -21,9 +21,10 @@
   },
   "main": "mobile/index.tsx",
   "scripts": {
-    "cap:ios": "cap open ios",
-    "cap:android": "cap open android",
-    "cap:copy": "cap copy",
+    "cap:ios": "npm run cap:sync && cap open ios",
+    "cap:android": "npm run cap:sync && cap open android",
+    "cap:copy": "NODE_ENV=development && cap copy",
+    "cap:copy:prod": "NODE_ENV=production && cap copy",
     "cap:sync": "NODE_ENV=development && cap sync",
     "cap:sync:prod": "npm run build && NODE_ENV=production cap sync",
     "start:expo": "expo start",
