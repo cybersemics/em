@@ -25,7 +25,7 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   ...serverConfig,
   ios: {
-    backgroundColor: '000000', // convert it in the viewcontroller
+    backgroundColor: '000000',
   },
   plugins: {
     Keyboard: {
