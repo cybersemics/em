@@ -31,6 +31,7 @@ const StaticThought = ({
   style,
 }: ThoughtProps) => {
   const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
+  const fontSize = useSelector((state: State) => state.fontSize)
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
 
@@ -64,27 +65,25 @@ const StaticThought = ({
 
   return (
     <div aria-label='thought' className='thought'>
-      {
-        // render nothing if it is a pending context since we have no value
-        homeContext ? (
-          <HomeIcon />
-        ) : isDivider(value) ? (
-          <Divider path={simplePathLive} />
-        ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
-          <div style={{ paddingTop: '2.8em' }}></div>
-        ) : (
-          <Editable
-            path={path}
-            disabled={!isDocumentEditable()}
-            isEditing={isEditing}
-            isVisible={isVisible}
-            rank={rank}
-            style={style}
-            simplePath={simplePathLive}
-            onEdit={onEdit}
-          />
-        )
-      }
+      {homeContext ? (
+        // left, top are eyeballed for different font sizes
+        <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
+      ) : isDivider(value) ? (
+        <Divider path={simplePathLive} />
+      ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
+        <div style={{ paddingTop: '2.8em' }}></div>
+      ) : (
+        <Editable
+          path={path}
+          disabled={!isDocumentEditable()}
+          isEditing={isEditing}
+          isVisible={isVisible}
+          rank={rank}
+          style={style}
+          simplePath={simplePathLive}
+          onEdit={onEdit}
+        />
+      )}
 
       <Superscript simplePath={simplePathLive} superscript={false} />
     </div>
