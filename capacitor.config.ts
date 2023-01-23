@@ -24,6 +24,14 @@ const config: CapacitorConfig = {
   webDir: 'build',
   bundledWebRuntime: false,
   ...serverConfig,
+  ios: {
+    backgroundColor: '000000', // convert it in the viewcontroller
+  },
+  plugins: {
+    Keyboard: {
+      resize: 'none',
+    },
+  },
 }
 
 export default config

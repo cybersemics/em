@@ -3,6 +3,8 @@ import { Capacitor } from '@capacitor/core'
 import 'react-native-get-random-values'
 import { v4 as uuid } from 'uuid'
 
+export const isIOS = Capacitor.getPlatform() === 'ios'
+
 /** Returns true if the user's device is touch screen. The use of matchMedia('pointer: coarse') did not work for Android webviews, so checking if it is Android Webview using capacitor. */
 export const isTouch =
   typeof window !== 'undefined' &&

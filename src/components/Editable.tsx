@@ -17,7 +17,7 @@ import setCursor from '../action-creators/setCursor'
 import setInvalidState from '../action-creators/setInvalidState'
 import toggleColorPicker from '../action-creators/toggleColorPicker'
 import tutorialNext from '../action-creators/tutorialNext'
-import { isSafari, isTouch } from '../browser'
+import { isIOS, isSafari, isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -370,7 +370,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
     e => {
       blurring = true
 
-      if (isTouch && isSafari()) {
+      if (isTouch && isSafari() && !isIOS) {
         positionFixed.stop()
       }
 
@@ -436,7 +436,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
 
-    if (isTouch && isSafari()) {
+    if (isTouch && isSafari() && !isIOS) {
       positionFixed.start()
     }
 
