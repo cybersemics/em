@@ -219,11 +219,11 @@ const AppComponent: FC<Props> = props => {
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      StatusBar.setStyle({ style: Style.Dark })
+      StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
       // Android only, set statusbar color to black.
       if (Capacitor.getPlatform() === 'android') {
         StatusBar.setBackgroundColor({
-          color: '#000000',
+          color: colors.bg,
         })
       }
     }
@@ -233,7 +233,7 @@ const AppComponent: FC<Props> = props => {
     () => [
       [
         // increase specificity to override .popup .modal-actions
-        'a.button.button.butt on:hover, a.button.button.button:active',
+        'a.button.button.button:hover, a.button.button.button:active',
         {
           backgroundColor: colors.fg85,
         },
