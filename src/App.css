@@ -28,6 +28,9 @@
   /* define a single var to place any element in a stacking context */
   --z-index-stack: 1;
   --z-index-hide: -1;
+
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
 }
 
 .z-index-alert {
@@ -390,6 +393,10 @@ a.text-link {
   padding-top: 500px;
 }
 
+.native .toolbar-container {
+  top: var(--safe-area-top) !important;
+}
+
 .toolbar {
   position: relative;
   touch-action: inherit;
@@ -661,6 +668,11 @@ a.text-link {
   margin-top: -2px;
 }
 
+/*  */
+.native {
+  padding-top: var(--safe-area-top);
+}
+
 /* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is used instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. Increase specificity to override ".mobiile .child .editable". */
 .multiline.multiline.multiline.multiline {
   line-height: 1.25;
@@ -808,7 +820,7 @@ body.dark {
   display: flex;
   align-items: flex-end;
   /* rounded screens */
-  padding-bottom: calc(max(10px, env(safe-area-inset-bottom)));
+  padding-bottom: calc(max(10px, var(--safe-area-bottom)));
 }
 
 .home .logo-wrapper {
@@ -862,7 +874,7 @@ body.dark {
 
 .error-message {
   position: fixed;
-  top: 0;
+  top: var(--safe-area-top);
   left: 0;
   right: 0;
   padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
@@ -871,6 +883,10 @@ body.dark {
   text-align: center;
   z-index: var(--z-index-alert);
   word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
+}
+
+.native .alert {
+  top: var(--safe-area-top) !important;
 }
 
 .status {
@@ -1656,6 +1672,10 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
+.native .popup-close-x {
+  top: var(--safe-area-top);
+}
+
 .status-close-x {
   font-size: 16px;
   top: 0;
@@ -2277,6 +2297,10 @@ code,
   transition: width 0.2s ease;
 }
 
+.MuiDrawer-paperAnchorLeft {
+  top: var(--safe-area-top) !important;
+}
+
 /* material drawer container css override */
 .drawer-container-mobile {
   max-width: 90%;
@@ -2292,6 +2316,10 @@ code,
 .hamburger-menu,
 .hamburger-menu * {
   user-select: none;
+}
+
+.native .hamburger-menu {
+  top: var(--safe-area-top) !important;
 }
 
 .hamburger-menu > div > span {
