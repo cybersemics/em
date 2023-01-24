@@ -88,7 +88,7 @@ const useLongPress = (
 
   const onContextMenu = useCallback((e: React.PointerEvent) => {
     // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
-    if (!isTouch || (isTouch && e.nativeEvent.pointerType === 'touch')) {
+    if (!isTouch || e.nativeEvent.pointerType === 'touch') {
       e.preventDefault()
       e.stopPropagation()
       selection.clear()
