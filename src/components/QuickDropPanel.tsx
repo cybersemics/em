@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import React from 'react'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
@@ -21,7 +22,12 @@ const QuickDropPanel = () => {
         }}
       >
         <DeleteDrop />
-        {!isTouch && <CopyOneDrop />}
+        {
+          // CopyOneDrop does not work on Mobile Safari, so temporarily disable it.
+          // Works fine in capacitor with the clipboard plugin.
+          // https://github.com/cybersemics/em/issues/1679
+          !isTouch || Capacitor.isNativePlatform() ? <CopyOneDrop /> : null
+        }
         <ExportDrop />
       </div>
     </CSSTransition>
