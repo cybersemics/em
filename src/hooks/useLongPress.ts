@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
+import { isTouch } from '../browser'
 import { NOOP } from '../constants'
 import * as selection from '../device/selection'
 
@@ -85,11 +86,14 @@ const useLongPress = (
     [pressed],
   )
 
-  const onContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    selection.clear()
-    dispatch(editing({ value: false }))
+  const onContextMenu = useCallback((e: React.PointerEvent) => {
+    // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
+    if (!isTouch || (isTouch && e.nativeEvent.pointerType === 'touch')) {
+      e.preventDefault()
+      e.stopPropagation()
+      selection.clear()
+      dispatch(editing({ value: false }))
+    }
   }, [])
 
   // unlock on unmount
