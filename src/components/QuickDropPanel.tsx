@@ -5,6 +5,7 @@ import State from '../@types/State'
 import { isTouch } from '../browser'
 import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
+import ExportDrop from './ExportDrop'
 
 /** A panel of buttons that slides out from the right edge of the screen during drag-and-drop to quickly execute certain commands on a droppedthought. */
 const QuickDropPanel = () => {
@@ -21,6 +22,7 @@ const QuickDropPanel = () => {
       >
         <DeleteDrop />
         {!isTouch && <CopyOneDrop />}
+        <ExportDrop />
       </div>
     </CSSTransition>
   )

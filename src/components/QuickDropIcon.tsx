@@ -1,11 +1,12 @@
 import React, { FC, useEffect } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import IconType from '../@types/Icon'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
+import dragInProgress from '../action-creators/dragInProgress'
 import { AlertText, AlertType } from '../constants'
 import theme from '../selectors/theme'
 import store from '../stores/app'
@@ -92,8 +93,13 @@ const QuickDropIcon = ({
   onDrop: (state: State, item: DragThoughtItem) => void
   onHoverMessage: (state: State, zone: DragThoughtZone) => string
 }) => {
+  const dispatch = useDispatch()
+
   /** Invokes onDrop with the DragThoughtItem. */
-  const drop = (props: unknown, monitor: DropTargetMonitor) => onDrop(store.getState(), monitor.getItem())
+  const drop = (props: unknown, monitor: DropTargetMonitor) => {
+    dispatch(dragInProgress({ value: false }))
+    onDrop(store.getState(), monitor.getItem())
+  }
 
   const Drop = DropTarget('thought', { drop }, dropCollect)(DroppableQuickDropIcon)
   return (
