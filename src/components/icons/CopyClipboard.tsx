@@ -1,16 +1,10 @@
 import React, { FC } from 'react'
 import { useSelector } from 'react-redux'
-import Index from '../../@types/IndexType'
+import Icon from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
-export interface IconProps {
-  fill?: string
-  size?: number
-  style?: Index<string>
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const CopyClipboard: FC<IconProps> = ({ fill, size = 20, style }) => {
+/** Clipboard icon. */
+const CopyClipboard: FC<Icon> = ({ fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <svg

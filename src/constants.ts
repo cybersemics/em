@@ -472,6 +472,8 @@ export enum AlertType {
   DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
+  // shown when a dragged thought is hovering over the ExportDrop component
+  ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown after a longer delay during a MultiGesture

@@ -37,7 +37,7 @@ import ModalSignup from './ModalSignup'
 import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import QuickDrop from './QuickDrop'
+import QuickDropPanel from './QuickDropPanel'
 import Scale from './Scale'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
@@ -269,7 +269,7 @@ const AppComponent: FC<Props> = props => {
         </>
       )}
       {!showModal && !tutorial && <Toolbar />}
-      <QuickDrop />
+      <QuickDropPanel />
       <MultiGestureIfTouch>
         {showModal ? (
           // modals
