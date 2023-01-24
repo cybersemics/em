@@ -3,6 +3,7 @@ import theme from './theme'
 
 const colors = {
   dark: {
+    // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#000000',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
@@ -29,6 +30,7 @@ const colors = {
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
   },
   light: {
+    // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#FFFFFF',
     bgOverlay80: 'rgba(0, 0, 0, 0.8)',
     black: 'rgba(0, 0, 0, 1)',
