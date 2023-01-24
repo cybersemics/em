@@ -2,6 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import CopyOneDrop from './CopyOneDrop'
 import DeleteDrop from './DeleteDrop'
 
@@ -19,7 +20,7 @@ const QuickDropPanel = () => {
         }}
       >
         <DeleteDrop />
-        <CopyOneDrop />
+        {!isTouch && <CopyOneDrop />}
       </div>
     </CSSTransition>
   )
