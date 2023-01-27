@@ -86,9 +86,11 @@ const useLongPress = (
     [pressed],
   )
 
-  const onContextMenu = useCallback((e: React.PointerEvent) => {
+  // Android passes React.PointerEvent
+  // Web passes React.MouseEvent
+  const onContextMenu = useCallback((e: React.MouseEvent | React.PointerEvent) => {
     // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
-    if (!isTouch || e.nativeEvent.pointerType === 'touch') {
+    if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
       e.preventDefault()
       e.stopPropagation()
       selection.clear()
@@ -107,7 +109,7 @@ const useLongPress = (
   return {
     // disable Android context menu
     // does not work to prevent iOS long press to select behavior
-    onContextMenu: onContextMenu,
+    onContextMenu,
     onMouseDown: start,
     onMouseUp: stop,
     onTouchStart: start,
