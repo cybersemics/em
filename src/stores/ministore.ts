@@ -2,8 +2,23 @@ import Emitter from 'emitter20'
 import { useEffect, useRef, useState } from 'react'
 import { act } from 'react-dom/test-utils'
 
+export interface Ministore<T> {
+  // get the full state of the store
+  getState: () => T
+  // subscribe to changes
+  subscribe: (f: (state: T) => void) => void
+  // Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state.
+  update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
+  // a hook that invokes a callback with side effects when the state changes
+  useEffect: (f: (state: T) => void) => void
+  // a hook that subscribes to a slice of the state
+  useSelector: <U>(selector: (state: T) => U) => U
+  // a hook that subscribes to the entire state
+  useState: () => T
+}
+
 /** Creates a mini store that tracks state and can update consumers. */
-const ministore = <T = any>(initialState: T) => {
+const ministore = <T>(initialState: T): Ministore<T> => {
   let state: T = initialState
   const emitter = new Emitter()
 
@@ -38,8 +53,10 @@ const ministore = <T = any>(initialState: T) => {
     }, [])
   }
 
+  function useSelector<U>(selector: (state: T) => U): U
+  function useSelector(): T
   /** A hook that subscribes to a slice of the state. If no selector is given, subscribes to the whole state. */
-  const useSelector = <U>(selector?: (state: T) => U) => {
+  function useSelector<U>(selector?: (state: T) => U): T | U {
     const [localState, setLocalState] = useState(selector ? selector(state) : state)
     const unmounted = useRef(false)
 
@@ -77,11 +94,10 @@ const ministore = <T = any>(initialState: T) => {
 
   return {
     getState: () => state,
-    update,
     subscribe,
+    update,
     useEffect: useChangeEffect,
     useSelector,
-    /** A hook that subscribes to the entire state. */
     useState: useSelector as () => T,
   }
 }
