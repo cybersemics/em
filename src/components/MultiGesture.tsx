@@ -27,6 +27,11 @@ interface GestureState {
   moveY: number
 }
 
+enum TraceVisibility {
+  Show = 'Show',
+  Hide = 'Hide',
+}
+
 interface MultiGestureProps {
   disableTrace?: boolean
   onGesture?: (args: {
@@ -75,9 +80,9 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 }
 
 /** Draws a gesture as it is being performed onto a canvas. */
-const TraceGesture = ({ showStore }: { showStore: Ministore<boolean | null> }) => {
+const TraceGesture = ({ visibilityStore }: { visibilityStore: Ministore<TraceVisibility> }) => {
   const colors = useSelector(themeColors)
-  const show = showStore.useState()
+  const visibility = visibilityStore.useState()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
   const fadeTimer = useRef(0)
@@ -107,7 +112,7 @@ const TraceGesture = ({ showStore }: { showStore: Ministore<boolean | null> }) =
 
   return (
     <div className='z-index-gesture-trace' style={{ position: 'fixed', top: 0, left: 0, height: innerHeight }}>
-      <CSSTransition in={show !== false} timeout={400} classNames='fade-both'>
+      <CSSTransition in={visibility === TraceVisibility.Show} timeout={400} classNames='fade-both'>
         <div
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'
@@ -138,8 +143,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   panResponder: { panHandlers: unknown }
   scrolling = false
   sequence: GesturePath = ''
-  // a ministore that tracks if the trace should be shown (true), hidden (false), or inactive (null)
-  showStore = ministore<boolean | null>(false)
+  // a ministore that tracks if the trace should be shown, hidden, or dimmed
+  visibilityStore = ministore<TraceVisibility>(TraceVisibility.Hide)
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -235,7 +240,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart!, e })
-          this.showStore.update(null)
+          this.visibilityStore.update(TraceVisibility.Hide)
           this.abandon = true
           return
         }
@@ -296,7 +301,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
               this.sequence += g
               this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
               if (this.sequence.length === 1) {
-                this.showStore.update(true)
+                this.visibilityStore.update(TraceVisibility.Show)
               }
             }
           }
@@ -326,14 +331,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
-    this.showStore.update(false)
+    this.visibilityStore.update(TraceVisibility.Hide)
   }
 
   render() {
     return (
       <div>
         <View {...this.panResponder.panHandlers}>
-          <TraceGesture showStore={this.showStore} />
+          <TraceGesture visibilityStore={this.visibilityStore} />
           {this.props.children}
         </View>
       </div>
