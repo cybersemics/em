@@ -1,9 +1,15 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import { noop } from 'lodash'
-import React from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { GestureResponderEvent } from 'react-native'
+import { useSelector } from 'react-redux'
+import SignaturePad from 'react-signature-pad-wrapper'
+import { CSSTransition } from 'react-transition-group'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import themeColors from '../selectors/themeColors'
+import ministore, { Ministore } from '../stores/ministore'
+import viewportStore from '../stores/viewport'
 
 // expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -22,6 +28,7 @@ interface GestureState {
 }
 
 interface MultiGestureProps {
+  disableTrace?: boolean
   onGesture?: (args: {
     gesture: Direction | null
     sequence: GesturePath
@@ -67,17 +74,72 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
     : 'l'
 }
 
+/** Draws a gesture as it is being performed onto a canvas. */
+const TraceGesture = ({ showStore }: { showStore: Ministore<boolean | null> }) => {
+  const colors = useSelector(themeColors)
+  const show = showStore.useState()
+  const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+  const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
+  const fadeTimer = useRef(0)
+
+  // Clear the signature pad when the stroke starts.
+  // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
+  const onBeginStroke = useCallback(() => {
+    clearTimeout(fadeTimer.current)
+    if (!signaturePadRef.current) return
+    signaturePadRef.current.signaturePad.clear()
+  }, [])
+
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+    const signaturePad = signaturePadRef.current.signaturePad
+    signaturePad.addEventListener('beginStroke', onBeginStroke)
+
+    // update canvas dimensions, otherwise the initial height on load is too large for some reason
+    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
+    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
+    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
+
+    return () => {
+      signaturePad.removeEventListener('beginStroke', onBeginStroke)
+    }
+  }, [])
+
+  return (
+    <div className='z-index-gesture-trace' style={{ position: 'fixed', top: 0, left: 0, height: innerHeight }}>
+      <CSSTransition in={show !== false} timeout={400} classNames='fade-both'>
+        <div
+          // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
+          className='fade-both-enter'
+        >
+          <SignaturePad
+            height={innerHeight}
+            // TODO: Fix type
+            ref={signaturePadRef as any}
+            options={{
+              penColor: colors.fg,
+            }}
+          />
+        </div>
+      </CSSTransition>
+    </div>
+  )
+}
+
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
   clientStart: Point | null = null
   currentStart: Point | null = null
+  disableTrace = false
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
   panResponder: { panHandlers: unknown }
   scrolling = false
   sequence: GesturePath = ''
+  // a ministore that tracks if the trace should be shown (true), hidden (false), or inactive (null)
+  showStore = ministore<boolean | null>(false)
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -173,6 +235,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart!, e })
+          this.showStore.update(null)
           this.abandon = true
           return
         }
@@ -232,6 +295,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             else {
               this.sequence += g
               this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+              if (this.sequence.length === 1) {
+                this.showStore.update(true)
+              }
             }
           }
         }
@@ -260,13 +326,24 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
+    this.showStore.update(false)
   }
 
   render() {
-    return <View {...this.panResponder.panHandlers}>{this.props.children}</View>
+    return (
+      <div>
+        <View {...this.panResponder.panHandlers}>
+          <TraceGesture showStore={this.showStore} />
+          {this.props.children}
+        </View>
+      </div>
+    )
   }
 
   static defaultProps: MultiGestureProps = {
+    // if true, does not draw the gesture as the user is making it
+    disableTrace: false,
+
     // When a swipe is less than this number of pixels, then it won't count as a gesture.
     // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
     // related: https://github.com/cybersemics/em/issues/1268

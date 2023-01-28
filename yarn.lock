@@ -16069,6 +16069,13 @@ react-shallow-renderer@^16.13.1:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
 
+react-signature-pad-wrapper@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/react-signature-pad-wrapper/-/react-signature-pad-wrapper-3.3.1.tgz#7af4ceefec5cf30a147c853a407e035f0181bc2b"
+  integrity sha512-409/N1cHHyoK7PtpO0JhL/p9gk87aSir/wd0k/Pk0Pmu7g9UqI+jwAVc17b3LD6npwwwd8ohN/nk1mJ4fXqdgw==
+  dependencies:
+    signature_pad "^4.0.0"
+
 react-split-pane@^0.1.92:
   version "0.1.92"
   resolved "https://registry.npmjs.org/react-split-pane/-/react-split-pane-0.1.92.tgz"
@@ -17107,6 +17114,11 @@ signal-exit@^3.0.0, signal-exit@^3.0.2, signal-exit@^3.0.3, signal-exit@^3.0.7:
   version "3.0.7"
   resolved "https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz"
   integrity sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==
+
+signature_pad@^4.0.0:
+  version "4.1.4"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-4.1.4.tgz#b1ff36f2565ad7455d9174fd9f2e7affc872e666"
+  integrity sha512-NKLm9uhRfEPl8cdbbyYAiPsoJ3slIo1AyKg3tzwy8OCX2zQc6jrccUlgMBTJPcUsZXNU8o6fy7iX33rtYSoQHQ==
 
 signed-varint@^2.0.1:
   version "2.0.1"
