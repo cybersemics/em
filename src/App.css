@@ -4,6 +4,7 @@
 :root {
   --z-index-alert: 1500;
   /* Sidebar : 1300 */
+  --z-index-gesture-trace: 50;
   --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
   --z-index-toolbar-container: 20;
@@ -35,6 +36,9 @@
 
 .z-index-alert {
   z-index: var(--z-index-alert);
+}
+.z-index-gesture-trace {
+  z-index: var(--z-index-gesture-trace);
 }
 .z-index-hamburger-menu {
   z-index: var(--z-index-hamburger-menu);
@@ -1043,6 +1047,34 @@ body.dark {
 .fade-600-exit-active {
   opacity: 0;
   transition: opacity 700ms ease 0ms;
+}
+
+/* react-transition-group animation: fade-both */
+/* eases in and out  */
+.fade-both-enter {
+  opacity: 0;
+}
+
+.fade-both-enter-active {
+  opacity: 1;
+  transition: opacity 400ms ease-in-out;
+}
+
+.fade-both-enter-done {
+  opacity: 1;
+}
+
+.fade-both-exit-done {
+  opacity: 0;
+}
+
+.fade-both-exit {
+  opacity: 1;
+}
+
+.fade-both-exit-active {
+  opacity: 0;
+  transition: opacity 400ms ease-in-out;
 }
 
 /* react-transition-group animation: slide */
