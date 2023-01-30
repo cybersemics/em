@@ -58,6 +58,10 @@ const ModalSettings = () => {
           Hides all superscripts (<sup>2</sup>) that indicate the number of contexts the thought appears in. When
           hidden, the superscript will not be visible, but the context view can still be activated and used as normal.
         </Setting>
+
+        <Setting settingKey='disableGestureTracing' title={'Disable Gesture Tracing'}>
+          Disables the trace that is drawn onto the screen while executing a gesture.
+        </Setting>
       </form>
     </Modal>
   )

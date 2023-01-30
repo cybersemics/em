@@ -3,22 +3,30 @@ import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
 import State from '../@types/State'
-import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import { AlertType, EM_TOKEN, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import findDescendant from '../selectors/findDescendant'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import { Ministore } from '../stores/ministore'
 import viewportStore from '../stores/viewport'
 
-/** Draws a gesture as it is being performed onto a canvas. */
-const TraceGesture = ({
-  eventNodeRef,
-  visibilityStore,
-}: {
+interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
   visibilityStore: Ministore<boolean>
-}) => {
+}
+
+/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+const TraceGestureWrapper = (props: TraceGestureProps) => {
+  const disableGestureTracing = useSelector(
+    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'disableGestureTracing']),
+  )
+  return <>{!disableGestureTracing && <TraceGesture {...props} />}</>
+}
+
+/** Draws a gesture as it is being performed onto a canvas. */
+const TraceGesture = ({ eventNodeRef, visibilityStore }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
 
   // A hook that is true when there is a cancelled gesture in progress.
@@ -113,4 +121,4 @@ const TraceGesture = ({
   )
 }
 
-export default TraceGesture
+export default TraceGestureWrapper
