@@ -7,7 +7,7 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import GestureDiagram from '../components/GestureDiagram'
-import { AlertType } from '../constants'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { globalShortcuts } from '../shortcuts'
@@ -58,6 +58,7 @@ const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
 
   if (!alert.value) return null
 
+  // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
   const gestureInProgress = alert.value === '*' ? '' : alert.value!
 
   // get the shortcuts that can be executed from the current gesture in progress
@@ -102,7 +103,7 @@ const ExtendedGestureHint = ({ alert }: { alert: Alert }) => {
           ))}
         </div>
       ) : (
-        <div style={{ textAlign: 'center' }}>✗ Cancel gesture</div>
+        <div style={{ textAlign: 'center' }}>{GESTURE_CANCEL_ALERT_TEXT}</div>
       )}
     </div>
   )

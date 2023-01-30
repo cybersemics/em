@@ -141,7 +141,7 @@ const TraceGesture = ({
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
-      <CSSTransition in={show === TraceVisibility.Show} timeout={400} classNames='fade-both'>
+      <CSSTransition in={visibility === TraceVisibility.Show} timeout={400} classNames='fade-both'>
         <div
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'

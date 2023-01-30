@@ -9,7 +9,7 @@ import Shortcut from './@types/Shortcut'
 import State from './@types/State'
 import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
-import { AlertType, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
@@ -85,7 +85,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
+        alert(shortcut ? shortcut?.label : GESTURE_CANCEL_ALERT_TEXT, {
           alertType: AlertType.GestureHint,
           showCloseLink: !!shortcut,
         }),
@@ -99,7 +99,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
-          if (getState().alert?.value === '✗ Cancel gesture') return
+          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
           dispatch(
             alert(sequence as string, {
               alertType: AlertType.GestureHintExtended,

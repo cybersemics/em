@@ -13,7 +13,7 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { AlertType, EM_TOKEN, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, EM_TOKEN, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
 import globals from './globals'
 import findDescendant from './selectors/findDescendant'
 import * as shortcutObject from './shortcuts/index'
@@ -163,7 +163,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
+        alert(shortcut ? shortcut?.label : GESTURE_CANCEL_ALERT_TEXT, {
           alertType: AlertType.GestureHint,
           clearDelay: 5000,
           showCloseLink: false,
@@ -178,7 +178,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
-          if (getState().alert?.value === '✗ Cancel gesture') return
+          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
           dispatch(
             alert(sequence as string, {
               alertType: AlertType.GestureHintExtended,
