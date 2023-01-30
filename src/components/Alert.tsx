@@ -10,16 +10,12 @@ import GestureDiagram from '../components/GestureDiagram'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
-import { globalShortcuts } from '../shortcuts'
+import { gestureString, globalShortcuts } from '../shortcuts'
 
 interface AlertProps {
   alert?: Alert | null
   onClose: () => void
 }
-
-/** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
-const gestureString = (shortcut: Shortcut): string =>
-  (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const ShortcutGestureHint = ({

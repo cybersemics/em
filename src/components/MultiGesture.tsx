@@ -7,7 +7,10 @@ import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import State from '../@types/State'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import themeColors from '../selectors/themeColors'
+import { gestureString, globalShortcuts } from '../shortcuts'
 import ministore, { Ministore } from '../stores/ministore'
 import viewportStore from '../stores/viewport'
 
@@ -90,6 +93,23 @@ const TraceGesture = ({
   visibilityStore: Ministore<TraceVisibility>
 }) => {
   const colors = useSelector(themeColors)
+
+  // A hook that is true when there is a cancelled gesture in progress.
+  // Handles GestureHint and GestureHintExtended which have different ways of showing a cancelled gesture.
+  const cancelled = useSelector((state: State) => {
+    const alert = state.alert
+    if (!alert || !alert.value) return false
+    // GestureHint
+    else if (alert.alertType === AlertType.GestureHint && alert.value === GESTURE_CANCEL_ALERT_TEXT) return true
+    // GestureHintExtended
+    else if (alert.alertType === AlertType.GestureHintExtended) {
+      // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
+      return !globalShortcuts.some(shortcut => gestureString(shortcut) === alert.value)
+    }
+
+    return false
+  })
+
   const visibility = visibilityStore.useState()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
@@ -138,6 +158,10 @@ const TraceGesture = ({
         top: 0,
         left: 0,
         height: innerHeight,
+        // Dim the gesture trace to 50% opacity when the gesture is cancelled.
+        // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
+        opacity: cancelled || visibility === TraceVisibility.Hide ? 0.5 : 1,
+        transition: 'opacity 150ms ease-in-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
