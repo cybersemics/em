@@ -80,7 +80,15 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 }
 
 /** Draws a gesture as it is being performed onto a canvas. */
-const TraceGesture = ({ visibilityStore }: { visibilityStore: Ministore<TraceVisibility> }) => {
+const TraceGesture = ({
+  eventNodeRef,
+  visibilityStore,
+}: {
+  // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
+  // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
+  eventNodeRef?: React.RefObject<HTMLElement>
+  visibilityStore: Ministore<TraceVisibility>
+}) => {
   const colors = useSelector(themeColors)
   const visibility = visibilityStore.useState()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
@@ -98,6 +106,14 @@ const TraceGesture = ({ visibilityStore }: { visibilityStore: Ministore<TraceVis
   useEffect(() => {
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
+
+    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
+    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
+    if (eventNodeRef?.current) {
+      eventNodeRef.current.addEventListener('pointerdown', handlePointerStart)
+      eventNodeRef.current.addEventListener('pointermove', handlePointerMove)
+    }
+
     signaturePad.addEventListener('beginStroke', onBeginStroke)
 
     // update canvas dimensions, otherwise the initial height on load is too large for some reason
@@ -106,13 +122,26 @@ const TraceGesture = ({ visibilityStore }: { visibilityStore: Ministore<TraceVis
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     return () => {
+      if (eventNodeRef?.current) {
+        eventNodeRef.current.removeEventListener('pointerdown', handlePointerStart)
+        eventNodeRef.current.removeEventListener('pointermove', handlePointerMove)
+      }
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [])
 
   return (
-    <div className='z-index-gesture-trace' style={{ position: 'fixed', top: 0, left: 0, height: innerHeight }}>
-      <CSSTransition in={visibility === TraceVisibility.Show} timeout={400} classNames='fade-both'>
+    <div
+      className='z-index-gesture-trace'
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: innerHeight,
+        pointerEvents: eventNodeRef ? 'none' : undefined,
+      }}
+    >
+      <CSSTransition in={show === TraceVisibility.Show} timeout={400} classNames='fade-both'>
         <div
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'
@@ -335,13 +364,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   render() {
+    const ref = React.createRef<HTMLDivElement>()
     return (
-      <div>
-        <View {...this.panResponder.panHandlers}>
-          <TraceGesture visibilityStore={this.visibilityStore} />
-          {this.props.children}
-        </View>
-      </div>
+      <View {...this.panResponder.panHandlers}>
+        <TraceGesture eventNodeRef={ref} visibilityStore={this.visibilityStore} />
+        <div ref={ref}>{this.props.children}</div>
+      </View>
     )
   }
 
