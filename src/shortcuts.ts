@@ -200,9 +200,16 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (scrollPrioritized) return
 
-    const shortcut = shortcutGestureIndex[sequence as string]
+    // Get the shortcut from the shortcut gesture index.
+    // When the extended gesture hint is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
+    const shortcut =
+      state.alert?.alertType !== AlertType.GestureHintExtended ||
+      !shortcutGestureIndex[sequence as string]?.hideFromInstructions
+        ? shortcutGestureIndex[sequence as string]
+        : null
 
-    // disable when modal is displayed or a drag is in progress
+    // execute shortcut
+    // do not execute when modal is displayed or a drag is in progress
     if (shortcut && !state.showModal && !state.dragInProgress) {
       shortcutEmitter.trigger('shortcut', shortcut)
       shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })

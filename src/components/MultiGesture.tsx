@@ -104,7 +104,9 @@ const TraceGesture = ({
     // GestureHintExtended
     else if (alert.alertType === AlertType.GestureHintExtended) {
       // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
-      return !globalShortcuts.some(shortcut => gestureString(shortcut) === alert.value)
+      return !globalShortcuts.some(
+        shortcut => !shortcut.hideFromInstructions && gestureString(shortcut) === alert.value,
+      )
     }
 
     return false
