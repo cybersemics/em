@@ -30,11 +30,6 @@ interface GestureState {
   moveY: number
 }
 
-enum TraceVisibility {
-  Show = 'Show',
-  Hide = 'Hide',
-}
-
 interface MultiGestureProps {
   disableTrace?: boolean
   onGesture?: (args: {
@@ -90,7 +85,7 @@ const TraceGesture = ({
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
-  visibilityStore: Ministore<TraceVisibility>
+  visibilityStore: Ministore<boolean>
 }) => {
   const colors = useSelector(themeColors)
 
@@ -112,7 +107,7 @@ const TraceGesture = ({
     return false
   })
 
-  const visibility = visibilityStore.useState()
+  const show = visibilityStore.useState()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
   const fadeTimer = useRef(0)
@@ -162,12 +157,12 @@ const TraceGesture = ({
         height: innerHeight,
         // Dim the gesture trace to 50% opacity when the gesture is cancelled.
         // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
-        opacity: cancelled || visibility === TraceVisibility.Hide ? 0.5 : 1,
+        opacity: cancelled || !show ? 0.5 : 1,
         transition: 'opacity 150ms ease-in-out',
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
-      <CSSTransition in={visibility === TraceVisibility.Show} timeout={400} classNames='fade-both'>
+      <CSSTransition in={show} timeout={400} classNames='fade-both'>
         <div
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'
@@ -199,7 +194,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   scrolling = false
   sequence: GesturePath = ''
   // a ministore that tracks if the trace should be shown, hidden, or dimmed
-  visibilityStore = ministore<TraceVisibility>(TraceVisibility.Hide)
+  visibilityStore = ministore(false)
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -295,7 +290,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart!, e })
-          this.visibilityStore.update(TraceVisibility.Hide)
+          this.visibilityStore.update(false)
           this.abandon = true
           return
         }
@@ -356,7 +351,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
               this.sequence += g
               this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
               if (this.sequence.length === 1) {
-                this.visibilityStore.update(TraceVisibility.Show)
+                this.visibilityStore.update(true)
               }
             }
           }
@@ -386,7 +381,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
-    this.visibilityStore.update(TraceVisibility.Hide)
+    this.visibilityStore.update(false)
   }
 
   render() {
