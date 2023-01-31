@@ -493,6 +493,15 @@ export enum AlertType {
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
 }
 
+// Allowable settings that can be saved to /EM/Settings/
+// See ModalSettings for full descriptions.
+export enum Settings {
+  disableGestureTracing = 'disableGestureTracing',
+  experienceMode = 'experienceMode',
+  favoritesHideContexts = 'favoritesHideContexts',
+  hideSuperscripts = 'hideSuperscripts',
+}
+
 // maximum size of state.jumpHistory
 export const MAX_JUMPS = 100
 

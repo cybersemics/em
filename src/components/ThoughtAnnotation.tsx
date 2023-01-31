@@ -9,13 +9,14 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
-import { EM_TOKEN, REGEXP_PUNCTUATIONS, REGEXP_TAGS } from '../constants'
+import { REGEXP_PUNCTUATIONS, REGEXP_TAGS, Settings } from '../constants'
 import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
+import getUserSetting from '../selectors/getUserSetting'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
@@ -134,9 +135,7 @@ const ThoughtAnnotation = ({
   editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
   const fontSize = useSelector((state: State) => state.fontSize)
-  const hideSuperscriptsSetting = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'hideSuperscripts']),
-  )
+  const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
 
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)

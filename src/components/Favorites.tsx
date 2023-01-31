@@ -21,12 +21,12 @@ import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, EM_TOKEN, NOOP } from '../constants'
+import { AlertType, EM_TOKEN, NOOP, Settings } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
-import findDescendant from '../selectors/findDescendant'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import store from '../stores/app'
@@ -240,9 +240,7 @@ const FavoritesOptions = ({
   showOptions?: boolean
 }) => {
   const dispatch = useDispatch()
-  const hideContexts = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
-  )
+  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
     <div style={{ marginBottom: '0.5em' }}>
@@ -313,9 +311,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
       .filter(x => x) as SimplePath[]
   }, _.isEqual)
 
-  const hideContexts = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
-  )
+  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
     <div

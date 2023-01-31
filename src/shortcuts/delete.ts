@@ -4,9 +4,10 @@ import alert from '../action-creators/alert'
 import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
 import Icon from '../components/icons/DeleteIcon'
-import { AlertType, EM_TOKEN } from '../constants'
+import { AlertType, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import getUserSetting from '../selectors/getUserSetting'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
@@ -38,7 +39,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
 
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.
-    const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+    const experienceMode = getUserSetting(Settings.experienceMode)
     if (value || !experienceMode) {
       dispatch(
         alert(

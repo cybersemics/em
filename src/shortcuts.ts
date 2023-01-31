@@ -13,9 +13,9 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { AlertType, EM_TOKEN, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT, Settings } from './constants'
 import globals from './globals'
-import findDescendant from './selectors/findDescendant'
+import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
@@ -142,7 +142,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
-    const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+    const experienceMode = getUserSetting(state, Settings.experienceMode)
 
     if (toolbarOverlay || scrollPrioritized || state.showModal || state.dragInProgress) return
 
@@ -227,7 +227,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
-        const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+        const experienceMode = getUserSetting(Settings.experienceMode)
         if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
           dispatch(
             alert(
