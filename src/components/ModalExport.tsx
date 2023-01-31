@@ -157,11 +157,11 @@ const useDescendantsNumber = () => useContext(DescendantNumberContext)
 
 interface AdvancedSetting {
   id: string
-  onChangeFunc: () => void
+  onChange: () => void
   checked: boolean
   title: string
   description: string
-  dim?: boolean
+  disable?: boolean
   indent?: boolean
 }
 
@@ -451,7 +451,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const advancedSettingsArray: AdvancedSetting[] = [
     {
       id: 'meta',
-      onChangeFunc: onChangeMetaCheckbox,
+      onChange: onChangeMetaCheckbox,
       checked: shouldIncludeMetaAttributes,
       title: 'Metaprogramming Attributes',
       description:
@@ -459,16 +459,16 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     },
     {
       id: 'archived',
-      onChangeFunc: onChangeArchivedCheckbox,
+      onChange: onChangeArchivedCheckbox,
       checked: shouldIncludeArchived,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
-      dim: !shouldIncludeMetaAttributes,
+      disable: !shouldIncludeMetaAttributes,
       indent: true,
     },
     {
       id: 'formatting',
-      onChangeFunc: onChangeFormattingCheckbox,
+      onChange: onChangeFormattingCheckbox,
       checked: shouldIncludeMarkdownFormatting,
       title: 'Formatting Characters',
       description:
@@ -561,17 +561,8 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       {advancedSettings && (
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ checked, description, dim, id, indent, onChangeFunc, title }) => (
-            <div key={id}>
-              <CheckboxItem
-                checked={checked}
-                description={description}
-                dim={dim}
-                indent={indent}
-                onChange={onChangeFunc}
-                title={title}
-              />
-            </div>
+          {advancedSettingsArray.map(props => (
+            <CheckboxItem key={props.id} {...props} />
           ))}
         </div>
       )}
