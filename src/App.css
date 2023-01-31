@@ -2840,8 +2840,8 @@ a.advance-setting-link {
 .checkbox-container {
   display: block;
   position: relative;
-  padding-left: 35px;
-  margin-bottom: 12px;
+  padding-left: 2.2em;
+  margin-bottom: 1em;
   cursor: pointer;
   user-select: none;
 }
@@ -2854,36 +2854,36 @@ a.advance-setting-link {
   width: 0;
 }
 
-.checkmark {
+.checkbox {
   position: absolute;
-  top: 0;
+  top: 2px;
   left: 0;
   height: 15px;
   width: 15px;
   background-color: #fff;
 }
 
-.checkbox-container input ~ .checkmark,
-.checkbox-container:hover input ~ .checkmark,
-.checkbox-container input:checked ~ .checkmark {
+.checkbox-container input ~ .checkbox,
+.checkbox-container:hover input ~ .checkbox,
+.checkbox-container input:checked ~ .checkbox {
   background-color: #000;
   border: 1px solid #fff;
 }
 
-/* Create the checkmark/indicator (hidden when not checked) */
-.checkmark:after {
+/* Create the checkbox/indicator (hidden when not checked) */
+.checkbox:after {
   content: '';
   position: absolute;
   display: none;
 }
 
-/* Show the checkmark when checked */
-.checkbox-container input:checked ~ .checkmark:after {
+/* Show the checkbox when checked */
+.checkbox-container input:checked ~ .checkbox:after {
   display: block;
 }
 
-/* Style the checkmark/indicator */
-.checkbox-container .checkmark:after {
+/* checkbox indicator */
+.checkbox-container .checkbox:after {
   left: 5px;
   top: 1px;
   width: 4px;
