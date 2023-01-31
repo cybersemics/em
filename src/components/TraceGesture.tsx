@@ -55,7 +55,14 @@ const TraceGesture = ({ eventNodeRef, visibilityStore }: TraceGestureProps) => {
   const onBeginStroke = useCallback(() => {
     clearTimeout(fadeTimer.current)
     if (!signaturePadRef.current) return
-    signaturePadRef.current.signaturePad.clear()
+    const signaturePad = signaturePadRef.current.signaturePad
+    signaturePad.clear()
+
+    // add glow
+    signaturePad._ctx.shadowColor = colors.gray
+    signaturePad._ctx.shadowOffsetX = 0
+    signaturePad._ctx.shadowOffsetY = 0
+    signaturePad._ctx.shadowBlur = 15
   }, [])
 
   useEffect(() => {
