@@ -39,6 +39,7 @@ import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import removeHome from '../util/removeHome'
 import timestamp from '../util/timestamp'
+import CheckboxItem from './CheckboxItem'
 import ChevronImg from './ChevronImg'
 import DropDownMenu from './DropDownMenu'
 import LoadingEllipsis from './LoadingEllipsis'
@@ -560,26 +561,18 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
       {advancedSettings && (
         <div className='advance-setting-section'>
-          {advancedSettingsArray.map(({ id, onChangeFunc, checked, title, description, dim, indent }) => {
-            return (
-              <label
-                className='checkbox-container'
-                key={`${id}-key-${title}`}
-                // marginLeft should match .checkbox-container paddingLeft
-                style={{ opacity: dim ? 0.5 : undefined, marginLeft: indent ? 35 : undefined }}
-              >
-                <div>
-                  <p className='advance-setting-label'>{title}</p>
-                  <p className='advance-setting-description dim'>{description}</p>
-                </div>
-
-                {/* Note: never preventDefault on a controlled checkbox in React.
-                    See: https://stackoverflow.com/a/70030088/4806080 */}
-                <input type='checkbox' id={id} checked={checked} onChange={onChangeFunc} />
-                <span className='checkmark'></span>
-              </label>
-            )
-          })}
+          {advancedSettingsArray.map(({ checked, description, dim, id, indent, onChangeFunc, title }) => (
+            <div key={id}>
+              <CheckboxItem
+                checked={checked}
+                description={description}
+                dim={dim}
+                indent={indent}
+                onChange={onChangeFunc}
+                title={title}
+              />
+            </div>
+          ))}
         </div>
       )}
 
