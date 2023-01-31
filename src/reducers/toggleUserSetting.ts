@@ -6,10 +6,13 @@ import { EM_TOKEN, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 
 /** Toggles a user setting on/off. */
-const toggleUserSetting = (state: State, { key }: { key: Settings }) => {
+const toggleUserSetting = (state: State, { key, value }: { key: Settings; value?: boolean }) => {
   const settingsId = findDescendant(state, EM_TOKEN, 'Settings')!
   const settingsPath = [EM_TOKEN, settingsId] as Path
-  return toggleThought(state, { path: settingsPath, value: key })
+  const exists = !!findDescendant(state, settingsId, key)
+  return value === undefined || (value ? !exists : exists)
+    ? toggleThought(state, { path: settingsPath, value: key })
+    : state
 }
 
 export default _.curryRight(toggleUserSetting)
