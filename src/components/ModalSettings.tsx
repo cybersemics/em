@@ -1,41 +1,46 @@
-import React from 'react'
+import React, { FC, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import ModalType from '../@types/Modal'
-import State from '../@types/State'
-import toggleAttribute from '../action-creators/toggleAttribute'
-import { EM_TOKEN } from '../constants'
+import Path from '../@types/Path'
+import toggleThought from '../action-creators/toggleThought'
+import { EM_TOKEN, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
+import getUserSetting from '../selectors/getUserSetting'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
 
 const labelStyle: React.CSSProperties = { cursor: 'pointer', userSelect: 'none', padding: '1em', margin: '-1em' }
 
-/** Returns the boolean value of a setting stored in /EM/Settings. */
-const useBooleanSetting = (key: string) =>
-  useSelector((state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', key]))
-
-/** Toggles a setting in /EM/Settings. */
-const useToggleSetting = (key: string) => {
-  const dispatch = useDispatch()
-  return () => dispatch(toggleAttribute({ path: [EM_TOKEN], values: ['Settings', key] }))
-}
-
 /** A boolean setting checkbox, title, and description. */
-const Setting = ({ invert, settingKey, title, children }: any) => {
-  const value = useBooleanSetting(settingKey)
+const Setting: FC<{
+  // if true, checks the checkbox if the key is false
+  invert?: boolean
+  settingsKey: Settings
+  title: string
+}> = ({ children, invert, settingsKey, title }) => {
+  const value = useSelector(getUserSetting(settingsKey))
+  const dispatch = useDispatch()
+  const onChange = useCallback(() => {
+    dispatch((dispatch, getState) => {
+      const state = getState()
+      const settingsId = findDescendant(state, EM_TOKEN, 'Settings')!
+      const settingsPath = [EM_TOKEN, settingsId] as Path
+      dispatch(toggleThought({ path: settingsPath, value: settingsKey }))
+    })
+  }, [settingsKey])
   return (
-    <>
+    <div style={{ marginBottom: '1.5em' }}>
       <label style={labelStyle}>
         <input
           type='checkbox'
           checked={invert ? !value : value}
-          onChange={useToggleSetting(settingKey)}
+          onChange={onChange}
           style={{ cursor: 'pointer' }}
         ></input>{' '}
         <b>{title}</b>
       </label>
-      <p style={{ marginTop: 5 }}>{children}</p>
-    </>
+      <p style={{ marginLeft: 3, marginTop: '0.5em' }}>{children}</p>
+    </div>
   )
 }
 
@@ -46,21 +51,25 @@ const ModalSettings = () => {
       id={ModalType.settings}
       title='Settings'
       className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
+      actions={({ close }) => (
+        <div style={{ textAlign: 'center' }}>
+          <ActionButton key='close' title='Close' onClick={() => close()} />
+        </div>
+      )}
     >
       <form>
-        <Setting settingKey='experienceMode' title={'Training Mode'} invert={true}>
-          Shows a notification each time a gesture is executed. This is helpful when you are learning gestures and want
-          an extra bit of feedback.
+        <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
+          Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
+          learning gestures and want an extra bit of feedback.
         </Setting>
 
-        <Setting settingKey='hideSuperscripts' title={'Hide Superscripts'}>
+        <Setting settingsKey={Settings.hideSuperscripts} title='Hide Superscripts'>
           Hides all superscripts (<sup>2</sup>) that indicate the number of contexts the thought appears in. When
           hidden, the superscript will not be visible, but the context view can still be activated and used as normal.
         </Setting>
 
-        <Setting settingKey='disableGestureTracing' title={'Disable Gesture Tracing'}>
-          Disables the trace that is drawn onto the screen while executing a gesture.
+        <Setting settingsKey={Settings.disableGestureTracing} title='Disable Gesture Tracing'>
+          Disables the trace that is drawn onto the screen while making a gesture on a touch screen device.
         </Setting>
       </form>
     </Modal>

@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
 import State from '../@types/State'
-import { AlertType, EM_TOKEN, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
-import findDescendant from '../selectors/findDescendant'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT, Settings } from '../constants'
+import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import { Ministore } from '../stores/ministore'
@@ -19,9 +19,7 @@ interface TraceGestureProps {
 
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
-  const disableGestureTracing = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'disableGestureTracing']),
-  )
+  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
   return <>{!disableGestureTracing && <TraceGesture {...props} />}</>
 }
 
