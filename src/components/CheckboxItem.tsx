@@ -1,18 +1,35 @@
 import React from 'react'
-import Checkbox from './Checkbox'
+
+/** A checkbox component with em styling. */
+const Checkbox = ({
+  checked,
+  onChange,
+}: {
+  checked?: boolean
+  onChange?: React.ChangeEventHandler<HTMLInputElement>
+}) => {
+  return (
+    <>
+      {/* Note: never preventDefault on a controlled checkbox in React.
+          See: https://stackoverflow.com/a/70030088/4806080 */}
+      <input type='checkbox' checked={checked} onChange={onChange} />
+      <span className='checkbox' />
+    </>
+  )
+}
 
 /** A checkbox item with title and description. */
 const CheckboxItem = ({
   checked,
   description,
-  dim,
+  disable,
   indent,
   onChange,
   title,
 }: {
   checked?: boolean
   description?: string
-  dim?: boolean
+  disable?: boolean
   indent?: boolean
   onChange: React.ChangeEventHandler
   title?: string
@@ -20,8 +37,12 @@ const CheckboxItem = ({
   return (
     <label
       className='checkbox-container'
-      // marginLeft should match .checkbox-container paddingLeft
-      style={{ opacity: dim ? 0.5 : undefined, marginLeft: indent ? 35 : undefined }}
+      style={{
+        opacity: disable ? 0.5 : undefined,
+        // indent should match .checkbox-container padding-left
+        marginLeft: indent ? '2.2em' : undefined,
+        pointerEvents: disable ? 'none' : undefined,
+      }}
     >
       <div>
         <p className='advance-setting-label'>{title}</p>

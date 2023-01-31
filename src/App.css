@@ -2856,7 +2856,7 @@ a.advance-setting-link {
 
 .checkbox {
   position: absolute;
-  top: 2px;
+  top: 0;
   left: 0;
   height: 15px;
   width: 15px;
