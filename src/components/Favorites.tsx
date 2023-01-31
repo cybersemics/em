@@ -19,9 +19,9 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
-import toggleAttribute from '../action-creators/toggleAttribute'
+import toggleUserSetting from '../action-creators/toggleUserSetting'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, EM_TOKEN, NOOP, Settings } from '../constants'
+import { AlertType, NOOP, Settings } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
@@ -279,10 +279,10 @@ const FavoritesOptions = ({
               <input
                 type='checkbox'
                 checked={!hideContexts}
-                onChange={e => {
+                onChange={() => {
                   // Note: never preventDefault on a controlled checkbox in React.
                   // See: https://stackoverflow.com/a/70030088/4806080
-                  dispatch(toggleAttribute({ path: [EM_TOKEN], values: ['Settings', 'favoritesHideContexts'] }))
+                  dispatch(toggleUserSetting({ key: Settings.favoritesHideContexts }))
                 }}
                 style={{ cursor: 'pointer' }}
               ></input>{' '}

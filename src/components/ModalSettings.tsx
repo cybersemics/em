@@ -1,10 +1,8 @@
-import React, { FC, useCallback } from 'react'
+import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import ModalType from '../@types/Modal'
-import Path from '../@types/Path'
-import toggleThought from '../action-creators/toggleThought'
-import { EM_TOKEN, Settings } from '../constants'
-import findDescendant from '../selectors/findDescendant'
+import toggleUserSetting from '../action-creators/toggleUserSetting'
+import { Settings } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
@@ -20,21 +18,15 @@ const Setting: FC<{
 }> = ({ children, invert, settingsKey, title }) => {
   const value = useSelector(getUserSetting(settingsKey))
   const dispatch = useDispatch()
-  const onChange = useCallback(() => {
-    dispatch((dispatch, getState) => {
-      const state = getState()
-      const settingsId = findDescendant(state, EM_TOKEN, 'Settings')!
-      const settingsPath = [EM_TOKEN, settingsId] as Path
-      dispatch(toggleThought({ path: settingsPath, value: settingsKey }))
-    })
-  }, [settingsKey])
   return (
     <div style={{ marginBottom: '1.5em' }}>
       <label style={labelStyle}>
         <input
           type='checkbox'
           checked={invert ? !value : value}
-          onChange={onChange}
+          onChange={() => {
+            dispatch(toggleUserSetting({ key: settingsKey }))
+          }}
           style={{ cursor: 'pointer' }}
         ></input>{' '}
         <b>{title}</b>
