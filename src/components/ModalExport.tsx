@@ -161,7 +161,7 @@ interface AdvancedSetting {
   checked: boolean
   title: string
   description: string
-  disable?: boolean
+  disabled?: boolean
   indent?: boolean
 }
 
@@ -463,7 +463,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       checked: shouldIncludeArchived,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
-      disable: !shouldIncludeMetaAttributes,
+      disabled: !shouldIncludeMetaAttributes,
       indent: true,
     },
     {
@@ -562,7 +562,9 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       {advancedSettings && (
         <div className='advance-setting-section'>
           {advancedSettingsArray.map(props => (
-            <CheckboxItem key={props.id} {...props} />
+            <CheckboxItem key={props.id} {...props}>
+              {props.description}
+            </CheckboxItem>
           ))}
         </div>
       )}

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC } from 'react'
 
 /** A checkbox component with em styling. */
 const Checkbox = ({
@@ -19,34 +19,33 @@ const Checkbox = ({
 }
 
 /** A checkbox item with title and description. */
-const CheckboxItem = ({
-  checked,
-  description,
-  disable,
-  indent,
-  onChange,
-  title,
-}: {
+const CheckboxItem: FC<{
   checked?: boolean
-  description?: string
-  disable?: boolean
+  disabled?: boolean
   indent?: boolean
   onChange: React.ChangeEventHandler
   title?: string
-}) => {
+}> = ({ checked, children, disabled, indent, onChange, title }) => {
   return (
     <label
       className='checkbox-container'
       style={{
-        opacity: disable ? 0.5 : undefined,
+        opacity: disabled ? 0.5 : undefined,
         // indent should match .checkbox-container padding-left
         marginLeft: indent ? '2.2em' : undefined,
-        pointerEvents: disable ? 'none' : undefined,
+        pointerEvents: disabled ? 'none' : undefined,
+        cursor: disabled ? 'default' : 'pointer',
       }}
     >
-      <div>
+      <div
+        style={{
+          // Ensure that the title and description margins are not merged with checkbox-container margins.
+          // For some reason they were preserved in Exports Advanced Settings but not User Settings.
+          overflow: 'auto',
+        }}
+      >
         <p className='advance-setting-label'>{title}</p>
-        <p className='advance-setting-description dim'>{description}</p>
+        <p className='advance-setting-description dim'>{children}</p>
       </div>
 
       <Checkbox checked={checked} onChange={onChange} />

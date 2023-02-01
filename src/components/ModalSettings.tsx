@@ -5,7 +5,10 @@ import State from '../@types/State'
 import toggleUserSetting from '../action-creators/toggleUserSetting'
 import { Settings } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
+import themeColors from '../selectors/themeColors'
 import { ActionButton } from './ActionButton'
+import CheckboxItem from './CheckboxItem'
+import GestureDiagram from './GestureDiagram'
 import Modal from './Modal'
 
 /** A boolean setting checkbox, title, and description. */
@@ -23,29 +26,27 @@ const Setting: FC<{
   const disabled = useSelector((state: State) => dependsOn && getUserSetting(state, dependsOn))
   const dispatch = useDispatch()
   return (
-    <div style={{ marginBottom: '1.5em', opacity: disabled ? 0.5 : undefined }}>
-      <label style={{ cursor: disabled ? 'default' : 'pointer', userSelect: 'none', padding: '1em', margin: '-1em' }}>
-        <input
-          type='checkbox'
-          checked={invert ? !value : value}
-          onChange={() => {
-            if (disabled) return
-            dispatch(toggleUserSetting({ key: settingsKey }))
-            if (dependee && !value) {
-              dispatch(toggleUserSetting({ key: dependee, value: false }))
-            }
-          }}
-          style={{ cursor: disabled ? undefined : 'pointer' }}
-        ></input>{' '}
-        <b>{title}</b>
-      </label>
-      <p style={{ marginLeft: 3, marginTop: '0.5em', cursor: disabled ? 'default' : undefined }}>{children}</p>
-    </div>
+    <CheckboxItem
+      checked={invert ? !value : value}
+      disabled={disabled}
+      title={title}
+      onChange={() => {
+        if (disabled) return
+        dispatch(toggleUserSetting({ key: settingsKey }))
+        if (dependee && !value) {
+          dispatch(toggleUserSetting({ key: dependee, value: false }))
+        }
+      }}
+    >
+      {children}
+    </CheckboxItem>
   )
 }
 
 /** User settings modal. */
 const ModalSettings = () => {
+  const colors = useSelector(themeColors)
+  const fontSize = useSelector((state: State) => state.fontSize)
   return (
     <Modal
       id={ModalType.settings}
@@ -57,7 +58,7 @@ const ModalSettings = () => {
         </div>
       )}
     >
-      <form>
+      <form style={{ fontSize: undefined }}>
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
           learning gestures and want an extra bit of feedback.
@@ -80,10 +81,32 @@ const ModalSettings = () => {
         <div style={{ marginLeft: '2em' }}>
           <Setting
             settingsKey={Settings.disableGestureTracingBackForward}
-            title='Disable Gesture Tracing for back/forward only'
+            title='Disable Gesture Tracing for back/forward'
             dependsOn={Settings.disableGestureTracing}
           >
-            Do not show the gesture trace for simple back or forward gestures.
+            Do not show the gesture trace for single-swipe gestures, i.e. back
+            <span style={{ whiteSpace: 'nowrap' }}>
+              (
+              <GestureDiagram
+                path='r'
+                size={fontSize * 2}
+                color={colors.gray66}
+                style={{ height: 9, marginLeft: '-0.2em', marginRight: '-0.9em' }}
+              />
+              )
+            </span>{' '}
+            and forward{' '}
+            <span style={{ whiteSpace: 'nowrap' }}>
+              (
+              <GestureDiagram
+                path='l'
+                size={fontSize * 2}
+                color={colors.gray66}
+                style={{ height: 9, marginLeft: '-0.2em', marginRight: '-0.9em' }}
+              />
+              )
+            </span>
+            .
           </Setting>
         </div>
       </form>
