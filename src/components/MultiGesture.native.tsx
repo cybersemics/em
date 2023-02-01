@@ -1,8 +1,8 @@
-import { noop } from 'lodash'
 import React, { FC, useEffect, useState } from 'react'
 import { GestureResponderEvent, PanResponder, ScrollView } from 'react-native'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import { NOOP } from '../constants'
 import { commonStyles } from '../style/commonStyles'
 
 interface Point {
@@ -66,13 +66,13 @@ const MultiGesture: FC<MultiGestureProps> = ({
 
   // fired at the start of a gesture
   // includes false starts
-  onStart = noop,
+  onStart = NOOP,
 
   // fired when a new gesture is added to the sequence
-  onGesture = noop,
+  onGesture = NOOP,
 
   // fired when all gestures have completed
-  onEnd = noop,
+  onEnd = NOOP,
   ...props
 }) => {
   const [isGestureActive, setIsGestureActive] = useState(false)

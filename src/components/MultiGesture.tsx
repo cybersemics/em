@@ -1,9 +1,9 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import { noop } from 'lodash'
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import { NOOP } from '../constants'
 import ministore from '../stores/ministore'
 import TraceGesture from './TraceGesture'
 
@@ -296,9 +296,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     disableTrace: false,
     minDistance: 10,
     scrollThreshold: 15,
-    onStart: noop,
-    onGesture: noop,
-    onEnd: noop,
+    onStart: NOOP,
+    onGesture: NOOP,
+    onEnd: NOOP,
   }
 }
 

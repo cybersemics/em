@@ -1,6 +1,7 @@
-import _, { noop } from 'lodash'
+import _ from 'lodash'
 import * as Firebase from '../../@types/Firebase'
 import Index from '../../@types/IndexType'
+import { NOOP } from '../../constants'
 
 // eslint-disable-next-line fp/no-let
 const firebaseStore = {}
@@ -27,7 +28,7 @@ const ref = (refPath: string) => ({
     })
     cb(null)
   },
-  on: noop,
+  on: NOOP,
 })
 
 /**

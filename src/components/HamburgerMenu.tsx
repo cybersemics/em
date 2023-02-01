@@ -1,11 +1,11 @@
 import classNames from 'classnames'
-import { noop } from 'lodash'
 import React from 'react'
 import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import State from '../@types/State'
 import toggleSidebar from '../action-creators/toggleSidebar'
+import { NOOP } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import storage from '../util/storage'
 
@@ -52,7 +52,7 @@ const HamburgerMenu = () => {
           width={width}
           height={width * 0.7}
           strokeWidth={fontSize / 20}
-          menuClicked={noop} // just passing an empty arrow function as it is mandatory prop to pass
+          menuClicked={NOOP}
           rotate={0}
           color=' ' // passing blank, non-empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
           borderRadius={0}
