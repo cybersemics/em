@@ -14,7 +14,7 @@ import { DataProvider } from '../DataProvider'
 
 const yThoughtIndex = ydoc.getMap<ThoughtDb>('thoughtIndex')
 const yLexemeIndex = ydoc.getMap<Lexeme>('lexemeIndex')
-const yHelpers = ydoc.getMap<string>('helpers')
+const yHelpers = ydoc.getMap<string | number>('helpers')
 
 /** Atomically updates the thoughtIndex and lexemeIndex. */
 export const updateThoughts = async (

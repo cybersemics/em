@@ -58,8 +58,8 @@ const roamBlocksToBlocks = (children: RoamBlock[]): Block[] =>
       'create-email': createEmail,
       'edit-email': editEmail,
     }) => {
-      const created = createTime ? (new Date(createTime).toISOString() as Timestamp) : timestamp()
-      const lastUpdated = editTime ? (new Date(editTime).toISOString() as Timestamp) : timestamp()
+      const created = (createTime as Timestamp) || timestamp()
+      const lastUpdated = (editTime as Timestamp) || timestamp()
       return {
         scope: string,
         created,
