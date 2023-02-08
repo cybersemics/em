@@ -6,8 +6,9 @@ import State from '../@types/State'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
+import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
-interface ToolbarButtonProps {
+export interface ToolbarButtonProps {
   // see ToolbarProps.customize
   customize?: boolean
   disabled?: boolean
@@ -21,9 +22,11 @@ interface ToolbarButtonProps {
 }
 
 /** A single button in the Toolbar. */
-const ToolbarButton: FC<ToolbarButtonProps> = ({
+const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   customize,
   disabled,
+  dragSource,
+  dropTarget,
   fontSize,
   isPressing,
   lastScrollLeft,
@@ -49,61 +52,63 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
-  return (
-    <div
-      aria-label={shortcut.label}
-      key={shortcutId}
-      style={{
-        top: isButtonExecutable && isPressing ? 10 : 0,
-        position: 'relative',
-        cursor: isButtonExecutable ? 'pointer' : 'default',
-      }}
-      className='toolbar-icon'
-      onMouseDown={e => {
-        // prevents editable blur
-        e.preventDefault()
-        onTapDown?.(e)
-      }}
-      onMouseUp={(e: React.MouseEvent) => {
-        const iconEl = e.target as HTMLElement
-        const toolbarEl = iconEl.closest('.toolbar')!
-        const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
-
-        if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
-          exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-        }
-
-        lastScrollLeft.current = toolbarEl.scrollLeft
-        onTapUp?.(e)
-      }}
-      onTouchStart={e => {
-        onTapDown?.(e)
-      }}
-      onTouchEnd={(e: React.TouchEvent) => {
-        const iconEl = e.target as HTMLElement
-        const toolbarEl = iconEl.closest('.toolbar')!
-        const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
-
-        if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
-          exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-        }
-
-        lastScrollLeft.current = toolbarEl.scrollLeft
-        onTapUp?.(e)
-      }}
-    >
-      {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
-      <SVG
-        size={fontSize}
-        style={{
-          cursor: isButtonExecutable ? 'pointer' : 'default',
-          fill: isButtonExecutable && isButtonActive ? colors.fg : 'gray',
-          width: fontSize + 4,
-          height: fontSize + 4,
+  return dropTarget(
+    dragSource(
+      <div
+        aria-label={shortcut.label}
+        key={shortcutId}
+        className='toolbar-icon'
+        onMouseDown={e => {
+          // prevents editable blur
+          e.preventDefault()
+          onTapDown?.(e)
         }}
-      />
-    </div>
+        onMouseUp={(e: React.MouseEvent) => {
+          const iconEl = e.target as HTMLElement
+          const toolbarEl = iconEl.closest('.toolbar')!
+          const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
+
+          if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
+            exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+          }
+
+          lastScrollLeft.current = toolbarEl.scrollLeft
+          onTapUp?.(e)
+        }}
+        onTouchStart={e => {
+          onTapDown?.(e)
+        }}
+        onTouchEnd={(e: React.TouchEvent) => {
+          const iconEl = e.target as HTMLElement
+          const toolbarEl = iconEl.closest('.toolbar')!
+          const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
+
+          if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
+            exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+          }
+
+          lastScrollLeft.current = toolbarEl.scrollLeft
+          onTapUp?.(e)
+        }}
+      >
+        {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
+        <SVG
+          size={fontSize}
+          style={{
+            top: isButtonExecutable && isPressing ? 10 : 0,
+            position: 'relative',
+            cursor: isButtonExecutable ? 'pointer' : 'default',
+            fill: isButtonExecutable && isButtonActive ? colors.fg : 'gray',
+            width: fontSize + 4,
+            height: fontSize + 4,
+          }}
+        />
+      </div>,
+    ),
   )
 }
+
+// export drag and drop higher order toolbar button component
+const ToolbarButton = DragAndDropToolbarButton(ToolbarButtonComponent)
 
 export default ToolbarButton

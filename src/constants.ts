@@ -423,6 +423,7 @@ export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 // There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
+  DragAndDropToolbar: 'Drag and drop to organize toolbar',
   ReorderFavorites: 'Drag and drop to reorder favorites',
 }
 
@@ -437,6 +438,8 @@ export enum AlertType {
   DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
+  // shown when dragging a toolbar button
+  DragAndDropToolbarHint = 'DragAndDropToolbarHint',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
