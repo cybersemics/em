@@ -1,14 +1,11 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
-import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
-import State from '../@types/State'
 import { isTouch } from '../browser'
-import { formatKeyboardShortcut, globalShortcuts, shortcutById } from '../shortcuts'
+import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
-import GestureDiagram from './GestureDiagram'
+import ShortcutRow from './ShortcutRow'
 
 // define the grouping and ordering of shortcuts
 const groups: {
@@ -99,33 +96,6 @@ if (shortcutsUngrouped.length > 0) {
   )
 }
 
-/** Renders all of a shortcut's details as a table row. */
-const ShortcutRow = (shortcut: Shortcut | null) => {
-  const description = useSelector((state: State) => {
-    if (!shortcut) return ''
-    return typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description
-  })
-
-  return (
-    shortcut && (
-      <tr key={shortcut.id}>
-        <th>
-          <b>{shortcut.label}</b>
-          <p>{description}</p>
-        </th>
-        <td>
-          {isTouch && shortcut.gesture ? (
-            // GesturePath[]
-            <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />
-          ) : shortcut.keyboard ? (
-            formatKeyboardShortcut(shortcut.keyboard)
-          ) : null}
-        </td>
-      </tr>
-    )
-  )
-}
-
 /** Renders a table of shortcuts. */
 const ShortcutTable = () => {
   return (
@@ -133,7 +103,7 @@ const ShortcutTable = () => {
       {groups.map(group => {
         const shortcuts = group.shortcuts
           .map(shortcutById)
-          .filter(shortcut => (isTouch ? shortcut.gesture : shortcut.keyboard))
+          .filter((shortcut): shortcut is Shortcut => (isTouch ? !!shortcut.gesture : !!shortcut.keyboard))
 
         // do not render groups with no shrotcuts on this platform
         if (shortcuts.length === 0) return null
@@ -142,7 +112,11 @@ const ShortcutTable = () => {
           <div key={group.title}>
             <h2 className='modal-subtitle'>{group.title}</h2>
             <table className='shortcuts'>
-              <tbody>{shortcuts.map(ShortcutRow)}</tbody>
+              <tbody>
+                {shortcuts.map(shortcut => (
+                  <ShortcutRow key={shortcut.id} shortcut={shortcut} />
+                ))}
+              </tbody>
             </table>
           </div>
         )

@@ -12,6 +12,7 @@ import React, { FC, MutableRefObject, useCallback, useEffect, useRef, useState }
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Icon from '../@types/Icon'
+import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
@@ -23,13 +24,23 @@ import store from '../stores/app'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 
+interface ToolbarProps {
+  // places the toolbar into customize mode where buttons can be dragged and dropped.
+  customize?: boolean
+  onSelect?: (shortcut: Shortcut) => void
+  selected?: ShortcutId
+}
+
 interface ToolbarIconProps {
+  // see ToolbarProps.customize
+  customize?: boolean
   disabled?: boolean
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapDown: (id: ShortcutId) => void
-  onTapUp: (id: ShortcutId) => void
+  onTapUp?: (e: React.MouseEvent | React.TouchEvent) => void
+  onTapDown?: (e: React.MouseEvent | React.TouchEvent) => void
+  selected?: boolean
   shortcutId: ShortcutId
 }
 
@@ -37,14 +48,17 @@ interface ToolbarIconProps {
  * ToolbarIcon component.
  */
 const ToolbarIcon: FC<ToolbarIconProps> = ({
+  customize,
   disabled,
   fontSize,
   lastScrollLeft,
   isPressing,
   onTapDown,
   onTapUp,
+  selected,
   shortcutId,
 }) => {
+  const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     throw new Error('Missing shortcut: ' + shortcutId)
@@ -55,9 +69,8 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const isButtonActive = useSelector((state: State) => !isActive || isActive(() => state))
-  const isButtonExecutable = useSelector((state: State) => !canExecute || canExecute(() => state))
-  const colors = useSelector(themeColors)
+  const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
+  const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
@@ -75,27 +88,28 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       onMouseDown={e => {
         // prevents editable blur
         e.preventDefault()
-        onTapDown(shortcutId)
+        onTapDown?.(e)
       }}
-      onMouseUp={() => {
-        onTapUp(shortcutId)
+      onMouseUp={e => {
+        onTapUp?.(e)
       }}
-      onTouchStart={() => {
-        onTapDown(shortcutId)
+      onTouchStart={e => {
+        onTapDown?.(e)
       }}
       onTouchEnd={(e: React.TouchEvent) => {
         const iconEl = e.target as HTMLElement
         const toolbarEl = iconEl.closest('.toolbar')!
         const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
 
-        if (isButtonExecutable && !disabled && scrollDifference < 5) {
+        if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
           exec(store.dispatch, store.getState, e, { type: 'toolbar' })
         }
 
         lastScrollLeft.current = toolbarEl.scrollLeft
-        onTapUp(shortcutId)
+        onTapUp?.(e)
       }}
     >
+      {selected && <div style={{ border: 'solid 1px', borderColor: colors.highlight }}></div>}
       <SVG
         size={fontSize}
         style={{
@@ -110,7 +124,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
 }
 
 /** Toolbar component. */
-const Toolbar = () => {
+const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
@@ -198,18 +212,28 @@ const Toolbar = () => {
               setPressingToolbarId(null)
             }}
             onScroll={onScroll}
+            style={{
+              maxWidth: customize ? '100%' : 'calc(100% - 3em)',
+            }}
           >
             <span id='left-arrow' className={leftArrowElementClassName}>
               <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
             </span>
             {shortcutIds.map(id => (
               <ToolbarIcon
+                customize={customize}
                 fontSize={fontSize}
                 isPressing={pressingToolbarId === id}
                 key={id}
                 lastScrollLeft={lastScrollLeft}
-                onTapDown={setPressingToolbarId}
-                onTapUp={() => setPressingToolbarId(null)}
+                onTapDown={e => {
+                  setPressingToolbarId(id)
+                }}
+                onTapUp={() => {
+                  setPressingToolbarId(null)
+                  onSelect?.(shortcutById(id)!)
+                }}
+                selected={selected === id}
                 shortcutId={id}
               />
             ))}

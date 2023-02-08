@@ -31,7 +31,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
         in={latestShortcuts.length > 0}
         classNames={'latest-shortcuts-transition'}
         timeout={400}
-        unmountOnExit={true}
+        unmountOnExit
       >
         <div
           className={classNames({
