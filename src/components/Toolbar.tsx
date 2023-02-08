@@ -8,6 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
+import classNames from 'classnames'
 import React, { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
@@ -80,7 +81,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
       aria-label={shortcut.label}
       key={shortcutId}
       style={{
-        paddingTop: isButtonExecutable && isPressing ? '10px' : '',
+        top: isButtonExecutable && isPressing ? 10 : 0,
         position: 'relative',
         cursor: isButtonExecutable ? 'pointer' : 'default',
       }}
@@ -109,7 +110,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({
         onTapUp?.(e)
       }}
     >
-      {selected && <div style={{ border: 'solid 1px', borderColor: colors.highlight }}></div>}
+      {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
       <SVG
         size={fontSize}
         style={{
@@ -195,7 +196,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   return (
     <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
-      <div aria-label='toolbar' className='toolbar-container'>
+      <div
+        aria-label='toolbar'
+        className={classNames({
+          'toolbar-container': true,
+          'toolbar-fixed': !customize,
+        })}
+      >
         <div
           className='toolbar-mask'
           style={{

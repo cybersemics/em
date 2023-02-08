@@ -393,6 +393,15 @@ a.text-link {
 /* Toolbar */
 
 .toolbar-container {
+  text-align: right;
+  top: 0;
+  right: 0;
+  max-width: calc(100% - 1em); /* use 100% - 3em when HamburgerMenu is enabled */
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+.toolbar-fixed {
   position: fixed;
   text-align: right;
   top: 0;
@@ -462,7 +471,7 @@ a.text-link {
   padding: 5px 8px;
   border-radius: 3px;
   z-index: var(--z-index-stack);
-  transition: padding 0.2s ease 0s;
+  transition: top 200ms ease 0s;
 }
 
 .toolbar-icon .icon {
@@ -482,18 +491,27 @@ a.text-link {
 
 /* Toolbar mask */
 .toolbar-mask {
-  padding-top: 500px; /* offset .toolbar-container negative margin-top */
   position: absolute;
-  top: 0;
+  /* sometimes the body peeks through with top: 0 */
+  top: -1px;
   left: 0;
   right: 0;
   background-color: white;
-  box-shadow: 10px -20px 15px 25px white;
   pointer-events: none; /* allows clickOnEmptySpace */
 }
 
 .dark .toolbar-mask {
   background-color: black;
+  box-shadow: -10px 10px 20px 0 black;
+  /*  box-shadow: 10px -20px 15px 25px black;*/
+}
+
+.toolbar-fixed .toolbar-mask {
+  box-shadow: 10px -20px 15px 25px white;
+  padding-top: 500px; /* offset .toolbar-container negative margin-top */
+}
+
+.dark .toolbar-fixed .toolbar-mask {
   box-shadow: 10px -20px 15px 25px black;
 }
 

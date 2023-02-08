@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { CSSTransition } from 'react-transition-group'
 import Shortcut from '../../@types/Shortcut'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
@@ -20,6 +20,7 @@ const ModalCustomizeToolbar: FC = () => {
 
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
+
   return (
     <ModalComponent
       id='customizeToolbar'
@@ -32,50 +33,53 @@ const ModalCustomizeToolbar: FC = () => {
         </div>
       )}
     >
-      <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
-      <div style={{ marginTop: '2.7em' }}>
-        <div style={{ overflow: 'scroll', height: 'calc(100vh - 8em)' }}>
-          <p style={{ marginTop: '1em' }}>
-            &lt; <a onClick={() => dispatch(showModal({ id: 'settings' }))}>Back to Settings</a>
-          </p>
-          <h1 className='modal-title'>Customize Toolbar</h1>
+      <h1 className='modal-title'>Customize Toolbar</h1>
+      <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
+        &lt; <a onClick={() => dispatch(showModal({ id: 'settings' }))}>Back to Settings</a>
+      </p>
 
-          <div style={{ position: selectedShortcut ? 'sticky' : undefined, top: 0, marginBottom: '1em' }}>
-            {/* fade-in only */}
-            <TransitionGroup>
-              {selectedShortcut ? (
-                <CSSTransition key='selected' classNames='fade' timeout={200} exit={false}>
-                  <div
-                    style={{
-                      backgroundColor: colors.bg,
-                      paddingBottom: '1em',
-                      boxShadow: `10px -20px 15px 25px ${colors.bg}`,
-                    }}
-                  >
-                    <div style={{ backgroundColor: colors.gray15, padding: '1em 0 1em 1em' }}>
-                      <table className='shortcuts'>
-                        <tbody>
-                          <ShortcutRow shortcut={selectedShortcut} />
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </CSSTransition>
-              ) : (
-                <CSSTransition key='unselected' classNames='fade' timeout={200} exit={false}>
-                  <div className='dim' style={{ marginBottom: '2.645em' }}>
-                    <p>Drag-and-drop buttons to and from the toolbar.</p>
-                    <p>Drag-and-drop to reorder.</p>
-                    <p>{isTouch ? 'Tap' : 'Click'} a toolbar button for more information.</p>
-                  </div>
-                </CSSTransition>
-              )}
-            </TransitionGroup>
+      <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
+        <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
+
+        {/* fade-in only */}
+        <CSSTransition in={!!selectedShortcut} classNames='fade' timeout={200} exit={false} unmountOnExit>
+          <div
+            style={{
+              backgroundColor: colors.bg,
+              // add bottom drop-shadow
+              // mask gap between this and the toolbar
+              // do not overlap modal close x
+              boxShadow: `0 -8px 20px 15px ${colors.bg}`,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: colors.gray15,
+                marginTop: '0.5em',
+                padding: '1em 0 1em 1em',
+                position: 'relative',
+              }}
+              className='z-index-alert'
+            >
+              <table className='shortcuts'>
+                <tbody>
+                  <ShortcutRow shortcut={selectedShortcut} />
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <ShortcutTable />
-        </div>
+        </CSSTransition>
       </div>
+
+      <CSSTransition in={!selectedShortcut} classNames='fade' timeout={200} exit={false} unmountOnExit>
+        <div className='dim' style={{ marginTop: '2em', marginBottom: '2.645em' }}>
+          <p>Drag-and-drop buttons to and from the toolbar.</p>
+          <p>Drag-and-drop to reorder.</p>
+          <p>{isTouch ? 'Tap' : 'Click'} a toolbar button for more information.</p>
+        </div>
+      </CSSTransition>
+
+      <ShortcutTable />
     </ModalComponent>
   )
 }
