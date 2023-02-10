@@ -1,5 +1,5 @@
 import Thought from '../../@types/Thought'
-import ThoughtId from '../../@types/ThoughtId'
+import { HOME_TOKEN } from '../../constants'
 import {
   compare,
   compareDateStrings,
@@ -13,6 +13,18 @@ import {
   makeOrderedComparator,
 } from '../../util/compareThought'
 import timestamp from '../../util/timestamp'
+import createId from '../createId'
+
+/** Build a test thought with the given value. */
+const thought = (value: string): Thought => ({
+  id: createId(),
+  rank: 0,
+  value: value,
+  parentId: HOME_TOKEN,
+  childrenMap: {},
+  lastUpdated: timestamp(),
+  updatedBy: '',
+})
 
 it('compareNumberAndOther', () => {
   expect(compareNumberAndOther(1, 2)).toBe(0)
@@ -133,47 +145,42 @@ describe('compareReasonable', () => {
     expect(compareReasonable('🍍 the apple', '🍍 book')).toBe(-1)
     expect(compareReasonable('🍍 the apple', '🍍 apple')).toBe(0)
   })
+
+  it('diacritics', () => {
+    expect(compareReasonable('élan', 'every')).toBe(-1)
+    expect(compareReasonable('élan', 'élan')).toBe(0)
+    expect(compareReasonable('every', 'élan')).toBe(1)
+  })
 })
 
-describe('compareReasonableDescending', () => {
-  /**
-   * Build Parent object for tests.
-   */
-  const buildChild = (value: string): Thought => ({
-    id: '0' as ThoughtId,
-    rank: 0,
-    value: value,
-    parentId: 'ROOT' as ThoughtId,
-    childrenMap: {},
-    lastUpdated: timestamp(),
-    updatedBy: timestamp(),
-  })
+describe('compareThought', () => {
+  describe('descending', () => {
+    it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
+      expect(compareThoughtDescending(thought('a'), thought('a'))).toBe(0)
+      expect(compareThoughtDescending(thought('a'), thought('b'))).toBe(1)
+      expect(compareThoughtDescending(thought('🍍 a'), thought('a'))).toBe(1)
+      expect(compareThoughtDescending(thought('🍍 a'), thought('b'))).toBe(1)
+      expect(compareThoughtDescending(thought('a'), thought('🍍 a'))).toBe(-1)
+      expect(compareThoughtDescending(thought('b'), thought('🍍 a'))).toBe(-1)
+      expect(compareThoughtDescending(thought('🍍 a'), thought('🍍 a'))).toBe(0)
+      expect(compareThoughtDescending(thought('🍍 a'), thought('🍍 b'))).toBe(1)
+    })
 
-  it('sort emojis above non-emojis and sort within emoji group in descending order', () => {
-    expect(compareThoughtDescending(buildChild('a'), buildChild('a'))).toBe(0)
-    expect(compareThoughtDescending(buildChild('a'), buildChild('b'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('a'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('b'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('a'), buildChild('🍍 a'))).toBe(-1)
-    expect(compareThoughtDescending(buildChild('b'), buildChild('🍍 a'))).toBe(-1)
-    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('🍍 a'))).toBe(0)
-    expect(compareThoughtDescending(buildChild('🍍 a'), buildChild('🍍 b'))).toBe(1)
-  })
+    it('sort meta-attributes above everything', () => {
+      expect(compareThoughtDescending(thought('a'), thought('=test'))).toBe(-1)
+      expect(compareThoughtDescending(thought('=test'), thought('a'))).toBe(1)
+      expect(compareThoughtDescending(thought('=test'), thought('=test'))).toBe(0)
+      expect(compareThoughtDescending(thought('🍍'), thought('=test'))).toBe(-1)
+      expect(compareThoughtDescending(thought('=test'), thought('🍍'))).toBe(1)
+    })
 
-  it('sort meta-attributes above everything', () => {
-    expect(compareThoughtDescending(buildChild('a'), buildChild('=test'))).toBe(-1)
-    expect(compareThoughtDescending(buildChild('=test'), buildChild('a'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('=test'), buildChild('=test'))).toBe(0)
-    expect(compareThoughtDescending(buildChild('🍍'), buildChild('=test'))).toBe(-1)
-    expect(compareThoughtDescending(buildChild('=test'), buildChild('🍍'))).toBe(1)
-  })
-
-  it('sort by removing ignored prefixes in descending order', () => {
-    expect(compareThoughtDescending(buildChild('the apple'), buildChild('apple'))).toBe(0)
-    expect(compareThoughtDescending(buildChild('the apple'), buildChild('book'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('theatre'), buildChild('book'))).toBe(-1)
-    expect(compareThoughtDescending(buildChild('the apple'), buildChild('theatre'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('🍍 the apple'), buildChild('🍍 book'))).toBe(1)
-    expect(compareThoughtDescending(buildChild('🍍 the apple'), buildChild('🍍 apple'))).toBe(0)
+    it('sort by removing ignored prefixes in descending order', () => {
+      expect(compareThoughtDescending(thought('the apple'), thought('apple'))).toBe(0)
+      expect(compareThoughtDescending(thought('the apple'), thought('book'))).toBe(1)
+      expect(compareThoughtDescending(thought('theatre'), thought('book'))).toBe(-1)
+      expect(compareThoughtDescending(thought('the apple'), thought('theatre'))).toBe(1)
+      expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 book'))).toBe(1)
+      expect(compareThoughtDescending(thought('🍍 the apple'), thought('🍍 apple'))).toBe(0)
+    })
   })
 })

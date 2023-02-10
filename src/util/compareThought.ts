@@ -14,6 +14,25 @@ const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
 const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
 const regexIgnoredPrefixes = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gm')
 
+// removeDiacritics borrowed from modern-diacritics package
+// modern-diacritics does not currently import so it is copied here
+// See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
+/** Remove all diacritics from a string. */
+const removeDiacritics = (s: string): string => {
+  const subject = `${s}`.normalize('NFD')
+  let result
+
+  try {
+    // more complete modern variant
+    result = subject.replace(/\p{Diacritic}/gu, '')
+  } catch {
+    // backwards compatible variant
+    result = subject.replace(/[\u0300-\u036f]/g, '')
+  }
+
+  return result
+}
+
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
 const removeEmojisAndSpaces = (str: string) => str.replace(EMOJI_REGEX_GLOBAL, '').trim()
 
@@ -22,7 +41,7 @@ const removeIgnoredPrefixes = (str: string) => str.replace(regexIgnoredPrefixes,
 
 /** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
 const removeUncomparableCharacters = (str: string) => {
-  return removeIgnoredPrefixes(removeEmojisAndSpaces(str))
+  return removeDiacritics(removeIgnoredPrefixes(removeEmojisAndSpaces(str)))
 }
 
 /** Parse a date string and handle M/d (e.g. "2/1") for Safari. */
