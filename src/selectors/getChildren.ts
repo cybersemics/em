@@ -29,7 +29,7 @@ const NO_THOUGHT_IDS: ThoughtId[] = []
 type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry((state: State, child: Thought) => {
+export const isChildVisible = _.curry((state: State, child: Thought): boolean => {
   // temporarily disable =hidden for performance
   return !isAttribute(child.value) // && !findDescendant(state, child.id, '=hidden')
 })
@@ -43,28 +43,31 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
 }
 
 /** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
-export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null) => {
+export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }
 
 /** Makes a function that only returns visible thoughts. */
-const getVisibleThoughtsById = _.curry((getThoughtsFunction: GetThoughtsSelector, state: State, id: ThoughtId) => {
-  const children = getThoughtsFunction(state, id)
-  return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
-})
+const getVisibleThoughtsById = _.curry(
+  (getThoughtsFunction: GetThoughtsSelector, state: State, id: ThoughtId): Thought[] => {
+    const children = getThoughtsFunction(state, id)
+    return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
+  },
+)
+
+/** Returns the first child of a thought or undefined. Also see: firstVisibleChild. */
+export const firstChild = (state: State, id: ThoughtId | undefined): Thought | undefined =>
+  id && getAllChildrenAsThoughts(state, id)[0]
 
 /** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId) => {
-  const children = getAllChildrenAsThoughts(state, id)
-  return state.showHiddenThoughts ? children.length > 0 : children.some(isChildVisible(state))
-}
+export const hasChildren = (state: State, id: ThoughtId): boolean => !!firstChild(state, id)
 
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 
 /** Gets all children of a Context sorted by rank or sort preference. */
-export const getAllChildrenSorted = (state: State, id: ThoughtId) => {
+export const getAllChildrenSorted = (state: State, id: ThoughtId): Thought[] => {
   const getThoughtsFunction =
     getSortPreference(state, id).type === 'Alphabetical' ? getChildrenSortedAlphabetical : getChildrenRanked
   return getThoughtsFunction(state, id)
@@ -73,12 +76,12 @@ export const getAllChildrenSorted = (state: State, id: ThoughtId) => {
 /** Gets all visible children of a thought sorted by rank or sort preference.
  * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
  */
-export const getChildrenSorted = (state: State, id: ThoughtId | null) => {
+export const getChildrenSorted = (state: State, id: ThoughtId | null): Thought[] => {
   return id ? getVisibleThoughtsById(getAllChildrenSorted, state, id) : NO_CHILDREN
 }
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
-const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>) =>
+const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
   sort(getAllChildrenAsThoughts(state, id), compare)
 
 /** Returns the absolute difference between to child ranks. */
@@ -164,7 +167,7 @@ export const getChildrenRanked = moize(
   },
 )
 
-/** Returns the first visible child of a context. */
+/** Returns the first visible child of a sorted context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
 
 /** Returns the first visible child (with cursor check) of a context. */
@@ -174,9 +177,9 @@ export const firstVisibleChildWithCursorCheck = (state: State, path: SimplePath)
 }
 
 /** Checks if a child lies within the cursor path. */
-const isChildInCursor = (state: State, path: Path, child: Thought) => {
+const isChildInCursor = (state: State, path: Path, child: Thought): boolean => {
   const childPath = unroot([...path, child.id])
-  return state.cursor && state.cursor[childPath.length - 1] === child.id
+  return !!state.cursor && state.cursor[childPath.length - 1] === child.id
 }
 
 /** Check if the cursor is a meta attribute && the given Path is the descendant of the cursor.  */
@@ -190,7 +193,7 @@ const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
 
 /** Checks if the child is visible or if the child lies within the cursor or is descendant of the meta cursor. */
 const isChildVisibleWithCursorCheck = _.curry(
-  (state: State, path: SimplePath, thought: Thought) =>
+  (state: State, path: SimplePath, thought: Thought): boolean =>
     state.showHiddenThoughts ||
     isChildVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
@@ -199,9 +202,9 @@ const isChildVisibleWithCursorCheck = _.curry(
 )
 
 /** Checks if the child is created after latest absolute context toggle. */
-const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | ThoughtContext) => {
+const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | ThoughtContext): boolean => {
   const thought = getThoughtById(state, child)
-  return thought.lastUpdated && state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
+  return !!thought.lastUpdated && !!state.absoluteContextTime && thought.lastUpdated > state.absoluteContextTime
 })
 
 /**
@@ -211,7 +214,7 @@ const isCreatedAfterAbsoluteToggle = _.curry((state: State, child: ThoughtId | T
  * 2. Checks if child is within cursor.
  * 3. Checks if child is created after latest absolute context toggle if starting context is absolute.
  */
-export const childrenFilterPredicate = _.curry((state: State, parentPath: SimplePath, child: Thought) => {
+export const childrenFilterPredicate = _.curry((state: State, parentPath: SimplePath, child: Thought): boolean => {
   return (
     isChildVisibleWithCursorCheck(state, parentPath, child) &&
     (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child.id))
