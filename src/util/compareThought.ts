@@ -59,7 +59,9 @@ const parseDate = (s: string): number =>
 const isNumber = (x: number | string): boolean => !isNaN(toNumber(x))
 
 /** Converts a string to a number. If given a number, returns it as-is. If given a string with a prefixe such as "#" or "$", strips it and returns the actual number. If given a number range, returns the start of the range. If the input cannot be converted to a number, returns NaN. */
-const toNumber = (x: number | string): number => (typeof x === 'number' ? x : +x.replace(/^[$₹₤₱₠₪₨€#] ?/, ''))
+const toNumber = (x: number | string): number =>
+  // match hyphen, em-dash, and em-dash
+  typeof x === 'number' ? x : +x.replace(/^[$₹₤₱₠₪₨€#] ?/, '').replace(/^(\d+)\s*[-–—]\s*\d+$/, '$1')
 
 /** The default comparator that uses the ">" operator. Can be passed to Array.prototype.sort. */
 export const compare = <T>(a: T, b: T) => (a > b ? 1 : a < b ? -1 : 0)

@@ -67,6 +67,23 @@ it('compareNumbers', () => {
   expect(compareNumbers('€9', '€10')).toBe(-1)
   expect(compareNumbers('₤9', '₤10')).toBe(-1)
   expect(compareNumbers('₪9', '₪10')).toBe(-1)
+
+  // number ranges
+  // hyphen
+  expect(compareNumbers('2', '100-200')).toBe(-1)
+  expect(compareNumbers('100-200', '2')).toBe(1)
+  // en dash
+  expect(compareNumbers('2', '100–200')).toBe(-1)
+  expect(compareNumbers('100–200', '2')).toBe(1)
+  // em dash
+  expect(compareNumbers('2', '100—200')).toBe(-1)
+  expect(compareNumbers('100—200', '2')).toBe(1)
+  // surrounding spaces
+  expect(compareNumbers('2', '100 - 200')).toBe(-1)
+  expect(compareNumbers('100 - 200', '2')).toBe(1)
+  // irregular spaces
+  expect(compareNumbers('2', '100-  200')).toBe(-1)
+  expect(compareNumbers('100-  200', '2')).toBe(1)
 })
 
 it('compareLowercase', () => {
