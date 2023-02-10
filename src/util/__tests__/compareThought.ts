@@ -144,6 +144,12 @@ describe('compareReasonable', () => {
     expect(compareReasonable('the apple', 'theatre')).toBe(-1)
     expect(compareReasonable('🍍 the apple', '🍍 book')).toBe(-1)
     expect(compareReasonable('🍍 the apple', '🍍 apple')).toBe(0)
+    expect(compareReasonable('The Apple', 'Apple')).toBe(0)
+    expect(compareReasonable('The Apple', 'Book')).toBe(-1)
+    expect(compareReasonable('Theatre', 'Book')).toBe(1)
+    expect(compareReasonable('The Apple', 'Theatre')).toBe(-1)
+    expect(compareReasonable('🍍 The Apple', '🍍 Book')).toBe(-1)
+    expect(compareReasonable('🍍 The Apple', '🍍 Apple')).toBe(0)
   })
 
   it('diacritics', () => {
