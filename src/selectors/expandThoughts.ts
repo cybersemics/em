@@ -28,14 +28,23 @@ import childIdsToThoughts from './childIdsToThoughts'
 import { firstChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 
+// pin state map
+const pinStateMap = { false: false, true: true }
+
+/** Returns true if a thought is pinned with =pin/true, false if =pin/false, and null if not pinned. */
+const pinned = (state: State, id: ThoughtId | null): boolean | null => {
+  const pinState = attribute(state, id, '=pin') as keyof typeof pinStateMap
+  return pinStateMap[pinState] ?? null
+}
+
+/** Returns true if a thought's children are pinned with =children/=pin/true, false if =children/=pin/false, and null if not pinned. */
+const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
+  const childrenAttributeId = findDescendant(state, id, '=children')
+  return pinned(state, childrenAttributeId)
+}
+
 /** Returns true if the context is in table view. */
 const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=view', 'Table')
-
-/** Returns the value of =children/=pin. */
-const pinChildren = (state: State, id: ThoughtId) => {
-  const childrenAttributeId = findDescendant(state, id, '=children')
-  return childrenAttributeId ? attribute(state, childrenAttributeId, '=pin') : null
-}
 
 /** Returns true if the context is the first column in a table view. */
 const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head(parentOf(path)), '=view', 'Table')
@@ -46,7 +55,7 @@ const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head
  */
 const publishPinChildren = (state: State, context: Context) => {
   const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
-  return id && publishMode() && findDescendant(state, id, ['=children', '=pin', 'true'])
+  return id && publishMode() && childrenPinned(state, id)
 }
 
 function expandThoughts(state: State, path: Path | null): Index<Path>
@@ -144,15 +153,15 @@ function expandThoughtsRecursive(
     !isTableColumn1(state, simplePath) &&
     !isURL(firstGrandchild.value)
 
-  const childrenPinned =
+  const childrenExpanded =
     isTable(state, thoughtId) ||
     (isOnlyChildNoUrl &&
-      pinChildren(state, thoughtId) !== 'false' &&
-      attribute(state, visibleChildren[0].id, '=pin') !== 'false') ||
+      childrenPinned(state, thoughtId) !== false &&
+      pinned(state, visibleChildren[0].id) !== false) ||
     publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
-          if (pinChildren(state, thoughtId) === 'true') return attribute(state, child.id, '=pin') !== 'false'
+          if (childrenPinned(state, thoughtId)) return pinned(state, child.id) !== false
 
           const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
 
@@ -161,8 +170,6 @@ function expandThoughtsRecursive(
 
           /** Check if the path is equal to the expansion path. */
           const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
-
-          const isChildPinned = attribute(state, child.id, '=pin') === 'true'
 
           /**
             Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
@@ -175,7 +182,7 @@ function expandThoughtsRecursive(
 
           return (
             strippedValue[strippedValue.length - 1] === EXPAND_THOUGHT_CHAR ||
-            isChildPinned ||
+            pinned(state, child.id) ||
             isEitherMetaAncestorOrCursor() ||
             isExpansionBasePath() ||
             isAncestor()
@@ -189,7 +196,7 @@ function expandThoughtsRecursive(
 
   // expand children (recursive)
   return keyValueBy(
-    childrenPinned,
+    childrenExpanded,
     childOrContext => {
       const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
       return expandThoughtsRecursive(state, expansionBasePath, newPath, { returnContexts })
