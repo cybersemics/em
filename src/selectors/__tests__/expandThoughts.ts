@@ -15,7 +15,7 @@ import reducerFlow from '../../util/reducerFlow'
 const isContextExpanded = (state: State, context: Context) => {
   const path = contextToPath(state, context)
   if (!path) return false
-  return expandThoughts(state, state.cursor)[hashPath(path)]
+  return !!expandThoughts(state, state.cursor)[hashPath(path)]
 }
 
 describe('normal view', () => {
@@ -95,6 +95,68 @@ describe('normal view', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e1'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2', 'f'])).toBeFalsy()
+  })
+
+  // Related issue: https://github.com/cybersemics/em/issues/1238
+  it('thought with html value should be expanded', () => {
+    const text = `
+      - <i>a</i>
+        - b
+      - c
+    `
+
+    const stateNew = importText(initialState(), { text })
+
+    const stateNew1 = setCursor(stateNew, ['<i>a</i>'])
+
+    expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
+  })
+
+  it('cursor ancestors are expanded', () => {
+    const text = `
+      - a
+        - b
+          - c
+            - d
+              - e
+                - f
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd', 'e', 'f'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e', 'f'])).toBeTruthy()
+  })
+
+  it('pinned uncles should stay expanded', () => {
+    const text = `
+      - a
+        - =pin
+          - true
+        - b
+      - c
+        - d
+          - e
+            - f
+    `
+
+    const steps = [importText({ text }), setCursor(['c', 'd', 'e', 'f'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, [HOME_TOKEN])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['c', 'd'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['c', 'd', 'e'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['c', 'd', 'e', 'f'])).toBeTruthy()
   })
 })
 
@@ -228,101 +290,105 @@ describe('table view', () => {
   })
 })
 
-describe('=pin', () => {
-  it('pinned thoughts are expanded when cursor is on parent', () => {
-    const text = `
-      - a
-        - b
-          - =pin
-            - true
-          - c
-        - d
-          - e
-    `
+describe('pin', () => {
+  describe('=pin/true', () => {
+    it('pinned thoughts are expanded when cursor is on parent', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+              - true
+            - c
+          - d
+            - e
+      `
 
-    const steps = [importText({ text }), setCursor(['a'])]
+      const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = reducerFlow(steps)(initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 
-    // unpinned sibling
-    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+      // unpinned sibling
+      expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+    })
+
+    it('pinned thoughts are expanded when cursor is on sibling', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+              - true
+            - c
+          - d
+            - e
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'd'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    })
   })
 
-  it('pinned thoughts are expanded when cursor is on sibling', () => {
-    const text = `
+  describe('=pin/false', () => {
+    it('only-child descendants are not expanded with =pin/false', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+              - false
+            - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+      expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+    })
+
+    it('thoughts with =pin/false are not expanded even if ancestor has =children/=pin/true', () => {
+      const text = `
       - a
-        - b
+        - =children
           - =pin
             - true
-          - c
-        - d
-          - e
-    `
-
-    const steps = [importText({ text }), setCursor(['a', 'd'])]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
-  })
-
-  it('only-child descendants are not expanded with =pin/false', () => {
-    const text = `
-      - a
         - b
           - =pin
             - false
           - c
-    `
+        - d
+      `
 
-    const steps = [importText({ text }), setCursor(['a'])]
+      const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = reducerFlow(steps)(initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
-    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
-    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+      expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+      expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+    })
+
+    it('children of cursor should always be visible, it should take precedence over =pin/false', () => {
+      const text = `
+        - a
+          - =pin
+            - false
+          - b
+            - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'b'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    })
   })
-
-  it('thoughts with =pin/false are not expanded even if ancestor has =children/=pin/true', () => {
-    const text = `
-    - a
-      - =children
-        - =pin
-          - true
-      - b
-        - =pin
-          - false
-        - c
-      - d
-    `
-
-    const steps = [importText({ text }), setCursor(['a'])]
-
-    const stateNew = reducerFlow(steps)(initialState())
-
-    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
-    expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
-  })
-})
-
-it('children of cursor should always be visible, it should take precedence over =pin/false', () => {
-  const text = `
-    - a
-      - =pin
-        - false
-      - b
-        - c
-    `
-
-  const steps = [importText({ text }), setCursor(['a', 'b'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
-
-  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 })
 
 describe('=children/=pin', () => {
@@ -472,66 +538,4 @@ describe('expand with : char', () => {
     expect(isContextExpanded(stateNew, ['<b>b:</b>'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['<b>b:</b>', '<b><i>c:</i></b>'])).toBeTruthy()
   })
-})
-
-// Related issue: https://github.com/cybersemics/em/issues/1238
-it('thought with html value should be expanded', () => {
-  const text = `
-    - <i>a</i>
-      - b
-    - c
-  `
-
-  const stateNew = importText(initialState(), { text })
-
-  const stateNew1 = setCursor(stateNew, ['<i>a</i>'])
-
-  expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
-})
-
-it('cursor ancestors are expanded', () => {
-  const text = `
-    - a
-      - b
-        - c
-          - d
-            - e
-              - f
-  `
-
-  const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd', 'e', 'f'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
-
-  expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e', 'f'])).toBeTruthy()
-})
-
-it('pinned uncles should stay expanded', () => {
-  const text = `
-    - a
-      - =pin
-        - true
-      - b
-    - c
-      - d
-        - e
-          - f
-  `
-
-  const steps = [importText({ text }), setCursor(['c', 'd', 'e', 'f'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
-
-  expect(isContextExpanded(stateNew, [HOME_TOKEN])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
-  expect(isContextExpanded(stateNew, ['c'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['c', 'd'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['c', 'd', 'e'])).toBeTruthy()
-  expect(isContextExpanded(stateNew, ['c', 'd', 'e', 'f'])).toBeTruthy()
 })
