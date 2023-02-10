@@ -388,6 +388,26 @@ describe('pin', () => {
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     })
+
+    it('siblings of thoughts with =pin/false should not be expanded', () => {
+      const text = `
+        - a
+          - b
+            - =pin
+              - false
+            - c
+          - d
+            - e
+      `
+
+      const steps = [importText({ text }), setCursor(['a'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+      expect(isContextExpanded(stateNew, ['a', 'd'])).toBeFalsy()
+    })
   })
 })
 
