@@ -118,6 +118,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           }}
         />
         <div>
+          <span id='left-arrow' className={leftArrowElementClassName}>
+            <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
+          </span>
           <div
             id='toolbar'
             ref={toolbarRef}
@@ -126,35 +129,32 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
               setPressingToolbarId(null)
             }}
             onScroll={onScroll}
-            style={{
-              maxWidth: customize ? '100%' : 'calc(100% - 3em)',
-            }}
           >
-            <span id='left-arrow' className={leftArrowElementClassName}>
-              <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
-            </span>
-            {shortcutIds.map(id => (
-              <ToolbarButton
-                customize={customize}
-                fontSize={fontSize}
-                isPressing={pressingToolbarId === id}
-                key={id}
-                lastScrollLeft={lastScrollLeft}
-                onTapDown={e => {
-                  setPressingToolbarId(id)
-                }}
-                onTapUp={() => {
-                  setPressingToolbarId(null)
-                  onSelect?.(shortcutById(id)!)
-                }}
-                selected={selected === id}
-                shortcutId={id}
-              />
-            ))}
-            <span id='right-arrow' className={rightArrowElementClassName}>
-              <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
-            </span>
+            {shortcutIds.map(id => {
+              return (
+                <ToolbarButton
+                  customize={customize}
+                  fontSize={fontSize}
+                  isPressing={pressingToolbarId === id}
+                  key={id}
+                  lastScrollLeft={lastScrollLeft}
+                  onTapDown={e => {
+                    setPressingToolbarId(id)
+                  }}
+                  onTapUp={() => {
+                    setPressingToolbarId(null)
+                    onSelect?.(shortcutById(id)!)
+                  }}
+                  selected={selected === id}
+                  shortcutId={id}
+                />
+              )
+            })}
           </div>
+
+          <span id='right-arrow' className={rightArrowElementClassName}>
+            <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
+          </span>
         </div>
       </div>
     </CSSTransition>

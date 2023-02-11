@@ -121,6 +121,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleSplitView: false,
   toggleThought: true,
   toggleUserSetting: false,
+  toolbarLongPress: false,
   tutorial: false,
   tutorialChoice: false,
   tutorialNext: false,

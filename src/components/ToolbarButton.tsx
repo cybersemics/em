@@ -1,8 +1,10 @@
 import React, { FC, MutableRefObject } from 'react'
 import { useSelector } from 'react-redux'
+import DragToolbarZone from '../@types/DragToolbarZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
+import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
@@ -28,6 +30,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   dragSource,
   dropTarget,
   fontSize,
+  isDragging,
   isPressing,
   lastScrollLeft,
   onTapUp,
@@ -48,6 +51,12 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
+  const longPress = useToolbarLongPress({
+    disabled: !customize,
+    isDragging,
+    shortcut,
+    sourceZone: DragToolbarZone.Toolbar,
+  })
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
@@ -55,15 +64,32 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   return dropTarget(
     dragSource(
       <div
+        {...longPress.props}
         aria-label={shortcut.label}
         key={shortcutId}
+        style={{
+          // offset top to avoid changing container height
+          // marginBottom: isPressing ? -10 : 0,
+          // top: isButtonExecutable && isPressing ? 10 : 0,
+          transform: `translateY(${
+            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0
+          }em`,
+          position: 'relative',
+          cursor: isButtonExecutable ? 'pointer' : 'default',
+          transition: 'transform 200ms ease-out',
+        }}
         className='toolbar-icon'
         onMouseDown={e => {
+          longPress.props.onMouseDown(e)
+
           // prevents editable blur
-          e.preventDefault()
+          if (!customize) {
+            e.preventDefault()
+          }
           onTapDown?.(e)
         }}
         onMouseUp={(e: React.MouseEvent) => {
+          longPress.props.onMouseUp(e)
           const iconEl = e.target as HTMLElement
           const toolbarEl = iconEl.closest('.toolbar')!
           const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
@@ -76,9 +102,11 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           onTapUp?.(e)
         }}
         onTouchStart={e => {
+          longPress.props.onTouchStart(e)
           onTapDown?.(e)
         }}
         onTouchEnd={(e: React.TouchEvent) => {
+          longPress.props.onTouchEnd(e)
           const iconEl = e.target as HTMLElement
           const toolbarEl = iconEl.closest('.toolbar')!
           const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
@@ -92,13 +120,31 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         }}
       >
         {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
+
+        {
+          // invert colors while long pressing or dragging
+          // cannot wrap SVG and maintain proper height since SVG has top-padding
+          (longPress.isPressed || isDragging) && (
+            <div
+              style={{
+                width: fontSize + 15,
+                height: fontSize + 15,
+                backgroundColor: colors.fg,
+                position: 'absolute',
+                zIndex: -1,
+                top: 9,
+                left: 2,
+              }}
+            ></div>
+          )
+        }
         <SVG
           size={fontSize}
           style={{
-            top: isButtonExecutable && isPressing ? 10 : 0,
             position: 'relative',
             cursor: isButtonExecutable ? 'pointer' : 'default',
-            fill: isButtonExecutable && isButtonActive ? colors.fg : 'gray',
+            fill:
+              longPress.isPressed || isDragging ? colors.bg : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
             width: fontSize + 4,
             height: fontSize + 4,
           }}
