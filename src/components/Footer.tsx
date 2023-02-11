@@ -60,7 +60,7 @@ const LinkDivider = () => <span className='footer-divider'> | </span>
 const ModalLink = ({ id, children }: { id: Modal; children: React.ReactNode }) => {
   const dispatch = useDispatch()
   return (
-    <a tabIndex={-1} onClick={() => dispatch(showModal({ id }))}>
+    <a tabIndex={-1} onClick={() => dispatch(showModal({ id }))} style={{ whiteSpace: 'nowrap' }}>
       {children}
     </a>
   )
@@ -100,20 +100,22 @@ const Footer = () => {
   return (
     <ul aria-label='footer' className='footer list-none'>
       <li>
-        <span className='floatLeft'>
+        <div style={{ float: 'left', lineHeight: 1 }}>
           <a className='increase-font expand-click-area-left no-select' onClick={() => dispatch(scaleFontUp())}>
             A
           </a>
           <a className='decrease-font expand-click-area-right no-select' onClick={() => dispatch(scaleFontDown())}>
             A
           </a>
-        </span>
+        </div>
 
-        <ModalLink id={Modal.devices}>Devices</ModalLink>
-        <LinkDivider />
-        <ModalLink id={Modal.settings}>Settings</ModalLink>
-        <LinkDivider />
-        <ModalLink id={Modal.manual}>The Manual</ModalLink>
+        <div style={{ lineHeight: 2, margin: '-0.5em 0' }}>
+          <ModalLink id={Modal.devices}>Devices</ModalLink>
+          <LinkDivider />
+          <ModalLink id={Modal.settings}>Settings</ModalLink>
+          <LinkDivider />
+          <ModalLink id={Modal.manual}>The Manual</ModalLink>
+        </div>
       </li>
       <br />
 
