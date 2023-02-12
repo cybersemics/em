@@ -120,7 +120,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
     return (
       <div
         ref={this.ref}
-        style={Object.assign({}, style, top && { top: 55 })}
+        style={{ ...style, ...(top ? { top: 55 } : null) }}
         className={
           className +
           ' ' +
@@ -147,7 +147,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
           {title && <h1 className='modal-title'>{title}</h1>}
           <div className='modal-text'>{children}</div>
           {!hideModalActions && actions && (
-            <div className='modal-actions'>
+            <div className='modal-actions center'>
               {actions({
                 close: this.close,
                 complete: this.complete,

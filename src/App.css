@@ -299,6 +299,10 @@ a.text-link {
   font-size: 80%;
 }
 
+.text-medium {
+  font-size: 90%;
+}
+
 .list-none li::before {
   display: none;
 }

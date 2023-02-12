@@ -1,179 +1,126 @@
-import React from 'react'
-import { connect } from 'react-redux'
-import Connected from '../@types/Connected'
+import React, { FC, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import Icon from '../@types/Icon'
 import ModalType from '../@types/Modal'
 import State from '../@types/State'
 import closeModal from '../action-creators/closeModal'
 import tutorial from '../action-creators/tutorial'
 import setTutorialStep from '../action-creators/tutorialStep'
-import { isTouch } from '../browser'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
 import getSetting from '../selectors/getSetting'
 import { ActionButton } from './ActionButton'
 import Modal from './Modal'
 import ShortcutTable from './ShortcutTable'
+import CommandCenterIcon from './icons/CommandCenterIcon'
+import MetaIcon from './icons/MetaIcon'
+import TutorialsIcon from './icons/TutorialsIcon'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { showQueue, enableLatestShortcutsDiagram } = state
-  return {
-    showQueue,
-    tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
-    enableLatestShortcutsDiagram,
-  }
+enum Section {
+  Menu = 'Menu',
+  Shortcuts = 'Shortcuts',
+  Tutorials = 'Tutorials',
+  Metaprogramming = 'Metaprogramming',
+  About = 'About',
 }
 
-/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalManual = ({
-  tutorialStep,
-  showQueue,
-  dispatch,
-  enableLatestShortcutsDiagram,
-}: Connected<ReturnType<typeof mapStateToProps>>) => {
+/** An item within the manual menu. */
+const ManualMenuItem: FC<{ Icon: FC<Icon>; onClick: () => void; title: string; description: string }> = ({
+  Icon,
+  onClick,
+  title,
+  description,
+}) => {
+  const fontSize = useSelector((state: State) => state.fontSize)
   return (
-    <Modal
-      id={ModalType.manual}
-      title='The Manual'
-      className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
-    >
-      <div className=''>
-        <p
-          style={{
-            textAlign: 'center',
-            marginTop: -30,
-            marginBottom: 40,
-            opacity: 0.8,
-          }}
-        >
-          Learn all the things.
+    <div onClick={onClick} style={{ display: 'flex', marginBottom: '1em' }}>
+      <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
+        <Icon size={fontSize * 3} />
+      </div>
+      <div>
+        <a style={{ display: 'inline-block', paddingBottom: '0.25em' }}>{title}</a>
+        <p className='dim text-medium' style={{ marginBottom: '1.5em' }}>
+          {description}
         </p>
-        <section className='popup-section'>
-          <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
-            <div
-              style={{
-                maxWidth: '40%',
-              }}
-            >
-              <a className='button' href='#shortcuts'>
-                {isTouch ? '👆 Gestures' : '⌨️ Keyboard Shortcuts'}
-              </a>
-              <p
-                style={{
-                  fontSize: '18px',
-                  opacity: 0.8,
-                  margin: 20,
-                }}
-              >
-                View a complete list of {isTouch ? 'gestures' : 'keyboard shortcuts'} that can be used in em.
-              </p>
-            </div>
-            <div
-              style={{
-                maxWidth: '40%',
-                marginLeft: 20,
-              }}
-            >
-              <a className='button' href='#toolbar'>
-                🚥 Toolbar
-              </a>
-              <p
-                style={{
-                  fontSize: '18px',
-                  opacity: 0.8,
-                  margin: 20,
-                }}
-              >
-                View a list of toolbar icons with descriptions and corresponding gestures.
-              </p>
-            </div>
-          </div>
-        </section>
-        <section className='popup-section'>
-          <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
-            <div
-              style={{
-                maxWidth: '40%',
-              }}
-            >
-              <a className='button' href='#tutorials'>
-                👩🏻‍🏫 Tutorials
-              </a>
-              <p
-                style={{
-                  fontSize: '18px',
-                  opacity: 0.8,
-                  margin: 20,
-                }}
-              >
-                Play the interactive tutorials to walk through em's essential functionality.
-              </p>
-            </div>
-            <div
-              style={{
-                maxWidth: '40%',
-                marginLeft: 20,
-              }}
-            >
-              <a className='button' href='#meta'>
-                🧙‍♀️ Metaprogramming
-              </a>
-              <p
-                style={{
-                  fontSize: '18px',
-                  opacity: 0.8,
-                  margin: 20,
-                }}
-              >
-                Explore em's unique metaprogramming functionality to customize the appearance and behavior of em.
-              </p>
-            </div>
-          </div>
-        </section>
       </div>
+    </div>
+  )
+}
 
-      <section className='popup-section' id='tutorials'>
-        <h2 className='modal-subtitle'>Tutorials</h2>
+/** Menu of manual sections. */
+const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
+  return (
+    <div>
+      <ManualMenuItem
+        Icon={TutorialsIcon}
+        onClick={() => onClick(Section.Tutorials)}
+        title='Tutorials'
+        description={`Play the interactive tutorials to learn the basics.`}
+      />
+      <ManualMenuItem
+        Icon={CommandCenterIcon}
+        onClick={() => onClick(Section.Shortcuts)}
+        title={'Command Center'}
+        description='View all gestures, keyboard shortcuts, and toolbar icons.'
+      />
+      <ManualMenuItem
+        Icon={MetaIcon}
+        onClick={() => onClick(Section.Metaprogramming)}
+        title='Metaprogramming'
+        description={`Explore em's unique metaprogramming feature to customize the appearance and behavior of em.`}
+      />
+    </div>
+  )
+}
 
-        <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
-          <div>
-            <a
-              className='button'
-              onClick={() => {
-                dispatch([
-                  tutorial({ value: true }),
-                  // allow resume
-                  // TODO: Allow resume for both tutorials
-                  setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
-                  closeModal(),
-                ])
-              }}
-            >
-              Part I: Intro
-            </a>
-          </div>
-          <div>
-            <a
-              className='button'
-              onClick={() => {
-                dispatch([
-                  tutorial({ value: true }),
-                  // allow resume
-                  setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
-                  closeModal(),
-                ])
-              }}
-            >
-              Part II: Contexts
-            </a>
-          </div>
+/** Tutorials section. */
+const Tutorials = () => {
+  const dispatch = useDispatch()
+  const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
+  return (
+    <section className='popup-section' id='tutorials'>
+      <h2 className='modal-subtitle'>Tutorials</h2>
+
+      <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
+        <div>
+          <a
+            className='button'
+            onClick={() => {
+              dispatch([
+                tutorial({ value: true }),
+                // allow resume
+                // TODO: Allow resume for both tutorials
+                setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
+                closeModal(),
+              ])
+            }}
+          >
+            Part I: Intro
+          </a>
         </div>
-      </section>
-
-      <div id='shortcuts'>
-        <ShortcutTable />
+        <div>
+          <a
+            className='button'
+            onClick={() => {
+              dispatch([
+                tutorial({ value: true }),
+                // allow resume
+                setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
+                closeModal(),
+              ])
+            }}
+          >
+            Part II: Contexts
+          </a>
+        </div>
       </div>
+    </section>
+  )
+}
 
+/** A manual section that lists all metaprogramming attributes. */
+const Metaprogramming = () => {
+  return (
+    <div>
       <h2 id='meta' className='modal-subtitle modal-subtitle-compact'>
         Metaprogramming
       </h2>
@@ -273,7 +220,15 @@ const ModalManual = ({
         Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" for
         longform writing. Default: List.
       </p>
+    </div>
+  )
+}
 
+/** List the credits for em and copyrighted assets. */
+const About = () => {
+  return (
+    <div>
+      {' '}
       <div className='text-small' style={{ marginTop: '2em', fontStyle: 'italic', opacity: 0.7 }}>
         <div>
           Context View icon by{' '}
@@ -380,9 +335,67 @@ const ModalManual = ({
           Download icon by <a href='https://thenounproject.com/icon/download-1000840/'>DinosoftLab</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Command Center icon by <a href='https://thenounproject.com/icon/one-finger-touch-68664/'>iconsmind.com</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Teach icon by <a href='https://thenounproject.com/icon/teach-4200138/'>Alzam</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
+        <div>
+          Metaprogramming icon by <a href='https://thenounproject.com/icon/inspect-element-4199164/'>Ary Prasetyo</a>{' '}
+          from the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
+    </div>
+  )
+}
+
+/** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
+const ModalManual = () => {
+  const [section, setSection] = useState(Section.Menu)
+  const fontSize = useSelector((state: State) => state.fontSize)
+  return (
+    <Modal
+      id={ModalType.manual}
+      title='The Manual'
+      className='popup'
+      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
+      style={{ fontSize }}
+    >
+      <div>
+        <p
+          style={{
+            textAlign: 'center',
+            marginTop: -30,
+            marginBottom: 40,
+            opacity: 0.8,
+          }}
+        >
+          Learn all the things.
+        </p>
+      </div>
+
+      {section === Section.Menu ? (
+        <ManualMenu onClick={setSection} />
+      ) : (
+        <span className='text-small'>
+          &lt; <a onClick={() => setSection(Section.Menu)}>Back</a>
+        </span>
+      )}
+
+      {section === Section.Tutorials ? (
+        <Tutorials />
+      ) : section === Section.Shortcuts ? (
+        <ShortcutTable />
+      ) : section === Section.Metaprogramming ? (
+        <Metaprogramming />
+      ) : section === Section.About ? (
+        <About />
+      ) : null}
     </Modal>
   )
 }
 
-export default connect(mapStateToProps)(ModalManual)
+export default ModalManual
