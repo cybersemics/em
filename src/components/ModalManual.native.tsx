@@ -23,9 +23,8 @@ interface IMetaprogramming {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { showQueue, enableLatestShortcutsDiagram } = state
+  const { enableLatestShortcutsDiagram } = state
   return {
-    showQueue,
     tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
     enableLatestShortcutsDiagram,
   }
@@ -66,7 +65,6 @@ const mapStateToProps = (state: State) => {
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalManual = ({
   tutorialStep,
-  showQueue,
   dispatch,
   enableLatestShortcutsDiagram,
 }: Connected<ReturnType<typeof mapStateToProps>>) => {
