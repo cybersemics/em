@@ -1,12 +1,11 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import classNames from 'classnames'
 import React from 'react'
-import Connected from '../@types/Connected'
-import ModalType from '../@types/Modal'
-import closeModal from '../action-creators/closeModal'
-import modalComplete from '../action-creators/modalComplete'
-import tutorial from '../action-creators/tutorial'
-import { FADEOUT_DURATION } from '../constants'
+import ModalType from '../../@types/Modal'
+import closeModal from '../../action-creators/closeModal'
+import modalComplete from '../../action-creators/modalComplete'
+import { FADEOUT_DURATION } from '../../constants'
+import store from '../../stores/app'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -24,7 +23,6 @@ export interface ModalProps {
   onClose?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   opaque?: boolean
-  show?: boolean
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title: string
@@ -33,46 +31,42 @@ export interface ModalProps {
 }
 
 /** A generic modal component. */
-class ModalComponent extends React.Component<Connected<ModalProps>> {
+class ModalComponent extends React.Component<ModalProps> {
   animateAndClose: (() => void) | null = null
   escapeListener: ((e: KeyboardEvent) => void) | null = null
   ref: React.RefObject<HTMLDivElement>
 
-  constructor(props: Connected<ModalProps>) {
+  constructor(props: ModalProps) {
     super(props)
     this.ref = React.createRef()
   }
 
   componentDidMount() {
-    // add a global escape listener
-    if (this.props.show) {
-      /**
-       * A handler that closes the modal when the escape key is pressed.
-       */
-      this.escapeListener = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
-          e.stopPropagation()
-          this.close!()
-        }
+    /**
+     * A handler that closes the modal when the escape key is pressed.
+     */
+    this.escapeListener = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
+        e.stopPropagation()
+        this.close!()
       }
-
-      /**
-       * Animate and close the modal.
-       */
-      this.animateAndClose = () => {
-        const { dispatch } = this.props
-        window.removeEventListener('keydown', this.escapeListener!, true)
-        if (this.ref.current) {
-          this.ref.current.classList.add('animate-fadeout')
-        }
-        setTimeout(() => {
-          dispatch(closeModal())
-        }, FADEOUT_DURATION)
-      }
-
-      // use capturing so that this fires before the global window Escape which removes the cursor
-      window.addEventListener('keydown', this.escapeListener, true)
     }
+
+    /**
+     * Animate and close the modal.
+     */
+    this.animateAndClose = () => {
+      window.removeEventListener('keydown', this.escapeListener!, true)
+      if (this.ref.current) {
+        this.ref.current.classList.add('animate-fadeout')
+      }
+      setTimeout(() => {
+        store.dispatch(closeModal())
+      }, FADEOUT_DURATION)
+    }
+
+    // use capturing so that this fires before the global window Escape which removes the cursor
+    window.addEventListener('keydown', this.escapeListener, true)
   }
 
   close = () => {
@@ -85,37 +79,11 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
   }
 
   /** Dispatches a modalComplete action for the modal. */
-  complete = () => this.props.dispatch(modalComplete(this.props.id))
-
-  /** Dispatches a tutorial action that ends the tutorial. */
-  endTutorial = () => this.props.dispatch(tutorial({ value: false }))
+  complete = () => store.dispatch(modalComplete(this.props.id))
 
   render() {
-    const {
-      actions,
-      arrow,
-      center,
-      children,
-      className,
-      hideClose,
-      hideModalActions,
-      id,
-      opaque,
-      show,
-      style,
-      title,
-      top,
-    } = this.props
-
-    if (!show) return null
-
-    /** Dispatches a closeModal action for the modal. */
-
-    // /** Dispatches a modalComplete action for the modal. */
-    // const complete = () => dispatch(modalComplete(id))
-
-    // /** Dispatches a tutorial action that ends the tutorial. */
-    // const endTutorial = () => dispatch(tutorial({ value: false }))
+    const { actions, arrow, center, children, className, hideClose, hideModalActions, id, opaque, style, title, top } =
+      this.props
 
     return (
       <div

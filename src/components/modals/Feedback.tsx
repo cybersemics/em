@@ -1,13 +1,13 @@
 import { AxiosError } from 'axios'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import ModalType from '../@types/Modal'
-import State from '../@types/State'
-import alert from '../action-creators/alert'
-import { AlertType } from '../constants'
-import submitFeedback from '../util/submitFeedback'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
+import ModalType from '../../@types/Modal'
+import State from '../../@types/State'
+import alert from '../../action-creators/alert'
+import { AlertType } from '../../constants'
+import submitFeedback from '../../util/submitFeedback'
+import { ActionButton } from './../ActionButton'
+import ModalComponent from './ModalComponent'
 
 const FEEDBACK_MIN_LENGTH = 10
 
@@ -68,7 +68,7 @@ const ModalFeedback = () => {
   }, [feedback])
 
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.feedback}
       title='Feedback'
       className='popup'
@@ -99,7 +99,7 @@ const ModalFeedback = () => {
         onChange={onChange}
         style={{ borderRadius: 5 }}
       />
-    </Modal>
+    </ModalComponent>
   )
 }
 

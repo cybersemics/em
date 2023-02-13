@@ -1,16 +1,14 @@
-import React, { FC, useCallback, useEffect, useState } from 'react'
-import { NativeSyntheticEvent, TextInputFocusEventData, TouchableOpacity, View } from 'react-native'
-import { TextInput } from 'react-native-gesture-handler'
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import Index from '../@types/IndexType'
-import ModalType from '../@types/Modal'
-import alert from '../action-creators/alert'
-import login from '../action-creators/login'
-import { FIREBASE_REDIRECT_URL } from '../constants'
-import { commonStyles } from '../style/commonStyles'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
-import { Text } from './Text.native'
+import Index from '../../@types/IndexType'
+import ModalType from '../../@types/Modal'
+import alert from '../../action-creators/alert'
+import login from '../../action-creators/login'
+import modalComplete from '../../action-creators/modalComplete'
+import { FIREBASE_REDIRECT_URL } from '../../constants'
+import storage from '../../util/storage'
+import { ActionButton } from './../ActionButton'
+import ModalComponent from './ModalComponent'
 
 const firebaseErrorsIndex = {
   'auth/weak-password': 'Password should be at least 6 characters',
@@ -25,41 +23,6 @@ const firebaseErrorsIndex = {
 type errorCode = keyof typeof firebaseErrorsIndex
 
 type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
-
-interface InputProps {
-  type: 'email' | 'password'
-  placeholder: string
-  onBlur: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void
-  value: string
-}
-
-/**
- *
- */
-const Input: FC<InputProps> = ({ type, placeholder, value, onBlur }) => {
-  const [inputValue, updateInputValue] = useState(value)
-
-  useEffect(() => {
-    updateInputValue(value)
-  }, [value])
-
-  /** On input change handler. */
-  const onChange = (text: string) => updateInputValue(text)
-
-  return (
-    <View style={[marginVertical, fullWidth]}>
-      <TextInput
-        style={textInput}
-        placeholder={placeholder}
-        placeholderTextColor={'white'}
-        value={inputValue}
-        secureTextEntry={type === 'password'}
-        onChangeText={onChange}
-        onBlur={onBlur}
-      />
-    </View>
-  )
-}
 
 interface Mode {
   name: string
@@ -80,24 +43,12 @@ const modes: Index<Mode> = {
   },
 }
 
-const {
-  whiteText,
-  underlineText,
-  alignItemsCenter,
-  halfOpacity,
-  marginTop,
-  crimsonText,
-  marginVertical,
-  textInput,
-  fullWidth,
-} = commonStyles
-
 /** A modal dialog for signing up, logging in, and resetting password. */
 const ModalAuth = () => {
   /** Checks if the given mode is active. */
   const isModeActive = (mode: Mode) => activeMode.name === mode.name
 
-  const [activeMode, updateActiveMode] = useState(modes.resetPassword)
+  const [activeMode, updateActiveMode] = useState(modes.login)
   const [email, updateEmail] = useState('')
   const [password, updatePassword] = useState('')
   const [error, updateError] = useState<null | string>(null)
@@ -113,9 +64,9 @@ const ModalAuth = () => {
     try {
       await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
       updateIsSubmitting(false)
-    } catch (error) {
+    } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(error.message || firebaseErrorsIndex.default)
+      return updateError(e.message || firebaseErrorsIndex.default)
     }
     dispatch(alert('Please check your email'))
     closeModal()
@@ -126,11 +77,12 @@ const ModalAuth = () => {
     updateIsSubmitting(true)
     try {
       await window.firebase.auth().signInWithEmailAndPassword(email, password!)
+      storage.setItem('modal-to-show', 'welcome')
       updateIsSubmitting(false)
       closeModal()
-    } catch (error) {
+    } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
+      return updateError(firebaseErrorsIndex[e?.code as errorCode] || firebaseErrorsIndex.default)
     }
   }, [])
 
@@ -158,10 +110,10 @@ const ModalAuth = () => {
   }, [activeMode])
 
   /** Handle email change. */
-  const onChangeEmail = (e: NativeSyntheticEvent<TextInputFocusEventData>) => updateEmail(e.nativeEvent.text)
+  const onChangeEmail = (e: ChangeEvent<HTMLInputElement>) => updateEmail(e.target.value)
 
   /** Handle password change. */
-  const onChangePassword = (e: NativeSyntheticEvent<TextInputFocusEventData>) => updatePassword(e.nativeEvent.text)
+  const onChangePassword = (e: ChangeEvent<HTMLInputElement>) => updatePassword(e.target.value)
 
   /** Show Login with email and password. */
   const showLogin = () => updateActiveMode(modes.login)
@@ -170,11 +122,14 @@ const ModalAuth = () => {
   const showForgotPassword = () => updateActiveMode(modes.resetPassword)
 
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.auth}
       title={activeMode.modalTitle}
+      className='popup'
+      center
+      preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
-        <View style={alignItemsCenter}>
+        <div style={isModeActive(modes.resetPassword) ? { marginTop: '-50px' } : undefined}>
           <ActionButton
             key={activeMode.modalKey}
             title={activeMode.modalTitle}
@@ -184,41 +139,64 @@ const ModalAuth = () => {
           />
 
           {!isModeActive(modes.login) && (
-            <TouchableOpacity disabled={isSubmitting} onPress={showLogin} style={marginTop}>
-              <Text style={[underlineText, whiteText]}>
-                {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
-              </Text>
-            </TouchableOpacity>
+            <button
+              disabled={isSubmitting}
+              className='button'
+              onClick={showLogin}
+              style={{ textDecoration: 'underline', marginTop: 15 }}
+            >
+              {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
+            </button>
           )}
 
           {!isModeActive(modes.resetPassword) && (
-            <TouchableOpacity disabled={isSubmitting} style={marginTop} onPress={signInWithGoogle}>
-              <Text style={[underlineText, whiteText]}>Sign in with Google</Text>
-            </TouchableOpacity>
+            <button
+              disabled={isSubmitting}
+              className='button'
+              style={{ textDecoration: 'underline', marginTop: 15 }}
+              onClick={signInWithGoogle}
+            >
+              Sign in with Google
+            </button>
           )}
 
-          <TouchableOpacity disabled={isSubmitting} style={[halfOpacity, marginTop]} onPress={() => closeModal()}>
-            <Text style={[underlineText, whiteText]}>Work Offline</Text>
-          </TouchableOpacity>
-        </View>
+          <button
+            disabled={isSubmitting}
+            className='button'
+            key='cancel'
+            style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}
+          >
+            <a
+              id='cancel-login'
+              onClick={() => {
+                // prevent the login modal on refresh once working offline
+                storage.setItem('modal-to-show', '')
+                dispatch(modalComplete('welcome'))
+                closeModal()
+              }}
+            >
+              Work Offline
+            </a>
+          </button>
+        </div>
       )}
     >
-      <View style={[alignItemsCenter, marginVertical]}>
-        <Input type='email' placeholder='email' value={email} onBlur={onChangeEmail} />
+      <div style={{ display: 'flex', minHeight: '100px', flexDirection: 'column' }}>
+        <input type='email' placeholder='email' value={email} onChange={onChangeEmail} />
 
         {!isModeActive(modes.resetPassword) && (
-          <Input type='password' placeholder='password' value={password} onBlur={onChangePassword} />
+          <input type='password' placeholder='password' value={password} onChange={onChangePassword} />
         )}
 
         {isModeActive(modes.login) && (
-          <TouchableOpacity style={marginTop} disabled={isSubmitting} onPress={showForgotPassword}>
-            <Text style={whiteText}>Forgot Password?</Text>
-          </TouchableOpacity>
+          <button disabled={isSubmitting} className='button' onClick={showForgotPassword}>
+            Forgot Password?
+          </button>
         )}
 
-        {error && <Text style={crimsonText}>{error}</Text>}
-      </View>
-    </Modal>
+        {error && <span style={{ color: 'crimson' }}>{error}</span>}
+      </div>
+    </ModalComponent>
   )
 }
 

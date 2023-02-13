@@ -4,26 +4,26 @@ import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import Index from '../@types/IndexType'
-import ModalType from '../@types/Modal'
-import Role from '../@types/Role'
-import ShareType from '../@types/Share'
-import State from '../@types/State'
-import alert from '../action-creators/alert'
-import { isTouch } from '../browser'
-import { accessToken as accessTokenCurrent, tsid } from '../data-providers/yjs'
-import permissionsServer from '../data-providers/yjs/permissionsServer'
-import * as selection from '../device/selection'
-import usePermissions from '../hooks/usePermissions'
-import useStatus from '../hooks/useStatus'
-import themeColors from '../selectors/themeColors'
-import strip from '../util/strip'
-import { ActionButton } from './ActionButton'
-import ContentEditable, { ContentEditableEvent } from './ContentEditable'
-import Modal from './Modal'
-import CopyClipboard from './icons/CopyClipboard'
-import PencilIcon from './icons/PencilIcon.native'
-import ShareIcon from './icons/ShareIcon'
+import Index from '../../@types/IndexType'
+import ModalType from '../../@types/Modal'
+import Role from '../../@types/Role'
+import ShareType from '../../@types/Share'
+import State from '../../@types/State'
+import alert from '../../action-creators/alert'
+import { isTouch } from '../../browser'
+import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
+import permissionsServer from '../../data-providers/yjs/permissionsServer'
+import * as selection from '../../device/selection'
+import usePermissions from '../../hooks/usePermissions'
+import useStatus from '../../hooks/useStatus'
+import themeColors from '../../selectors/themeColors'
+import strip from '../../util/strip'
+import { ActionButton } from './../ActionButton'
+import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
+import CopyClipboard from './../icons/CopyClipboard'
+import PencilIcon from './../icons/PencilIcon.native'
+import ShareIcon from './../icons/ShareIcon'
+import ModalComponent from './ModalComponent'
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
 const getNextDeviceName = (permissions: Index<ShareType>, start?: number): string => {
@@ -43,7 +43,7 @@ const ModalDevices = () => {
   const onBack = useCallback(() => setSelected(null), [])
 
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.devices}
       title='Device Management'
       className='popup'
@@ -69,7 +69,7 @@ const ModalDevices = () => {
           )}
         </TransitionGroup>
       </div>
-    </Modal>
+    </ModalComponent>
   )
 }
 

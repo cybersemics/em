@@ -1,22 +1,22 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import * as Firebase from '../@types/Firebase'
-import Index from '../@types/IndexType'
-import InviteCode from '../@types/InviteCode'
-import ModalType from '../@types/Modal'
-import State from '../@types/State'
-import alert from '../action-creators/alert'
-import { getInviteById, updateInviteCode } from '../apis/invites'
-import { baseUrl } from '../device/router'
-import themeColors from '../selectors/themeColors'
-import createId from '../util/createId'
-import timestamp from '../util/timestamp'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
-import CheckmarkIcon from './icons/CheckmarkIcon'
-import CopyClipboard from './icons/CopyClipboard'
-import InvitesIcon from './icons/InvitesIcon'
+import * as Firebase from '../../@types/Firebase'
+import Index from '../../@types/IndexType'
+import InviteCode from '../../@types/InviteCode'
+import ModalType from '../../@types/Modal'
+import State from '../../@types/State'
+import alert from '../../action-creators/alert'
+import { getInviteById, updateInviteCode } from '../../apis/invites'
+import { baseUrl } from '../../device/router'
+import themeColors from '../../selectors/themeColors'
+import createId from '../../util/createId'
+import timestamp from '../../util/timestamp'
+import { ActionButton } from './../ActionButton'
+import CheckmarkIcon from './../icons/CheckmarkIcon'
+import CopyClipboard from './../icons/CopyClipboard'
+import InvitesIcon from './../icons/InvitesIcon'
+import ModalComponent from './ModalComponent'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -136,7 +136,7 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
   }
 
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.invites}
       title='Gift codes'
       className='popup'
@@ -182,7 +182,7 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
           )
         })}
       </div>
-    </Modal>
+    </ModalComponent>
   )
 }
 

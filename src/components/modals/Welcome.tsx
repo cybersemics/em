@@ -1,10 +1,10 @@
 /* eslint-disable no-unmodified-loop-condition */
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import ModalType from '../@types/Modal'
-import tutorial from '../action-creators/tutorial'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
+import ModalType from '../../@types/Modal'
+import tutorial from '../../action-creators/tutorial'
+import { ActionButton } from './../ActionButton'
+import ModalComponent from './ModalComponent'
 
 /** Shrink modal text and logos to fit container vertically. */
 const onRef = (el: HTMLDivElement) => {
@@ -58,7 +58,7 @@ const ModalWelcome = () => {
 
   return (
     <div ref={onRef}>
-      <Modal
+      <ModalComponent
         id={ModalType.welcome}
         title='Welcome to em'
         className='popup'
@@ -94,7 +94,7 @@ const ModalWelcome = () => {
             </p>
           </div>
         </div>
-      </Modal>
+      </ModalComponent>
     </div>
   )
 }

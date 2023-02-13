@@ -1,15 +1,15 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import ModalType from '../@types/Modal'
-import State from '../@types/State'
-import toggleUserSetting from '../action-creators/toggleUserSetting'
-import { Settings } from '../constants'
-import getUserSetting from '../selectors/getUserSetting'
-import themeColors from '../selectors/themeColors'
-import { ActionButton } from './ActionButton'
-import CheckboxItem from './CheckboxItem'
-import GestureDiagram from './GestureDiagram'
-import Modal from './Modal'
+import ModalType from '../../@types/Modal'
+import State from '../../@types/State'
+import toggleUserSetting from '../../action-creators/toggleUserSetting'
+import { Settings } from '../../constants'
+import getUserSetting from '../../selectors/getUserSetting'
+import themeColors from '../../selectors/themeColors'
+import { ActionButton } from './../ActionButton'
+import CheckboxItem from './../CheckboxItem'
+import GestureDiagram from './../GestureDiagram'
+import ModalComponent from './ModalComponent'
 
 /** A boolean setting checkbox, title, and description. */
 const Setting: FC<{
@@ -48,7 +48,7 @@ const ModalSettings = () => {
   const colors = useSelector(themeColors)
   const fontSize = useSelector((state: State) => state.fontSize)
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.settings}
       title='Settings'
       className='popup'
@@ -110,7 +110,7 @@ const ModalSettings = () => {
           </Setting>
         </div>
       </form>
-    </Modal>
+    </ModalComponent>
   )
 }
 

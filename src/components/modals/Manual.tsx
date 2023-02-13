@@ -1,19 +1,19 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Icon from '../@types/Icon'
-import ModalType from '../@types/Modal'
-import State from '../@types/State'
-import closeModal from '../action-creators/closeModal'
-import tutorial from '../action-creators/tutorial'
-import setTutorialStep from '../action-creators/tutorialStep'
-import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../constants'
-import getSetting from '../selectors/getSetting'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
-import ShortcutTable from './ShortcutTable'
-import CommandCenterIcon from './icons/CommandCenterIcon'
-import MetaIcon from './icons/MetaIcon'
-import TutorialsIcon from './icons/TutorialsIcon'
+import Icon from '../../@types/Icon'
+import ModalType from '../../@types/Modal'
+import State from '../../@types/State'
+import closeModal from '../../action-creators/closeModal'
+import tutorial from '../../action-creators/tutorial'
+import setTutorialStep from '../../action-creators/tutorialStep'
+import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
+import getSetting from '../../selectors/getSetting'
+import { ActionButton } from './../ActionButton'
+import ShortcutTable from './../ShortcutTable'
+import CommandCenterIcon from './../icons/CommandCenterIcon'
+import MetaIcon from './../icons/MetaIcon'
+import TutorialsIcon from './../icons/TutorialsIcon'
+import ModalComponent from './ModalComponent'
 
 enum Section {
   Menu = 'Menu',
@@ -368,7 +368,7 @@ const ModalManual = () => {
   const fontSize = useSelector((state: State) => state.fontSize)
   const back = useCallback(() => setSection(Section.Menu), [])
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.manual}
       title='The Manual'
       className='popup'
@@ -414,7 +414,7 @@ const ModalManual = () => {
           </div>
         )
       }
-    </Modal>
+    </ModalComponent>
   )
 }
 

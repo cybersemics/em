@@ -26,15 +26,6 @@ import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
-import ModalAuth from './ModalAuth'
-import ModalDevices from './ModalDevices'
-import ModalExport from './ModalExport'
-import ModalFeedback from './ModalFeedback'
-import ModalInvites from './ModalInvites'
-import ModalManual from './ModalManual'
-import ModalSettings from './ModalSettings'
-import ModalSignup from './ModalSignup'
-import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
@@ -42,6 +33,7 @@ import Scale from './Scale'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
+import * as modals from './modals'
 
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
@@ -256,6 +248,12 @@ const AppComponent: FC<Props> = props => {
     [colors],
   )
 
+  if (showModal && !modals[showModal]) {
+    throw new Error(`Missing component for Modal type: ${showModal}`)
+  }
+
+  const Modal = showModal ? modals[showModal] : null
+
   return (
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
@@ -272,33 +270,7 @@ const AppComponent: FC<Props> = props => {
       <QuickDropPanel />
       <MultiGestureIfTouch>
         {showModal ? (
-          <div style={{ fontSize }}>
-            {
-              // modals
-              // eslint-disable-next-line @typescript-eslint/no-extra-parens
-              showModal === Modal.welcome ? (
-                <ModalWelcome />
-              ) : showModal === Modal.manual ? (
-                <ModalManual />
-              ) : showModal === Modal.export ? (
-                <ModalExport />
-              ) : showModal === Modal.feedback ? (
-                <ModalFeedback />
-              ) : showModal === Modal.auth ? (
-                <ModalAuth />
-              ) : showModal === Modal.signup ? (
-                <ModalSignup />
-              ) : showModal === Modal.settings ? (
-                <ModalSettings />
-              ) : showModal === Modal.devices ? (
-                <ModalDevices />
-              ) : showModal === Modal.invites ? (
-                <ModalInvites />
-              ) : (
-                `Missing component for Modal type: ${showModal}`
-              )
-            }
-          </div>
+          <div style={{ fontSize }}>{Modal && <Modal />}</div>
         ) : (
           // navigation, content, and footer
           <>

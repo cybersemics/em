@@ -1,16 +1,16 @@
 import React, { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import Index from '../@types/IndexType'
-import InviteCode from '../@types/InviteCode'
-import ModalType from '../@types/Modal'
-import showModal from '../action-creators/showModal'
-import { getInviteById, updateInviteCode } from '../apis/invites'
-import getQueryParam from '../util/getQueryParam'
-import storage from '../util/storage'
-import timestamp from '../util/timestamp'
-import { ActionButton } from './ActionButton'
-import Modal from './Modal'
-import InvitesIcon from './icons/InvitesIcon'
+import Index from '../../@types/IndexType'
+import InviteCode from '../../@types/InviteCode'
+import ModalType from '../../@types/Modal'
+import showModal from '../../action-creators/showModal'
+import { getInviteById, updateInviteCode } from '../../apis/invites'
+import getQueryParam from '../../util/getQueryParam'
+import storage from '../../util/storage'
+import timestamp from '../../util/timestamp'
+import { ActionButton } from './../ActionButton'
+import InvitesIcon from './../icons/InvitesIcon'
+import ModalComponent from './ModalComponent'
 
 interface Mode {
   name: string
@@ -135,7 +135,7 @@ const ModalSignup = () => {
     })
 
   return (
-    <Modal
+    <ModalComponent
       id={ModalType.signup}
       title={modes.signup.modalTitle}
       className='popup'
@@ -203,7 +203,7 @@ const ModalSignup = () => {
           </form>
         </>
       )}
-    </Modal>
+    </ModalComponent>
   )
 }
 

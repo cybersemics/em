@@ -4,46 +4,46 @@ import _ from 'lodash'
 import React, { FC, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
-import Context from '../@types/Context'
-import ExportOption from '../@types/ExportOption'
-import ModalType from '../@types/Modal'
-import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
-import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
-import ThoughtIndices from '../@types/ThoughtIndices'
-import alert from '../action-creators/alert'
-import closeModal from '../action-creators/closeModal'
-import error from '../action-creators/error'
-import pull from '../action-creators/pull'
-import { isTouch } from '../browser'
-import { AlertType, HOME_PATH } from '../constants'
-import download from '../device/download'
-import * as selection from '../device/selection'
-import globals from '../globals'
-import contextToThoughtId from '../selectors/contextToThoughtId'
-import exportContext from '../selectors/exportContext'
-import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
-import getThoughtById from '../selectors/getThoughtById'
-import simplifyPath from '../selectors/simplifyPath'
-import theme from '../selectors/theme'
-import themeColors from '../selectors/themeColors'
-import ellipsize from '../util/ellipsize'
-import exportPhrase from '../util/exportPhrase'
-import head from '../util/head'
-import isAttribute from '../util/isAttribute'
-import isRoot from '../util/isRoot'
-import pathToContext from '../util/pathToContext'
-import removeHome from '../util/removeHome'
-import timestamp from '../util/timestamp'
-import CheckboxItem from './CheckboxItem'
-import ChevronImg from './ChevronImg'
-import DropDownMenu from './DropDownMenu'
-import LoadingEllipsis from './LoadingEllipsis'
-import Modal from './Modal'
+import Context from '../../@types/Context'
+import ExportOption from '../../@types/ExportOption'
+import ModalType from '../../@types/Modal'
+import Path from '../../@types/Path'
+import SimplePath from '../../@types/SimplePath'
+import State from '../../@types/State'
+import Thought from '../../@types/Thought'
+import ThoughtId from '../../@types/ThoughtId'
+import ThoughtIndices from '../../@types/ThoughtIndices'
+import alert from '../../action-creators/alert'
+import closeModal from '../../action-creators/closeModal'
+import error from '../../action-creators/error'
+import pull from '../../action-creators/pull'
+import { isTouch } from '../../browser'
+import { AlertType, HOME_PATH } from '../../constants'
+import download from '../../device/download'
+import * as selection from '../../device/selection'
+import globals from '../../globals'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import exportContext from '../../selectors/exportContext'
+import findDescendant from '../../selectors/findDescendant'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
+import getThoughtById from '../../selectors/getThoughtById'
+import simplifyPath from '../../selectors/simplifyPath'
+import theme from '../../selectors/theme'
+import themeColors from '../../selectors/themeColors'
+import ellipsize from '../../util/ellipsize'
+import exportPhrase from '../../util/exportPhrase'
+import head from '../../util/head'
+import isAttribute from '../../util/isAttribute'
+import isRoot from '../../util/isRoot'
+import pathToContext from '../../util/pathToContext'
+import removeHome from '../../util/removeHome'
+import timestamp from '../../util/timestamp'
+import CheckboxItem from './../CheckboxItem'
+import ChevronImg from './../ChevronImg'
+import DropDownMenu from './../DropDownMenu'
+import LoadingEllipsis from './../LoadingEllipsis'
+import ModalComponent from './ModalComponent'
 
 /** Use a throttled callback. */
 // https://stackoverflow.com/a/62017005/480608
@@ -481,7 +481,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   ]
 
   return (
-    <Modal id={ModalType.export} title={isTouch ? 'Share' : 'Export'} className='popup'>
+    <ModalComponent id={ModalType.export} title={isTouch ? 'Share' : 'Export'} className='popup'>
       {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>
@@ -639,7 +639,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
           </div>
         </>
       ) */}
-    </Modal>
+    </ModalComponent>
   )
 }
 
