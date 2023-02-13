@@ -30,7 +30,7 @@ const CursorBreadcrumbs = () => {
 }
 
 /** A link that opens The Manual. */
-const ManualBUtton: React.FC = () => {
+const ManualButton: React.FC = () => {
   const dispatch = useDispatch()
 
   return (
@@ -42,8 +42,9 @@ const ManualBUtton: React.FC = () => {
         display: 'inline-flex',
         fontWeight: 'bold',
         // extend tap area
-        padding: '10px 20px',
-        margin: '-10px -20px',
+        // margin-right less than -10 causes content to scroll horizontally on swipe
+        padding: '10px 10px 10px 20px',
+        margin: -10,
         userSelect: 'none',
       }}
     >
@@ -91,7 +92,7 @@ const NavBar = ({ position }: { position: string }) => {
 
               <div className='nav-right-button-group'>
                 <>
-                  <ManualBUtton />
+                  <ManualButton />
                   {authenticated && <InvitesButton />}
                   {/* <FeedbackButton /> */}
                   {/* <QuickAddButton /> */}
