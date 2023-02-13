@@ -162,7 +162,10 @@ interface AdvancedSetting {
   title: string
   description: string
   disabled?: boolean
-  indent?: boolean
+  // child settings are indented
+  child?: boolean
+  // parent settings have less margin-bottom
+  parent?: boolean
 }
 
 const exportOptions: ExportOption[] = [
@@ -456,6 +459,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       title: 'Metaprogramming Attributes',
       description:
         'When checked, include all metaprogramming attributes such pins, table view, etc. Check this option if the text is intended to be pasted back into em. Uncheck this option for social sharing or public display. ',
+      parent: true,
     },
     {
       id: 'archived',
@@ -464,7 +468,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       title: 'Archived',
       description: 'When checked, the exported thoughts include archived thoughts.',
       disabled: !shouldIncludeMetaAttributes,
-      indent: true,
+      child: true,
     },
     {
       id: 'formatting',
@@ -509,7 +513,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
           color: '#aaa',
           fontSize: '1em',
           height: '120px',
-          marginBottom: '20px',
+          marginBottom: 'calc(max(1.2em, 20px))',
           width: '300px',
         }}
         value={exportContent || ''}

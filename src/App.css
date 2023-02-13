@@ -85,7 +85,7 @@ body {
 }
 
 button {
-  font-size: 16px;
+  font-size: 1.2em;
 }
 
 a {
@@ -224,8 +224,8 @@ textarea {
 }
 
 a.button {
-  padding: 4px 30px;
-  min-width: 120px;
+  padding: 0.5em 2em;
+  min-width: 6em;
   text-decoration: none;
   display: inline-block;
   border-radius: 99px;
@@ -1681,7 +1681,7 @@ h1 .num-contexts {
 }
 
 .modal p {
-  margin: 0 0 10px 0;
+  margin: 0 0 1em 0;
 }
 
 .modal.center {
@@ -1704,9 +1704,8 @@ h1 .num-contexts {
   padding: 10px 20px;
   margin: -10px -20px;
   position: fixed;
-  top: 0.15em;
-  right: 0.4em;
-  font-size: 24px;
+  top: calc(9px - 0.2em);
+  right: 11px;
   color: inherit;
   text-decoration: none;
 }
@@ -1742,23 +1741,18 @@ h1 .num-contexts {
 
 .popup .modal-subtitle {
   font-family: 'Helvetica Neue';
-  font-size: 22px;
+  font-size: 1.7em;
 }
 
 .popup .modal-subtitle-compact {
-  margin-bottom: 15px;
+  margin-bottom: 0.8em;
 }
 
 .popup .modal-text {
-  margin-bottom: 50px;
-}
-
-.popup .modal-actions a {
-  font-size: 75%;
+  margin-bottom: 2em;
 }
 
 .popup .modal-actions a.button {
-  font-size: 18px;
   text-decoration: none;
   background-color: black;
   color: white;
@@ -1799,7 +1793,6 @@ h1 .num-contexts {
 
 .modal-content .button {
   cursor: pointer;
-  font-size: 0.9rem;
   background: transparent;
   color: #ccc;
   display: block;
@@ -1845,10 +1838,6 @@ h1 .num-contexts {
 
 .modal-title {
   font-weight: 400;
-}
-
-.modal-actions {
-  font-size: 75%;
 }
 
 .modal-actions a {
@@ -2504,11 +2493,9 @@ code,
   min-width: 90px;
   display: inline-block;
   border-radius: 99px;
-  font-weight: normal;
   margin: 0 5px 15px 5px;
   white-space: nowrap;
   line-height: 2;
-  font-size: 18px;
   text-decoration: none;
   border: none;
 }
@@ -2795,7 +2782,7 @@ code,
 .advance-setting-wrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 2em;
 }
 
 p.advance-setting-label {
@@ -2844,7 +2831,6 @@ a.advance-setting-link {
   display: block;
   position: relative;
   padding-left: 2.2em;
-  margin-bottom: 1em;
   user-select: none;
 }
 
@@ -2858,10 +2844,10 @@ a.advance-setting-link {
 
 .checkbox {
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 15px;
-  width: 15px;
+  top: 0.1em;
+  left: 0.1em;
+  height: 1em;
+  width: 1em;
   background-color: #fff;
 }
 
@@ -2869,7 +2855,7 @@ a.advance-setting-link {
 .checkbox-container:hover input ~ .checkbox,
 .checkbox-container input:checked ~ .checkbox {
   background-color: #000;
-  border: 1px solid #fff;
+  border: 0.1em solid #fff;
 }
 
 /* Create the checkbox/indicator (hidden when not checked) */
@@ -2886,12 +2872,12 @@ a.advance-setting-link {
 
 /* checkbox indicator */
 .checkbox-container .checkbox:after {
-  left: 5px;
-  top: 1px;
-  width: 4px;
-  height: 9px;
+  left: 0.3em;
+  bottom: 0.2em;
+  width: 0.3em;
+  height: 0.65em;
   border: solid white;
-  border-width: 0 2px 2px 0;
+  border-width: 0 0.15em 0.15em 0;
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */

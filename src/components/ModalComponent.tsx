@@ -134,7 +134,7 @@ class ModalComponent extends React.Component<Connected<ModalProps>> {
         }
       >
         {!this.props.preventCloseOnEscape && !hideClose && (
-          <a className='upper-right popup-close-x text-small' onClick={this.close}>
+          <a className='upper-right popup-close-x' onClick={this.close}>
             ✕
           </a>
         )}

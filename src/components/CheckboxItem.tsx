@@ -13,7 +13,11 @@ const Checkbox = ({
       {/* Note: never preventDefault on a controlled checkbox in React.
           See: https://stackoverflow.com/a/70030088/4806080 */}
       <input type='checkbox' checked={checked} onChange={onChange} />
-      <span className='checkbox' />
+      <span
+        className='checkbox'
+        // extend tap area without disrupting padding
+        style={{ margin: 10, transform: 'translate(-10px, -10px)' }}
+      />
     </>
   )
 }
@@ -22,17 +26,19 @@ const Checkbox = ({
 const CheckboxItem: FC<{
   checked?: boolean
   disabled?: boolean
-  indent?: boolean
+  child?: boolean
+  parent?: boolean
   onChange: React.ChangeEventHandler
   title?: string
-}> = ({ checked, children, disabled, indent, onChange, title }) => {
+}> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
     <label
       className='checkbox-container'
       style={{
         opacity: disabled ? 0.5 : undefined,
-        // indent should match .checkbox-container padding-left
-        marginLeft: indent ? '2.2em' : undefined,
+        marginBottom: parent ? '0.5em' : '1em',
+        // child marginLeft should match .checkbox-container padding-left
+        marginLeft: child ? '2.2em' : undefined,
         pointerEvents: disabled ? 'none' : undefined,
         cursor: disabled ? 'default' : 'pointer',
       }}

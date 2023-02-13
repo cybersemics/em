@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Icon from '../@types/Icon'
 import ModalType from '../@types/Modal'
@@ -17,7 +17,7 @@ import TutorialsIcon from './icons/TutorialsIcon'
 
 enum Section {
   Menu = 'Menu',
-  Shortcuts = 'Shortcuts',
+  CommandCenter = 'Shortcuts',
   Tutorials = 'Tutorials',
   Metaprogramming = 'Metaprogramming',
   About = 'About',
@@ -58,7 +58,7 @@ const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
       />
       <ManualMenuItem
         Icon={CommandCenterIcon}
-        onClick={() => onClick(Section.Shortcuts)}
+        onClick={() => onClick(Section.CommandCenter)}
         title={'Command Center'}
         description='View all gestures, keyboard shortcuts, and toolbar icons.'
       />
@@ -117,6 +117,16 @@ const Tutorials = () => {
   )
 }
 
+/** A manual section to view all gestures, shortcuts, and toolbar buttons. */
+const CommandCenter = () => <ShortcutTable />
+
+/** List the valid values for a metaprogramming attribute. */
+const Options = ({ options }: { options: string[] }) => (
+  <div className='dim text-small' style={{ marginBottom: '0.5em' }}>
+    <b>Options</b>: {options.join(', ')}
+  </div>
+)
+
 /** A manual section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
   return (
@@ -125,34 +135,35 @@ const Metaprogramming = () => {
         Metaprogramming
       </h2>
 
+      <p className='dim' style={{ marginBottom: '2em' }}>
+        <i>Metaprogramming attributes</i> are hidden thoughts with superpowers. Customize the appearance and behavior of
+        thoughts, define style templates, and more.
+      </p>
+
       <code>=bullets</code>
       <p>
-        Options: Bullets, None
-        <br />
+        <Options options={['Bullets', 'None']} />
         Hide the bullets of a context. For a less bullety look.
       </p>
 
       <code>=children</code>
       <p>
-        Options: =bullet, =pin, =style
-        <br />
+        <Options options={['=bullet', '=pin', '=style']} />
         Applies a meta attribute to all children of a thought.
       </p>
 
       <code>=drop</code>
       <p>
-        Options: top, bottom
-        <br />
+        <Options options={['top', 'bottom']} />
         Controls where in a context an item is placed after drag-and-drop. Default: bottom.
       </p>
 
-      <code>=focus</code>
+      {/* <code>=focus</code>
       <p>
-        Options: Normal, Zoom
-        <br />
+        <Options options={['Normal', 'Zoom']} />
         When the cursor is on this thought, hide its parent and siblings for additional focus. Excellent for study time
         or when you have had too much coffee.
-      </p>
+      </p> */}
 
       <code>=hidden</code>
       <p>Hide the thought.</p>
@@ -163,19 +174,19 @@ const Metaprogramming = () => {
       <code>=label</code>
       <p>
         Display alternative text for a thought, but continue using the real text when linking contexts and sorting. The
-        real text is hidden unless editing. Useful for nuisance words like "The", "A", and "Chrysanthemum".
+        real text is hidden unless editing.
       </p>
 
       <code>=note</code>
       <p>Display a note in smaller text underneath the thought. How pretty.</p>
 
       <code>=options</code>
-      <p>A list of allowed subthoughts. We all have times when we need to be strict.</p>
+      <p>A list of allowed subthoughts. Constraint is the mother of creativity?</p>
 
       <code>=pin</code>
       <p>Keep a thought expanded, forever. Or at least until you unpin it.</p>
 
-      <code>=publish</code>
+      {/* <code>=publish</code>
       <p>Specify meta data for publishing the context as an article.</p>
       <ul>
         <li>
@@ -193,13 +204,13 @@ const Metaprogramming = () => {
           <code>Title</code>
           <p>Override the title of the article when exported.</p>
         </li>
-      </ul>
+      </ul> */}
 
       <code>=readonly</code>
       <p>The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.</p>
 
-      <code>=src</code>
-      <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.</p>
+      {/* <code>=src</code>
+      <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.</p> */}
 
       <code>=style</code>
       <p>
@@ -213,13 +224,12 @@ const Metaprogramming = () => {
       <code>=unextendable</code>
       <p>New subthoughts may not be added to the thought.</p>
 
-      <code>=view</code>
+      {/* <code>=view</code>
       <p>
-        Options: Article, List, Table, Prose
-        <br />
+        <Options options={['Article', 'List', 'Table', 'Prose']} />
         Controls how the thought and its subthoughts are displayed. Use "Table" to create two columns, and "Prose" for
         longform writing. Default: List.
-      </p>
+      </p> */}
     </div>
   )
 }
@@ -356,6 +366,7 @@ const About = () => {
 const ModalManual = () => {
   const [section, setSection] = useState(Section.Menu)
   const fontSize = useSelector((state: State) => state.fontSize)
+  const back = useCallback(() => setSection(Section.Menu), [])
   return (
     <Modal
       id={ModalType.manual}
@@ -381,19 +392,28 @@ const ModalManual = () => {
         <ManualMenu onClick={setSection} />
       ) : (
         <span className='text-small'>
-          &lt; <a onClick={() => setSection(Section.Menu)}>Back</a>
+          &lt; <a onClick={back}>Back</a>
         </span>
       )}
 
       {section === Section.Tutorials ? (
         <Tutorials />
-      ) : section === Section.Shortcuts ? (
-        <ShortcutTable />
+      ) : section === Section.CommandCenter ? (
+        <CommandCenter />
       ) : section === Section.Metaprogramming ? (
         <Metaprogramming />
       ) : section === Section.About ? (
         <About />
       ) : null}
+
+      {
+        // TODO: Remove Section.Tutorials condition once it has more content.
+        section !== Section.Menu && section !== Section.Tutorials && (
+          <div className='text-small' style={{ marginTop: '2em' }}>
+            &lt; <a onClick={back}>Back</a>
+          </div>
+        )
+      }
     </Modal>
   )
 }

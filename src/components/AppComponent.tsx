@@ -272,29 +272,33 @@ const AppComponent: FC<Props> = props => {
       <QuickDropPanel />
       <MultiGestureIfTouch>
         {showModal ? (
-          // modals
-          // eslint-disable-next-line @typescript-eslint/no-extra-parens
-          showModal === Modal.welcome ? (
-            <ModalWelcome />
-          ) : showModal === Modal.manual ? (
-            <ModalManual />
-          ) : showModal === Modal.export ? (
-            <ModalExport />
-          ) : showModal === Modal.feedback ? (
-            <ModalFeedback />
-          ) : showModal === Modal.auth ? (
-            <ModalAuth />
-          ) : showModal === Modal.signup ? (
-            <ModalSignup />
-          ) : showModal === Modal.settings ? (
-            <ModalSettings />
-          ) : showModal === Modal.devices ? (
-            <ModalDevices />
-          ) : showModal === Modal.invites ? (
-            <ModalInvites />
-          ) : (
-            `Missing component for Modal type: ${showModal}`
-          )
+          <div style={{ fontSize }}>
+            {
+              // modals
+              // eslint-disable-next-line @typescript-eslint/no-extra-parens
+              showModal === Modal.welcome ? (
+                <ModalWelcome />
+              ) : showModal === Modal.manual ? (
+                <ModalManual />
+              ) : showModal === Modal.export ? (
+                <ModalExport />
+              ) : showModal === Modal.feedback ? (
+                <ModalFeedback />
+              ) : showModal === Modal.auth ? (
+                <ModalAuth />
+              ) : showModal === Modal.signup ? (
+                <ModalSignup />
+              ) : showModal === Modal.settings ? (
+                <ModalSettings />
+              ) : showModal === Modal.devices ? (
+                <ModalDevices />
+              ) : showModal === Modal.invites ? (
+                <ModalInvites />
+              ) : (
+                `Missing component for Modal type: ${showModal}`
+              )
+            }
+          </div>
         ) : (
           // navigation, content, and footer
           <>

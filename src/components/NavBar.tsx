@@ -41,8 +41,9 @@ const ManualBUtton: React.FC = () => {
         cursor: 'pointer',
         display: 'inline-flex',
         fontWeight: 'bold',
-        padding: 10,
-        margin: -10,
+        // extend tap area
+        padding: '10px 20px',
+        margin: '-10px -20px',
         userSelect: 'none',
       }}
     >
