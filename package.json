@@ -32,7 +32,6 @@
     "build": "react-scripts build",
     "clean": "rm -rf ./node_modules/.cache",
     "docs": "typedoc --options typedoc.json",
-    "deploy": "npm run deploy:major",
     "deploy:major": "npm run lint && npm version major && npm run build && firebase deploy --only hosting",
     "deploy:minor": "npm run lint && npm version minor && npm run build && firebase deploy --only hosting",
     "deploy:patch": "npm run lint && npm version patch && npm run build && firebase deploy --only hosting",
