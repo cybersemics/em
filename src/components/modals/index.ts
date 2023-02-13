@@ -1,5 +1,3 @@
-// exports a map from Modal type to component
-// See: /src/@types/Modal.ts
 export { default as auth } from './Auth'
 export { default as devices } from './Devices'
 export { default as export } from './Export'

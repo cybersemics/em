@@ -1,7 +1,6 @@
 import { AxiosError } from 'axios'
 import React, { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import ModalType from '../../@types/Modal'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import { AlertType } from '../../constants'
@@ -69,7 +68,7 @@ const ModalFeedback = () => {
 
   return (
     <ModalComponent
-      id={ModalType.feedback}
+      id='feedback'
       title='Feedback'
       className='popup'
       center

@@ -5,7 +5,6 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../../@types/IndexType'
-import ModalType from '../../@types/Modal'
 import Role from '../../@types/Role'
 import ShareType from '../../@types/Share'
 import State from '../../@types/State'
@@ -44,7 +43,7 @@ const ModalDevices = () => {
 
   return (
     <ModalComponent
-      id={ModalType.devices}
+      id='devices'
       title='Device Management'
       className='popup'
       center

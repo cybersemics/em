@@ -1,7 +1,6 @@
 /* eslint-disable no-unmodified-loop-condition */
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import ModalType from '../../@types/Modal'
 import tutorial from '../../action-creators/tutorial'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -59,7 +58,7 @@ const ModalWelcome = () => {
   return (
     <div ref={onRef}>
       <ModalComponent
-        id={ModalType.welcome}
+        id='welcome'
         title='Welcome to em'
         className='popup'
         hideModalActions={false}

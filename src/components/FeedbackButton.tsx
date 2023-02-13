@@ -1,6 +1,5 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import Modal from '../@types/Modal'
 import showModal from '../action-creators/showModal'
 import FeedbackIcon from './icons/FeedbackIcon'
 
@@ -10,11 +9,7 @@ import FeedbackIcon from './icons/FeedbackIcon'
 const FeedbackButton: React.FC = () => {
   const dispatch = useDispatch()
   return (
-    <div
-      style={{ display: 'inline-flex' }}
-      onClick={() => dispatch(showModal({ id: Modal.feedback }))}
-      title='Feedback'
-    >
+    <div style={{ display: 'inline-flex' }} onClick={() => dispatch(showModal({ id: 'feedback' }))} title='Feedback'>
       <FeedbackIcon size={26} />
     </div>
   )

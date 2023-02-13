@@ -110,11 +110,11 @@ const Footer = () => {
         </div>
 
         <div style={{ lineHeight: 2, margin: '-0.5em 0' }}>
-          <ModalLink id={Modal.devices}>Devices</ModalLink>
+          <ModalLink id='devices'>Devices</ModalLink>
           <LinkDivider />
-          <ModalLink id={Modal.settings}>Settings</ModalLink>
+          <ModalLink id='settings'>Settings</ModalLink>
           <LinkDivider />
-          <ModalLink id={Modal.manual}>The Manual</ModalLink>
+          <ModalLink id='manual'>The Manual</ModalLink>
         </div>
       </li>
       <br />

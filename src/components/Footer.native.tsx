@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import * as pkg from '../../package.json'
-import Modal from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
@@ -64,21 +63,21 @@ const Footer = () => {
         </TouchableOpacity>
 
         <View style={[row, justifyContentEnd]}>
-          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: Modal.feedback }))}>
+          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: 'feedback' }))}>
             <Text style={[lightblueText, hyperlink]}>Feedback</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: Modal.settings }))}>
+          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: 'settings' }))}>
             <Text style={[lightblueText, hyperlink]}>Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: Modal.manual }))}>
+          <TouchableOpacity style={styles.optionButton} onPress={() => dispatch(showModal({ id: 'manual' }))}>
             <Text style={[lightblueText, hyperlink]}>Help</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.authButton}
-            onPress={() => (authenticated ? dispatch(logout()) : dispatch(showModal({ id: Modal.auth })))}
+            onPress={() => (authenticated ? dispatch(logout()) : dispatch(showModal({ id: 'auth' })))}
           >
             <Text style={[lightblueText, hyperlink]}>{authenticated ? 'Log Out' : 'Log In'}</Text>
           </TouchableOpacity>

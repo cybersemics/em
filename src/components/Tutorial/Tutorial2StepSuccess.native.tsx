@@ -1,6 +1,5 @@
 import React, { Fragment } from 'react'
 import Dispatch from '../../@types/Dispatch'
-import Modal from '../../@types/Modal'
 import showModal from '../../action-creators/showModal'
 import { commonStyles } from '../../style/commonStyles'
 import { Text } from '../Text.native'
@@ -20,7 +19,7 @@ const Tutorial2StepSuccess = ({ dispatch }: IComponentProps) => (
     </Text>
     <Text style={smallText}>
       That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
-      gestures by clicking the <Text onPress={() => dispatch(showModal({ id: Modal.manual }))}>Help</Text> link in the
+      gestures by clicking the <Text onPress={() => dispatch(showModal({ id: 'manual' }))}>Help</Text> link in the
       footer.
     </Text>
     <Text style={smallText}>Happy Sensemaking!</Text>

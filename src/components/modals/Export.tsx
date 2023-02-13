@@ -6,7 +6,6 @@ import { useDispatch, useSelector, useStore } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import Context from '../../@types/Context'
 import ExportOption from '../../@types/ExportOption'
-import ModalType from '../../@types/Modal'
 import Path from '../../@types/Path'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -481,7 +480,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   ]
 
   return (
-    <ModalComponent id={ModalType.export} title={isTouch ? 'Share' : 'Export'} className='popup'>
+    <ModalComponent id='export' title={isTouch ? 'Share' : 'Export'} className='popup'>
       {/* Export message */}
       <div className='modal-export-wrapper'>
         <span className='modal-content-to-export'>

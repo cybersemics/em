@@ -1,6 +1,5 @@
 import React from 'react'
 import DragThoughtItem from '../@types/DragThoughtItem'
-import Modal from '../@types/Modal'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import setCursor from '../action-creators/setCursor'
@@ -18,7 +17,7 @@ import ShareIcon from './icons/ShareIcon'
 const drop = (state: State, { simplePath }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
   copy(value)
-  store.dispatch([alert(null), setCursor({ path: simplePath }), showModal({ id: Modal.export })])
+  store.dispatch([alert(null), setCursor({ path: simplePath }), showModal({ id: 'export' })])
 }
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */

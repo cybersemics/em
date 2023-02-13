@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
-import ModalType from '../../@types/Modal'
 import State from '../../@types/State'
 import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
@@ -369,7 +368,7 @@ const ModalManual = () => {
   const back = useCallback(() => setSection(Section.Menu), [])
   return (
     <ModalComponent
-      id={ModalType.manual}
+      id='manual'
       title='The Manual'
       className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}

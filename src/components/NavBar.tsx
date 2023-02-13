@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import React from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import Modal from '../@types/Modal'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import showModal from '../action-creators/showModal'
@@ -35,7 +34,7 @@ const ManualButton: React.FC = () => {
 
   return (
     <div
-      onClick={() => dispatch(showModal({ id: Modal.manual }))}
+      onClick={() => dispatch(showModal({ id: 'manual' }))}
       title='The Manual'
       style={{
         cursor: 'pointer',

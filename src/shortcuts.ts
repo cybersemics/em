@@ -6,7 +6,6 @@ import Direction from './@types/Direction'
 import GesturePath from './@types/GesturePath'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
-import Modal from './@types/Modal'
 import Shortcut from './@types/Shortcut'
 import State from './@types/State'
 import alert from './action-creators/alert'
@@ -280,11 +279,11 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // disable when welcome, shortcuts, or feeback modals are displayed
     if (
-      state.showModal === Modal.auth ||
-      state.showModal === Modal.feedback ||
-      state.showModal === Modal.invites ||
-      state.showModal === Modal.manual ||
-      state.showModal === Modal.welcome
+      state.showModal === 'auth' ||
+      state.showModal === 'feedback' ||
+      state.showModal === 'invites' ||
+      state.showModal === 'manual' ||
+      state.showModal === 'welcome'
     )
       return
 

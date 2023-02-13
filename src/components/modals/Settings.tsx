@@ -1,6 +1,5 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import ModalType from '../../@types/Modal'
 import State from '../../@types/State'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'
 import { Settings } from '../../constants'
@@ -49,7 +48,7 @@ const ModalSettings = () => {
   const fontSize = useSelector((state: State) => state.fontSize)
   return (
     <ModalComponent
-      id={ModalType.settings}
+      id='settings'
       title='Settings'
       className='popup'
       actions={({ close }) => (
