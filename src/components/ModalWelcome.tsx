@@ -71,9 +71,10 @@ const ModalWelcome = () => {
           <div>
             <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
             {
-              <div key='skip' style={{ marginTop: 10, opacity: 0.5 }}>
+              <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
                 <a
                   id='skip-tutorial'
+                  className='text-small'
                   onClick={() => {
                     endTutorial()
                     complete()

@@ -1769,6 +1769,7 @@ h1 .num-contexts {
 .modal-welcome {
   height: 100%;
   font-size: 26px;
+  padding-top: 2em;
 }
 
 .modal-welcome .modal-title {
@@ -1782,8 +1783,8 @@ h1 .num-contexts {
   font-size: 75%;
 }
 
-.modal-welcome .modal-actions a.button {
-  font-size: 92%; /* instead of px, so that it will be scaled with shrink-to-fit */
+.modal-welcome .modal-actions {
+  font-size: 0.75em;
 }
 
 .dark .popup .modal-actions a.button {
