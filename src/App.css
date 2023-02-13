@@ -1700,6 +1700,9 @@ h1 .num-contexts {
 }
 
 .popup-close-x {
+  /* extend click area */
+  padding: 10px 20px;
+  margin: -10px -20px;
   position: fixed;
   top: 0.15em;
   right: 0.4em;
