@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import alert from '../../action-creators/alert'
 import login from '../../action-creators/login'
-import modalComplete from '../../action-creators/modalComplete'
 import { FIREBASE_REDIRECT_URL } from '../../constants'
 import storage from '../../util/storage'
 import { ActionButton } from './../ActionButton'
@@ -170,7 +169,6 @@ const ModalAuth = () => {
               onClick={() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
-                dispatch(modalComplete('welcome'))
                 closeModal()
               }}
             >

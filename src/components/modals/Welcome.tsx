@@ -1,6 +1,7 @@
 /* eslint-disable no-unmodified-loop-condition */
 import React from 'react'
 import { useDispatch } from 'react-redux'
+import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -46,6 +47,9 @@ const onRef = (el: HTMLDivElement) => {
 const ModalWelcome = () => {
   const dispatch = useDispatch()
 
+  /** Close the welcome modal. */
+  const close = () => dispatch(closeModal())
+
   /** End the tutorial. */
   const endTutorial = () => {
     dispatch(
@@ -66,9 +70,9 @@ const ModalWelcome = () => {
         center
         // the modal is closed by ModalComponent when Escape is hit, so make sure to end the tutorial
         onClose={endTutorial}
-        actions={({ complete }) => (
+        actions={() => (
           <div>
-            <ActionButton key='start' title='START TUTORIAL' onClick={complete} />
+            <ActionButton key='start' title='START TUTORIAL' onClick={close} />
             {
               <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
                 <a
@@ -76,7 +80,7 @@ const ModalWelcome = () => {
                   className='text-small'
                   onClick={() => {
                     endTutorial()
-                    complete()
+                    close()
                   }}
                 >
                   This ain’t my first rodeo. Skip it.

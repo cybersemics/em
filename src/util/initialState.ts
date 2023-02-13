@@ -4,12 +4,8 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
-import * as modals from '../components/modals'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
-import globals from '../globals'
-import canShowModal from '../selectors/canShowModal'
 import hashThought from '../util/hashThought'
-import isDocumentEditable from '../util/isDocumentEditable'
 import never from '../util/never'
 import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
@@ -133,6 +129,9 @@ const initialState = (created: Timestamp = timestamp()) => {
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
+    // start the app with the welcome modal unless it has already been completed
+    // See: /src/action-creators/closeModal.ts
+    showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
     showTopControls: true,
@@ -144,18 +143,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     thoughts: initialThoughts(created),
     toolbarOverlay: null,
     undoPatches: [],
-  }
-  Object.keys(modals).forEach(key => {
-    // initial modal states
-    state.modals[key] = {
-      // eslint-disable-next-line no-mixed-operators
-      complete: globals.disableTutorial || JSON.parse(storage.getItem('modal-complete-' + key) || 'false'),
-    }
-  })
-
-  // welcome modal
-  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = 'welcome'
   }
 
   /**

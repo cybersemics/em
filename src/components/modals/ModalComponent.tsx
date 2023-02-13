@@ -3,13 +3,11 @@ import classNames from 'classnames'
 import React from 'react'
 import ModalType from '../../@types/Modal'
 import closeModal from '../../action-creators/closeModal'
-import modalComplete from '../../action-creators/modalComplete'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
-  complete: ModalComponent['complete']
 }
 
 export interface ModalProps {
@@ -78,9 +76,6 @@ class ModalComponent extends React.Component<ModalProps> {
     window.removeEventListener('keydown', this.escapeListener!, true)
   }
 
-  /** Dispatches a modalComplete action for the modal. */
-  complete = () => store.dispatch(modalComplete(this.props.id))
-
   render() {
     const { actions, arrow, center, children, className, hideClose, hideModalActions, id, opaque, style, title, top } =
       this.props
@@ -118,7 +113,6 @@ class ModalComponent extends React.Component<ModalProps> {
             <div className='modal-actions center'>
               {actions({
                 close: this.close,
-                complete: this.complete,
               })}
             </div>
           )}

@@ -84,7 +84,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   jump: true,
   loadLocalState: false,
   mergeThoughts: false,
-  modalComplete: false,
   moveThought: true,
   moveThoughtDown: true,
   moveThoughtUp: true,

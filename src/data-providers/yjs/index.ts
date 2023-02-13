@@ -5,7 +5,7 @@ import Index from '../../@types/IndexType'
 import Share from '../../@types/Share'
 import ThoughtDb from '../../@types/ThoughtDb'
 import WebsocketProviderType from '../../@types/WebsocketProviderType'
-import modalComplete from '../../action-creators/modalComplete'
+import closeModal from '../../action-creators/closeModal'
 import { HOME_TOKEN } from '../../constants'
 import store from '../../stores/app'
 import createId from '../../util/createId'
@@ -93,7 +93,7 @@ if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
       storage.getItem('accessTokenBackup', accessTokenLocal)
 
       // close the welcome modal
-      store.dispatch(modalComplete('welcome'))
+      store.dispatch(closeModal())
 
       // clear share params from URL without refreshing
       window.history.pushState({}, '', '/')
