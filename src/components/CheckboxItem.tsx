@@ -22,7 +22,7 @@ const Checkbox = ({
   )
 }
 
-/** A checkbox item with title and description. */
+/** A checkbox item with a title and description. */
 const CheckboxItem: FC<{
   checked?: boolean
   disabled?: boolean
@@ -36,7 +36,7 @@ const CheckboxItem: FC<{
       className='checkbox-container'
       style={{
         opacity: disabled ? 0.5 : undefined,
-        marginBottom: parent ? '0.5em' : '1em',
+        marginBottom: children ? (parent ? '0.5em' : '1em') : 0,
         // child marginLeft should match .checkbox-container padding-left
         marginLeft: child ? '2.2em' : undefined,
         pointerEvents: disabled ? 'none' : undefined,
@@ -50,8 +50,12 @@ const CheckboxItem: FC<{
           overflow: 'auto',
         }}
       >
-        <p className='advance-setting-label'>{title}</p>
-        <p className='advance-setting-description dim'>{children}</p>
+        {title && (
+          <div className='checkbox-label' style={{ lineHeight: children ? 1.2 : 1.5 }}>
+            {title}
+          </div>
+        )}
+        {children && <p className='checkbox-description text-medium dim'>{children}</p>}
       </div>
 
       <Checkbox checked={checked} onChange={onChange} />

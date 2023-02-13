@@ -2785,13 +2785,8 @@ code,
   margin-bottom: 2em;
 }
 
-p.advance-setting-label {
-  margin-bottom: 5px;
-  line-height: 1.2;
-}
-
-p.advance-setting-description {
-  font-size: 90%;
+p.checkbox-description {
+  margin-top: 0.5em;
 }
 
 .advance-setting-link {
@@ -2854,7 +2849,7 @@ a.advance-setting-link {
 .checkbox-container input ~ .checkbox,
 .checkbox-container:hover input ~ .checkbox,
 .checkbox-container input:checked ~ .checkbox {
-  background-color: #000;
+  background-color: transparent;
   border: 0.1em solid #fff;
 }
 
