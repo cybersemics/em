@@ -19,11 +19,11 @@ export const ydocLocal = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
-export const accessTokenLocal = storage.getItem('accessToken', () => createId())
+export const accessTokenLocal = storage.getItem('accessToken', createId)
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-export const tsidLocal = storage.getItem('tsid', () => createId())
+export const tsidLocal = storage.getItem('tsid', createId)
 
 // access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device
