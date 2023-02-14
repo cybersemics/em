@@ -2142,6 +2142,22 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
+"@hocuspocus/common@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-1.0.1.tgz#9f8875f37fcb4346c94232ca86323751d569aa15"
+  integrity sha512-S1CBQvAca8Ff6VxeNRk4OY2XOvF0Fg0jz7l/qqBPNzGAdN8T84BgptgVyd3/Hn9fxsOz5/bA3heKhQP0TtlIJA==
+  dependencies:
+    lib0 "^0.2.47"
+
+"@hocuspocus/provider@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-1.0.1.tgz#27995cc564369f9f1cbb0db60c8e3c142ad671bd"
+  integrity sha512-iG9KU7V4sksonPhrdNqQJNvz1/nZOHwVIdfT3y5a1+eL7smfk6OFjoAGC3qbBAbTWlDQnhLLz4p7oYXMae85cA==
+  dependencies:
+    "@hocuspocus/common" "^1.0.1"
+    "@lifeomic/attempt" "^3.0.2"
+    lib0 "^0.2.46"
+
 "@ionic/cli-framework-output@^2.2.5":
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/@ionic/cli-framework-output/-/cli-framework-output-2.2.5.tgz#0db9fba7efe0c27bb5085b12ee01f22053e44152"
@@ -2861,6 +2877,11 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
+
+"@lifeomic/attempt@^3.0.2":
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/@lifeomic/attempt/-/attempt-3.0.3.tgz#e742a5b85eb673e2f1746b0f39cb932cbc6145bb"
+  integrity sha512-GlM2AbzrErd/TmLL3E8hAHmb5Q7VhDJp35vIbyPVA5Rz55LZuRr8pwL3qrwwkVNo05gMX1J44gURKb4MHQZo7w==
 
 "@mapbox/node-pre-gyp@^1.0.0":
   version "1.0.9"
@@ -12113,6 +12134,13 @@ lib0@^0.2.31, lib0@^0.2.35, lib0@^0.2.42, lib0@^0.2.49, lib0@^0.2.52:
   version "0.2.58"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.58.tgz#bb5326a1e028f72fd3a5bdb20e61404bff08d0a5"
   integrity sha512-6ovqPaYfOKU7GkkVxz/wjMR0zsqmNsISLvH+h9Lx5YNtWDZey69aYsTGXaSVpUPpJ+ZFtIvcZHsTGL3MbwOM8A==
+  dependencies:
+    isomorphic.js "^0.2.4"
+
+lib0@^0.2.46, lib0@^0.2.47:
+  version "0.2.62"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.62.tgz#c4e6860751ba7674a0dca51bb3c23d80985852de"
+  integrity sha512-DY0G8AaQloUvpiss7EpAo/t4R82b9m/AydbQRNAa9Khssn9oGDJnSN8Q1qQ8u82Wog4iaT1O8yM+DfhzGCrrpQ==
   dependencies:
     isomorphic.js "^0.2.4"
 

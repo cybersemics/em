@@ -7,7 +7,7 @@ import ministore from './ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
 export const offlineStatusStore = ministore<OfflineStatus>(
-  websocketProviderPermissions.wsconnected ? 'connected' : 'preconnecting',
+  websocketProviderPermissions.status === 'connected' ? 'connected' : 'preconnecting',
 )
 
 /* Offline status state machine driven by websocket connection status changes.
@@ -20,17 +20,17 @@ export const offlineStatusStore = ministore<OfflineStatus>(
   disconnected -> reconnecting
 
 */
-websocketProviderPermissions.on('status', (e: { status: WebsocketStatus }) => {
+websocketProviderPermissions.on('status', ({ status }: { status: WebsocketStatus }) => {
   offlineStatusStore.update(statusOld =>
-    e.status === 'connecting'
+    status === 'connecting'
       ? statusOld === 'preconnecting' || statusOld === 'connecting' || statusOld === 'offline'
         ? statusOld
         : 'reconnecting'
-      : e.status === 'connected'
+      : status === 'connected'
       ? (stopConnecting(), 'connected')
-      : e.status === 'disconnected'
+      : status === 'disconnected'
       ? (startConnecting(), 'reconnecting')
-      : (new Error('Unknown connection status: ' + e.status), statusOld),
+      : (new Error('Unknown connection status: ' + status), statusOld),
   )
 })
 

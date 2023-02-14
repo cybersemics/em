@@ -1,9 +1,8 @@
+import { HocuspocusProvider } from '@hocuspocus/provider'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
 import Share from '../../@types/Share'
-import WebsocketProviderType from '../../@types/WebsocketProviderType'
 import createId from '../../util/createId'
 import storage from '../../util/storage'
 
@@ -36,17 +35,17 @@ export const accessToken = accessTokenShared || accessTokenLocal
 export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
 export const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
 
-export const websocketProviderPermissions: WebsocketProviderType = new WebsocketProvider(
-  websocketUrl,
-  `${tsid}/permissions`,
-  ypermissionsDoc,
-  {
-    auth: accessToken,
-  },
-)
+export const websocketProviderPermissions = new HocuspocusProvider({
+  url: websocketUrl,
+  name: `${tsid}/permissions`,
+  document: ypermissionsDoc,
+  token: accessToken,
+})
 
-export const websocketProviderThoughtspace = new WebsocketProvider(websocketUrl, tsid, ydoc, {
-  auth: accessToken,
+export const websocketProviderThoughtspace = new HocuspocusProvider({
+  url: websocketUrl,
+  name: tsid,
+  document: ydoc,
   // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
   connect: false,
 })

@@ -1,6 +1,6 @@
+import { HocuspocusProvider } from '@hocuspocus/provider'
 import Emitter from 'emitter20'
 import { IndexeddbPersistence } from 'y-indexeddb'
-import { WebsocketProvider } from 'y-websocket-auth'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
@@ -137,8 +137,11 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
     const persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
 
     // eslint-disable-next-line no-new
-    new WebsocketProvider(websocketUrl, `${tsid}-thought-${id}`, thoughtDoc, {
-      auth: accessToken,
+    new HocuspocusProvider({
+      url: websocketUrl,
+      name: `${tsid}-thought-${id}`,
+      document: thoughtDoc,
+      token: accessToken,
     })
 
     thoughtMap.observe(e => {
@@ -197,8 +200,11 @@ const loadLexemeDoc = (key: string): Y.Doc => {
     const persistence = new IndexeddbPersistence(`${tsid}-lexeme-${key}`, lexemeDoc)
 
     // eslint-disable-next-line no-new
-    new WebsocketProvider(websocketUrl, `${tsid}-lexeme-${key}`, lexemeDoc, {
-      auth: accessToken,
+    new HocuspocusProvider({
+      url: websocketUrl,
+      name: `${tsid}-lexeme-${key}`,
+      document: lexemeDoc,
+      // auth: accessToken,
     })
 
     lexemeMap.observe(e => {

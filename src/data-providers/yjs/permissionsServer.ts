@@ -5,7 +5,7 @@ import alert from '../../action-creators/alert'
 import clearActionCreator from '../../action-creators/clear'
 import importText from '../../action-creators/importText'
 import { EM_TOKEN, INITIAL_SETTINGS } from '../../constants'
-import { accessTokenLocal, tsid, websocketProviderPermissions, ypermissionsDoc } from '../../data-providers/yjs/index'
+import { accessTokenLocal, ypermissionsDoc } from '../../data-providers/yjs/index'
 import { clear } from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import createId from '../../util/createId'
@@ -18,19 +18,21 @@ const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
 const permissionsServer: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
-    websocketProviderPermissions.send({
-      type: 'share/add',
-      docid: tsid,
-      accessToken,
-      name: name || '',
-      role,
-    })
-    // TODO: get success/fail result of share/add
-    store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
+    throw new Error('Not implemented')
+    // websocketProviderPermissions.send({
+    //   type: 'share/add',
+    //   docid: tsid,
+    //   accessToken,
+    //   name: name || '',
+    //   role,
+    // })
+    // // TODO: get success/fail result of share/add
+    // store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
     return { accessToken }
   },
   delete: (accessToken: string, { name }: { name?: string } = {}) => {
-    websocketProviderPermissions.send({ type: 'share/delete', docid: tsid, accessToken })
+    throw new Error('Not implemented')
+    // websocketProviderPermissions.send({ type: 'share/delete', docid: tsid, accessToken })
 
     // removed other device
     if (accessToken !== accessTokenLocal) {
@@ -59,7 +61,8 @@ const permissionsServer: { [key in keyof Routes['share']]: any } = {
     }
   },
   update: (accessToken: string, { name, role }: Share) => {
-    websocketProviderPermissions.send({ type: 'share/update', docid: tsid, accessToken, name, role })
+    throw new Error('Not implemented')
+    // websocketProviderPermissions.send({ type: 'share/update', docid: tsid, accessToken, name, role })
     store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
 }
