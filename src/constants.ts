@@ -459,6 +459,8 @@ export enum ViewMode {
 
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 
+// Static alert text that is used in multiple places.
+// There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
   ReorderFavorites: 'Drag and drop to reorder favorites',

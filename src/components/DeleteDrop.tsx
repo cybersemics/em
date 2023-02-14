@@ -6,21 +6,17 @@ import alert from '../action-creators/alert'
 import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import { AlertType } from '../constants'
+import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
-import headValue from '../util/headValue'
-import parentOf from '../util/parentOf'
 import QuickDropIcon from './QuickDropIcon'
 import DeleteIcon from './icons/DeleteIcon'
 
 /** Copy the thought on drop. */
 const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   const value = getThoughtById(state, head(simplePath))?.value
-
-  const showContexts = isContextViewActive(state, parentOf(path || simplePath))
 
   if (zone === DragThoughtZone.Favorites) {
     store.dispatch([
@@ -34,16 +30,11 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
   } else if (zone === DragThoughtZone.Thoughts) {
     store.dispatch([
       deleteThoughtWithCursor({ path }),
-      alert(
-        `Deleted ${value ? ellipsize(value) : 'empty thought'}${
-          showContexts ? ' from ' + ellipsize(headValue(state, path || simplePath)) : ''
-        }`,
-        {
-          alertType: AlertType.DeleteThoughtComplete,
-          clearDelay: 8000,
-          showCloseLink: true,
-        },
-      ),
+      alert(deleteThoughtAlertText(state, path || simplePath), {
+        alertType: AlertType.DeleteThoughtComplete,
+        clearDelay: 8000,
+        showCloseLink: true,
+      }),
     ])
   } else {
     console.error(`Unsupported DragThoughtZone: ${zone}`)

@@ -5,17 +5,15 @@ import deleteThoughtWithCursor from '../action-creators/deleteThoughtWithCursor'
 import error from '../action-creators/error'
 import Icon from '../components/icons/DeleteIcon'
 import { AlertType, Settings } from '../constants'
+import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
-import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
-import parentOf from '../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {
@@ -33,8 +31,6 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    const parentPath = parentOf(cursor)
-    const showContexts = isContextViewActive(state, parentPath)
     dispatch(deleteThoughtWithCursor({ path: cursor }))
 
     // Alert which thought was deleted.
@@ -42,16 +38,11 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
     const experienceMode = getUserSetting(Settings.experienceMode)
     if (value || !experienceMode) {
       dispatch(
-        alert(
-          `Deleted ${value ? ellipsize(value) : 'empty thought'}${
-            showContexts ? ' from ' + ellipsize(headValue(state, cursor)) : ''
-          }`,
-          {
-            alertType: AlertType.ThoughtDeleted,
-            clearDelay: 8000,
-            showCloseLink: true,
-          },
-        ),
+        alert(deleteThoughtAlertText(state, cursor), {
+          alertType: AlertType.ThoughtDeleted,
+          clearDelay: 8000,
+          showCloseLink: true,
+        }),
       )
     }
   }
