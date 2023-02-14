@@ -124,6 +124,8 @@ const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
         <div
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'
+          // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
         >
           <SignaturePad
             height={innerHeight}
