@@ -109,6 +109,25 @@ const GlobalStyles = React.memo(({ styles }: { styles: [string, React.CSSPropert
 })
 GlobalStyles.displayName = 'GlobalStyles'
 
+/** Disables long-press-to-select by clearing any selections that appear during long press. */
+const useDisableLongPressToSelect = () => {
+  const onSelectionChange = useCallback(() => {
+    const sel = window.getSelection()
+    // when isCollapsed is false, there is a selection with at least one character
+    // long-press-to-select only selects one or more characters
+    if (globals.longpressing && sel && !sel.isCollapsed) {
+      selection.clear()
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', onSelectionChange)
+    }
+  }, [])
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
@@ -178,6 +197,8 @@ const AppComponent: FC<Props> = props => {
     [],
   )
 
+  useDisableLongPressToSelect()
+
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
     if (globals.simulateDrag) {
@@ -194,6 +215,7 @@ const AppComponent: FC<Props> = props => {
     const splitAnimationTimer = setTimeout(() => {
       updateIsSplitting(false)
     }, 400)
+
     return () => {
       clearTimeout(splitAnimationTimer)
     }

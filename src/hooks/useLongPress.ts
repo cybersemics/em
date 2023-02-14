@@ -4,6 +4,7 @@ import editing from '../action-creators/editing'
 import { isTouch } from '../browser'
 import { NOOP } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
@@ -41,6 +42,7 @@ const useLongPress = (
       // cast Timeout to number for compatibility with clearTimeout
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
+        globals.longpressing = true
         onLongPressStart?.()
         setPressed(true)
         lock = true
@@ -60,6 +62,7 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
       lock = false
+      globals.longpressing = false
       setPressed(false)
       onLongPressEnd?.()
     }, 10)

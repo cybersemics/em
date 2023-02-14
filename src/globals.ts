@@ -2,7 +2,11 @@
 
 /** THE BAD PLACE where mutable globals are defined. */
 
-// track whether the user is touching the screen so that we can distinguish touchend events from tap or drag
+// globally tracks when a long press starts and ends
+// this is useful to prevent long-tap-to-select on mobile safari
+let longpressing = false
+
+// track whether the user is touchmoving so that we can distinguish touchend events from tap or drag
 // not related to react-dnd
 let touching = false
 
@@ -52,6 +56,7 @@ const globals = {
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
+  longpressing,
   rendered,
   simulateDrag,
   simulateDrop,
