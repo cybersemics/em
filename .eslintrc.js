@@ -7,7 +7,6 @@ module.exports = {
     'react-native/react-native': true,
   },
   extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
-  ignorePatterns: 'scripts',
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],

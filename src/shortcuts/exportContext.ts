@@ -1,4 +1,3 @@
-import Modal from '../@types/Modal'
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
 import ShareIcon from '../components/icons/ShareIcon'
@@ -15,7 +14,7 @@ const shortcut: Shortcut = {
     if (state.cursor) return true
     return getAllChildren(state, HOME_TOKEN).length > 0
   },
-  exec: dispatch => dispatch(showModal({ id: Modal.export })),
+  exec: dispatch => dispatch(showModal({ id: 'export' })),
 }
 
 export default shortcut

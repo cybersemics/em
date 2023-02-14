@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
+import * as selection from '../device/selection'
 import globals from '../globals'
 import { DragInProgressPayload } from '../reducers/dragInProgress'
 import store from '../stores/app'
@@ -71,6 +72,11 @@ const dragInProgress =
     // react-dnd stops propagation of the TouchMonitor's touchend event, so we need to turn off globals.touching here
     if (!value) {
       globals.touching = false
+
+      // clear selection after drag ends just in case browser made a selection
+      // Mobile Safari long-press-to-select is difficult to stop
+      // See: https://github.com/cybersemics/em/issues/1704
+      setTimeout(selection.clear)
     }
 
     dispatch({

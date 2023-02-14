@@ -3,7 +3,7 @@ import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newSubthought from '../newSubthought'
@@ -81,7 +81,7 @@ it('add attribute if key has already been created', () => {
   const steps = [
     newThought('a'),
     newSubthought('=test'),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     (state: State) =>
       toggleAttribute(state, {
         path: contextToPath(state, ['a']),

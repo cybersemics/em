@@ -10,6 +10,7 @@ import { isTouch } from '../browser'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
+import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -46,8 +47,17 @@ const DropEmptyContainer = ({ depth, dropTarget, isHovering, last, path, simpleP
 }
 
 /** Only render the DropEmpty component if not expanded. */
-const DropEmptyInnerContainer = ({ depth, dropTarget, isHovering, last, path, simplePath }: DropEmptyProps) => {
-  const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
+const DropEmptyInnerContainer = ({
+  depth,
+  dropTarget,
+  isHovering,
+  last,
+  path,
+  simplePath,
+}: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
+  const isExpanded = useSelector(
+    (state: State) => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
+  )
   const draggingThought = useSelector((state: State) => state.draggingThought, shallowEqual)
 
   // Do not render DropEmpty on expanded thoughts or on the dragging thought.
@@ -67,14 +77,17 @@ const DropEmptyInnerContainer = ({ depth, dropTarget, isHovering, last, path, si
 }
 
 /** The actual DropEmpty component. */
-const DropEmpty = ({ depth, dropTarget, isHovering, last, path, simplePath }: DropEmptyProps) => {
+const DropEmpty = ({
+  depth,
+  dropTarget,
+  isHovering,
+  last,
+  path,
+  simplePath,
+}: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
   const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
-
-  // dropTarget should always be truthy here since it would have short circuited in DropEmptyContainer.
-  // Just do a check here for type safety in order to reuse DropEmptyProps and avoid a more complex type.
-  if (!dropTarget) return null
 
   return (
     <li className='drop-empty' style={{ position: 'relative' }}>

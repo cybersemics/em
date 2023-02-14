@@ -1,6 +1,5 @@
 import React from 'react'
 import IconType from '../@types/Icon'
-import Modal from '../@types/Modal'
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
 import { isTouch } from '../browser'
@@ -34,7 +33,7 @@ const openShortcutPopupShortcut: Shortcut = {
   keyboard: { key: '/', meta: true },
   svg: Icon,
   exec: dispatch => {
-    dispatch(showModal({ id: Modal.manual }))
+    dispatch(showModal({ id: 'manual' }))
     scrollTo('top')
   },
 }

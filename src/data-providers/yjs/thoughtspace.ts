@@ -19,7 +19,7 @@ import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
 
-const yHelpers = ydoc.getMap<string>('helpers')
+const yHelpers = ydoc.getMap<string | number>('helpers')
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId

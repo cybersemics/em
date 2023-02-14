@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
+import { isTouch } from '../browser'
 import { NOOP } from '../constants'
 import * as selection from '../device/selection'
+import globals from '../globals'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
@@ -40,6 +42,7 @@ const useLongPress = (
       // cast Timeout to number for compatibility with clearTimeout
       clearTimeout(timerIdRef.current)
       timerIdRef.current = setTimeout(() => {
+        globals.longpressing = true
         onLongPressStart?.()
         setPressed(true)
         lock = true
@@ -59,6 +62,7 @@ const useLongPress = (
       clearTimeout(timerIdRef.current)
       timerIdRef.current = 0
       lock = false
+      globals.longpressing = false
       setPressed(false)
       onLongPressEnd?.()
     }, 10)
@@ -85,11 +89,16 @@ const useLongPress = (
     [pressed],
   )
 
-  const onContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    selection.clear()
-    dispatch(editing({ value: false }))
+  // Android passes React.PointerEvent
+  // Web passes React.MouseEvent
+  const onContextMenu = useCallback((e: React.MouseEvent | React.PointerEvent) => {
+    // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
+    if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
+      e.preventDefault()
+      e.stopPropagation()
+      selection.clear()
+      dispatch(editing({ value: false }))
+    }
   }, [])
 
   // unlock on unmount
@@ -103,7 +112,7 @@ const useLongPress = (
   return {
     // disable Android context menu
     // does not work to prevent iOS long press to select behavior
-    onContextMenu: onContextMenu,
+    onContextMenu,
     onMouseDown: start,
     onMouseUp: stop,
     onTouchStart: start,

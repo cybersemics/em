@@ -19,21 +19,23 @@ import State from '../@types/State'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
-import toggleAttribute from '../action-creators/toggleAttribute'
+import toggleUserSetting from '../action-creators/toggleUserSetting'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, EM_TOKEN, NOOP } from '../constants'
+import { AlertType, NOOP, Settings } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
-import findDescendant from '../selectors/findDescendant'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
+import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import store from '../stores/app'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
+import CheckboxItem from './CheckboxItem'
 import ThoughtLink from './ThoughtLink'
+import StarIcon from './icons/StarIcon'
 
 /** Handles drag start. */
 const beginDrag = ({ path, simplePath, zone }: DragThoughtItem): DragThoughtItem => {
@@ -240,9 +242,7 @@ const FavoritesOptions = ({
   showOptions?: boolean
 }) => {
   const dispatch = useDispatch()
-  const hideContexts = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
-  )
+  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
     <div style={{ marginBottom: '0.5em' }}>
@@ -270,26 +270,20 @@ const FavoritesOptions = ({
       <div style={{ overflow: 'hidden' }}>
         <CSSTransition in={showOptions} timeout={150} classNames='slidedown' unmountOnExit>
           <form
+            className='text-small'
             style={{
               backgroundColor: '#3e3e3e',
               borderRadius: '0.5em',
-              fontSize: '0.8em',
-              padding: '0.5em',
+              padding: '1em',
             }}
           >
-            <label style={{ cursor: 'pointer', userSelect: 'none' }}>
-              <input
-                type='checkbox'
-                checked={!hideContexts}
-                onChange={e => {
-                  // Note: never preventDefault on a controlled checkbox in React.
-                  // See: https://stackoverflow.com/a/70030088/4806080
-                  dispatch(toggleAttribute({ path: [EM_TOKEN], values: ['Settings', 'favoritesHideContexts'] }))
-                }}
-                style={{ cursor: 'pointer' }}
-              ></input>{' '}
-              Show full contexts
-            </label>
+            <CheckboxItem
+              checked={!hideContexts}
+              title='Show full contexts'
+              onChange={() => {
+                dispatch(toggleUserSetting({ key: Settings.favoritesHideContexts }))
+              }}
+            />
           </form>
         </CSSTransition>
       </div>
@@ -313,9 +307,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
       .filter(x => x) as SimplePath[]
   }, _.isEqual)
 
-  const hideContexts = useSelector(
-    (state: State) => !!findDescendant(state, EM_TOKEN, ['Settings', 'favoritesHideContexts']),
-  )
+  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
     <div
@@ -349,16 +341,21 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
       <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
 
       <div>
-        {simplePaths.length > 0
-          ? simplePaths.map((simplePath, i) => (
-              <DragAndDropFavorite
-                key={head(simplePath)}
-                simplePath={simplePath}
-                disableDragAndDrop={disableDragAndDrop}
-                hideContext={hideContexts}
-              />
-            ))
-          : 'No favorites'}
+        {simplePaths.length > 0 ? (
+          simplePaths.map((simplePath, i) => (
+            <DragAndDropFavorite
+              key={head(simplePath)}
+              simplePath={simplePath}
+              disableDragAndDrop={disableDragAndDrop}
+              hideContext={hideContexts}
+            />
+          ))
+        ) : (
+          <div style={{ margin: '1em 0.5em' }}>
+            Set the cursor on a thought and tap <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar to
+            add the thought to your favorites list.
+          </div>
+        )}
         <DropEnd />
       </div>
     </div>

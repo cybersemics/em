@@ -1,11 +1,11 @@
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import Modal from '../@types/Modal'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
+import * as modals from '../components/modals'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import globals from '../globals'
 import hashThought from './hashThought'
@@ -154,7 +154,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
     toolbarOverlay: null,
     undoPatches: [],
   }
-  Object.keys(Modal).forEach(key => {
+  Object.keys(modals).forEach(key => {
     // initial modal states
     state.modals[key] = {
       // eslint-disable-next-line no-mixed-operators
@@ -163,7 +163,7 @@ export const initialState = (created: Timestamp = timestamp()) => {
   })
 
   // welcome modal
-  state.showModal = Modal.welcome
+  state.showModal = 'welcome'
 
   return state
 }

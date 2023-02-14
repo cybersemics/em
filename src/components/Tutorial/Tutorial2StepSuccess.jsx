@@ -1,5 +1,4 @@
 import React, { Fragment } from 'react'
-import Modal from '../../@types/Modal'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
 
@@ -13,7 +12,7 @@ const Tutorial2StepSuccess = ({ dispatch }) => (
     <p>
       That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
       {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
-      <a onClick={() => dispatch(showModal({ id: Modal.manual }))}>Help</a> link in the footer.
+      <a onClick={() => dispatch(showModal({ id: 'manual' }))}>Help</a> link in the footer.
     </p>
     <p>Happy Sensemaking!</p>
   </Fragment>

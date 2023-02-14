@@ -91,7 +91,6 @@ interface State {
   showColorPicker?: boolean
   showHiddenThoughts: boolean
   showModal?: Modal | null
-  showQueue?: boolean | null
   showSidebar: boolean
   showSplitView: boolean
   showTopControls: boolean

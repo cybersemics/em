@@ -49,10 +49,10 @@ const createTestApp = async () => {
 
     store.dispatch([
       // skip tutorial
-      { type: 'modalComplete', id: 'welcome' },
+      { type: 'tutorial', value: false },
 
       // close welcome modal
-      { type: 'tutorial', value: false },
+      { type: 'closeModal' },
     ])
 
     jest.runOnlyPendingTimers()

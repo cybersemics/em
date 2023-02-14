@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -24,22 +26,14 @@ import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestShortcutsDiagram from './LatestShortcutsDiagram'
-import ModalAuth from './ModalAuth'
-import ModalDevices from './ModalDevices'
-import ModalExport from './ModalExport'
-import ModalFeedback from './ModalFeedback'
-import ModalInvites from './ModalInvites'
-import ModalManual from './ModalManual'
-import ModalSettings from './ModalSettings'
-import ModalSignup from './ModalSignup'
-import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import QuickDrop from './QuickDrop'
+import QuickDropPanel from './QuickDropPanel'
 import Scale from './Scale'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
+import * as modals from './modals'
 
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
@@ -115,6 +109,25 @@ const GlobalStyles = React.memo(({ styles }: { styles: [string, React.CSSPropert
 })
 GlobalStyles.displayName = 'GlobalStyles'
 
+/** Disables long-press-to-select by clearing any selections that appear during long press. */
+const useDisableLongPressToSelect = () => {
+  const onSelectionChange = useCallback(() => {
+    const sel = window.getSelection()
+    // when isCollapsed is false, there is a selection with at least one character
+    // long-press-to-select only selects one or more characters
+    if (globals.longpressing && sel && !sel.isCollapsed) {
+      selection.clear()
+    }
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', onSelectionChange)
+    }
+  }, [])
+}
+
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
@@ -184,6 +197,8 @@ const AppComponent: FC<Props> = props => {
     [],
   )
 
+  useDisableLongPressToSelect()
+
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
     if (globals.simulateDrag) {
@@ -200,6 +215,7 @@ const AppComponent: FC<Props> = props => {
     const splitAnimationTimer = setTimeout(() => {
       updateIsSplitting(false)
     }, 400)
+
     return () => {
       clearTimeout(splitAnimationTimer)
     }
@@ -209,10 +225,23 @@ const AppComponent: FC<Props> = props => {
     // mobile safari must be detected because empty and full bullet points in Helvetica Neue have different margins
     mobile: isTouch,
     android: isAndroid,
+    native: Capacitor.isNativePlatform(),
     'drag-in-progress': dragInProgress,
     chrome: /Chrome/.test(navigator.userAgent),
     safari: isSafari(),
   })
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
+      // Android only, set statusbar color to black.
+      if (Capacitor.getPlatform() === 'android') {
+        StatusBar.setBackgroundColor({
+          color: colors.bg,
+        })
+      }
+    }
+  }, [])
 
   const globalStyles = useMemo<[string, React.CSSProperties][]>(
     () => [
@@ -241,6 +270,12 @@ const AppComponent: FC<Props> = props => {
     [colors],
   )
 
+  if (showModal && !modals[showModal]) {
+    throw new Error(`Missing component for Modal type: ${showModal}`)
+  }
+
+  const Modal = showModal ? modals[showModal] : null
+
   return (
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
@@ -254,32 +289,10 @@ const AppComponent: FC<Props> = props => {
         </>
       )}
       {!showModal && !tutorial && <Toolbar />}
-      <QuickDrop />
+      <QuickDropPanel />
       <MultiGestureIfTouch>
         {showModal ? (
-          // modals
-          // eslint-disable-next-line @typescript-eslint/no-extra-parens
-          showModal === Modal.welcome ? (
-            <ModalWelcome />
-          ) : showModal === Modal.manual ? (
-            <ModalManual />
-          ) : showModal === Modal.export ? (
-            <ModalExport />
-          ) : showModal === Modal.feedback ? (
-            <ModalFeedback />
-          ) : showModal === Modal.auth ? (
-            <ModalAuth />
-          ) : showModal === Modal.signup ? (
-            <ModalSignup />
-          ) : showModal === Modal.settings ? (
-            <ModalSettings />
-          ) : showModal === Modal.devices ? (
-            <ModalDevices />
-          ) : showModal === Modal.invites ? (
-            <ModalInvites />
-          ) : (
-            `Missing component for Modal type: ${showModal}`
-          )
+          <div style={{ fontSize }}>{Modal && <Modal />}</div>
         ) : (
           // navigation, content, and footer
           <>

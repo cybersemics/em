@@ -7,30 +7,53 @@ import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import * as reducers from '../reducers'
 import updateThoughts from '../reducers/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
-// actions representing any cursor movements.
-// These need to be differentiated from the other actions because
-// any two or more such consecutive actions are merged together
-export const NAVIGATION_ACTIONS: Index<string> = {
-  cursorBack: 'cursorBack',
-  cursorBeforeSearch: 'cursorBeforeSearch',
-  cursorDown: 'cursorDown',
-  cursorForward: 'cursorForward',
-  cursorHistory: 'cursorHistory',
-  cursorUp: 'cursorUp',
-  setCursor: 'setCursor',
+// a map of action types to boolean
+type ActionFlags = {
+  [key in keyof typeof reducers]: boolean
 }
 
-// a list of all undoable/reversible actions (stored as object for indexing)
-const UNDOABLE_ACTIONS: Index<true> = {
-  archiveThought: true,
-  bumpThoughtDown: true,
+// Actions representing any cursor movements.
+// These need to be differentiated from the other actions because contiguous navigational actions are merged together.
+const NAVIGATION_ACTIONS: Partial<ActionFlags> = {
   cursorBack: true,
   cursorBeforeSearch: true,
+  cursorDown: true,
+  cursorForward: true,
+  cursorHistory: true,
+  cursorUp: true,
+  jump: true,
+  setNoteFocus: true,
+  setCursor: true,
+  toggleNote: true,
+}
+
+/** Returns if an action is navigational, i.e. cursor movements. Contiguous navigation actions will be merged and adjoined with the last non-navigational action. */
+export const isNavigation = (actionType: string) => NAVIGATION_ACTIONS[actionType as keyof typeof NAVIGATION_ACTIONS]
+
+// a list of all undoable actions
+// assumes that reducer names match their action types
+const UNDOABLE_ACTIONS: ActionFlags = {
+  addLatestShortcuts: false,
+  alert: false,
+  archiveThought: true,
+  authenticate: false,
+  bold: true,
+  bumpThoughtDown: true,
+  clear: false,
+  clearExpandDown: false,
+  clearLatestShortcuts: false,
+  closeModal: false,
+  collapseContext: true,
+  createThought: true,
+  cursorBack: true,
+  cursorBeforeSearch: true,
+  cursorCleared: false,
   cursorDown: true,
   cursorForward: true,
   cursorHistory: true,
@@ -38,34 +61,84 @@ const UNDOABLE_ACTIONS: Index<true> = {
   deleteAttribute: true,
   deleteData: true,
   deleteEmptyThought: true,
-  deleteThoughtWithCursor: true,
-  editThought: true,
   deleteThought: true,
-  moveThought: true,
+  deleteThoughtWithCursor: true,
+  dragHold: false,
+  dragInProgress: false,
+  editableRender: false,
+  editing: false,
+  editThought: true,
+  error: false,
   expandContextThought: true,
-  indent: true,
+  expandHoverDown: false,
+  expandHoverUp: false,
+  extractThought: true,
+  fontSize: false,
+  heading: true,
+  importSpeechToText: true,
   importText: true,
+  indent: true,
+  invalidState: false,
+  italic: true,
+  join: true,
+  jump: true,
+  loadLocalState: false,
+  mergeThoughts: false,
+  moveThought: true,
   moveThoughtDown: true,
   moveThoughtUp: true,
+  newGrandChild: true,
+  newSubthought: true,
   newThought: true,
-  createThought: true,
   outdent: true,
+  prependRevision: false,
+  prioritizeScroll: false,
+  rerank: false,
+  search: false,
+  searchContexts: false,
   searchLimit: true,
-  setDescendant: true,
+  selectionChange: false,
   setCursor: true,
+  setDescendant: true,
   setFirstSubthought: true,
+  setNoteFocus: true,
+  setRemoteSearch: false,
+  setResourceCache: false,
   settings: true,
-  splitThought: true,
+  setToolbarOverlay: false,
+  showModal: false,
   splitSentences: true,
+  splitThought: true,
+  status: false,
   subCategorizeAll: true,
   subCategorizeOne: true,
+  textColor: true,
+  toggleAbsoluteContext: false,
   toggleAttribute: true,
-  toggleCodeView: true,
+  toggleColorPicker: false,
   toggleContextView: true,
   toggleHiddenThoughts: true,
-  toggleSplitView: true,
-  toolbarOverlay: true,
+  toggleNote: true,
+  toggleShortcutsDiagram: false,
+  toggleSidebar: false,
+  toggleSplitView: false,
+  toggleThought: true,
+  toggleTopControlsAndBreadcrumbs: false,
+  toggleUserSetting: false,
+  tutorial: false,
+  tutorialChoice: false,
+  tutorialNext: false,
+  tutorialPrev: false,
+  tutorialStep: false,
+  underline: true,
+  undoArchive: false,
+  unknownAction: false,
+  updateSplitPosition: false,
+  updateThoughts: false,
 }
+
+/** Returns if an action is undoable. */
+const isUndoable = (actionType: string) => UNDOABLE_ACTIONS[actionType as keyof typeof UNDOABLE_ACTIONS]
 
 /** These properties are ignored when generating state patches. */
 const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
@@ -177,9 +250,7 @@ const undoReducer = (state: State, undoPatches: Patch[]) => {
 
   if (!undoPatches.length) return state
 
-  const undoTwice = NAVIGATION_ACTIONS[lastAction]
-    ? UNDOABLE_ACTIONS[penultimateAction]
-    : penultimateAction === 'newThought'
+  const undoTwice = isNavigation(lastAction) ? isUndoable(penultimateAction) : penultimateAction === 'newThought'
 
   const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
 
@@ -199,7 +270,7 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
 
   if (!redoPatches.length) return state
 
-  const redoTwice = lastAction && (NAVIGATION_ACTIONS[lastAction] || lastAction === 'newThought')
+  const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
 
   const poppedPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
   return reducerFlow([
@@ -252,7 +323,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // bail if state has not changed
         state === newState ||
         // bail if the action is not undoable
-        !UNDOABLE_ACTIONS[actionType] ||
+        !isUndoable(actionType) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
@@ -264,16 +335,25 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // edit merge logic
       // combine navigation and thoughtChange actions into single redoPatches
       if (
-        (NAVIGATION_ACTIONS[actionType] && NAVIGATION_ACTIONS[lastActionType]) ||
+        (isNavigation(actionType) && isNavigation(lastActionType)) ||
         (lastActionType === 'editThought' && actionType === 'editThought') ||
         actionType === 'closeAlert'
       ) {
         lastActionType = actionType
         const lastUndoPatch = nthLast(state.undoPatches, 1)
-        const lastState =
-          lastUndoPatch && lastUndoPatch.length > 0
-            ? produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-            : state
+        let lastState = state
+        if (lastUndoPatch && lastUndoPatch.length > 0) {
+          // Add a try-catch to provide better error messaging if a patch fails.
+          // The patch should always be valid, i.e. the necessary structure is in the state to apply the patch.
+          // However, because non-undoable actions are skipped, it is possible that the state has shifted and the patch is no longer valid.
+          // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
+          try {
+            lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
+          } catch (e: any) {
+            console.error(e.message, { state, lastUndoPatch })
+            throw new Error('Error applying patch')
+          }
+        }
         const combinedUndoPatch = diffState(newState as Index, lastState)
         return {
           ...newState,

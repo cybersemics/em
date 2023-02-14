@@ -11,7 +11,7 @@ import roamJsonToBlocks, { RoamBlock, RoamPage } from '../roamJsonToBlocks'
 
 jest.mock('../timestamp', () => () => '2020-11-02T01:11:58.869Z')
 
-const testData = [
+const testData: RoamPage[] = [
   {
     title: 'Fruits',
     children: [
@@ -223,17 +223,13 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
   /** Gets the edit-time of a RoamBlock. */
   const editTimeOf = (value: string) => {
     const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
-    if (!roamBlock) return null
-    const editTimeOf = new Date(roamBlock['edit-time']!)
-    return editTimeOf?.toISOString()
+    return roamBlock?.['edit-time'] || null
   }
 
   /** Gets the create-time of a RoamBlock. */
   const createTime = (value: string) => {
     const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
-    if (!roamBlock) return null
-    const editTimeOf = new Date(roamBlock['create-time']!)
-    return editTimeOf?.toISOString()
+    return roamBlock?.['create-time'] || null
   }
 
   const thoughtIndexEntries = keyValueBy(thoughtIndex, (key, thought) => ({

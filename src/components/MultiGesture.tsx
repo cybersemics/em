@@ -1,9 +1,11 @@
 /* eslint-disable fp/no-class, fp/no-this */
-import { noop } from 'lodash'
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import { NOOP } from '../constants'
+import ministore from '../stores/ministore'
+import TraceGesture from './TraceGesture'
 
 // expects peer dependencies react-dom and react-native-web
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -21,23 +23,35 @@ interface GestureState {
   moveY: number
 }
 
+// See: defaultProps for defaults
 interface MultiGestureProps {
+  // if true, does not draw the gesture as the user is making it
+  disableTrace?: boolean
+  // fired when a new gesture is added to the sequence
   onGesture?: (args: {
     gesture: Direction | null
     sequence: GesturePath
     clientStart: Point
     e: GestureResponderEvent
   }) => void
+  // fired when all gestures have completed
   onEnd?: (args: {
     sequence: GesturePath | null
     clientStart: Point | null
     clientEnd: Point | null
     e: GestureResponderEvent
   }) => void
+  // fired at the start of a gesture
+  // includes false starts
   onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
+  // fired when a gesture has been cancelled
   onCancel?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
+  // When a swipe is less than this number of pixels, then it won't count as a gesture.
+  // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
+  // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   shouldCancelGesture?: () => boolean
+  // the distance to allow scrolling before abandoning the gesture
   scrollThreshold?: number
 }
 
@@ -72,12 +86,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
   clientStart: Point | null = null
   currentStart: Point | null = null
+  disableTrace = false
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
   panResponder: { panHandlers: unknown }
   scrolling = false
   sequence: GesturePath = ''
+  // a ministore that tracks the current sequence
+  sequenceStore = ministore<GesturePath>('')
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -173,6 +190,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart!, e })
+          this.sequenceStore.update('')
           this.abandon = true
           return
         }
@@ -232,6 +250,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             else {
               this.sequence += g
               this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+              this.sequenceStore.update(this.sequence)
             }
           }
         }
@@ -260,30 +279,26 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
+    this.sequenceStore.update('')
   }
 
   render() {
-    return <View {...this.panResponder.panHandlers}>{this.props.children}</View>
+    const ref = React.createRef<HTMLDivElement>()
+    return (
+      <View {...this.panResponder.panHandlers}>
+        <TraceGesture eventNodeRef={ref} gestureStore={this.sequenceStore} />
+        <div ref={ref}>{this.props.children}</div>
+      </View>
+    )
   }
 
   static defaultProps: MultiGestureProps = {
-    // When a swipe is less than this number of pixels, then it won't count as a gesture.
-    // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
-    // related: https://github.com/cybersemics/em/issues/1268
+    disableTrace: false,
     minDistance: 10,
-
-    // the distance to allow scrolling before abandoning the gesture
     scrollThreshold: 15,
-
-    // fired at the start of a gesture
-    // includes false starts
-    onStart: noop,
-
-    // fired when a new gesture is added to the sequence
-    onGesture: noop,
-
-    // fired when all gestures have completed
-    onEnd: noop,
+    onStart: NOOP,
+    onGesture: NOOP,
+    onEnd: NOOP,
   }
 }
 

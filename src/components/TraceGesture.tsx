@@ -1,0 +1,144 @@
+import React, { useCallback, useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
+import SignaturePad from 'react-signature-pad-wrapper'
+import { CSSTransition } from 'react-transition-group'
+import GesturePath from '../@types/GesturePath'
+import State from '../@types/State'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT, NOOP, Settings } from '../constants'
+import getUserSetting from '../selectors/getUserSetting'
+import themeColors from '../selectors/themeColors'
+import { gestureString, globalShortcuts } from '../shortcuts'
+import { Ministore } from '../stores/ministore'
+import viewportStore from '../stores/viewport'
+
+interface TraceGestureProps {
+  // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
+  // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
+  eventNodeRef?: React.RefObject<HTMLElement>
+  gestureStore: Ministore<GesturePath>
+}
+
+/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+const TraceGestureWrapper = (props: TraceGestureProps) => {
+  const showModal = useSelector((state: State) => state.showModal)
+  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
+  return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
+}
+
+/** Draws a gesture as it is being performed onto a canvas. */
+const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
+  const colors = useSelector(themeColors)
+
+  // A hook that is true when there is a cancelled gesture in progress.
+  // Handles GestureHint and GestureHintExtended which have different ways of showing a cancelled gesture.
+  const cancelled = useSelector((state: State) => {
+    const alert = state.alert
+    if (!alert || !alert.value) return false
+    // GestureHint
+    else if (alert.alertType === AlertType.GestureHint && alert.value === GESTURE_CANCEL_ALERT_TEXT) return true
+    // GestureHintExtended
+    else if (alert.alertType === AlertType.GestureHintExtended) {
+      // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
+      return !globalShortcuts.some(
+        shortcut => !shortcut.hideFromInstructions && gestureString(shortcut) === alert.value,
+      )
+    }
+
+    return false
+  })
+
+  const disableGestureTracingBackForward = useSelector(getUserSetting(Settings.disableGestureTracingBackForward))
+  const show = gestureStore.useState()?.length > (disableGestureTracingBackForward ? 1 : 0)
+  const innerHeight = viewportStore.useSelector(state => state.innerHeight)
+  const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
+  const fadeTimer = useRef(0)
+
+  // Clear the signature pad when the stroke starts.
+  // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
+  const onBeginStroke = useCallback(() => {
+    clearTimeout(fadeTimer.current)
+    if (!signaturePadRef.current) return
+    const signaturePad = signaturePadRef.current.signaturePad
+    signaturePad.clear()
+
+    // add glow
+    signaturePad._ctx.shadowColor = colors.gray
+    signaturePad._ctx.shadowOffsetX = 0
+    signaturePad._ctx.shadowOffsetY = 0
+    signaturePad._ctx.shadowBlur = 15
+  }, [])
+
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+    const signaturePad = signaturePadRef.current.signaturePad
+
+    // Attach pointer handlers to a provided node rather than the signature pad canvas.
+    // See: eventNodeRef
+    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
+    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
+    if (eventNodeRef?.current) {
+      eventNodeRef.current.addEventListener('pointerdown', e => {
+        // Make preventDefault a noop otherwise tap-to-edit is broken.
+        // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
+        e.preventDefault = NOOP
+        handlePointerStart(e)
+      })
+      eventNodeRef.current.addEventListener('pointermove', e => {
+        e.preventDefault = NOOP
+        handlePointerMove(e)
+      })
+    }
+
+    signaturePad.addEventListener('beginStroke', onBeginStroke)
+
+    // update canvas dimensions, otherwise the initial height on load is too large for some reason
+    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
+    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
+    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
+
+    return () => {
+      if (eventNodeRef?.current) {
+        eventNodeRef.current.removeEventListener('pointerdown', handlePointerStart)
+        eventNodeRef.current.removeEventListener('pointermove', handlePointerMove)
+      }
+      signaturePad.removeEventListener('beginStroke', onBeginStroke)
+    }
+  }, [])
+
+  return (
+    <div
+      className='z-index-gesture-trace'
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: innerHeight,
+        // Dim the gesture trace to 50% opacity when the gesture is cancelled.
+        // Also dim when hidden, otherwise when releasing a cancelled gesture the opacity briefly goes back to 1 to start the fade-both animation. This also has the effect of immediately dimming a valid (non-cancelled) gesture as soon as it is released, which actually looks pretty good.
+        opacity: cancelled || !show ? 0.5 : 1,
+        transition: 'opacity 150ms ease-in-out',
+        pointerEvents: eventNodeRef ? 'none' : undefined,
+      }}
+    >
+      <CSSTransition in={show} timeout={400} classNames='fade-both'>
+        <div
+          // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
+          className='fade-both-enter'
+          // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+        >
+          <SignaturePad
+            height={innerHeight}
+            // TODO: Fix type
+            ref={signaturePadRef as any}
+            options={{
+              penColor: colors.fg,
+            }}
+          />
+        </div>
+      </CSSTransition>
+    </div>
+  )
+}
+
+export default TraceGestureWrapper

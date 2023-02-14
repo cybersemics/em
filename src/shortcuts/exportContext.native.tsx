@@ -1,7 +1,6 @@
 import React from 'react'
 import Svg, { G, Path } from 'react-native-svg'
 import IconType from '../@types/Icon'
-import Modal from '../@types/Modal'
 import Shortcut from '../@types/Shortcut'
 import showModal from '../action-creators/showModal'
 
@@ -27,7 +26,7 @@ const exportContextShortcut: Shortcut = {
   label: 'Export Context',
   description: 'Export the current context as plaintext or html',
   svg: Icon,
-  exec: dispatch => dispatch(showModal({ id: Modal.export })),
+  exec: dispatch => dispatch(showModal({ id: 'export' })),
 }
 
 export default exportContextShortcut

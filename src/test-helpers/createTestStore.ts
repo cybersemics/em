@@ -23,10 +23,10 @@ export const createTestStore = () => {
     }),
 
     // skip tutorial
-    { type: 'modalComplete', id: 'welcome' },
+    { type: 'tutorial', value: false },
 
     // close welcome modal
-    { type: 'tutorial', value: false },
+    { type: 'closeModal' },
   ])
 
   return store as Store<State, any>

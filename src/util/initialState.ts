@@ -1,15 +1,11 @@
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
-import Modal from '../@types/Modal'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
-import globals from '../globals'
-import canShowModal from '../selectors/canShowModal'
 import hashThought from '../util/hashThought'
-import isDocumentEditable from '../util/isDocumentEditable'
 import never from '../util/never'
 import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
@@ -133,6 +129,9 @@ const initialState = (created: Timestamp = timestamp()) => {
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
+    // start the app with the welcome modal unless it has already been completed
+    // See: /src/action-creators/closeModal.ts
+    showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
     showTopControls: true,
@@ -144,18 +143,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     thoughts: initialThoughts(created),
     toolbarOverlay: null,
     undoPatches: [],
-  }
-  Object.keys(Modal).forEach(key => {
-    // initial modal states
-    state.modals[key] = {
-      // eslint-disable-next-line no-mixed-operators
-      complete: globals.disableTutorial || JSON.parse(storage.getItem('modal-complete-' + key) || 'false'),
-    }
-  })
-
-  // welcome modal
-  if (isDocumentEditable() && canShowModal(state, 'welcome')) {
-    state.showModal = Modal.welcome
   }
 
   /**
@@ -170,13 +157,13 @@ const initialState = (created: Timestamp = timestamp()) => {
   //   const showModalLocal: Modal | null = (storage.getItem('modal-to-show') as Modal) || null
   //   // do not show the modal if it has been permanently dismissed (complete)
   //   if (showModalLocal && !state.modals[showModalLocal as keyof typeof state.modals]?.complete) {
-  //     state.showModal = showModalLocal || Modal.auth
+  //     state.showModal = showModalLocal || 'auth'
   //   }
   // }
 
   // show the signup modal if the app is loaded with signup path
   if (typeof window !== 'undefined' && window.location.pathname.substr(1) === 'signup') {
-    state.showModal = Modal.signup
+    state.showModal = 'signup'
   }
 
   return state

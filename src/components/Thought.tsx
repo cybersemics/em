@@ -28,7 +28,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
-import store from '../stores/app'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import hashPath from '../util/hashPath'
@@ -435,7 +434,7 @@ const ThoughtContainer = ({
             <a
               tabIndex={-1}
               onClick={() => {
-                store.dispatch(expandContextThought(path))
+                dispatch(expandContextThought(path))
               }}
             >
               ...{' '}

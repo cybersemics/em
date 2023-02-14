@@ -2,7 +2,6 @@ import classNames from 'classnames'
 import React from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
-import Modal from '../@types/Modal'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import showModal from '../action-creators/showModal'
@@ -30,18 +29,20 @@ const CursorBreadcrumbs = () => {
 }
 
 /** A link that opens The Manual. */
-const ManualBUtton: React.FC = () => {
+const ManualButton: React.FC = () => {
   const dispatch = useDispatch()
 
   return (
     <div
-      onClick={() => dispatch(showModal({ id: Modal.manual }))}
+      onClick={() => dispatch(showModal({ id: 'manual' }))}
       title='The Manual'
       style={{
         cursor: 'pointer',
         display: 'inline-flex',
         fontWeight: 'bold',
-        padding: 10,
+        // extend tap area
+        // margin-right less than -10 causes content to scroll horizontally on swipe
+        padding: '10px 10px 10px 20px',
         margin: -10,
         userSelect: 'none',
       }}
@@ -90,7 +91,7 @@ const NavBar = ({ position }: { position: string }) => {
 
               <div className='nav-right-button-group'>
                 <>
-                  <ManualBUtton />
+                  <ManualButton />
                   {authenticated && <InvitesButton />}
                   {/* <FeedbackButton /> */}
                   {/* <QuickAddButton /> */}

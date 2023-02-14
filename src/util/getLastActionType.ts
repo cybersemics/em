@@ -1,5 +1,5 @@
 import Patch from '../@types/Patch'
-import { NAVIGATION_ACTIONS } from '../redux-enhancers/undoRedoEnhancer'
+import { isNavigation } from '../redux-enhancers/undoRedoEnhancer'
 
 /**
  * Recursively calculates last action type from patches/inversePatches history if it is one of the navigation actions and finally returns the action.
@@ -7,8 +7,7 @@ import { NAVIGATION_ACTIONS } from '../redux-enhancers/undoRedoEnhancer'
  */
 const getLatestActionType = (patchArr: Patch[], n = 1): string | undefined => {
   const lastActionType = patchArr[patchArr.length - n]?.[0]?.actions[0]
-  if (NAVIGATION_ACTIONS[lastActionType]) return getLatestActionType(patchArr, n + 1)
-  return lastActionType
+  return isNavigation(lastActionType) ? getLatestActionType(patchArr, n + 1) : lastActionType
 }
 
 export default getLatestActionType

@@ -14,7 +14,6 @@ import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
-import timeDifference from '../util/timeDifference'
 import timestamp from '../util/timestamp'
 import isEM from './isEM'
 
@@ -28,6 +27,9 @@ export interface Leaf {
 export type Tree = {
   [index: string]: Tree | Leaf
 }
+
+/** Returns the difference in seconds between two timestamps. */
+const timeDifference = (timestamp1: Timestamp, timestamp2: Timestamp) => Math.floor(timestamp1 - timestamp2) / 1000
 
 /** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
 const contextEncode = (context: Context) =>

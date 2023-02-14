@@ -6,16 +6,15 @@ import Direction from './@types/Direction'
 import GesturePath from './@types/GesturePath'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
-import Modal from './@types/Modal'
 import Shortcut from './@types/Shortcut'
 import State from './@types/State'
 import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { AlertType, EM_TOKEN, GESTURE_HINT_EXTENDED_TIMEOUT } from './constants'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT, Settings } from './constants'
 import globals from './globals'
-import findDescendant from './selectors/findDescendant'
+import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
@@ -142,7 +141,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
     const { toolbarOverlay, scrollPrioritized } = state
-    const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+    const experienceMode = getUserSetting(state, Settings.experienceMode)
 
     if (toolbarOverlay || scrollPrioritized || state.showModal || state.dragInProgress) return
 
@@ -163,7 +162,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch(
         // alert the shortcut label if it is a valid gesture
         // alert "Cancel gesture" if it is not a valid gesture (basic gesture hint)
-        alert(shortcut ? shortcut?.label : '✗ Cancel gesture', {
+        alert(shortcut ? shortcut?.label : GESTURE_CANCEL_ALERT_TEXT, {
           alertType: AlertType.GestureHint,
           clearDelay: 5000,
           showCloseLink: false,
@@ -178,7 +177,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
-          if (getState().alert?.value === '✗ Cancel gesture') return
+          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
           dispatch(
             alert(sequence as string, {
               alertType: AlertType.GestureHintExtended,
@@ -200,9 +199,16 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     if (scrollPrioritized) return
 
-    const shortcut = shortcutGestureIndex[sequence as string]
+    // Get the shortcut from the shortcut gesture index.
+    // When the extended gesture hint is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
+    const shortcut =
+      state.alert?.alertType !== AlertType.GestureHintExtended ||
+      !shortcutGestureIndex[sequence as string]?.hideFromInstructions
+        ? shortcutGestureIndex[sequence as string]
+        : null
 
-    // disable when modal is displayed or a drag is in progress
+    // execute shortcut
+    // do not execute when modal is displayed or a drag is in progress
     if (shortcut && !state.showModal && !state.dragInProgress) {
       shortcutEmitter.trigger('shortcut', shortcut)
       shortcut.exec(store.dispatch, store.getState, e, { type: 'gesture' })
@@ -220,7 +226,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
       store.dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
-        const experienceMode = !!findDescendant(state, EM_TOKEN, ['Settings', 'experienceMode'])
+        const experienceMode = getUserSetting(Settings.experienceMode)
         if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
           dispatch(
             alert(
@@ -273,11 +279,11 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
     // disable when welcome, shortcuts, or feeback modals are displayed
     if (
-      state.showModal === Modal.auth ||
-      state.showModal === Modal.feedback ||
-      state.showModal === Modal.invites ||
-      state.showModal === Modal.manual ||
-      state.showModal === Modal.welcome
+      state.showModal === 'auth' ||
+      state.showModal === 'feedback' ||
+      state.showModal === 'invites' ||
+      state.showModal === 'manual' ||
+      state.showModal === 'welcome'
     )
       return
 
@@ -323,5 +329,9 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
 
 /** Finds a shortcut by its id. */
 export const shortcutById = (id: string): Shortcut | null => shortcutIdIndex[id]
+
+/** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
+export const gestureString = (shortcut: Shortcut): string =>
+  (typeof shortcut.gesture === 'string' ? shortcut.gesture : shortcut.gesture?.[0] || '') as string
 
 const { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex } = index()

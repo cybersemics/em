@@ -136,7 +136,7 @@ const ContextBreadcrumbs = ({
       - The "c/d" context will render "d" as a thought and "c" as the breadcrumbs.
     */
         !homeContext ? (
-          <HomeLink color='gray' size={16} style={{ position: 'relative', left: -5, top: 2 }} />
+          <HomeLink color='gray' size={16} style={{ position: 'relative', left: -1, top: 2 }} />
         ) : null
       ) : (
         <TransitionGroup childFactory={factoryManager}>

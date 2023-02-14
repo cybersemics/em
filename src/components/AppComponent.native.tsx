@@ -19,12 +19,6 @@ import Alert from './Alert'
 import Content from './Content.native'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
-import ModalAuth from './ModalAuth'
-import ModalExport from './ModalExport'
-import ModalFeedback from './ModalFeedback'
-import ModalManual from './ModalManual'
-import ModalSettings from './ModalSettings'
-import ModalWelcome from './ModalWelcome'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar'
@@ -133,12 +127,6 @@ const AppComponent: React.FC = () => {
 
             <Footer />
           </ScrollView>
-          <ModalAuth />
-          <ModalFeedback />
-          <ModalSettings />
-          <ModalManual />
-          <ModalWelcome />
-          <ModalExport />
         </DrawerLayout>
       </SafeAreaView>
     </>

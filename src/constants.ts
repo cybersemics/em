@@ -185,6 +185,9 @@ export const MIN_LINE_HEIGHT = 26
 // the maximum number of characters of a thought to display before ellipsizing in links and tutorial
 export const THOUGHT_ELLIPSIZED_CHARS = 16
 
+// The text that is alerted when a gesture is made that does not correspond to a valid shortcut.
+export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
+
 // time before gesture hint appears
 export const GESTURE_HINT_EXTENDED_TIMEOUT = 400
 
@@ -456,6 +459,8 @@ export enum ViewMode {
 
 export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 
+// Static alert text that is used in multiple places.
+// There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
   ReorderFavorites: 'Drag and drop to reorder favorites',
@@ -472,6 +477,8 @@ export enum AlertType {
   DeleteThoughtComplete = 'DeleteThoughtComplete',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
+  // shown when a dragged thought is hovering over the ExportDrop component
+  ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown after a longer delay during a MultiGesture
@@ -486,6 +493,16 @@ export enum AlertType {
   ThoughtMoved = 'ThoughtMoved',
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
+}
+
+// Allowable settings that can be saved to /EM/Settings/
+// See ModalSettings for full descriptions.
+export enum Settings {
+  disableGestureTracing = 'disableGestureTracing',
+  experienceMode = 'experienceMode',
+  favoritesHideContexts = 'favoritesHideContexts',
+  hideSuperscripts = 'hideSuperscripts',
+  disableGestureTracingBackForward = 'disableGestureTracingBackForward',
 }
 
 // maximum size of state.jumpHistory

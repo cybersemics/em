@@ -89,7 +89,7 @@ yPermissions.observe(connectThoughtspaceProvider)
 //       storage.getItem('accessTokenBackup', accessTokenLocal)
 
 //       // close the welcome modal
-//       store.dispatch(modalComplete('welcome'))
+//       store.dispatch(closeModal())
 
 //       // clear share params from URL without refreshing
 //       window.history.pushState({}, '', '/')
