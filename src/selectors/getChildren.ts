@@ -56,10 +56,6 @@ const getVisibleThoughtsById = _.curry(
   },
 )
 
-/** Returns the first child of a thought or undefined. Also see: firstVisibleChild. */
-export const firstChild = (state: State, id: ThoughtId | undefined): Thought | undefined =>
-  id && getAllChildrenAsThoughts(state, id)[0]
-
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, id: ThoughtId): boolean => !!firstVisibleChild(state, id)
 
@@ -166,6 +162,13 @@ export const getChildrenRanked = moize(
     profileName: 'getChildrenRanked',
   },
 )
+
+/** Returns the first unsorted child of a thought. Only use on a thought with a single child.. Also see: firstVisibleChild. */
+export const firstChild = (state: State, id: ThoughtId | undefined): Thought | undefined => {
+  if (!id) return undefined
+  const children = getAllChildren(state, id)
+  return children.length > 0 ? getThoughtById(state, children[0]) : undefined
+}
 
 /** Returns the first visible child of a sorted context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]

@@ -145,7 +145,7 @@ function expandThoughtsRecursive(
         return !isAttribute(value) || isExpansionBasePath() || isAncestor()
       })
 
-  // expand if child is only child and its child is not url
+  // expand if child is an only child and its child is not a url
   const firstGrandchild = firstChild(state, visibleChildren[0]?.id)
   const isOnlyChildNoUrl =
     firstGrandchild &&
