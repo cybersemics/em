@@ -5,7 +5,7 @@ import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-/** Toolbars shortcut instance of italic, which toggles italic font style of the cursor. */
+/** Toggles formatting of the current browser selection as italic. If there is no selection, formats the entire thought. */
 const italic: Shortcut = {
   id: 'italic',
   label: 'Italic',

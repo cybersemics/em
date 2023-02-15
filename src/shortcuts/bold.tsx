@@ -5,7 +5,7 @@ import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-/** Toolbars shortcut instance of bold, which toggles bold font weight of the cursor. */
+/** Toggles formatting of the current browser selection as bold. If there is no selection, formats the entire thought. */
 const bold: Shortcut = {
   id: 'bold',
   label: 'Bold',

@@ -8,26 +8,25 @@ const formatSelection = (state: State, command: 'bold' | 'italic' | 'underline')
 
   const thought = pathToThought(state, state.cursor)
 
-  const sel = getSelection()
+  const sel = window.getSelection()
 
   // if there is no selection, format the entire thought by selecting the whole thought
-  if ((sel?.toString() ?? '').length === 0 && thought.value.length !== 0) {
+  if (sel?.toString().length === 0 && thought.value.length !== 0) {
     const thoughtContentEditable = document.querySelector('.editable-' + thought.id)
-    if (thoughtContentEditable) {
-      const savedSelection = selection.save()
+    if (!thoughtContentEditable) return
 
-      // select entire thought contents
-      sel?.selectAllChildren(thoughtContentEditable)
+    const savedSelection = selection.save()
 
-      document.execCommand(command)
+    sel?.selectAllChildren(thoughtContentEditable)
 
-      sel?.removeAllRanges()
+    document.execCommand(command)
 
-      // restore selection after the next tick, otherwise during browse mode the selection is not cleared
-      setTimeout(() => {
-        selection.restore(savedSelection)
-      })
-    }
+    sel?.removeAllRanges()
+
+    // restore selection after the next tick, otherwise during browse mode on mobile the selection is not cleared
+    setTimeout(() => {
+      selection.restore(savedSelection)
+    })
   } else {
     document.execCommand(command)
   }
