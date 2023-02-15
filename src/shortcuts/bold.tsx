@@ -1,8 +1,8 @@
-import { head } from 'lodash'
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/BoldTextIcon'
-import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
 import formatSelection from '../util/formatSelection'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toolbars shortcut instance of bold, which toggles bold font weight of the cursor. */
@@ -15,12 +15,13 @@ const bold: Shortcut = {
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     const state = getState()
-
     formatSelection(state, 'bold')
   },
   isActive: getState => {
     const state = getState()
-    return !!state.cursor && !!findDescendant(state, head(state.cursor)!, ['=style', 'fontWeight', '700'])
+    if (!state.cursor) return false
+    const thought = getThoughtById(state, head(state.cursor))
+    return thought.value.includes('<b>') || thought.value.includes('<strong>')
   },
   isDropdownOpen: getState => !!getState().showColorPicker,
 }

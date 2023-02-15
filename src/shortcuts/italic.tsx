@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import Icon from '../components/icons/ItalicTextIcon'
-import findDescendant from '../selectors/findDescendant'
+import getThoughtById from '../selectors/getThoughtById'
 import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -19,7 +19,9 @@ const italic: Shortcut = {
   },
   isActive: getState => {
     const state = getState()
-    return !!state.cursor && !!findDescendant(state, head(state.cursor), ['=style', 'fontStyle', 'italic'])
+    if (!state.cursor) return false
+    const thought = getThoughtById(state, head(state.cursor))
+    return thought.value.includes('<i>') || thought.value.includes('<em>')
   },
   isDropdownOpen: getState => !!getState().showColorPicker,
 }
