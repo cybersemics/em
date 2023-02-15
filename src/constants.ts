@@ -111,10 +111,6 @@ export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thoug
 export const SCHEMA_LEMMA = 8
 export const SCHEMA_LATEST = 8
 
-// store the empty string as a non-empty token in firebase since firebase does not allow empty child records
-// See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
-export const EMPTY_TOKEN = '__EMPTY__'
-
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const HOME_TOKEN = '__ROOT__' as ThoughtId
 

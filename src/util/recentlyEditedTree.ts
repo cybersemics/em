@@ -5,7 +5,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
-import { EMPTY_TOKEN, EM_TOKEN } from '../constants'
+import { EM_TOKEN } from '../constants'
 import appendToPath from '../util/appendToPath'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
@@ -31,9 +31,8 @@ export type Tree = {
 /** Returns the difference in seconds between two timestamps. */
 const timeDifference = (timestamp1: Timestamp, timestamp2: Timestamp) => Math.floor(timestamp1 - timestamp2) / 1000
 
-/** Encodes array of string to escape unsafe characters (.$[]#/) and converts empty string to EMPTY_TOKEN (for firebase). */
-const contextEncode = (context: Context) =>
-  context.map(value => (value.length === 0 ? EMPTY_TOKEN : hashThought(value)))
+/** Encodes array of string to escape unsafe characters (.$[]#/). */
+const contextEncode = (context: Context) => context.map(value => hashThought(value))
 
 const EDIT_TIME_MAX = 7200 // time diff limit in second for replacing descendants by ancestor
 
@@ -176,7 +175,7 @@ const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
         let isMerged = false // eslint-disable-line fp/no-let
         leafNodes.forEach(descendant => {
           const descendantContext = contextEncode(pathToContext(state, descendant.path))
-          if (descendantContext[0] === EM_TOKEN) return // preventing nodes at level 0 from merged to this (temporary fix)
+          if (descendantContext[0] === hashThought(EM_TOKEN)) return // preventing nodes at level 0 from merged to this (temporary fix)
           const [shortContext, longContext] =
             newContext.length < descendantContext.length
               ? [newContext, descendantContext]

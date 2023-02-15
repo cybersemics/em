@@ -52,7 +52,7 @@ const initializeCursor = async () => {
   }
 }
 
-/** Initilaize local db , firebase and window events. */
+/** Initilaize local db and window events. */
 export const initialize = async () => {
   await initOfflineStatusStore()
 
