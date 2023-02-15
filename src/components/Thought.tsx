@@ -12,7 +12,7 @@ import ThoughtId from '../@types/ThoughtId'
 import expandContextThought from '../action-creators/expandContextThought'
 import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { isTouch } from '../browser'
-import { AlertType, MAX_DISTANCE_FROM_CURSOR } from '../constants'
+import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEXP_TAGS } from '../constants'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
 import useHideBullet from '../hooks/useHideBullet'
@@ -301,7 +301,8 @@ const ThoughtContainer = ({
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
-    if (newValue.length > oldValue.length) {
+    // strip HTML tags, otherwise Formatting shortcuts will trigger toggleTopControlsAndBreadcrumbs
+    if (newValue.replace(REGEXP_TAGS, '').length > oldValue.replace(REGEXP_TAGS, '').length) {
       dispatch(toggleTopControlsAndBreadcrumbs(false))
     }
   }, [])
