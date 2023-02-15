@@ -5,9 +5,9 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
+import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
-import toggleTopControlsAndBreadcrumbs from '../action-creators/toggleTopControlsAndBreadcrumbs'
 import { AlertType } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
@@ -130,7 +130,7 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() => store.dispatch(toggleTopControlsAndBreadcrumbs(true)), 100, { leading: true })
+  const onMouseMove = _.debounce(() => store.dispatch(distractionFreeTyping(false)), 100, { leading: true })
 
   /** Handles auto scroll on drag near the edge of the screen on mobile. */
   // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.

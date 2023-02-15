@@ -134,8 +134,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
-    showTopControls: true,
-    showBreadcrumbs: true,
     // eslint-disable-next-line no-mixed-operators
     splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),
     status: 'disconnected',

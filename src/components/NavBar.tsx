@@ -57,7 +57,7 @@ const NavBar = ({ position }: { position: string }) => {
   const isTutorialOn = useSelector(isTutorial)
   const colors = useSelector(themeColors)
   const authenticated = useSelector((state: State) => state.authenticated)
-  const showBreadcrumbs = useSelector((state: State) => state.showBreadcrumbs)
+  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
 
   const showHomeLink = useSelector(
     (state: State) => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2),
@@ -83,7 +83,7 @@ const NavBar = ({ position }: { position: string }) => {
             <>
               {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
               {showHomeLink ? <HomeLink size={24} /> : null}
-              <CSSTransition in={showBreadcrumbs} timeout={200} classNames='fade' unmountOnExit>
+              <CSSTransition in={!distractionFreeTyping} timeout={200} classNames='fade' unmountOnExit>
                 <div style={{ flexGrow: 1 }}>
                   <CursorBreadcrumbs />
                 </div>
