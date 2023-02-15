@@ -10,7 +10,6 @@ import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
 import setCursor from './action-creators/setCursor'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import initDB from './data-providers/dexie'
 import * as db from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -60,7 +59,7 @@ export const initialize = async () => {
   sessionManager.init()
 
   // load local state unless loading a public context or source url
-  await initDB()
+  // await initDB()
 
   const src = urlDataSource()
   const thoughtsLocalPromise =
