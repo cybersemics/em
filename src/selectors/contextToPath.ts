@@ -3,7 +3,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { getAllChildren } from '../selectors/getChildren'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -33,18 +33,21 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
       const prevParentId: ThoughtId = head(simplePathAccum) || startingThoughtId
       const showContexts = prevParentId && isContextViewActive(state, acc)
       const prevParent = showContexts && prevParentId ? getThoughtById(state, prevParentId) : null
-      const children = prevParent
-        ? getContexts(state, prevParent.value).map(cxid => getThoughtById(state, cxid))
-        : getAllChildrenAsThoughts(state, prevParentId)
-      const firstChild = children.find(
-        child => (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value,
-      )
+      const childIds = prevParent ? getContexts(state, prevParent.value) : getAllChildren(state, prevParentId)
+      const firstChildId =
+        childIds.find(childId => {
+          const child = getThoughtById(state, childId)
+          return (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value
+        }) || null
 
-      if (!firstChild) throw Error('Thought not found')
+      if (!firstChildId) throw Error('Thought not found')
 
       const isEm = i === 0 && value === EM_TOKEN
 
-      return appendToPath(acc, isEm ? EM_TOKEN : showContexts ? firstChild.parentId : firstChild.id)
+      return appendToPath(
+        acc,
+        isEm ? EM_TOKEN : showContexts ? getThoughtById(state, firstChildId).parentId : firstChildId,
+      )
     }, [] as any as Path)
     // TODO: return Path
     return path as SimplePath
