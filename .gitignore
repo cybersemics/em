@@ -19,6 +19,5 @@ local.log
 .expo/*
 .DS_Store
 .env.*.local
-firebase-config.json
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__

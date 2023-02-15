@@ -1,10 +1,8 @@
 import { AxiosError } from 'axios'
 import React, { ChangeEvent, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import State from '../../@types/State'
+import { useDispatch } from 'react-redux'
 import alert from '../../action-creators/alert'
 import { AlertType } from '../../constants'
-import submitFeedback from '../../util/submitFeedback'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -21,7 +19,6 @@ const ModalFeedback = () => {
   const [feedback, setFeedback] = useState('')
   const [submitAttempts, setSubmitAttempts] = useState(0)
   const dispatch = useDispatch()
-  const uid = useSelector((state: State) => state.user?.uid)
 
   /** On text area change handler. */
   const onChange = (e: ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)
@@ -44,7 +41,7 @@ const ModalFeedback = () => {
 
     setIsSubmitting(true)
     try {
-      await submitFeedback(feedback, uid)
+      throw new Error('Not implemented')
       dispatch(alert('Feedback sent!'))
       close()
     } catch (err) {

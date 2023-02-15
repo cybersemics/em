@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import alert from '../../action-creators/alert'
 import login from '../../action-creators/login'
-import { FIREBASE_REDIRECT_URL } from '../../constants'
 import storage from '../../util/storage'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -60,7 +59,8 @@ const ModalAuth = () => {
     updateIsSubmitting(true)
 
     try {
-      await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
+      throw new Error('Not implemented')
+      // await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
       updateIsSubmitting(false)
     } catch (e: any) {
       updateIsSubmitting(false)
