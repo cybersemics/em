@@ -57,8 +57,7 @@ const getVisibleThoughtsById = _.curry(
 )
 
 /** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId): boolean =>
-  !!getAllChildren(state, id).find(childId => isVisible(state, getThoughtById(state, childId)))
+export const hasChildren = (state: State, id: ThoughtId): boolean => !!findAnyChild(state, id, isVisible(state))
 
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
