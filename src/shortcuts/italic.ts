@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
+import formatSelection from '../action-creators/formatSelection'
 import Icon from '../components/icons/ItalicTextIcon'
 import getThoughtById from '../selectors/getThoughtById'
-import formatSelection from '../util/formatSelection'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -13,9 +13,8 @@ const italic: Shortcut = {
   svg: Icon,
   keyboard: { key: 'i', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: (dispatch, getState) => {
-    const state = getState()
-    formatSelection(state, 'italic')
+  exec: dispatch => {
+    dispatch(formatSelection('italic'))
   },
   isActive: getState => {
     const state = getState()
@@ -23,7 +22,6 @@ const italic: Shortcut = {
     const thought = getThoughtById(state, head(state.cursor))
     return thought.value.includes('<i>') || thought.value.includes('<em>')
   },
-  isDropdownOpen: getState => !!getState().showColorPicker,
 }
 
 export default italic

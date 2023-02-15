@@ -188,6 +188,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'bold',
   'italic',
   'underline',
+  'strikethrough',
   'toggleContextView',
   // 'toggleSplitView',
   'note',
@@ -274,7 +275,7 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
-export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike']
 
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
