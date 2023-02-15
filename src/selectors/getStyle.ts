@@ -4,7 +4,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import keyValueBy from '../util/keyValueBy'
-import { getAllChildrenAsThoughts } from './getChildren'
+import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import themeColors from './themeColors'
 
 /** Parses the =style attributes of a given ThoughtId into an object that can be passed to React styles. Returns null if there are no styles. */
@@ -23,7 +23,7 @@ const getStyle = (
   const styles = keyValueBy(children, ({ value }) => {
     const styleChildId = findDescendant(state, styleId, value)
     if (!styleChildId) return null
-    const styleValueThought = getAllChildrenAsThoughts(state, styleChildId)[0]
+    const styleValueThought = anyChild(state, styleChildId)
     if (!styleValueThought) return null
     const styleKey = _.camelCase(value)
 

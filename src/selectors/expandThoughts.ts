@@ -25,7 +25,7 @@ import publishMode from '../util/publishMode'
 import strip from '../util/strip'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
-import { firstChild, getAllChildrenAsThoughts } from './getChildren'
+import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 
 // pin state map
@@ -146,7 +146,7 @@ function expandThoughtsRecursive(
       })
 
   // expand if child is an only child and its child is not a url
-  const firstGrandchild = firstChild(state, visibleChildren[0]?.id)
+  const firstGrandchild = anyChild(state, visibleChildren[0]?.id)
   const isOnlyChildNoUrl =
     firstGrandchild &&
     visibleChildren.length === 1 &&
