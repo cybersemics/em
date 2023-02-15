@@ -164,7 +164,7 @@ export const getChildrenRanked = moize(
 )
 
 /** Returns any child of a thought. Only use on a thought with a single child. Also see: firstVisibleChild. */
-export const anyChild = (state: State, id: ThoughtId | undefined): Thought | undefined => {
+export const anyChild = (state: State, id: ThoughtId | undefined | null): Thought | undefined => {
   if (!id) return undefined
   const children = getAllChildren(state, id)
   return children.length > 0 ? getThoughtById(state, children[0]) : undefined

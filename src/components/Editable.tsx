@@ -32,7 +32,7 @@ import {
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
@@ -123,7 +123,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   // })
 
   const labelId = findDescendant(state, parentId, '=label')
-  const childrenLabel = getAllChildrenAsThoughts(state, labelId)
+  const childrenLabel = anyChild(state, labelId)
 
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const contentRef = React.useRef<HTMLInputElement>(null)
@@ -521,8 +521,8 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           ? ''
           : isEditing
           ? value
-          : childrenLabel.length > 0
-          ? childrenLabel[0].value
+          : childrenLabel
+          ? childrenLabel.value
           : ellipsizeUrl(value)
       }
       placeholder={placeholder}

@@ -30,7 +30,7 @@ import {
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getLexeme from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
@@ -126,7 +126,7 @@ const Editable = ({
   const lexeme = getLexeme(state, value)
 
   const labelId = findDescendant(state, parentId, '=label')
-  const childrenLabel = getAllChildrenAsThoughts(state, labelId)
+  const childrenLabel = anyChild(state, labelId)
 
   // side effect to set old value ref to head value from updated simplePath.
   useEffect(() => {
@@ -461,8 +461,8 @@ const Editable = ({
           ? ''
           : isEditing
           ? value
-          : childrenLabel.length > 0
-          ? childrenLabel[0].value
+          : childrenLabel
+          ? childrenLabel.value
           : ellipsizeUrl(value)
       }
       placeholder={
