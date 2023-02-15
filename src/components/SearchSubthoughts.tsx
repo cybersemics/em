@@ -7,10 +7,8 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import error from '../action-creators/error'
-import searchContexts from '../action-creators/searchContexts'
 import setSearchLimit from '../action-creators/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import localSearch from '../search/localSearch'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegExp from '../util/escapeRegExp'
@@ -55,13 +53,14 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
    * Search thoughts remotely or locally and add it to pullQueue.
    */
   const searchThoughts = async (value: string) => {
-    const searchLocal = localSearch(store.getState())
+    throw new Error('Not implemented')
+    // const searchLocal = localSearch(store.getState())
 
     const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
     setLoadingState(true)
     try {
-      const contextMap = remoteSearch ? {} : (await searchLocal).searchAndGenerateContextMap(value)
-      dispatch(searchContexts({ value: contextMap }))
+      // const contextMap = remoteSearch ? {} : (await searchLocal).searchAndGenerateContextMap(value)
+      // dispatch(searchContexts({ value: contextMap }))
     } catch (err) {
       const errorMessage = `${remoteSearch ? 'Remote' : 'Local'} search failed`
       dispatch(error({ value: errorMessage }))
