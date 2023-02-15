@@ -22,7 +22,11 @@ const formatSelection = (state: State, command: 'bold' | 'italic' | 'underline')
       document.execCommand(command)
 
       sel?.removeAllRanges()
-      selection.restore(savedSelection)
+
+      // restore selection after the next tick, otherwise during browse mode the selection is not cleared
+      setTimeout(() => {
+        selection.restore(savedSelection)
+      })
     }
   } else {
     document.execCommand(command)

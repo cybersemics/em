@@ -146,9 +146,12 @@ export const offsetStart = (): number | null => {
   return range.startOffset || 0
 }
 
-/** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
+/** Restores the selection with the given restoration object (returned by selection.save). Removes the selection if the restoration object is null. */
 export const restore = (savedSelection: SavedSelection | null): void => {
-  if (!savedSelection) return
+  if (!savedSelection) {
+    clear()
+    return
+  }
 
   const sel = window.getSelection()
 
