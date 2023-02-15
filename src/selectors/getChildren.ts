@@ -171,6 +171,16 @@ export const anyChild = (state: State, id: ThoughtId | undefined): Thought | und
   return children.length > 0 ? getThoughtById(state, children[0]) : undefined
 }
 
+/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
+export const findAnyChild = (
+  state: State,
+  id: ThoughtId,
+  predicate: (child: Thought) => boolean,
+): Thought | undefined => {
+  const childId = getAllChildren(state, id).find(childId => predicate(getThoughtById(state, childId)))
+  return childId ? getThoughtById(state, childId) : undefined
+}
+
 /** Returns the first visible child of a sorted context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
 

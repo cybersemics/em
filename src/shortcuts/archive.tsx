@@ -7,7 +7,7 @@ import archiveThought from '../action-creators/archiveThought'
 import error from '../action-creators/error'
 import { AlertType, HOME_PATH } from '../constants'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -31,8 +31,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       dispatch(error({ value: `"${ellipsize(cursorThought.value)}" is read-only and cannot be archived.` }))
     } else if (noteFocus) {
       const path = state.cursor || HOME_PATH
-      const allChildren = getAllChildrenAsThoughts(state, head(path))
-      const childNote = allChildren.find(child => child.value === '=note')
+      const childNote = findAnyChild(state, head(path), child => child.value === '=note')
       // we know there is a =note child if noteFocus is true
       // we just need to get the Child object so that archiveThought has the full path
       const pathNote = appendToPath(path, childNote!.id)

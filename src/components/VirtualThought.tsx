@@ -12,7 +12,7 @@ import useSelectorEffect from '../hooks/useSelectorEffect'
 import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { findAnyChild } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -32,8 +32,9 @@ import Thought from './Thought'
 /** Finds the the first env entry with =focus/Zoom. O(children). */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env?: LazyEnv }): ThoughtId | null => {
   if (!env) return null
-  const children = getAllChildrenAsThoughts(state, id)
-  const child = children.find(
+  const child = findAnyChild(
+    state,
+    id,
     child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
   )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
@@ -251,14 +252,13 @@ const Subthought = ({
 
   const childrenAttributeId = useSelector(
     (state: State) =>
-      (thought.value !== '=children' &&
-        getAllChildrenAsThoughts(state, parentId).find(child => child.value === '=children')?.id) ||
+      (thought.value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) ||
       null,
   )
   const grandchildrenAttributeId = useSelector(
     (state: State) =>
       (thought.value !== '=style' &&
-        getAllChildrenAsThoughts(state, grandparentId).find(child => child.value === '=grandchildren')?.id) ||
+        findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,
   )
   const hideBullet = useSelector((state: State) => {
