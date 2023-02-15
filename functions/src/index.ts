@@ -1,7 +1,6 @@
 import algoliasearch from 'algoliasearch'
 import cors from 'cors'
 import * as admin from 'firebase-admin'
-import { encode } from 'firebase-encode'
 import * as functions from 'firebase-functions'
 import { FirebaseFunctionsRateLimiter } from 'firebase-functions-rate-limiter'
 import formData from 'form-data'
@@ -131,7 +130,8 @@ export const sendFeedbackEmail = functions.https.onRequest(async (request, respo
 
     // rate limit by ip address
     try {
-      await rateLimiter.rejectOnQuotaExceededOrRecordUsage(encode(ip as string))
+      // TODO: encode(ip)
+      await rateLimiter.rejectOnQuotaExceededOrRecordUsage(ip as string)
     } catch (err) {
       return response.status(429).json({
         message: 'Your feedback submission has been rate limited.',
