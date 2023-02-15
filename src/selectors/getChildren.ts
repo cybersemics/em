@@ -29,7 +29,7 @@ const NO_THOUGHT_IDS: ThoughtId[] = []
 type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry((state: State, child: Thought): boolean => {
+export const isVisible = _.curry((state: State, child: Thought): boolean => {
   // temporarily disable =hidden for performance
   return !isAttribute(child.value) // && !findDescendant(state, child.id, '=hidden')
 })
@@ -42,7 +42,7 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
   return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 
-/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
+/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. */
 export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
@@ -52,13 +52,13 @@ export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Th
 const getVisibleThoughtsById = _.curry(
   (getThoughtsFunction: GetThoughtsSelector, state: State, id: ThoughtId): Thought[] => {
     const children = getThoughtsFunction(state, id)
-    return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
+    return state.showHiddenThoughts ? children : children.filter(isVisible(state))
   },
 )
 
 /** Returns true if the context has any visible children. */
 export const hasChildren = (state: State, id: ThoughtId): boolean =>
-  !!getAllChildren(state, id).find(childId => isChildVisible(state, getThoughtById(state, childId)))
+  !!getAllChildren(state, id).find(childId => isVisible(state, getThoughtById(state, childId)))
 
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
@@ -199,7 +199,7 @@ const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
 const isChildVisibleWithCursorCheck = _.curry(
   (state: State, path: SimplePath, thought: Thought): boolean =>
     state.showHiddenThoughts ||
-    isChildVisible(state, thought) ||
+    isVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
     isDescendantOfMetaCursor(state, appendToPath(path, thought.id)),
   3,
