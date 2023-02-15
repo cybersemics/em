@@ -55,7 +55,7 @@ const pushLocal = (
   return Promise.resolve()
 }
 
-/** Syncs updates to local database and Firebase. */
+/** Syncs updates to local database and remote. */
 const push =
   (
     thoughtIndexUpdates: Index<Thought | null> = {},

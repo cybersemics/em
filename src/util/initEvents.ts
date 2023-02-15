@@ -244,10 +244,6 @@ const initEvents = (store: Store<State, any>) => {
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
 const onError = (e: any) => {
-  // ignore generic script error caused by a firebase disconnect (cross-site error)
-  // https://blog.sentry.io/2016/05/17/what-is-script-error
-  if (e.message === 'Network Error' || e.message === 'Script error.' || e.code?.startsWith('auth/')) return
-
   console.error({ message: e.message, code: e.code, 'error.code': (error as any).code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)
@@ -255,7 +251,7 @@ const onError = (e: any) => {
   store.dispatch(error({ value: e.message }))
 }
 
-// error handler must be added immediately to catch Firebase auth errors
+// error handler must be added immediately to catch auth errors
 if (typeof window !== 'undefined') {
   window.addEventListener('error', onError)
 }

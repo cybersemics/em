@@ -1,42 +1,21 @@
 import React, { useEffect, useRef } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import * as pkg from '../../package.json'
-import State from '../@types/State'
 import alert from '../action-creators/alert'
 import logout from '../action-creators/logout'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
-import pushStore from '../stores/push'
 import { commonStyles } from '../style/commonStyles'
 import { Text } from './Text.native'
 
 const { flexEnd, textOpacityWhite, hyperlink, lightblueText, row, justifyContentEnd, flexItemsEndRow } = commonStyles
 
-/** Show the user's login and saving status. */
-const Status = () => {
-  const isQueued = useSelector((state: State) => state.pushQueue.length > 0)
-  const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
-  const status = useSelector((state: State) => state.status)
-  return (
-    <>
-      <Text style={textOpacityWhite}>Status: </Text>
-      <Text style={textOpacityWhite}>
-        {(isPushing || isQueued) && (status === 'loading' || status === 'loaded')
-          ? 'Saving'
-          : status === 'loaded'
-          ? 'Online'
-          : status[0].toUpperCase() + status.substring(1)}
-      </Text>
-    </>
-  )
-}
-
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
-  const { authenticated, user, fontSize } = useFooterUseSelectors()
+  const { authenticated, fontSize } = useFooterUseSelectors()
 
   // alert when font size changes
   const firstUpdate = useRef(true)
@@ -83,21 +62,6 @@ const Footer = () => {
           </TouchableOpacity>
         </View>
       </View>
-
-      {user && (
-        <>
-          <View>
-            <Status />
-          </View>
-          <View>
-            <Text style={styles.textOpacityWhite}>Logged in as: {user?.email} </Text>
-          </View>
-          <View>
-            <Text style={textOpacityWhite}>User ID: </Text>
-            <Text style={textOpacityWhite}>{user?.uid?.slice(0, 6)}</Text>
-          </View>
-        </>
-      )}
 
       <View style={flexEnd}>
         <Text style={textOpacityWhite}>{`Version: ${pkg.version}`}</Text>

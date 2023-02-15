@@ -119,7 +119,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
       ? addContext(lexemeNewWithoutContext, rank, editedThoughtId, archived as Timestamp)
       : lexemeNewWithoutContext
 
-  // update local lexemeIndex so that we do not have to wait for firebase
+  // update local lexemeIndex so that we do not have to wait for the remote
   lexemeIndex[newKey] = lexemeNew
 
   // do not do anything with old lexemeIndex if hashes match, as the above line already took care of it

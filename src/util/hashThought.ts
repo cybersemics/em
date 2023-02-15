@@ -12,7 +12,7 @@ import normalizeThought from './normalizeThought'
  * - ignore punctuation & whitespace (when there is other text)
  * - ignore emojis (when there is other text)
  * - singularize
- * - murmurhash to prevent large keys (Firebase limitation)
+ * - murmurhash
  *
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.

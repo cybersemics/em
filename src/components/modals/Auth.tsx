@@ -7,7 +7,7 @@ import storage from '../../util/storage'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
-const firebaseErrorsIndex = {
+const errorsIndex = {
   'auth/weak-password': 'Password should be at least 6 characters',
   'auth/email-already-in-use': 'Account already exists',
   'auth/invalid-email': 'Invalid email',
@@ -17,7 +17,7 @@ const firebaseErrorsIndex = {
   default: 'Something went wrong',
 }
 
-type errorCode = keyof typeof firebaseErrorsIndex
+type errorCode = keyof typeof errorsIndex
 
 type SubmitAction = (closeModal: () => void, email: string, password?: string) => Promise<void>
 
@@ -58,13 +58,13 @@ const ModalAuth = () => {
   const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
     updateIsSubmitting(true)
 
+    throw new Error('Not implemented')
     try {
-      throw new Error('Not implemented')
       // await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
       updateIsSubmitting(false)
     } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(e.message || firebaseErrorsIndex.default)
+      return updateError(e.message || errorsIndex.default)
     }
     dispatch(alert('Please check your email'))
     closeModal()
@@ -73,14 +73,15 @@ const ModalAuth = () => {
   /** Login with email and password. */
   const loginWithEmailAndPassword: SubmitAction = useCallback(async (closeModal, email, password) => {
     updateIsSubmitting(true)
+    throw new Error('Not implemented')
     try {
-      await window.firebase.auth().signInWithEmailAndPassword(email, password!)
+      // await window.firebase.auth().signInWithEmailAndPassword(email, password!)
       storage.setItem('modal-to-show', 'welcome')
       updateIsSubmitting(false)
       closeModal()
     } catch (e: any) {
       updateIsSubmitting(false)
-      return updateError(firebaseErrorsIndex[e?.code as errorCode] || firebaseErrorsIndex.default)
+      return updateError(errorsIndex[e?.code as errorCode] || errorsIndex.default)
     }
   }, [])
 

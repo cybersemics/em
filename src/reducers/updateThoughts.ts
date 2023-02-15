@@ -223,7 +223,7 @@ const updateThoughts = (
       : {}
 
   // When a thought is deleted or moved, it needs to be removed from its old parent's inline children.
-  // Unfortunately, neither push nor firebase have access to the old parent, so we need to construct the updates here.
+  // Unfortunately, neither push nor the remote have access to the old parent, so we need to construct the updates here.
   // This causes inline children to leak into updateThoughts, which is not ideal architecturally.
   // Consider this a provisional solution that should be replaced. If it is not replaced entirely by a 3rd party sync-capable db, then we may need PushBatch to contain diffs and update types (move, edit, delete) rather than just synchronic updates.
   const inlineChildrenDeletes = keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {

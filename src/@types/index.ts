@@ -1,4 +1,3 @@
-import { Firebase } from './Firebase'
 import Thunk from './Thunk'
 
 declare global {
@@ -7,7 +6,6 @@ declare global {
   }
 
   interface Window {
-    firebase: Firebase
     em: unknown
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.

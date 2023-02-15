@@ -34,7 +34,7 @@ const Status = () => {
       }}
     >
       {
-        // pushQueue will be empty after all updates have been flushed to Firebase.
+        // pushQueue will be empty after all updates have been flushed to the remote.
         // isPushing is set back to true only when all updates have been committed.
         // This survives disconnections as long as the app isn't restarted and the push Promise does not time out. In that case, Firebase will still finish pushing once it is back online, but isPushing will be false. There is no way to independently check the completion status of Firebase offline writes (See: https://stackoverflow.com/questions/48565115/how-to-know-my-all-local-writeoffline-write-synced-to-firebase-real-time-datab#comment84128318_48565275).
         isPushing || isQueued

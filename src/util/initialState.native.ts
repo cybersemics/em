@@ -131,8 +131,8 @@ export const initialState = (created: Timestamp = timestamp()) => {
     resourceCache: {},
     rootContext: [HOME_TOKEN],
     /* status:
-      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
-      'connecting'     Connecting to firebase.
+      'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
+      'connecting'     Connecting.
       'loading'        Connected, authenticated, and waiting for first user data payload.
       'loaded'         User data payload received (may or may not be offline).
       'offline'        Disconnected and working in offline mode.

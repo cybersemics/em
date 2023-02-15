@@ -1,7 +1,6 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
 import Context from './Context'
-import { User } from './Firebase'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -99,8 +98,8 @@ interface State {
   // % or px
   splitPosition: number
   /* status:
-      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
-      'connecting'     Connecting to firebase.
+      'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
+      'connecting'     Connecting.
       'loading'        Connected, authenticated, and waiting for first user data payload.
       'loaded'         User data payload received (may or may not be offline).
       'offline'        Disconnected and working in offline mode.
@@ -111,7 +110,6 @@ interface State {
   transientFocus?: boolean
   tutorialStep?: number
   undoPatches: Patch[]
-  user?: User
 }
 
 export default State

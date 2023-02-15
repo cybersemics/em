@@ -9,7 +9,6 @@ export const useFooterUseSelectors = () => {
   return useSelector(
     (state: State) => ({
       authenticated: state.authenticated,
-      user: state.user,
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
       isTutorialOn: isTutorial(state),
       fontSize: state.fontSize,

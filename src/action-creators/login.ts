@@ -3,12 +3,10 @@ import alert from '../action-creators/alert'
 import status from '../action-creators/status'
 import storage from '../util/storage'
 
-/** Redirects the user to the Firebase login page. */
+/** Redirects the user to the login page. */
 const login = (): Thunk => dispatch => {
-  const firebase = window.firebase
-  const provider = new firebase.auth.GoogleAuthProvider()
+  throw new Error('Not implemented')
   dispatch(status({ value: 'connecting' }))
-  firebase.auth().signInWithRedirect(provider)
   storage.setItem('modal-to-show', 'welcome')
 
   // for some reason a delay is needed and this needs to go after signInWithRedirect, otherwise the alert flickers and is hidden
