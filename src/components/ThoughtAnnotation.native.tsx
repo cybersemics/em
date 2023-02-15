@@ -14,7 +14,7 @@ import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import getAncestorByValue from '../selectors/getAncestorByValue'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -58,15 +58,15 @@ interface ThoughtAnnotationProps {
 /** Sets the innerHTML of the ngram text. */
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId) => {
   const labelId = findDescendant(state, id, '=label')
-  const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
+  const labelChild = anyChild(state, labelId || undefined)
   const editingValue = editingValueStore.getState()
   return {
     __html: isEditing
       ? editingValue && value !== editingValue
         ? editingValue
         : value
-      : labelChildren.length > 0
-      ? labelChildren[0].value
+      : labelChild
+      ? labelChild.value
       : ellipsizeUrl(value),
   }
 }
@@ -143,7 +143,7 @@ const ThoughtAnnotation = ({
     return thought?.value || ''
   })
   const isExpanded = !!state.expanded[hashPath(simplePath)]
-  const childrenUrls = once(() => getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value)))
+  const childrenUrls = once(() => filterAllChildren(state, head(simplePath), child => isURL(child.value)))
   const [numContexts, setNumContexts] = useState(0)
   const homeContext = useSelector((state: State) => {
     const pathParent = rootedParentOf(state, path)

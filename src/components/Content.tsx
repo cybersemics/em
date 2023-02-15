@@ -11,7 +11,7 @@ import toggleColorPicker from '../action-creators/toggleColorPicker'
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import * as selection from '../device/selection'
-import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import head from '../util/head'
@@ -48,8 +48,11 @@ const mapStateToProps = (state: State) => {
   const isAbsoluteContext = isAbsolute(rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const children = getAllChildrenAsThoughts(state, head(rankedRoot))
-  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
+  const rootThoughtsLength = filterAllChildren(
+    state,
+    head(rankedRoot),
+    childrenFilterPredicate(state, rankedRoot),
+  ).length
 
   return {
     search,

@@ -180,6 +180,12 @@ export const findAnyChild = (
   return childId ? getThoughtById(state, childId) : undefined
 }
 
+/** Returns all child that match the predicate (unordered). */
+export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
+  const childIds = getAllChildren(state, id).filter(childId => predicate(getThoughtById(state, childId)))
+  return childIdsToThoughts(state, childIds)
+}
+
 /** Returns the first visible child of a sorted context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
 

@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { ABSOLUTE_PATH, HOME_PATH } from '../constants'
-import { childrenFilterPredicate, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import { commonStyles } from '../style/commonStyles'
@@ -40,8 +40,11 @@ const mapStateToProps = (state: State) => {
   const isAbsoluteContext = isAbsolute(rootContext)
 
   const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const children = getAllChildrenAsThoughts(state, head(rankedRoot))
-  const rootThoughtsLength = children.filter(childrenFilterPredicate(state, rankedRoot)).length
+  const rootThoughtsLength = filterAllChildren(
+    state,
+    head(rankedRoot),
+    childrenFilterPredicate(state, rankedRoot),
+  ).length
 
   return {
     search,

@@ -13,7 +13,7 @@ import { REGEXP_PUNCTUATIONS, REGEXP_TAGS, Settings } from '../constants'
 import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -53,14 +53,14 @@ interface ThoughtAnnotationProps {
 /** Gets the innerHTML of the live thought text. */
 const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId): string => {
   const labelId = findDescendant(state, id, '=label')
-  const labelChildren = labelId ? getAllChildrenAsThoughts(state, labelId) : []
+  const labelChild = anyChild(state, labelId || undefined)
   const editingValue = editingValueStore.getState()
   return isEditing
     ? editingValue && value !== editingValue
       ? editingValue
       : value
-    : labelChildren.length > 0
-    ? labelChildren[0].value
+    : labelChild
+    ? labelChild.value
     : ellipsizeUrl(value)
 }
 
@@ -145,7 +145,7 @@ const ThoughtAnnotation = ({
 
   const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
   const url = useSelector((state: State) => {
-    const childrenUrls = getAllChildrenAsThoughts(state, head(simplePath)).filter(child => isURL(child.value))
+    const childrenUrls = filterAllChildren(state, head(simplePath), child => isURL(child.value))
     const urlValue = isURL(value)
       ? value
       : // if the only subthought is a url and the thought is not expanded, link the thought
