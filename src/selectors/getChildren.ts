@@ -61,7 +61,7 @@ export const firstChild = (state: State, id: ThoughtId | undefined): Thought | u
   id && getAllChildrenAsThoughts(state, id)[0]
 
 /** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId): boolean => !!firstChild(state, id)
+export const hasChildren = (state: State, id: ThoughtId): boolean => !!firstVisibleChild(state, id)
 
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
