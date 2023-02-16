@@ -41,7 +41,7 @@ const ARROW_SCROLL_BUFFER = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
-  const { fontSize, isLoading, toolbarOverlay, scrollPrioritized, showTopControls, showHiddenThoughts } = state
+  const { fontSize, isLoading, toolbarOverlay, scrollPrioritized, distractionFreeTyping, showHiddenThoughts } = state
 
   return {
     isLoading,
@@ -49,7 +49,7 @@ const mapStateToProps = (state: State) => {
     scrollPrioritized,
     toolbarOverlay,
     // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed
-    showTopControls,
+    distractionFreeTyping,
     // Needed to add this to re-render Toolbar when hidden thought is toggled.
     showHiddenThoughts,
   }
@@ -131,7 +131,7 @@ const Toolbar = ({
   fontSize,
   toolbarOverlay,
   scrollPrioritized,
-  showTopControls,
+  distractionFreeTyping,
 }: ReturnType<typeof mapStateToProps>) => {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [holdTimer, setHoldTimer] = useState<Timer>(0 as unknown as Timer)
@@ -263,7 +263,7 @@ const Toolbar = ({
    **********************************************************************/
 
   return (
-    <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
+    <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
       <div aria-label='toolbar' className='toolbar-container'>
         <div className='toolbar-mask' />
         <div>

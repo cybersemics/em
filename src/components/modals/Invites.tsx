@@ -1,12 +1,9 @@
 import _ from 'lodash'
 import React, { useCallback, useEffect, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
-import * as Firebase from '../../@types/Firebase'
+import { useDispatch, useSelector } from 'react-redux'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
-import State from '../../@types/State'
 import alert from '../../action-creators/alert'
-import { getInviteById, updateInviteCode } from '../../apis/invites'
 import { baseUrl } from '../../device/router'
 import themeColors from '../../selectors/themeColors'
 import createId from '../../util/createId'
@@ -17,25 +14,16 @@ import CopyClipboard from './../icons/CopyClipboard'
 import InvitesIcon from './../icons/InvitesIcon'
 import ModalComponent from './ModalComponent'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { authenticated, user: { uid = '' } = {} } = state
-  return {
-    uid,
-    authenticated,
-  }
-}
-
 /**
  * Get all the invite codes that belongs to the given user.
  */
-const getUserInviteCodes = (userId: string) => {
-  const userDb = window.firebase.database().ref(`users/${userId}`).child('invites')
-  return new Promise<string[]>((resolve, reject) => {
-    userDb.once('value', (snapshot: Firebase.Snapshot) => {
-      resolve(Object.keys(snapshot.val() || {}))
-    })
-  })
+const getUserInviteCodes = (userId: string): Promise<string[]> => {
+  throw new Error('Not implemented')
+  // return new Promise<string[]>((resolve, reject) => {
+  //   userDb.once('value', (snapshot: Firebase.Snapshot) => {
+  //     resolve(Object.keys(snapshot.val() || {}))
+  //   })
+  // })
 }
 
 /** Generates three user invites. */
@@ -50,17 +38,18 @@ const generateUserInvites = (userId: string) =>
         hasSeen: false,
       }
 
-      await Promise.all([
-        window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode),
-        window.firebase.database().ref(`/users/${userId}/invites/${inviteId}`).set(true),
-      ])
+      throw new Error('Not implemented')
+      // await Promise.all([
+      //   window.firebase.database().ref(`/invites/${inviteId}`).set(newInviteCode),
+      //   window.firebase.database().ref(`/users/${userId}/invites/${inviteId}`).set(true),
+      // ])
 
       return { ...newInviteCode, id: inviteId }
     }),
   )
 
 /** Modal to get gift codes. */
-const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>) => {
+const Invites = () => {
   const dispatch = useDispatch()
 
   const colors = useSelector(themeColors)
@@ -77,9 +66,11 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
 
     const shouldGenerateInvites = inviteCodeIds.length === 0
 
-    const inviteCodes = await (shouldGenerateInvites
-      ? generateUserInvites(userId)
-      : Promise.all(inviteCodeIds.map(giftCode => getInviteById(giftCode))))
+    throw new Error('Not implemented')
+    const inviteCodes = shouldGenerateInvites
+      ? await generateUserInvites(userId)
+      : // : Promise.all(inviteCodeIds.map(giftCode => getInviteById(giftCode))))
+        []
 
     if (!inviteCodes) {
       console.error('Invite codes not found!')
@@ -92,7 +83,8 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
   }, [])
 
   useEffect(() => {
-    getAllInvitesOrGenerate(uid)
+    // getAllInvitesOrGenerate(uid)
+    getAllInvitesOrGenerate('')
   }, [])
 
   /**
@@ -120,7 +112,8 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
       setInviteCodes(updatedInviteCodes)
       setFocusedGiftCode(inviteCode.id)
 
-      await updateInviteCode(updatedInviteCode)
+      throw new Error('Not implemented')
+      // await updateInviteCode(updatedInviteCode)
     }
   }
 
@@ -130,9 +123,10 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
     dispatch(alert('Invite code copied to clipboard', { clearDelay: 2000 }))
   }
 
-  if (!authenticated) {
-    return <div>You arent allowed to view this page. </div>
-  }
+  throw new Error('Not implemented')
+  // if (!authenticated) {
+  //   return <div>You arent allowed to view this page. </div>
+  // }
 
   return (
     <ModalComponent
@@ -185,4 +179,4 @@ const ModalInvites = ({ uid, authenticated }: ReturnType<typeof mapStateToProps>
   )
 }
 
-export default connect(mapStateToProps)(ModalInvites)
+export default Invites

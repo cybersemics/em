@@ -20,7 +20,7 @@ import strip from '../../util/strip'
 import { ActionButton } from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
 import CopyClipboard from './../icons/CopyClipboard'
-import PencilIcon from './../icons/PencilIcon.native'
+import PencilIcon from './../icons/PencilIcon'
 import ShareIcon from './../icons/ShareIcon'
 import ModalComponent from './ModalComponent'
 

@@ -4,7 +4,7 @@ import State from '../@types/State'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
-import { getAllChildrenAsThoughts, getChildren, isChildVisible } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildren, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -43,9 +43,7 @@ const collapseContext = (state: State, { at }: Options) => {
 
   /** Returns first moved child path as new cursor after collapse. */
   const getNewCursor = (state: State) => {
-    const firstVisibleChildOfPrevCursor = (
-      state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
-    )[0]
+    const firstVisibleChildOfPrevCursor = (state.showHiddenThoughts ? children : children.filter(isVisible(state)))[0]
 
     const parentId = head(rootedParentOf(state, simplePath))
     const childrenOfMovedContext = getChildren(state, parentId)

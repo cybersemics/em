@@ -1,7 +1,6 @@
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 import { Capacitor } from '@capacitor/core'
 import 'react-native-get-random-values'
-import { v4 as uuid } from 'uuid'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 
@@ -21,9 +20,3 @@ export const isiPhone = typeof navigator !== 'undefined' && navigator.platform =
 
 /** Returns true if the navigator vendor contains 'Apple'. */
 export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
-
-/**
- * Use clientId to ignore value events from firebase originating from this client in this session.
- * This approach has a possible race condition though. See https://stackoverflow.com/questions/32087031/how-to-prevent-value-event-on-the-client-that-issued-set#comment100885493_32107959.
- */
-export const clientId = uuid()

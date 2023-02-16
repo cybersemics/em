@@ -19,7 +19,7 @@ const HamburgerMenu = () => {
   const error = useSelector((state: State) => state.error)
   const tutorial = isLoading ? tutorialLocal : tutorialSettings
   const showSidebar = useSelector((state: State) => state.showSidebar)
-  const showTopControls = useSelector((state: State) => state.showTopControls)
+  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const dispatch = useDispatch()
   const fontSize = useSelector<State, number>((state: State) => state.fontSize)
 
@@ -27,7 +27,7 @@ const HamburgerMenu = () => {
   const paddingTop = 15 + fontSize * 0.1
 
   return (
-    <CSSTransition in={showTopControls} timeout={600} classNames='fade-600' unmountOnExit>
+    <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
       <div
         aria-label='menu'
         className={classNames({

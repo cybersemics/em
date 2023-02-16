@@ -88,7 +88,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
   const lexemeNew =
     lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
 
-  // update state so that we do not have to wait for firebase
+  // update state so that we do not have to wait for the remote
   if (lexemeNew) {
     lexemeIndexNew[key] = lexemeNew
   } else {
@@ -103,7 +103,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
     id !== deletedThought.id ? { [key]: id } : null,
   )
 
-  /** Generates a firebase update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
+  /** Generates an update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
     // modify the state to use the lexemeIndex with lexemeNew
     // this ensures that contexts are calculated correctly for descendants with duplicate values
@@ -127,7 +127,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
             : // if this was the only context of the child, delete the child
               null
 
-        // update local lexemeIndex so that we do not have to wait for firebase
+        // update local lexemeIndex so that we do not have to wait for the remote
         if (lexemeChildNew) {
           lexemeIndexNew[hashedKey] = lexemeChildNew
         } else {

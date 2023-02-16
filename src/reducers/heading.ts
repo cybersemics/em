@@ -1,7 +1,7 @@
 import State from '../@types/State'
 import deleteThought from '../reducers/deleteThought'
 import setDescendant from '../reducers/setDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { filterAllChildren } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
 import { HeadingLevel } from '../shortcuts/headings'
 import head from '../util/head'
@@ -11,9 +11,7 @@ import reducerFlow from '../util/reducerFlow'
 const heading = (state: State, { level }: { level: HeadingLevel }): State => {
   if (!state.cursor) return state
   const path = simplifyPath(state, state.cursor)
-  const headingChildren = getAllChildrenAsThoughts(state, head(state.cursor)).filter(child =>
-    /^=heading[1-9]$/.test(child.value),
-  )
+  const headingChildren = filterAllChildren(state, head(state.cursor), child => /^=heading[1-9]$/.test(child.value))
   return reducerFlow([
     // delete other headings
     ...headingChildren.map(thought =>

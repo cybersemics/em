@@ -24,7 +24,7 @@ import globals from '../../globals'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import findDescendant from '../../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
+import { anyChild } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import getThoughtById from '../../selectors/getThoughtById'
 import simplifyPath from '../../selectors/simplifyPath'
@@ -270,7 +270,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const context = pathToContext(state, simplePath)
   const id = head(simplePath)
   const titleId = findDescendant(state, id, ['=publish', 'Title'])
-  const titleChild = getAllChildrenAsThoughts(state, titleId)[0]
+  const titleChild = titleId ? anyChild(state, titleId) : undefined
   const cursorThought = getThoughtById(state, head(cursor))
   const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
   const titleShort = ellipsize(title)

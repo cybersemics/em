@@ -11,7 +11,7 @@ import moveThought from '../reducers/moveThought'
 import newThought from '../reducers/newThought'
 import setCursor from '../reducers/setCursor'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -44,7 +44,7 @@ export const pathAndRankToArchive = (
   path: Path
   rank: number
 } | null => {
-  const rankedArchive = getAllChildrenAsThoughts(state, head(pathParent)).find(equalThoughtValue('=archive'))
+  const rankedArchive = findAnyChild(state, head(pathParent), equalThoughtValue('=archive'))
   if (!rankedArchive) return null
   const archivePath = rankedArchive ? appendToPath(parentOf(path), rankedArchive.id) : parentOf(path)
   const newRank = getPrevRank(state, head(archivePath))
@@ -85,9 +85,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
   const isArchive = thought.value === '=archive'
   const isArchived = isThoughtArchived(state, path)
   const hasDescendants = getAllChildren(state, head(path)).length !== 0
-  const allChildren = getAllChildrenAsThoughts(state, head(simplePath))
+  const child = anyChild(state, head(simplePath))
   const isDeletable = (isEmpty && !hasDescendants) || isArchive || isArchived || isDivider(thought.value)
-  const alertLabel = ellipsize(thought.value === '=note' ? 'note ' + allChildren[0]?.value || '' : thought.value)
+  const alertLabel = ellipsize(thought.value === '=note' ? 'note ' + child?.value || '' : thought.value)
 
   /** Gets the previous sibling context in the context view. */
   const prevContext = () => {

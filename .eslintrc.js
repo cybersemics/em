@@ -75,12 +75,6 @@ module.exports = {
             'jsdoc/check-tag-names': 0,
           },
         },
-        {
-          files: ['./src/**/*.native.tsx'],
-          rules: {
-            'react-native/no-inline-styles': 2,
-          },
-        },
       ],
     },
   ],

@@ -29,7 +29,7 @@ const NO_THOUGHT_IDS: ThoughtId[] = []
 type GetThoughtsSelector = (state: State, id: ThoughtId) => Thought[]
 
 /** Returns true if the child is not hidden due to being a function or having the =hidden attribute. */
-export const isChildVisible = _.curry((state: State, child: Thought): boolean => {
+export const isVisible = _.curry((state: State, child: Thought): boolean => {
   // temporarily disable =hidden for performance
   return !isAttribute(child.value) // && !findDescendant(state, child.id, '=hidden')
 })
@@ -42,7 +42,7 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
   return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 
-/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. If the subthoughts have not changed, returns the same object reference. */
+/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. */
 export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
@@ -52,16 +52,12 @@ export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Th
 const getVisibleThoughtsById = _.curry(
   (getThoughtsFunction: GetThoughtsSelector, state: State, id: ThoughtId): Thought[] => {
     const children = getThoughtsFunction(state, id)
-    return state.showHiddenThoughts ? children : children.filter(isChildVisible(state))
+    return state.showHiddenThoughts ? children : children.filter(isVisible(state))
   },
 )
 
-/** Returns the first child of a thought or undefined. Also see: firstVisibleChild. */
-export const firstChild = (state: State, id: ThoughtId | undefined): Thought | undefined =>
-  id && getAllChildrenAsThoughts(state, id)[0]
-
 /** Returns true if the context has any visible children. */
-export const hasChildren = (state: State, id: ThoughtId): boolean => !!firstChild(state, id)
+export const hasChildren = (state: State, id: ThoughtId): boolean => !!findAnyChild(state, id, isVisible(state))
 
 /** Gets all visible children of an id, unordered. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
@@ -167,6 +163,29 @@ export const getChildrenRanked = moize(
   },
 )
 
+/** Returns any child of a thought. Only use on a thought with a single child. Also see: firstVisibleChild. */
+export const anyChild = (state: State, id: ThoughtId | undefined | null): Thought | undefined => {
+  if (!id) return undefined
+  const children = getAllChildren(state, id)
+  return children.length > 0 ? getThoughtById(state, children[0]) : undefined
+}
+
+/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
+export const findAnyChild = (
+  state: State,
+  id: ThoughtId,
+  predicate: (child: Thought) => boolean,
+): Thought | undefined => {
+  const childId = getAllChildren(state, id).find(childId => predicate(getThoughtById(state, childId)))
+  return childId ? getThoughtById(state, childId) : undefined
+}
+
+/** Returns all child that match the predicate (unordered). */
+export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
+  const childIds = getAllChildren(state, id).filter(childId => predicate(getThoughtById(state, childId)))
+  return childIdsToThoughts(state, childIds)
+}
+
 /** Returns the first visible child of a sorted context. */
 export const firstVisibleChild = (state: State, id: ThoughtId): Thought | undefined => getChildrenSorted(state, id)[0]
 
@@ -195,7 +214,7 @@ const isDescendantOfMetaCursor = (state: State, path: Path): boolean => {
 const isChildVisibleWithCursorCheck = _.curry(
   (state: State, path: SimplePath, thought: Thought): boolean =>
     state.showHiddenThoughts ||
-    isChildVisible(state, thought) ||
+    isVisible(state, thought) ||
     isChildInCursor(state, path, thought) ||
     isDescendantOfMetaCursor(state, appendToPath(path, thought.id)),
   3,

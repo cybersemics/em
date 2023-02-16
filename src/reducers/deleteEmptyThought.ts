@@ -5,7 +5,7 @@ import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
 import editThought from '../reducers/editThought'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
-import { getAllChildrenAsThoughts, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import { findAnyChild, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -59,7 +59,7 @@ const deleteEmptyThought = (state: State): State => {
       }),
       // move the child archive up a level so it does not get permanently deleted
       state => {
-        const childArchive = getAllChildrenAsThoughts(state, head(cursor)).find(child => child.value === '=archive')
+        const childArchive = findAnyChild(state, head(cursor), child => child.value === '=archive')
         return childArchive
           ? moveThought(state, {
               oldPath: [...cursor, childArchive.id],

@@ -6,11 +6,8 @@ import scrollTo from '../device/scrollTo'
 import never from '../util/never'
 import storage from '../util/storage'
 
-/** Logs the user out of Firebase and clears the state. */
+/** Logs the user out and clears the state. */
 const logout = (): Thunk => (dispatch, getState) => {
-  // sign out first to prevent updates to remote
-  window.firebase.auth().signOut()
-
   // clear local db
   // clearAll().catch(err => {
   //   localStorage.removeItem(INITIAL_SETTING_KEY)

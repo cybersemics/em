@@ -111,10 +111,6 @@ export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thoug
 export const SCHEMA_LEMMA = 8
 export const SCHEMA_LATEST = 8
 
-// store the empty string as a non-empty token in firebase since firebase does not allow empty child records
-// See: https://stackoverflow.com/questions/15911165/create-an-empty-child-record-in-firebase
-export const EMPTY_TOKEN = '__EMPTY__'
-
 // store the root string as a token that is not likely to be written by the user (bad things will happen)
 export const HOME_TOKEN = '__ROOT__' as ThoughtId
 
@@ -131,37 +127,6 @@ export const HOME_PATH = [HOME_TOKEN] as SimplePath
 export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
-
-export const FIREBASE_CONFIG = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY as string,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN as string,
-  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL as string,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID as string,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET as string,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGE_SENDER_ID as string,
-}
-
-export const FIREBASE_REDIRECT_URL = process.env.REACT_APP_FIREBASE_REDIRECT_URL
-
-// if (!FIREBASE_CONFIG.apiKey) {
-//   console.warn('Environment variable not set: REACT_APP_FIREBASE_API_KEY')
-// }
-
-export const ALGOLIA_CONFIG = {
-  applicationId: process.env.REACT_APP_ALGOLIA_APPPLICATION_ID as string,
-  index: process.env.REACT_APP_ALGOLIA_INDEX as string,
-  searchKeyEndpoint: process.env.REACT_APP_ALGOLIA_SEARCH_KEY_ENDPOINT as string,
-}
-
-// if (!ALGOLIA_CONFIG.applicationId) {
-//   console.warn('Environment variable not set: REACT_APP_ALGOLIA_APPPLICATION_ID')
-// }
-
-export const FEEDBACK_URL = process.env.REACT_APP_FEEDBACK_URL as string
-
-// if (!FEEDBACK_URL) {
-//   console.warn('Environment variable not set: REACT_APP_FEEDBACK_URL')
-// }
 
 /** An identify function that returns the value passed to it. */
 export const ID = <T = any>(x: T): T => x
@@ -223,6 +188,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
   'bold',
   'italic',
   'underline',
+  'strikethrough',
   'toggleContextView',
   // 'toggleSplitView',
   'note',
@@ -309,7 +275,7 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
-export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span']
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike']
 
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 

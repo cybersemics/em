@@ -10,7 +10,7 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
 import setCursor from '../reducers/setCursor'
 import updateThoughts from '../reducers/updateThoughts'
-import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
+import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -176,9 +176,7 @@ const importText = (
      */
     const getDestinationPath = (): SimplePath => {
       if (!shouldImportIntoDummy) return simplePath
-      const dummyThought = getAllChildrenAsThoughts(stateWithDummy, head(simplePath)).find(
-        child => child.value === dummyValue,
-      )
+      const dummyThought = findAnyChild(stateWithDummy, head(simplePath), child => child.value === dummyValue)
       return (dummyThought ? [...simplePath, dummyThought.id] : simplePath) as SimplePath
     }
 
@@ -205,10 +203,11 @@ const importText = (
         /** Gets the id of a destination sibling with the same value as the last imported thought. */
         const idMerged = () => {
           const thoughtImported = imported.thoughtIndexUpdates[id]
-          const idMatchedValue = getAllChildrenAsThoughts(
+          const idMatchedValue = findAnyChild(
             state,
             destEmpty ? destThought.parentId : destThought.id,
-          ).find(child => child.value === thoughtImported.value)?.id
+            child => child.value === thoughtImported.value,
+          )?.id
           if (!thought && !idMatchedValue) {
             throw new Error(
               'Last imported cursor after collapse and merge is wrong. Expected the destination thought to have a sibling that matches the value of the last imported thought. This is a bug and the logic needs to be updated to handle this case.',

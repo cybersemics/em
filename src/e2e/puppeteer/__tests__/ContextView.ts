@@ -35,7 +35,7 @@ it('load buffered ancestors of contexts when context view is activated', async (
   await clickThought('m')
   await click('.toolbar-icon[aria-label="Context View"]')
 
-  // allow ancestors to be loaded from dexie
+  // allow ancestors to be loaded
   // may not be practically necessary, but there could be a delay on slower machines
   await delay(10)
 

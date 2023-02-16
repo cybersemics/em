@@ -327,7 +327,6 @@ const dataProviderTest = (provider: DataProvider) => {
       const lexemeIndexWithoutEm = _.omit(lexemeIndex, hashThought(EM_TOKEN), hashThought(ABSOLUTE_TOKEN))
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -355,7 +354,6 @@ const dataProviderTest = (provider: DataProvider) => {
       expect(thoughts.thoughtIndex).toEqual(startingThoughtsFromRoot)
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -397,7 +395,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -440,7 +437,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -475,7 +471,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -553,7 +548,6 @@ const dataProviderTest = (provider: DataProvider) => {
       )
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -615,7 +609,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -684,7 +677,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -756,7 +748,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))
@@ -813,7 +804,6 @@ const dataProviderTest = (provider: DataProvider) => {
       })
 
       // support optional id property
-      // dexie returns an id while firebase does not
       const lexemeIndexLocalWithoutIds = keyValueBy(thoughts.lexemeIndex, (key, value) => ({
         [key]: _.omit(value, 'id'),
       }))

@@ -3,10 +3,8 @@ import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import showModal from '../../action-creators/showModal'
-import { getInviteById, updateInviteCode } from '../../apis/invites'
 import getQueryParam from '../../util/getQueryParam'
 import storage from '../../util/storage'
-import timestamp from '../../util/timestamp'
 import { ActionButton } from './../ActionButton'
 import InvitesIcon from './../icons/InvitesIcon'
 import ModalComponent from './ModalComponent'
@@ -25,18 +23,7 @@ const modes: Index<Mode> = {
   },
 }
 
-// TODO: Separate this into separate file to reuse.
-const firebaseErrorsIndex = {
-  'auth/weak-password': 'Password should be at least 6 characters',
-  'auth/email-already-in-use': 'Account already exists',
-  'auth/invalid-email': 'Invalid email',
-  'auth/wrong-password': 'Invalid username or password',
-  'auth/user-not-found': 'User not found',
-  'auth/too-many-requests': 'Account temporarily disabled. You can restore it by resetting your password',
-  default: 'Something went wrong',
-}
-
-type errorCode = keyof typeof firebaseErrorsIndex
+// type errorCode = keyof typeof firebaseErrorsIndex
 
 /** A modal dialog for signing up. */
 const ModalSignup = () => {
@@ -68,15 +55,16 @@ const ModalSignup = () => {
       return
     }
 
+    throw new Error('Not implemented')
     // TODO: May be use never throw style error handling
     try {
-      const inviteCode = await getInviteById(invitationCodeId)
+      // const inviteCode = await getInviteById(invitationCodeId)
 
-      if (inviteCode.used) {
-        setValidationError('Invitation code has already been used.')
-        setIsValidatingCode(false)
-        return
-      }
+      // if (inviteCode.used) {
+      //   setValidationError('Invitation code has already been used.')
+      //   setIsValidatingCode(false)
+      //   return
+      // }
 
       // Set the invite code and is validating to false, only if code is valid.
       setInviteCode(inviteCode)
@@ -95,19 +83,20 @@ const ModalSignup = () => {
   const submitAction = useCallback(
     async (closeModal: () => void) => {
       updateIsSubmitting(true)
+      throw new Error('Not implemented')
       try {
-        await window.firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password!)
+        // await window.firebase.auth().createUserWithEmailAndPassword(formData.email, formData.password!)
 
-        const user = window.firebase.auth().currentUser
+        // const user = window.firebase.auth().currentUser
 
-        const updatedInviteCode: InviteCode = {
-          ...inviteCode!,
-          hasSeen: true,
-          used: timestamp(),
-          usedBy: user.uid,
-        }
+        // const updatedInviteCode: InviteCode = {
+        //   ...inviteCode!,
+        //   hasSeen: true,
+        //   used: timestamp(),
+        //   usedBy: user.uid,
+        // }
 
-        await updateInviteCode(updatedInviteCode)
+        // await updateInviteCode(updatedInviteCode)
 
         closeModal()
         updateIsSubmitting(false)
@@ -118,7 +107,8 @@ const ModalSignup = () => {
         setTimeout(() => window.location.reload(), 300)
       } catch (error) {
         updateIsSubmitting(false)
-        return setSubmitError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
+        // return setSubmitError(firebaseErrorsIndex[error?.code as errorCode] || firebaseErrorsIndex.default)
+        return setSubmitError(null)
       }
     },
     [formData],

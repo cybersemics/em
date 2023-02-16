@@ -1,7 +1,6 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
 import Context from './Context'
-import { User } from './Firebase'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -34,6 +33,8 @@ interface State {
   // currently only 0 and n are used, where n is the length of the thought
   // null means that the caret is not forcefully set on re-render, allowing the device to set it, e.g. on click
   cursorOffset: number | null
+  // Hides the toolbar and nav bar to allow for distraction-free typing on desktop.
+  distractionFreeTyping?: boolean
   // SimplePath of thought with drag hold activated
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath
@@ -93,14 +94,12 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showSplitView: boolean
-  showTopControls: boolean
-  showBreadcrumbs: boolean
   // react-split-pane Size
   // % or px
   splitPosition: number
   /* status:
-      'disconnected'   Logged out or yet to connect to firebase, but not in explicit offline mode.
-      'connecting'     Connecting to firebase.
+      'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
+      'connecting'     Connecting.
       'loading'        Connected, authenticated, and waiting for first user data payload.
       'loaded'         User data payload received (may or may not be offline).
       'offline'        Disconnected and working in offline mode.
@@ -111,7 +110,6 @@ interface State {
   transientFocus?: boolean
   tutorialStep?: number
   undoPatches: Patch[]
-  user?: User
 }
 
 export default State

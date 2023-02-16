@@ -12,13 +12,13 @@ import normalizeThought from './normalizeThought'
  * - ignore punctuation & whitespace (when there is other text)
  * - ignore emojis (when there is other text)
  * - singularize
- * - murmurhash to prevent large keys (Firebase limitation)
+ * - murmurhash
  *
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.
  */
-const hashThought: (s: string) => ThoughtHash = _.memoize((value: string) =>
-  _.flow([normalizeThought, ...(globals.debugIds ? [] : [murmurHash3.x64.hash128])])(value),
-)
+const hashThought: (s: string) => ThoughtHash = globals.debugIds
+  ? (value: string) => value as ThoughtHash
+  : _.memoize((value: string) => murmurHash3.x64.hash128(normalizeThought(value)) as ThoughtHash)
 
 export default hashThought
