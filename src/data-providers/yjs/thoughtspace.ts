@@ -10,7 +10,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
-import { accessToken, tsid, websocketUrl, ydoc } from '../../data-providers/yjs/index'
+import { accessToken, tsid, websocketThoughtspace, ydoc } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
@@ -127,7 +127,7 @@ const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
 /** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists. */
 const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
   // use the existing Doc if possible, otherwise the map will not be immediately populated
-  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `thought-${id}` })
+  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `{tsid}-thought-${id}` })
   const thoughtMap = thoughtDoc.getMap()
 
   // set up persistence and subscribe to changes
@@ -138,7 +138,7 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
 
     // eslint-disable-next-line no-new
     new HocuspocusProvider({
-      url: websocketUrl,
+      websocketProvider: websocketThoughtspace,
       name: `${tsid}-thought-${id}`,
       document: thoughtDoc,
       token: accessToken,
@@ -201,7 +201,7 @@ const loadLexemeDoc = (key: string): Y.Doc => {
 
     // eslint-disable-next-line no-new
     new HocuspocusProvider({
-      url: websocketUrl,
+      websocketProvider: websocketThoughtspace,
       name: `${tsid}-lexeme-${key}`,
       document: lexemeDoc,
       // auth: accessToken,
@@ -243,7 +243,15 @@ const loadLexemeDoc = (key: string): Y.Doc => {
 /** Gets a Thought from a thought Y.Doc. */
 const getThought = (thoughtDoc: Y.Doc): Thought | undefined => {
   const thoughtMap = thoughtDoc.getMap()
-  return thoughtMap.size > 0 ? (thoughtMap.toJSON() as Thought) : undefined
+  if (thoughtMap.size === 0) return undefined
+  const thoughtRaw = thoughtMap.toJSON()
+  return {
+    ...thoughtRaw,
+    // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
+    // toJSON is not recursive so we need to toJSON childrenMap as well
+    // It is possible that this was fixed in later versions of yjs after v13.5.41
+    childrenMap: thoughtRaw.childrenMap.toJSON ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
+  } as Thought
 }
 
 /** Gets a Lexeme from a lexeme Y.Doc. */
@@ -257,7 +265,8 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
     // contexts are stored as an object { [key: ThoughtId]: true } in yjs
     // contexts are stored as an array in local state
     // TODO: Change state contexts to objects for consistency
-    contexts: Object.keys(lexemeRaw.contexts) as ThoughtId[],
+    // TODO: Why is contexts sometimes a YMap and sometimes a plain object?
+    contexts: Object.keys(lexemeRaw.contexts.toJSON ? lexemeRaw.contexts.toJSON() : lexemeRaw.contexts) as ThoughtId[],
   } as Lexeme
 }
 

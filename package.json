@@ -128,9 +128,8 @@
     "use-onclickoutside": "^0.3.2",
     "xhtml-purifier": "^0.4.1",
     "y-indexeddb": "^9.0.9",
-    "y-websocket-auth": "^0.1.7",
     "yallist": "^4.0.0",
-    "yjs": "13.5.41"
+    "yjs": "13.5.29"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

@@ -1,4 +1,4 @@
-import { HocuspocusProvider } from '@hocuspocus/provider'
+import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import * as murmurHash3 from 'murmurhash3js'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
@@ -39,29 +39,39 @@ export const clientId = murmurHash3.x64.hash128(accessToken)
 export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
 export const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
 
-export const websocketProviderPermissions = new HocuspocusProvider({
+export const websocketPermissions = new HocuspocusProviderWebsocket({
   url: websocketUrl,
+})
+
+export const websocketProviderPermissions = new HocuspocusProvider({
+  websocketProvider: websocketPermissions,
   name: `${tsid}/permissions`,
   document: ypermissionsDoc,
   token: accessToken,
 })
 
-export const websocketProviderThoughtspace = new HocuspocusProvider({
-  url: websocketUrl,
-  name: tsid,
-  document: ydoc,
-  // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
-  connect: false,
-})
+// TODO: Separate thoughtspace websocket from permissions websocket to allow for connect/disconnect
+export const websocketThoughtspace = websocketPermissions
+// export const websocketThoughtspace = new HocuspocusProviderWebsocket({
+//   url: websocketUrl,
+//   // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
+//   connect: false,
+// })
+
+// export const websocketProviderThoughtspace = new HocuspocusProvider({
+//   websocketProvider: websocketPermissions,
+//   name: tsid,
+//   document: ydoc,
+// })
 
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
   if (yPermissions.size > 1) {
-    websocketProviderThoughtspace.connect()
+    websocketThoughtspace.connect()
   }
 }
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
-indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
+// indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
 yPermissions.observe(connectThoughtspaceProvider)
 
 // If the local thoughtspace is empty, save the shared docid and accessToken locally, i.e. make them the default thoughtspace.
