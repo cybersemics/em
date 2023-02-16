@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { clientId } from '../data-providers/yjs'
 import updateThoughts from '../reducers/updateThoughts'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -15,7 +16,6 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
-import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -42,7 +42,7 @@ const createThought = (state: State, { path, value, rank, id, children, splitSou
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }),
   }
 
@@ -66,7 +66,7 @@ const createThought = (state: State, { path, value, rank, id, children, splitSou
       lastUpdated: timestamp(),
       rank,
       value: newValue,
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
       ...(splitSource ? { splitSource } : null),
     }
     thoughtIndexUpdates[id] = thoughtNew
@@ -83,7 +83,7 @@ const createThought = (state: State, { path, value, rank, id, children, splitSou
       id: parentId,
       childrenMap: createChildrenMap(stateWithNewThought, siblings),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }
   }
 
@@ -96,7 +96,7 @@ const createThought = (state: State, { path, value, rank, id, children, splitSou
   //     contexts: (lexemeOld?.contexts || []).concat(id),
   //     created: lexemeOld?.created || timestamp(),
   //     lastUpdated: timestamp(),
-  //     updatedBy: getSessionId(),
+  //     updatedBy: clientId,
   //   }
   // } else {
   lexeme.contexts = !lexeme.contexts

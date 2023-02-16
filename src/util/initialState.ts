@@ -5,11 +5,11 @@ import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
+import { clientId } from '../data-providers/yjs'
 import hashThought from '../util/hashThought'
 import never from '../util/never'
 import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
-import { getSessionId } from './sessionManager'
 import storage from './storage'
 
 /** Generates an initial ThoughtIndices with the root and em contexts. */
@@ -27,7 +27,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       pending: true,
       lastUpdated: never(),
       rank: 0,
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
     [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN,
@@ -38,7 +38,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       pending: true,
       lastUpdated: never(),
       rank: 0,
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
     [EM_TOKEN_HASH]: {
       id: EM_TOKEN,
@@ -49,7 +49,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       pending: true,
       lastUpdated: never(),
       rank: 0,
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
   }
 
@@ -60,7 +60,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
       lemma: ABSOLUTE_TOKEN,
@@ -68,7 +68,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
       lastUpdated: never(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
     // this will get populated by importText in loadLocalState
     // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
@@ -77,7 +77,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       contexts: [],
       created,
       lastUpdated: never(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
   }
 

@@ -6,6 +6,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'
+import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -21,7 +22,6 @@ import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
-import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 import deleteThought from './deleteThought'
 import setCursor from './setCursor'
@@ -107,7 +107,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     contexts: [],
     created: timestamp(),
     lastUpdated: timestamp(),
-    updatedBy: getSessionId(),
+    updatedBy: clientId,
     lemma: normalizeThought(newValue),
   }
 
@@ -143,7 +143,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     // store the last non-empty value to preserve the sort order of thoughts edited to empty
     sortValue: newValue || oldValue || editedThought.sortValue,
     lastUpdated: timestamp(),
-    updatedBy: getSessionId(),
+    updatedBy: clientId,
   }
 
   // insert the new thought into the state just for createChildrenMap

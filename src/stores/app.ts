@@ -13,7 +13,6 @@ import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
 import pushQueue from '../redux-middleware/pushQueue'
-import sessionManager from '../redux-middleware/sessionManager'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
@@ -25,7 +24,7 @@ if (!appReducer) {
 const store = createStore(
   appReducer,
   composeEnhancers(
-    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory, sessionManager),
+    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
     undoRedoEnhancer,
     cursorChangedEnhancer,
     // must go at the end to ensure it clears the pushQueue before other enhancers

@@ -27,7 +27,6 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
-import * as sessionManager from './util/sessionManager'
 import urlDataSource from './util/urlDataSource'
 
 /**
@@ -54,9 +53,6 @@ const initializeCursor = async () => {
 /** Initilaize local db and window events. */
 export const initialize = async () => {
   await initOfflineStatusStore()
-
-  // initialize the session id
-  sessionManager.init()
 
   // load local state unless loading a public context or source url
   // await initDB()

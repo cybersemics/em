@@ -44,7 +44,6 @@ import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
-import isMobile from '../util/isMobile'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -177,7 +176,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
         ? setCursor(newState, {
             editing: true,
             path: unroot([...parentPath!, newThoughtId]),
-            offset: isMobile() ? 0 : offset != null ? offset : getTextContentFromHTML(value).length,
+            offset: offset != null ? offset : getTextContentFromHTML(value).length,
           })
         : null
     },

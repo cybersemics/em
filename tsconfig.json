@@ -17,6 +17,5 @@
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
     "downlevelIteration": true
-  },
-  "extends": "expo/tsconfig.base"
+  }
 }

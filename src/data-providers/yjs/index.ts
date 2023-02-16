@@ -1,4 +1,5 @@
 import { HocuspocusProvider } from '@hocuspocus/provider'
+import * as murmurHash3 from 'murmurhash3js'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
@@ -31,6 +32,9 @@ const accessTokenShared = new URLSearchParams(window.location.search).get('auth'
 
 export const tsid = tsidShared || tsidLocal
 export const accessToken = accessTokenShared || accessTokenLocal
+
+// make the clientId a hash of the access token for now so it can be public but linked back to the access token
+export const clientId = murmurHash3.x64.hash128(accessToken)
 
 export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
 export const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)

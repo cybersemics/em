@@ -4,6 +4,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import { clientId } from '../data-providers/yjs'
 import mergeThoughts from '../reducers/mergeThoughts'
 import rerank from '../reducers/rerank'
 import updateThoughts from '../reducers/updateThoughts'
@@ -19,7 +20,6 @@ import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
-import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 
 export interface MoveThoughtPayload {
@@ -111,13 +111,13 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
                 ...sourceParentThought,
                 childrenMap: sourceParentThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
-                updatedBy: getSessionId(),
+                updatedBy: clientId,
               },
               [destinationThought.id]: {
                 ...destinationThought,
                 childrenMap: destinationThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
-                updatedBy: getSessionId(),
+                updatedBy: clientId,
               },
             }
           : {}),
@@ -128,7 +128,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
           rank: newRank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
       }
 
