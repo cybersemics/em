@@ -13,6 +13,7 @@ import getDescendantThoughts from '../data-providers/data-helpers/getDescendantT
 import getLexeme from '../data-providers/data-helpers/getLexeme'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import getThoughtById from '../data-providers/data-helpers/getThoughtById'
+import { clientId } from '../data-providers/yjs'
 import importText from '../reducers/importText'
 import hashThought from '../util/hashThought'
 import initialState from '../util/initialState'
@@ -20,7 +21,6 @@ import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 import never from '../util/never'
 import reducerFlow from '../util/reducerFlow'
-import { getSessionId } from '../util/sessionManager'
 import thoughtToDb from '../util/thoughtToDb'
 import timestamp from '../util/timestamp'
 
@@ -127,7 +127,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }
 
     await provider.updateLexeme?.('12345', lexeme)
@@ -162,7 +162,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }
 
     await provider.updateLexeme?.(lexeme.id!, lexeme)
@@ -185,7 +185,7 @@ const dataProviderTest = (provider: DataProvider) => {
       lastUpdated: timestamp(),
       parentId: 'parentId' as ThoughtId,
       rank: 0,
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
       value: 'test',
     }
 
@@ -204,7 +204,7 @@ const dataProviderTest = (provider: DataProvider) => {
         child2: 'child2' as ThoughtId,
       },
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
       value: 'x',
       rank: 0,
       parentId: 'parent1' as ThoughtId,
@@ -214,7 +214,7 @@ const dataProviderTest = (provider: DataProvider) => {
       id: 'testIdA' as ThoughtId,
       childrenMap: {},
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
       value: 'a',
       rank: 1,
       parentId: 'parent2' as ThoughtId,
@@ -237,7 +237,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }
 
     const lexemeY: Lexeme = {
@@ -246,7 +246,7 @@ const dataProviderTest = (provider: DataProvider) => {
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     }
 
     await provider.updateLexemeIndex?.({
@@ -273,7 +273,7 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent1' as ThoughtId,
       rank: 0,
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     } as Thought
 
     const thoughtY = {
@@ -287,7 +287,7 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 1,
       parentId: 'parent2' as ThoughtId,
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     } as Thought
 
     await provider.updateThoughtIndex?.({
@@ -386,7 +386,7 @@ const dataProviderTest = (provider: DataProvider) => {
           id: thoughtY.id,
           childrenMap: {},
           lastUpdated: never(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
           pending: true,
           value: 'y',
           rank: 0,
@@ -429,7 +429,7 @@ const dataProviderTest = (provider: DataProvider) => {
           value: 'z',
           childrenMap: {},
           lastUpdated: never(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
           pending: true,
           rank: 0,
           parentId: thoughtY.id,
@@ -592,7 +592,7 @@ const dataProviderTest = (provider: DataProvider) => {
           },
           pending: true,
           lastUpdated: never(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
@@ -601,7 +601,7 @@ const dataProviderTest = (provider: DataProvider) => {
           },
           pending: true,
           lastUpdated: never(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
         // empty contexts are present in local state but not provider state
         // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
@@ -670,7 +670,7 @@ const dataProviderTest = (provider: DataProvider) => {
           },
           pending: true,
           lastUpdated: never(),
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
         // empty contexts are present in local state but not provider state
         // [hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])]: thoughtIndex[hashContext([EM_TOKEN, 'Settings', 'Theme', 'Dark'])],
@@ -732,7 +732,7 @@ const dataProviderTest = (provider: DataProvider) => {
           },
           lastUpdated: never(),
           pending: true,
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
         [thoughtV!.id]: {
           ...thoughtIndex[thoughtV!.id],
@@ -741,7 +741,7 @@ const dataProviderTest = (provider: DataProvider) => {
           },
           lastUpdated: never(),
           pending: true,
-          updatedBy: getSessionId(),
+          updatedBy: clientId,
         },
         // [hashContext(['x', 'y', 'z', 'm'])]: thoughtIndex[hashContext(['x', 'y', 'z', 'm'])],
         // [hashContext(['t', 'u', 'v', 'm', 'n'])]: thoughtIndex[hashContext(['t', 'u', 'v', 'm', 'n'])],

@@ -10,6 +10,7 @@ import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { clientId } from '../data-providers/yjs'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
@@ -27,7 +28,6 @@ import createId from './createId'
 import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
 import normalizeThought from './normalizeThought'
-import { getSessionId } from './sessionManager'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -53,7 +53,7 @@ const insertThought = (
     value,
     rank,
     lastUpdated,
-    updatedBy = getSessionId(),
+    updatedBy = clientId,
   }: {
     block: Block
     id: ThoughtId
@@ -119,7 +119,7 @@ const saveThoughts = (
   rankIncrement = 1,
   startRank = 0,
   lastUpdated = timestamp(),
-  updatedBy = getSessionId(),
+  updatedBy = clientId,
 ): ThoughtIndices => {
   const id = head(path)
 
@@ -231,7 +231,7 @@ const importJSON = (
   state: State,
   simplePath: SimplePath,
   blocks: Block[],
-  { lastUpdated = timestamp(), updatedBy = getSessionId(), skipRoot = false }: ImportJSONOptions = {},
+  { lastUpdated = timestamp(), updatedBy = clientId, skipRoot = false }: ImportJSONOptions = {},
 ) => {
   const initialLexemeIndex: Index<Lexeme> = {}
   const initialThoughtIndex: Index<Thought> = {}

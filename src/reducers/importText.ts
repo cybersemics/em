@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
+import { clientId } from '../data-providers/yjs'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
 import setCursor from '../reducers/setCursor'
@@ -24,7 +25,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks from '../util/roamJsonToBlocks'
-import { getSessionId } from '../util/sessionManager'
 import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
@@ -75,7 +75,7 @@ const importText = (
     replaceEnd,
     replaceStart,
     skipRoot,
-    updatedBy = getSessionId(),
+    updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
 ): State => {

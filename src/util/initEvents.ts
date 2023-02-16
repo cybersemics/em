@@ -20,8 +20,6 @@ import { updateHeight, updateScrollTop } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
-import { keepalive } from './sessionManager'
-import { getVisibilityChangeEventName, isTabHidden } from './visibilityApiHelpers'
 
 declare global {
   interface Window {
@@ -196,13 +194,6 @@ const initEvents = (store: Store<State, any>) => {
   // store input handlers so they can be removed on cleanup
   const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
-  /** Update local storage sessions used for managing subscriptions. */
-  const onTabVisibilityChanged = () => {
-    if (!isTabHidden()) {
-      keepalive()
-    }
-  }
-
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
@@ -216,7 +207,6 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('resize', updateHeight)
   window.addEventListener('scroll', updateScrollTop)
-  window.addEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -233,7 +223,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('resize', updateHeight)
     window.removeEventListener('scroll', updateScrollTop)
-    window.removeEventListener(getVisibilityChangeEventName() || 'focus', onTabVisibilityChanged)
     lifecycle.removeEventListener('statechange', onStateChange)
   }
 

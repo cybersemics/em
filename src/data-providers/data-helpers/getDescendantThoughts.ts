@@ -14,8 +14,8 @@ import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
-import { getSessionId } from '../../util/sessionManager'
 import { DataProvider } from '../DataProvider'
+import { clientId } from '../yjs'
 
 const MAX_DEPTH = 100
 const MAX_THOUGHTS_QUEUED = 100
@@ -185,7 +185,7 @@ async function* getDescendantThoughts(
           return {
             ...thought,
             lastUpdated: never(),
-            updatedBy: getSessionId(),
+            updatedBy: clientId,
             pending: true,
           }
         } else {

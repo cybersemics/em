@@ -6,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { clientId } from '../data-providers/yjs'
 import updateThoughts from '../reducers/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
@@ -22,7 +23,6 @@ import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
-import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -199,7 +199,7 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
         ...parent,
         childrenMap,
         lastUpdated: timestamp(),
-        updatedBy: getSessionId(),
+        updatedBy: clientId,
       } as Thought,
     }),
     [deletedThought.id]: null,

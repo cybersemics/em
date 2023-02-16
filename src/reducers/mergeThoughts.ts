@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import { HOME_TOKEN } from '../constants'
+import { clientId } from '../data-providers/yjs'
 import { getLexeme } from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -17,7 +18,6 @@ import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
-import { getSessionId } from '../util/sessionManager'
 import timestamp from '../util/timestamp'
 import moveThought from './moveThought'
 import updateThoughts from './updateThoughts'
@@ -153,7 +153,7 @@ const mergeThoughts = (
         id !== sourceThought.id ? { [key]: id } : null,
       ),
       lastUpdated: timestamp(),
-      updatedBy: getSessionId(),
+      updatedBy: clientId,
     },
     // delete source thought
     [sourceThought.id]: null,
