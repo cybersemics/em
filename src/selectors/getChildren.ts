@@ -42,7 +42,7 @@ export const getAllChildren = (state: State, thoughtId: ThoughtId | null): Thoug
   return children?.length > 0 ? children : NO_THOUGHT_IDS
 }
 
-/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. */
+/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. May return a partial or empty list if any thoughts are missing. */
 export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
@@ -176,13 +176,19 @@ export const findAnyChild = (
   id: ThoughtId,
   predicate: (child: Thought) => boolean,
 ): Thought | undefined => {
-  const childId = getAllChildren(state, id).find(childId => predicate(getThoughtById(state, childId)))
+  const childId = getAllChildren(state, id).find(childId => {
+    const child = getThoughtById(state, childId)
+    return child && predicate(child)
+  })
   return childId ? getThoughtById(state, childId) : undefined
 }
 
 /** Returns all child that match the predicate (unordered). */
 export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
-  const childIds = getAllChildren(state, id).filter(childId => predicate(getThoughtById(state, childId)))
+  const childIds = getAllChildren(state, id).filter(childId => {
+    const child = getThoughtById(state, childId)
+    return child && predicate(child)
+  })
   return childIdsToThoughts(state, childIds)
 }
 
