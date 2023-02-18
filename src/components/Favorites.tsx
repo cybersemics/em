@@ -351,7 +351,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
             />
           ))
         ) : (
-          <div style={{ margin: '1em 0.5em' }}>
+          <div style={{ margin: '1em 0.5em', maxWidth: 450 }}>
             Set the cursor on a thought and tap <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar to
             add the thought to your favorites list.
           </div>
