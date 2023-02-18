@@ -19,7 +19,6 @@ import themeColors from '../selectors/themeColors'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
-import storage from '../util/storage'
 import Alert from './Alert'
 import ContentFallback from './ContentFallback'
 import ErrorMessage from './ErrorMessage'
@@ -40,7 +39,6 @@ const DISABLE_SPLIT_PANE = true
 
 const Content = React.lazy(() => import('./Content'))
 
-const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
 interface StateProps {
@@ -189,8 +187,7 @@ const AppComponent: FC<Props> = props => {
   const [isSplitting, updateIsSplitting] = useState(false)
   const colors = useSelector(themeColors)
 
-  const tutorialSettings = useSelector(isTutorial)
-  const tutorial = isLoading ? tutorialLocal : tutorialSettings
+  const tutorial = useSelector(isTutorial)
 
   const onSplitResize = useCallback(
     _.throttle((n: number) => dispatch(updateSplitPosition(n)), 8),

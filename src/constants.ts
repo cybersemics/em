@@ -423,8 +423,6 @@ export enum ViewMode {
   Prose = 'Prose',
 }
 
-export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
-
 // Static alert text that is used in multiple places.
 // There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
@@ -476,3 +474,6 @@ export const MAX_JUMPS = 100
 
 // max time attempting to connect before moving to offline mode (milliseconds)
 export const WEBSOCKET_CONNECTION_TIME = 3000
+
+// See: cachedSettingsIds in pushQueue
+export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']

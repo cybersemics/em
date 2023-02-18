@@ -17,14 +17,10 @@ import isTutorial from '../selectors/isTutorial'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import publishMode from '../util/publishMode'
-import storage from '../util/storage'
 import Editable from './Editable'
 import LayoutTree from './LayoutTree'
 import NoThoughts from './NoThoughts'
 import Search from './Search'
-
-const tutorialLocal = storage.getItem('Settings/Tutorial') === 'On'
-const tutorialStepLocal = +(storage.getItem('Settings/Tutorial Step') || 1)
 
 const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
 
@@ -41,9 +37,9 @@ const TransientEditable = (
 const mapStateToProps = (state: State) => {
   const { isLoading, search, rootContext } = state
 
-  const isTutorialLocal = isLoading ? tutorialLocal : isTutorial(state)
+  const isTutorialLocal = isTutorial(state)
 
-  const tutorialStep = isLoading ? tutorialStepLocal : +(getSetting(state, 'Tutorial Step') ?? 1)
+  const tutorialStep = +(getSetting(state, 'Tutorial Step') ?? 1)
 
   const isAbsoluteContext = isAbsolute(rootContext)
 

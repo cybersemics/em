@@ -1,7 +1,7 @@
 import moize from 'moize'
 import Context from '../@types/Context'
 import State from '../@types/State'
-import { EM_TOKEN } from '../constants'
+import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import isAttribute from '../util/isAttribute'
@@ -11,8 +11,8 @@ import storage from '../util/storage'
 import getThoughtById from './getThoughtById'
 
 /** Cache localStorage settings. */
-const localStorageSettingsCache = keyValueBy(['Tutorial', 'Tutorial Step'], value => ({
-  [value]: typeof storage !== 'undefined' ? (storage.getItem('Settings/' + value) as string) : undefined,
+const localStorageSettingsCache = keyValueBy(CACHED_SETTINGS, name => ({
+  [name]: typeof storage !== 'undefined' ? (storage.getItem('Settings/' + name) as string) : undefined,
 }))
 
 /** Returns one of the localStorage Settings values that have been cached. */

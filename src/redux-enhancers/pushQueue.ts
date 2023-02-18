@@ -3,12 +3,13 @@ import Index from '../@types/IndexType'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { EM_TOKEN } from '../constants'
+import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isAttribute from '../util/isAttribute'
+import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 
 // Critical settings (e.g. EM/Settings/Tutorial) are cached in local storage so there is no gap on startup.
@@ -16,10 +17,7 @@ import storage from '../util/storage'
 // TODO: Consolidate caching logic.
 // Since settings ids are dynamic, we cache them in-memory to avoid selecting them from State on every action.
 // Note: If a setting id changes (e.g. if the user manually opens the Settings context and deletes a settings thought), then the app will need to be refreshed to re-load the correct id.
-const cachedSettingsIds: Index<ThoughtId | undefined> = {
-  Tutorial: undefined,
-  'Tutorial Step': undefined,
-}
+const cachedSettingsIds: Index<ThoughtId | undefined> = keyValueBy(CACHED_SETTINGS, name => ({ [name]: undefined }))
 
 /** Gets a list of settings ids. First checks in-memory cache (cachedSettingsIds), then State. */
 const getSettingsIds = (state: State): Index<ThoughtId | undefined> => {
