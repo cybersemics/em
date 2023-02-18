@@ -1,18 +1,15 @@
 /**
- * Defines the Redux app reducer and exports a global store.
- * NOTE: Exporting the store is not compatible with server-side rendering.
- *
+ * Defines the Redux app reducer, loads middleware and enhancers, and exports a global store.
  */
 import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import appReducer from '../reducers/app'
-import clearPushQueueEnhancer from '../redux-enhancers/clearPushQueue'
-import cursorChangedEnhancer from '../redux-enhancers/cursorChanged'
+import cursorChanged from '../redux-enhancers/cursorChanged'
+import pushQueue from '../redux-enhancers/pushQueue'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
-import pushQueue from '../redux-middleware/pushQueue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
 const composeEnhancers = composeWithDevTools({ trace: true })
@@ -24,11 +21,11 @@ if (!appReducer) {
 const store = createStore(
   appReducer,
   composeEnhancers(
-    applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
+    applyMiddleware(multi, thunk, pullQueue, updateUrlHistory),
     undoRedoEnhancer,
-    cursorChangedEnhancer,
+    cursorChanged,
     // must go at the end to ensure it clears the pushQueue before other enhancers
-    clearPushQueueEnhancer,
+    pushQueue,
   ),
 )
 

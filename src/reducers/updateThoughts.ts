@@ -16,7 +16,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import logWithTime from '../util/logWithTime'
 import mergeUpdates from '../util/mergeUpdates'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -231,8 +230,6 @@ const updateThoughts = (
     thoughtIndexUpdates: thoughtIndexUpdates,
     updates,
   }
-
-  logWithTime('updateThoughts: merge pushQueue')
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
