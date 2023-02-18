@@ -10,9 +10,7 @@ import isTutorial from '../selectors/isTutorial'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
-  const showModal = useSelector((state: State) => state.showModal)
-  const tutorial = useSelector(isTutorial)
-  const error = useSelector((state: State) => state.error)
+  const hide = useSelector((state: State) => state.showModal || state.error || isTutorial(state))
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const dispatch = useDispatch()
@@ -28,14 +26,14 @@ const HamburgerMenu = () => {
         className={classNames({
           'hamburger-menu': true,
           // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-          [showSidebar || tutorial || error || showModal ? 'z-index-hide' : 'z-index-hamburger-menu']: true,
+          [showSidebar || hide ? 'z-index-hide' : 'z-index-hamburger-menu']: true,
         })}
         style={{
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
           // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
-          transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
+          transition: showSidebar || hide ? '' : 'z-index 800ms linear',
           top: 0,
         }}
         onClick={() => {
