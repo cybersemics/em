@@ -1,6 +1,52 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import { EM_TOKEN } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
+import isAttribute from '../util/isAttribute'
+import storage from '../util/storage'
+
+// Critical settings (e.g. EM/Settings/Tutorial) are cached in local storage so there is no gap on startup.
+// The getter logic is in /selectors/getSetting.ts.
+// TODO: Consolidate caching logic.
+// Since settings ids are dynamic, we cache them in-memory to avoid selecting them from State on every action.
+// Note: If a setting id changes (e.g. if the user manually opens the Settings context and deletes a settings thought), then the app will need to be refreshed to re-load the correct id.
+const cachedSettingsIds: Index<ThoughtId | undefined> = {
+  Tutorial: undefined,
+  'Tutorial Step': undefined,
+}
+
+/** Gets a list of settings ids. First checks in-memory cache (cachedSettingsIds), then State. */
+const getSettingsIds = (state: State): Index<ThoughtId | undefined> => {
+  Object.keys(cachedSettingsIds).forEach(name => {
+    if (cachedSettingsIds[name]) return cachedSettingsIds[name]
+    const settingsId = contextToThoughtId(state, [EM_TOKEN, 'Settings', name])
+    const children = getChildrenRanked(state, settingsId)
+    const id = children.find(child => !isAttribute(child.value))?.id
+    // cache the settings id
+    // See: cachedSettingsIds
+    if (id) {
+      cachedSettingsIds[name] = id
+    }
+  })
+
+  return cachedSettingsIds
+}
+
+/** Cache a setting in local storage. If given null, deletes it. */
+const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null): void => {
+  const key = `Settings/${name}`
+  if (value) {
+    storage.setItem(key, value)
+  } else {
+    storage.removeItem(key)
+  }
+}
 
 /** Clears state.pushQueue on the next action when pushQueue has been invalidated by pushQueue, and then clear the invalidated flag. This is done to avoid an additional dispatch and thus selector recalculations on every thought change. Do not access state.pushQueue outside of a reducer, as it may be stale. */
 const clearPushQueueEnhancer: StoreEnhancer<any> =
@@ -9,14 +55,26 @@ const clearPushQueueEnhancer: StoreEnhancer<any> =
     createStore((state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
 
-      // push queued updates to db
-      // Promise.all(state.pushQueue.map(batch =>
-      state.pushQueue.forEach(batch =>
-        db.updateThoughts?.(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, batch.updates?.schemaVersion),
-      )
+      // apply reducer and clear push queue
+      const stateNew = reducer({ ...state, pushQueue: [] }, action)
 
-      // clear push queue
-      return reducer({ ...state, pushQueue: [] }, action)
+      // get ids of critical thoughts to cache to localStorage
+      const settingsIds = getSettingsIds(stateNew)
+
+      state.pushQueue.forEach(batch => {
+        // cache updated settings
+        Object.entries(settingsIds).forEach(([name, id]) => {
+          if (id && id in batch.thoughtIndexUpdates) {
+            const thought = getThoughtById(stateNew, id) as Thought | undefined
+            cacheSetting(name, thought?.value || null)
+          }
+        })
+
+        // push batch updates to database
+        db.updateThoughts?.(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, batch.updates?.schemaVersion)
+      })
+
+      return stateNew
     }, initialState)
 
 export default clearPushQueueEnhancer
