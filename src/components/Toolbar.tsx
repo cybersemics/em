@@ -15,11 +15,10 @@ import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import contextToThoughtId from '../selectors/contextToThoughtId'
-import subtree from '../selectors/subtree'
+import { EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import findDescendant from '../selectors/findDescendant'
+import { getChildrenRanked } from '../selectors/getChildren'
 import { shortcutById } from '../shortcuts'
-import store from '../stores/app'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -51,6 +50,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       showHiddenThoughts,
     }
   }, shallowEqual)
+  const arrowWidth = fontSize / 3
 
   /**********************************************************************
    * Methods
@@ -89,17 +89,19 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [])
 
-  // fallback to defaults if user does not have Settings defined
-  const visibleShortcutsId = contextToThoughtId(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
-  const userShortcutIds = (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : [])
-    .map(subthought => subthought.value)
-    .filter(shortcutIdString => !!shortcutById(shortcutIdString as ShortcutId)) as ShortcutId[]
-  const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
-  const arrowWidth = fontSize / 3
-
   /**********************************************************************
    * Render
    **********************************************************************/
+
+  // fallback to defaults if user does not have Settings defined
+  // const shortcutIds = TOOLBAR_DEFAULT_SHORTCUTS
+  const shortcutIds = useSelector((state: State) => {
+    const userShortcutsThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
+    const userShortcutIds = (userShortcutsThoughtId ? getChildrenRanked(state, userShortcutsThoughtId) : [])
+      .map(subthought => subthought.value)
+      .filter(shortcutIdString => !!shortcutById(shortcutIdString as ShortcutId)) as ShortcutId[]
+    return userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
+  }, shallowEqual)
 
   return (
     <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>

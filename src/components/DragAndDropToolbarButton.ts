@@ -9,9 +9,16 @@ import {
 } from 'react-dnd'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import alert from '../action-creators/alert'
-import { AlertText, AlertType, NOOP } from '../constants'
+import importText from '../action-creators/importText'
+import moveThought from '../action-creators/moveThought'
+import { AlertText, AlertType, EM_TOKEN, NOOP, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import contextToPath from '../selectors/contextToPath'
+import findDescendant from '../selectors/findDescendant'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getRankBefore from '../selectors/getRankBefore'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
+import appendToPath from '../util/appendToPath'
 import { ToolbarButtonProps } from './ToolbarButton'
 
 export type DraggableToolbarButtonProps = ToolbarButtonProps &
@@ -72,8 +79,44 @@ const canDrop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
 /** Handles dropping a toolbar button on a DropTarget. */
 const drop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
   // no bubbling
-  // if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
-  // const { shortcut } = monitor.getItem()
+  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
+
+  const state = store.getState()
+  const { shortcut } = monitor.getItem()
+  const from = shortcut
+  const to = shortcutById(props.shortcutId)!
+
+  // initialize EM/Settings/Toolbar/Visible with default shortcuts
+  const userShortcutsThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
+  if (!userShortcutsThoughtId) {
+    store.dispatch(
+      importText({
+        path: [EM_TOKEN],
+        text: `
+          - Settings
+            - Toolbar
+${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).join('\n')}
+        `,
+        preventSetCursor: true,
+      }),
+    )
+  }
+  const userShortcutChildren = getChildrenRanked(store.getState(), userShortcutsThoughtId)
+  const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
+
+  // user shortcuts must exist since it was created above
+  const userShortcutsPath = contextToPath(store.getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
+  const fromThoughtId = userShortcutChildren[userShortcutIds.indexOf(from.id)].id
+  const toThoughtId = userShortcutChildren[userShortcutIds.indexOf(to.id)].id
+  const fromPath = appendToPath(userShortcutsPath, fromThoughtId)
+  const toPath = appendToPath(userShortcutsPath, toThoughtId)
+  store.dispatch(
+    moveThought({
+      oldPath: fromPath,
+      newPath: fromPath,
+      newRank: getRankBefore(store.getState(), toPath),
+    }),
+  )
 }
 
 /** Collects props from the DragSource. */
