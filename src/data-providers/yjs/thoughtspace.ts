@@ -134,15 +134,22 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
   if (!thoughtDocs[id]) {
     thoughtDocs[id] = thoughtDoc
 
-    const persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
+    // disable during tests because of TransactionInactiveError in fake-indexeddb
+    let persistence: IndexeddbPersistence | undefined
+    if (process.env.NODE_ENV !== 'test') {
+      persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
+    }
 
-    // eslint-disable-next-line no-new
-    new HocuspocusProvider({
-      websocketProvider: websocketThoughtspace,
-      name: `${tsid}-thought-${id}`,
-      document: thoughtDoc,
-      token: accessToken,
-    })
+    // disable during tests because of infinite loop in sinon runAllAsync
+    if (process.env.NODE_ENV !== 'test') {
+      // eslint-disable-next-line no-new
+      new HocuspocusProvider({
+        websocketProvider: websocketThoughtspace,
+        name: `${tsid}-thought-${id}`,
+        document: thoughtDoc,
+        token: accessToken,
+      })
+    }
 
     thoughtMap.observe(e => {
       if (e.transaction.origin === thoughtDoc.clientID) return
@@ -166,23 +173,11 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
       })
     })
 
-    // TODO: Why do tests cause a TransactionInactiveError? All promises are properly awaited from what I can tell, and the tests pass. Do the docs need to be destroyed on cleanup?
-    // In the mean time, stifle the errors to avoid cluttering up the tests.
-    persistence.whenSynced
-      .catch(err => {
-        if (err.toString().includes('TransactionInactiveError')) {
-          if (process.env.NODE_ENV !== 'test') {
-            console.warn(err)
-          }
-        } else {
-          throw err
-        }
+    if (id === HOME_TOKEN) {
+      persistence?.whenSynced.then(() => {
+        resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
       })
-      .then(() => {
-        if (id === HOME_TOKEN) {
-          resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
-        }
-      })
+    }
   }
 
   return thoughtDoc
@@ -197,15 +192,22 @@ const loadLexemeDoc = (key: string): Y.Doc => {
     lexemeDocs[key] = lexemeDoc
     const lexemeMap = lexemeDoc.getMap()
 
-    const persistence = new IndexeddbPersistence(`${tsid}-lexeme-${key}`, lexemeDoc)
+    // disable during tests because of TransactionInactiveError in fake-indexeddb
+    if (process.env.NODE_ENV !== 'test') {
+      // eslint-disable-next-line no-new
+      new IndexeddbPersistence(`${tsid}-lexeme-${key}`, lexemeDoc)
+    }
 
-    // eslint-disable-next-line no-new
-    new HocuspocusProvider({
-      websocketProvider: websocketThoughtspace,
-      name: `${tsid}-lexeme-${key}`,
-      document: lexemeDoc,
-      // auth: accessToken,
-    })
+    // disable during tests because of infinite loop in sinon runAllAsync
+    if (process.env.NODE_ENV !== 'test') {
+      // eslint-disable-next-line no-new
+      new HocuspocusProvider({
+        websocketProvider: websocketThoughtspace,
+        name: `${tsid}-lexeme-${key}`,
+        document: lexemeDoc,
+        // auth: accessToken,
+      })
+    }
 
     lexemeMap.observe(e => {
       if (e.transaction.origin === lexemeDoc.clientID) return
@@ -223,18 +225,6 @@ const loadLexemeDoc = (key: string): Y.Doc => {
         }),
       )
     })
-
-    persistence.whenSynced
-      // See: loadThoughtDoc
-      .catch(err => {
-        if (err.toString().includes('TransactionInactiveError')) {
-          if (process.env.NODE_ENV !== 'test') {
-            console.warn(err)
-          }
-        } else {
-          throw err
-        }
-      })
   }
 
   return lexemeDoc

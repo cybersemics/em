@@ -36,8 +36,13 @@ export const accessToken = accessTokenShared || accessTokenLocal
 // make the clientId a hash of the access token for now so it can be public but linked back to the access token
 export const clientId = murmurHash3.x64.hash128(accessToken)
 
-export const indexeddbProviderPermissions = new IndexeddbPersistence(tsid, ypermissionsDoc)
-export const indexeddbProviderThoughtspace = new IndexeddbPersistence(tsid, ydoc)
+// disable during tests because of TransactionInactiveError in fake-indexeddb
+if (process.env.NODE_ENV !== 'test') {
+  // eslint-disable-next-line no-new
+  new IndexeddbPersistence(tsid, ypermissionsDoc)
+  // eslint-disable-next-line no-new
+  new IndexeddbPersistence(tsid, ydoc)
+}
 
 export const websocketPermissions = new HocuspocusProviderWebsocket({
   url: websocketUrl,
