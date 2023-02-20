@@ -10,7 +10,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 
-/** Toggles a thought. If any ancestors are missing, adds them. When toggling off, aAncestors with no other children are deleted. */
+/** Toggles a thought. If any ancestors are missing, adds them. When toggling off, ancestors with no other children are deleted. Preserves siblings. */
 const toggleThought = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },

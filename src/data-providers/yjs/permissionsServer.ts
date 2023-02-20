@@ -3,13 +3,10 @@ import Routes from '../../@types/Routes'
 import Share from '../../@types/Share'
 import alert from '../../action-creators/alert'
 import clearActionCreator from '../../action-creators/clear'
-import importText from '../../action-creators/importText'
-import { EM_TOKEN, INITIAL_SETTINGS } from '../../constants'
 import { accessTokenLocal, ypermissionsDoc } from '../../data-providers/yjs/index'
 import { clear } from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import createId from '../../util/createId'
-import never from '../../util/never'
 import storage from '../../util/storage'
 
 const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
@@ -46,15 +43,7 @@ const permissionsServer: { [key in keyof Routes['share']]: any } = {
     else {
       storage.clear()
       clear()
-      store.dispatch([
-        clearActionCreator(),
-        importText({
-          path: [EM_TOKEN],
-          text: INITIAL_SETTINGS,
-          lastUpdated: never(),
-          preventSetCursor: true,
-        }),
-      ])
+      store.dispatch(clearActionCreator())
 
       // TODO: Do a full reset without refreshing the page.
       window.location.reload()

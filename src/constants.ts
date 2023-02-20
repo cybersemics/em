@@ -4,8 +4,6 @@ import ThoughtId from './@types/ThoughtId'
 import { emojiRegex } from './emojiRegex'
 import * as shortcuts from './shortcuts/index'
 
-export { default as INITIAL_SETTINGS } from './initialSettings'
-
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20

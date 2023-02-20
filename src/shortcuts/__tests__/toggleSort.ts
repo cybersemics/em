@@ -5,7 +5,6 @@ import Thunk from '../../@types/Thunk'
 import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
-import setCursor from '../../action-creators/setCursor'
 import setFirstSubthought from '../../action-creators/setFirstSubthought'
 import toggleAttribute from '../../action-creators/toggleAttribute'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
@@ -16,13 +15,12 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleSortShortcut from '../toggleSort'
 
 it('toggle on sort preference of cursor (initial state without =sort attribute)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -33,7 +31,7 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
           - e
       `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -44,7 +42,6 @@ it('toggle on sort preference of cursor (initial state without =sort attribute)'
 it('toggle sort preference descending of cursor (initial state with =sort/Alphabetical)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -57,7 +54,7 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
           - c
           - e`,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -69,7 +66,6 @@ it('toggle sort preference descending of cursor (initial state with =sort/Alphab
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/desc)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -82,7 +78,7 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
           - c
           - e`,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -93,7 +89,6 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical/
 it('toggle off sort preference of cursor (initial state with =sort/Alphabetical and Global Sort Alphabetical/desc)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -107,36 +102,21 @@ it('toggle off sort preference of cursor (initial state with =sort/Alphabetical 
           - e`,
     }),
 
-    ((dispatch, getState) =>
-      dispatch(
-        editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-        }),
-      )) as Thunk,
+    toggleAttribute({
+      path: [EM_TOKEN],
+      values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
+    }),
 
-    ((dispatch, getState) =>
-      dispatch(
-        setFirstSubthought({
-          path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'])!,
-          value: 'Desc',
-        }),
-      )) as Thunk,
-
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
   expect(attributeByContext(store.getState(), ['a'], '=sort')).toBe(null)
 })
 
-// TODO: setFirstSubthought is failing because the Path doesn't exist for some reason
-it.skip('toggle off sort preference of cursor (initial state without =sort attribute and Global Sort Alphabetical/desc)', () => {
+it('toggle off sort preference of cursor (initial state without =sort attribute and Global Sort Alphabetical/desc)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -147,25 +127,12 @@ it.skip('toggle off sort preference of cursor (initial state without =sort attri
           - e`,
     }),
 
-    ((dispatch, getState) =>
-      dispatch(
-        editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-        }),
-      )) as Thunk,
+    toggleAttribute({
+      path: [EM_TOKEN],
+      values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
+    }),
 
-    ((dispatch, getState) =>
-      dispatch(
-        setFirstSubthought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort', 'Alphabetical'],
-          value: 'Desc',
-        }),
-      )) as Thunk,
-
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -175,7 +142,6 @@ it.skip('toggle off sort preference of cursor (initial state without =sort attri
 it('toggle on sort preference of home context when cursor is null (initial state without =sort attribute)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -187,7 +153,7 @@ it('toggle on sort preference of home context when cursor is null (initial state
           - 4`,
     }),
 
-    setCursor({ path: null }),
+    setCursor(null),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -198,7 +164,6 @@ it('toggle on sort preference of home context when cursor is null (initial state
 it('toggle sort preference descending of home context when cursor is null (initial state with =sort/Alphabetical)', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
@@ -208,7 +173,7 @@ it('toggle sort preference descending of home context when cursor is null (initi
         -b`,
     }),
 
-    setCursor({ path: null }),
+    setCursor(null),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -231,17 +196,12 @@ it('override global Alphabetical with local Alphabetical/desc', () => {
     `,
     }),
 
-    ((dispatch, getState) =>
-      dispatch(
-        editThought({
-          context: [EM_TOKEN, 'Settings', 'Global Sort'],
-          oldValue: 'None',
-          newValue: 'Alphabetical',
-          path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
-        }),
-      )) as Thunk,
+    toggleAttribute({
+      path: [EM_TOKEN],
+      values: ['Settings', 'Global Sort', 'Alphabetical'],
+    }),
 
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(toggleSortShortcut, { store })
@@ -262,7 +222,7 @@ describe.skip('DOM', () => {
       newThought({ value: 'c' }),
       newThought({ value: 'a' }),
       newThought({ value: 'b' }),
-      setCursor({ path: null }),
+      setCursor(null),
 
       toggleAttribute({
         path: HOME_PATH,
@@ -284,7 +244,7 @@ describe.skip('DOM', () => {
       newThought({ value: '3', insertNewSubthought: true }),
       newThought({ value: '1' }),
       newThought({ value: '2' }),
-      setCursorFirstMatchActionCreator(['a']),
+      setCursor(['a']),
 
       (dispatch, getState) =>
         dispatch(
@@ -310,7 +270,7 @@ describe.skip('DOM', () => {
         newThought({ value: 'c' }),
         newThought({ value: 'b' }),
         newThought({ value: 'a' }),
-        setCursor({ path: null }),
+        setCursor(null),
 
         ((dispatch, getState) =>
           dispatch(
@@ -338,7 +298,7 @@ describe.skip('DOM', () => {
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         ((dispatch, getState) =>
           dispatch(
             editThought({
@@ -366,7 +326,7 @@ describe.skip('DOM', () => {
         newThought({ value: '1' }),
         newThought({ value: '2' }),
 
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
 
         ((dispatch, getState) =>
           dispatch(
@@ -403,7 +363,7 @@ describe.skip('DOM', () => {
         newThought({ value: 'c' }),
         newThought({ value: 'a' }),
         newThought({ value: 'b' }),
-        setCursor({ path: null }),
+        setCursor(null),
       ])
 
       store.dispatch([
@@ -435,7 +395,7 @@ describe.skip('DOM', () => {
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
       ])
 
       store.dispatch([
@@ -480,7 +440,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '' }),
       ])
 
@@ -508,7 +468,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['c']),
+        setCursor(['c']),
         newThought({ value: '' }),
       ])
 
@@ -536,7 +496,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['f']),
+        setCursor(['f']),
         newThought({ value: '' }),
       ])
 
@@ -564,7 +524,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '', insertBefore: true }),
       ])
 
@@ -592,7 +552,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['c']),
+        setCursor(['c']),
         newThought({ value: '', insertBefore: true }),
       ])
 
@@ -620,7 +580,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['f']),
+        setCursor(['f']),
         newThought({ value: '', insertBefore: true }),
       ])
 
@@ -648,13 +608,13 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '', insertBefore: true }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '' }),
-        setCursorFirstMatchActionCreator(['c']),
+        setCursor(['c']),
         newThought({ value: '' }),
-        setCursorFirstMatchActionCreator(['f']),
+        setCursor(['f']),
         newThought({ value: '' }),
       ])
 
@@ -682,7 +642,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
@@ -712,7 +672,7 @@ describe.skip('DOM', () => {
               - b
           `,
         }),
-        setCursorFirstMatchActionCreator(['c']),
+        setCursor(['c']),
         newThought({ value: '' }),
         newThought({ value: '' }),
       ])
@@ -741,7 +701,7 @@ describe.skip('DOM', () => {
               - e
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
@@ -769,7 +729,7 @@ describe.skip('DOM', () => {
               - e
           `,
         }),
-        setCursorFirstMatchActionCreator(['a']),
+        setCursor(['a']),
         newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
       ])
 
@@ -795,7 +755,7 @@ describe.skip('DOM', () => {
               - a
           `,
         }),
-        setCursorFirstMatchActionCreator(['test', 'a']),
+        setCursor(['test', 'a']),
         // wrap in a thunk in order to access fresh state
         (dispatch, getState) =>
           dispatch(

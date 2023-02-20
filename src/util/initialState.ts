@@ -12,7 +12,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
 import storage from './storage'
 
-/** Generates an initial ThoughtIndices with the root and em contexts. */
+/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
@@ -91,7 +91,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
 const initialState = (created: Timestamp = timestamp()) => {
   const state: State = {
     authenticated: false,
-    // eslint-disable-next-line no-mixed-operators
     autologin: storage.getItem('autologin') === 'true',
     contextViews: {},
     cursor: null,
@@ -134,7 +133,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
-    // eslint-disable-next-line no-mixed-operators
     splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),
     status: 'disconnected',
     pushQueue: [],

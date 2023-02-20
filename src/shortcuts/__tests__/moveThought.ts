@@ -20,16 +20,17 @@ it('merge up to pending destination descendant', async () => {
   await timer.runAllAsync()
 
   const text = `
-  - a
-    - b
-      -c
-        - one
-        - two
-  - d
-    - b
-      - c
-        - three
-        - four`
+    - a
+      - b
+        -c
+          - one
+          - two
+    - d
+      - b
+        - c
+          - three
+          - four
+  `
 
   appStore.dispatch(importTextAction({ text }))
   await timer.runAllAsync()
