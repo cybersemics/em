@@ -76,7 +76,6 @@ interface State {
   // The current index of the jump history that is being navigated
   // Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward
   jumpIndex: number
-  lastUpdated?: string
   latestShortcuts: Shortcut[]
   modals: Index<{ complete?: boolean }>
   // noteFocus is true if the caret is on the note

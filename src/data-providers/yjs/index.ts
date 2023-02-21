@@ -13,9 +13,7 @@ const protocol = host === 'localhost' ? 'ws' : 'wss'
 // public host must end with '/' or the websocket connection will not open
 export const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
 
-export const ydoc = new Y.Doc()
 export const ypermissionsDoc = new Y.Doc()
-export const ydocLocal = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
@@ -40,8 +38,6 @@ export const clientId = murmurHash3.x64.hash128(accessToken)
 if (process.env.NODE_ENV !== 'test') {
   // eslint-disable-next-line no-new
   new IndexeddbPersistence(tsid, ypermissionsDoc)
-  // eslint-disable-next-line no-new
-  new IndexeddbPersistence(tsid, ydoc)
 }
 
 export const websocketPermissions = new HocuspocusProviderWebsocket({
@@ -61,12 +57,6 @@ export const websocketThoughtspace = websocketPermissions
 //   url: websocketUrl,
 //   // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
 //   connect: false,
-// })
-
-// export const websocketProviderThoughtspace = new HocuspocusProvider({
-//   websocketProvider: websocketPermissions,
-//   name: tsid,
-//   document: ydoc,
 // })
 
 /** If there is more than one device, connects the thoughtspace Websocket provider. */

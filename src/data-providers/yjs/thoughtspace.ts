@@ -7,11 +7,10 @@ import Lexeme from '../../@types/Lexeme'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
-import Timestamp from '../../@types/Timestamp'
 import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
-import { accessToken, tsid, websocketThoughtspace, ydoc } from '../../data-providers/yjs/index'
+import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
 import pushStore from '../../stores/push'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -38,8 +37,6 @@ const dequeue = (key: string) => {
     pushStore.update({ isPushing: false })
   }
 }
-
-const yHelpers = ydoc.getMap<string | number>('helpers')
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
@@ -418,12 +415,6 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
-
-/** Last updated. */
-export const getLastUpdated = async () => yHelpers.get('lastUpdated')
-
-/** Last updated. */
-export const updateLastUpdated = async (lastUpdated: Timestamp) => yHelpers.set('lastUpdated', lastUpdated)
 
 /** Deletes a single lexeme from the lexemeIndex by its id. Only used by deleteData. TODO: How to remove? */
 export const deleteLexeme = async (key: string) => {
