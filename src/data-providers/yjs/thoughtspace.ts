@@ -14,7 +14,6 @@ import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/y
 import store from '../../stores/app'
 import pushStore from '../../stores/push'
 import groupObjectBy from '../../util/groupObjectBy'
-import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -222,8 +221,6 @@ const loadThought = async (id: ThoughtId): Promise<Thought | undefined> => {
         if (e.transaction.origin === thoughtDoc.clientID) return
         const thought = getThought(thoughtDoc)
         if (!thought) return
-
-        loadLexeme(hashThought(thought.value))
 
         store.dispatch(
           updateThoughtsActionCreator({
