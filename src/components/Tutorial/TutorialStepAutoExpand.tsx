@@ -1,8 +1,10 @@
 import React, { Fragment } from 'react'
+import Path from '../../@types/Path'
+import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
 import { HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import { getAllChildren } from '../../selectors/getChildren'
+import { getAllChildren, getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import ellipsize from '../../util/ellipsize'
 import head from '../../util/head'
@@ -10,23 +12,25 @@ import headValue from '../../util/headValue'
 import parentOf from '../../util/parentOf'
 import pathToContext from '../../util/pathToContext'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialStepAutoExpand = ({ cursor } = {}) => {
+/** Tutorial: Auto Expand. */
+const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
   const state = store.getState()
-  const cursorContext = pathToContext(state, cursor || [])
-  const cursorChildren = getAllChildren(state, cursorContext)
+  const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
   const isCursorLeaf = cursorChildren.length === 0
-  const contextAncestor = isCursorLeaf ? parentOf(parentOf(cursorContext)) : parentOf(cursorContext)
+  const contextAncestor = cursor ? (isCursorLeaf ? parentOf(parentOf(cursor)) : parentOf(cursor)) : []
   const contextAncestorId = contextToThoughtId(state, contextAncestor)
 
-  const ancestorThoughtChildren = getAllChildren(state, contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId)
+  const ancestorThoughtChildren = getAllChildrenAsThoughts(
+    state,
+    contextAncestor.length === 0 ? HOME_TOKEN : contextAncestorId,
+  )
   const isCursorRootChildren = (cursor || []).length === 1
 
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
 
   /** Gets the subthought that is not the cursor. */
-  const subThoughtNotCursor = subthoughts =>
-    subthoughts.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
+  const subThoughtNotCursor = (subthoughts: Thought[]) =>
+    cursor && subthoughts.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
 
   return (
     <Fragment>
@@ -37,7 +41,7 @@ const TutorialStepAutoExpand = ({ cursor } = {}) => {
             <Fragment>
               <Fragment> Try {isTouch ? 'tapping' : 'clicking'} on </Fragment>
               <Fragment>
-                thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren).value)}"{' '}
+                thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren)?.value || '')}"{' '}
                 {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
               </Fragment>
               <Fragment>
