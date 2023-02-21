@@ -98,7 +98,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     cursorBeforeQuickAdd: null,
     cursorCleared: false,
     cursorHistory: [],
-    cursorInitialized: false, // tracks if the cursor has been restored from the url on first load and ensures it only happens once
+    cursorInitialized: false,
     cursorOffset: 0,
     dragInProgress: false,
     editableNonce: 0,
@@ -109,9 +109,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     fontSize: +(storage.getItem('fontSize') || 18),
     expandHoverDownPaths: {},
     invalidState: false,
-    // Displays a loading screen when the app starts.
-    // This is disabled by updateThoughts once it detects that the root thought is loaded.
-    // Used by the Content component to determine if there are no root children and NoThoughts should be displayed.
     isLoading: true,
     jumpHistory: [],
     jumpIndex: 0,
@@ -128,8 +125,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
-    // start the app with the welcome modal unless it has already been completed
-    // See: /src/action-creators/closeModal.ts
     showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),

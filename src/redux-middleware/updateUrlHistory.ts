@@ -4,13 +4,14 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
-import { deleteCursor, updateCursor } from '../data-providers/yjs/thoughtspace'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
-import hashPathURL from '../selectors/hashPathURL'
+import isContextViewActive from '../selectors/isContextViewActive'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
+import storage from '../util/storage'
 
 interface Options {
   // if true, replaces the last history state; otherwise pushes history state
@@ -21,26 +22,37 @@ interface Options {
 }
 
 /** Time delay (ms) to throttle the updateUrlHistory middleware so it is not executed on every action. */
-const THROTTLE_MIDDLEWARE = 50
-
-/** Time delay (ms) to throttle writing the cursor to the database which is slow and not done in a separate worker yet. */
-const THROTTLE_DB_WRITE = 400
+const THROTTLE_MIDDLEWARE = 100
 
 // The last path that is passed to updateUrlHistory that is different from the current path. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
 
-const updateCursorThrottled = _.throttle((state: State, path: Path) => {
-  // persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState)
-  // ensure the location does not change through refreshes in standalone PWA mode
-  const updateCursorPromise = state.cursor ? updateCursor(hashPathURL(state, path)) : deleteCursor()
+/** Encodes context array into a URL. */
+const pathToUrl = (state: State, path: Path) => {
+  if (!path || isRoot(path)) return '/'
 
-  updateCursorPromise.catch(err => {
-    throw new Error(err)
-  })
-}, THROTTLE_DB_WRITE)
+  const userId = window.location.pathname.split('/')[1] || '~'
+  const queryString = window.location.search
+  const thoughtsEncoded = path
+    // Note: Since thouhtId is a uuid, so they are url safe
+    .map((thoughtId, i) => thoughtId + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))
+    .join('/')
+
+  return `/${userId}/${thoughtsEncoded}${queryString}`
+}
+
+/** Persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState). Ensure the location does not change through refreshes in standalone PWA mode. */
+// TODO: Restore cursor after thoughts replicate
+const saveCursor = (state: State, path: Path) => {
+  if (state.cursor) {
+    storage.setItem('cursor', JSON.stringify(path))
+  } else {
+    storage.removeItem('cursor')
+  }
+}
 
 /**
- * Sets the url to the given Path.
+ * Sets the url to the given Path. Encodes and persists the cursor to local storage.
  * SIDE EFFECTS: window.history.
  */
 const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: Options = {}) => {
@@ -78,7 +90,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
     contextViews: contextViews || state.contextViews || decoded.contextViews,
   }
 
-  updateCursorThrottled(stateWithNewContextViews, path)
+  saveCursor(stateWithNewContextViews, path)
 
   // if PWA, do not update browser URL as it causes a special browser navigation bar to appear
   // does not interfere with functionality since URL bar is not visible anyway and cursor is persisted locally
@@ -91,7 +103,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
       // an incrementing ID to track back or forward browser actions
       (window.history.state || 0) + 1,
       '',
-      hashPathURL(stateWithNewContextViews, path || [HOME_TOKEN]),
+      pathToUrl(stateWithNewContextViews, path || [HOME_TOKEN]),
     )
   } catch (e) {
     // TODO: Fix SecurityError on mobile when ['', ''] gets encoded into '//'

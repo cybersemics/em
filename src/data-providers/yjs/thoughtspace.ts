@@ -419,13 +419,6 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
 
-/** Persists the cursor. */
-export const updateCursor = async (cursor: string | null) =>
-  cursor ? yHelpers.set('cursor', cursor) : yHelpers.delete('cursor')
-
-/** Deletes the cursor. */
-export const deleteCursor = async () => yHelpers.delete('cursor')
-
 /** Last updated. */
 export const getLastUpdated = async () => yHelpers.get('lastUpdated')
 

@@ -28,6 +28,9 @@ interface State {
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null
   cursorHistory: Path[]
+  // Tracks if the cursor has been restored from the url on first load and ensures it only happens once.
+  // See: updateUrlHistory
+  // See: initializeCursor in initialize
   cursorInitialized: boolean
   // the offset of the caret within the cursor, relative to the start of the thought
   // currently only 0 and n are used, where n is the length of the thought
@@ -62,6 +65,9 @@ interface State {
   // type of drop target being hovered over
   hoverZone?: DropThoughtZone
   invalidState: boolean
+  // Displays a loading screen when the app starts.
+  // This is disabled by updateThoughts once it detects that the root thought is loaded.
+  // Used by the Content component to determine if there are no root children and NoThoughts should be displayed.
   isLoading: boolean
   // History of edit points that can be navigated with the jump command.
   // Cannot use undoHistory because it omits the cursor from some edits.
@@ -91,6 +97,9 @@ interface State {
   searchLimit?: number
   showColorPicker?: boolean
   showHiddenThoughts: boolean
+  // The currently shown modal dialog box.
+  // Initialized to the welcome modal, unless already completed.
+  // See: /src/action-creators/closeModal.ts
   showModal?: Modal | null
   showSidebar: boolean
   showSplitView: boolean
