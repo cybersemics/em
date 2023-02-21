@@ -65,7 +65,7 @@ export const rootSynced = rootSyncedPromise
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
 const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   if (!thoughtDocs[id]) {
-    loadThought(id)
+    getThoughtById(id)
   }
   const thoughtDoc = thoughtDocs[id]
 
@@ -124,7 +124,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
 const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   if (!thoughtDocs[key]) {
-    loadLexeme(key)
+    getLexemeById(key)
   }
   const lexemeDoc = lexemeDocs[key]
 
@@ -183,7 +183,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
 }
 
 /** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. Returns a Thought promise, but you can access thoughtDocs[id] immediately. */
-const loadThought = async (id: ThoughtId): Promise<Thought | undefined> => {
+export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   const guid = `${tsid}-thought-${id}`
 
   // use the existing Doc if possible, otherwise the map will not be immediately populated
@@ -246,7 +246,7 @@ const loadThought = async (id: ThoughtId): Promise<Thought | undefined> => {
 }
 
 /** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
-const loadLexeme = async (key: string): Promise<Lexeme | undefined> => {
+export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
   const guid = `${tsid}-lexeme-${key}`
   const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid })
 
@@ -412,15 +412,9 @@ export const clear = async () => {
   updateThoughts(thoughtIndexUpdates, lexemeIndexUpdates, SCHEMA_LATEST)
 }
 
-/** Gets a single lexeme from the lexemeIndex by its id. */
-export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => loadLexeme(key)
-
 /** Gets multiple thoughts from the lexemeIndex by key. */
 export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> =>
   Promise.all(keys.map(getLexemeById))
-
-/** Get a thought by id. */
-export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => loadThought(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
