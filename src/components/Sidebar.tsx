@@ -67,15 +67,12 @@ const Sidebar = () => {
      */
     <SwipeableDrawerWithClasses
       classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      disableSwipeToOpen={!isTouch}
       ref={ref}
       swipeAreaWidth={8}
       anchor='left'
-      onOpen={() => {
-        toggleSidebar(true)
-      }}
-      onClose={() => {
-        toggleSidebar(false)
-      }}
+      onOpen={() => toggleSidebar(true)}
+      onClose={() => toggleSidebar(false)}
       open={showSidebar}
     >
       {/* <RecentlyEdited /> */}
