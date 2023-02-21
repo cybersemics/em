@@ -416,13 +416,6 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
 
-/** Deletes a single lexeme from the lexemeIndex by its id. Only used by deleteData. TODO: How to remove? */
-export const deleteLexeme = async (key: string) => {
-  lexemeDocs[key]?.destroy()
-  lexemePersistence[key]?.clearData()
-  delete lexemeDocs[key]
-}
-
 const db: DataProvider = {
   clear,
   getLexemeById,

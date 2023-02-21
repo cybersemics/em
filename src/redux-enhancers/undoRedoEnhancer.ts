@@ -58,7 +58,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   cursorHistory: true,
   cursorUp: true,
   deleteAttribute: true,
-  deleteData: true,
   deleteEmptyThought: true,
   deleteThought: true,
   deleteThoughtWithCursor: true,
