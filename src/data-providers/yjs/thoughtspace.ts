@@ -64,7 +64,7 @@ const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<ThoughtDb>()
 export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
-const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> => {
+const updateThought = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> => {
   // set updateQueue and isPushing
   // dequeued after syncing to IndexedDB
   enqueue(thought.id)
@@ -118,7 +118,7 @@ const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> =>
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
-const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
+const updateLexeme = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
   // set updateQueue and isPushing
   const key = hashThought(lexeme.lemma)
   enqueue(key)
@@ -173,8 +173,8 @@ const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
-/** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists. */
-const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
+/** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
+const loadThought = (id: ThoughtId): Y.Doc => {
   const guid = `${tsid}-thought-${id}`
 
   // use the existing Doc if possible, otherwise the map will not be immediately populated
@@ -205,8 +205,8 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = getThought(thoughtDoc)!
 
-      Object.values(thought.childrenMap).forEach(loadThoughtDoc)
-      loadLexemeDoc(hashThought(thought.value))
+      Object.values(thought.childrenMap).forEach(loadThought)
+      loadLexeme(hashThought(thought.value))
 
       store.dispatch((dispatch, getState) => {
         dispatch(
@@ -233,8 +233,8 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
   return thoughtDoc
 }
 
-/** Loads a lexeme from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in lexemeDocs. Lexeme is available on await. */
-const loadLexemeDoc = (key: string): Y.Doc => {
+/** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
+const loadLexeme = (key: string): Y.Doc => {
   const guid = `${tsid}-lexeme-${key}`
   const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid })
 
@@ -360,14 +360,14 @@ export const updateThoughts = async (
 
   const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
-    const thoughtDoc = loadThoughtDoc(id as ThoughtId)
-    return updateThoughtDoc(thoughtDoc, thought)
+    const thoughtDoc = loadThought(id as ThoughtId)
+    return updateThought(thoughtDoc, thought)
   })
 
   const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([key, lexeme]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
-    const lexemeDoc = loadLexemeDoc(key)
-    return updateLexemeDoc(lexemeDoc, lexeme)
+    const lexemeDoc = loadLexeme(key)
+    return updateLexeme(lexemeDoc, lexeme)
   })
 
   return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<void>[])
@@ -398,7 +398,7 @@ export const clear = async () => {
 
 /** Gets a single lexeme from the lexemeIndex by its id. */
 export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
-  const lexemeDoc = loadLexemeDoc(key)
+  const lexemeDoc = loadLexeme(key)
   return getLexeme(lexemeDoc)
 }
 
@@ -408,7 +408,7 @@ export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefin
 
 /** Get a thought by id. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  const thoughtDoc = await loadThoughtDoc(id)
+  const thoughtDoc = await loadThought(id)
   return getThought(thoughtDoc)
 }
 
