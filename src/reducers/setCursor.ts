@@ -9,22 +9,18 @@ import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT_VIEW_SELECT,
   TUTORIAL_CONTEXT,
-  TUTORIAL_STEP_AUTOEXPAND,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
 import globals from '../globals'
-import settings from '../reducers/settings'
+import setTutorialStep from '../reducers/tutorialStep'
 import chain from '../selectors/chain'
 import expandThoughts from '../selectors/expandThoughts'
-import { getAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isDescendant from '../util/isDescendant'
 import pathToContext from '../util/pathToContext'
 
 /**
@@ -65,7 +61,6 @@ const setCursor = (
   }
 
   const simplePath = path ? simplifyPath(state, path) : HOME_PATH
-  const context = pathToContext(state, simplePath)
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
   const thought = thoughtsResolved && getThoughtById(state, head(thoughtsResolved))
 
@@ -105,22 +100,7 @@ const setCursor = (
   const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
 
-  /**
-   * Detects if any thought has collapsed for TUTORIAL_STEP_AUTOEXPAND.
-   * This logic doesn't take invisible meta thoughts, hidden thoughts and pinned thoughts into consideration.
-   *
-   * @todo Abstract tutorial logic away from setCursor and call only when tutorial is on.
-   */
-  const hasThoughtCollapsed = () =>
-    state.cursor &&
-    !expanded[hashPath(state.cursor)] &&
-    (getAllChildren(state, head(simplePath)).length > 0 ||
-      (state.cursor.length > (thoughtsResolved || []).length &&
-        thoughtsResolved &&
-        !isDescendant(pathToContext(state, thoughtsResolved), context)))
-
   const tutorialNext =
-    (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && hasThoughtCollapsed()) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND_EXPAND && Object.keys(expanded).length > 1) ||
     (tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_SELECT &&
       thoughtsResolved &&
@@ -136,11 +116,10 @@ const setCursor = (
     ...(!equalPath(thoughtsResolved, state.cursor) || state.contextViews !== newContextViews
       ? {
           ...(tutorialNext
-            ? settings(
+            ? setTutorialStep(
                 { ...state, cursor: thoughtsResolved },
                 {
-                  key: 'Tutorial Step',
-                  value: (tutorialStep + 1).toString(),
+                  value: tutorialStep + 1,
                 },
               )
             : null),
