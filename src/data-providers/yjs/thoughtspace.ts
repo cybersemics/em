@@ -330,6 +330,38 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
   } as Lexeme
 }
 
+/** Deletes a thought and clears the doc from IndexedDB. */
+const deleteThought = (id: ThoughtId) => {
+  delete thoughtDocs[id]
+
+  enqueue(id)
+  return thoughtPersistence[id]
+    ?.clearData()
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error deleting thought'))
+    })
+    .then(() => {
+      dequeue(id)
+    })
+}
+
+/** Deletes a lexemes and clears the doc from IndexedDB. */
+const deleteLexeme = (key: string) => {
+  delete lexemeDocs[key]
+
+  enqueue(key)
+  return lexemePersistence[key]
+    ?.clearData()
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error deleting thought'))
+    })
+    .then(() => {
+      dequeue(key)
+    })
+}
+
 /** Updates shared thoughts and lexemes. */
 export const updateThoughts = async (
   thoughtIndexUpdates: Index<ThoughtDb | null>,
@@ -352,33 +384,7 @@ export const updateThoughts = async (
     delete?: Index<null>
   }
 
-  Object.keys(thoughtDeletes || {}).forEach(id => {
-    thoughtDocs[id]?.destroy()
-    enqueue(id)
-    thoughtPersistence[id]
-      ?.clearData()
-      .catch(e => {
-        console.error(e)
-        store.dispatch(alert('Error deleting thought'))
-      })
-      .then(() => dequeue(id))
-    delete thoughtDocs[id]
-  })
-
-  Object.keys(lexemeDeletes || {}).forEach(key => {
-    lexemeDocs[key]?.destroy()
-    enqueue(key)
-    lexemePersistence[key]
-      ?.clearData()
-      .catch(e => {
-        console.error(e)
-        store.dispatch(alert('Error deleting thought'))
-      })
-      .then(() => dequeue(key))
-    delete lexemeDocs[key]
-  })
-
-  const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) =>
+  const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(([id, thought]) =>
     updateThought(id as ThoughtId, thought),
   )
 
@@ -386,21 +392,23 @@ export const updateThoughts = async (
     updateLexeme(key, lexeme),
   )
 
-  return Promise.all([...thoughtUpdatesPromise, ...lexemeUpdatesPromise] as Promise<void>[])
+  const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
+  const lexemeDeleteKeys = Object.keys(lexemeDeletes || {})
+
+  return Promise.all([
+    ...thoughtUpdatesPromise,
+    ...lexemeUpdatesPromise,
+    ...thoughtDeleteIds.map(deleteThought),
+    ...lexemeDeleteKeys.map(deleteLexeme),
+  ] as Promise<void>[])
 }
 
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  Object.entries(thoughtDocs).forEach(([id, doc]) => {
-    doc.destroy()
-    thoughtPersistence[id]?.clearData()
-    delete thoughtDocs[id]
-  })
-  Object.entries(lexemeDocs).forEach(([key, doc]) => {
-    doc.destroy()
-    lexemePersistence[key]?.clearData()
-    delete lexemeDocs[key]
-  })
+  const deleteThoughtPromises = Object.entries(thoughtDocs).map(([id, doc]) => deleteThought(id as ThoughtId))
+  const deleteLexemePromises = Object.entries(lexemeDocs).map(([key, doc]) => deleteLexeme(key))
+
+  await Promise.all([...deleteThoughtPromises, ...deleteLexemePromises])
 
   // reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
   const state = initialState()
