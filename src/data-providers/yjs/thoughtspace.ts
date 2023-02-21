@@ -8,10 +8,12 @@ import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
+import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace, ydoc } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
+import pushStore from '../../stores/push'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
@@ -19,13 +21,33 @@ import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
 
+// A map of thoughts and lexemes being updated.
+// Used to update pushStore isPushing.
+const updateQueue: Index<true> = {}
+
+/** Adds the thought id or lexeme to the updateQueue and sets isPushing. */
+const enqueue = (key: string) => {
+  updateQueue[key] = true
+  pushStore.update({ isPushing: true })
+}
+
+/** Removes thought id or lexeme key from the updateQueue and turns off isPushing if empty. */
+const dequeue = (key: string) => {
+  delete updateQueue[key]
+  if (Object.keys(updateQueue).length === 0) {
+    pushStore.update({ isPushing: false })
+  }
+}
+
 const yHelpers = ydoc.getMap<string | number>('helpers')
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
 // parallel to thoughtIndex and lexemeIndex
 const thoughtDocs: Index<Y.Doc> = {}
+const thoughtPersistence: Index<IndexeddbPersistence> = {}
 const lexemeDocs: Index<Y.Doc> = {}
+const lexemePersistence: Index<IndexeddbPersistence> = {}
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
 const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
@@ -46,6 +68,21 @@ export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
 const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> => {
+  // set updateQueue and isPushing
+  // dequeued after syncing to IndexedDB
+  enqueue(thought.id)
+
+  // Must add afterTransaction handler BEFORE transact.
+  // Resolves after in-memory transaction is complete, not after synced with providers.
+  const done = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
+
+  thoughtPersistence[thought.id]?.whenSynced
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error saving thought'))
+    })
+    .then(() => dequeue(thought.id))
+
   thoughtDoc.transact(() => {
     const thoughtMap = thoughtDoc.getMap()
     Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
@@ -80,11 +117,26 @@ const updateThoughtDoc = (thoughtDoc: Y.Doc, thought: Thought): Promise<void> =>
     })
   }, thoughtDoc.clientID)
 
-  return new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
+  return done
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
 const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
+  // set updateQueue and isPushing
+  const key = hashThought(lexeme.lemma)
+  enqueue(key)
+
+  // Must add afterTransaction handler BEFORE transact.
+  // Resolves after in-memory transaction is complete, not after synced with providers.
+  const done = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+
+  lexemePersistence[key]?.whenSynced
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error saving thought'))
+    })
+    .then(() => dequeue(key))
+
   lexemeDoc.transact(() => {
     const lexemeMap = lexemeDoc.getMap()
     Object.entries(lexeme).forEach(([key, value]) => {
@@ -121,13 +173,15 @@ const updateLexemeDoc = (lexemeDoc: Y.Doc, lexeme: Lexeme): Promise<void> => {
     })
   }, lexemeDoc.clientID)
 
-  return new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+  return done
 }
 
 /** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists. */
 const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
+  const guid = `${tsid}-thought-${id}`
+
   // use the existing Doc if possible, otherwise the map will not be immediately populated
-  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: `{tsid}-thought-${id}` })
+  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid })
   const thoughtMap = thoughtDoc.getMap()
 
   // set up persistence and subscribe to changes
@@ -135,9 +189,8 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
     thoughtDocs[id] = thoughtDoc
 
     // disable during tests because of TransactionInactiveError in fake-indexeddb
-    let persistence: IndexeddbPersistence | undefined
     if (process.env.NODE_ENV !== 'test') {
-      persistence = new IndexeddbPersistence(`${tsid}-thought-${id}`, thoughtDoc)
+      thoughtPersistence[id] = new IndexeddbPersistence(guid, thoughtDoc)
     }
 
     // disable during tests because of infinite loop in sinon runAllAsync
@@ -155,10 +208,10 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
       if (e.transaction.origin === thoughtDoc.clientID) return
       const thought = getThought(thoughtDoc)!
 
-      store.dispatch((dispatch, getState) => {
-        Object.values(thought.childrenMap).forEach(loadThoughtDoc)
-        loadLexemeDoc(hashThought(thought.value))
+      Object.values(thought.childrenMap).forEach(loadThoughtDoc)
+      loadLexemeDoc(hashThought(thought.value))
 
+      store.dispatch((dispatch, getState) => {
         dispatch(
           updateThoughtsActionCreator({
             thoughtIndexUpdates: {
@@ -173,11 +226,11 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
       })
     })
 
-    if (id === HOME_TOKEN) {
-      persistence?.whenSynced.then(() => {
+    thoughtPersistence[id]?.whenSynced.then(() => {
+      if (id === HOME_TOKEN) {
         resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
-      })
-    }
+      }
+    })
   }
 
   return thoughtDoc
@@ -185,7 +238,8 @@ const loadThoughtDoc = (id: ThoughtId): Y.Doc => {
 
 /** Loads a lexeme from the persistence layers and binds the Y.Doc. Reuses the existing Y.Doc if it exists. The Y.Doc is immediately available in lexemeDocs. Lexeme is available on await. */
 const loadLexemeDoc = (key: string): Y.Doc => {
-  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: `lexeme-${key}` })
+  const guid = `${tsid}-lexeme-${key}`
+  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid })
 
   // set up persistence and subscribe to changes
   if (!lexemeDocs[key]) {
@@ -194,8 +248,7 @@ const loadLexemeDoc = (key: string): Y.Doc => {
 
     // disable during tests because of TransactionInactiveError in fake-indexeddb
     if (process.env.NODE_ENV !== 'test') {
-      // eslint-disable-next-line no-new
-      new IndexeddbPersistence(`${tsid}-lexeme-${key}`, lexemeDoc)
+      lexemePersistence[key] = new IndexeddbPersistence(guid, lexemeDoc)
     }
 
     // disable during tests because of infinite loop in sinon runAllAsync
@@ -284,14 +337,28 @@ export const updateThoughts = async (
 
   Object.keys(thoughtDeletes || {}).forEach(id => {
     thoughtDocs[id]?.destroy()
-    // eslint-disable-next-line fp/no-delete
+    enqueue(id)
+    thoughtPersistence[id]
+      ?.clearData()
+      .catch(e => {
+        console.error(e)
+        store.dispatch(alert('Error deleting thought'))
+      })
+      .then(() => dequeue(id))
     delete thoughtDocs[id]
   })
 
-  Object.keys(lexemeDeletes || {}).forEach(id => {
-    lexemeDocs[id]?.destroy()
-    // eslint-disable-next-line fp/no-delete
-    delete lexemeDocs[id]
+  Object.keys(lexemeDeletes || {}).forEach(key => {
+    lexemeDocs[key]?.destroy()
+    enqueue(key)
+    lexemePersistence[key]
+      ?.clearData()
+      .catch(e => {
+        console.error(e)
+        store.dispatch(alert('Error deleting thought'))
+      })
+      .then(() => dequeue(key))
+    delete lexemeDocs[key]
   })
 
   const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(async ([id, thought]) => {
@@ -300,9 +367,9 @@ export const updateThoughts = async (
     return updateThoughtDoc(thoughtDoc, thought)
   })
 
-  const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([id, lexeme]) => {
+  const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([key, lexeme]) => {
     // TODO: Why do we get a TransactionInactiveError in tests if we don't await loadThoughtDoc before executing the transaction?
-    const lexemeDoc = loadLexemeDoc(id)
+    const lexemeDoc = loadLexemeDoc(key)
     return updateLexemeDoc(lexemeDoc, lexeme)
   })
 
@@ -313,13 +380,13 @@ export const updateThoughts = async (
 export const clear = async () => {
   Object.entries(thoughtDocs).forEach(([id, doc]) => {
     doc.destroy()
-    // eslint-disable-next-line fp/no-delete
+    thoughtPersistence[id]?.clearData()
     delete thoughtDocs[id]
   })
-  Object.entries(lexemeDocs).forEach(([id, doc]) => {
+  Object.entries(lexemeDocs).forEach(([key, doc]) => {
     doc.destroy()
-    // eslint-disable-next-line fp/no-delete
-    delete lexemeDocs[id]
+    lexemePersistence[key]?.clearData()
+    delete lexemeDocs[key]
   })
 
   // reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
@@ -333,14 +400,14 @@ export const clear = async () => {
 }
 
 /** Gets a single lexeme from the lexemeIndex by its id. */
-export const getLexemeById = async (id: string): Promise<Lexeme | undefined> => {
-  const lexemeDoc = loadLexemeDoc(id)
+export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
+  const lexemeDoc = loadLexemeDoc(key)
   return getLexeme(lexemeDoc)
 }
 
-/** Gets multiple thoughts from the lexemeIndex by Lexeme id. */
-export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> =>
-  Promise.all(ids.map(getLexemeById))
+/** Gets multiple thoughts from the lexemeIndex by key. */
+export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> =>
+  Promise.all(keys.map(getLexemeById))
 
 /** Get a thought by id. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
@@ -366,10 +433,10 @@ export const getLastUpdated = async () => yHelpers.get('lastUpdated')
 export const updateLastUpdated = async (lastUpdated: Timestamp) => yHelpers.set('lastUpdated', lastUpdated)
 
 /** Deletes a single lexeme from the lexemeIndex by its id. Only used by deleteData. TODO: How to remove? */
-export const deleteLexeme = async (id: string) => {
-  lexemeDocs[id]?.destroy()
-  // eslint-disable-next-line fp/no-delete
-  delete lexemeDocs[id]
+export const deleteLexeme = async (key: string) => {
+  lexemeDocs[key]?.destroy()
+  lexemePersistence[key]?.clearData()
+  delete lexemeDocs[key]
 }
 
 const db: DataProvider = {

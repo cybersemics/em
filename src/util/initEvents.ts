@@ -168,9 +168,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    const shouldConfirmReload = pushStore.getState().isPushing
-
-    if (shouldConfirmReload) {
+    if (pushStore.getState().isPushing) {
       // Note: Showing confirmation dialog can vary between browsers.
       // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()

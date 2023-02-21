@@ -47,19 +47,19 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
 }
 
 /** Clears state.pushQueue on the next action when pushQueue has been invalidated by pushQueue, and then clear the invalidated flag. This is done to avoid an additional dispatch and thus selector recalculations on every thought change. Do not access state.pushQueue outside of a reducer, as it may be stale. */
-const clearPushQueueEnhancer: StoreEnhancer<any> =
+const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
     createStore((state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
 
       // apply reducer and clear push queue
-      const stateNew = reducer({ ...state, pushQueue: [] }, action)
+      const stateNew: State = reducer(state, action)
 
       // get ids of critical thoughts to cache to localStorage
       const settingsIds = getSettingsIds(stateNew)
 
-      state.pushQueue.forEach(batch => {
+      stateNew.pushQueue.forEach(batch => {
         // cache updated settings
         Object.entries(settingsIds).forEach(([name, id]) => {
           if (id && id in batch.thoughtIndexUpdates) {
@@ -72,7 +72,8 @@ const clearPushQueueEnhancer: StoreEnhancer<any> =
         db.updateThoughts?.(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, batch.updates?.schemaVersion)
       })
 
-      return stateNew
+      // clear push queue
+      return { ...stateNew, pushQueue: [] }
     }, initialState)
 
-export default clearPushQueueEnhancer
+export default pushQueue

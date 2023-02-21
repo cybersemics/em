@@ -8,8 +8,8 @@ import ThoughtId from '../@types/ThoughtId'
 export interface DataProvider {
   name?: string
   clear: () => Promise<unknown>
-  getLexemeById: (id: string) => Promise<Lexeme | undefined>
-  getLexemesByIds: (ids: string[]) => Promise<(Lexeme | undefined)[]>
+  getLexemeById: (key: string) => Promise<Lexeme | undefined>
+  getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
   updateThoughts?: (
