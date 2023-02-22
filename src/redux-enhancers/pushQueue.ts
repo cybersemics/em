@@ -1,5 +1,6 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
+import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -46,6 +47,34 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
   }
 }
 
+/** Merges multiple push batches into a single batch. Last write wins. */
+const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
+  ...accum,
+  thoughtIndexUpdates: {
+    ...accum.thoughtIndexUpdates,
+    ...batch.thoughtIndexUpdates,
+  },
+  lexemeIndexUpdates: {
+    ...accum.lexemeIndexUpdates,
+    ...batch.lexemeIndexUpdates,
+  },
+  recentlyEdited: {
+    ...accum.recentlyEdited,
+    ...batch.recentlyEdited,
+  },
+  pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
+  pendingLexemes: {
+    ...(accum.pendingLexemes || {}),
+    ...(batch.pendingLexemes || {}),
+  },
+  updates: {
+    ...accum.updates,
+    ...batch.updates,
+  },
+  local: batch.local !== false,
+  remote: batch.remote !== false,
+})
+
 /** Clears state.pushQueue on the next action when pushQueue has been invalidated by pushQueue, and then clear the invalidated flag. This is done to avoid an additional dispatch and thus selector recalculations on every thought change. Do not access state.pushQueue outside of a reducer, as it may be stale. */
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
@@ -56,21 +85,27 @@ const pushQueue: StoreEnhancer<any> =
       // apply reducer and clear push queue
       const stateNew: State = reducer(state, action)
 
-      // get ids of critical thoughts to cache to localStorage
+      if (stateNew.pushQueue.length === 0) return stateNew
+
+      // merge batches
+      // last write wins
+      const mergedBatch = stateNew.pushQueue.reduce(mergeBatch, {} as PushBatch)
+
+      // cache updated settings
       const settingsIds = getSettingsIds(stateNew)
-
-      stateNew.pushQueue.forEach(batch => {
-        // cache updated settings
-        Object.entries(settingsIds).forEach(([name, id]) => {
-          if (id && id in batch.thoughtIndexUpdates) {
-            const thought = getThoughtById(stateNew, id) as Thought | undefined
-            cacheSetting(name, thought?.value || null)
-          }
-        })
-
-        // push batch updates to database
-        db.updateThoughts?.(batch.thoughtIndexUpdates, batch.lexemeIndexUpdates, batch.updates?.schemaVersion)
+      Object.entries(settingsIds).forEach(([name, id]) => {
+        if (id && id in mergedBatch.thoughtIndexUpdates) {
+          const thought = getThoughtById(stateNew, id) as Thought | undefined
+          cacheSetting(name, thought?.value || null)
+        }
       })
+
+      // push batch updates to database
+      db.updateThoughts?.(
+        mergedBatch.thoughtIndexUpdates,
+        mergedBatch.lexemeIndexUpdates,
+        mergedBatch.updates?.schemaVersion,
+      )
 
       // clear push queue
       return { ...stateNew, pushQueue: [] }
