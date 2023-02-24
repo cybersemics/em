@@ -1,10 +1,9 @@
 import Role from './Role'
 
-/** An access token for sharing a thoughtspace. */
+/** A set of permissons granted to an access token. */
 interface Share {
-  // ISOString
-  accessed?: string
-  created: string
+  accessed?: number
+  created: number
   name?: string
   role: Role
 }

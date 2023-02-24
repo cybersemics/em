@@ -13,6 +13,8 @@ const protocol = host === 'localhost' ? 'ws' : 'wss'
 // public host must end with '/' or the websocket connection will not open
 export const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
 
+// stores the permissions for the entire thoughtspace
+// only accessible by owner
 export const ypermissionsDoc = new Y.Doc()
 
 // Define a secret access token for this device.
@@ -40,10 +42,12 @@ if (process.env.NODE_ENV !== 'test') {
   new IndexeddbPersistence(tsid, ypermissionsDoc)
 }
 
+// websocket for the permissions doc
 export const websocketPermissions = new HocuspocusProviderWebsocket({
   url: websocketUrl,
 })
 
+// websocket provider for the permissions doc
 export const websocketProviderPermissions = new HocuspocusProvider({
   websocketProvider: websocketPermissions,
   name: `${tsid}/permissions`,

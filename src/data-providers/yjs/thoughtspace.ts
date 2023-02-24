@@ -18,6 +18,7 @@ import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
+import { encodeLexemeDocumentName, encodeThoughtDocumentName } from './documentNameEncoder'
 
 // A map of thoughts and lexemes being updated.
 // Used to update pushStore isPushing.
@@ -202,10 +203,10 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
 
 /** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. Returns a Thought promise, but you can access thoughtDocs[id] immediately. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  const guid = `${tsid}-thought-${id}`
+  const documentName = encodeThoughtDocumentName(tsid, id)
 
   // use the existing Doc if possible, otherwise the map will not be immediately populated
-  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid })
+  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
 
   // set up persistence and subscribe to changes
   if (!thoughtDocs[id]) {
@@ -215,12 +216,12 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
     // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
     // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
-      thoughtPersistence[id] = new IndexeddbPersistence(guid, thoughtDoc)
+      thoughtPersistence[id] = new IndexeddbPersistence(documentName, thoughtDoc)
 
       // eslint-disable-next-line no-new
       new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
-        name: `${tsid}-thought-${id}`,
+        name: documentName,
         document: thoughtDoc,
         token: accessToken,
       })
@@ -265,8 +266,8 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 
 /** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
 export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
-  const guid = `${tsid}-lexeme-${key}`
-  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid })
+  const documentName = encodeLexemeDocumentName(tsid, key)
+  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
 
   // set up persistence and subscribe to changes
   if (!lexemeDocs[key]) {
@@ -276,12 +277,12 @@ export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
     // disable during tests because of TransactionInactiveError in fake-indexeddb
     // disable during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
-      lexemePersistence[key] = new IndexeddbPersistence(guid, lexemeDoc)
+      lexemePersistence[key] = new IndexeddbPersistence(documentName, lexemeDoc)
 
       // eslint-disable-next-line no-new
       new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
-        name: `${tsid}-lexeme-${key}`,
+        name: documentName,
         document: lexemeDoc,
         token: accessToken,
       })
