@@ -45,6 +45,22 @@ const thoughtPersistence: Index<IndexeddbPersistence> = {}
 const lexemeDocs: Index<Y.Doc> = {}
 const lexemePersistence: Index<IndexeddbPersistence> = {}
 
+// doclog is an append-only log of all thought ids and lexeme keys that are updated.
+// Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
+// They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and future compaction.
+const doclog = new Y.Doc()
+const thoughtLog = doclog.getArray<ThoughtId>('thoughtLog')
+const lexemeLog = doclog.getArray<string>('lexemeLog')
+const doclogPersistence = new IndexeddbPersistence('doclog', doclog)
+doclogPersistence.whenSynced
+  .catch(e => {
+    console.error(e)
+    store.dispatch(alert('Error loading doclog'))
+  })
+  .then(() => {
+    // TODO
+  })
+
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
 const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
   const emitter = new Emitter()
@@ -63,6 +79,7 @@ const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<ThoughtDb>()
 export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
+// NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   if (!thoughtDocs[id]) {
     getThoughtById(id)
@@ -122,6 +139,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
+// NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
 const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   if (!lexemeDocs[key]) {
     getLexemeById(key)
@@ -395,6 +413,11 @@ export const updateThoughts = async (
   const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([key, lexeme]) =>
     updateLexeme(key, lexeme),
   )
+
+  // eslint-disable-next-line fp/no-mutating-methods
+  thoughtLog.push(Object.keys(thoughtIndexUpdates || {}) as ThoughtId[])
+  // eslint-disable-next-line fp/no-mutating-methods
+  lexemeLog.push(Object.keys(lexemeIndexUpdates))
 
   const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
   const lexemeDeleteKeys = Object.keys(lexemeDeletes || {})
