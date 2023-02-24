@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@hocuspocus/server": "^1.0.1",
-    "yjs": "13.5.41"
+    "yjs": "13.5.29"
   },
   "devDependencies": {
     "typescript": "^4.9.4"
