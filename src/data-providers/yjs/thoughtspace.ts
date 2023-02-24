@@ -123,7 +123,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
 const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
-  if (!thoughtDocs[key]) {
+  if (!lexemeDocs[key]) {
     getLexemeById(key)
   }
   const lexemeDoc = lexemeDocs[key]
@@ -331,11 +331,13 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. */
-const deleteThought = (id: ThoughtId) => {
+const deleteThought = (id: ThoughtId): Promise<void> => {
+  const persistence = thoughtPersistence[id]
   delete thoughtDocs[id]
+  delete thoughtPersistence[id]
 
   enqueue(id)
-  return thoughtPersistence[id]
+  return persistence
     ?.clearData()
     .catch(e => {
       console.error(e)
@@ -347,11 +349,13 @@ const deleteThought = (id: ThoughtId) => {
 }
 
 /** Deletes a lexemes and clears the doc from IndexedDB. */
-const deleteLexeme = (key: string) => {
+const deleteLexeme = (key: string): Promise<void> => {
+  const persistence = lexemePersistence[key]
   delete lexemeDocs[key]
+  delete lexemePersistence[key]
 
   enqueue(key)
-  return lexemePersistence[key]
+  return persistence
     ?.clearData()
     .catch(e => {
       console.error(e)
