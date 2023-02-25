@@ -6,14 +6,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
-import ShareType from '../../@types/Share'
+import Share from '../../@types/Share'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import { isTouch } from '../../browser'
-import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
+import { accessToken as accessTokenCurrent, permissionsClientDoc, tsid } from '../../data-providers/yjs'
 import permissionsServer from '../../data-providers/yjs/permissionsServer'
 import * as selection from '../../device/selection'
-import usePermissions from '../../hooks/usePermissions'
+import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
 import strip from '../../util/strip'
@@ -24,8 +24,11 @@ import PencilIcon from './../icons/PencilIcon'
 import ShareIcon from './../icons/ShareIcon'
 import ModalComponent from './ModalComponent'
 
+/** A hook that subscribes to the permissionsClientDoc. */
+const usePermissions = (): Index<Share> => useSharedType(permissionsClientDoc.getMap<Share>())
+
 /** Gets the next available device name for a new device. Autoincrements by 1. */
-const getNextDeviceName = (permissions: Index<ShareType>, start?: number): string => {
+const getNextDeviceName = (permissions: Index<Share>, start?: number): string => {
   const nextDeviceNumber = start ?? Object.keys(permissions).length + 1
   return Object.values(permissions).some(share => share.name === `Device ${nextDeviceNumber}`)
     ? getNextDeviceName(permissions, nextDeviceNumber + 1)
@@ -80,7 +83,7 @@ const ShareList = ({
 }: {
   onAdd?: (accessToken: string) => void
   onSelect?: (accessToken: string) => void
-  permissions: Index<ShareType>
+  permissions: Index<Share>
 }) => {
   const status = useStatus()
   const dispatch = useDispatch()
@@ -128,7 +131,7 @@ const ShareList = ({
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
-                      onSubmit={({ name, role }: Pick<ShareType, 'name' | 'role'>) => {
+                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
                         const result: { accessToken?: string; error?: string } = permissionsServer.add({
                           role,
                           name: strip(name || ''),
@@ -182,17 +185,7 @@ const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Acce
 
 /** Renders a single device share. */
 const ShareRow = React.memo(
-  ({
-    accessToken,
-    isCurrent,
-    role,
-    share,
-  }: {
-    accessToken: string
-    isCurrent?: boolean
-    share: ShareType
-    role: Role
-  }) => {
+  ({ accessToken, isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
     return (
       <div
         style={{
@@ -235,7 +228,7 @@ const AddDeviceForm = ({
   defaultName,
 }: {
   onCancel: () => void
-  onSubmit: ({ name, role }: Pick<ShareType, 'name' | 'role'>) => void
+  onSubmit: ({ name, role }: Pick<Share, 'name' | 'role'>) => void
   defaultName?: string
 }) => {
   const colors = useSelector(themeColors)
@@ -354,7 +347,7 @@ const ShareDetail = React.memo(
     accessToken: string
     isLastDevice?: boolean
     onBack: () => void
-    share: ShareType
+    share: Share
   }) => {
     const dispatch = useDispatch()
     const fontSize = useSelector((state: State) => state.fontSize)
