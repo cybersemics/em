@@ -5,10 +5,12 @@
     "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level node build/scripts/server/index.js"
   },
   "dependencies": {
-    "@hocuspocus/server": "^1.0.1",
-    "yjs": "13.5.29"
+    "@hocuspocus/server": "^1.0.1"
   },
   "devDependencies": {
     "typescript": "^4.9.4"
+  },
+  "peerDependencies": {
+    "yjs": "^13.5.29"
   }
 }

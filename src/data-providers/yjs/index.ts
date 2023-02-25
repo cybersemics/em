@@ -2,7 +2,6 @@ import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/pro
 import * as murmurHash3 from 'murmurhash3js'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
-import Index from '../../@types/IndexType'
 import Share from '../../@types/Share'
 import createId from '../../util/createId'
 import storage from '../../util/storage'
@@ -13,9 +12,9 @@ const protocol = host === 'localhost' ? 'ws' : 'wss'
 // public host must end with '/' or the websocket connection will not open
 export const websocketUrl = `${protocol}://${host}${host === 'localhost' || host.endsWith('/') ? '' : '/'}:${port}`
 
-// stores the permissions for the entire thoughtspace
+// stores the permissions for the entire thoughtspace as Index<Share> (indexed by access token)
 // only accessible by owner
-export const ypermissionsDoc = new Y.Doc()
+export const permissionsClientDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
@@ -39,7 +38,7 @@ export const clientId = murmurHash3.x64.hash128(accessToken)
 // disable during tests because of TransactionInactiveError in fake-indexeddb
 if (process.env.NODE_ENV !== 'test') {
   // eslint-disable-next-line no-new
-  new IndexeddbPersistence(tsid, ypermissionsDoc)
+  new IndexeddbPersistence(tsid, permissionsClientDoc)
 }
 
 // websocket for the permissions doc
@@ -51,7 +50,7 @@ export const websocketPermissions = new HocuspocusProviderWebsocket({
 export const websocketProviderPermissions = new HocuspocusProvider({
   websocketProvider: websocketPermissions,
   name: `${tsid}/permissions`,
-  document: ypermissionsDoc,
+  document: permissionsClientDoc,
   token: accessToken,
 })
 
@@ -65,13 +64,13 @@ export const websocketThoughtspace = websocketPermissions
 
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
-  if (yPermissions.size > 1) {
+  if (permissionsClientMap.size > 1) {
     websocketThoughtspace.connect()
   }
 }
-const yPermissions = ypermissionsDoc.getMap<Index<Share>>('permissions')
+const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 // indexeddbProviderPermissions.whenSynced.then(connectThoughtspaceProvider)
-yPermissions.observe(connectThoughtspaceProvider)
+permissionsClientMap.observe(connectThoughtspaceProvider)
 
 // If the local thoughtspace is empty, save the shared docid and accessToken locally, i.e. make them the default thoughtspace.
 // if (tsidShared && accessTokenShared && tsidShared !== tsidLocal) {
