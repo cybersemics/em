@@ -39,6 +39,10 @@ const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
 
 /** Logs a message to the console with an ISO timestamp. */
 const log = (...args: any) => {
+  // prepend timestamp
+  if (process.env.LOG_TIMESTAMPS) {
+    args = [gray(new Date().toISOString()), ...args]
+  }
   // default to console.info
   // override the method by passing { method: 'error' } as the last argument
   let method = 'info'
@@ -47,7 +51,7 @@ const log = (...args: any) => {
     args = args.slice(0, -1)
     method = lastArg.method
   }
-  ;(console as any)[method](gray(new Date().toISOString()), ...args)
+  ;(console as any)[method](args)
 }
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
