@@ -10,8 +10,8 @@ import storage from '../../util/storage'
 
 const permissionsMap = permissionsClientDoc.getMap<Share>()
 
-// websocket RPC for shares
-const permissionsServer: { [key in keyof Routes['share']]: any } = {
+// permissions model that waps permissionsClientDoc
+const permissionsModel: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
     permissionsMap.set(accessToken, {
@@ -55,4 +55,4 @@ const permissionsServer: { [key in keyof Routes['share']]: any } = {
   },
 }
 
-export default permissionsServer
+export default permissionsModel
