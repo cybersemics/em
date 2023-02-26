@@ -94,9 +94,21 @@ export const onLoadDocument = async ({
     const permissionsClientDoc = getYDoc(permissionsDocName)
     if (!permissionsClientDoc) return
 
-    // stores the permissions for the entire thoughtspace as Index<Share> (indexed by access token)
-    // only accessible by owner
     const permissionsClientMap = permissionsClientDoc.getMap<Share>()
+
+    // sync client permissions to server
+    // TODO: Maybe we can 2-way sync only the updates for this tsid
+    permissionsClientMap?.observe(e => {
+      e.changes.keys.forEach((change, key) => {
+        if (change.action === 'delete') {
+          permissionsServerMap.delete(key)
+        } else {
+          permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+        }
+      })
+    })
+
+    // copy server permissions to client
     permissionsServerMap.forEach((permission: Share, token: string) => {
       permissionsClientMap.set(token, permission)
     })
