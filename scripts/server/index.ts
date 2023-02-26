@@ -9,24 +9,8 @@ const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
 const PERMISSIONS_DOC_NAME = 'permissions'
 
-// contains a Map<Index<Share>> mapping tsid -> token -> Share for all thoughtspaces
+// contains a top level map for each thoughtspace Map<Share> mapping token -> permission
 const permissionsServerDoc = new Y.Doc()
-
-// persist permissions to YPERMISSIONS with leveldb
-// TODO: encrypt
-if (process.env.YPERMISSIONS) {
-  // do not use process.env.YPERSISTENCE or it will overwrite the thoughtspace leveldb
-  const ldb = new LeveldbPersistence(process.env.YPERMISSIONS)
-  ;(async () => {
-    const persistedYdoc = await ldb.getYDoc(PERMISSIONS_DOC_NAME)
-    const newUpdates = Y.encodeStateAsUpdate(permissionsServerDoc)
-    ldb.storeUpdate(PERMISSIONS_DOC_NAME, newUpdates)
-    Y.applyUpdate(permissionsServerDoc, Y.encodeStateAsUpdate(persistedYdoc))
-    permissionsServerDoc.on('update', update => {
-      ldb.storeUpdate(PERMISSIONS_DOC_NAME, update)
-    })
-  })()
-}
 
 /** Shows the first n characters of a string and replaces the rest with an ellipsis. */
 const mask = (s: string, n = 4) => `${s.slice(0, n)}...`
@@ -107,8 +91,6 @@ export const onLoadDocument = async ({
     // update last accessed time on auth
     permissionsServerMap.set(token, { ...permission, accessed: Date.now() })
 
-    // TODO: Wait until permissions document is fully synced
-    // Move to other hook?
     const permissionsClientDoc = getYDoc(permissionsDocName)
     if (!permissionsClientDoc) return
 
@@ -119,6 +101,22 @@ export const onLoadDocument = async ({
       permissionsClientMap.set(token, permission)
     })
   }
+}
+
+// persist permissions to YPERMISSIONS with leveldb
+// TODO: encrypt
+if (process.env.YPERMISSIONS) {
+  // do not use process.env.YPERSISTENCE or it will overwrite the thoughtspace leveldb
+  const ldb = new LeveldbPersistence(process.env.YPERMISSIONS)
+  ;(async () => {
+    const persistedYdoc = await ldb.getYDoc(PERMISSIONS_DOC_NAME)
+    const newUpdates = Y.encodeStateAsUpdate(permissionsServerDoc)
+    ldb.storeUpdate(PERMISSIONS_DOC_NAME, newUpdates)
+    Y.applyUpdate(permissionsServerDoc, Y.encodeStateAsUpdate(persistedYdoc))
+    permissionsServerDoc.on('update', update => {
+      ldb.storeUpdate(PERMISSIONS_DOC_NAME, update)
+    })
+  })()
 }
 
 const server = Server.configure({
