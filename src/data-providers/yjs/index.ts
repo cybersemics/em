@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 import Share from '../../@types/Share'
 import createId from '../../util/createId'
 import storage from '../../util/storage'
+import { encodePermissionsDocumentName } from './documentNameEncoder'
 
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
 const port = process.env.REACT_APP_WEBSOCKET_PORT || 8080
@@ -49,7 +50,7 @@ export const websocketPermissions = new HocuspocusProviderWebsocket({
 // websocket provider for the permissions doc
 export const websocketProviderPermissions = new HocuspocusProvider({
   websocketProvider: websocketPermissions,
-  name: `${tsid}/permissions`,
+  name: encodePermissionsDocumentName(tsid),
   document: permissionsClientDoc,
   token: accessToken,
 })

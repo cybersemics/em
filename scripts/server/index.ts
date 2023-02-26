@@ -3,7 +3,7 @@ import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
 import Index from '../../src/@types/IndexType'
 import Share from '../../src/@types/Share'
-import { parseDocumentName } from '../../src/data-providers/yjs/documentNameEncoder'
+import { encodePermissionsDocumentName, parseDocumentName } from '../../src/data-providers/yjs/documentNameEncoder'
 
 const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
@@ -35,17 +35,13 @@ const log = (...args: any) => {
     args = args.slice(0, -1)
     method = lastArg.method
   }
-  ;(console as any)[method](args)
+  ;(console as any)[method](...args)
 }
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
 export const onAuthenticate = async ({ token, documentName }: { documentName: string; token: string }) => {
-  // extract the tsid from the documentName
-  // permissions docs are in the format `${tsid}/permissions`
-  // thoughts docs are in the format `${tsid}/thought/${id}`
-  // lexeme docs are in the format `${tsid}/lexeme/${key}`
   const tsid = parseDocumentName(documentName)
-  const permissionsDocName = `${tsid}/permissions`
+  const permissionsDocName = encodePermissionsDocumentName(tsid)
   // the server-side permissions map
   // stores the permissions for all thoughtspaces as Map<Index<Share>> (indexed by tsid and access token)
   // only accessible on the server
@@ -79,7 +75,7 @@ export const onLoadDocument = async ({
 }) => {
   const { token } = context
   const tsid = parseDocumentName(documentName)
-  const permissionsDocName = `${tsid}/permissions`
+  const permissionsDocName = encodePermissionsDocumentName(tsid)
   const permissionsServerMap = permissionsServerDoc.getMap<Share>(tsid)
   let permission = permissionsServerMap.get(token)
   const permissionsClientDoc = getYDoc(documentName)
