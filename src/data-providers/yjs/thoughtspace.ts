@@ -43,8 +43,10 @@ const dequeue = (key: string) => {
 // parallel to thoughtIndex and lexemeIndex
 const thoughtDocs: Index<Y.Doc> = {}
 const thoughtPersistence: Index<IndexeddbPersistence> = {}
+const thoughtWebsocketProvider: Index<HocuspocusProvider> = {}
 const lexemeDocs: Index<Y.Doc> = {}
 const lexemePersistence: Index<IndexeddbPersistence> = {}
+const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
@@ -217,9 +219,7 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
     // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
       thoughtPersistence[id] = new IndexeddbPersistence(documentName, thoughtDoc)
-
-      // eslint-disable-next-line no-new
-      new HocuspocusProvider({
+      thoughtWebsocketProvider[id] = new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
         name: documentName,
         document: thoughtDoc,
@@ -278,9 +278,7 @@ export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
     // disable during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
       lexemePersistence[key] = new IndexeddbPersistence(documentName, lexemeDoc)
-
-      // eslint-disable-next-line no-new
-      new HocuspocusProvider({
+      lexemeWebsocketProvider[key] = new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
         name: documentName,
         document: lexemeDoc,
@@ -354,6 +352,7 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   const persistence = thoughtPersistence[id]
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
+  delete thoughtWebsocketProvider[id]
 
   enqueue(id)
   return persistence
@@ -372,6 +371,7 @@ const deleteLexeme = (key: string): Promise<void> => {
   const persistence = lexemePersistence[key]
   delete lexemeDocs[key]
   delete lexemePersistence[key]
+  delete lexemeWebsocketProvider[key]
 
   enqueue(key)
   return persistence
