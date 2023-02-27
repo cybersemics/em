@@ -241,17 +241,20 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
         const thought = getThought(thoughtDoc)
         if (!thought) return
 
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {
-              [thought.id]: thought,
-            },
-            lexemeIndexUpdates: {},
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
+        // dispatch on the next tick, since a reducer may be running
+        setTimeout(() => {
+          store.dispatch(
+            updateThoughtsActionCreator({
+              thoughtIndexUpdates: {
+                [thought.id]: thought,
+              },
+              lexemeIndexUpdates: {},
+              local: false,
+              remote: false,
+              repairCursor: true,
+            }),
+          )
+        })
       })
     })
     .catch(e => {
@@ -296,17 +299,20 @@ export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
         const lexeme = getLexeme(lexemeDoc)
         if (!lexeme) return
 
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {},
-            lexemeIndexUpdates: {
-              [key]: lexeme,
-            },
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
+        // dispatch on the next tick, since a reducer may be running
+        setTimeout(() => {
+          store.dispatch(
+            updateThoughtsActionCreator({
+              thoughtIndexUpdates: {},
+              lexemeIndexUpdates: {
+                [key]: lexeme,
+              },
+              local: false,
+              remote: false,
+              repairCursor: true,
+            }),
+          )
+        })
       })
     })
     .catch(e => {
