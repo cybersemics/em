@@ -69,11 +69,11 @@ new HocuspocusProvider({
 thoughtLog.observe(e => {
   // since the doglogs are append-only, ids are only on .insert
   const idsChanged = e.changes.delta.flatMap(item => item.insert || [])
-  idsChanged.forEach(getThoughtById)
+  idsChanged.forEach(replicateThought)
 })
 lexemeLog.observe(e => {
   const keysChanged = e.changes.delta.flatMap(item => item.insert || [])
-  keysChanged.forEach(getLexemeById)
+  keysChanged.forEach(replicateLexeme)
 })
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
@@ -97,7 +97,7 @@ export const rootSynced = rootSyncedPromise
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   if (!thoughtDocs[id]) {
-    getThoughtById(id)
+    replicateThought(id)
   }
   const thoughtDoc = thoughtDocs[id]
 
@@ -157,7 +157,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
 const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   if (!lexemeDocs[key]) {
-    getLexemeById(key)
+    replicateLexeme(key)
   }
   const lexemeDoc = lexemeDocs[key]
 
@@ -215,8 +215,8 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
-/** Loads a thought from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. Returns a Thought promise, but you can access thoughtDocs[id] immediately. */
-export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
+/** Replicates a thought from the persistence layers to state and IndexedDB. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
+export const replicateThought = async (id: ThoughtId): Promise<void> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
 
   // use the existing Doc if possible, otherwise the map will not be immediately populated
@@ -275,12 +275,10 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
     })
 
   // TODO: race IDB and socket?
-
-  return getThought(thoughtDoc)
 }
 
 /** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
-export const getLexemeById = async (key: string): Promise<Lexeme | undefined> => {
+export const replicateLexeme = async (key: string): Promise<void> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
   const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
 
@@ -331,8 +329,6 @@ export const getLexemeById = async (key: string): Promise<Lexeme | undefined> =>
       console.error(e)
       store.dispatch(alert('Error loading thought'))
     })
-
-  return getLexeme(lexemeDoc)
 }
 
 /** Gets a Thought from a thought Y.Doc. */
@@ -466,9 +462,21 @@ export const clear = async () => {
   updateThoughts(thoughtIndexUpdates, lexemeIndexUpdates, SCHEMA_LATEST)
 }
 
+/** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
+export const getLexemeById = async (key: string) => {
+  await replicateLexeme(key)
+  return getLexeme(lexemeDocs[key])
+}
+
 /** Gets multiple thoughts from the lexemeIndex by key. */
 export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> =>
   Promise.all(keys.map(getLexemeById))
+
+/** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
+export const getThoughtById = async (id: ThoughtId) => {
+  await replicateThought(id)
+  return getThought(thoughtDocs[id])
+}
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
