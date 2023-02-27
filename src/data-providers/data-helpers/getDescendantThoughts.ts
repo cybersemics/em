@@ -4,7 +4,7 @@ import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import ThoughtIndices from '../../@types/ThoughtIndices'
-import { EM_TOKEN, EXPAND_THOUGHT_CHAR } from '../../constants'
+import { EM_TOKEN, EXPAND_THOUGHT_CHAR, ROOT_PARENT_ID } from '../../constants'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
@@ -22,9 +22,6 @@ const MAX_THOUGHTS_QUEUED = 100
 
 interface Options {
   maxDepth?: number
-  // if true, missing ancestors are not loaded
-  // must be set when deleting pending descendants
-  preventLoadingAncestors?: boolean
 }
 
 /** A very simple queue. */
@@ -88,7 +85,7 @@ async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
   getState: () => State,
-  { maxDepth = MAX_DEPTH, preventLoadingAncestors }: Options = {},
+  { maxDepth = MAX_DEPTH }: Options = {},
 ): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
   const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
@@ -150,7 +147,7 @@ async function* getDescendantThoughts(
         const parent = getThoughtById(updatedState, thought.parentId)
 
         // load ancestors of tangential contexts
-        if (!parent && !preventLoadingAncestors) {
+        if (!parent && thought.parentId !== ROOT_PARENT_ID) {
           thoughtIdQueue.add([thought.parentId])
         }
 

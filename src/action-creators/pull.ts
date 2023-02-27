@@ -23,7 +23,6 @@ export interface PullOptions {
   maxDepth?: number
   onLocalThoughts?: (thoughts: ThoughtIndices) => void
   onRemoteThoughts?: (thoughts: ThoughtIndices) => void
-  preventLoadingAncestors?: boolean
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
@@ -66,7 +65,7 @@ const filterPendingDescendants = (state: State, thoughtIds: ThoughtId[]): Though
 const pull =
   (
     thoughtIds: ThoughtId[],
-    { force, maxDepth, onLocalThoughts, onRemoteThoughts, preventLoadingAncestors, remote }: PullOptions = {},
+    { force, maxDepth, onLocalThoughts, onRemoteThoughts, remote }: PullOptions = {},
   ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
@@ -85,7 +84,6 @@ const pull =
     // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
     const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
       maxDepth: maxDepth ?? BUFFER_DEPTH,
-      preventLoadingAncestors,
     })
 
     // pull local before remote
