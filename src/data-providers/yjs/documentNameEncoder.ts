@@ -9,5 +9,8 @@ export const encodeLexemeDocumentName = (tsid: string, key: string) => `${tsid}/
 /** Generates a documentName for a given thought. */
 export const encodePermissionsDocumentName = (tsid: string) => `${tsid}/permissions`
 
+/** Generates a documentName for a given thought. */
+export const encodeDocLogDocumentName = (tsid: string) => `${tsid}/doclog`
+
 /** Extracts the tsid from a document name. */
 export const parseDocumentName = (documentName: string): string => documentName.split('/')[0]

@@ -18,7 +18,7 @@ import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
-import { encodeLexemeDocumentName, encodeThoughtDocumentName } from './documentNameEncoder'
+import { encodeDocLogDocumentName, encodeLexemeDocumentName, encodeThoughtDocumentName } from './documentNameEncoder'
 
 // A map of thoughts and lexemes being updated.
 // Used to update pushStore isPushing.
@@ -50,19 +50,31 @@ const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
-// They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and future compaction.
+// They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and regular compaction.
 const doclog = new Y.Doc()
 const thoughtLog = doclog.getArray<ThoughtId>('thoughtLog')
 const lexemeLog = doclog.getArray<string>('lexemeLog')
-const doclogPersistence = new IndexeddbPersistence('doclog', doclog)
-doclogPersistence.whenSynced
-  .catch(e => {
-    console.error(e)
-    store.dispatch(alert('Error loading doclog'))
-  })
-  .then(() => {
-    // TODO
-  })
+const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+doclogPersistence.whenSynced.catch(e => {
+  console.error(e)
+  store.dispatch(alert('Error loading doclog'))
+})
+// eslint-disable-next-line no-new
+new HocuspocusProvider({
+  websocketProvider: websocketThoughtspace,
+  name: encodeDocLogDocumentName(tsid),
+  document: doclog,
+  token: accessToken,
+})
+thoughtLog.observe(e => {
+  // since the doglogs are append-only, ids are only on .insert
+  const idsChanged = e.changes.delta.flatMap(item => item.insert || [])
+  idsChanged.forEach(getThoughtById)
+})
+lexemeLog.observe(e => {
+  const keysChanged = e.changes.delta.flatMap(item => item.insert || [])
+  keysChanged.forEach(getLexemeById)
+})
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
 const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
