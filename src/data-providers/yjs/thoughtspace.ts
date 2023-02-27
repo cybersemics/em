@@ -248,17 +248,24 @@ export const replicateThought = async (id: ThoughtId): Promise<void> => {
 
       // dispatch on the next tick, since a reducer may be running
       setTimeout(() => {
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {
-              [thought.id]: thought,
-            },
-            lexemeIndexUpdates: {},
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
+        store.dispatch((dispatch, getState) => {
+          // Only update state if the thought or its parent is already loaded.
+          // Otherwise let it load into IndexedDB in the background.
+          // Is there a chance of a false positive if updates arrive out of order?
+          if (!getState().thoughts.thoughtIndex[id] && !getState().thoughts.thoughtIndex[thought.parentId]) return
+
+          dispatch(
+            updateThoughtsActionCreator({
+              thoughtIndexUpdates: {
+                [thought.id]: thought,
+              },
+              lexemeIndexUpdates: {},
+              local: false,
+              remote: false,
+              repairCursor: true,
+            }),
+          )
+        })
       })
     })
   }
@@ -308,17 +315,28 @@ export const replicateLexeme = async (key: string): Promise<void> => {
 
       // dispatch on the next tick, since a reducer may be running
       setTimeout(() => {
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {},
-            lexemeIndexUpdates: {
-              [key]: lexeme,
-            },
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
+        store.dispatch((dispatch, getState) => {
+          // Only update state if the lexeme or at least one of its contets is loaded.
+          // Otherwise let it load into IndexedDB in the background.
+          // Is there a chance of a false positive if the thought arrives after the lexeme?
+          if (
+            !getState().thoughts.lexemeIndex[key] &&
+            lexeme.contexts.every(cxid => !getState().thoughts.thoughtIndex[cxid])
+          )
+            return
+
+          dispatch(
+            updateThoughtsActionCreator({
+              thoughtIndexUpdates: {},
+              lexemeIndexUpdates: {
+                [key]: lexeme,
+              },
+              local: false,
+              remote: false,
+              repairCursor: true,
+            }),
+          )
+        })
       })
     })
   }
