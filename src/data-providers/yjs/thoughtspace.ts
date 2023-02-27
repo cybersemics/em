@@ -238,6 +238,29 @@ export const replicateThought = async (id: ThoughtId): Promise<void> => {
         token: accessToken,
       })
     }
+
+    // TODO: Subscribe to changes after first sync.
+    // This ensures that pending is not overwritten.
+    thoughtDoc.getMap().observe(e => {
+      if (e.transaction.origin === thoughtDoc.clientID) return
+      const thought = getThought(thoughtDoc)
+      if (!thought) return
+
+      // dispatch on the next tick, since a reducer may be running
+      setTimeout(() => {
+        store.dispatch(
+          updateThoughtsActionCreator({
+            thoughtIndexUpdates: {
+              [thought.id]: thought,
+            },
+            lexemeIndexUpdates: {},
+            local: false,
+            remote: false,
+            repairCursor: true,
+          }),
+        )
+      })
+    })
   }
 
   await thoughtPersistence[id]?.whenSynced
@@ -245,29 +268,6 @@ export const replicateThought = async (id: ThoughtId): Promise<void> => {
       if (id === HOME_TOKEN) {
         resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
       }
-
-      // Subscribe to changes after first sync.
-      // This ensures that pending is not overwritten.
-      thoughtDoc.getMap().observe(e => {
-        if (e.transaction.origin === thoughtDoc.clientID) return
-        const thought = getThought(thoughtDoc)
-        if (!thought) return
-
-        // dispatch on the next tick, since a reducer may be running
-        setTimeout(() => {
-          store.dispatch(
-            updateThoughtsActionCreator({
-              thoughtIndexUpdates: {
-                [thought.id]: thought,
-              },
-              lexemeIndexUpdates: {},
-              local: false,
-              remote: false,
-              repairCursor: true,
-            }),
-          )
-        })
-      })
     })
     .catch(e => {
       console.error(e)
@@ -298,37 +298,35 @@ export const replicateLexeme = async (key: string): Promise<void> => {
         token: accessToken,
       })
     }
-  }
 
-  await lexemePersistence[key]?.whenSynced
-    .then(() => {
-      // Subscribe to changes after first sync.
-      // This ensures that pending is not overwritten.
-      lexemeDoc.getMap().observe(e => {
-        if (e.transaction.origin === lexemeDoc.clientID) return
-        const lexeme = getLexeme(lexemeDoc)
-        if (!lexeme) return
+    // TODO: Subscribe to changes after first sync.
+    // This ensures that pending is not overwritten.
+    lexemeDoc.getMap().observe(e => {
+      if (e.transaction.origin === lexemeDoc.clientID) return
+      const lexeme = getLexeme(lexemeDoc)
+      if (!lexeme) return
 
-        // dispatch on the next tick, since a reducer may be running
-        setTimeout(() => {
-          store.dispatch(
-            updateThoughtsActionCreator({
-              thoughtIndexUpdates: {},
-              lexemeIndexUpdates: {
-                [key]: lexeme,
-              },
-              local: false,
-              remote: false,
-              repairCursor: true,
-            }),
-          )
-        })
+      // dispatch on the next tick, since a reducer may be running
+      setTimeout(() => {
+        store.dispatch(
+          updateThoughtsActionCreator({
+            thoughtIndexUpdates: {},
+            lexemeIndexUpdates: {
+              [key]: lexeme,
+            },
+            local: false,
+            remote: false,
+            repairCursor: true,
+          }),
+        )
       })
     })
-    .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error loading thought'))
-    })
+  }
+
+  await lexemePersistence[key]?.whenSynced.catch(e => {
+    console.error(e)
+    store.dispatch(alert('Error loading thought'))
+  })
 }
 
 /** Gets a Thought from a thought Y.Doc. */
