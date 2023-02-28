@@ -5,7 +5,7 @@ import Thought from '../@types/Thought'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
-import { clientId } from '../data-providers/yjs'
+import { clientId, tsidShared } from '../data-providers/yjs'
 import hashThought from '../util/hashThought'
 import never from '../util/never'
 import parseJsonSafe from '../util/parseJsonSafe'
@@ -125,7 +125,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
-    showModal: !storage.getItem('welcomeComplete') ? 'welcome' : null,
+    showModal: !storage.getItem('welcomeComplete') && !tsidShared ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
     splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),

@@ -27,7 +27,7 @@ export const tsidLocal = storage.getItem('tsid', createId)
 
 // access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device
-const tsidShared = new URLSearchParams(window.location.search).get('share')
+export const tsidShared = new URLSearchParams(window.location.search).get('share')
 const accessTokenShared = new URLSearchParams(window.location.search).get('auth')
 
 export const tsid = tsidShared || tsidLocal
@@ -100,8 +100,8 @@ permissionsClientMap.observe(connectThoughtspaceProvider)
 //       storage.getItem('tsidBackup', tsidLocal)
 //       storage.getItem('accessTokenBackup', accessTokenLocal)
 
-//       // close the welcome modal
-//       store.dispatch(closeModal())
+//       // the welcome modal was disabled in initialState, but we still need to complete it so it doesn't appear again
+//       storage.setItem('welcomeComplete')
 
 //       // clear share params from URL without refreshing
 //       window.history.pushState({}, '', '/')
