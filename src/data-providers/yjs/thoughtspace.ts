@@ -67,11 +67,13 @@ new HocuspocusProvider({
   token: accessToken,
 })
 thoughtLog.observe(e => {
+  if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
   const idsChanged: ThoughtId[] = e.changes.delta.flatMap(item => item.insert || [])
   idsChanged.forEach(replicateThought)
 })
 lexemeLog.observe(e => {
+  if (e.transaction.origin === doclog.clientID) return
   const keysChanged: string[] = e.changes.delta.flatMap(item => item.insert || [])
   keysChanged.forEach(replicateLexeme)
 })
@@ -450,13 +452,15 @@ export const updateThoughts = async (
   // The only cost is that any clients that go offline will not replicate a delayed contiguous edit when reconnecting.
   const ids = Object.keys(thoughtIndexUpdates || {}) as ThoughtId[]
   const idsTrimmed = ids[0] === thoughtLog.slice(-1)[0] ? ids.slice(1) : ids
-  // eslint-disable-next-line fp/no-mutating-methods
-  thoughtLog.push(idsTrimmed)
 
   const keys = Object.keys(lexemeIndexUpdates || {})
   const keysTrimmed = keys[0] === lexemeLog.slice(-1)[0] ? keys.slice(1) : keys
-  // eslint-disable-next-line fp/no-mutating-methods
-  lexemeLog.push(keysTrimmed)
+  doclog.transact(() => {
+    // eslint-disable-next-line fp/no-mutating-methods
+    thoughtLog.push(idsTrimmed)
+    // eslint-disable-next-line fp/no-mutating-methods
+    lexemeLog.push(keysTrimmed)
+  }, doclog.clientID)
 
   const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
   const lexemeDeleteKeys = Object.keys(lexemeDeletes || {})
