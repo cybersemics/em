@@ -68,11 +68,11 @@ new HocuspocusProvider({
 })
 thoughtLog.observe(e => {
   // since the doglogs are append-only, ids are only on .insert
-  const idsChanged = e.changes.delta.flatMap(item => item.insert || [])
+  const idsChanged: ThoughtId[] = e.changes.delta.flatMap(item => item.insert || [])
   idsChanged.forEach(replicateThought)
 })
 lexemeLog.observe(e => {
-  const keysChanged = e.changes.delta.flatMap(item => item.insert || [])
+  const keysChanged: string[] = e.changes.delta.flatMap(item => item.insert || [])
   keysChanged.forEach(replicateLexeme)
 })
 
@@ -445,10 +445,18 @@ export const updateThoughts = async (
     updateLexeme(key, lexeme),
   )
 
+  // When thought ids are pushed to the doclog, the first id is trimmed if it matches the last id of the thought log.
+  // This is done to reduce the growth of the doclog during the common operation of editing a single thought.
+  // The only cost is that any clients that go offline will not replicate a delayed contiguous edit when reconnecting.
+  const ids = Object.keys(thoughtIndexUpdates || {}) as ThoughtId[]
+  const idsTrimmed = ids[0] === thoughtLog.slice(-1)[0] ? ids.slice(1) : ids
   // eslint-disable-next-line fp/no-mutating-methods
-  thoughtLog.push(Object.keys(thoughtIndexUpdates || {}) as ThoughtId[])
+  thoughtLog.push(idsTrimmed)
+
+  const keys = Object.keys(lexemeIndexUpdates || {})
+  const keysTrimmed = keys[0] === lexemeLog.slice(-1)[0] ? keys.slice(1) : keys
   // eslint-disable-next-line fp/no-mutating-methods
-  lexemeLog.push(Object.keys(lexemeIndexUpdates))
+  lexemeLog.push(keysTrimmed)
 
   const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
   const lexemeDeleteKeys = Object.keys(lexemeDeletes || {})
