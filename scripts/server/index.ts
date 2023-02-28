@@ -129,8 +129,8 @@ if (process.env.YPERMISSIONS) {
 
 const server = Server.configure({
   port,
-  // onAuthenticate,
-  // onLoadDocument,
+  onAuthenticate,
+  onLoadDocument,
 })
 
 server.listen()
