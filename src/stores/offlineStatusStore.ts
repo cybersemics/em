@@ -1,13 +1,13 @@
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
 import { WEBSOCKET_CONNECTION_TIME } from '../constants'
-import { websocketPermissions } from '../data-providers/yjs'
+import { websocket } from '../data-providers/yjs'
 import { rootSynced } from '../data-providers/yjs/thoughtspace'
 import ministore from './ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
 export const offlineStatusStore = ministore<OfflineStatus>(
-  websocketPermissions.status === 'connected' ? 'connected' : 'preconnecting',
+  websocket.status === 'connected' ? 'connected' : 'preconnecting',
 )
 
 /* Offline status state machine driven by websocket connection status changes.
@@ -20,7 +20,7 @@ export const offlineStatusStore = ministore<OfflineStatus>(
   disconnected -> reconnecting
 
 */
-websocketPermissions.on('status', ({ status }: { status: WebsocketStatus }) => {
+websocket.on('status', ({ status }: { status: WebsocketStatus }) => {
   offlineStatusStore.update(statusOld =>
     status === 'connecting'
       ? statusOld === 'preconnecting' || statusOld === 'connecting' || statusOld === 'offline'

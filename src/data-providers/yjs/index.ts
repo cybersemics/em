@@ -39,24 +39,20 @@ export const clientId = murmurHash3.x64.hash128(accessToken)
 // disable during tests because of TransactionInactiveError in fake-indexeddb
 if (process.env.NODE_ENV !== 'test') {
   // eslint-disable-next-line no-new
-  new IndexeddbPersistence(tsid, permissionsClientDoc)
+  new IndexeddbPersistence(encodePermissionsDocumentName(tsid), permissionsClientDoc)
 }
 
-// websocket for the permissions doc
-export const websocketPermissions = new HocuspocusProviderWebsocket({
-  url: websocketUrl,
-})
-
-// websocket provider for the permissions doc
+// websocket provider
+export const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
 export const websocketProviderPermissions = new HocuspocusProvider({
-  websocketProvider: websocketPermissions,
+  websocketProvider: websocket,
   name: encodePermissionsDocumentName(tsid),
   document: permissionsClientDoc,
   token: accessToken,
 })
 
 // TODO: Separate thoughtspace websocket from permissions websocket to allow for connect/disconnect
-export const websocketThoughtspace = websocketPermissions
+export const websocketThoughtspace = websocket
 // export const websocketThoughtspace = new HocuspocusProviderWebsocket({
 //   url: websocketUrl,
 //   // Do not auto connect. Connects in connectThoughtspaceProvider only when there is more than one device.
