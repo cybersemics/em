@@ -1,5 +1,6 @@
 import { HocuspocusProvider } from '@hocuspocus/provider'
 import Emitter from 'emitter20'
+import _ from 'lodash'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
@@ -20,6 +21,13 @@ import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
 import { encodeDocLogDocumentName, encodeLexemeDocumentName, encodeThoughtDocumentName } from './documentNameEncoder'
 
+// action types for the doclog
+// See: doclog
+enum DocLogAction {
+  Delete,
+  Update,
+}
+
 // A map of thoughts and lexemes being updated.
 // Used to update pushStore isPushing.
 const updateQueue: Index<true> = {}
@@ -38,6 +46,15 @@ const dequeue = (key: string) => {
   }
 }
 
+/** Deletes an IndexedDB database. */
+const deleteDB = (name: string): Promise<void> => {
+  const request = indexedDB.deleteDatabase(name)
+  return new Promise((resolve, reject) => {
+    request.onerror = (e: any) => reject(new Error(e.target.error))
+    request.onsuccess = (e: any) => resolve()
+  })
+}
+
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
 // parallel to thoughtIndex and lexemeIndex
@@ -51,9 +68,10 @@ const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
 // They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and regular compaction.
+// Deletes must be marked, otherwise there is no way to differentiate it from an update (because there is no way to tell if a websocket has no data for a thought, or just has not yet returned any data.)
 const doclog = new Y.Doc()
-const thoughtLog = doclog.getArray<ThoughtId>('thoughtLog')
-const lexemeLog = doclog.getArray<string>('lexemeLog')
+const thoughtLog = doclog.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
+const lexemeLog = doclog.getArray<[string, DocLogAction]>('lexemeLog')
 const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
 doclogPersistence.whenSynced.catch(e => {
   console.error(e)
@@ -69,13 +87,38 @@ new HocuspocusProvider({
 thoughtLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const idsChanged: ThoughtId[] = e.changes.delta.flatMap(item => item.insert || [])
-  idsChanged.forEach(replicateThought)
+  const idsChanged: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+  // traverse from recent to old, and ignore older updates to the same thought
+  // eslint-disable-next-line fp/no-mutating-methods
+  idsChanged.reverse()
+  const idsTraversed = new Set()
+  idsChanged.forEach(([id, action]) => {
+    if (idsTraversed.has(id)) return
+    idsTraversed.add(id)
+    if (action === DocLogAction.Update) {
+      replicateThought(id)
+    } else {
+      deleteThought(id)
+    }
+  })
 })
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
-  const keysChanged: string[] = e.changes.delta.flatMap(item => item.insert || [])
-  keysChanged.forEach(replicateLexeme)
+  // since the doglogs are append-only, ids are only on .insert
+  const keysChanged: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+  // traverse from recent to old, and ignore older updates to the same lexeme
+  // eslint-disable-next-line fp/no-mutating-methods
+  keysChanged.reverse()
+  const keysTraversed = new Set()
+  keysChanged.forEach(([key, action]) => {
+    if (keysTraversed.has(key)) return
+    keysTraversed.add(key)
+    if (action === DocLogAction.Update) {
+      replicateLexeme(key)
+    } else {
+      deleteLexeme(key)
+    }
+  })
 })
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
@@ -381,38 +424,38 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 
 /** Deletes a thought and clears the doc from IndexedDB. */
 const deleteThought = (id: ThoughtId): Promise<void> => {
-  const persistence = thoughtPersistence[id]
+  enqueue(id)
+  thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
   delete thoughtWebsocketProvider[id]
 
-  enqueue(id)
-  return persistence
-    ?.clearData()
-    .catch(e => {
+  // there may not be a persistence instance in memory at all, so delete the database directly
+  return deleteDB(encodeThoughtDocumentName(tsid, id))
+    .catch((e: Error) => {
       console.error(e)
       store.dispatch(alert('Error deleting thought'))
     })
-    .then(() => {
+    .finally(() => {
       dequeue(id)
     })
 }
 
 /** Deletes a lexemes and clears the doc from IndexedDB. */
 const deleteLexeme = (key: string): Promise<void> => {
-  const persistence = lexemePersistence[key]
+  enqueue(key)
+  lexemeDocs[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
   delete lexemeWebsocketProvider[key]
 
-  enqueue(key)
-  return persistence
-    ?.clearData()
-    .catch(e => {
+  // there may not be a persistence instance in memory at all, so delete the database directly
+  return deleteDB(encodeLexemeDocumentName(tsid, key))
+    .catch((e: Error) => {
       console.error(e)
       store.dispatch(alert('Error deleting thought'))
     })
-    .then(() => {
+    .finally(() => {
       dequeue(key)
     })
 }
@@ -447,19 +490,33 @@ export const updateThoughts = async (
     updateLexeme(key, lexeme),
   )
 
-  // When thought ids are pushed to the doclog, the first id is trimmed if it matches the last id of the thought log.
+  // When thought ids are pushed to the doclog, the first log is trimmed if it matches the last log.
   // This is done to reduce the growth of the doclog during the common operation of editing a single thought.
   // The only cost is that any clients that go offline will not replicate a delayed contiguous edit when reconnecting.
   const ids = Object.keys(thoughtIndexUpdates || {}) as ThoughtId[]
-  const idsTrimmed = ids[0] === thoughtLog.slice(-1)[0] ? ids.slice(1) : ids
+  const thoughtLogs: [ThoughtId, DocLogAction][] = ids.map(id => [
+    id,
+    thoughtIndexUpdates[id] ? DocLogAction.Update : DocLogAction.Delete,
+  ])
+  if (_.isEqual(thoughtLogs[0], thoughtLog.slice(-1)[0])) {
+    // eslint-disable-next-line fp/no-mutating-methods
+    thoughtLogs.shift()
+  }
 
   const keys = Object.keys(lexemeIndexUpdates || {})
-  const keysTrimmed = keys[0] === lexemeLog.slice(-1)[0] ? keys.slice(1) : keys
+  const lexemeLogs: [string, DocLogAction][] = keys.map(key => [
+    key,
+    lexemeIndexUpdates[key] ? DocLogAction.Update : DocLogAction.Delete,
+  ])
+  if (_.isEqual(lexemeLogs[0], lexemeLog.slice(-1)[0])) {
+    // eslint-disable-next-line fp/no-mutating-methods
+    lexemeLogs.shift()
+  }
   doclog.transact(() => {
     // eslint-disable-next-line fp/no-mutating-methods
-    thoughtLog.push(idsTrimmed)
+    thoughtLog.push(thoughtLogs)
     // eslint-disable-next-line fp/no-mutating-methods
-    lexemeLog.push(keysTrimmed)
+    lexemeLog.push(lexemeLogs)
   }, doclog.clientID)
 
   const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
