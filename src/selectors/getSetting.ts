@@ -2,6 +2,7 @@ import moize from 'moize'
 import Context from '../@types/Context'
 import State from '../@types/State'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
+import { tsidShared } from '../data-providers/yjs'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import isAttribute from '../util/isAttribute'
@@ -14,6 +15,12 @@ import getThoughtById from './getThoughtById'
 const localStorageSettingsCache = keyValueBy(CACHED_SETTINGS, name => ({
   [name]: typeof storage !== 'undefined' ? (storage.getItem('Settings/' + name) as string) : undefined,
 }))
+
+// disable tutorial if the thoughtspace was shared
+if (!localStorageSettingsCache.Tutorial && tsidShared) {
+  localStorageSettingsCache.Tutorial = 'Off'
+  storage.setItem('Settings/Tutorial', 'Off')
+}
 
 /** Returns one of the localStorage Settings values that have been cached. */
 const localCached = (context: Context | string) =>
