@@ -143,6 +143,7 @@ describe('normal view', () => {
     `,
       }),
       cursorDown,
+      cursorDown,
       collapseContext({}),
     ]
 

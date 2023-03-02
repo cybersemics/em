@@ -466,6 +466,30 @@ it('replace empty cursor without affecting siblings', () => {
   expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a']), contextToThoughtId(stateNew, ['a', 'y'])])
 })
 
+it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
+  const text = `
+    - a
+      - b
+        - c
+  `
+
+  const now = timestamp()
+  const stateNew = reducerFlow([
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+      lastUpdated: now,
+    }),
+  ])(initialState(now))
+
+  const { thoughtIndex, lexemeIndex } = stateNew.thoughts
+
+  const emptyThought = Object.values(thoughtIndex).find(thought => thought.value === '')
+  expect(emptyThought).toBeUndefined()
+  expect(lexemeIndex).not.toHaveProperty(hashThought(''))
+})
+
 it('import as subthoughts of non-empty cursor', () => {
   const paste = `
     - x

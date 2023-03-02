@@ -241,16 +241,17 @@ const importJSON = (
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, destThought, rankStart)
   const path = rootedParentOf(state, simplePath)
-  const id = head(path)
+  const parentId = head(path)
+  const hashEmpty = hashThought('')
 
   // if the thought where we are pasting is empty, replace it instead of adding to it
   if (destEmpty) {
     const lexeme = getLexeme(state, '')
     if (lexeme) {
-      initialLexemeIndex[hashThought('')] = removeContext(state, lexeme, destThought.id)
+      initialLexemeIndex[hashEmpty] = removeContext(state, lexeme, destThought.id)
       const childrenNew = getAllChildren(state, head(path)).filter(child => child !== destThought.id)
-      initialThoughtIndex[id] = {
-        ...state.thoughts.thoughtIndex[id],
+      initialThoughtIndex[parentId] = {
+        ...state.thoughts.thoughtIndex[parentId],
         childrenMap: createChildrenMap(state, childrenNew),
         lastUpdated,
         updatedBy,
@@ -264,6 +265,14 @@ const importJSON = (
       lexemeIndex: initialLexemeIndex,
       thoughtIndex: initialThoughtIndex,
     }),
+  }
+
+  // remove empty Lexeme if it is in no other contexts than the destination
+  if (destEmpty) {
+    delete stateUpdated.thoughts.thoughtIndex[destThought.id]
+    if (initialLexemeIndex[hashEmpty].contexts.length === 0) {
+      delete stateUpdated.thoughts.lexemeIndex[hashEmpty]
+    }
   }
 
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
@@ -280,8 +289,9 @@ const importJSON = (
   )
 
   // get the last child imported in the first level so the cursor can be set
-  const thought = initialThoughtIndex[id]
-  const lastChildIndex = ((thought && Object.values(thought.childrenMap).length) || 0) + blocksNormalized.length - 1
+  const parent = initialThoughtIndex[parentId]
+  const lastChildIndex =
+    (parent && !destEmpty ? Object.values(parent.childrenMap).length : 0) + blocksNormalized.length - 1
   const importId = head(importPath)
   const lastChildFirstLevel =
     thoughtIndex[importId] && Object.values(thoughtIndex[importId].childrenMap)[lastChildIndex]
@@ -294,8 +304,21 @@ const importJSON = (
   const lastImported = lastChildFirstLevel && !metaOnly ? appendToPath(importPath, lastChildFirstLevel) : null
 
   return {
-    thoughtIndexUpdates: { ...initialThoughtIndex, ...thoughtIndex },
-    lexemeIndexUpdates: { ...initialLexemeIndex, ...lexemeIndex },
+    thoughtIndexUpdates: {
+      ...initialThoughtIndex,
+      ...(destEmpty ? { [destThought.id]: null } : null),
+      ...thoughtIndex,
+    },
+    lexemeIndexUpdates: {
+      ...initialLexemeIndex,
+      // remove empty Lexeme if it is in no other contexts than the destination
+      ...(destEmpty && initialLexemeIndex[hashEmpty].contexts.length === 0
+        ? {
+            [hashEmpty]: null,
+          }
+        : {}),
+      ...lexemeIndex,
+    },
     lastImported,
   }
 }

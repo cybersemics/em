@@ -202,7 +202,7 @@ const importText = (
 
         /** Gets the id of a destination sibling with the same value as the last imported thought. */
         const idMerged = () => {
-          const thoughtImported = imported.thoughtIndexUpdates[id]
+          const thoughtImported = imported.thoughtIndexUpdates[id]!
           const idMatchedValue = findAnyChild(
             state,
             destEmpty ? destThought.parentId : destThought.id,
@@ -230,7 +230,8 @@ const importText = (
     const parentOfDestination = parentOf(newDestinationPath)
 
     return reducerFlow([
-      updateThoughts(imported),
+      // thoughts will be expanded by setCursor
+      updateThoughts({ ...imported, preventExpandThoughts: true }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? collapseContext({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.
