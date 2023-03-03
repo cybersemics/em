@@ -1,14 +1,14 @@
 import clear from '../../action-creators/clear'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
-import importTextAction from '../../action-creators/importText'
+import importText from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
-import appStore from '../../stores/app'
+import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import { cleanupTestApp } from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import keyValueBy from '../../util/keyValueBy'
@@ -16,7 +16,42 @@ import keyValueBy from '../../util/keyValueBy'
 const timer = testTimer()
 
 // Note: Since we are using intialize for these tests, we need to make sure to cleanup dbs, storage and window location.
-afterEach(async () => await cleanupTestApp())
+afterEach(cleanupTestApp)
+
+/** Mount tests required for caret. */
+describe('mount', () => {
+  beforeEach(createTestApp)
+
+  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
+    store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
+    jest.runOnlyPendingTimers()
+
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is at the end of the apple element.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
+    expect(window.getSelection()?.focusOffset).toBe(1)
+  })
+
+  it('after merging siblings, caret should be in between', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - apple
+          - banana`,
+      }),
+      setCursor(['banana']),
+      { type: 'deleteEmptyThought' },
+    ])
+    jest.runOnlyPendingTimers()
+
+    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
+    // In this case, the selection is in the applebanana text node, in between apple and banana.
+    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.TEXT_NODE)
+    expect(window.getSelection()?.focusNode?.textContent).toBe('applebanana')
+    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
+  })
+})
 
 // TODO: Fix test
 it.skip('delete pending descendants', async () => {
@@ -35,10 +70,10 @@ it.skip('delete pending descendants', async () => {
             - two
     - x`
 
-  appStore.dispatch(importTextAction({ text }))
+  store.dispatch(importText({ text }))
   await timer.runAllAsync()
 
-  const state = appStore.getState()
+  const state = store.getState()
 
   const thoughts = {
     a: contextToThought(state, ['a'])!,
@@ -70,16 +105,16 @@ it.skip('delete pending descendants', async () => {
   timer.useFakeTimer()
 
   // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
+  store.dispatch(clear())
   initialize()
   await timer.runAllAsync()
 
-  appStore.dispatch([setCursor(['a'])])
+  store.dispatch([setCursor(['a'])])
 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
-  const stateAfterRefresh = appStore.getState()
+  const stateAfterRefresh = store.getState()
 
   // Create a map of { [text]: !!thought } for readable test output
   const thoughtsAfterRefresh = keyValueBy(thoughts, (text, thought) => ({
@@ -100,13 +135,13 @@ it.skip('delete pending descendants', async () => {
 
   timer.useFakeTimer()
 
-  appStore.dispatch([deleteThoughtWithCursor({})])
+  store.dispatch([deleteThoughtWithCursor({})])
 
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
-  const stateNew = appStore.getState()
+  const stateNew = store.getState()
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -192,10 +227,10 @@ it.skip('delete many pending descendants', async () => {
               - Are we meeting
       `
 
-  appStore.dispatch(importTextAction({ text }))
+  store.dispatch(importText({ text }))
   await timer.runAllAsync()
 
-  const state = appStore.getState()
+  const state = store.getState()
 
   const thoughts = {
     Cybersemics: contextToThought(state, ['Cybersemics'])!,
@@ -227,24 +262,24 @@ it.skip('delete many pending descendants', async () => {
   timer.useFakeTimer()
 
   // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
+  store.dispatch(clear())
   initialize()
   await timer.runAllAsync()
 
-  appStore.dispatch([setCursor(['Cybersemics'])])
+  store.dispatch([setCursor(['Cybersemics'])])
 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()
 
   timer.useFakeTimer()
 
-  appStore.dispatch([deleteThoughtWithCursor({})])
+  store.dispatch([deleteThoughtWithCursor({})])
 
   await timer.runAllAsync()
 
   timer.useRealTimer()
 
-  const stateNew = appStore.getState()
+  const stateNew = store.getState()
 
   // Create a map of { [text]: !!thought } for readable test output
   const thoughtsAfterDelete = keyValueBy(thoughts, (text, thought) => ({

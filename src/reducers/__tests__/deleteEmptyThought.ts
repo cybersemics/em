@@ -1,13 +1,10 @@
-import importTextActionCreator from '../../action-creators/importText'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
-import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import prettyPath from '../../test-helpers/prettyPath'
-import setCursor, { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
@@ -235,42 +232,6 @@ describe('context view', () => {
 
     // cursor should be on the next context
     expect(prettyPath(stateNew, stateNew.cursor)).toEqual('a/m/a')
-  })
-})
-
-/** Mount tests required for caret. */
-describe('mount', () => {
-  beforeEach(createTestApp)
-  afterEach(cleanupTestApp)
-
-  it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
-    store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
-    jest.runOnlyPendingTimers()
-
-    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
-    // In this case, the selection is at the end of the apple element.
-    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.ELEMENT_NODE)
-    expect(window.getSelection()?.focusNode?.textContent).toBe('apple')
-    expect(window.getSelection()?.focusOffset).toBe(1)
-  })
-
-  it('after merging siblings, caret should be in between', async () => {
-    store.dispatch([
-      importTextActionCreator({
-        text: `
-          - apple
-          - banana`,
-      }),
-      setCursorFirstMatchActionCreator(['banana']),
-      { type: 'deleteEmptyThought' },
-    ])
-    jest.runOnlyPendingTimers()
-
-    // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
-    // In this case, the selection is in the applebanana text node, in between apple and banana.
-    expect(window.getSelection()?.focusNode?.nodeType).toBe(Node.TEXT_NODE)
-    expect(window.getSelection()?.focusNode?.textContent).toBe('applebanana')
-    expect(window.getSelection()?.focusOffset).toBe('apple'.length)
   })
 })
 
