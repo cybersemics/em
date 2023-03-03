@@ -13,4 +13,9 @@ export const encodePermissionsDocumentName = (tsid: string) => `${tsid}/permissi
 export const encodeDocLogDocumentName = (tsid: string) => `${tsid}/doclog`
 
 /** Extracts the tsid from a document name. */
-export const parseDocumentName = (documentName: string): string => documentName.split('/')[0]
+export const parseDocumentName = (
+  documentName: string,
+): { tsid: string; type: string | undefined; id: ThoughtId | string | undefined } => {
+  const [tsid, type, id] = documentName.split('/')
+  return { tsid, type, id }
+}

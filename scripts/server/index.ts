@@ -40,7 +40,7 @@ const log = (...args: any) => {
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
 export const onAuthenticate = async ({ token, documentName }: { documentName: string; token: string }) => {
-  const tsid = parseDocumentName(documentName)
+  const { tsid } = parseDocumentName(documentName)
   const permissionsDocName = encodePermissionsDocumentName(tsid)
   // the server-side permissions map
   // stores the permissions for all thoughtspaces as Map<Index<Share>> (indexed by tsid and access token)
@@ -74,7 +74,7 @@ export const onLoadDocument = async ({
   documentName: string
 }) => {
   const { token } = context
-  const tsid = parseDocumentName(documentName)
+  const { tsid } = parseDocumentName(documentName)
   const permissionsDocName = encodePermissionsDocumentName(tsid)
   const permissionsServerMap = permissionsServerDoc.getMap<Share>(tsid)
   let permission = permissionsServerMap.get(token)

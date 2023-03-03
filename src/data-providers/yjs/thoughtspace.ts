@@ -19,7 +19,12 @@ import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
-import { encodeDocLogDocumentName, encodeLexemeDocumentName, encodeThoughtDocumentName } from './documentNameEncoder'
+import {
+  encodeDocLogDocumentName,
+  encodeLexemeDocumentName,
+  encodeThoughtDocumentName,
+  parseDocumentName,
+} from './documentNameEncoder'
 
 // action types for the doclog
 // See: doclog
@@ -260,6 +265,82 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
+/** Handles the thought observer. Updates thoughtIndex if the thought or its parent is in the state. Ignores events from self. */
+const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
+  const targetDoc = e.target.doc!
+  // we can assume id is defined since thought doc guids are always in the format `${tsid}/thought/${id}`
+  const { id } = parseDocumentName(targetDoc.guid) as { id: string }
+  const thoughtDoc = thoughtDocs[id]
+  if (thoughtDoc !== targetDoc) {
+    throw new Error(`e.target.doc does not equal thoughtDocs['${id}']. An observe handler was probably not unobserved.`)
+  }
+  if (e.transaction.origin === thoughtDoc.clientID) return
+  const thought = getThought(thoughtDoc)
+  if (!thought) return
+
+  // dispatch on the next tick, since a reducer may be running
+  setTimeout(() => {
+    store.dispatch((dispatch, getState) => {
+      // Only update state if the thought or its parent is already loaded.
+      // Otherwise let it load into IndexedDB in the background.
+      // Is there a chance of a false positive if updates arrive out of order?
+      if (!getState().thoughts.thoughtIndex[id] && !getState().thoughts.thoughtIndex[thought.parentId]) return
+
+      dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {
+            [thought.id]: thought,
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
+    })
+  })
+}
+
+/** Handles the lexeme observer. Updates lexemeIndex if the lexeme or at least one of its contexts is in the state. Ignores events from self. */
+const onLexemeChange = (e: Y.YMapEvent<unknown>) => {
+  const targetDoc = e.target.doc!
+  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
+  const { id: key } = parseDocumentName(targetDoc.guid) as { id: string }
+  const lexemeDoc = lexemeDocs[key]
+  if (lexemeDoc !== targetDoc) {
+    throw new Error(`e.target.doc does not equal lexemeDocs['${key}']. An observe handler was probably not unobserved.`)
+  }
+  if (e.transaction.origin === lexemeDoc.clientID) return
+  const lexeme = getLexeme(lexemeDoc)
+  if (!lexeme) return
+
+  // dispatch on the next tick, since a reducer may be running
+  setTimeout(() => {
+    store.dispatch((dispatch, getState) => {
+      // Only update state if the lexeme or at least one of its contets is loaded.
+      // Otherwise let it load into IndexedDB in the background.
+      // Is there a chance of a false positive if the thought arrives after the lexeme?
+      if (
+        !getState().thoughts.lexemeIndex[key] &&
+        lexeme.contexts.every(cxid => !getState().thoughts.thoughtIndex[cxid])
+      )
+        return
+
+      dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {
+            [key]: lexeme,
+          },
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
+    })
+  })
+}
+
 /** Replicates a thought from the persistence layers to state and IndexedDB. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
 export const replicateThought = async (id: ThoughtId): Promise<void> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
@@ -284,35 +365,8 @@ export const replicateThought = async (id: ThoughtId): Promise<void> => {
       })
     }
 
-    // TODO: Subscribe to changes after first sync.
-    // This ensures that pending is not overwritten.
-    thoughtDoc.getMap().observe(e => {
-      if (e.transaction.origin === thoughtDoc.clientID) return
-      const thought = getThought(thoughtDoc)
-      if (!thought) return
-
-      // dispatch on the next tick, since a reducer may be running
-      setTimeout(() => {
-        store.dispatch((dispatch, getState) => {
-          // Only update state if the thought or its parent is already loaded.
-          // Otherwise let it load into IndexedDB in the background.
-          // Is there a chance of a false positive if updates arrive out of order?
-          if (!getState().thoughts.thoughtIndex[id] && !getState().thoughts.thoughtIndex[thought.parentId]) return
-
-          dispatch(
-            updateThoughtsActionCreator({
-              thoughtIndexUpdates: {
-                [thought.id]: thought,
-              },
-              lexemeIndexUpdates: {},
-              local: false,
-              remote: false,
-              repairCursor: true,
-            }),
-          )
-        })
-      })
-    })
+    // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
+    thoughtDoc.getMap().observe(onThoughtChange)
   }
 
   await thoughtPersistence[id]?.whenSynced
@@ -351,39 +405,8 @@ export const replicateLexeme = async (key: string): Promise<void> => {
       })
     }
 
-    // TODO: Subscribe to changes after first sync.
-    // This ensures that pending is not overwritten.
-    lexemeDoc.getMap().observe(e => {
-      if (e.transaction.origin === lexemeDoc.clientID) return
-      const lexeme = getLexeme(lexemeDoc)
-      if (!lexeme) return
-
-      // dispatch on the next tick, since a reducer may be running
-      setTimeout(() => {
-        store.dispatch((dispatch, getState) => {
-          // Only update state if the lexeme or at least one of its contets is loaded.
-          // Otherwise let it load into IndexedDB in the background.
-          // Is there a chance of a false positive if the thought arrives after the lexeme?
-          if (
-            !getState().thoughts.lexemeIndex[key] &&
-            lexeme.contexts.every(cxid => !getState().thoughts.thoughtIndex[cxid])
-          )
-            return
-
-          dispatch(
-            updateThoughtsActionCreator({
-              thoughtIndexUpdates: {},
-              lexemeIndexUpdates: {
-                [key]: lexeme,
-              },
-              local: false,
-              remote: false,
-              repairCursor: true,
-            }),
-          )
-        })
-      })
-    })
+    // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
+    lexemeDoc.getMap().observe(onLexemeChange)
   }
 
   await lexemePersistence[key]?.whenSynced.catch(e => {
@@ -425,6 +448,8 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 /** Deletes a thought and clears the doc from IndexedDB. */
 const deleteThought = (id: ThoughtId): Promise<void> => {
   enqueue(id)
+  // destroying the doc does not remove top level shared type observers
+  lexemeDocs[id]?.getMap().unobserve(onLexemeChange)
   thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
@@ -444,6 +469,8 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
 /** Deletes a lexemes and clears the doc from IndexedDB. */
 const deleteLexeme = (key: string): Promise<void> => {
   enqueue(key)
+  // destroying the doc does not remove top level shared type observers
+  lexemeDocs[key]?.getMap().unobserve(onLexemeChange)
   lexemeDocs[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
