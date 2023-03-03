@@ -103,6 +103,17 @@ thoughtLog.observe(e => {
     if (action === DocLogAction.Update) {
       replicateThought(id)
     } else {
+      store.dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {
+            [id]: null,
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
       deleteThought(id)
     }
   })
@@ -121,6 +132,17 @@ lexemeLog.observe(e => {
     if (action === DocLogAction.Update) {
       replicateLexeme(key)
     } else {
+      store.dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {
+            [key]: null,
+          },
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
       deleteLexeme(key)
     }
   })
