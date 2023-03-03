@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Block from '../@types/Block'
-import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -11,18 +10,18 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { clientId } from '../data-providers/yjs'
-import { getAllChildren } from '../selectors/getChildren'
+import { deleteThought } from '../reducers'
+import { anyChild } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
+import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
-import createChildrenMap from '../util/createChildrenMap'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 import createId from './createId'
 import mergeThoughts from './mergeThoughts'
@@ -233,47 +232,18 @@ const importJSON = (
   blocks: Block[],
   { lastUpdated = timestamp(), updatedBy = clientId, skipRoot = false }: ImportJSONOptions = {},
 ) => {
-  const initialLexemeIndex: Index<Lexeme> = {}
-  const initialThoughtIndex: Index<Thought> = {}
-  const destThought = state.thoughts.thoughtIndex[head(simplePath)]
-  const destEmpty = destThought.value === '' && getAllChildren(state, head(simplePath)).length === 0
+  const destThought = pathToThought(state, simplePath)
+  const destEmpty = destThought.value === '' && !anyChild(state, head(simplePath))
   // use getNextRank instead of getRankAfter because if dest is not empty then we need to import thoughts inside it
   const rankStart = destEmpty ? destThought.rank : getNextRank(state, head(simplePath))
   const rankIncrement = getRankIncrement(state, blocks, destThought, rankStart)
-  const path = rootedParentOf(state, simplePath)
-  const parentId = head(path)
-  const hashEmpty = hashThought('')
+  const pathParent = rootedParentOf(state, simplePath)
+  const parentId = head(pathParent)
 
-  // if the thought where we are pasting is empty, replace it instead of adding to it
-  if (destEmpty) {
-    const lexeme = getLexeme(state, '')
-    if (lexeme) {
-      initialLexemeIndex[hashEmpty] = removeContext(state, lexeme, destThought.id)
-      const childrenNew = getAllChildren(state, head(path)).filter(child => child !== destThought.id)
-      initialThoughtIndex[parentId] = {
-        ...state.thoughts.thoughtIndex[parentId],
-        childrenMap: createChildrenMap(state, childrenNew),
-        lastUpdated,
-        updatedBy,
-      }
-    }
-  }
-
-  const stateUpdated: State = {
-    ...state,
-    thoughts: mergeThoughts(state.thoughts, {
-      lexemeIndex: initialLexemeIndex,
-      thoughtIndex: initialThoughtIndex,
-    }),
-  }
-
-  // remove empty Lexeme if it is in no other contexts than the destination
-  if (destEmpty) {
-    delete stateUpdated.thoughts.thoughtIndex[destThought.id]
-    if (initialLexemeIndex[hashEmpty].contexts.length === 0) {
-      delete stateUpdated.thoughts.lexemeIndex[hashEmpty]
-    }
-  }
+  // remove empty destination thought
+  // pull updates out of pushQueue for convenience
+  const stateUpdated = destEmpty ? deleteThought(state, { pathParent, thoughtId: destThought.id }) : state
+  const deletedEmptyUpdates = destEmpty ? stateUpdated.pushQueue.slice(-1)[0] : null
 
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
@@ -289,7 +259,7 @@ const importJSON = (
   )
 
   // get the last child imported in the first level so the cursor can be set
-  const parent = initialThoughtIndex[parentId]
+  const parent = thoughtIndex[parentId]
   const lastChildIndex =
     (parent && !destEmpty ? Object.values(parent.childrenMap).length : 0) + blocksNormalized.length - 1
   const importId = head(importPath)
@@ -305,18 +275,11 @@ const importJSON = (
 
   return {
     thoughtIndexUpdates: {
-      ...initialThoughtIndex,
-      ...(destEmpty ? { [destThought.id]: null } : null),
+      ...deletedEmptyUpdates?.thoughtIndexUpdates,
       ...thoughtIndex,
     },
     lexemeIndexUpdates: {
-      ...initialLexemeIndex,
-      // remove empty Lexeme if it is in no other contexts than the destination
-      ...(destEmpty && initialLexemeIndex[hashEmpty].contexts.length === 0
-        ? {
-            [hashEmpty]: null,
-          }
-        : {}),
+      ...deletedEmptyUpdates?.lexemeIndexUpdates,
       ...lexemeIndex,
     },
     lastImported,
