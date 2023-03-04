@@ -48,52 +48,31 @@ import TutorialStepSubThoughtEnter from './TutorialStepSubThoughtEnter'
 import TutorialStepSuccess from './TutorialStepSuccess'
 
 const tutorialStepComponentMap = {
+  // Part I: Intro
   [TUTORIAL_STEP_START]: TutorialStepStart,
-
   [TUTORIAL_STEP_FIRSTTHOUGHT]: TutorialStepFirstThought,
-
   [TUTORIAL_STEP_FIRSTTHOUGHT_ENTER]: TutorialStepFirstThoughtEnter,
-
   [TUTORIAL_STEP_SECONDTHOUGHT]: TutorialStepSecondThought,
-
   [TUTORIAL_STEP_SECONDTHOUGHT_ENTER]: TutorialStepSecondThoughtEnter,
-
   [TUTORIAL_STEP_SUBTHOUGHT]: TutorialStepSubThought,
-
   [TUTORIAL_STEP_SUBTHOUGHT_ENTER]: TutorialStepSubThoughtEnter,
-
   [TUTORIAL_STEP_AUTOEXPAND]: TutorialStepAutoExpand,
-
   [TUTORIAL_STEP_AUTOEXPAND_EXPAND]: TutorialStepAutoExpandExpand,
-
   [TUTORIAL_STEP_SUCCESS]: TutorialStepSuccess,
 
-  // Part II: Connected Thoughts
-
+  // Part II: Contexts
   [TUTORIAL2_STEP_START]: Tutorial2StepStart,
-
   [TUTORIAL2_STEP_CHOOSE]: Tutorial2StepChoose,
-
   [TUTORIAL2_STEP_CONTEXT1_PARENT]: Tutorial2StepContext1Parent,
-
   [TUTORIAL2_STEP_CONTEXT1]: Tutorial2StepContext1,
-
   [TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT]: Tutorial2StepContext1SubThought,
-
   [TUTORIAL2_STEP_CONTEXT2_PARENT]: Tutorial2StepContext2Parent,
-
   [TUTORIAL2_STEP_CONTEXT2]: Tutorial2StepContext2,
-
   [TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT]: Tutorial2StepContext2Subthought,
-
   [TUTORIAL2_STEP_CONTEXT_VIEW_SELECT]: Tutorial2StepContextViewSelect,
-
   [TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE]: Tutorial2StepContextViewToggle,
-
   [TUTORIAL2_STEP_CONTEXT_VIEW_OPEN]: Tutorial2StepContextViewOpen,
-
   [TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES]: Tutorial2StepContextViewExamples,
-
   [TUTORIAL2_STEP_SUCCESS]: Tutorial2StepSuccess,
 }
 
