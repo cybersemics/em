@@ -1,16 +1,14 @@
-import React from 'react'
-import { connect } from 'react-redux'
+import React, { FC } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import State from '../../@types/State'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import getSetting from '../../selectors/getSetting'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = state => ({
-  tutorialStep: +getSetting(state, 'Tutorial Step'),
-})
-
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
-const TutorialHint = connect(mapStateToProps)(({ tutorialStep, children, dispatch }) => {
+const TutorialHint: FC = ({ children }) => {
   // fractional steps are hints
+  const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 0))
+  const dispatch = useDispatch()
   const hint = tutorialStep !== Math.floor(tutorialStep)
 
   return (
@@ -27,6 +25,6 @@ const TutorialHint = connect(mapStateToProps)(({ tutorialStep, children, dispatc
       )}
     </>
   )
-})
+}
 
 export default TutorialHint
