@@ -1,17 +1,21 @@
 import React from 'react'
-import { useStore } from 'react-redux'
+import { useSelector } from 'react-redux'
+import GesturePath from '../../@types/GesturePath'
+import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import { shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 
-const newThoughtShortcut = shortcutById('newThought')
+const newThoughtShortcut = shortcutById('newThought')!
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialStepSecondThoughtEnter = ({ cursor }) => {
-  const state = useStore().getState()
-
-  const headCursorValue = cursor && headValue(state, cursor)
+const TutorialStepSecondThoughtEnter = () => {
+  const ready = useSelector((state: State) => {
+    if (!state.cursor) return true
+    const headCursorValue = headValue(state, state.cursor)
+    return headCursorValue?.length > 0
+  })
 
   return (
     <>
@@ -19,14 +23,19 @@ const TutorialStepSecondThoughtEnter = ({ cursor }) => {
       <p>
         {isTouch ? (
           <>
-            Swiping <GestureDiagram path={newThoughtShortcut.gesture} size='28' style={{ margin: '-10px -4px -6px' }} />
+            Swiping{' '}
+            <GestureDiagram
+              path={newThoughtShortcut.gesture as GesturePath}
+              size={28}
+              style={{ margin: '-10px -4px -6px' }}
+            />
           </>
         ) : (
           'Hitting Enter'
         )}{' '}
         will always create a new thought <i>after</i> the currently selected thought.
       </p>
-      {!cursor || headCursorValue?.length > 0 ? (
+      {ready ? (
         <p>Wonderful. Click the Next button when you are ready to continue.</p>
       ) : (
         <p>Now type some text for the new thought.</p>
