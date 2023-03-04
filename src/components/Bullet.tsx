@@ -35,6 +35,8 @@ interface BulletProps {
   thoughtId: ThoughtId
 }
 
+const isIOSSafari = isTouch && isiPhone && isSafari()
+
 /** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
   fill,
@@ -44,7 +46,6 @@ const BulletLeaf = ({
   showContexts,
 }: { fill?: string; isHighlighted?: boolean; missing?: boolean; pending?: boolean; showContexts?: boolean } = {}) => {
   const colors = useSelector(themeColors)
-  const isIOSSafari = isTouch && isiPhone && isSafari()
   const radius = isIOSSafari ? 105 : 92
   return (
     <ellipse
@@ -87,7 +88,6 @@ const BulletParent = ({
   showContexts?: boolean
 } = {}) => {
   const colors = useSelector(themeColors)
-  const isIOSSafari = isTouch && isiPhone && isSafari()
   const path = isIOSSafari
     ? 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z'
     : 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
@@ -130,7 +130,6 @@ const BulletCursorOverlay = ({
   simplePath: SimplePath
 }) => {
   const colors = useSelector(themeColors)
-  const isIOSSafari = isTouch && isiPhone && isSafari()
   const bulletOverlayRadius = isIOSSafari ? 300 : 245
   return (
     <ellipse
@@ -192,7 +191,6 @@ const Bullet = ({
   const extendClickWidth = fontSize * 1.2
   const extendClickHeight = fontSize / 3
   const lineHeight = fontSize * 1.25
-  const isIOSSafari = isTouch && isiPhone && isSafari()
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
 
