@@ -183,44 +183,7 @@ const Bullet = ({
 
   // props to pass based on different platforms
   const isIOSSafari = isTouch && isiPhone && isSafari()
-  const vendorSpecificData = isIOSSafari
-    ? {
-        bullet: {
-          path: 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z',
-        },
-        bulletOverlayRadius: '300',
-        glyphMarginBottom: '-0.2em',
-      }
-    : {
-        bullet: {
-          path: 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z',
-        },
-        bulletOverlayRadius: '245',
-        glyphMarginBottom: '-0.3em',
-      }
-
-  /** Renders a circle or triangle for the bullet. */
-  const bulletShape = ({ missing, pending }: { missing?: boolean; pending?: boolean } = {}) => {
-    // when context view is activated, render non-leaf bullet
-    return leaf && !showContexts ? (
-      <BulletLeaf
-        fill={fill}
-        isHighlighted={isHighlighted}
-        missing={missing}
-        pending={pending}
-        showContexts={showContexts}
-      />
-    ) : (
-      <BulletParent
-        currentScale={svgElement.current?.currentScale || 1}
-        fill={fill}
-        isHighlighted={isHighlighted}
-        missing={missing}
-        pending={pending}
-        showContexts={showContexts}
-      />
-    )
-  }
+  const bulletOverlayRadius = isIOSSafari ? 300 : 245
 
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
@@ -282,7 +245,7 @@ const Bullet = ({
         viewBox='0 0 600 600'
         style={{
           ...svgSizeStyle,
-          marginBottom: vendorSpecificData.glyphMarginBottom,
+          marginBottom: isIOSSafari ? '-0.2em' : '-0.3em',
           ...(isHighlighted
             ? {
                 fillOpacity: 1,
@@ -297,8 +260,8 @@ const Bullet = ({
           {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
             <ellipse
               className='bullet-cursor-overlay'
-              ry={vendorSpecificData.bulletOverlayRadius}
-              rx={vendorSpecificData.bulletOverlayRadius}
+              ry={bulletOverlayRadius}
+              rx={bulletOverlayRadius}
               cy='300'
               cx='300'
               style={{
@@ -308,13 +271,24 @@ const Bullet = ({
               }}
             />
           )}
-          {bulletShape({
-            // Since Thoughts and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
-            // Therefore render in a simple gray rather than an error color.
-            // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
-            missing,
-            pending,
-          })}
+          {leaf && !showContexts ? (
+            <BulletLeaf
+              fill={fill}
+              isHighlighted={isHighlighted}
+              missing={missing}
+              pending={pending}
+              showContexts={showContexts}
+            />
+          ) : (
+            <BulletParent
+              currentScale={svgElement.current?.currentScale || 1}
+              fill={fill}
+              isHighlighted={isHighlighted}
+              missing={missing}
+              pending={pending}
+              showContexts={showContexts}
+            />
+          )}
         </g>
       </svg>
     </span>
