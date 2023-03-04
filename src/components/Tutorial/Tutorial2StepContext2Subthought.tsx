@@ -16,22 +16,22 @@ import findDescendant from '../../selectors/findDescendant'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
-import store from '../../stores/app'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const context2SubthoughtCreated = ({
-  rootChildren,
-  tutorialChoice,
-}: {
-  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
-  rootChildren: Thought[]
-}) => {
-  const state = store.getState()
-
+const context2SubthoughtCreated = (
+  state: State,
+  {
+    rootChildren,
+    tutorialChoice,
+  }: {
+    tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+    rootChildren: Thought[]
+  },
+) => {
   const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
   const tutorialChoiceId =
     tutorialChoiceParentId && findDescendant(state, tutorialChoiceParentId, TUTORIAL_CONTEXT[tutorialChoice])
@@ -60,7 +60,9 @@ const Tutorial2StepContext2Subthought = ({
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))
   })
-  const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
+  const isContext2SubthoughtCreated = useSelector((state: State) =>
+    context2SubthoughtCreated(state, { rootChildren, tutorialChoice }),
+  )
 
   const hasChosen = useSelector((state: State) => {
     const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])

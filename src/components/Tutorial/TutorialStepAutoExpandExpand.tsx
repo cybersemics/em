@@ -1,11 +1,9 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import Path from '../../@types/Path'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
 import { getAllChildren, getChildrenRanked } from '../../selectors/getChildren'
-import store from '../../stores/app'
 import ellipsize from '../../util/ellipsize'
 
 /**
@@ -13,17 +11,17 @@ import ellipsize from '../../util/ellipsize'
  * @param rootChildren The object array that show all the root thoughts.
  * @returns The array that holds all the thoughts that that don't have a cursor, but have children.
  */
-const thoughtsNoCursorWithChild = (cursor: Path | null, rootChildren: Thought[]): Thought[] => {
-  const noCursorThoughts = cursor ? rootChildren.filter(c => c.id !== cursor[0]) : rootChildren
-  return noCursorThoughts.filter(t => getAllChildren(store.getState(), t.id).length > 0)
+const thoughtsNoCursorWithChild = (state: State, rootChildren: Thought[]): Thought[] => {
+  const noCursorThoughts = state.cursor ? rootChildren.filter(c => c.id !== state.cursor![0]) : rootChildren
+  return noCursorThoughts.filter(t => getAllChildren(state, t.id).length > 0)
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ rootChildren = [] }: { rootChildren: Thought[] }) => {
-  const uncle = useSelector((state: State) => thoughtsNoCursorWithChild(state.cursor, rootChildren)[0])
+  const uncle = useSelector((state: State) => thoughtsNoCursorWithChild(state, rootChildren)[0])
 
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = uncle ? getChildrenRanked(store.getState(), uncle.id)[0] : null
+  const childWithNoCursorParent = useSelector((state: State) => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
 
   const hiddenChild = (childWithNoCursorParent && ellipsize(childWithNoCursorParent?.value)) || ''
 
