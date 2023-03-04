@@ -3,10 +3,10 @@ import State from '../@types/State'
 import settings from './settings'
 
 /** Sets the Tutorial Choice Settings value. */
-const tutorialChoice = (state: State, { value }: { value: string }) =>
+const tutorialChoice = (state: State, { value }: { value: number }) =>
   settings(state, {
     key: 'Tutorial Choice',
-    value,
+    value: value.toString(),
   })
 
 export default _.curryRight(tutorialChoice)

@@ -1,5 +1,6 @@
 import classNames from 'classnames'
 import React from 'react'
+import { useDispatch } from 'react-redux'
 import tutorial from '../../action-creators/tutorial'
 import tutorialChoice from '../../action-creators/tutorialChoice'
 import tutorialNext from '../../action-creators/tutorialNext'
@@ -19,7 +20,8 @@ import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialNavigation = ({ tutorialStep, dispatch }) => {
+const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
+  const dispatch = useDispatch()
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },
     { key: TUTORIAL_VERSION_JOURNAL, value: TUTORIAL_VERSION_JOURNAL, textValue: 'Journal Theme' },
@@ -33,7 +35,7 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
             ? TUTORIAL_STEP_SUCCESS - TUTORIAL_STEP_START + 1
             : TUTORIAL2_STEP_SUCCESS - TUTORIAL2_STEP_START + 1,
         )
-          .fill()
+          .fill(undefined)
           .map((_, i) => {
             const step = i + (tutorialStep < TUTORIAL2_STEP_START ? 1 : TUTORIAL2_STEP_START)
             return (
@@ -54,16 +56,22 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
       {tutorialStep === TUTORIAL_STEP_SUCCESS ? (
         <>
           <TutorialNavigationButton
+            classes={undefined}
             clickHandler={() => dispatch(setTutorialStep({ value: TUTORIAL2_STEP_START }))}
             value='Learn more'
           />
-          <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value='Play on my own' />
+          <TutorialNavigationButton
+            classes={undefined}
+            clickHandler={() => dispatch(tutorial({ value: false }))}
+            value='Play on my own'
+          />
         </>
       ) : tutorialStep === TUTORIAL2_STEP_CHOOSE ? (
         <ul className='simple-list'>
           {tutorialOptions.map(({ key, value, textValue }) => (
             <li key={key}>
               <TutorialNavigationButton
+                classes={undefined}
                 clickHandler={() => {
                   dispatch([tutorialChoice({ value }), tutorialNext({})])
                 }}

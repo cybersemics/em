@@ -134,7 +134,7 @@ const Tutorial = ({
               )}
             </TransitionGroup>
           </div>
-          <TutorialNavigation tutorialStep={tutorialStep} dispatch={dispatch} />
+          <TutorialNavigation tutorialStep={tutorialStep} />
         </div>
 
         {isTouch &&
