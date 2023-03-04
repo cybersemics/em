@@ -1,5 +1,7 @@
 import React from 'react'
-import { useStore } from 'react-redux'
+import { useSelector } from 'react-redux'
+import State from '../../@types/State'
+import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -15,9 +17,27 @@ import TutorialHint from './TutorialHint'
 import { context1SubthoughtCreated } from './TutorialUtils'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren }) => {
+const Tutorial2StepContext1SubThought = ({
+  tutorialChoice,
+  rootChildren,
+}: {
+  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+  rootChildren: Thought[]
+}) => {
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
-  const store = useStore()
+  const select = useSelector(
+    (state: State) =>
+      !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+  )
+  const tryItYourself = useSelector((state: State) => {
+    const tutorialChoiceId = contextToThoughtId(state, [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
+    return (
+      tutorialChoiceId &&
+      getChildrenRanked(state, tutorialChoiceId).find(
+        child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+      )
+    )
+  })
 
   if (context1SubthoughtisCreated) {
     return (
@@ -27,8 +47,6 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
       </>
     )
   }
-
-  const tutorialChoiceId = contextToThoughtId(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
 
   return (
     <>
@@ -48,19 +66,13 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
         ) &&
         // e.g. Home/To Do
-        tutorialChoiceId &&
-        getChildrenRanked(store.getState(), tutorialChoiceId).find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
-        ) ? (
+        tryItYourself ? (
           <p>
             Do you remember how to do it?
             <TutorialHint>
               <br />
               <br />
-              {!cursor ||
-              headValue(store.getState(), cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
-                ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
-                : null}
+              {select ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
               to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
             </TutorialHint>
