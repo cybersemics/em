@@ -1,5 +1,6 @@
 import React from 'react'
-import Path from '../../@types/Path'
+import { useSelector } from 'react-redux'
+import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -46,20 +47,32 @@ const context2SubthoughtCreated = ({
 const Tutorial2StepContext2Subthought = ({
   tutorialChoice,
   rootChildren,
-  cursor,
 }: {
-  cursor: Path | null
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
-  const contexts = getContexts(state, caseSensitiveValue)
-  const contextParentThoughts = contexts.map(thoughtId => parentOfThought(state, thoughtId))
-  const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
-
+  const caseSensitiveValue = useSelector((state: State) =>
+    getContexts(state, value).length > 0 ? value : value.toLowerCase(),
+  )
+  const numContexts = useSelector((state: State) => getContexts(state, caseSensitiveValue).length)
+  const contextParentThoughts = useSelector((state: State) => {
+    const contexts = getContexts(state, caseSensitiveValue)
+    return contexts.map(thoughtId => parentOfThought(state, thoughtId))
+  })
   const isContext2SubthoughtCreated = context2SubthoughtCreated({ rootChildren, tutorialChoice })
+
+  const hasChosen = useSelector((state: State) => {
+    const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
+    return !!getChildrenRanked(state, tutorialChoiceParentId).find(
+      child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+    )
+  })
+
+  const selectChoice = useSelector(
+    (state: State) =>
+      !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
+  )
 
   if (isContext2SubthoughtCreated) {
     return (
@@ -73,9 +86,9 @@ const Tutorial2StepContext2Subthought = ({
     <>
       <p>Very good!</p>
       <p>
-        Notice the small number (<StaticSuperscript n={contexts.length} />
-        ). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'},
-        or <i>contexts</i> (in our case{' '}
+        Notice the small number (<StaticSuperscript n={numContexts} />
+        ). This means that “{caseSensitiveValue}” appears in {numContexts} place{numContexts === 1 ? '' : 's'}, or{' '}
+        <i>contexts</i> (in our case{' '}
         {joinConjunction(
           contextParentThoughts
             .filter(parent => parent && parent.value !== HOME_TOKEN)
@@ -100,17 +113,13 @@ const Tutorial2StepContext2Subthought = ({
           child => child.value.toLowerCase() === TUTORIAL_CONTEXT2_PARENT[tutorialChoice].toLowerCase(),
         ) &&
         // e.g. Work/To Do
-        getChildrenRanked(state, tutorialChoiceParentId).find(
-          child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
-        ) ? (
+        hasChosen ? (
           <p>
             Do you remember how to do it?
             <TutorialHint>
               <br />
               <br />
-              {!cursor || headValue(state, cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()
-                ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". `
-                : null}
+              {selectChoice ? `Select "${TUTORIAL_CONTEXT[tutorialChoice]}". ` : null}
               {isTouch ? 'Trace the line below with your finger ' : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter `}
               to create a new thought <i>within</i> "{TUTORIAL_CONTEXT[tutorialChoice]}".
             </TutorialHint>
