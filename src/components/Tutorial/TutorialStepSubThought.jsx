@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import headValue from '../../util/headValue'
@@ -9,7 +9,7 @@ const TutorialStepSubThought = ({ cursor }) => {
 
   const headCursorValue = cursor && headValue(state, cursor)
   return (
-    <Fragment>
+    <>
       <p>
         Now I am going to show you how to add a thought <i>within</i> another thought.
       </p>
@@ -28,7 +28,7 @@ const TutorialStepSubThought = ({ cursor }) => {
           .
         </p>
       )}
-    </Fragment>
+    </>
   )
 }
 

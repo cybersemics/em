@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -18,7 +18,7 @@ const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootChildren }) => {
   const value = cursor && headValue(store.getState(), cursor)
 
   return (
-    <Fragment>
+    <>
       <p>
         Let's say that{' '}
         {tutorialChoice === TUTORIAL_VERSION_TODO
@@ -53,7 +53,7 @@ const Tutorial2StepContext1 = ({ cursor, tutorialChoice, rootChildren }) => {
           back.
         </p>
       )}
-    </Fragment>
+    </>
   )
 }
 

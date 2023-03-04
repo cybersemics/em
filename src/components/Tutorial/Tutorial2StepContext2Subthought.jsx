@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { isMac, isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -47,14 +47,14 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
 
   if (isContext2SubthoughtCreated) {
     return (
-      <Fragment>
+      <>
         <p>Nice work!</p>
         <p>{isTouch ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-      </Fragment>
+      </>
     )
   }
   return (
-    <Fragment>
+    <>
       <p>Very good!</p>
       <p>
         Notice the small number (<StaticSuperscript n={contexts.length} />
@@ -101,7 +101,7 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
           </p>
         )
       }
-    </Fragment>
+    </>
   )
 }
 

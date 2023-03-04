@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
 import ellipsize from '../../util/ellipsize'
@@ -10,15 +10,15 @@ const TutorialStepSubThoughtEnter = ({ cursor }) => {
   const store = useStore()
 
   return (
-    <Fragment>
+    <>
       <p>
         As you can see{isTouch ? ' (if you scroll down)' : ''}, the new thought
         {cursor && cursor.length > 1 && headValue(store.getState(), cursor).length > 0 ? (
-          <Fragment> "{ellipsize(headValue(store.getState(), cursor))}"</Fragment>
+          <> "{ellipsize(headValue(store.getState(), cursor))}"</>
         ) : null}{' '}
         is nested <i>within</i>{' '}
         {cursor && cursor.length > 1 ? (
-          <Fragment>"{ellipsize(headValue(store.getState(), parentOf(cursor)))}"</Fragment>
+          <>"{ellipsize(headValue(store.getState(), parentOf(cursor)))}"</>
         ) : (
           'the other thought'
         )}
@@ -30,7 +30,7 @@ const TutorialStepSubThoughtEnter = ({ cursor }) => {
       ) : (
         <p>Feel free to type some text for the new thought.</p>
       )}
-    </Fragment>
+    </>
   )
 }
 

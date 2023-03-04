@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
@@ -16,7 +16,7 @@ const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
   const store = useStore()
 
   return (
-    <Fragment>
+    <>
       <p>Now we are going to create a different "{TUTORIAL_CONTEXT[tutorialChoice]}" list.</p>
       <p>
         {tutorialChoiceMap[tutorialChoice] || null}
@@ -29,17 +29,17 @@ const Tutorial2StepContext2Parent = ({ tutorialChoice, cursor }) => {
           {!cursor ||
           headValue(store.getState(), cursor).toLowerCase() !==
             TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase() ? (
-            <Fragment>Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}." </Fragment>
+            <>Select "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}." </>
           ) : (
-            <Fragment>
+            <>
               {isTouch ? 'Trace the line below with your finger' : 'Hit the Enter key'} to create a new thought{' '}
               <i>after</i> "{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}". Then type "
               {TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
-            </Fragment>
+            </>
           )}
         </TutorialHint>
       </p>
-    </Fragment>
+    </>
   )
 }
 

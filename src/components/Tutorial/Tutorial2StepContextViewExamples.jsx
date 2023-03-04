@@ -1,8 +1,8 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewExamples = () => (
-  <Fragment>
+  <>
     <p>
       Here are some real-world examples of using contexts in <b>em</b>:
     </p>
@@ -14,7 +14,7 @@ const Tutorial2StepContextViewExamples = () => (
     <p>
       The more thoughts you add to <b>em</b>, the more useful this feature will become.
     </p>
-  </Fragment>
+  </>
 )
 
 export default Tutorial2StepContextViewExamples

@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
@@ -12,7 +12,7 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
   const cursorThought = childIdsToThoughts(store.getState(), cursor)
 
   return (
-    <Fragment>
+    <>
       <p>
         Now add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “
         {TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}”.
@@ -32,7 +32,7 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
               cursorThought[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice] ? (
                 `Type "${TUTORIAL_CONTEXT[tutorialChoice]}."`
               ) : (
-                <Fragment>
+                <>
                   {!cursor || headValue(store.getState(), cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
                     ? `Select "${TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}". `
                     : null}
@@ -40,7 +40,7 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
                     ? 'Trace the line below with your finger'
                     : `Hold ${isMac ? 'Command' : 'Ctrl'} and hit Enter`}{' '}
                   to create a new thought <i>within</i> "{TUTORIAL_CONTEXT2_PARENT[tutorialChoice]}".
-                </Fragment>
+                </>
               )}
             </TutorialHint>
           </p>
@@ -51,7 +51,7 @@ const Tutorial2StepContext2 = ({ tutorialChoice, rootChildren, cursor }) => {
           </p>
         )
       }
-    </Fragment>
+    </>
   )
 }
 

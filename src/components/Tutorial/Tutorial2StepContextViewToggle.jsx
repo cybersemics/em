@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
@@ -20,16 +20,16 @@ const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase()
   return (
-    <Fragment>
+    <>
       {!cursor || headValue(store.getState(), cursor) !== caseSensitiveValue ? (
         <p>First select "{caseSensitiveValue}".</p>
       ) : (
-        <Fragment>
+        <>
           {isHint() ? (
             <p>
               You did the right gesture, but somehow "{caseSensitiveValue}" wasn't selected. Try
               {!cursor || headValue(store.getState(), cursor) !== caseSensitiveValue ? (
-                <Fragment> selecting "{caseSensitiveValue}" and trying</Fragment>
+                <> selecting "{caseSensitiveValue}" and trying</>
               ) : null}{' '}
               again.
             </p>
@@ -40,9 +40,9 @@ const Tutorial2StepContextViewToggle = ({ cursor, tutorialChoice }) => {
               : `Hit ${formatKeyboardShortcut(shortcutById('toggleContextView').keyboard)}`}{' '}
             to view the current thought's contexts.
           </p>
-        </Fragment>
+        </>
       )}
-    </Fragment>
+    </>
   )
 }
 

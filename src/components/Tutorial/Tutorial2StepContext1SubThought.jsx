@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -21,17 +21,17 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
 
   if (context1SubthoughtisCreated) {
     return (
-      <Fragment>
+      <>
         <p>Nice work!</p>
         <p>{isTouch ? 'Tap' : 'Click'} the Next button when you are done entering your thought.</p>
-      </Fragment>
+      </>
     )
   }
 
   const tutorialChoiceId = contextToThoughtId(store.getState(), [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
 
   return (
-    <Fragment>
+    <>
       <p>
         Now add a thought to “{TUTORIAL_CONTEXT[tutorialChoice]}”.{' '}
         {tutorialChoice === TUTORIAL_VERSION_TODO
@@ -71,7 +71,7 @@ const Tutorial2StepContext1SubThought = ({ cursor, tutorialChoice, rootChildren 
           </p>
         )
       }
-    </Fragment>
+    </>
   )
 }
 

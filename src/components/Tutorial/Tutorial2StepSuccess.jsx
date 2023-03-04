@@ -1,10 +1,10 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepSuccess = ({ dispatch }) => (
-  <Fragment>
+  <>
     <p>
       Congratulations! You have completed Part II of the tutorial. You now have the skills to create a vast web of
       thoughts in <b>em</b>.
@@ -15,7 +15,7 @@ const Tutorial2StepSuccess = ({ dispatch }) => (
       <a onClick={() => dispatch(showModal({ id: 'manual' }))}>Help</a> link in the footer.
     </p>
     <p>Happy Sensemaking!</p>
-  </Fragment>
+  </>
 )
 
 export default Tutorial2StepSuccess

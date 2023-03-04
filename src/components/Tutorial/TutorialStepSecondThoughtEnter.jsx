@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { useStore } from 'react-redux'
 import { isTouch } from '../../browser'
 import { shortcutById } from '../../shortcuts'
@@ -14,13 +14,13 @@ const TutorialStepSecondThoughtEnter = ({ cursor }) => {
   const headCursorValue = cursor && headValue(state, cursor)
 
   return (
-    <Fragment>
+    <>
       <p>Good work!</p>
       <p>
         {isTouch ? (
-          <Fragment>
+          <>
             Swiping <GestureDiagram path={newThoughtShortcut.gesture} size='28' style={{ margin: '-10px -4px -6px' }} />
-          </Fragment>
+          </>
         ) : (
           'Hitting Enter'
         )}{' '}
@@ -31,7 +31,7 @@ const TutorialStepSecondThoughtEnter = ({ cursor }) => {
       ) : (
         <p>Now type some text for the new thought.</p>
       )}
-    </Fragment>
+    </>
   )
 }
 

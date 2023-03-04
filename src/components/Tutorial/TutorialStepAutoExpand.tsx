@@ -60,18 +60,18 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
     cursor && subthoughts.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
 
   return (
-    <Fragment>
+    <>
       <p>
         Thoughts <i>within</i> thoughts are automatically hidden when you {isTouch ? 'tap' : 'click'} away.
         {cursor ? (
           isCursorCollapsePossible ? (
-            <Fragment>
-              <Fragment> Try {isTouch ? 'tapping' : 'clicking'} on </Fragment>
-              <Fragment>
+            <>
+              <> Try {isTouch ? 'tapping' : 'clicking'} on </>
+              <>
                 thought "{ellipsize(subThoughtNotCursor(ancestorThoughtChildren)?.value || '')}"{' '}
                 {contextAncestor.length !== 0 && `or "${ellipsize(head(contextAncestor))}"`}{' '}
-              </Fragment>
-              <Fragment>
+              </>
+              <>
                 {' '}
                 to hide
                 {(isCursorLeaf ? headValue(state, cursor) : cursorChildren[0].value).length === 0 && ' the empty '}{' '}
@@ -84,10 +84,10 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
                     : '',
                 )}
                 .
-              </Fragment>
-            </Fragment>
+              </>
+            </>
           ) : (
-            <Fragment> Add a subthought and I'll show you.</Fragment>
+            <> Add a subthought and I'll show you.</>
           )
         ) : getAllChildren(state, HOME_TOKEN).length === 0 ? (
           ' Oops! There are no thoughts in your thoughtspace. Please add some thoughts to continue with the tutorial.'
@@ -95,7 +95,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
           ' Please focus on one of the thoughts.'
         )}
       </p>
-    </Fragment>
+    </>
   )
 }
 
