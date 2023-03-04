@@ -59,7 +59,7 @@ const mapStateToProps = (state: State, props: BulletProps) => {
   }
 }
 
-/** Renters the leaf bullet. */
+/** A circle bullet for leaf thoughts. */
 const BulletLeaf = ({
   fill,
   isHighlighted,
@@ -87,6 +87,51 @@ const BulletLeaf = ({
         fill: isHighlighted ? colors.highlight : missing ? undefined : colors.fg,
         stroke: isHighlighted ? colors.highlight : undefined,
       }}
+      strokeWidth={showContexts ? 30 : undefined}
+      stroke={showContexts ? 'none' : colors.fg85}
+      fill={showContexts ? 'none' : fill}
+    />
+  )
+}
+
+/** A triangle-shaped bullet for thoughts with children. */
+const BulletParent = ({
+  currentScale,
+  fill,
+  isHighlighted,
+  missing,
+  pending,
+  showContexts,
+}: {
+  currentScale?: number
+  fill?: string
+  isHighlighted?: boolean
+  missing?: boolean
+  pending?: boolean
+  showContexts?: boolean
+} = {}) => {
+  const colors = useSelector(themeColors)
+  const isIOSSafari = isTouch && isiPhone && isSafari()
+  const path = isIOSSafari
+    ? 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z'
+    : 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z'
+
+  /** Gets pixel based center for OSX safari as it can't handle "center" or percentage based values in SVGs. */
+  const calculateTransformOrigin = () => {
+    const isOSXSafari = isMac && isSafari()
+    const svgCenter = 300
+    const scale = currentScale || 1
+    const transformOrigin = isOSXSafari ? `${scale * svgCenter}px ${scale * svgCenter}px` : 'center'
+    return transformOrigin
+  }
+
+  return (
+    <path
+      className={classNames({ 'glyph-fg': true, triangle: true, gray: missing, graypulse: pending })}
+      style={{
+        transformOrigin: calculateTransformOrigin(),
+      }}
+      d={path}
       strokeWidth={showContexts ? 30 : undefined}
       stroke={showContexts ? 'none' : colors.fg85}
       fill={showContexts ? 'none' : fill}
@@ -136,15 +181,6 @@ const Bullet = ({
   // calculate position of thought for different font sizes
   const bulletMarginLeft = (fontSize - 9) * 0.5 - 11
 
-  /** Gets pixel based center for OSX safari as it can't handle "center" or percentage based values in SVGs. */
-  const calculateTransformOrigin = () => {
-    const isOSXSafari = isMac && isSafari()
-    const currentScale = svgElement.current?.currentScale || 1
-    const svgCenter = 300
-    const transformOrigin = isOSXSafari ? `${currentScale * svgCenter}px ${currentScale * svgCenter}px` : 'center'
-    return transformOrigin
-  }
-
   // props to pass based on different platforms
   const isIOSSafari = isTouch && isiPhone && isSafari()
   const vendorSpecificData = isIOSSafari
@@ -165,25 +201,23 @@ const Bullet = ({
 
   /** Renders a circle or triangle for the bullet. */
   const bulletShape = ({ missing, pending }: { missing?: boolean; pending?: boolean } = {}) => {
-    const bulletShapeProps = {
-      ...(showContexts ? { strokeWidth: 30 } : null),
-      stroke: showContexts ? 'none' : colors.fg85,
-      fill: showContexts ? 'none' : fill,
-    }
-
-    const { path } = vendorSpecificData.bullet
-
     // when context view is activated, render non-leaf bullet
     return leaf && !showContexts ? (
-      <BulletLeaf missing={missing} />
+      <BulletLeaf
+        fill={fill}
+        isHighlighted={isHighlighted}
+        missing={missing}
+        pending={pending}
+        showContexts={showContexts}
+      />
     ) : (
-      <path
-        className={classNames({ 'glyph-fg': true, triangle: true, gray: missing, graypulse: pending })}
-        style={{
-          transformOrigin: calculateTransformOrigin(),
-        }}
-        d={path}
-        {...bulletShapeProps}
+      <BulletParent
+        currentScale={svgElement.current?.currentScale || 1}
+        fill={fill}
+        isHighlighted={isHighlighted}
+        missing={missing}
+        pending={pending}
+        showContexts={showContexts}
       />
     )
   }
