@@ -17,6 +17,9 @@ import pushStore from '../stores/push'
 const Status = () => {
   const colors = useSelector(themeColors)
   const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
+  const replicationPercentage = pushStore.useSelector(({ replicationProgress }) =>
+    Math.round(replicationProgress * 100),
+  )
   const status = offlineStatusStore.useState()
   return (
     <span
@@ -38,7 +41,9 @@ const Status = () => {
         : status === 'connecting' || status === 'reconnecting'
         ? 'Connecting'
         : status === 'connected' || status === 'synced'
-        ? 'Online'
+        ? replicationPercentage < 100
+          ? `Replicating ${replicationPercentage}%`
+          : 'Online'
         : status === 'offline'
         ? 'Offline'
         : null}

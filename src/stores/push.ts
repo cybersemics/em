@@ -4,6 +4,8 @@ import ministore from './ministore'
 const pushStore = ministore({
   // Tracks if the pushQueue is currently pushing to IndexedDB.
   isPushing: false,
+  // progress of replicating all thoughts for offline editing (%)
+  replicationProgress: 1,
 })
 
 export default pushStore
