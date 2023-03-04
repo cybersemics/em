@@ -1,7 +1,6 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -60,6 +59,41 @@ const mapStateToProps = (state: State, props: BulletProps) => {
   }
 }
 
+/** Renters the leaf bullet. */
+const BulletLeaf = ({
+  fill,
+  isHighlighted,
+  missing,
+  pending,
+  showContexts,
+}: { fill?: string; isHighlighted?: boolean; missing?: boolean; pending?: boolean; showContexts?: boolean } = {}) => {
+  const colors = useSelector(themeColors)
+  const isIOSSafari = isTouch && isiPhone && isSafari()
+  const radius = isIOSSafari ? 105 : 92
+  return (
+    <ellipse
+      aria-label='bullet-glyph'
+      className={classNames({
+        'glyph-fg': true,
+        gray: missing,
+        graypulse: pending,
+      })}
+      ry={radius}
+      rx={radius}
+      cy='298'
+      cx='297'
+      style={{
+        // allow 'gray' className to define fill when missing
+        fill: isHighlighted ? colors.highlight : missing ? undefined : colors.fg,
+        stroke: isHighlighted ? colors.highlight : undefined,
+      }}
+      strokeWidth={showContexts ? 30 : undefined}
+      stroke={showContexts ? 'none' : colors.fg85}
+      fill={showContexts ? 'none' : fill}
+    />
+  )
+}
+
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
   dark,
@@ -116,7 +150,6 @@ const Bullet = ({
   const vendorSpecificData = isIOSSafari
     ? {
         bullet: {
-          ellipseRadius: '105',
           path: 'M194.95196151422277,180.42647327382525 L194.95196151422277,419.57354223877866 L413.24607972032067,298.0609718441649 L194.95196151422277,180.42646533261976 L194.95196151422277,180.42647327382525 z',
         },
         bulletOverlayRadius: '300',
@@ -124,54 +157,33 @@ const Bullet = ({
       }
     : {
         bullet: {
-          ellipseRadius: '92',
           path: 'M260.8529375873694,149.42646091838702 L260.8529375873694,450.5735238982077 L409.1470616167427,297.55825763741126 L260.8529375873694,149.42646091838702 z',
         },
         bulletOverlayRadius: '245',
         glyphMarginBottom: '-0.3em',
       }
 
-  /** Return circle or triangle for the bullet. */
-  const foregroundShape = (classes: Index<boolean> = {}) => {
-    const foregroundShapeProps = showContexts
-      ? {
-          strokeWidth: '30',
-          stroke: colors.fg85,
-          fill: 'none',
-        }
-      : {
-          stroke: 'none',
-          fill,
-        }
+  /** Renders a circle or triangle for the bullet. */
+  const bulletShape = ({ missing, pending }: { missing?: boolean; pending?: boolean } = {}) => {
+    const bulletShapeProps = {
+      ...(showContexts ? { strokeWidth: 30 } : null),
+      stroke: showContexts ? 'none' : colors.fg85,
+      fill: showContexts ? 'none' : fill,
+    }
 
-    const { ellipseRadius, path } = vendorSpecificData.bullet
+    const { path } = vendorSpecificData.bullet
 
     // when context view is activated, render non-leaf bullet
     return leaf && !showContexts ? (
-      <ellipse
-        aria-label='bullet-glyph'
-        className={classNames({
-          'glyph-fg': true,
-          ...classes,
-        })}
-        ry={ellipseRadius}
-        rx={ellipseRadius}
-        cy='298'
-        cx='297'
-        style={{
-          fill: isHighlighted ? colors.highlight : classes.gray ? '#666' : colors.fg,
-          stroke: isHighlighted ? colors.highlight : undefined,
-        }}
-        {...foregroundShapeProps}
-      />
+      <BulletLeaf missing={missing} />
     ) : (
       <path
-        className={classNames({ 'glyph-fg': true, triangle: true, ...classes })}
+        className={classNames({ 'glyph-fg': true, triangle: true, gray: missing, graypulse: pending })}
         style={{
           transformOrigin: calculateTransformOrigin(),
         }}
         d={path}
-        {...foregroundShapeProps}
+        {...bulletShapeProps}
       />
     )
   }
@@ -262,12 +274,12 @@ const Bullet = ({
               }}
             />
           )}
-          {foregroundShape({
+          {bulletShape({
             // Since Thoughts and Lexemes are loaded from the db separately, it is common for Lexemes to be temporarily missing.
             // Therefore render in a simple gray rather than an error color.
             // There is not an easy way to distinguish between a Lexeme that is missing and one that is loading, though eventually if all pulls have completed successfully and the Lexeme is still missing we could infer it was an error.
-            gray: missing,
-            graypulse: pending,
+            missing,
+            pending,
           })}
         </g>
       </svg>
