@@ -65,7 +65,6 @@ const TutorialNavigationNext = ({
     (Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT &&
       context2SubthoughtCreated({ rootChildren, tutorialChoice })) ? (
     <TutorialNavigationButton
-      classes={undefined}
       clickHandler={() => dispatch(tutorialNext({}))}
       value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
     />

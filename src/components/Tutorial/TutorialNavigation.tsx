@@ -56,22 +56,16 @@ const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
       {tutorialStep === TUTORIAL_STEP_SUCCESS ? (
         <>
           <TutorialNavigationButton
-            classes={undefined}
             clickHandler={() => dispatch(setTutorialStep({ value: TUTORIAL2_STEP_START }))}
             value='Learn more'
           />
-          <TutorialNavigationButton
-            classes={undefined}
-            clickHandler={() => dispatch(tutorial({ value: false }))}
-            value='Play on my own'
-          />
+          <TutorialNavigationButton clickHandler={() => dispatch(tutorial({ value: false }))} value='Play on my own' />
         </>
       ) : tutorialStep === TUTORIAL2_STEP_CHOOSE ? (
         <ul className='simple-list'>
           {tutorialOptions.map(({ key, value, textValue }) => (
             <li key={key}>
               <TutorialNavigationButton
-                classes={undefined}
                 clickHandler={() => {
                   dispatch([tutorialChoice({ value }), tutorialNext({})])
                 }}

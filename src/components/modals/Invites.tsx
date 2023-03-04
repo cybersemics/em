@@ -135,7 +135,7 @@ const Invites = () => {
       className='popup'
       center
       actions={({ close }) => (
-        <div style={undefined}>
+        <div>
           <ActionButton key='close' title='Close' onClick={() => close()} />
         </div>
       )}
