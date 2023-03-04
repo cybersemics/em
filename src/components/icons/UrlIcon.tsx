@@ -1,6 +1,6 @@
 import React from 'react'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Url icon. */
 const UrlIcon = () => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
