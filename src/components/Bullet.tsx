@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -16,14 +16,10 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
-import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
-
-// other bullets
-// •◦◂◄◀︎ ➤▹▸►◥
 
 interface BulletProps {
   // See: ThoughtProps['isContextPending']
@@ -37,26 +33,6 @@ interface BulletProps {
   simplePath: SimplePath
   path: Path
   thoughtId: ThoughtId
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: BulletProps) => {
-  const { invalidState } = state
-  const thought = getThoughtById(state, props.thoughtId)
-  const lexeme = thought ? getLexeme(state, thought.value) : null
-  const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(props.simplePath)
-  return {
-    // if being edited and meta validation error has occured
-    invalid: !!props.isEditing && invalidState,
-    isHighlighted: isHolding || props.isDragging,
-    missing: !lexeme,
-    fontSize: state.fontSize,
-    // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
-    // (Another approach would be to pre-load the context children as soon as the context view is activated.)
-    pending: props.isContextPending || (!isContextViewActive(state, parentOf(props.path)) && isPending(state, thought)),
-    showContexts: isContextViewActive(state, props.path),
-    dark: theme(state) !== 'Light',
-  }
 }
 
 /** A circle bullet for leaf thoughts. */
@@ -174,24 +150,37 @@ const BulletCursorOverlay = ({
 
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
-  dark,
-  fontSize,
-  invalid,
   isContextPending,
-  isHighlighted,
+  isDragging,
   isEditing,
   leaf,
-  missing,
   onClick,
   path,
-  pending,
   publish,
-  showContexts,
   simplePath,
-}: BulletProps & ReturnType<typeof mapStateToProps>) => {
+  thoughtId,
+}: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
   const dragHold = useSelector((state: State) => state.dragHold)
+  const showContexts = useSelector((state: State) => isContextViewActive(state, path))
+  // if being edited and meta validation error has occured
+  const invalid = useSelector((state: State) => !!isEditing && state.invalidState)
+  const fontSize = useSelector((state: State) => state.fontSize)
+  const isHighlighted = useSelector((state: State) => {
+    const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
+    return isHolding || isDragging
+  })
+  const pending = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
+    // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
+    // (Another approach would be to pre-load the context children as soon as the context view is activated.)
+    return isContextPending || (!isContextViewActive(state, parentOf(path)) && isPending(state, thought))
+  })
+  const missing = useSelector((state: State) => {
+    const thought = getThoughtById(state, thoughtId)
+    return !thought || !getLexeme(state, thought.value)
+  })
   const colors = useSelector(themeColors)
   const fill = useSelector((state: State) => {
     const bulletId = findDescendant(state, head(simplePath), '=bullet')
@@ -313,4 +302,7 @@ const Bullet = ({
   )
 }
 
-export default connect(mapStateToProps)(Bullet)
+const BulletMemo = React.memo(Bullet)
+BulletMemo.displayName = 'Bullet'
+
+export default BulletMemo
