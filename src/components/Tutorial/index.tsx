@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { connect, useStore } from 'react-redux'
-import { TransitionGroup } from 'react-transition-group'
+import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Connected from '../../@types/Connected'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
@@ -32,7 +32,18 @@ import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
-import WithCSSTransition from './WithCSSTransition'
+
+/** Wrap a component in a slide CSS transition. */
+const withCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
+  const Component = component
+  return (
+    <CSSTransition in={true} key={Math.floor(props.step)} timeout={400} classNames='slide'>
+      <div>
+        <Component {...props} />
+      </div>
+    </CSSTransition>
+  )
+}
 
 // assert shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
@@ -115,7 +126,7 @@ const Tutorial = ({
           <div className='tutorial-text'>
             <TransitionGroup>
               {tutorialStepComponent ? (
-                WithCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps })
+                withCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps })
               ) : (
                 <p>
                   Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.
