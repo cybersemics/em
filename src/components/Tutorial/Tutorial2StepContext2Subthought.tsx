@@ -1,6 +1,9 @@
 import React from 'react'
+import Path from '../../@types/Path'
+import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
+  HOME_TOKEN,
   TUTORIAL_CONTEXT,
   TUTORIAL_CONTEXT2_PARENT,
   TUTORIAL_VERSION_BOOK,
@@ -14,13 +17,18 @@ import getContexts from '../../selectors/getContexts'
 import parentOfThought from '../../selectors/parentOfThought'
 import store from '../../stores/app'
 import headValue from '../../util/headValue'
-import isRoot from '../../util/isRoot'
 import joinConjunction from '../../util/joinConjunction'
 import StaticSuperscript from '../StaticSuperscript'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
+const context2SubthoughtCreated = ({
+  rootChildren,
+  tutorialChoice,
+}: {
+  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+  rootChildren: Thought[]
+}) => {
   const state = store.getState()
 
   const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
@@ -35,7 +43,15 @@ const context2SubthoughtCreated = ({ rootChildren, tutorialChoice }) => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor }) => {
+const Tutorial2StepContext2Subthought = ({
+  tutorialChoice,
+  rootChildren,
+  cursor,
+}: {
+  cursor: Path | null
+  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+  rootChildren: Thought[]
+}) => {
   const state = store.getState()
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
   const caseSensitiveValue = getContexts(state, value).length > 0 ? value : value.toLowerCase()
@@ -60,7 +76,11 @@ const Tutorial2StepContext2Subthought = ({ tutorialChoice, rootChildren, cursor 
         Notice the small number (<StaticSuperscript n={contexts.length} />
         ). This means that “{caseSensitiveValue}” appears in {contexts.length} place{contexts.length === 1 ? '' : 's'},
         or <i>contexts</i> (in our case{' '}
-        {joinConjunction(contextParentThoughts.filter(parent => !isRoot(parent)).map(parent => `"${parent.value}"`))}
+        {joinConjunction(
+          contextParentThoughts
+            .filter(parent => parent && parent.value !== HOME_TOKEN)
+            .map(parent => `"${parent!.value}"`),
+        )}
         ).
       </p>
       <p>
