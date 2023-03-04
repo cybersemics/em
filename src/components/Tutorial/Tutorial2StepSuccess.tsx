@@ -1,0 +1,25 @@
+import React from 'react'
+import { useDispatch } from 'react-redux'
+import showModal from '../../action-creators/showModal'
+import { isTouch } from '../../browser'
+
+// eslint-disable-next-line jsdoc/require-jsdoc
+const Tutorial2StepSuccess = () => {
+  const dispatch = useDispatch()
+  return (
+    <>
+      <p>
+        Congratulations! You have completed Part II of the tutorial. You now have the skills to create a vast web of
+        thoughts in <b>em</b>.
+      </p>
+      <p>
+        That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
+        {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
+        <a onClick={() => dispatch(showModal({ id: 'manual' }))}>Help</a> link in the footer.
+      </p>
+      <p>Happy Sensemaking!</p>
+    </>
+  )
+}
+
+export default Tutorial2StepSuccess
