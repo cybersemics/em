@@ -1,14 +1,24 @@
 import React from 'react'
 import { useStore } from 'react-redux'
+import Path from '../../@types/Path'
+import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
-import { TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
 import joinConjunction from '../../util/joinConjunction'
 import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const Tutorial2StepContext1Parent = ({ cursor, tutorialChoice, rootChildren }) => {
+const Tutorial2StepContext1Parent = ({
+  cursor,
+  tutorialChoice,
+  rootChildren,
+}: {
+  cursor: Path | null
+  tutorialChoice: keyof typeof TUTORIAL_CONTEXT
+  rootChildren: Thought[]
+}) => {
   const store = useStore()
 
   return (
