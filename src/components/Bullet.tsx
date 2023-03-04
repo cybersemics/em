@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { useRef } from 'react'
+import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -196,6 +196,42 @@ const Bullet = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
 
+  // expand or collapse on click
+  // has some additional logic to make it work intuitively with pin true/false
+  const clickHandler = useCallback(
+    (e: React.MouseEvent) => {
+      // stop click event from bubbling up to Content.clickOnEmptySpace
+      e.stopPropagation()
+      // short circuit if dragHold
+      // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
+      // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
+      if (dragHold) return
+
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        const isExpanded = state.expanded[hashPath(path)]
+        const children = getChildren(state, head(path))
+        const shouldCollapse = isExpanded && children.length > 0
+        const pathParent = path.length > 1 ? parentOf(path) : null
+        const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
+        // if thought is not expanded, set the cursor on the thought
+        // if thought is expanded, collapse it by moving the cursor to its parent
+        dispatch([
+          // set pin false on expanded only child
+          ...(isExpanded &&
+          (parentChildren?.length === 1 ||
+            findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
+            ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
+            : [deleteAttribute({ path: simplePath, value: '=pin' })]),
+          // move cursor
+          setCursor({ path: shouldCollapse ? pathParent : path }),
+        ])
+      })
+      onClick?.(e)
+    },
+    [dragHold],
+  )
+
   return (
     <span
       aria-label='bullet'
@@ -217,36 +253,7 @@ const Bullet = ({
         width: 4, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
       }}
-      onClick={(e: React.MouseEvent) => {
-        // stop click event from bubbling up to Content.clickOnEmptySpace
-        e.stopPropagation()
-        // short circuit if dragHold
-        // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
-        // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
-        if (dragHold) return
-
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          const isExpanded = state.expanded[hashPath(path)]
-          const children = getChildren(state, head(path))
-          const shouldCollapse = isExpanded && children.length > 0
-          const pathParent = path.length > 1 ? parentOf(path) : null
-          const parentChildren = pathParent ? getChildren(state, head(pathParent)) : null
-          // if thought is not expanded, set the cursor on the thought
-          // if thought is expanded, collapse it by moving the cursor to its parent
-          dispatch([
-            // set pin false on expanded only child
-            ...(isExpanded &&
-            (parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
-              ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
-              : [deleteAttribute({ path: simplePath, value: '=pin' })]),
-            // move cursor
-            setCursor({ path: shouldCollapse ? pathParent : path }),
-          ])
-        })
-        onClick?.(e)
-      }}
+      onClick={clickHandler}
     >
       <svg
         className='glyph'
