@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { connect, useStore } from 'react-redux'
+import { connect, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Connected from '../../@types/Connected'
 import GesturePath from '../../@types/GesturePath'
@@ -107,8 +107,7 @@ const Tutorial = ({
         : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
   )
 
-  const store = useStore<State>()
-  const cursorHeadValue = cursor && headValue(store.getState(), cursor)
+  const cursorHeadValue = useSelector((state: State) => state.cursor && headValue(state, state.cursor))
   return (
     <div className='tutorial'>
       <div className='tutorial-inner'>

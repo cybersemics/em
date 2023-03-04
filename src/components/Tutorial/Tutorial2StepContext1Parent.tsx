@@ -1,6 +1,7 @@
 import React from 'react'
-import { useStore } from 'react-redux'
+import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
+import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
@@ -19,13 +20,13 @@ const Tutorial2StepContext1Parent = ({
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const store = useStore()
+  const hasQuotes = useSelector((state: State) => state.cursor && headValue(state, state.cursor).startsWith('"'))
 
   return (
     <>
       <p>
         Let's begin! Create a new thought with the text “{TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”
-        {cursor && headValue(store.getState(), cursor).startsWith('"') ? ' (without quotes)' : null}.
+        {hasQuotes ? ' (without quotes)' : null}.
       </p>
       <p>
         You should create this thought at the top level, i.e. not <i>within</i> any other thoughts.
