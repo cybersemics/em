@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React, { useRef } from 'react'
 import { connect, useDispatch, useSelector } from 'react-redux'
+import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -131,7 +132,7 @@ const Bullet = ({
       }
 
   /** Return circle or triangle for the bullet. */
-  const foregroundShape = (classes = {}) => {
+  const foregroundShape = (classes: Index<boolean> = {}) => {
     const foregroundShapeProps = showContexts
       ? {
           strokeWidth: '30',
@@ -158,7 +159,7 @@ const Bullet = ({
         cy='298'
         cx='297'
         style={{
-          fill: isHighlighted ? colors.highlight : colors.fg,
+          fill: isHighlighted ? colors.highlight : classes.gray ? '#666' : colors.fg,
           stroke: isHighlighted ? colors.highlight : undefined,
         }}
         {...foregroundShapeProps}
