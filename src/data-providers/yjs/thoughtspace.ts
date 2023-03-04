@@ -471,7 +471,7 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 const deleteThought = (id: ThoughtId): Promise<void> => {
   enqueue(id)
   // destroying the doc does not remove top level shared type observers
-  lexemeDocs[id]?.getMap().unobserve(onLexemeChange)
+  thoughtDocs[id]?.getMap().unobserve(onThoughtChange)
   thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
