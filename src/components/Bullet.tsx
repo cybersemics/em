@@ -139,6 +139,39 @@ const BulletParent = ({
   )
 }
 
+/** A larger circle that surrounds the bullet of the cursor thought. */
+const BulletCursorOverlay = ({
+  isEditing,
+  isHighlighted,
+  leaf,
+  publish,
+  simplePath,
+}: {
+  isEditing?: boolean
+  isHighlighted?: boolean
+  leaf?: boolean
+  publish?: boolean
+  simplePath: SimplePath
+}) => {
+  const colors = useSelector(themeColors)
+  const isIOSSafari = isTouch && isiPhone && isSafari()
+  const bulletOverlayRadius = isIOSSafari ? 300 : 245
+  return (
+    <ellipse
+      className='bullet-cursor-overlay'
+      ry={bulletOverlayRadius}
+      rx={bulletOverlayRadius}
+      cy='300'
+      cx='300'
+      style={{
+        fillOpacity: isHighlighted ? 1 : 0.25,
+        fill: isHighlighted ? colors.highlight : colors.fg,
+        stroke: isHighlighted ? colors.highlight : undefined,
+      }}
+    />
+  )
+}
+
 /** Connect bullet to contextViews so it can re-render independent from <Subthought>. */
 const Bullet = ({
   dark,
@@ -156,12 +189,9 @@ const Bullet = ({
   showContexts,
   simplePath,
 }: BulletProps & ReturnType<typeof mapStateToProps>) => {
-  const isRoot = simplePath.length === 1
-  const isRootChildLeaf = simplePath.length === 2 && leaf
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
   const dragHold = useSelector((state: State) => state.dragHold)
-
   const colors = useSelector(themeColors)
   const fill = useSelector((state: State) => {
     const bulletId = findDescendant(state, head(simplePath), '=bullet')
@@ -169,25 +199,13 @@ const Bullet = ({
     return styles?.color || colors.fg85
   })
 
-  const lineHeight = fontSize * 1.25
-  const svgSizeStyle = {
-    height: lineHeight,
-    width: lineHeight,
-    marginLeft: -lineHeight,
-    // required to make the distance between bullet and thought scale properly at all font sizes.
-    left: lineHeight * 0.317,
-  }
-
-  // calculate position of thought for different font sizes
-  const bulletMarginLeft = (fontSize - 9) * 0.5 - 11
-
-  // props to pass based on different platforms
-  const isIOSSafari = isTouch && isiPhone && isSafari()
-  const bulletOverlayRadius = isIOSSafari ? 300 : 245
-
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
   const extendClickHeight = fontSize / 3
+  const lineHeight = fontSize * 1.25
+  const isIOSSafari = isTouch && isiPhone && isSafari()
+  const isRoot = simplePath.length === 1
+  const isRootChildLeaf = simplePath.length === 2 && leaf
 
   return (
     <span
@@ -199,7 +217,8 @@ const Bullet = ({
       })}
       style={{
         marginTop: -extendClickHeight,
-        marginLeft: bulletMarginLeft - extendClickWidth,
+        // calculate position of thought for different font sizes
+        marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth,
         marginBottom: -extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
@@ -244,7 +263,11 @@ const Bullet = ({
         className='glyph'
         viewBox='0 0 600 600'
         style={{
-          ...svgSizeStyle,
+          height: lineHeight,
+          width: lineHeight,
+          marginLeft: -lineHeight,
+          // required to make the distance between bullet and thought scale properly at all font sizes.
+          left: lineHeight * 0.317,
           marginBottom: isIOSSafari ? '-0.2em' : '-0.3em',
           ...(isHighlighted
             ? {
@@ -258,17 +281,12 @@ const Bullet = ({
       >
         <g>
           {!(publish && (isRoot || isRootChildLeaf)) && (isEditing || isHighlighted) && (
-            <ellipse
-              className='bullet-cursor-overlay'
-              ry={bulletOverlayRadius}
-              rx={bulletOverlayRadius}
-              cy='300'
-              cx='300'
-              style={{
-                fillOpacity: isHighlighted ? 1 : 0.25,
-                fill: isHighlighted ? colors.highlight : colors.fg,
-                stroke: isHighlighted ? colors.highlight : undefined,
-              }}
+            <BulletCursorOverlay
+              isEditing={isEditing}
+              isHighlighted={isHighlighted}
+              leaf={leaf}
+              publish={publish}
+              simplePath={simplePath}
             />
           )}
           {leaf && !showContexts ? (
