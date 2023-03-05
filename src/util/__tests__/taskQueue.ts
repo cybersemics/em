@@ -43,6 +43,24 @@ it('async tasks', async () => {
   expect(counter).toBe(3)
 })
 
+it('autostart: false', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => counter++
+
+  await new Promise<void>(resolve => {
+    const queue = taskQueue({
+      autostart: false,
+      onEnd: resolve,
+    })
+    queue.add([inc, inc, inc])
+    queue.add([inc, inc, inc])
+    queue.start()
+  })
+
+  expect(counter).toBe(6)
+})
+
 it('onStep', async () => {
   let counter = 0
   /** Increment counter. */
