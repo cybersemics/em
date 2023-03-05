@@ -7,6 +7,8 @@ export interface Ministore<T> {
   getState: () => T
   // subscribe to changes
   subscribe: (f: (state: T) => void) => void
+  // subscribe to changes to a slice of the state
+  subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
   // Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state.
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
   // a hook that invokes a callback with side effects when the state changes
@@ -92,9 +94,26 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     return () => emitter.off('change', f)
   }
 
+  /** Subscribe to a slice of the state. */
+  const subscribeSelector = <S>(
+    selector: (state: T) => S,
+    f: (slice: S) => void,
+    equals: (a: S, b: S) => boolean = (a, b) => a === b,
+  ) => {
+    let value = selector(state)
+    subscribe((stateNew: T) => {
+      const valueOld = value
+      value = selector(state)
+      if (!equals(value, valueOld)) {
+        f(value)
+      }
+    })
+  }
+
   return {
     getState: () => state,
     subscribe,
+    subscribeSelector,
     update,
     useEffect: useChangeEffect,
     useSelector,
