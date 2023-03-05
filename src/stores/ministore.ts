@@ -83,8 +83,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     // Do this once here rather than in every test.
     // TODO: Move this to a stubbing function.
     if (process.env.NODE_ENV === 'test') {
-      emitter.on('change', (state: T) => {
-        act(() => f(state))
+      emitter.on('change', async (state: T) => {
+        await act(() => Promise.resolve(f(state)))
       })
     } else {
       emitter.on('change', f)
