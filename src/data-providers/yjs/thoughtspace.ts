@@ -13,7 +13,7 @@ import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
-import pushStore from '../../stores/push'
+import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
@@ -121,27 +121,25 @@ const taskQueue = ({
 
 const replicationQueue = taskQueue({
   onStep: (current, total) => {
-    pushStore.update({ replicationProgress: current / total })
+    syncStatusStore.update({ replicationProgress: current / total })
   },
-  // onEnd: () => {
-  // },
 })
 
 // A map of thoughts and lexemes being updated.
-// Used to update pushStore isPushing.
+// Used to update syncStatusStore isPushing.
 const updateQueue: Index<true> = {}
 
 /** Adds the thought id or lexeme to the updateQueue and sets isPushing. */
 const enqueue = (key: string) => {
   updateQueue[key] = true
-  pushStore.update({ isPushing: true })
+  syncStatusStore.update({ isPushing: true })
 }
 
 /** Removes thought id or lexeme key from the updateQueue and turns off isPushing if empty. */
 const dequeue = (key: string) => {
   delete updateQueue[key]
   if (Object.keys(updateQueue).length === 0) {
-    pushStore.update({ isPushing: false })
+    syncStatusStore.update({ isPushing: false })
   }
 }
 

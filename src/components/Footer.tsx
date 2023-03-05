@@ -11,13 +11,13 @@ import scrollTo from '../device/scrollTo'
 import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import themeColors from '../selectors/themeColors'
 import offlineStatusStore from '../stores/offlineStatusStore'
-import pushStore from '../stores/push'
+import syncStatusStore from '../stores/syncStatus'
 
 /** Show the user's connection status. */
 const Status = () => {
   const colors = useSelector(themeColors)
-  const isPushing = pushStore.useSelector(({ isPushing }) => isPushing)
-  const replicationPercentage = pushStore.useSelector(({ replicationProgress }) =>
+  const isPushing = syncStatusStore.useSelector(({ isPushing }) => isPushing)
+  const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
     Math.round(replicationProgress * 100),
   )
   const status = offlineStatusStore.useState()

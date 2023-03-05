@@ -15,7 +15,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
-import pushStore from '../stores/push'
+import syncStatusStore from '../stores/syncStatus'
 import { updateHeight, updateScrollTop } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
@@ -168,7 +168,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (pushStore.getState().isPushing) {
+    if (syncStatusStore.getState().isPushing) {
       // Note: Showing confirmation dialog can vary between browsers.
       // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()
