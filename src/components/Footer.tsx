@@ -18,7 +18,7 @@ const Status = () => {
   const colors = useSelector(themeColors)
   const isPushing = syncStatusStore.useSelector(({ isPushing }) => isPushing)
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
-    Math.round(replicationProgress * 100),
+    replicationProgress !== null ? Math.round(replicationProgress * 100) : null,
   )
   const status = offlineStatusStore.useState()
   return (
@@ -41,8 +41,8 @@ const Status = () => {
         : status === 'connecting' || status === 'reconnecting'
         ? 'Connecting'
         : status === 'connected' || status === 'synced'
-        ? replicationPercentage < 100
-          ? `Replicating ${replicationPercentage}%`
+        ? !replicationPercentage || replicationPercentage < 100
+          ? `Replicating ${replicationPercentage ?? '...'}%`
           : 'Online'
         : status === 'offline'
         ? 'Offline'

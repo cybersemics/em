@@ -35,6 +35,7 @@ enum DocLogAction {
 }
 
 const replicationQueue = taskQueue({
+  autostart: false,
   onStep: (current, total) => {
     syncStatusStore.update({ replicationProgress: current / total })
   },
@@ -69,6 +70,10 @@ const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 const doclog = new Y.Doc()
 const thoughtLog = doclog.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
 const lexemeLog = doclog.getArray<[string, DocLogAction]>('lexemeLog')
+// set to true after first observe from thoughtLog/lexemeLog
+// used to start rendering the replication progress
+let thoughtLogLoaded = false
+let lexemeLogLoaded = false
 const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
 doclogPersistence.whenSynced.catch(e => {
   console.error(e)
@@ -114,6 +119,10 @@ thoughtLog.observe(e => {
   })
 
   replicationQueue.add(nonempty(tasks))
+  thoughtLogLoaded = true
+  if (lexemeLogLoaded) {
+    replicationQueue.start()
+  }
 })
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
@@ -148,6 +157,10 @@ lexemeLog.observe(e => {
   })
 
   replicationQueue.add(nonempty(tasks))
+  lexemeLogLoaded = true
+  if (thoughtLogLoaded) {
+    replicationQueue.start()
+  }
 })
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */

@@ -2,11 +2,12 @@ import ThoughtId from '../@types/ThoughtId'
 import ministore from './ministore'
 
 /** A store that tracks state related to syncing. Updated by yjs/thouguhtspace. */
-const syncStatusStore = ministore({
+const syncStatusStore = ministore<{ isPushing: boolean; replicationProgress: number | null }>({
   // Tracks if the pushQueue is currently pushing to IndexedDB.
   isPushing: false,
   // progress of replicating all thoughts for offline editing (%)
-  replicationProgress: 1,
+  // null means replication has not started yet
+  replicationProgress: null,
 })
 
 // A Set of thoughts and lexemes being pushed.
