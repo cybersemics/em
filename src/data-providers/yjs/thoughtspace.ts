@@ -34,13 +34,6 @@ enum DocLogAction {
   Update,
 }
 
-const replicationQueue = taskQueue({
-  autostart: false,
-  onStep: (current, total) => {
-    syncStatusStore.update({ replicationProgress: current / total })
-  },
-})
-
 /** Filters out null and undefined values and properly types the result. */
 const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
 
@@ -52,6 +45,25 @@ const deleteDB = (name: string): Promise<void> => {
     request.onsuccess = (e: any) => resolve()
   })
 }
+
+const replicationQueue = taskQueue({
+  autostart: false,
+  onStep: (current, total) => {
+    syncStatusStore.update({ replicationProgress: current / total })
+  },
+})
+
+// pause replication during pushing
+syncStatusStore.subscribeSelector(
+  ({ isPushing }) => isPushing,
+  isPushing => {
+    if (isPushing) {
+      replicationQueue.pause()
+    } else {
+      replicationQueue.start()
+    }
+  },
+)
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
