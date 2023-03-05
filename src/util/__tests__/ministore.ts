@@ -19,60 +19,64 @@ it('update partial', () => {
   expect(store.getState()).toEqual({ a: 3, b: 2 })
 })
 
-it('subscribe', async () => {
-  let counter = 0
-  const store = ministore(0)
-  store.subscribe(n => (counter += n))
-  store.update(1)
-  await delay(0)
-  expect(counter).toBe(1)
+describe('subscribe', () => {
+  it('subscribe to an update', async () => {
+    let counter = 0
+    const store = ministore(0)
+    store.subscribe(n => (counter += n))
+    store.update(1)
+    await delay(0)
+    expect(counter).toBe(1)
+  })
+
+  it('only trigger if state has changed', async () => {
+    let counter = 0
+    const store = ministore(0)
+    store.subscribe(n => counter++)
+    store.update(1)
+    store.update(1)
+    await delay(0)
+    expect(counter).toBe(1)
+  })
 })
 
-it('subscribe: only trigger if state has changed', async () => {
-  let counter = 0
-  const store = ministore(0)
-  store.subscribe(n => counter++)
-  store.update(1)
-  store.update(1)
-  await delay(0)
-  expect(counter).toBe(1)
-})
+describe('subscribeSelector', () => {
+  it('subscribe to a slice of state', async () => {
+    let counter = 0
+    const store = ministore({ a: 1, b: 4 })
+    store.subscribeSelector(
+      state => state.a,
+      a => (counter += a),
+    )
+    store.update({ a: 2 })
+    await delay(0)
+    expect(counter).toBe(2)
+  })
 
-it('subscribeSelector', async () => {
-  let counter = 0
-  const store = ministore({ a: 1, b: 4 })
-  store.subscribeSelector(
-    state => state.a,
-    a => (counter += a),
-  )
-  store.update({ a: 2 })
-  await delay(0)
-  expect(counter).toBe(2)
-})
+  it('only trigger if slice has changed', async () => {
+    let counter = 0
+    const store = ministore({ a: 1, b: 4 })
+    store.subscribeSelector(
+      state => state.a,
+      a => counter++,
+    )
+    store.update({ a: 2 })
+    store.update({ a: 2, b: 5 })
+    await delay(0)
+    expect(counter).toBe(1)
+  })
 
-it('subscribeSelector: only trigger if slice has changed', async () => {
-  let counter = 0
-  const store = ministore({ a: 1, b: 4 })
-  store.subscribeSelector(
-    state => state.a,
-    a => counter++,
-  )
-  store.update({ a: 2 })
-  store.update({ a: 2, b: 5 })
-  await delay(0)
-  expect(counter).toBe(1)
-})
-
-it('subscribeSelector: custom equals function', async () => {
-  let counter = 0
-  const store = ministore({ a: 1, b: 4 })
-  store.subscribeSelector(
-    state => ({ x: state.a }),
-    a => counter++,
-    _.isEqual,
-  )
-  store.update({ a: 2 })
-  store.update({ a: 2, b: 5 })
-  await delay(0)
-  expect(counter).toBe(1)
+  it('custom equals function', async () => {
+    let counter = 0
+    const store = ministore({ a: 1, b: 4 })
+    store.subscribeSelector(
+      state => ({ x: state.a }),
+      a => counter++,
+      _.isEqual,
+    )
+    store.update({ a: 2 })
+    store.update({ a: 2, b: 5 })
+    await delay(0)
+    expect(counter).toBe(1)
+  })
 })
