@@ -32,7 +32,7 @@ const mutex = () => {
 }
 
 /** A simple task queue with concurrency. */
-const taskQueue = ({
+const taskQueue = <T = any>({
   concurrency = 8,
   onStep,
   onEnd,
@@ -43,7 +43,7 @@ const taskQueue = ({
   let complete = 0
 
   // queue of tasks to process in order, without exceeding concurrency
-  let queue: (() => Promise<void>)[] = []
+  let queue: (() => T)[] = []
 
   // map of currently running tasks
   // const running = new Map<string, Promise<void>>()
@@ -58,10 +58,10 @@ const taskQueue = ({
     if (!task) return
 
     running++
-    task().then(() => {
+    Promise.resolve(task()).then(() => {
       complete++
       running--
-      onStep?.(complete, total)
+      onStep?.(complete - 1, total)
       if (queue.length === 0 && running === 0) {
         onEnd?.()
       }
@@ -71,7 +71,10 @@ const taskQueue = ({
 
   return {
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. */
-    add: async (tasks: (() => Promise<void>)[]) => {
+    add: async (tasks: (() => T) | (() => T)[]) => {
+      if (typeof tasks === 'function') {
+        tasks = [tasks]
+      }
       total += tasks.length
       await mux.lock()
       queue = [...queue, ...tasks]
