@@ -53,11 +53,11 @@ const replicationQueue = taskQueue({
   },
 })
 
-// pause replication during pushing
+// pause replication during pushing and pulling
 syncStatusStore.subscribeSelector(
-  ({ isPushing }) => isPushing,
-  isPushing => {
-    if (isPushing) {
+  ({ isPushing, isPulling }) => isPushing || isPulling,
+  isPushingOrPulling => {
+    if (isPushingOrPulling) {
       replicationQueue.pause()
     } else {
       replicationQueue.start()

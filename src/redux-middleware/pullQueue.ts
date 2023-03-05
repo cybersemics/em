@@ -11,6 +11,7 @@ import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
@@ -106,6 +107,8 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ forceRemote }: { forceRemote?: boolean } = {}) => {
+    syncStatusStore.update({ isPulling: true })
+
     // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
 
@@ -126,6 +129,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
 
+    syncStatusStore.update({ isPulling: false })
     delete pullQueuePulling[pullKey]
   }
 
