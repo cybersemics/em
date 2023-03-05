@@ -17,6 +17,7 @@ const taskQueue = <T = any>({
   let total = 0
   let running = 0
   let complete = 0
+  let paused = false
 
   // queue of tasks to process in order, without exceeding concurrency
   const queue: (() => T)[] = []
@@ -24,9 +25,9 @@ const taskQueue = <T = any>({
   // map of currently running tasks
   // const running = new Map<string, Promise<void>>()
 
-  /** Processes the next task in the queue. If the queue is empty or the concurrency limit has been reached, do nothing. */
+  /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
   const tick = () => {
-    if (running >= concurrency) return
+    if (paused || running >= concurrency) return
     // eslint-disable-next-line fp/no-mutating-methods
     const task = queue.shift()
     if (!task) return
@@ -41,6 +42,8 @@ const taskQueue = <T = any>({
       }
       setTimeout(tick)
     })
+
+    tick()
   }
 
   return {
@@ -60,9 +63,13 @@ const taskQueue = <T = any>({
 
     /** Starts running tasks. */
     start: () => {
-      // tasks to start with, up to the concurrency limit
-      const startTasks = queue.slice(0, concurrency)
-      startTasks.forEach(tick)
+      paused = false
+      tick()
+    },
+
+    /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
+    pause: () => {
+      paused = true
     },
   }
 }

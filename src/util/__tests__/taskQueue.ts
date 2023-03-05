@@ -85,3 +85,34 @@ it('onStep', async () => {
     { current: 2, total: 3 },
   ])
 })
+
+it('pause', async () => {
+  let counter = 0
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await delay(20)
+    counter++
+  }
+
+  let queue: ReturnType<typeof taskQueue> = {} as any
+  const done = new Promise<void>(resolve => {
+    queue = taskQueue({ onEnd: resolve })
+  })
+
+  // add three tasks and pause midway through
+  // expect counter to not be incremented because tasks are still in progress
+  queue.add([incDelayed, incDelayed, incDelayed])
+  await delay(10)
+  queue.pause()
+  expect(counter).toBe(0)
+
+  // add three more tasks and resume
+  // expect first three tasks to have completed after a delay
+  queue.add([incDelayed, incDelayed, incDelayed])
+  queue.start()
+  await delay(10)
+  expect(counter).toBe(3)
+
+  await done
+  expect(counter).toBe(6)
+})
