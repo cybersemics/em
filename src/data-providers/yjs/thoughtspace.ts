@@ -118,31 +118,36 @@ thoughtLog.observe(e => {
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const keysChanged: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+  const deltas: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
   // traverse from recent to old, and ignore older updates to the same lexeme
   // eslint-disable-next-line fp/no-mutating-methods
-  keysChanged.reverse()
+  deltas.reverse()
   const keysTraversed = new Set()
-  keysChanged.forEach(([key, action]) => {
-    if (keysTraversed.has(key)) return
+  const tasks = deltas.map(([key, action]) => {
+    if (keysTraversed.has(key)) return null
     keysTraversed.add(key)
-    if (action === DocLogAction.Update) {
-      replicateLexeme(key)
-    } else {
-      store.dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {
-            [key]: null,
-          },
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
-      deleteLexeme(key)
+
+    return async () => {
+      if (action === DocLogAction.Update) {
+        await replicateLexeme(key)
+      } else {
+        store.dispatch(
+          updateThoughtsActionCreator({
+            thoughtIndexUpdates: {},
+            lexemeIndexUpdates: {
+              [key]: null,
+            },
+            local: false,
+            remote: false,
+            repairCursor: true,
+          }),
+        )
+        deleteLexeme(key)
+      }
     }
   })
+
+  replicationQueue.add(nonempty(tasks))
 })
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
