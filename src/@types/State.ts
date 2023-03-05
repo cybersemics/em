@@ -54,6 +54,7 @@ interface State {
   // show the latest activated shortcuts at the bottom of the screen for webcasts.
   enableLatestShortcutsDiagram: boolean
   error?: string | null
+  // keyed by hashPath(path)
   expanded: Index<Path>
   expandHoverDownPaths: Index<Path>
   expandHoverUpPath?: Path | null
