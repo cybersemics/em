@@ -28,7 +28,7 @@ const taskQueue = <T = any>({
   const tick = () => {
     if (running >= concurrency) return
     // eslint-disable-next-line fp/no-mutating-methods
-    const task = queue.pop()
+    const task = queue.shift()
     if (!task) return
 
     running++
