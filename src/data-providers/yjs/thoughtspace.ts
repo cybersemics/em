@@ -125,24 +125,6 @@ const replicationQueue = taskQueue({
   },
 })
 
-// A map of thoughts and lexemes being updated.
-// Used to update syncStatusStore isPushing.
-const updateQueue: Index<true> = {}
-
-/** Adds the thought id or lexeme to the updateQueue and sets isPushing. */
-const enqueue = (key: string) => {
-  updateQueue[key] = true
-  syncStatusStore.update({ isPushing: true })
-}
-
-/** Removes thought id or lexeme key from the updateQueue and turns off isPushing if empty. */
-const dequeue = (key: string) => {
-  delete updateQueue[key]
-  if (Object.keys(updateQueue).length === 0) {
-    syncStatusStore.update({ isPushing: false })
-  }
-}
-
 /** Deletes an IndexedDB database. */
 const deleteDB = (name: string): Promise<void> => {
   const request = indexedDB.deleteDatabase(name)
@@ -272,7 +254,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 
   // set updateQueue and isPushing
   // dequeued after syncing to IndexedDB
-  enqueue(thought.id)
+  syncStatusStore.pushStart(thought.id)
 
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
@@ -283,7 +265,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
       console.error(e)
       store.dispatch(alert('Error saving thought'))
     })
-    .then(() => dequeue(thought.id))
+    .then(() => syncStatusStore.pushEnd(thought.id))
 
   thoughtDoc.transact(() => {
     const thoughtMap = thoughtDoc.getMap()
@@ -332,7 +314,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
 
   // set updateQueue and isPushing
   // dequeued after syncing to IndexedDB
-  enqueue(key)
+  syncStatusStore.pushStart(key)
 
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
@@ -343,7 +325,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
       console.error(e)
       store.dispatch(alert('Error saving thought'))
     })
-    .then(() => dequeue(key))
+    .then(() => syncStatusStore.pushEnd(key))
 
   lexemeDoc.transact(() => {
     const lexemeMap = lexemeDoc.getMap()
@@ -566,7 +548,7 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 
 /** Deletes a thought and clears the doc from IndexedDB. */
 const deleteThought = (id: ThoughtId): Promise<void> => {
-  enqueue(id)
+  syncStatusStore.pushStart(id)
   // destroying the doc does not remove top level shared type observers
   thoughtDocs[id]?.getMap().unobserve(onThoughtChange)
   thoughtDocs[id]?.destroy()
@@ -581,13 +563,13 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
       store.dispatch(alert('Error deleting thought'))
     })
     .finally(() => {
-      dequeue(id)
+      syncStatusStore.pushEnd(id)
     })
 }
 
 /** Deletes a lexemes and clears the doc from IndexedDB. */
 const deleteLexeme = (key: string): Promise<void> => {
-  enqueue(key)
+  syncStatusStore.pushStart(key)
   // destroying the doc does not remove top level shared type observers
   lexemeDocs[key]?.getMap().unobserve(onLexemeChange)
   lexemeDocs[key]?.destroy()
@@ -602,7 +584,7 @@ const deleteLexeme = (key: string): Promise<void> => {
       store.dispatch(alert('Error deleting thought'))
     })
     .finally(() => {
-      dequeue(key)
+      syncStatusStore.pushEnd(key)
     })
 }
 
