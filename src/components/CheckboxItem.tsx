@@ -1,21 +1,19 @@
 import React, { FC } from 'react'
-import { isTouch } from '../browser'
+import onFastClick from '../util/onFastClick'
 
 /** A checkbox component with em styling. */
-const Checkbox = ({ checked }: { checked?: boolean }) => {
-  return (
-    <>
-      {/* Note: never preventDefault on a controlled checkbox in React.
+const Checkbox = ({ checked }: { checked?: boolean }) => (
+  <>
+    {/* Note: never preventDefault on a controlled checkbox in React.
           See: https://stackoverflow.com/a/70030088/4806080 */}
-      <input type='checkbox' checked={checked} />
-      <span
-        className='checkbox'
-        // extend tap area without disrupting padding
-        style={{ margin: 10, transform: 'translate(-10px, -10px)' }}
-      />
-    </>
-  )
-}
+    <input type='checkbox' checked={checked} />
+    <span
+      className='checkbox'
+      // extend tap area without disrupting padding
+      style={{ margin: 10, transform: 'translate(-10px, -10px)' }}
+    />
+  </>
+)
 
 /** A checkbox item with a title and description. */
 const CheckboxItem: FC<{
@@ -30,8 +28,7 @@ const CheckboxItem: FC<{
     <label
       className='checkbox-container'
       // checkbox onChange is very slow for some reason, so use onTouchStart on mobile
-      onTouchStart={isTouch && !disabled ? onChange : undefined}
-      onClick={!isTouch && !disabled ? onChange : undefined}
+      {...(!disabled ? onFastClick(onChange) : null)}
       style={{
         opacity: disabled ? 0.5 : undefined,
         marginBottom: children ? (parent ? '0.5em' : '1em') : 0,
