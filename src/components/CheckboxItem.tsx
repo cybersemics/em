@@ -1,18 +1,13 @@
 import React, { FC } from 'react'
+import { isTouch } from '../browser'
 
 /** A checkbox component with em styling. */
-const Checkbox = ({
-  checked,
-  onChange,
-}: {
-  checked?: boolean
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
-}) => {
+const Checkbox = ({ checked }: { checked?: boolean }) => {
   return (
     <>
       {/* Note: never preventDefault on a controlled checkbox in React.
           See: https://stackoverflow.com/a/70030088/4806080 */}
-      <input type='checkbox' checked={checked} onChange={onChange} />
+      <input type='checkbox' checked={checked} />
       <span
         className='checkbox'
         // extend tap area without disrupting padding
@@ -28,12 +23,15 @@ const CheckboxItem: FC<{
   disabled?: boolean
   child?: boolean
   parent?: boolean
-  onChange: React.ChangeEventHandler
+  onChange: (e: React.MouseEvent | React.TouchEvent) => void
   title?: string
 }> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
     <label
       className='checkbox-container'
+      // checkbox onChange is very slow for some reason, so use onTouchStart on mobile
+      onTouchStart={isTouch && !disabled ? onChange : undefined}
+      onClick={!isTouch && !disabled ? onChange : undefined}
       style={{
         opacity: disabled ? 0.5 : undefined,
         marginBottom: children ? (parent ? '0.5em' : '1em') : 0,
@@ -58,7 +56,7 @@ const CheckboxItem: FC<{
         {children && <p className='checkbox-description text-medium dim'>{children}</p>}
       </div>
 
-      <Checkbox checked={checked} onChange={onChange} />
+      <Checkbox checked={checked} />
     </label>
   )
 }
