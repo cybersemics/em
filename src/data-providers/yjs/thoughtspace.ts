@@ -112,7 +112,7 @@ thoughtLog.observe(e => {
 
     return async () => {
       if (action === DocLogAction.Update) {
-        await replicateThought(id)
+        await replicateThought(id, { background: true })
       } else {
         store.dispatch(
           updateThoughtsActionCreator({
@@ -150,7 +150,7 @@ lexemeLog.observe(e => {
 
     return async () => {
       if (action === DocLogAction.Update) {
-        await replicateLexeme(key)
+        await replicateLexeme(key, { background: true })
       } else {
         store.dispatch(
           updateThoughtsActionCreator({
@@ -314,154 +314,195 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
-/** Handles the thought observer. Updates thoughtIndex if the thought or its parent is in the state. Ignores events from self. */
+/** Handles the thought observe event. Updates thoughtIndex if the thought or its parent is in the state. Ignores events from self. */
 const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
-  const targetDoc = e.target.doc!
-  // we can assume id is defined since thought doc guids are always in the format `${tsid}/thought/${id}`
-  const { id } = parseDocumentName(targetDoc.guid) as { id: string }
-  const thoughtDoc = thoughtDocs[id]
-  if (thoughtDoc !== targetDoc) {
-    throw new Error(`e.target.doc does not equal thoughtDocs['${id}']. An observe handler was probably not unobserved.`)
-  }
+  const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
   const thought = getThought(thoughtDoc)
   if (!thought) return
 
-  // dispatch on the next tick, since a reducer may be running
+  // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
   setTimeout(() => {
-    store.dispatch((dispatch, getState) => {
-      // Only update state if the thought or its parent is already loaded.
-      // Otherwise let it load into IndexedDB in the background.
-      // Is there a chance of a false positive if updates arrive out of order?
-      if (!getState().thoughts.thoughtIndex[id] && !getState().thoughts.thoughtIndex[thought.parentId]) return
-
-      dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {
-            [thought.id]: thought,
-          },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
-    })
+    store.dispatch(
+      updateThoughtsActionCreator({
+        thoughtIndexUpdates: {
+          [thought.id]: thought,
+        },
+        lexemeIndexUpdates: {},
+        local: false,
+        remote: false,
+        repairCursor: true,
+      }),
+    )
   })
 }
 
-/** Handles the lexeme observer. Updates lexemeIndex if the lexeme or at least one of its contexts is in the state. Ignores events from self. */
+/** Handles the lexeme observer. Ignores events from self. */
 const onLexemeChange = (e: Y.YMapEvent<unknown>) => {
-  const targetDoc = e.target.doc!
-  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
-  const { id: key } = parseDocumentName(targetDoc.guid) as { id: string }
-  const lexemeDoc = lexemeDocs[key]
-  if (lexemeDoc !== targetDoc) {
-    throw new Error(`e.target.doc does not equal lexemeDocs['${key}']. An observe handler was probably not unobserved.`)
-  }
+  const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
   const lexeme = getLexeme(lexemeDoc)
+  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
+  const { id: key } = parseDocumentName(lexemeDoc!.guid) as { id: string }
+
   if (!lexeme) return
 
-  // dispatch on the next tick, since a reducer may be running
+  // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
   setTimeout(() => {
-    store.dispatch((dispatch, getState) => {
-      // Only update state if the lexeme or at least one of its contets is loaded.
-      // Otherwise let it load into IndexedDB in the background.
-      // Is there a chance of a false positive if the thought arrives after the lexeme?
-      if (
-        !getState().thoughts.lexemeIndex[key] &&
-        lexeme.contexts.every(cxid => !getState().thoughts.thoughtIndex[cxid])
-      )
-        return
-
-      dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {
-            [key]: lexeme,
-          },
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
-    })
+    store.dispatch(
+      updateThoughtsActionCreator({
+        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {
+          [key]: lexeme,
+        },
+        local: false,
+        remote: false,
+        repairCursor: true,
+      }),
+    )
   })
 }
 
 /** Replicates a thought from the persistence layers to state and IndexedDB. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
-export const replicateThought = async (id: ThoughtId): Promise<void> => {
+export const replicateThought = async (
+  id: ThoughtId,
+  {
+    background,
+  }: {
+    // do not store thought doc in memory
+    // do not update thoughtIndex
+    // destroy IndexedDBPersistence after sync
+    // destroy HocuspocusProvider after sync
+    background?: boolean
+  } = {},
+): Promise<void> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
-
-  // use the existing Doc if possible, otherwise the map will not be immediately populated
-  const thoughtDoc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
+  const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
+  let idbSynced: Promise<void> | undefined
+  let websocketSynced: Promise<void> | undefined
 
   // set up persistence and subscribe to changes
   if (!thoughtDocs[id]) {
-    thoughtDocs[id] = thoughtDoc
-
     // connect providers
     // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
     // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
-      thoughtPersistence[id] = new IndexeddbPersistence(documentName, thoughtDoc)
-      thoughtWebsocketProvider[id] = new HocuspocusProvider({
+      const persistence = new IndexeddbPersistence(documentName, doc)
+      const websocketProvider = new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
         name: documentName,
-        document: thoughtDoc,
+        document: doc,
         token: accessToken,
       })
-    }
 
-    // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
-    thoughtDoc.getMap().observe(onThoughtChange)
+      // if replicating in the background, destroy the HocuspocusProvider once synced
+      idbSynced = persistence.whenSynced
+        .then(() => {
+          if (background) {
+            persistence.destroy()
+          } else if (id === HOME_TOKEN) {
+            resolveRootSynced(doc.getMap().toJSON() as ThoughtDb)
+          }
+        })
+        .catch(e => {
+          console.error(e)
+          store.dispatch(alert('Error loading thought'))
+        })
+
+      // if replicating in the background, destroy the IndexedDBPersistence once synced
+      websocketSynced = new Promise<void>(resolve => {
+        websocketProvider.on('synced', () => {
+          // TODO: Why is document empty on first sync?
+          if (getThought(doc)) {
+            if (background) {
+              websocketProvider.destroy()
+            }
+            resolve()
+          }
+        })
+      })
+
+      if (!background) {
+        // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten?
+        doc.getMap().observe(onThoughtChange)
+        thoughtDocs[id] = doc
+        thoughtPersistence[id] = persistence
+        thoughtWebsocketProvider[id] = websocketProvider
+      }
+    }
   }
 
-  await thoughtPersistence[id]?.whenSynced
-    .then(() => {
-      if (id === HOME_TOKEN) {
-        resolveRootSynced(thoughtDocs[HOME_TOKEN]?.getMap().toJSON() as ThoughtDb)
-      }
-    })
-    .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error loading thought'))
-    })
-
-  // TODO: race IDB and socket?
+  await Promise.race([idbSynced, websocketSynced])
 }
 
 /** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
-export const replicateLexeme = async (key: string): Promise<void> => {
+export const replicateLexeme = async (
+  key: string,
+  {
+    background,
+  }: {
+    // do not store lexeme doc in memory
+    // do not update lexemeIndex
+    // destroy IndexedDBPersistence after sync
+    // destroy HocuspocusProvider after sync
+    background?: boolean
+  } = {},
+): Promise<void> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
-  const lexemeDoc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
+  const doc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
+  let idbSynced: Promise<void> | undefined
+  let websocketSynced: Promise<void> | undefined
 
   // set up persistence and subscribe to changes
   if (!lexemeDocs[key]) {
-    lexemeDocs[key] = lexemeDoc
-
     // connect providers
     // disable during tests because of TransactionInactiveError in fake-indexeddb
     // disable during tests because of infinite loop in sinon runAllAsync
     if (process.env.NODE_ENV !== 'test') {
-      lexemePersistence[key] = new IndexeddbPersistence(documentName, lexemeDoc)
-      lexemeWebsocketProvider[key] = new HocuspocusProvider({
+      const persistence = new IndexeddbPersistence(documentName, doc)
+      const websocketProvider = new HocuspocusProvider({
         websocketProvider: websocketThoughtspace,
         name: documentName,
-        document: lexemeDoc,
+        document: doc,
         token: accessToken,
       })
-    }
 
-    // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
-    lexemeDoc.getMap().observe(onLexemeChange)
+      // if replicating in the background, destroy the HocuspocusProvider once synced
+      idbSynced = persistence.whenSynced
+        .then(() => {
+          if (background) {
+            persistence.destroy()
+          }
+        })
+        .catch(e => {
+          console.error(e)
+          store.dispatch(alert('Error loading thought'))
+        })
+
+      // if replicating in the background, destroy the IndexedDBPersistence once synced
+      websocketSynced = new Promise<void>(resolve => {
+        websocketProvider.on('synced', () => {
+          // TODO: Why is document empty on first sync?
+          if (getLexeme(doc)) {
+            if (background) {
+              websocketProvider.destroy()
+            }
+            resolve()
+          }
+        })
+      })
+
+      if (!background) {
+        // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
+        doc.getMap().observe(onLexemeChange)
+        lexemeDocs[key] = doc
+        lexemePersistence[key] = persistence
+        lexemeWebsocketProvider[key] = websocketProvider
+      }
+    }
   }
 
-  await lexemePersistence[key]?.whenSynced.catch(e => {
-    console.error(e)
-    store.dispatch(alert('Error loading thought'))
-  })
+  await Promise.race([idbSynced, websocketSynced])
 }
 
 /** Gets a Thought from a thought Y.Doc. */
