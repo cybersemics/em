@@ -468,7 +468,6 @@ export enum Settings {
   experienceMode = 'experienceMode',
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',
-  disableGestureTracingBackForward = 'disableGestureTracingBackForward',
 }
 
 // maximum size of state.jumpHistory
