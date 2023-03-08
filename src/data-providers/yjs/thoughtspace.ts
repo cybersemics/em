@@ -314,7 +314,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
-/** Handles the thought observe event. Updates thoughtIndex if the thought or its parent is in the state. Ignores events from self. */
+/** Handles the Thought observe event (foreground replication only). Ignores events from self. */
 const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
@@ -337,7 +337,7 @@ const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
   })
 }
 
-/** Handles the lexeme observer. Ignores events from self. */
+/** Handles the Lexeme observe event (foreground replication only). Ignores events from self. */
 const onLexemeChange = (e: Y.YMapEvent<unknown>) => {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
