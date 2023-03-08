@@ -363,7 +363,7 @@ const onLexemeChange = (e: Y.YMapEvent<unknown>) => {
   })
 }
 
-/** Replicates a thought from the persistence layers to state and IndexedDB. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
+/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
 export const replicateThought = async (
   id: ThoughtId,
   {
@@ -378,64 +378,65 @@ export const replicateThought = async (
 ): Promise<void> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
-  let idbSynced: Promise<void> | undefined
-  let websocketSynced: Promise<void> | undefined
 
-  // set up persistence and subscribe to changes
-  if (!thoughtDocs[id]) {
-    // connect providers
-    // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
-    // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
-    if (process.env.NODE_ENV !== 'test') {
-      const persistence = new IndexeddbPersistence(documentName, doc)
-      const websocketProvider = new HocuspocusProvider({
-        websocketProvider: websocketThoughtspace,
-        name: documentName,
-        document: doc,
-        token: accessToken,
-      })
+  // if the doc has already been initialized and added to thoughtDocs, return immediately
+  // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
+  // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
+  if (thoughtDocs[id] || process.env.NODE_ENV === 'test') return Promise.resolve()
 
-      // if replicating in the background, destroy the HocuspocusProvider once synced
-      idbSynced = persistence.whenSynced
-        .then(() => {
-          if (background) {
-            persistence.destroy()
-          } else if (id === HOME_TOKEN) {
-            resolveRootSynced(doc.getMap().toJSON() as ThoughtDb)
-          }
-        })
-        .catch(e => {
-          console.error(e)
-          store.dispatch(alert('Error loading thought'))
-        })
+  // set up idb and websocket persistence and subscribe to changes
+  const persistence = new IndexeddbPersistence(documentName, doc)
+  const websocketProvider = new HocuspocusProvider({
+    websocketProvider: websocketThoughtspace,
+    name: documentName,
+    document: doc,
+    token: accessToken,
+  })
 
-      // if replicating in the background, destroy the IndexedDBPersistence once synced
-      websocketSynced = new Promise<void>(resolve => {
-        websocketProvider.on('synced', () => {
-          // TODO: Why is document empty on first sync?
-          if (getThought(doc)) {
-            if (background) {
-              websocketProvider.destroy()
-            }
-            resolve()
-          }
-        })
-      })
-
-      if (!background) {
-        // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten?
-        doc.getMap().observe(onThoughtChange)
-        thoughtDocs[id] = doc
-        thoughtPersistence[id] = persistence
-        thoughtWebsocketProvider[id] = websocketProvider
-      }
-    }
+  // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
+  if (!background) {
+    thoughtDocs[id] = doc
+    thoughtPersistence[id] = persistence
+    thoughtWebsocketProvider[id] = websocketProvider
   }
 
+  // if replicating in the background, destroy the HocuspocusProvider once synced
+  const idbSynced = persistence.whenSynced
+    .then(() => {
+      if (background) {
+        persistence.destroy()
+      } else if (id === HOME_TOKEN) {
+        resolveRootSynced(doc.getMap().toJSON() as ThoughtDb)
+      }
+    })
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error loading thought'))
+    })
+
+  // if replicating in the background, destroy the IndexedDBPersistence once synced
+  const websocketSynced = new Promise<void>(resolve => {
+    websocketProvider.on('synced', () => {
+      // TODO: Why is document empty on first sync?
+      if (getThought(doc)) {
+        if (background) {
+          websocketProvider.destroy()
+        }
+        resolve()
+      }
+    })
+  })
+
   await Promise.race([idbSynced, websocketSynced])
+
+  // Subscribe to changes after first sync to ensure that pending is set properly.
+  // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+  if (!background) {
+    doc.getMap().observe(onThoughtChange)
+  }
 }
 
-/** Loads a lexeme from the persistence layers and returns a Y.Doc. Reuses the existing Y.Doc if it exists, otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
+/** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
 export const replicateLexeme = async (
   key: string,
   {
@@ -450,59 +451,59 @@ export const replicateLexeme = async (
 ): Promise<void> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
-  let idbSynced: Promise<void> | undefined
-  let websocketSynced: Promise<void> | undefined
 
   // set up persistence and subscribe to changes
-  if (!lexemeDocs[key]) {
-    // connect providers
-    // disable during tests because of TransactionInactiveError in fake-indexeddb
-    // disable during tests because of infinite loop in sinon runAllAsync
-    if (process.env.NODE_ENV !== 'test') {
-      const persistence = new IndexeddbPersistence(documentName, doc)
-      const websocketProvider = new HocuspocusProvider({
-        websocketProvider: websocketThoughtspace,
-        name: documentName,
-        document: doc,
-        token: accessToken,
-      })
+  // disable during tests because of TransactionInactiveError in fake-indexeddb
+  // disable during tests because of infinite loop in sinon runAllAsync
+  if (lexemeDocs[key] || process.env.NODE_ENV === 'test') return Promise.resolve()
 
-      // if replicating in the background, destroy the HocuspocusProvider once synced
-      idbSynced = persistence.whenSynced
-        .then(() => {
-          if (background) {
-            persistence.destroy()
-          }
-        })
-        .catch(e => {
-          console.error(e)
-          store.dispatch(alert('Error loading thought'))
-        })
+  const persistence = new IndexeddbPersistence(documentName, doc)
+  const websocketProvider = new HocuspocusProvider({
+    websocketProvider: websocketThoughtspace,
+    name: documentName,
+    document: doc,
+    token: accessToken,
+  })
 
-      // if replicating in the background, destroy the IndexedDBPersistence once synced
-      websocketSynced = new Promise<void>(resolve => {
-        websocketProvider.on('synced', () => {
-          // TODO: Why is document empty on first sync?
-          if (getLexeme(doc)) {
-            if (background) {
-              websocketProvider.destroy()
-            }
-            resolve()
-          }
-        })
-      })
-
-      if (!background) {
-        // TODO: Subscribe to changes after first sync to ensure that pending is not overwritten.
-        doc.getMap().observe(onLexemeChange)
-        lexemeDocs[key] = doc
-        lexemePersistence[key] = persistence
-        lexemeWebsocketProvider[key] = websocketProvider
-      }
-    }
+  // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
+  if (!background) {
+    lexemeDocs[key] = doc
+    lexemePersistence[key] = persistence
+    lexemeWebsocketProvider[key] = websocketProvider
   }
 
+  // if replicating in the background, destroy the HocuspocusProvider once synced
+  const idbSynced = persistence.whenSynced
+    .then(() => {
+      if (background) {
+        persistence.destroy()
+      }
+    })
+    .catch(e => {
+      console.error(e)
+      store.dispatch(alert('Error loading thought'))
+    })
+
+  // if replicating in the background, destroy the IndexedDBPersistence once synced
+  const websocketSynced = new Promise<void>(resolve => {
+    websocketProvider.on('synced', () => {
+      // TODO: Why is document empty on first sync?
+      if (getLexeme(doc)) {
+        if (background) {
+          websocketProvider.destroy()
+        }
+        resolve()
+      }
+    })
+  })
+
   await Promise.race([idbSynced, websocketSynced])
+
+  // Subscribe to changes after first sync to ensure that pending is set properly.
+  // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+  if (!background) {
+    doc.getMap().observe(onLexemeChange)
+  }
 }
 
 /** Gets a Thought from a thought Y.Doc. */
