@@ -112,8 +112,10 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
-  const [lastScrollLeft, setLastScrollLeft] = useState<number | undefined>()
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
+  // track scrollLeft after each touchend
+  // this is used to reset pressingToolbarId when the user has scrolled at least 5px
+  const lastScrollLeft = useRef<number>(0)
   const arrowWidth = fontSize / 3
   const colors = useSelector(themeColors)
 
@@ -150,8 +152,7 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
 
   /** Handles toolbar scroll event. */
   const onScroll = (e: React.UIEvent<HTMLElement>) => {
-    const scrollDifference =
-      lastScrollLeft != null && e.target ? Math.abs(lastScrollLeft - (e.target as HTMLElement).scrollLeft) : 0
+    const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
 
     if (scrollDifference >= 5) {
       setPressingToolbarId(null)
@@ -176,7 +177,7 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
             onTouchEnd={e => {
               setPressingToolbarId(null)
               if (e.target) {
-                setLastScrollLeft((e.target as HTMLElement).scrollLeft)
+                lastScrollLeft.current = (e.target as HTMLElement).scrollLeft
               }
             }}
             onScroll={onScroll}
