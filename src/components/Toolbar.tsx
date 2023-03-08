@@ -9,7 +9,7 @@ Test:
 
 */
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { connect, useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Icon from '../@types/Icon'
 import State from '../@types/State'
@@ -30,20 +30,6 @@ interface ToolbarIconProps {
   onTapDown: (id: string) => void
   onTapUp: (id: string) => void
   shortcutId: string
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { fontSize, isLoading, distractionFreeTyping, showHiddenThoughts } = state
-
-  return {
-    isLoading,
-    fontSize,
-    // We cannot know if any one the shortcut's active status,has changed, so we re-render everytime thoughts or cursor is changed
-    distractionFreeTyping,
-    // Needed to add this to re-render Toolbar when hidden thought is toggled.
-    showHiddenThoughts,
-  }
 }
 
 /**
@@ -107,7 +93,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing,
 }
 
 /** Toolbar component. */
-const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapStateToProps>) => {
+const Toolbar = () => {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
@@ -115,8 +101,18 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
-  const arrowWidth = fontSize / 3
   const colors = useSelector(themeColors)
+  const { fontSize, distractionFreeTyping } = useSelector((state: State) => {
+    const { fontSize, isLoading, distractionFreeTyping, showHiddenThoughts } = state
+    return {
+      isLoading,
+      fontSize,
+      // we cannot know if any one the shortcut's active status has changed, so we re-render every time the thoughts or cursor has changed
+      distractionFreeTyping,
+      // re-render only
+      showHiddenThoughts,
+    }
+  }, shallowEqual)
 
   /**********************************************************************
    * Methods
@@ -161,6 +157,7 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
     .map(subthought => subthought.value)
     .filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
+  const arrowWidth = fontSize / 3
 
   /**********************************************************************
    * Render
@@ -207,4 +204,7 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
   )
 }
 
-export default connect(mapStateToProps)(Toolbar)
+const ToolbarMemo = React.memo(Toolbar)
+ToolbarMemo.displayName = 'Toolbar'
+
+export default ToolbarMemo
