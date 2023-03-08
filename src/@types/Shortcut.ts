@@ -4,6 +4,7 @@ import Dispatch from './Dispatch'
 import GesturePath from './GesturePath'
 import Icon from './Icon'
 import Key from './Key'
+import ShortcutId from './ShortcutId'
 import ShortcutType from './ShortcutType'
 import State from './State'
 
@@ -33,7 +34,7 @@ interface Shortcut {
   hideFromInstructions?: boolean
 
   // a readable, internal unique id
-  id: string
+  id: ShortcutId
 
   // a function that returns true if the shortcut should be highlighted in the Toolbar
   isActive?: (getState: () => State) => boolean

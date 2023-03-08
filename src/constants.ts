@@ -1,8 +1,8 @@
 /** Defines app-wide constants. */
+import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { emojiRegex } from './emojiRegex'
-import * as shortcuts from './shortcuts/index'
 
 export { default as INITIAL_SETTINGS } from './initialSettings'
 
@@ -168,7 +168,7 @@ export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
+export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'undo',
   'redo',
   'favorite',

@@ -5,7 +5,7 @@ import * as selection from '../device/selection'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const bumpThoughtDownShortcut: Shortcut = {
-  id: 'bumpThought',
+  id: 'bumpThoughtDown',
   label: 'Bump Thought Down',
   description: 'Bump the current thought down one level and replace it with a new, empty thought.',
   gesture: 'rld',

@@ -2,6 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
+import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut, globalShortcuts, shortcutById } from '../shortcuts'
@@ -10,7 +11,10 @@ import keyValueBy from '../util/keyValueBy'
 import GestureDiagram from './GestureDiagram'
 
 // define the grouping and ordering of shortcuts
-const groups = [
+const groups: {
+  title: string
+  shortcuts: ShortcutId[]
+}[] = [
   {
     title: 'Navigation',
     shortcuts: [
@@ -38,7 +42,7 @@ const groups = [
       'newGrandChild',
       'subcategorizeOne',
       'subcategorizeAll',
-      'extract',
+      'extractThought',
     ],
   },
   {
@@ -47,7 +51,7 @@ const groups = [
   },
   {
     title: 'Moving thoughts',
-    shortcuts: ['indent', 'outdent', 'bumpThought', 'moveThoughtDown', 'moveThoughtUp'],
+    shortcuts: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp'],
   },
   {
     title: 'Editing thoughts',

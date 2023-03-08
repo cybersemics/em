@@ -2,7 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import extract from '../action-creators/extractThought'
 
 const extractThought: Shortcut = {
-  id: 'extract',
+  id: 'extractThought',
   label: 'Extract',
   description: 'Extract selected part of a thought as its child',
   keyboard: { key: 'e', control: true, meta: true },

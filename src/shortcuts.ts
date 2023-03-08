@@ -7,6 +7,7 @@ import GesturePath from './@types/GesturePath'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import Shortcut from './@types/Shortcut'
+import ShortcutId from './@types/ShortcutId'
 import State from './@types/State'
 import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
@@ -321,7 +322,7 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
 }
 
 /** Finds a shortcut by its id. */
-export const shortcutById = (id: string): Shortcut | null => shortcutIdIndex[id]
+export const shortcutById = (id: ShortcutId): Shortcut | null => shortcutIdIndex[id]
 
 /** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
 export const gestureString = (shortcut: Shortcut): string =>

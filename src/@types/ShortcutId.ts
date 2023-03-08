@@ -1,5 +1,7 @@
 import * as shortcuts from '../shortcuts/index'
 
-type ShortcutId = keyof typeof shortcuts
+type ShortcutSimple = keyof typeof shortcuts
+type ShortcutAlias = `${ShortcutSimple}Alias`
+type ShortcutId = ShortcutSimple | ShortcutAlias
 
 export default ShortcutId

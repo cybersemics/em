@@ -12,6 +12,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Icon from '../@types/Icon'
+import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
@@ -26,9 +27,9 @@ interface ToolbarIconProps {
   disabled?: boolean
   fontSize: number
   isPressing: boolean
-  onTapDown: (id: string) => void
-  onTapUp: (id: string) => void
-  shortcutId: string
+  onTapDown: (id: ShortcutId) => void
+  onTapUp: (id: ShortcutId) => void
+  shortcutId: ShortcutId
 }
 
 /**
@@ -152,9 +153,11 @@ const Toolbar = () => {
 
   // fallback to defaults if user does not have Settings defined
   const visibleShortcutsId = contextToThoughtId(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
-  const userShortcutIds = (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : [])
-    .map(subthought => subthought.value)
-    .filter(shortcutById)
+  const userShortcutIds = (
+    (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : []).map(
+      subthought => subthought.value,
+    ) as ShortcutId[]
+  ).filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
   const arrowWidth = fontSize / 3
 
