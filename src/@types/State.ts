@@ -37,7 +37,7 @@ interface State {
   // null means that the caret is not forcefully set on re-render, allowing the device to set it, e.g. on click
   cursorOffset: number | null
   // Hides the toolbar and nav bar to allow for distraction-free typing on desktop.
-  distractionFreeTyping?: boolean
+  distractionFreeTyping: boolean
   // SimplePath of thought with drag hold activated
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath
