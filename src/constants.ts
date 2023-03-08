@@ -156,12 +156,6 @@ export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
 // time before gesture hint appears
 export const GESTURE_HINT_EXTENDED_TIMEOUT = 400
 
-// time before shortcut hint overlay appears
-export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
-
-// time before scroll prioritization is disabled
-export const SCROLL_PRIORITIZATION_TIMEOUT = 500
-
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 

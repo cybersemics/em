@@ -451,71 +451,6 @@ a.text-link {
   padding-left: 4px;
 }
 
-.toolbar-overlay {
-  touch-action: inherit;
-  display: inline-block;
-  width: 150px;
-  text-align: left;
-  font-size: 14px;
-  margin: 15px 20px 20px 5px;
-  z-index: var(--z-index-toolbar-overlay);
-  background-color: #ccc;
-  padding: 10px;
-  box-shadow: 5px 5px 10px 0px #ccc;
-  border-top: solid 1px #cdcdcd;
-  border-left: solid 1px #cdcdcd;
-  border-bottom: solid 1px #cbcbcb;
-  border-right: solid 1px #cbcbcb;
-}
-
-.dark .toolbar-overlay {
-  color: white;
-  background-color: #333;
-  border-top: solid 1px #333;
-  border-left: solid 1px #333;
-  border-bottom: solid 1px #3c3c3c;
-  border-right: solid 1px #3c3c3c;
-  box-shadow: 5px 5px 10px 0px #222;
-}
-
-.touch-toolbar-overlay {
-  touch-action: inherit;
-  position: fixed;
-  width: 150px;
-  max-width: 100%;
-  top: 35%;
-  left: 45%;
-  text-align: left;
-  font-size: 13px;
-  border-color: #87ceeb;
-  margin: 0;
-  z-index: var(--z-index-toolbar-overlay);
-  padding: 10px;
-  background-color: #ccc;
-}
-
-.dark .touch-toolbar-overlay {
-  color: white;
-  background-color: #333;
-}
-
-.overlay-name {
-  font-weight: bolder;
-  margin-bottom: 5px;
-}
-
-.overlay-shortcut {
-  opacity: 0.5;
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-.overlay-body {
-  font-style: italic;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
 .toolbar-icon {
   cursor: pointer;
   display: inline-block;
@@ -556,22 +491,6 @@ a.text-link {
 .dark .toolbar-mask {
   background-color: black;
   box-shadow: 10px -20px 15px 25px black;
-}
-
-@media only screen and (max-width: 768px) {
-  .touch-toolbar-overlay {
-    touch-action: inherit;
-    position: fixed;
-    width: 120px;
-    top: 25%;
-    left: 35%;
-    color: #fff;
-    text-align: left;
-    font-size: 13px;
-    border-color: #87ceeb;
-    margin: 0;
-    z-index: var(--z-index-toolbar-overlay);
-  }
 }
 
 /* Thoughts */

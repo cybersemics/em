@@ -124,7 +124,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     resourceCache: {},
     rootContext: [HOME_TOKEN],
     schemaVersion: SCHEMA_LATEST,
-    scrollPrioritized: false,
     search: null,
     remoteSearch: false,
     searchContexts: null,
@@ -139,7 +138,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     status: 'disconnected',
     pushQueue: [],
     thoughts: initialThoughts(created),
-    toolbarOverlay: null,
     undoPatches: [],
   }
 

@@ -85,7 +85,6 @@ interface State {
   resourceCache: Index<string>
   rootContext: Context
   schemaVersion: number
-  scrollPrioritized: boolean
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
@@ -106,7 +105,6 @@ interface State {
     */
   status: string
   thoughts: ThoughtIndices
-  toolbarOverlay?: string | null
   transientFocus?: boolean
   tutorialStep?: number
   undoPatches: Patch[]
