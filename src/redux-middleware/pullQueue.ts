@@ -20,7 +20,7 @@ import keyValueBy from '../util/keyValueBy'
 const updatePullQueueDelay = 10
 
 /** Limit frequency of fetching pull queue contexts. Ignored on first flush. */
-const flushPullQueueDelay = 500
+const flushPullQueueDelay = 100
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Record<ThoughtId, true> => ({
