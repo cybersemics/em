@@ -23,7 +23,7 @@ interface Shortcut {
   exec: (
     dispatch: Dispatch,
     getState: () => State,
-    e: Event | GestureResponderEvent | React.MouseEvent,
+    e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent,
     { type }: { type: ShortcutType },
   ) => void
 

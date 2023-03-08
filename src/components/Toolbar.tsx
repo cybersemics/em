@@ -8,7 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
+import React, { FC, MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Icon from '../@types/Icon'
@@ -27,6 +27,7 @@ interface ToolbarIconProps {
   disabled?: boolean
   fontSize: number
   isPressing: boolean
+  lastScrollLeft: MutableRefObject<number>
   onTapDown: (id: ShortcutId) => void
   onTapUp: (id: ShortcutId) => void
   shortcutId: ShortcutId
@@ -35,7 +36,15 @@ interface ToolbarIconProps {
 /**
  * ToolbarIcon component.
  */
-const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fontSize, isPressing, onTapDown, onTapUp, shortcutId }) => {
+const ToolbarIcon: FC<ToolbarIconProps> = ({
+  disabled,
+  fontSize,
+  lastScrollLeft,
+  isPressing,
+  onTapDown,
+  onTapUp,
+  shortcutId,
+}) => {
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     throw new Error('Missing shortcut: ' + shortcutId)
@@ -74,10 +83,17 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fontSize, isPressing, onT
       onTouchStart={() => {
         onTapDown(shortcutId)
       }}
-      onClick={e => {
-        e.preventDefault()
-        if (!isButtonExecutable || disabled) return
-        exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+      onTouchEnd={(e: React.TouchEvent) => {
+        const iconEl = e.target as HTMLElement
+        const toolbarEl = iconEl.closest('.toolbar')!
+        const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
+
+        if (isButtonExecutable && !disabled && scrollDifference < 5) {
+          exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+        }
+
+        lastScrollLeft.current = toolbarEl.scrollLeft
+        onTapUp(shortcutId)
       }}
     >
       <SVG
@@ -176,9 +192,6 @@ const Toolbar = () => {
             className='toolbar'
             onTouchEnd={e => {
               setPressingToolbarId(null)
-              if (e.target) {
-                lastScrollLeft.current = (e.target as HTMLElement).scrollLeft
-              }
             }}
             onScroll={onScroll}
           >
@@ -190,6 +203,7 @@ const Toolbar = () => {
                 fontSize={fontSize}
                 isPressing={pressingToolbarId === id}
                 key={id}
+                lastScrollLeft={lastScrollLeft}
                 onTapDown={setPressingToolbarId}
                 onTapUp={() => setPressingToolbarId(null)}
                 shortcutId={id}
