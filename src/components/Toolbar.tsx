@@ -24,7 +24,6 @@ import TriangleRight from './TriangleRight'
 
 interface ToolbarIconProps {
   disabled?: boolean
-  fg: string
   fontSize: number
   isPressing: boolean
   onTapDown: (id: string) => void
@@ -35,7 +34,7 @@ interface ToolbarIconProps {
 /**
  * ToolbarIcon component.
  */
-const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing, onTapDown, onTapUp, shortcutId }) => {
+const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fontSize, isPressing, onTapDown, onTapUp, shortcutId }) => {
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     throw new Error('Missing shortcut: ' + shortcutId)
@@ -48,6 +47,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing,
 
   const isButtonActive = useSelector((state: State) => !isActive || isActive(() => state))
   const isButtonExecutable = useSelector((state: State) => !canExecute || canExecute(() => state))
+  const colors = useSelector(themeColors)
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
@@ -83,7 +83,7 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing,
         size={fontSize}
         style={{
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          fill: isButtonExecutable && isButtonActive ? fg : 'gray',
+          fill: isButtonExecutable && isButtonActive ? colors.fg : 'gray',
           width: fontSize + 4,
           height: fontSize + 4,
         }}
@@ -101,7 +101,6 @@ const Toolbar = () => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
-  const colors = useSelector(themeColors)
   const { fontSize, distractionFreeTyping } = useSelector((state: State) => {
     const { fontSize, isLoading, distractionFreeTyping, showHiddenThoughts } = state
     return {
@@ -185,7 +184,6 @@ const Toolbar = () => {
             </span>
             {shortcutIds.map(id => (
               <ToolbarIcon
-                fg={colors.fg}
                 fontSize={fontSize}
                 isPressing={pressingToolbarId === id}
                 key={id}
