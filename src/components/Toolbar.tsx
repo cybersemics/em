@@ -8,7 +8,7 @@ Test:
   - Overlay hidden on touch "leave"
 
 */
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { connect, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Icon from '../@types/Icon'
@@ -31,8 +31,6 @@ interface ToolbarIconProps {
   onTapUp: (id: string) => void
   shortcutId: string
 }
-
-const ARROW_SCROLL_BUFFER = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State) => {
@@ -120,16 +118,33 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
   const arrowWidth = fontSize / 3
   const colors = useSelector(themeColors)
 
+  /**********************************************************************
+   * Methods
+   **********************************************************************/
+
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
-  const updateArrows = () => {
+  const updateArrows = useCallback(() => {
     const el = toolbarRef.current
     if (el) {
-      setLeftArrowElementClassName(el.scrollLeft > ARROW_SCROLL_BUFFER ? 'shown' : 'hidden')
-      setRightArrowElementClassName(
-        el.offsetWidth + el.scrollLeft < el.scrollWidth - ARROW_SCROLL_BUFFER ? 'shown' : 'hidden',
-      )
+      setLeftArrowElementClassName(el.scrollLeft > 20 ? 'shown' : 'hidden')
+      setRightArrowElementClassName(el.offsetWidth + el.scrollLeft < el.scrollWidth - 20 ? 'shown' : 'hidden')
     }
-  }
+  }, [])
+
+  /** Handles toolbar scroll event. */
+  const onScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
+    const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
+
+    if (scrollDifference >= 5) {
+      setPressingToolbarId(null)
+    }
+
+    updateArrows()
+  }, [])
+
+  /**********************************************************************
+   * Effects
+   **********************************************************************/
 
   useEffect(() => {
     window.addEventListener('resize', updateArrows)
@@ -146,21 +161,6 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
     .map(subthought => subthought.value)
     .filter(shortcutById)
   const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
-
-  /**********************************************************************
-   * Event Handlers
-   **********************************************************************/
-
-  /** Handles toolbar scroll event. */
-  const onScroll = (e: React.UIEvent<HTMLElement>) => {
-    const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
-
-    if (scrollDifference >= 5) {
-      setPressingToolbarId(null)
-    }
-
-    updateArrows()
-  }
 
   /**********************************************************************
    * Render
