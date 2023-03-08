@@ -69,9 +69,11 @@ syncStatusStore.subscribeSelector(
 // indexed by ThoughtId
 // parallel to thoughtIndex and lexemeIndex
 const thoughtDocs: Index<Y.Doc> = {}
+const thoughtSynced: Index<Promise<void>> = {}
 const thoughtPersistence: Index<IndexeddbPersistence> = {}
 const thoughtWebsocketProvider: Index<HocuspocusProvider> = {}
 const lexemeDocs: Index<Y.Doc> = {}
+const lexemeSynced: Index<Promise<void>> = {}
 const lexemePersistence: Index<IndexeddbPersistence> = {}
 const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 
@@ -382,7 +384,7 @@ export const replicateThought = async (
   // if the doc has already been initialized and added to thoughtDocs, return immediately
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
   // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
-  if (thoughtDocs[id] || process.env.NODE_ENV === 'test') return Promise.resolve()
+  if (thoughtDocs[id] || process.env.NODE_ENV === 'test') return thoughtSynced[id] || Promise.resolve()
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -392,13 +394,6 @@ export const replicateThought = async (
     document: doc,
     token: accessToken,
   })
-
-  // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
-  if (!background) {
-    thoughtDocs[id] = doc
-    thoughtPersistence[id] = persistence
-    thoughtWebsocketProvider[id] = websocketProvider
-  }
 
   // if replicating in the background, destroy the HocuspocusProvider once synced
   const idbSynced = persistence.whenSynced
@@ -427,7 +422,17 @@ export const replicateThought = async (
     })
   })
 
-  await Promise.race([idbSynced, websocketSynced])
+  const synced = Promise.race([idbSynced, websocketSynced])
+
+  // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
+  if (!background) {
+    thoughtDocs[id] = doc
+    thoughtSynced[id] = synced
+    thoughtPersistence[id] = persistence
+    thoughtWebsocketProvider[id] = websocketProvider
+  }
+
+  await synced
 
   // Subscribe to changes after first sync to ensure that pending is set properly.
   // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
@@ -455,7 +460,7 @@ export const replicateLexeme = async (
   // set up persistence and subscribe to changes
   // disable during tests because of TransactionInactiveError in fake-indexeddb
   // disable during tests because of infinite loop in sinon runAllAsync
-  if (lexemeDocs[key] || process.env.NODE_ENV === 'test') return Promise.resolve()
+  if (lexemeDocs[key] || process.env.NODE_ENV === 'test') return lexemeSynced[key] || Promise.resolve()
 
   const persistence = new IndexeddbPersistence(documentName, doc)
   const websocketProvider = new HocuspocusProvider({
@@ -464,13 +469,6 @@ export const replicateLexeme = async (
     document: doc,
     token: accessToken,
   })
-
-  // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
-  if (!background) {
-    lexemeDocs[key] = doc
-    lexemePersistence[key] = persistence
-    lexemeWebsocketProvider[key] = websocketProvider
-  }
 
   // if replicating in the background, destroy the HocuspocusProvider once synced
   const idbSynced = persistence.whenSynced
@@ -497,7 +495,17 @@ export const replicateLexeme = async (
     })
   })
 
-  await Promise.race([idbSynced, websocketSynced])
+  const synced = Promise.race([idbSynced, websocketSynced])
+
+  // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
+  if (!background) {
+    lexemeDocs[key] = doc
+    lexemeSynced[key] = synced
+    lexemePersistence[key] = persistence
+    lexemeWebsocketProvider[key] = websocketProvider
+  }
+
+  await synced
 
   // Subscribe to changes after first sync to ensure that pending is set properly.
   // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
@@ -544,6 +552,7 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
+  delete thoughtSynced[id]
   delete thoughtWebsocketProvider[id]
 
   // there may not be a persistence instance in memory at all, so delete the database directly
@@ -565,6 +574,7 @@ const deleteLexeme = (key: string): Promise<void> => {
   lexemeDocs[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
+  delete lexemeSynced[key]
   delete lexemeWebsocketProvider[key]
 
   // there may not be a persistence instance in memory at all, so delete the database directly
