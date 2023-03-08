@@ -60,13 +60,12 @@ const BulletLeaf = ({
       cy='298'
       cx='297'
       style={{
-        // allow 'gray' className to define fill when missing
-        fill: isHighlighted ? colors.highlight : missing ? undefined : colors.fg,
-        stroke: isHighlighted ? colors.highlight : undefined,
+        // allow .gray to define fill when missing
+        // allow .graypulse to define fill when pending
+        fill: showContexts ? 'none' : isHighlighted ? colors.highlight : fill,
+        stroke: showContexts ? 'none' : isHighlighted ? colors.highlight : fill,
       }}
       strokeWidth={showContexts ? 30 : undefined}
-      stroke={showContexts ? 'none' : colors.fg85}
-      fill={showContexts ? 'none' : fill}
     />
   )
 }
@@ -181,10 +180,12 @@ const Bullet = ({
     return !thought || !getLexeme(state, thought.value)
   })
   const colors = useSelector(themeColors)
+
+  // fill =bullet/=style override
   const fill = useSelector((state: State) => {
     const bulletId = findDescendant(state, head(simplePath), '=bullet')
     const styles = getStyle(state, bulletId)
-    return styles?.color || colors.fg85
+    return styles?.color
   })
 
   // offset margin with padding by equal amounts proportional to the font size to extend the click area

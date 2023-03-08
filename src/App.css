@@ -1273,6 +1273,14 @@ h1 .num-contexts {
   user-select: none;
 }
 
+/* Style bullet glyph with CSS to allow .graypulse animation to override it. */
+.bullet .glyph {
+  fill: rgba(39, 39, 39, 1);
+}
+.dark .bullet .glyph {
+  fill: rgba(217, 217, 217, 1);
+}
+
 .child > .thought-container > .bullet .glyph {
   position: relative;
   /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
