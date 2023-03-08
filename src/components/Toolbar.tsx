@@ -27,7 +27,8 @@ interface ToolbarIconProps {
   fg: string
   fontSize: number
   isPressing: boolean
-  onClick: (id: string | null) => void
+  onTapDown: (id: string) => void
+  onTapUp: (id: string) => void
   shortcutId: string
 }
 
@@ -50,7 +51,7 @@ const mapStateToProps = (state: State) => {
 /**
  * ToolbarIcon component.
  */
-const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing, onClick, shortcutId }) => {
+const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing, onTapDown, onTapUp, shortcutId }) => {
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
     throw new Error('Missing shortcut: ' + shortcutId)
@@ -78,15 +79,15 @@ const ToolbarIcon: FC<ToolbarIconProps> = ({ disabled, fg, fontSize, isPressing,
       }}
       className='toolbar-icon'
       onMouseDown={e => {
-        onClick(shortcutId)
         // prevents editable blur
         e.preventDefault()
+        onTapDown(shortcutId)
       }}
-      onMouseUp={e => {
-        onClick(null)
+      onMouseUp={() => {
+        onTapUp(shortcutId)
       }}
       onTouchStart={() => {
-        onClick(shortcutId)
+        onTapDown(shortcutId)
       }}
       onClick={e => {
         e.preventDefault()
@@ -185,18 +186,17 @@ const Toolbar = ({ fontSize, distractionFreeTyping }: ReturnType<typeof mapState
             <span id='left-arrow' className={leftArrowElementClassName}>
               <TriangleLeft width={arrowWidth} height={fontSize} fill='gray' />
             </span>
-            {shortcutIds.map(id => {
-              return (
-                <ToolbarIcon
-                  fg={colors.fg}
-                  fontSize={fontSize}
-                  isPressing={pressingToolbarId === id}
-                  key={id}
-                  onClick={setPressingToolbarId}
-                  shortcutId={id}
-                />
-              )
-            })}
+            {shortcutIds.map(id => (
+              <ToolbarIcon
+                fg={colors.fg}
+                fontSize={fontSize}
+                isPressing={pressingToolbarId === id}
+                key={id}
+                onTapDown={setPressingToolbarId}
+                onTapUp={() => setPressingToolbarId(null)}
+                shortcutId={id}
+              />
+            ))}
             <span id='right-arrow' className={rightArrowElementClassName}>
               <TriangleRight width={arrowWidth} height={fontSize} fill='gray' />
             </span>
