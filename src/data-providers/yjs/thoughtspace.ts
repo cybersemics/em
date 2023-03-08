@@ -49,7 +49,7 @@ const deleteDB = (name: string): Promise<void> => {
 const replicationQueue = taskQueue({
   autostart: false,
   onStep: (current, total) => {
-    syncStatusStore.update({ replicationProgress: current / total })
+    syncStatusStore.update({ replicationProgress: (current + 1) / total })
   },
 })
 
