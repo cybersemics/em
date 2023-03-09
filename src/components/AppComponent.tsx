@@ -10,7 +10,6 @@ import Modal from '../@types/Modal'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
-import { BASE_FONT_SIZE } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import isTutorial from '../selectors/isTutorial'
@@ -29,7 +28,6 @@ import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
-import Scale from './Scale'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
@@ -48,7 +46,6 @@ interface StateProps {
   dragInProgress?: boolean
   isLoading?: boolean
   showModal?: Modal | null
-  scale?: number
   showSplitView?: boolean
   splitPosition?: number
   fontSize: number
@@ -132,12 +129,10 @@ const useDisableLongPressToSelect = () => {
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
   const dark = theme(state) !== 'Light'
-  const scale = state.fontSize / BASE_FONT_SIZE
   return {
     dark,
     dragInProgress,
     isLoading,
-    scale,
     showModal,
     splitPosition,
     showSplitView,
@@ -178,7 +173,6 @@ const AppComponent: FC<Props> = props => {
     enableLatestShortcutsDiagram,
     isLoading,
     showModal,
-    scale,
     showSplitView,
     splitPosition,
     fontSize,
@@ -327,19 +321,7 @@ const AppComponent: FC<Props> = props => {
               </SplitPane>
             )}
 
-            <div
-              className='z-index-stack'
-              style={{
-                position: 'sticky',
-                // cannot use safe-area-inset because of mobile Safari z-index issues
-                bottom: 0,
-              }}
-            >
-              {/* {isTouch && <SidebarGutter />} */}
-              <Scale amount={scale!} origin='bottom left'>
-                <NavBar position='bottom' />
-              </Scale>
-            </div>
+            <NavBar position='bottom' />
           </>
         )}
 
