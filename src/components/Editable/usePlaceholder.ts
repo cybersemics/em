@@ -1,8 +1,10 @@
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import { Settings } from '../../constants'
 import attributeEquals from '../../selectors/attributeEquals'
 import getThoughtById from '../../selectors/getThoughtById'
+import getUserSetting from '../../selectors/getUserSetting'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import head from '../../util/head'
 import strip from '../../util/strip'
@@ -17,20 +19,24 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
     const parentId = head(rootedParentOf(state, simplePath))
     const lastUpdated = getThoughtById(state, head(simplePath)).lastUpdated
     const value = getThoughtById(state, head(simplePath)).value
-    const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
+    if (!isCursorCleared && value) return value
 
     // strip formatting tags for clearThought placeholder
     const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
 
-    return isCursorCleared
-      ? valueStripped || 'This is an empty thought'
-      : value ||
-          (isTableColumn1
-            ? ''
-            : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
-            Date.now() - new Date(lastUpdated).getTime() > EMPTY_THOUGHT_TIMEOUT
-            ? 'This is an empty thought'
-            : 'Add a thought')
+    if (valueStripped) return valueStripped
+
+    const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
+    const experienceMode = getUserSetting(state, Settings.experienceMode)
+    const emptyValue =
+      experienceMode || isTableColumn1
+        ? ''
+        : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
+        Date.now() - lastUpdated > EMPTY_THOUGHT_TIMEOUT
+        ? 'This is an empty thought'
+        : 'Add a thought'
+
+    return emptyValue
   })
 
 export default usePlaceholder
