@@ -62,27 +62,58 @@ it('autostart: false', async () => {
 })
 
 it('onStep', async () => {
-  let counter = 0
-  /** Increment counter. */
-  const inc = () => counter++
-  const output: { current: number; total: number }[] = []
+  const output: { completed: number; total: number; index: number; value: string }[] = []
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValue = (s: string, n: number) => async () => {
+    await delay(n)
+    return s
+  }
 
   await new Promise<void>(resolve => {
     const queue = taskQueue({
-      onStep: (current, total) => {
+      onStep: ({ completed, total, index, value }) => {
         // eslint-disable-next-line fp/no-mutating-methods
-        output.push({ current, total })
+        output.push({ completed, total, index, value })
       },
       onEnd: resolve,
     })
 
-    queue.add([inc, inc, inc])
+    queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
   })
 
   expect(output).toEqual([
-    { current: 0, total: 3 },
-    { current: 1, total: 3 },
-    { current: 2, total: 3 },
+    { completed: 1, total: 3, index: 2, value: 'c' },
+    { completed: 2, total: 3, index: 0, value: 'a' },
+    { completed: 3, total: 3, index: 1, value: 'b' },
+  ])
+})
+
+it('onLowStep', async () => {
+  const output: { completed: number; total: number; index: number; value: string }[] = []
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValue = (s: string, n: number) => async () => {
+    await delay(n)
+    return s
+  }
+
+  await new Promise<void>(resolve => {
+    const queue = taskQueue({
+      onLowStep: ({ completed, total, index, value }) => {
+        // eslint-disable-next-line fp/no-mutating-methods
+        output.push({ completed, total, index, value })
+      },
+      onEnd: resolve,
+    })
+
+    queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
+  })
+
+  expect(output).toEqual([
+    { completed: 2, total: 3, index: 0, value: 'a' },
+    { completed: 3, total: 3, index: 1, value: 'b' },
+    { completed: 3, total: 3, index: 2, value: 'c' },
   ])
 })
 

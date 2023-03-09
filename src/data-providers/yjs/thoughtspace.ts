@@ -17,6 +17,7 @@ import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
+import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
@@ -27,12 +28,38 @@ import {
   parseDocumentName,
 } from './documentNameEncoder'
 
+interface ReplicationResult {
+  type: 'thought' | 'lexeme'
+  id: ThoughtId | string
+  // the delta index that is saved as the replication cursor to enable partial replication
+  index: number
+}
+
 // action types for the doclog
 // See: doclog
 enum DocLogAction {
   Delete,
   Update,
 }
+
+let thoughtReplicationCursor = +(storage.getItem('thoughtReplicationCursor') || 0)
+let lexemeReplicationCursor = +(storage.getItem('lexemeReplicationCursor') || 0)
+const updateThoughtReplicationCursor = _.throttle(
+  (index: number) => {
+    thoughtReplicationCursor = index
+    storage.setItem('thoughtReplicationCursor', index.toString())
+  },
+  100,
+  { leading: false },
+)
+const updateLexemeReplicationCursor = _.throttle(
+  (index: number) => {
+    lexemeReplicationCursor = index
+    storage.setItem('lexemeReplicationCursor', index.toString())
+  },
+  100,
+  { leading: false },
+)
 
 /** Filters out null and undefined values and properly types the result. */
 const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
@@ -46,10 +73,17 @@ const deleteDB = (name: string): Promise<void> => {
   })
 }
 
-const replicationQueue = taskQueue({
+const replicationQueue = taskQueue<ReplicationResult>({
   autostart: false,
-  onStep: (current, total) => {
-    syncStatusStore.update({ replicationProgress: (current + 1) / total })
+  onLowStep: ({ index, value }) => {
+    if (value.type === 'thought') {
+      updateThoughtReplicationCursor(value.index)
+    } else {
+      updateLexemeReplicationCursor(value.index)
+    }
+  },
+  onStep: ({ completed, total }) => {
+    syncStatusStore.update({ replicationProgress: completed / total })
   },
 })
 
@@ -93,6 +127,7 @@ doclogPersistence.whenSynced.catch(e => {
   console.error(e)
   store.dispatch(alert('Error loading doclog'))
 })
+
 // eslint-disable-next-line no-new
 new HocuspocusProvider({
   websocketProvider: websocketThoughtspace,
@@ -100,19 +135,17 @@ new HocuspocusProvider({
   document: doclog,
   token: accessToken,
 })
+// Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
+// Clocks across clients are not monotonic, so we can't slice by clock.
+// Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
+// Therefore, observe the deltas and slice from the replication cursor.
 thoughtLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const deltas: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
-  // traverse from recent to old, and ignore older updates to the same thought
-  // eslint-disable-next-line fp/no-mutating-methods
-  deltas.reverse()
-  const idsTraversed = new Set()
-  const tasks = deltas.map(([id, action]) => {
-    if (idsTraversed.has(id)) return null
-    idsTraversed.add(id)
-
-    return async () => {
+  const startIndex = thoughtReplicationCursor + 1
+  const deltas: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
+  const tasks = deltas.map(([id, action], index) => {
+    return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
         await replicateThought(id, { background: true })
       } else {
@@ -127,8 +160,10 @@ thoughtLog.observe(e => {
             repairCursor: true,
           }),
         )
-        deleteThought(id)
+        await deleteThought(id)
       }
+
+      return { type: 'thought', id, index: startIndex + index }
     }
   })
 
@@ -138,19 +173,15 @@ thoughtLog.observe(e => {
     replicationQueue.start()
   }
 })
+
+// See: thoughtLog.observe
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const deltas: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
-  // traverse from recent to old, and ignore older updates to the same lexeme
-  // eslint-disable-next-line fp/no-mutating-methods
-  deltas.reverse()
-  const keysTraversed = new Set()
-  const tasks = deltas.map(([key, action]) => {
-    if (keysTraversed.has(key)) return null
-    keysTraversed.add(key)
-
-    return async () => {
+  const startIndex = lexemeReplicationCursor + 1
+  const deltas: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
+  const tasks = deltas.map(([key, action], index) => {
+    return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
         await replicateLexeme(key, { background: true })
       } else {
@@ -165,8 +196,10 @@ lexemeLog.observe(e => {
             repairCursor: true,
           }),
         )
-        deleteLexeme(key)
+        await deleteLexeme(key)
       }
+
+      return { type: 'lexeme', id: key, index: startIndex + index } as ReplicationResult
     }
   })
 
