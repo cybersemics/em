@@ -121,9 +121,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     document.body.addEventListener('touchstart', e => {
       if (e?.touches.length > 0) {
-        this.clientStart = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
+        const x = e.touches[0].clientX
+        const y = e.touches[0].clientY
+        this.clientStart = { x, y }
+
+        // disable gestures in the scroll zone on the right side of the screen
+        // disable scroll in the gesture zone on the left side of the screen
+        if (x < window.innerWidth - 100) {
+          this.disableScroll = true
+        } else {
+          this.abandon = true
         }
       }
     })
@@ -240,10 +247,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
 
           if (g !== this.sequence[this.sequence.length - 1]) {
-            // abandon gestures that start with d or u
+            // abandon gestures that start with d or u when scroll is not disabled
             // this can occur when dragging down at the top of the screen on mobile
             // since scrollY is already 0,  this.scrolling will not be set to true to abandon the gesture
-            if (this.sequence.length === 0 && (g === 'd' || g === 'u')) {
+            if (this.sequence.length === 0 && !this.disableScroll && (g === 'd' || g === 'u')) {
               this.abandon = true
             }
             // otherwise append the gesture to the sequence and call the onGesture handler
