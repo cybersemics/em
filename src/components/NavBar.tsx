@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import showModal from '../action-creators/showModal'
+import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
@@ -59,6 +60,7 @@ const NavBar = ({ position }: { position: string }) => {
   const isTutorialOn = useSelector(isTutorial)
   const colors = useSelector(themeColors)
   const authenticated = useSelector((state: State) => state.authenticated)
+  const editing = useSelector((state: State) => state.editing)
   const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const fontSize = useSelector((state: State) => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
@@ -73,11 +75,15 @@ const NavBar = ({ position }: { position: string }) => {
   return (
     <div
       className='z-index-stack'
-      style={{
-        position: 'sticky',
-        // cannot use safe-area-inset because of mobile Safari z-index issues
-        bottom: 0,
-      }}
+      style={
+        !isTouch || !editing
+          ? {
+              position: 'sticky',
+              // cannot use safe-area-inset because of mobile Safari z-index issues
+              bottom: 0,
+            }
+          : undefined
+      }
     >
       {/* {isTouch && <SidebarGutter />} */}
       <Scale amount={scale!} origin='bottom left'>
