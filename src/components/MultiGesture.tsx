@@ -142,34 +142,27 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is always called.
     // Fixes https://github.com/cybersemics/em/issues/1242
     document.body.addEventListener('touchend', e => {
-      // manually reset everything except sequence and abandon, in case reset does not get called
-      // Fixes https://github.com/cybersemics/em/issues/1189
-      this.currentStart = null
-      this.scrollYStart = null
-      this.disableScroll = false
-      this.scrolling = false
+      // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
+      setTimeout(() => {
+        // call onEnd if there is a gesture that has not been reset
+        if (!this.abandon && this.sequence) {
+          const clientEnd =
+            e?.touches.length > 0
+              ? {
+                  x: e.touches[0].clientX,
+                  y: e.touches[0].clientY,
+                }
+              : null
+          this.props.onEnd?.({
+            sequence: this.sequence,
+            clientStart: this.clientStart!,
+            clientEnd,
+            e: e as unknown as GestureResponderEvent,
+          })
+        }
 
-      if (this.sequence) {
-        // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
-        setTimeout(() => {
-          if (!this.abandon && this.sequence) {
-            const clientEnd =
-              e?.touches.length > 0
-                ? {
-                    x: e.touches[0].clientX,
-                    y: e.touches[0].clientY,
-                  }
-                : null
-            this.props.onEnd?.({
-              sequence: this.sequence,
-              clientStart: this.clientStart!,
-              clientEnd,
-              e: e as unknown as GestureResponderEvent,
-            })
-            this.reset()
-          }
-        })
-      }
+        this.reset()
+      })
     })
 
     document.addEventListener('visibilitychange', () => {
