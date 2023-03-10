@@ -10,8 +10,10 @@ import Modal from '../@types/Modal'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
+import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
@@ -149,9 +151,11 @@ const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapse
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
-const MultiGestureIfTouch: FC = ({ children }) =>
-  isTouch ? (
+const MultiGestureIfTouch: FC = ({ children }) => {
+  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+  return isTouch ? (
     <MultiGesture
+      leftHanded={leftHanded}
       onGesture={handleGestureSegment}
       onEnd={handleGestureEnd}
       shouldCancelGesture={shouldCancelGesture}
@@ -162,6 +166,7 @@ const MultiGestureIfTouch: FC = ({ children }) =>
   ) : (
     <>{children}</>
   )
+}
 
 /**
  * The main app component.

@@ -455,11 +455,12 @@ export enum AlertType {
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
 }
 
-// Allowable settings that can be saved to /EM/Settings/
-// See ModalSettings for full descriptions.
+// User settings that can be saved to /EM/Settings/
+// See Settings modal for full descriptions.
 export enum Settings {
   disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
+  leftHanded = 'leftHanded',
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',
 }

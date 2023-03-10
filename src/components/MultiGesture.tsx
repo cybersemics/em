@@ -27,6 +27,8 @@ interface GestureState {
 interface MultiGestureProps {
   // if true, does not draw the gesture as the user is making it
   disableTrace?: boolean
+  // moves the scroll zone to the left side of the screen and the gesture zone to the right
+  leftHanded?: boolean
   // fired when a new gesture is added to the sequence
   onGesture?: (args: {
     gesture: Direction | null
@@ -87,6 +89,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   clientStart: Point | null = null
   currentStart: Point | null = null
   disableTrace = false
+  leftHanded = false
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
@@ -101,6 +104,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // square the minDistance once for more efficient distance comparisons
     this.minDistanceSquared = Math.pow(props.minDistance || 10, 2)
+
+    // this.leftHanded is updated when props change by UNSAFE_componentWillReceiveProps
+    this.leftHanded = !!props.leftHanded
 
     this.reset()
 
@@ -127,7 +133,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
-        if (x < window.innerWidth - 100) {
+        const isInGestureZone = this.leftHanded ? x > 100 : x < window.innerWidth - 100
+        if (isInGestureZone) {
           this.disableScroll = true
         } else {
           this.abandon = true
@@ -272,6 +279,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     })
   }
 
+  // update leftHanded when props change
+  // TODO: Why is the component no re-rendered automatically when a prop changes?
+  UNSAFE_componentWillReceiveProps(nextProps: MultiGestureProps) {
+    this.leftHanded = !!nextProps.leftHanded
+  }
+
   reset() {
     this.abandon = false
     this.currentStart = null
@@ -294,6 +307,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
   static defaultProps: MultiGestureProps = {
     disableTrace: false,
+    leftHanded: false,
     minDistance: 10,
     scrollThreshold: 15,
     onStart: NOOP,
