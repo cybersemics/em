@@ -146,7 +146,8 @@ const mapStateToProps = (state: State): StateProps => {
 type Props = StateProps
 
 /** Cancel gesture if there is an active text selection or active drag. */
-const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress
+const shouldCancelGesture = () =>
+  (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.

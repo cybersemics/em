@@ -163,7 +163,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
         const isInGestureZone = this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH
-        if (isInGestureZone) {
+        if (isInGestureZone && !props.shouldCancelGesture?.()) {
           this.disableScroll = true
         } else {
           this.abandon = true
