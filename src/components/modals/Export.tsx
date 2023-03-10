@@ -35,7 +35,7 @@ import exportPhrase from '../../util/exportPhrase'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
-import onFastClick from '../../util/onFastClick'
+import onTapDown from '../../util/onTapDown'
 import pathToContext from '../../util/pathToContext'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
@@ -547,7 +547,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
         <span>
           <a
             className='advance-setting-link no-select'
-            {...onFastClick(onAdvancedClick)}
+            {...onTapDown(onAdvancedClick)}
             style={{ opacity: advancedSettings ? 1 : 0.5 }}
           >
             Advanced

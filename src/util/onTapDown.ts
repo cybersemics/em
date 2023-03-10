@@ -1,7 +1,7 @@
 import { isTouch } from '../browser'
 
 /** A faster alternative to onClick or checkbox onChange. Returns onTouchStart or onMouseDown handler depending on if touch is supported. */
-const onFastClick = (onClick: (e: React.MouseEvent | React.TouchEvent) => void) =>
-  isTouch ? { onTouchStart: onClick } : { onMouseDown: onClick }
+const onTapDown = (handler: (e: React.MouseEvent | React.TouchEvent) => void) =>
+  isTouch ? { onTouchStart: handler } : { onMouseDown: handler }
 
-export default onFastClick
+export default onTapDown
