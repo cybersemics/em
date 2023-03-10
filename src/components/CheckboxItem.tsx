@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import onTapDown from '../util/onTapDown'
+import onTapUp from '../util/onTapUp'
 
 /** A checkbox component with em styling. */
 const Checkbox = ({ checked }: { checked?: boolean }) => (
@@ -27,8 +27,9 @@ const CheckboxItem: FC<{
   return (
     <label
       className='checkbox-container'
-      // checkbox onChange is very slow for some reason, so use onTouchStart on mobile
-      {...(!disabled ? onTapDown(onChange) : null)}
+      // checkbox onChange is very slow for some reason, so use the faster onTapUp
+      // do not use onTapDown to avoid being activated when scrolling
+      {...(!disabled ? onTapUp(onChange) : null)}
       style={{
         opacity: disabled ? 0.5 : undefined,
         marginBottom: children ? (parent ? '0.5em' : '1em') : 0,
