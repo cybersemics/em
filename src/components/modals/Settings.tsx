@@ -52,10 +52,14 @@ const ModalSettings = () => (
       </div>
     )}
   >
-    <form style={{ fontSize: undefined }}>
+    <form>
       <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
         Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
         learning gestures and want an extra bit of feedback.
+      </Setting>
+
+      <Setting settingsKey={Settings.hideScrollZone} title='Hide Scroll Zone'>
+        Hide the overlay that indicates where the scroll zone is.
       </Setting>
 
       <Setting settingsKey={Settings.hideSuperscripts} title='Superscripts' invert>

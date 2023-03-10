@@ -460,6 +460,7 @@ export enum AlertType {
 export enum Settings {
   disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
+  hideScrollZone = 'hideScrollZone',
   leftHanded = 'leftHanded',
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',

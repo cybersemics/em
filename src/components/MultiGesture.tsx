@@ -4,7 +4,8 @@ import { GestureResponderEvent } from 'react-native'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import { NOOP } from '../constants'
+import { NOOP, Settings } from '../constants'
+import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import ministore from '../stores/ministore'
 import TraceGesture from './TraceGesture'
@@ -90,6 +91,9 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 /** An overlay for the scroll zone. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const colors = useSelector(themeColors)
+  const hideScrollZone = useSelector(getUserSetting(Settings.hideScrollZone))
+  if (hideScrollZone) return null
+
   return (
     <div
       className='z-index-stack'
