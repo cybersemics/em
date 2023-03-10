@@ -1,9 +1,11 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
+import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import { NOOP } from '../constants'
+import themeColors from '../selectors/themeColors'
 import ministore from '../stores/ministore'
 import TraceGesture from './TraceGesture'
 
@@ -57,6 +59,8 @@ interface MultiGestureProps {
   scrollThreshold?: number
 }
 
+const SCROLL_ZONE_WIDTH = 100
+
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
   NW: -Math.PI * (3 / 4),
@@ -81,6 +85,27 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
     : angle >= dirToRad.SE && angle < dirToRad.SW
     ? 'd'
     : 'l'
+}
+
+/** An overlay for the scroll zone. */
+const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
+  const colors = useSelector(themeColors)
+  return (
+    <div
+      className='z-index-stack'
+      style={{
+        backgroundColor: colors.gray50,
+        [leftHanded ? 'borderRight' : 'borderLeft']: `solid 1px ${colors.gray33}`,
+        position: 'fixed',
+        left: leftHanded ? 0 : undefined,
+        right: leftHanded ? undefined : 0,
+        height: '100%',
+        opacity: 0.18,
+        pointerEvents: 'none',
+        width: SCROLL_ZONE_WIDTH,
+      }}
+    />
+  )
 }
 
 /** A component that handles touch gestures composed of sequential swipes. */
@@ -133,7 +158,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
-        const isInGestureZone = this.leftHanded ? x > 100 : x < window.innerWidth - 100
+        const isInGestureZone = this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH
         if (isInGestureZone) {
           this.disableScroll = true
         } else {
@@ -300,6 +325,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     return (
       <View {...this.panResponder.panHandlers}>
         <TraceGesture eventNodeRef={ref} gestureStore={this.sequenceStore} />
+        <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>
       </View>
     )
