@@ -61,7 +61,7 @@ interface MultiGestureProps {
   scrollThreshold?: number
 }
 
-const SCROLL_ZONE_WIDTH = 100
+const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
 const TOOLBAR_HEIGHT = 50
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
