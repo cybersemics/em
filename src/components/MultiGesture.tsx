@@ -61,6 +61,7 @@ interface MultiGestureProps {
 }
 
 const SCROLL_ZONE_WIDTH = 100
+const TOOLBAR_HEIGHT = 50
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
@@ -162,7 +163,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
-        const isInGestureZone = this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH
+        const isInGestureZone =
+          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) && y > TOOLBAR_HEIGHT
         if (isInGestureZone && !props.shouldCancelGesture?.()) {
           this.disableScroll = true
         } else {
