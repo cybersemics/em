@@ -111,6 +111,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           'toolbar-container': true,
           'toolbar-fixed': !customize,
         })}
+        style={{
+          // make toolbar flush with left padding
+          marginLeft: customize ? -5 : 0,
+        }}
       >
         <div
           className='toolbar-mask'
@@ -131,6 +135,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
               setPressingToolbarId(null)
             }}
             onScroll={onScroll}
+            style={{
+              marginLeft: customize ? -3 : 0,
+              paddingLeft: customize ? 3 : 0,
+            }}
           >
             {shortcutIds.map(id => {
               return (

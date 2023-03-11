@@ -430,16 +430,6 @@ a.text-link {
   display: none;
 }
 
-.toolbar > *:first-child {
-  /* move the first icon more flush to the left edge of the toolbar */
-  margin-left: -5px;
-}
-
-.toolbar > *:last-child {
-  /* negative margin-right does not woxk here so use width to crop the right side so that it is flush. */
-  width: 1em;
-}
-
 .toolbar-fixed .toolbar > *:last-child {
   /* add right margin so right-arrow does not feel too attached to the right edge of the screen */
   margin-right: 1em;

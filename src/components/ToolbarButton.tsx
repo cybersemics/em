@@ -34,6 +34,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   dropTarget,
   fontSize,
   isDragging,
+  isHovering,
   isPressing,
   lastScrollLeft,
   onTapUp,
@@ -124,6 +125,23 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
                 left: 2,
               }}
             ></div>
+          )
+        }
+        {
+          // drop hover
+          isHovering && (
+            <div
+              style={{
+                borderRadius: 3,
+                position: 'absolute',
+                top: '18%',
+                left: -2,
+                // match the height of the inverted button
+                height: '66.666%',
+                width: 3,
+                backgroundColor: colors.highlight,
+              }}
+            />
           )
         }
         <SVG
