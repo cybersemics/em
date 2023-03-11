@@ -4,10 +4,13 @@ import DragToolbarZone from '../@types/DragToolbarZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
+import onTapDownProps from '../util/onTapDown'
+import onTapUpProps from '../util/onTapUp'
 import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
 export interface ToolbarButtonProps {
@@ -79,17 +82,19 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           transition: 'transform 200ms ease-out',
         }}
         className='toolbar-icon'
-        onMouseDown={e => {
-          longPress.props.onMouseDown(e)
+        // tapDown
+        {...onTapDownProps((e: React.MouseEvent | React.TouchEvent) => {
+          longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown'](e)
 
           // prevents editable blur
           if (!customize) {
             e.preventDefault()
           }
           onTapDown?.(e)
-        }}
-        onMouseUp={(e: React.MouseEvent) => {
-          longPress.props.onMouseUp(e)
+        })}
+        // tapUp
+        {...onTapUpProps((e: React.MouseEvent | React.TouchEvent) => {
+          longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
           const iconEl = e.target as HTMLElement
           const toolbarEl = iconEl.closest('.toolbar')!
           const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
@@ -100,24 +105,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
           lastScrollLeft.current = toolbarEl.scrollLeft
           onTapUp?.(e)
-        }}
-        onTouchStart={e => {
-          longPress.props.onTouchStart(e)
-          onTapDown?.(e)
-        }}
-        onTouchEnd={(e: React.TouchEvent) => {
-          longPress.props.onTouchEnd(e)
-          const iconEl = e.target as HTMLElement
-          const toolbarEl = iconEl.closest('.toolbar')!
-          const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
-
-          if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
-            exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-          }
-
-          lastScrollLeft.current = toolbarEl.scrollLeft
-          onTapUp?.(e)
-        }}
+        })}
       >
         {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
 
