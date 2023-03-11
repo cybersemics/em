@@ -5,10 +5,7 @@ import { isTouch } from '../browser'
 import GestureDiagram from '../components/GestureDiagram'
 import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 
-const subthoughtShortcut = shortcutById('newSubthought')
 const toggleContextViewShortcut = shortcutById('toggleContextView')
-if (!subthoughtShortcut) throw new Error('newSubthought shortcut not found.')
-if (!toggleContextViewShortcut) throw new Error('toggleContextView shortcut not found.')
 
 /** A message that explains that the thought is no other contexts and provides a hint for adding it to a context. */
 const NoOtherContexts = ({

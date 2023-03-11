@@ -321,8 +321,8 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
   )
 }
 
-/** Finds a shortcut by its id. */
-export const shortcutById = (id: ShortcutId): Shortcut | null => shortcutIdIndex[id]
+/** Get a shortcut by its id. */
+export const shortcutById = (id: ShortcutId): Shortcut => shortcutIdIndex[id]
 
 /** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
 export const gestureString = (shortcut: Shortcut): string =>

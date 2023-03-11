@@ -133,7 +133,7 @@ const ShortcutTable = () => {
       {groups.map(group => {
         const shortcuts = group.shortcuts
           .map(shortcutById)
-          .filter(shortcut => shortcut && (isTouch ? shortcut.gesture : shortcut.keyboard))
+          .filter(shortcut => (isTouch ? shortcut.gesture : shortcut.keyboard))
 
         // do not render groups with no shrotcuts on this platform
         if (shortcuts.length === 0) return null

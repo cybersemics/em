@@ -169,11 +169,9 @@ const Toolbar = () => {
 
   // fallback to defaults if user does not have Settings defined
   const visibleShortcutsId = contextToThoughtId(store.getState(), ['Settings', 'Toolbar', 'Visible:'])
-  const userShortcutIds = (
-    (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : []).map(
-      subthought => subthought.value,
-    ) as ShortcutId[]
-  ).filter(shortcutById)
+  const userShortcutIds = (visibleShortcutsId ? subtree(store.getState(), visibleShortcutsId) : [])
+    .map(subthought => subthought.value)
+    .filter(shortcutIdString => !!shortcutById(shortcutIdString as ShortcutId)) as ShortcutId[]
   const shortcutIds = userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
   const arrowWidth = fontSize / 3
 
