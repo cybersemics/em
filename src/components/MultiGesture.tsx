@@ -100,7 +100,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
 
   return (
     <div
-      className='z-index-stack'
+      className='z-index-scroll-zone'
       style={{
         background: `linear-gradient(90deg, ${colors.bg} -100%, ${colors.fg} 100%)`,
         backgroundColor: colors.gray50,

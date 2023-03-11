@@ -19,6 +19,8 @@
   --z-index-subthoughts-drop-end: 5;
   /* above .children */
   --z-index-tutorial: 3;
+  /* above footer and breadcrumbs */
+  --z-index-scroll-zone: 2;
   --z-index-toolbar-arrow: 2;
   /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
   --z-index-thought-annotation-link: 2;
@@ -51,6 +53,9 @@
 }
 .z-index-hide {
   z-index: var(--z-index-hide);
+}
+.z-index-scroll-zone {
+  z-index: var(--z-index-scroll-zone);
 }
 
 /* fixed debug box in bottom right */
