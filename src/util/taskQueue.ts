@@ -62,7 +62,12 @@ const taskQueue = <T = any>({
     if (paused || running >= concurrency) return
     // eslint-disable-next-line fp/no-mutating-methods
     const task = queue.shift()
-    if (!task) return
+    if (!task) {
+      if (total === 0) {
+        onEnd?.(0)
+      }
+      return
+    }
 
     const index = nextIndex()
     running++

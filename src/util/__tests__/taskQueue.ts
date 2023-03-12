@@ -40,6 +40,15 @@ it('onEnd', async () => {
   expect(total).toBe(3)
 })
 
+it('onEnd with no tasks', async () => {
+  const total = await new Promise(resolve => {
+    const queue = taskQueue({ onEnd: resolve })
+    queue.add([])
+  })
+
+  expect(total).toBe(0)
+})
+
 it('async tasks', async () => {
   let counter = 0
   /** Increment counter after a delay. */
