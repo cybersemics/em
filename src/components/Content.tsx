@@ -14,6 +14,7 @@ import * as selection from '../device/selection'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import publishMode from '../util/publishMode'
@@ -114,7 +115,7 @@ const Content: ContentComponent = props => {
         id='content'
         ref={contentRef}
         className={contentClassNames}
-        onClick={() => dispatch(clickOnEmptySpace)}
+        {...fastClick(() => dispatch(clickOnEmptySpace))}
         onMouseDown={() => setIsPressed(true)}
       >
         {search != null ? (
