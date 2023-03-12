@@ -1,6 +1,5 @@
 const initialSettings = `
 - Settings
-  - =readonly
   - Theme
     - =readonly
     - =options

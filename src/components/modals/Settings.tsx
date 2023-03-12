@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import State from '../../@types/State'
+import showModal from '../../action-creators/showModal'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'
 import { Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
@@ -42,41 +43,48 @@ const Setting: FC<{
 }
 
 /** User settings modal. */
-const ModalSettings = () => (
-  <ModalComponent
-    id='settings'
-    title='Settings'
-    className='popup'
-    actions={({ close }) => (
-      <div style={{ textAlign: 'center' }}>
-        <ActionButton key='close' title='Close' {...fastClick(() => close())} />
-      </div>
-    )}
-  >
-    <form>
-      <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
-        Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
-        learning gestures and want an extra bit of feedback.
-      </Setting>
+const ModalSettings = () => {
+  const dispatch = useDispatch()
+  return (
+    <ModalComponent
+      id='settings'
+      title='Settings'
+      className='popup'
+      actions={({ close }) => (
+        <div style={{ textAlign: 'center' }}>
+          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
+        </div>
+      )}
+    >
+      <form>
+        <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
+          <a onClick={() => dispatch(showModal({ id: 'customizeToolbar' }))}>Customize Toolbar</a> &gt;
+        </p>
 
-      <Setting settingsKey={Settings.hideScrollZone} title='Hide Scroll Zone'>
-        Hide the overlay that indicates where the scroll zone is.
-      </Setting>
+        <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
+          Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
+          learning gestures and want an extra bit of feedback.
+        </Setting>
 
-      <Setting settingsKey={Settings.hideSuperscripts} title='Superscripts' invert>
-        Shows superscripts (<sup>2</sup>) indicating the number of contexts the thought appears in. When disabled, the
-        superscript will not be visible, but the context view can still be activated and used as normal.
-      </Setting>
+        <Setting settingsKey={Settings.hideScrollZone} title='Hide Scroll Zone'>
+          Hide the overlay that indicates where the scroll zone is.
+        </Setting>
 
-      <Setting settingsKey={Settings.disableGestureTracing} title='Gesture Tracing' invert>
-        Draw a trace onto the screen while making a gesture on a touch screen device.
-      </Setting>
+        <Setting settingsKey={Settings.hideSuperscripts} title='Superscripts' invert>
+          Shows superscripts (<sup>2</sup>) indicating the number of contexts the thought appears in. When disabled, the
+          superscript will not be visible, but the context view can still be activated and used as normal.
+        </Setting>
 
-      <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
-        Moves the scroll zone to the left side of the screen and the gesture zone to the right.
-      </Setting>
-    </form>
-  </ModalComponent>
-)
+        <Setting settingsKey={Settings.disableGestureTracing} title='Gesture Tracing' invert>
+          Draw a trace onto the screen while making a gesture on a touch screen device.
+        </Setting>
+
+        <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
+          Moves the scroll zone to the left side of the screen and the gesture zone to the right.
+        </Setting>
+      </form>
+    </ModalComponent>
+  )
+}
 
 export default ModalSettings

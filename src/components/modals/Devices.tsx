@@ -56,7 +56,7 @@ const ModalDevices = () => {
       <div className='modal-wrapper'>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <CSSTransition key='share-detail' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+            <CSSTransition key='share-detail' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
               <ShareDetail
                 accessToken={selected}
                 isLastDevice={Object.keys(permissions).length === 1}
@@ -65,7 +65,7 @@ const ModalDevices = () => {
               />
             </CSSTransition>
           ) : (
-            <CSSTransition key='share-list' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+            <CSSTransition key='share-list' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
               <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
             </CSSTransition>
           )}
@@ -121,13 +121,7 @@ const ShareList = ({
             {
               // form
               showDeviceForm ? (
-                <CSSTransition
-                  key='add-device-form'
-                  classNames='fade-400'
-                  exit={false}
-                  timeout={400}
-                  unmountOnExit={true}
-                >
+                <CSSTransition key='add-device-form' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
@@ -150,7 +144,7 @@ const ShareList = ({
                 </CSSTransition>
               ) : (
                 // "+ Add a device" button
-                <CSSTransition key='add-a-device' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
+                <CSSTransition key='add-a-device' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
                   <div style={{ marginTop: '1em' }}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
@@ -405,7 +399,7 @@ const ShareDetail = React.memo(
               <input
                 type={'text'}
                 value={url}
-                readOnly={true}
+                readOnly
                 style={{
                   margin: '10px',
                   padding: '0.75em 3em 0.75em 1em',

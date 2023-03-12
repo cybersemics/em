@@ -8,8 +8,9 @@
   --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
   --z-index-toolbar-container: 20;
+  --z-index-toolbar-overlay: 15;
+  --z-index-toolbar-arrow: 15;
   --z-index-toolbar: 10;
-  --z-index-toolbar-overlay: 10;
   --z-index-latest-shortcuts: 10;
   /* above .children */
   --z-index-tutorial-trace-gesture: 5;
@@ -21,7 +22,6 @@
   --z-index-tutorial: 3;
   /* above footer and breadcrumbs */
   --z-index-scroll-zone: 2;
-  --z-index-toolbar-arrow: 2;
   /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
   --z-index-thought-annotation-link: 2;
   --z-index-resizer: 2;
@@ -393,14 +393,19 @@ a.text-link {
 /* Toolbar */
 
 .toolbar-container {
-  position: fixed;
+  position: relative;
   text-align: right;
+  max-width: 100%;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.toolbar-fixed {
+  position: fixed;
   top: 0;
   right: 0;
   z-index: var(--z-index-toolbar-container);
-  max-width: calc(100% - 1em); /* use 100% - 3em when HamburgerMenu is enabled */
-  user-select: none;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   /* Extend upward beyond the top edge of the screen. This is necessary because when the position:absolute hack is used for Safari while the keyboard is up, the mask is not able to stay perfectly glued to the top edge during scrolling to emulate position:fixed, and underlying thoughts can bleed through. */
   margin-top: -500px;
   padding-top: 500px;
@@ -411,14 +416,12 @@ a.text-link {
 }
 
 .toolbar {
+  max-width: 100%;
   position: relative;
   touch-action: inherit;
   display: inline-flex;
   overflow-x: scroll;
-  /* leave space on left for sidebar menu */
-  max-width: calc(100% - 3em);
   z-index: var(--z-index-toolbar);
-  right: 5px;
   /* override default align-items:stretch so that icons do not take up full height of toolbar */
   align-items: flex-start;
 }
@@ -427,17 +430,26 @@ a.text-link {
   display: none;
 }
 
+.toolbar-fixed .toolbar > *:last-child {
+  /* add right margin so right-arrow does not feel too attached to the right edge of the screen */
+  margin-right: 1em;
+}
+
+.toolbar-fixed .toolbar {
+  max-width: calc(100% - 4em);
+}
+
 #left-arrow,
 #right-arrow {
+  position: absolute;
   font-size: 80%;
-  position: fixed;
   padding-top: 16px;
   vertical-align: middle;
   color: gray;
   background-color: white;
-  z-index: var(--z-index-toolbar-arrow);
   display: inline-block;
   line-height: 20px;
+  z-index: var(--z-index-toolbar-arrow);
 }
 
 .dark #left-arrow,
@@ -446,14 +458,19 @@ a.text-link {
 }
 
 #left-arrow {
+  margin-left: -5px;
   padding-left: 5px;
   padding-right: 4px;
 }
 
 #right-arrow {
-  right: -1px;
-  padding-right: 13px;
+  right: -11px;
   padding-left: 4px;
+  padding-right: 13px;
+}
+
+.toolbar-fixed #right-arrow {
+  right: 0;
 }
 
 .toolbar-icon {
@@ -462,7 +479,6 @@ a.text-link {
   padding: 5px 8px;
   border-radius: 3px;
   z-index: var(--z-index-stack);
-  transition: padding 0.2s ease 0s;
 }
 
 .toolbar-icon .icon {
@@ -482,18 +498,27 @@ a.text-link {
 
 /* Toolbar mask */
 .toolbar-mask {
-  padding-top: 500px; /* offset .toolbar-container negative margin-top */
   position: absolute;
-  top: 0;
+  /* sometimes the body peeks through with top:0 */
+  top: -1px;
   left: 0;
-  right: 0;
+  /* Hide the popup-close-x in the customize modal by extending the toolbar-mask to the right. Otherwise it would be too cluttered. Use just enough to cover popup-close-x without  */
+  right: -1.75em;
   background-color: white;
-  box-shadow: 10px -20px 15px 25px white;
   pointer-events: none; /* allows clickOnEmptySpace */
 }
 
 .dark .toolbar-mask {
   background-color: black;
+  box-shadow: -10px 10px 20px 0 black;
+}
+
+.toolbar-fixed .toolbar-mask {
+  box-shadow: 10px -20px 15px 25px white;
+  padding-top: 500px; /* offset .toolbar-container negative margin-top */
+}
+
+.dark .toolbar-fixed .toolbar-mask {
   box-shadow: 10px -20px 15px 25px black;
 }
 
