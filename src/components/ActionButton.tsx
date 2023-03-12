@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React from 'react'
-import onTapUp from '../util/onTapUp'
+import fastClick from '../util/fastClick'
 import Loader from './Loader'
 
 interface ActionButtonProps {
@@ -36,7 +36,7 @@ export const ActionButton = ({
       'action-button': true,
       disabled: isDisabled,
     })}
-    {...(onClick && !isDisabled ? onTapUp(onClick) : null)}
+    {...(onClick && !isDisabled ? fastClick(onClick) : null)}
     {...restProps}
   >
     {/* TODO: Animate on loader toggle. */}

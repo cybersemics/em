@@ -7,7 +7,7 @@ import tutorial from '../../action-creators/tutorial'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
-import onTapUp from '../../util/onTapUp'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
 import GestureLibraryIcon from './../icons/GestureLibraryIcon'
@@ -32,7 +32,7 @@ const ManualMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; des
 }) => {
   const fontSize = useSelector((state: State) => state.fontSize)
   return (
-    <div {...onTapUp(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
+    <div {...fastClick(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
       <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
         <Icon size={fontSize * 3} />
       </div>
@@ -82,7 +82,7 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            {...onTapUp(() => {
+            {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
@@ -98,7 +98,7 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            {...onTapUp(() => {
+            {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
@@ -370,14 +370,14 @@ const ModalManual = () => {
       id='manual'
       title='The Manual'
       className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' {...onTapUp(() => close())} />}
+      actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
       {section === Section.Menu ? (
         <ManualMenu onSelect={setSection} />
       ) : (
         <span className='text-small'>
-          &lt; <a {...onTapUp(back)}>Back</a>
+          &lt; <a {...fastClick(back)}>Back</a>
         </span>
       )}
 
@@ -395,7 +395,7 @@ const ModalManual = () => {
         // TODO: Remove Section.Tutorials condition once it has more content.
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
-            &lt; <a {...onTapUp(back)}>Back</a>
+            &lt; <a {...fastClick(back)}>Back</a>
           </div>
         )
       }

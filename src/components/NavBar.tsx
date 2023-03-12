@@ -9,8 +9,8 @@ import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 import isDocumentEditable from '../util/isDocumentEditable'
-import onTapUp from '../util/onTapUp'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import HomeLink from './HomeLink'
@@ -37,7 +37,7 @@ const ManualButton: React.FC = () => {
   const dispatch = useDispatch()
   return (
     <div
-      {...onTapUp(() => dispatch(showModal({ id: 'manual' })))}
+      {...fastClick(() => dispatch(showModal({ id: 'manual' })))}
       title='The Manual'
       style={{
         cursor: 'pointer',
