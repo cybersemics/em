@@ -5,6 +5,7 @@ import textColor from '../action-creators/textColor'
 import { isTouch } from '../browser'
 import getStyle from '../selectors/getStyle'
 import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
@@ -66,10 +67,10 @@ const ColorSwatch: FC<{
   return (
     <span
       aria-label={label || color || backgroundColor}
-      onClick={e => {
+      {...fastClick(e => {
         // stop click empty space
         e.stopPropagation()
-      }}
+      })}
       onTouchStart={toggleTextColor}
       // only add mousedown to desktop, otherwise it will activate twice on mobile
       onMouseDown={!isTouch ? toggleTextColor : undefined}
