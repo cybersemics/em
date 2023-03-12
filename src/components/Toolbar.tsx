@@ -15,7 +15,7 @@ import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
-import { EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { AlertType, EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { shortcutById } from '../shortcuts'
@@ -35,6 +35,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
   const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
+  const isDraggingAny = useSelector((state: State) => state.alert?.alertType === AlertType.DragAndDropToolbarHint)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
@@ -114,6 +115,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
         style={{
           // make toolbar flush with left padding
           marginLeft: customize ? -5 : 0,
+          // offset extended drop area of ToolbarButton
+          marginBottom: isDraggingAny ? '-7em' : 0,
         }}
       >
         <div

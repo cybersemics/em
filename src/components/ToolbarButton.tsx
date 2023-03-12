@@ -5,6 +5,7 @@ import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
+import { AlertType } from '../constants'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
@@ -53,6 +54,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
+  const isDraggingAny = useSelector((state: State) => state.alert?.alertType === AlertType.DragAndDropToolbarHint)
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
   const longPress = useToolbarLongPress({
@@ -81,6 +83,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           transition: 'transform 200ms ease-out',
+          // extend drop area down, otherwise the drop hover is blocked by the user's finger
+          // must match toolbar marginBottom
+          paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
         // tapDown
@@ -134,10 +139,10 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
               style={{
                 borderRadius: 3,
                 position: 'absolute',
-                top: '18%',
+                top: '0.5em',
                 left: -2,
                 // match the height of the inverted button
-                height: '66.666%',
+                height: '1.85em',
                 width: 3,
                 backgroundColor: colors.highlight,
               }}

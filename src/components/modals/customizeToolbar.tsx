@@ -59,7 +59,6 @@ const ModalCustomizeToolbar: FC = () => {
                 padding: '1em 0 1em 1em',
                 position: 'relative',
               }}
-              className='z-index-alert'
             >
               <table className='shortcuts'>
                 <tbody>
