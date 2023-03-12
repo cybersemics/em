@@ -11,6 +11,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import decodeCharacterEntities from '../util/decodeCharacterEntities'
 import ellipsize from '../util/ellipsize'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -69,7 +70,7 @@ const BreadCrumb: FC<{
   ) : (
     <span>
       <span style={delimiterStyle}> • </span>
-      <span onClick={onClickEllipsis} style={{ cursor: 'pointer' }}>
+      <span {...fastClick(onClickEllipsis)} style={{ cursor: 'pointer' }}>
         {' '}
         ...{' '}
       </span>
