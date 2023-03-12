@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import showModal from '../../action-creators/showModal'
+import fastClick from '../../util/fastClick'
 import getQueryParam from '../../util/getQueryParam'
 import storage from '../../util/storage'
 import { ActionButton } from './../ActionButton'
@@ -142,13 +143,13 @@ const ModalSignup = () => {
                   active={true}
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
-                  onClick={() => submitAction(closeModal)}
+                  {...fastClick(() => submitAction(closeModal))}
                 />
               )}
               <button
                 disabled={isSubmitting}
                 className='button'
-                onClick={() => dispatch(showModal({ id: 'auth' }))}
+                {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
                 style={{ textDecoration: 'underline', marginTop: 15 }}
               >
                 Log in
