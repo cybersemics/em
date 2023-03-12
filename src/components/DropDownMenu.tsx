@@ -4,6 +4,7 @@ import ExportOption from '../@types/ExportOption'
 import Checked from '../images/iconfinder_done-01_186405.svg'
 import CheckedBlack from '../images/iconfinder_icon-checkmark_black.svg'
 import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 
 interface DropDownMenuProps {
   dark?: boolean
@@ -33,11 +34,11 @@ const DropDownMenu = React.forwardRef<HTMLDivElement, DropDownMenuProps>(
             className='drop-down-option-wrapper'
             // composite key is unique
             key={`${option.type}-${option.label}`}
-            onClick={() => {
+            {...fastClick(() => {
               if (onSelect) {
                 onSelect(option)
               }
-            }}
+            })}
           >
             <div className='drop-down-option'>
               {option.label === (selected || options[0]).label ? (
