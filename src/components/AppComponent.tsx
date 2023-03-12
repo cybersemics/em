@@ -60,9 +60,9 @@ interface StateProps {
 //   return (
 //     <div style={{ position: 'relative' }}>
 //       <div
-//         onClick={() => {
+//         {...fastClick(() => {
 //           store.dispatch(toggleSidebar({}))
-//         }}
+//         })}
 //         style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
 //       ></div>
 //     </div>
