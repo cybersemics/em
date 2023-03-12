@@ -11,7 +11,6 @@ import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import fastClick from '../util/fastClick'
-import onTapDownProps from '../util/onTapDown'
 import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
 export interface ToolbarButtonProps {
@@ -67,7 +66,8 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
-  const fastClickProps = fastClick((e: React.MouseEvent | React.TouchEvent) => {
+  /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
+  const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
     longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
     const iconEl = e.target as HTMLElement
     const toolbarEl = iconEl.closest('.toolbar')!
@@ -79,7 +79,22 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
     lastScrollLeft.current = toolbarEl.scrollLeft
     onTapUp?.(e)
-  })
+  }
+
+  /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
+  const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const iconEl = e.target as HTMLElement
+    const toolbarEl = iconEl.closest('.toolbar')!
+    longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown'](e)
+
+    // prevents editable blur
+    if (!customize) {
+      e.preventDefault()
+    }
+
+    lastScrollLeft.current = toolbarEl.scrollLeft
+    onTapDown?.(e)
+  }
 
   return dropTarget(
     dragSource(
@@ -102,26 +117,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
-        // tapUp
-        {...fastClickProps}
-        // tapDown
-        {...onTapDownProps((e: React.MouseEvent | React.TouchEvent) => {
-          const iconEl = e.target as HTMLElement
-          const toolbarEl = iconEl.closest('.toolbar')!
-          lastScrollLeft.current = toolbarEl.scrollLeft
-          longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown'](e)
-
-          if (isTouch) {
-            // eslint-disable-next-line @typescript-eslint/no-extra-semi
-            ;(fastClickProps as { onTouchStart?: (e: React.TouchEvent | React.MouseEvent) => void }).onTouchStart?.(e)
-          }
-
-          // prevents editable blur
-          if (!customize) {
-            e.preventDefault()
-          }
-          onTapDown?.(e)
-        })}
+        {...fastClick(tapUp, tapDown)}
       >
         {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
 

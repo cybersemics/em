@@ -23,13 +23,15 @@ if (isTouch) {
 
 /** A faster alternative to onClick or checkbox onChange. Returns onTouchEnd or onMouseUp handler depending on if touch is supported. Disabled on scroll (with 15px error tolerance). */
 const fastClick = isTouch
-  ? (handler: (e: React.TouchEvent) => void) => ({
+  ? (tapUp: (e: React.TouchEvent) => void, tapDown?: (e: React.TouchEvent) => void) => ({
       onTouchStart: (e: React.TouchEvent) => {
         if (e.touches.length > 0) {
           const x = e.touches[0].clientX
           const y = e.touches[0].clientY
           touchStart = { x, y }
         }
+
+        tapDown?.(e)
       },
       onTouchEnd: (e: React.TouchEvent) => {
         let disable = scrolling
@@ -43,12 +45,15 @@ const fastClick = isTouch
         }
 
         if (!disable) {
-          handler(e)
+          tapUp(e)
         }
 
         scrolling = false
       },
     })
-  : (handler: (e: React.MouseEvent) => void) => ({ onMouseUp: handler })
+  : (tapUp: (e: React.MouseEvent) => void, tapDown?: (e: React.MouseEvent) => void) => ({
+      onMouseUp: tapUp,
+      ...(tapDown ? { onMouseDown: tapDown } : null),
+    })
 
 export default fastClick
