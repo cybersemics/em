@@ -18,6 +18,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isPending from '../selectors/isPending'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
@@ -31,7 +32,7 @@ interface BulletProps {
   isDragging?: boolean
   isEditing?: boolean
   leaf?: boolean
-  onClick?: (event: React.MouseEvent) => void
+  onClick?: (event: React.MouseEvent | React.TouchEvent) => void
   publish?: boolean
   showContexts?: boolean
   simplePath: SimplePath
@@ -199,7 +200,7 @@ const Bullet = ({
         width: 4, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
       }}
-      onClick={(e: React.MouseEvent) => {
+      {...fastClick((e: React.MouseEvent | React.TouchEvent) => {
         // stop click event from bubbling up to Content.clickOnEmptySpace
         e.stopPropagation()
         // short circuit if dragHold
@@ -228,7 +229,7 @@ const Bullet = ({
           ])
         })
         onClick?.(e)
-      }}
+      })}
     >
       <svg
         className='glyph'
