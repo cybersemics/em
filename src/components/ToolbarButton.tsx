@@ -78,6 +78,11 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
       if (!customize && isButtonExecutable && !disabled && !scrolled) {
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+
+        // prevent Editable blur
+        if (isTouch) {
+          e.preventDefault()
+        }
       }
 
       lastScrollLeft.current = toolbarEl.scrollLeft
@@ -96,15 +101,14 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       const toolbarEl = iconEl.closest('.toolbar')!
       longPressTapDown(e)
 
-      // prevents editable blur
-      if (!customize) {
-        e.preventDefault()
-      }
-
       lastScrollLeft.current = toolbarEl.scrollLeft
 
       if (!disabled) {
         onTapDown?.(e)
+      }
+
+      if (!customize && !isTouch) {
+        e.preventDefault()
       }
     },
 
