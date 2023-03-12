@@ -59,13 +59,13 @@ const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
         Icon={GestureLibraryIcon}
         onClick={() => onClick(Section.GestureLibrary)}
         title='Gesture Library'
-        description='View a list of all gestures.'
+        description='View a list of all available gestures.'
       />
       <ManualMenuItem
         Icon={MetaIcon}
         onClick={() => onClick(Section.Metaprogramming)}
         title='Metaprogramming'
-        description={`Explore em's unique metaprogramming feature to customize the appearance and behavior of em.`}
+        description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
       />
     </div>
   )
@@ -374,19 +374,6 @@ const ModalManual = () => {
       actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
       style={{ fontSize }}
     >
-      <div>
-        <p
-          style={{
-            textAlign: 'center',
-            marginTop: -30,
-            marginBottom: 40,
-            opacity: 0.8,
-          }}
-        >
-          Learn all the things.
-        </p>
-      </div>
-
       {section === Section.Menu ? (
         <ManualMenu onClick={setSection} />
       ) : (
