@@ -67,6 +67,20 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
+  const fastClickProps = fastClick((e: React.MouseEvent | React.TouchEvent) => {
+    longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
+    const iconEl = e.target as HTMLElement
+    const toolbarEl = iconEl.closest('.toolbar')!
+    const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+
+    if (!customize && isButtonExecutable && !disabled && !scrolled) {
+      exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+    }
+
+    lastScrollLeft.current = toolbarEl.scrollLeft
+    onTapUp?.(e)
+  })
+
   return dropTarget(
     dragSource(
       <div
@@ -88,29 +102,25 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
+        // tapUp
+        {...fastClickProps}
         // tapDown
         {...onTapDownProps((e: React.MouseEvent | React.TouchEvent) => {
+          const iconEl = e.target as HTMLElement
+          const toolbarEl = iconEl.closest('.toolbar')!
+          lastScrollLeft.current = toolbarEl.scrollLeft
           longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown'](e)
+
+          if (isTouch) {
+            // eslint-disable-next-line @typescript-eslint/no-extra-semi
+            ;(fastClickProps as { onTouchStart?: (e: React.TouchEvent | React.MouseEvent) => void }).onTouchStart?.(e)
+          }
 
           // prevents editable blur
           if (!customize) {
             e.preventDefault()
           }
           onTapDown?.(e)
-        })}
-        // tapUp
-        {...fastClick((e: React.MouseEvent | React.TouchEvent) => {
-          longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
-          const iconEl = e.target as HTMLElement
-          const toolbarEl = iconEl.closest('.toolbar')!
-          const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
-
-          if (!customize && isButtonExecutable && !disabled && !scrolled) {
-            exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-          }
-
-          lastScrollLeft.current = toolbarEl.scrollLeft
-          onTapUp?.(e)
         })}
       >
         {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
