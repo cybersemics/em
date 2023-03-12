@@ -3,6 +3,7 @@ import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import State from '../@types/State'
 import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'
+import fastClick from '../util/fastClick'
 import isAbsolute from '../util/isAbsolute'
 import AddIcon from './AddIcon'
 
@@ -19,7 +20,7 @@ const QuickAddButton: React.FC = () => {
         'quick-add-button': true,
         rotate: isAbsolute(rootContext),
       })}
-      onClick={() => dispatch(toggleAbsoluteContext())}
+      {...fastClick(() => dispatch(toggleAbsoluteContext()))}
       title='Quick Add'
     >
       <AddIcon size={20} />
