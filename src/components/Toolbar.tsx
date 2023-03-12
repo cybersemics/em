@@ -182,7 +182,13 @@ const Toolbar = () => {
   return (
     <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
       <div aria-label='toolbar' className='toolbar-container'>
-        <div className='toolbar-mask' />
+        <div
+          className='toolbar-mask'
+          style={{
+            // must scale height with fontSize, since height does not scale linearly with em or px
+            height: fontSize + 30,
+          }}
+        />
         <div>
           <div
             id='toolbar'

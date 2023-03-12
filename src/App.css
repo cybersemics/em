@@ -487,7 +487,6 @@ a.text-link {
   top: 0;
   left: 0;
   right: 0;
-  height: 50px;
   background-color: white;
   box-shadow: 10px -20px 15px 25px white;
   pointer-events: none; /* allows clickOnEmptySpace */
