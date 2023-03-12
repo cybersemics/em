@@ -16,6 +16,7 @@ import * as selection from '../../device/selection'
 import usePermissions from '../../hooks/usePermissions'
 import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
+import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
 import { ActionButton } from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
@@ -48,7 +49,9 @@ const ModalDevices = () => {
       className='popup'
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
-      actions={({ close }) => (!selected ? <ActionButton key='close' title='Close' onClick={() => close()} /> : null)}
+      actions={({ close }) =>
+        !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
+      }
     >
       <div className='modal-wrapper'>
         <TransitionGroup>
@@ -106,7 +109,7 @@ const ShareList = ({
             {permissionsSorted.map(([accessToken, share]) => {
               const isCurrent = accessToken === accessTokenCurrent
               return (
-                <div key={accessToken} onClick={() => onSelect?.(accessToken)} style={{ cursor: 'pointer' }}>
+                <div key={accessToken} {...fastClick(() => onSelect?.(accessToken))} style={{ cursor: 'pointer' }}>
                   <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
                 </div>
               )
@@ -150,7 +153,7 @@ const ShareList = ({
                 <CSSTransition key='add-a-device' classNames='fade-400' exit={false} timeout={400} unmountOnExit={true}>
                   <div style={{ marginTop: '1em' }}>
                     <a
-                      onClick={() => setShowDeviceForm(true)}
+                      {...fastClick(() => setShowDeviceForm(true))}
                       className={classNames({
                         button: true,
                         'button-outline': true,
@@ -281,7 +284,7 @@ const AddDeviceForm = ({
 
       <div>
         <a
-          onClick={() => onSubmit({ name, role: 'owner' })}
+          {...fastClick(() => onSubmit({ name, role: 'owner' }))}
           className={classNames({
             button: true,
             'button-outline': true,
@@ -293,7 +296,7 @@ const AddDeviceForm = ({
           Add
         </a>
         <a
-          onClick={onCancel}
+          {...fastClick(onCancel)}
           style={{
             color: colors.gray,
             marginLeft: '1em',
@@ -323,9 +326,9 @@ const EditableName = React.memo(
           style={{ display: 'inline', fontSize: fontSize * 1.25, marginBottom: '0.5em' }}
         />
         <a
-          onClick={() => {
+          {...fastClick(() => {
             selection.set(ref.current, { end: true })
-          }}
+          })}
           style={{
             display: 'inline-block',
             marginLeft: '1em',
@@ -412,7 +415,7 @@ const ShareDetail = React.memo(
               />
             </span>
             <span
-              onClick={copyShareUrl}
+              {...fastClick(copyShareUrl)}
               style={{
                 position: 'absolute',
                 top: '0.75em',
@@ -433,7 +436,7 @@ const ShareDetail = React.memo(
 
         {onBack && (
           <a
-            onClick={onBack}
+            {...fastClick(onBack)}
             className={classNames({
               button: true,
               'action-button': true,
@@ -459,10 +462,10 @@ const ShareDetail = React.memo(
           were saved for offline use.`}
           </p>
           <a
-            onClick={() => {
+            {...fastClick(() => {
               permissionsServer.delete(accessToken, share)
               onBack()
-            }}
+            })}
             style={{ color: colors.red }}
           >
             {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
