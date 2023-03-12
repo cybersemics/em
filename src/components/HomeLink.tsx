@@ -1,6 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 import home from '../action-creators/home'
+import fastClick from '../util/fastClick'
 import HomeIcon from './icons/HomeIcon'
 
 interface HomeLinkProps {
@@ -16,11 +17,11 @@ const HomeLink = ({ color, size, style }: HomeLinkProps) => {
     <span className='home'>
       <a
         tabIndex={-1}
-        /* TODO: Add setting to enable tabIndex for accessibility */ href='/'
-        onClick={e => {
+        href='/'
+        {...fastClick(e => {
           e.preventDefault()
           dispatch(home())
-        }}
+        })}
       >
         <HomeIcon fill={color} size={size} style={style} />
       </a>
