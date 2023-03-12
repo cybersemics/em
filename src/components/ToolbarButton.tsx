@@ -10,8 +10,8 @@ import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
+import fastClick from '../util/fastClick'
 import onTapDownProps from '../util/onTapDown'
-import onTapUpProps from '../util/onTapUp'
 import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
 export interface ToolbarButtonProps {
@@ -99,13 +99,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           onTapDown?.(e)
         })}
         // tapUp
-        {...onTapUpProps((e: React.MouseEvent | React.TouchEvent) => {
+        {...fastClick((e: React.MouseEvent | React.TouchEvent) => {
           longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
           const iconEl = e.target as HTMLElement
           const toolbarEl = iconEl.closest('.toolbar')!
-          const scrollDifference = Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft)
+          const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
-          if (!customize && isButtonExecutable && !disabled && scrollDifference < 5) {
+          if (!customize && isButtonExecutable && !disabled && !scrolled) {
             exec(store.dispatch, store.getState, e, { type: 'toolbar' })
           }
 
