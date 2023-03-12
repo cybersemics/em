@@ -1,5 +1,5 @@
 export { default as auth } from './Auth'
-export { default as customizeToolbar } from './customizeToolbar'
+export { default as customizeToolbar } from './CustomizeToolbar'
 export { default as devices } from './Devices'
 export { default as export } from './Export'
 export { default as feedback } from './Feedback'
