@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject } from 'react'
+import React, { FC, MutableRefObject, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import DragToolbarZone from '../@types/DragToolbarZone'
 import Icon from '../@types/Icon'
@@ -62,45 +62,54 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     shortcut,
     sourceZone: DragToolbarZone.Toolbar,
   })
+  const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
+  const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
 
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
-  const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
-    longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
-    const iconEl = e.target as HTMLElement
-    const toolbarEl = iconEl.closest('.toolbar')!
-    const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
+  const tapUp = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
+      const iconEl = e.target as HTMLElement
+      const toolbarEl = iconEl.closest('.toolbar')!
+      const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
 
-    if (!customize && isButtonExecutable && !disabled && !scrolled) {
-      exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-    }
+      if (!customize && isButtonExecutable && !disabled && !scrolled) {
+        exec(store.dispatch, store.getState, e, { type: 'toolbar' })
+      }
 
-    lastScrollLeft.current = toolbarEl.scrollLeft
+      lastScrollLeft.current = toolbarEl.scrollLeft
 
-    if (!disabled) {
-      onTapUp?.(e)
-    }
-  }
+      if (!disabled) {
+        onTapUp?.(e)
+      }
+    },
+    [longPressTapUp, customize, isButtonExecutable, disabled],
+  )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
-  const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
-    const iconEl = e.target as HTMLElement
-    const toolbarEl = iconEl.closest('.toolbar')!
-    longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown'](e)
+  const tapDown = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      const iconEl = e.target as HTMLElement
+      const toolbarEl = iconEl.closest('.toolbar')!
+      longPressTapDown(e)
 
-    // prevents editable blur
-    if (!customize) {
-      e.preventDefault()
-    }
+      // prevents editable blur
+      if (!customize) {
+        e.preventDefault()
+      }
 
-    lastScrollLeft.current = toolbarEl.scrollLeft
+      lastScrollLeft.current = toolbarEl.scrollLeft
 
-    if (!disabled) {
-      onTapDown?.(e)
-    }
-  }
+      if (!disabled) {
+        onTapDown?.(e)
+      }
+    },
+
+    [longPressTapDown, customize, isButtonExecutable, disabled],
+  )
 
   return dropTarget(
     dragSource(
