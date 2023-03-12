@@ -6,7 +6,7 @@ it('add single task', async () => {
   /** Increment counter. */
   const inc = () => counter++
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({ onEnd: resolve })
     queue.add(inc)
   })
@@ -19,12 +19,25 @@ it('add multiple tasks', async () => {
   /** Increment counter. */
   const inc = () => counter++
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({ onEnd: resolve })
     queue.add([inc, inc, inc])
   })
 
   expect(counter).toBe(3)
+})
+
+it('onEnd', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => counter++
+
+  const total = await new Promise(resolve => {
+    const queue = taskQueue({ onEnd: resolve })
+    queue.add([inc, inc, inc])
+  })
+
+  expect(total).toBe(3)
 })
 
 it('async tasks', async () => {
@@ -35,7 +48,7 @@ it('async tasks', async () => {
     counter++
   }
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({ onEnd: resolve })
     queue.add([incDelayed, incDelayed, incDelayed])
   })
@@ -48,7 +61,7 @@ it('autostart: false', async () => {
   /** Increment counter. */
   const inc = () => counter++
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({
       autostart: false,
       onEnd: resolve,
@@ -70,7 +83,7 @@ it('onStep', async () => {
     return s
   }
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({
       onStep: ({ completed, total, index, value }) => {
         // eslint-disable-next-line fp/no-mutating-methods
@@ -98,7 +111,7 @@ it('onLowStep', async () => {
     return s
   }
 
-  await new Promise<void>(resolve => {
+  await new Promise(resolve => {
     const queue = taskQueue({
       onLowStep: ({ completed, total, index, value }) => {
         // eslint-disable-next-line fp/no-mutating-methods
@@ -126,7 +139,7 @@ it('pause', async () => {
   }
 
   let queue: ReturnType<typeof taskQueue> = {} as any
-  const done = new Promise<void>(resolve => {
+  const done = new Promise(resolve => {
     queue = taskQueue({ onEnd: resolve })
   })
 

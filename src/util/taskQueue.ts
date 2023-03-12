@@ -16,7 +16,7 @@ const taskQueue = <T = any>({
   // onStep is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order.
   onStep?: (args: { completed: number; total: number; index: number; value: T }) => void
   // called when all tasks have completed
-  onEnd?: () => void
+  onEnd?: (total: number) => void
 } = {}) => {
   if (concurrency <= 0) {
     throw new Error(`Invalid concurrency: ${concurrency}. Concurrency must be > 0.`)
@@ -82,7 +82,7 @@ const taskQueue = <T = any>({
       }
 
       if (queue.length === 0 && running === 0) {
-        onEnd?.()
+        onEnd?.(total)
       }
 
       setTimeout(tick)
