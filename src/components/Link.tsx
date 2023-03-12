@@ -12,6 +12,7 @@ import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import decodeCharacterEntities from '../util/decodeCharacterEntities'
 import ellipsize from '../util/ellipsize'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import strip from '../util/strip'
 
@@ -33,7 +34,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style }: LinkProps
     <a
       tabIndex={-1}
       className='link'
-      onClick={e => {
+      {...fastClick(e => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()
         selection.clear()
@@ -44,7 +45,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style }: LinkProps
           toggleSidebar({ value: false }),
         ])
         scrollCursorIntoView()
-      }}
+      })}
       style={{
         userSelect: 'none',
         color: 'inherit',
