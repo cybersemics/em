@@ -30,6 +30,7 @@ import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
 import store from '../stores/app'
+import fastClick from '../util/fastClick'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
@@ -249,7 +250,7 @@ const FavoritesOptions = ({
       {/* Show Options toggle */}
       <div style={{ textAlign: 'center' }}>
         <span
-          onClick={() => setShowOptions(!showOptions)}
+          {...fastClick(() => setShowOptions(!showOptions))}
           style={{ color: '#444', cursor: 'pointer', fontSize: '0.7em', fontWeight: 'bold', position: 'relative' }}
         >
           <span
@@ -320,20 +321,6 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         minWidth: '60vw',
       }}
     >
-      {/* <div
-        onClick={() => setShowOptions(!showOptions)}
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          fontSize: '1.2em',
-          fontWeight: 'bold',
-          padding: '0.25em',
-        }}
-      >
-        <SettingsIcon />
-      </div> */}
-
       <div className='header' style={{ color: colors.fg, fontSize: '1.2em', fontWeight: 600, marginBottom: 0 }}>
         Favorites
       </div>
