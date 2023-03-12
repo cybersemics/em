@@ -22,6 +22,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
+import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -77,7 +78,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       rel='noopener noreferrer'
       target='_blank'
       className='external-link'
-      onClick={e => {
+      {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
           dispatch((dispatch, getState) => {
@@ -89,7 +90,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
           })
           e.preventDefault()
         }
-      }}
+      })}
     >
       <UrlIcon />
     </a>
