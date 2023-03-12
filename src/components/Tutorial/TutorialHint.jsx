@@ -2,6 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import getSetting from '../../selectors/getSetting'
+import fastClick from '../../util/fastClick'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = state => ({
@@ -18,7 +19,7 @@ const TutorialHint = connect(mapStateToProps)(({ tutorialStep, children, dispatc
       {!hint ? (
         <a
           className='button button-variable-width button-status button-less-padding text-small button-dim'
-          onClick={() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 }))}
+          {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
         >
           hint
         </a>

@@ -14,6 +14,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import fastClick from '../../util/fastClick'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
@@ -43,7 +44,7 @@ const TutorialNavigation = ({ tutorialStep, dispatch }) => {
                   active: step === Math.floor(tutorialStep),
                 })}
                 key={step}
-                onClick={() => dispatch(setTutorialStep({ value: step }))}
+                {...fastClick(() => dispatch(setTutorialStep({ value: step })))}
               >
                 •
               </a>

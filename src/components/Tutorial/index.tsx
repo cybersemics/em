@@ -27,6 +27,7 @@ import {
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'
+import fastClick from '../../util/fastClick'
 import headValue from '../../util/headValue'
 import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
@@ -107,7 +108,7 @@ const Tutorial = ({
             visibility:
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
           }}
-          onClick={() => dispatch(tutorial({ value: false }))}
+          {...fastClick(() => dispatch(tutorial({ value: false })))}
         >
           ✕ close tutorial
         </a>
