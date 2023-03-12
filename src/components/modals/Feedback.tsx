@@ -3,6 +3,7 @@ import React, { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import alert from '../../action-creators/alert'
 import { AlertType } from '../../constants'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -77,10 +78,10 @@ const ModalFeedback = () => {
             active={true}
             isLoading={isSubmitting}
             isDisabled={isDisabled}
-            onClick={() => onSubmit({ close })}
+            {...fastClick(() => onSubmit({ close }))}
           />
           <div key='cancel' style={{ fontSize: 22, marginTop: 10, opacity: 0.5 }}>
-            <a id='skip-tutorial' onClick={() => close()}>
+            <a id='skip-tutorial' {...fastClick(() => close())}>
               Cancel
             </a>
           </div>
