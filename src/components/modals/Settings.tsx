@@ -4,6 +4,7 @@ import State from '../../@types/State'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'
 import { Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import CheckboxItem from './../CheckboxItem'
 import ModalComponent from './ModalComponent'
@@ -48,7 +49,7 @@ const ModalSettings = () => (
     className='popup'
     actions={({ close }) => (
       <div style={{ textAlign: 'center' }}>
-        <ActionButton key='close' title='Close' onClick={() => close()} />
+        <ActionButton key='close' title='Close' {...fastClick(() => close())} />
       </div>
     )}
   >
