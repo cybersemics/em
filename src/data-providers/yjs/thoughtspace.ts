@@ -85,6 +85,10 @@ const replicationQueue = taskQueue<ReplicationResult>({
   onStep: ({ completed, total }) => {
     syncStatusStore.update({ replicationProgress: completed / total })
   },
+  // update replication progress on end in case there are no tasks and onStep never gets called
+  onEnd: () => {
+    syncStatusStore.update({ replicationProgress: 1 })
+  },
 })
 
 // pause replication during pushing and pulling
