@@ -7,6 +7,7 @@ import State from '../@types/State'
 import toggleSidebar from '../action-creators/toggleSidebar'
 import { NOOP } from '../constants'
 import isTutorial from '../selectors/isTutorial'
+import fastClick from '../util/fastClick'
 import storage from '../util/storage'
 
 const tutorialLocal = storage.getItem('Settings/Tutorial') !== 'Off'
@@ -43,9 +44,9 @@ const HamburgerMenu = () => {
           transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
           top: 0,
         }}
-        onClick={() => {
+        {...fastClick(() => {
           dispatch(toggleSidebar({}))
-        }}
+        })}
       >
         <ReactHamburger
           isOpen={showSidebar}
