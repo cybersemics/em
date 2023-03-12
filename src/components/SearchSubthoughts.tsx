@@ -12,6 +12,7 @@ import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegExp from '../util/escapeRegExp'
+import fastClick from '../util/fastClick'
 import formatNumber from '../util/formatNumber'
 import isArchived from '../util/isArchived'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -151,7 +152,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
       {children.length > DEFAULT_SEARCH_LIMIT ? (
         <a
           className='indent text-note'
-          onClick={() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT }))}
+          {...fastClick(() => dispatch(setSearchLimit({ value: searchLimit + DEFAULT_SEARCH_LIMIT })))}
         >
           More...
         </a>
