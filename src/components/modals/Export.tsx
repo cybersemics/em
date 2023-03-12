@@ -231,7 +231,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   return (
     <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-      <a style={{ color: colors.fg }} onClick={() => setIsOpen(!isOpen)}>
+      <a style={{ color: colors.fg }} {...fastClick(() => setIsOpen(!isOpen))}>
         {selected.label}
       </a>
       <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
@@ -524,7 +524,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
         <button
           className='modal-btn-export'
           disabled={exportContent === null}
-          onClick={onExportClick}
+          {...fastClick(onExportClick)}
           style={{ color: colors.bg, backgroundColor: colors.fg }}
         >
           {exportWord}
@@ -616,7 +616,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
             <button
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              onClick={publish}
+              {...fastClick(publish))}
               style={{ color: colors.bg, backgroundColor: colors.fg }}
             >
               Publish
@@ -625,9 +625,9 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
             {(publishing || publishedCIDs.length > 0) && (
               <button
                 className='modal-btn-cancel'
-                onClick={() => {
+                {...fastClick(()) => {
                   dispatch([alert(null), closeModal()])
-                }}
+                })}
                 style={{
                   color: colors.fg,
                   fontSize: '14px',
