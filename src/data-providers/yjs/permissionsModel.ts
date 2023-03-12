@@ -7,6 +7,7 @@ import { clear } from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import createId from '../../util/createId'
 import storage from '../../util/storage'
+import timestamp from '../../util/timestamp'
 
 const permissionsMap = permissionsClientDoc.getMap<Share>()
 
@@ -15,7 +16,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = createId()
     permissionsMap.set(accessToken, {
-      created: Date.now(),
+      created: timestamp(),
       name: name || '',
       role,
     })
@@ -47,7 +48,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
     const permission = permissionsMap.get(accessToken)!
     permissionsMap.set(accessToken, {
       ...(permission || null),
-      created: Date.now(),
+      created: timestamp(),
       ...(name ? { name } : null),
       ...(role ? { role } : null),
     })

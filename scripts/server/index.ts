@@ -4,6 +4,7 @@ import * as Y from 'yjs'
 import Index from '../../src/@types/IndexType'
 import Share from '../../src/@types/Share'
 import { encodePermissionsDocumentName, parseDocumentName } from '../../src/data-providers/yjs/documentNameEncoder'
+import timestamp from '../../src/util/timestamp'
 
 const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
@@ -50,7 +51,7 @@ export const onAuthenticate = async ({ token, documentName }: { documentName: st
   // if the document has no owner, automatically assign the current user as owner
   if (permissionsServerMap.size === 0) {
     log(`assigning owner ${mask(token)} to new thoughtspace ${tsid}`)
-    permissionsServerMap.set(token, { accessed: Date.now(), created: Date.now(), name: 'Owner', role: 'owner' })
+    permissionsServerMap.set(token, { accessed: timestamp(), created: timestamp(), name: 'Owner', role: 'owner' })
   }
 
   // authenicate existing owner
@@ -85,7 +86,7 @@ export const onLoadDocument = async ({
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
   if (permission?.role === 'owner') {
     // update last accessed time on auth
-    permissionsServerMap.set(token, { ...permission, accessed: Date.now() })
+    permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
 
     const permissionsClientDoc = getYDoc(permissionsDocName)
     if (!permissionsClientDoc) return
