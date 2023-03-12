@@ -11,6 +11,7 @@ import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
+import fastClick from '../util/fastClick'
 
 interface AlertProps {
   alert?: Alert | null
@@ -177,7 +178,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         {children}
       </div>
       {alert.showCloseLink ? (
-        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' onClick={onClose}>
+        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' {...fastClick(onClose)}>
           ✕
         </a>
       ) : null}
