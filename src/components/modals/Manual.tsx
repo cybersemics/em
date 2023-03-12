@@ -9,17 +9,17 @@ import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from
 import getSetting from '../../selectors/getSetting'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
-import CommandCenterIcon from './../icons/CommandCenterIcon'
+import GestureLibraryIcon from './../icons/GestureLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
 import ModalComponent from './ModalComponent'
 
 enum Section {
-  Menu = 'Menu',
-  CommandCenter = 'Shortcuts',
-  Tutorials = 'Tutorials',
-  Metaprogramming = 'Metaprogramming',
   About = 'About',
+  GestureLibrary = 'GestureLibrary',
+  Menu = 'Menu',
+  Metaprogramming = 'Metaprogramming',
+  Tutorials = 'Tutorials',
 }
 
 /** An item within the manual menu. */
@@ -53,13 +53,13 @@ const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
         Icon={TutorialsIcon}
         onClick={() => onClick(Section.Tutorials)}
         title='Tutorials'
-        description={`Play the interactive tutorials to learn the basics.`}
+        description='Play the interactive tutorials to learn the basics.'
       />
       <ManualMenuItem
-        Icon={CommandCenterIcon}
-        onClick={() => onClick(Section.CommandCenter)}
-        title={'Command Center'}
-        description='View all gestures, keyboard shortcuts, and toolbar icons.'
+        Icon={GestureLibraryIcon}
+        onClick={() => onClick(Section.GestureLibrary)}
+        title='Gesture Library'
+        description='View a list of all gestures.'
       />
       <ManualMenuItem
         Icon={MetaIcon}
@@ -397,7 +397,7 @@ const ModalManual = () => {
 
       {section === Section.Tutorials ? (
         <Tutorials />
-      ) : section === Section.CommandCenter ? (
+      ) : section === Section.GestureLibrary ? (
         <CommandCenter />
       ) : section === Section.Metaprogramming ? (
         <Metaprogramming />

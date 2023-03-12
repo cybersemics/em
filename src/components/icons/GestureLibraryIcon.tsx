@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
-/** Command center icon that looks like a finger pressing a button. */
-const CommandCenterIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
+/** Gesture Library icon that looks like a finger pressing a button. */
+const GestureLibraryIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
@@ -28,4 +28,4 @@ const CommandCenterIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
   )
 }
 
-export default CommandCenterIcon
+export default GestureLibraryIcon
