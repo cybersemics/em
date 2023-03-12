@@ -10,6 +10,7 @@ import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
 import isDocumentEditable from '../util/isDocumentEditable'
+import onTapUp from '../util/onTapUp'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import HomeLink from './HomeLink'
@@ -34,10 +35,9 @@ const CursorBreadcrumbs = () => {
 /** A link that opens The Manual. */
 const ManualButton: React.FC = () => {
   const dispatch = useDispatch()
-
   return (
     <div
-      onClick={() => dispatch(showModal({ id: 'manual' }))}
+      {...onTapUp(() => dispatch(showModal({ id: 'manual' })))}
       title='The Manual'
       style={{
         cursor: 'pointer',

@@ -7,6 +7,7 @@ import tutorial from '../../action-creators/tutorial'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
+import onTapUp from '../../util/onTapUp'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
 import GestureLibraryIcon from './../icons/GestureLibraryIcon'
@@ -23,15 +24,15 @@ enum Section {
 }
 
 /** An item within the manual menu. */
-const ManualMenuItem: FC<{ Icon: FC<Icon>; onClick: () => void; title: string; description: string }> = ({
+const ManualMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; description: string }> = ({
   Icon,
-  onClick,
+  onTap,
   title,
   description,
 }) => {
   const fontSize = useSelector((state: State) => state.fontSize)
   return (
-    <div onClick={onClick} style={{ display: 'flex', marginBottom: '1em' }}>
+    <div {...onTapUp(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
       <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
         <Icon size={fontSize * 3} />
       </div>
@@ -46,30 +47,28 @@ const ManualMenuItem: FC<{ Icon: FC<Icon>; onClick: () => void; title: string; d
 }
 
 /** Menu of manual sections. */
-const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
-  return (
-    <div>
-      <ManualMenuItem
-        Icon={TutorialsIcon}
-        onClick={() => onClick(Section.Tutorials)}
-        title='Tutorials'
-        description='Play the interactive tutorials to learn the basics.'
-      />
-      <ManualMenuItem
-        Icon={GestureLibraryIcon}
-        onClick={() => onClick(Section.GestureLibrary)}
-        title='Gesture Library'
-        description='View a list of all available gestures.'
-      />
-      <ManualMenuItem
-        Icon={MetaIcon}
-        onClick={() => onClick(Section.Metaprogramming)}
-        title='Metaprogramming'
-        description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
-      />
-    </div>
-  )
-}
+const ManualMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
+  <div>
+    <ManualMenuItem
+      Icon={TutorialsIcon}
+      onTap={() => onSelect(Section.Tutorials)}
+      title='Tutorials'
+      description='Play the interactive tutorials to learn the basics.'
+    />
+    <ManualMenuItem
+      Icon={GestureLibraryIcon}
+      onTap={() => onSelect(Section.GestureLibrary)}
+      title='Gesture Library'
+      description='View a list of all available gestures.'
+    />
+    <ManualMenuItem
+      Icon={MetaIcon}
+      onTap={() => onSelect(Section.Metaprogramming)}
+      title='Metaprogramming'
+      description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
+    />
+  </div>
+)
 
 /** Tutorials section. */
 const Tutorials = () => {
@@ -83,7 +82,7 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            onClick={() => {
+            {...onTapUp(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
@@ -91,7 +90,7 @@ const Tutorials = () => {
                 setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            }}
+            })}
           >
             Part I: Intro
           </a>
@@ -99,14 +98,14 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            onClick={() => {
+            {...onTapUp(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
                 setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            }}
+            })}
           >
             Part II: Contexts
           </a>
@@ -371,14 +370,14 @@ const ModalManual = () => {
       id='manual'
       title='The Manual'
       className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
+      actions={({ close }) => <ActionButton key='close' title='Close' {...onTapUp(() => close())} />}
       style={{ fontSize }}
     >
       {section === Section.Menu ? (
-        <ManualMenu onClick={setSection} />
+        <ManualMenu onSelect={setSection} />
       ) : (
         <span className='text-small'>
-          &lt; <a onClick={back}>Back</a>
+          &lt; <a {...onTapUp(back)}>Back</a>
         </span>
       )}
 
@@ -396,7 +395,7 @@ const ModalManual = () => {
         // TODO: Remove Section.Tutorials condition once it has more content.
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
-            &lt; <a onClick={back}>Back</a>
+            &lt; <a {...onTapUp(back)}>Back</a>
           </div>
         )
       }

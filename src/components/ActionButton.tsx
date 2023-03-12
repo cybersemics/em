@@ -1,10 +1,12 @@
 import classNames from 'classnames'
 import React from 'react'
+import onTapUp from '../util/onTapUp'
 import Loader from './Loader'
 
 interface ActionButtonProps {
   title: string
   active?: boolean
+  onClick?: (e: React.MouseEvent | React.TouchEvent) => void
   inActive?: boolean
   small?: boolean
   isLoading?: boolean
@@ -34,7 +36,7 @@ export const ActionButton = ({
       'action-button': true,
       disabled: isDisabled,
     })}
-    onClick={!isDisabled ? onClick : undefined}
+    {...(onClick && !isDisabled ? onTapUp(onClick) : null)}
     {...restProps}
   >
     {/* TODO: Animate on loader toggle. */}
