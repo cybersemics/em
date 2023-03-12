@@ -7,6 +7,7 @@ import alert from '../../action-creators/alert'
 import { baseUrl } from '../../device/router'
 import themeColors from '../../selectors/themeColors'
 import createId from '../../util/createId'
+import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
 import { ActionButton } from './../ActionButton'
 import CheckmarkIcon from './../icons/CheckmarkIcon'
@@ -136,7 +137,7 @@ const Invites = () => {
       center
       actions={({ close }) => (
         <div style={undefined}>
-          <ActionButton key='close' title='Close' onClick={() => close()} />
+          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
         </div>
       )}
     >
@@ -152,7 +153,7 @@ const Invites = () => {
             <div key={`${id}-gift-code`} className='gift-code-wrapper'>
               <div
                 style={{ display: 'inline-flex' }}
-                onClick={() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id))}
+                {...fastClick(() => (focusedGiftCode === id ? setFocusedGiftCode(null) : onInviteCodeSeen(id)))}
               >
                 <InvitesIcon fill={selectedIconFill} size={26} />
               </div>
@@ -168,7 +169,7 @@ const Invites = () => {
               ) : (
                 <CheckmarkIcon fill={colors.bg} size={21} />
               )}
-              <div className='copy-icon-wrapper' onClick={() => updateCopy(link)}>
+              <div className='copy-icon-wrapper' {...fastClick(() => updateCopy(link))}>
                 <CopyClipboard fill={selectedIconFill} size={26} />
               </div>
             </div>
