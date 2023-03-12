@@ -13,6 +13,7 @@ import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
 import themeColors from '../selectors/themeColors'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import pushStore from '../stores/push'
+import fastClick from '../util/fastClick'
 
 /** Show the user's connection status. */
 const Status = () => {
@@ -60,7 +61,7 @@ const LinkDivider = () => <span className='footer-divider'> | </span>
 const ModalLink = ({ id, children }: { id: Modal; children: React.ReactNode }) => {
   const dispatch = useDispatch()
   return (
-    <a tabIndex={-1} onClick={() => dispatch(showModal({ id }))} style={{ whiteSpace: 'nowrap' }}>
+    <a tabIndex={-1} {...fastClick(() => dispatch(showModal({ id })))} style={{ whiteSpace: 'nowrap' }}>
       {children}
     </a>
   )
@@ -101,10 +102,13 @@ const Footer = () => {
     <ul aria-label='footer' className='footer list-none'>
       <li>
         <div style={{ float: 'left', lineHeight: 1 }}>
-          <a className='increase-font expand-click-area-left no-select' onClick={() => dispatch(scaleFontUp())}>
+          <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(scaleFontUp()))}>
             A
           </a>
-          <a className='decrease-font expand-click-area-right no-select' onClick={() => dispatch(scaleFontDown())}>
+          <a
+            className='decrease-font expand-click-area-right no-select'
+            {...fastClick(() => dispatch(scaleFontDown()))}
+          >
             A
           </a>
         </div>
