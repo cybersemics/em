@@ -78,7 +78,10 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     }
 
     lastScrollLeft.current = toolbarEl.scrollLeft
-    onTapUp?.(e)
+
+    if (!disabled) {
+      onTapUp?.(e)
+    }
   }
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -93,7 +96,10 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     }
 
     lastScrollLeft.current = toolbarEl.scrollLeft
-    onTapDown?.(e)
+
+    if (!disabled) {
+      onTapDown?.(e)
+    }
   }
 
   return dropTarget(
