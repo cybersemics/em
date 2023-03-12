@@ -4,6 +4,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Connected from '../@types/Connected'
 import State from '../@types/State'
 import error from '../action-creators/error'
+import fastClick from '../util/fastClick'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = ({ error }: State) => ({ value: error })
@@ -15,7 +16,7 @@ const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) => (
       <CSSTransition key={0} timeout={200} classNames='fade'>
         <div className='error-message'>
           {value.toString()}
-          <a className='upper-right status-close-x text-small' onClick={() => dispatch(error({ value: null }))}>
+          <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
             ✕
           </a>
         </div>
