@@ -2,13 +2,10 @@
 import storage from '../util/storage'
 
 const storageModel = storage.model({
-  defaults: {
-    fontSize: 18,
+  fontSize: {
+    default: 18,
+    decode: (s: string | null) => (s ? +s : undefined),
   },
-  decoders: {
-    fontSize: (s: string | null) => (s ? +s : 18),
-  },
-  encoders: {},
 })
 
 export default storageModel
