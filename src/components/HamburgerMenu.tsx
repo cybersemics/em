@@ -8,17 +8,12 @@ import toggleSidebar from '../action-creators/toggleSidebar'
 import { NOOP } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import fastClick from '../util/fastClick'
-import storage from '../util/storage'
-
-const tutorialLocal = storage.getItem('Settings/Tutorial') !== 'Off'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
-  const isLoading = useSelector((state: State) => state.isLoading)
   const showModal = useSelector((state: State) => state.showModal)
-  const tutorialSettings = useSelector(isTutorial)
+  const tutorial = useSelector(isTutorial)
   const error = useSelector((state: State) => state.error)
-  const tutorial = isLoading ? tutorialLocal : tutorialSettings
   const showSidebar = useSelector((state: State) => state.showSidebar)
   const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const dispatch = useDispatch()

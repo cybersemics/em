@@ -104,6 +104,14 @@ interface State {
       'offline'        Disconnected and working in offline mode.
     */
   status: string
+  // Thought values that are needed on startup before thoughts have loaded (e.g. theme, tutorial, etc) are cached to local storage.
+  // storageCache is populated initially with the values in local storage and updated as the state changes.
+  // See: /redux-enhancers/storageCache.ts
+  storageCache?: {
+    theme?: 'Dark' | 'Light'
+    tutorialComplete?: boolean
+    tutorialStep?: number
+  }
   thoughts: ThoughtIndices
   // shortcut of a toolbar button that is being long pressed in the customize modal
   toolbarLongPress?: Shortcut

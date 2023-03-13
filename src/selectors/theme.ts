@@ -1,10 +1,6 @@
 import State from '../@types/State'
 import getSetting from '../selectors/getSetting'
 import publishMode from '../util/publishMode'
-import storage from '../util/storage'
-
-// eslint-disable-next-line no-mixed-operators
-const themeLocal = (typeof storage !== 'undefined' && storage.getItem('Settings/Theme')) || 'Dark'
 
 // disable ancestorTheme until we have better memoization
 /** Looks for =focus/Theme in cursor ancestors. */
@@ -28,10 +24,7 @@ const themeLocal = (typeof storage !== 'undefined' && storage.getItem('Settings/
 /** Gets the theme, defaulting to localStorage while loading to avoid re-render. */
 const theme = (state: State) => {
   if (publishMode()) return 'Light'
-  if (state.isLoading) return themeLocal
-
-  // return ancestorTheme(state) || getSetting(state, 'Theme') || 'Dark'
-  return getSetting(state, 'Theme') || 'Dark'
+  return getSetting(state, 'Theme') || state.storageCache?.theme || 'Dark'
 }
 
 export default theme

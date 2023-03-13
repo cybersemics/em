@@ -9,9 +9,7 @@ import db from '../data-providers/yjs/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
 import filterObject from '../util/filterObject'
-import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
-import storage from '../util/storage'
 import thoughtToDb from '../util/thoughtToDb'
 
 /** Syncs thought updates to the local database. Caches updated localStorageSettingsContexts to local storage. */
@@ -23,26 +21,9 @@ const pushLocal = (
   updates: Index = {},
   localStorageSettingsContexts: Index<string>,
 ): Promise<unknown> => {
-  const updatedThoughtIndex = {
-    ...state.thoughts.thoughtIndex,
-    ...thoughtIndexUpdates,
-  }
   const thoughtUpdates = keyValueBy(thoughtIndexUpdates, (id, thought) => {
     if (!thought) return { [id]: null }
     const thoughtDb = thoughtToDb(thought)
-
-    // some settings are propagated to localStorage for faster load on startup
-    const name = localStorageSettingsContexts[id]
-    if (name) {
-      const firstChild = Object.values(thought.childrenMap || {}).find(childId => {
-        const child = updatedThoughtIndex[childId]
-        return child && !isAttribute(child.value)
-      })
-      if (firstChild) {
-        const thought = updatedThoughtIndex[firstChild]
-        storage.setItem(`Settings/${name}`, thought!.value)
-      }
-    }
 
     return { [id]: thoughtDb }
   })

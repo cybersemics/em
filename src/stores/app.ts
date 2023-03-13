@@ -9,6 +9,7 @@ import thunk from 'redux-thunk'
 import appReducer from '../reducers/app'
 import clearPushQueueEnhancer from '../redux-enhancers/clearPushQueue'
 import cursorChangedEnhancer from '../redux-enhancers/cursorChanged'
+import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
@@ -25,6 +26,7 @@ const store = createStore(
   appReducer,
   composeEnhancers(
     applyMiddleware(multi, thunk, pushQueue, pullQueue, updateUrlHistory),
+    storageCache,
     undoRedoEnhancer,
     cursorChangedEnhancer,
     // must go at the end to ensure it clears the pushQueue before other enhancers

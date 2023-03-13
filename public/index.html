@@ -45,8 +45,8 @@
     <div id="debug"></div>
 
     <script>
-      // Note: Initially theme needs to be set here before react loads. Else it causes white flash.
-      const theme = localStorage['Settings/Theme'] || 'dark'
+      // Note: theme needs to be loaded here before react loads, otherwise it causes a white flash.
+      const theme = localStorage.getItem('storageCache/theme')?.toLowerCase() || 'dark'
       document.body.classList.add(theme)
     </script>
   </body>
