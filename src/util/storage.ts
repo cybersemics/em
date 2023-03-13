@@ -11,6 +11,40 @@ function getItem(key: string, defaultValue?: string | (() => string)) {
   return value
 }
 
+/** Creates a strongly typed local storage model. */
+const model = <T extends string, U extends string | number | boolean>({
+  defaults,
+  decoders,
+  encoders,
+}: {
+  defaults: Record<T, U>
+  decoders: Partial<Record<T, (s: string | null) => U>>
+  encoders: Partial<Record<T, (value: U) => string>>
+}) => {
+  type StorageKey = keyof typeof defaults
+  type KeyType<T extends StorageKey> = typeof defaults[T]
+
+  /** Gets a value from local storage. */
+  function get<T extends StorageKey>(key: T): KeyType<T> {
+    const value = storage.getItem(key)
+    const decoder = decoders[key]
+    return decoder ? decoder(value) : (value as unknown as KeyType<T>) || defaults[key]
+  }
+
+  /** Sets a value in local storage. */
+  function set<T extends StorageKey>(key: T, value: KeyType<T>) {
+    const encode = encoders[key]
+    storage.setItem(key, encode ? encode(value) : value.toString())
+  }
+
+  /** Removes a value from local storage. */
+  function remove(key: StorageKey) {
+    storage.removeItem(key)
+  }
+
+  return { get, set, remove }
+}
+
 const storage = {
   clear(): void {
     localStorage.clear()
@@ -25,6 +59,8 @@ const storage = {
   setItem(key: string, value: string): void {
     localStorage.setItem(key, value)
   },
+
+  model,
 }
 
 export default storage
