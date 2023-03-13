@@ -6,6 +6,7 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID, SCHEMA_LATEST } from '../constants'
 import { clientId } from '../data-providers/yjs'
+import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
 import never from '../util/never'
 import parseJsonSafe from '../util/parseJsonSafe'
@@ -107,7 +108,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     enableLatestShortcutsDiagram: false,
     error: null,
     expanded: {},
-    fontSize: +(storage.getItem('fontSize') || 18),
+    fontSize: storageModel.get('fontSize'),
     expandHoverDownPaths: {},
     invalidState: false,
     // Displays a loading screen when the app starts.
