@@ -12,12 +12,17 @@ function getItem(key: string, defaultValue?: string | (() => string)) {
 }
 
 /** Creates a strongly typed local storage model. */
-const model = <K extends string, V extends string | number | boolean>(
+const model = <
+  K extends string,
+  V extends string | number | boolean,
+  // define a wrapper type for the optional default argument
+  // this allows us to change the return type of get when default is not provided
+  OptionalDefault extends { default: V } | Record<string, never>,
+>(
   schema: Record<
     K,
-    {
-      /** The default value that is returned by get if local storage is empty. */
-      default: V
+    /** The default value that is returned by get if local storage is empty. */
+    OptionalDefault & {
       /** Decodes a string stored in local storage back into a properly typed value. Default: identify function. */
       decode?: (s: string | null) => V | undefined
       /** Encodes a value as a string to be saved to local storage. Default: toString. */
@@ -25,11 +30,14 @@ const model = <K extends string, V extends string | number | boolean>(
     }
   >,
 ) => {
+  // undefined if no default arg is given
+  type UndefinedIfDefault = OptionalDefault extends { default: V } ? never : undefined
+
   /** Gets a value from local storage. */
-  function get<T extends K>(key: T): V {
+  function get<T extends K>(key: T): V | UndefinedIfDefault {
     const value = storage.getItem(key)
     const decode = schema[key].decode
-    return (decode ? decode(value) : (value as V)) || schema[key].default
+    return (decode ? decode(value) : (value as V | UndefinedIfDefault)) || schema[key].default
   }
 
   /** Sets a value in local storage. */
