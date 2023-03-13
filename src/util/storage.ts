@@ -1,6 +1,14 @@
+/** Clear local storage. */
+const clear = () => localStorage.clear()
+
+/** Removes an item from local storage. */
+const removeItem = (key: string) => localStorage.removeItem(key)
+
+/** Sets an item on local storage. */
+const setItem = (key: string, value: string) => localStorage.setItem(key, value)
+
 function getItem(key: string): string | null
 function getItem(key: string, defaultValue: string | (() => string)): string
-
 /** Gets the item from local storage. If it does not exist and defaultValue is provided, sets the value in local storage to defaultValue and returns it. */
 function getItem(key: string, defaultValue?: string | (() => string)) {
   let value = localStorage.getItem(key)
@@ -11,7 +19,7 @@ function getItem(key: string, defaultValue?: string | (() => string)) {
   return value
 }
 
-/** Creates a strongly typed local storage model. */
+/** Creates a strongly typed local storage model. Guarantees well-typed keys and values of storage items. */
 const model = <
   K extends string,
   V extends string | number | boolean,
@@ -35,7 +43,7 @@ const model = <
 
   /** Gets a value from local storage. */
   function get<T extends K>(key: T): V | UndefinedIfDefault {
-    const value = storage.getItem(key)
+    const value = getItem(key)
     const decode = schema[key].decode
     return (decode ? decode(value) : (value as V | UndefinedIfDefault)) || schema[key].default
   }
@@ -43,33 +51,21 @@ const model = <
   /** Sets a value in local storage. */
   function set<T extends K>(key: T, value: V) {
     const encode = schema[key].encode
-    storage.setItem(key, encode ? encode(value) : value.toString())
+    setItem(key, encode ? encode(value) : value.toString())
   }
 
   /** Removes a value from local storage. */
-  function remove(key: K) {
-    storage.removeItem(key)
-  }
+  const remove = (key: K) => removeItem(key)
 
   return { get, set, remove }
 }
 
 const storage = {
-  clear(): void {
-    localStorage.clear()
-  },
-
+  clear,
   getItem,
-
-  removeItem(key: string): void {
-    localStorage.removeItem(key)
-  },
-
-  setItem(key: string, value: string): void {
-    localStorage.setItem(key, value)
-  },
-
   model,
+  removeItem,
+  setItem,
 }
 
 export default storage
