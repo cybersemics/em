@@ -7,7 +7,10 @@ const showModal =
   (payload: { id: Modal }): Thunk =>
   (dispatch, getState) => {
     dispatch({ type: 'showModal', ...payload })
-    scrollTo('top')
+    // wait till next tick, otherwise modal may not be rendered yet
+    setTimeout(() => {
+      scrollTo('top')
+    })
   }
 
 export default showModal
