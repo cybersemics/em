@@ -72,9 +72,8 @@ const ModalCustomizeToolbar: FC = () => {
 
       <CSSTransition in={!selectedShortcut} classNames='fade' timeout={200} exit={false} unmountOnExit>
         <div className='dim' style={{ marginTop: '2em', marginBottom: '2.645em' }}>
-          <p>Drag-and-drop buttons to rearrange the toolbar.</p>
-          <p>Drag-and-drop to reorder.</p>
-          <p>{isTouch ? 'Tap' : 'Click'} a toolbar button for command details.</p>
+          <p>Drag-and-drop to rearrange toolbar.</p>
+          <p>{isTouch ? 'Tap' : 'Click'} a command for details.</p>
         </div>
       </CSSTransition>
 

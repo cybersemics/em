@@ -57,11 +57,9 @@ const ModalSettings = () => {
       )}
     >
       <form>
-        {!Math && (
-          <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
-            <a onClick={() => dispatch(showModal({ id: 'customizeToolbar' }))}>Customize Toolbar</a> &gt;
-          </p>
-        )}
+        <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))}>Customize Toolbar</a> &gt;
+        </p>
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
