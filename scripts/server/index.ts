@@ -79,37 +79,36 @@ export const onLoadDocument = async ({
   const permissionsDocName = encodePermissionsDocumentName(tsid)
   const permissionsServerMap = permissionsServerDoc.getMap<Share>(tsid)
   let permission = permissionsServerMap.get(token)
-  const permissionsClientDoc = getYDoc(documentName)
+
+  if (!permission || permission.role !== 'owner') return
 
   // Copy permissions from the server-side permissions doc to the client-side permission doc.
   // The server-side permissions doc keeps all permissions for all documents in memory.
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
-  if (permission?.role === 'owner') {
-    // update last accessed time on auth
-    permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
+  // update last accessed time on auth
+  permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
 
-    const permissionsClientDoc = getYDoc(permissionsDocName)
-    if (!permissionsClientDoc) return
+  const permissionsClientDoc = getYDoc(permissionsDocName)
+  if (!permissionsClientDoc) return
 
-    const permissionsClientMap = permissionsClientDoc.getMap<Share>()
+  const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 
-    // sync client permissions to server
-    // TODO: Maybe we can 2-way sync only the updates for this tsid
-    permissionsClientMap?.observe(e => {
-      e.changes.keys.forEach((change, key) => {
-        if (change.action === 'delete') {
-          permissionsServerMap.delete(key)
-        } else {
-          permissionsServerMap.set(key, permissionsClientMap.get(key)!)
-        }
-      })
+  // sync client permissions to server
+  // TODO: Maybe we can 2-way sync only the updates for this tsid
+  permissionsClientMap?.observe(e => {
+    e.changes.keys.forEach((change, key) => {
+      if (change.action === 'delete') {
+        permissionsServerMap.delete(key)
+      } else {
+        permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+      }
     })
+  })
 
-    // copy server permissions to client
-    permissionsServerMap.forEach((permission: Share, token: string) => {
-      permissionsClientMap.set(token, permission)
-    })
-  }
+  // copy server permissions to client
+  permissionsServerMap.forEach((permission: Share, token: string) => {
+    permissionsClientMap.set(token, permission)
+  })
 }
 
 // persist permissions to YPERMISSIONS with leveldb
