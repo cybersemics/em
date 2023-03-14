@@ -65,7 +65,7 @@ const autoscroll = (() => {
   }
 
   /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
-  const startOrUpdate = (rateNew?: number) => {
+  const start = (rateNew?: number) => {
     // update the scroll rate
     rate = ease(rateNew ?? 1)
 
@@ -79,11 +79,11 @@ const autoscroll = (() => {
   }
 
   /** Stops scrolling. */
-  startOrUpdate.stop = () => {
+  const stop = () => {
     autoscrolling = false
   }
 
-  return startOrUpdate
+  return { start, stop }
 })()
 
 /** Add window event handlers. */
@@ -148,12 +148,12 @@ const initEvents = (store: Store<State, any>) => {
     // start scrolling up when within 100px of the top edge of the screen
     if (y < 120) {
       const rate = 1 + (120 - y) / 60
-      autoscroll(-rate)
+      autoscroll.start(-rate)
     }
     // start scrolling down when within 100px of the bottom edge of the screen
     else if (y > window.innerHeight - 100) {
       const rate = 1 + (y - window.innerHeight + 100) / 50
-      autoscroll(rate)
+      autoscroll.start(rate)
     }
     // stop scrolling when not near the edge of the screen
     else {
