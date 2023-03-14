@@ -4,9 +4,11 @@ import fastClick from '../util/fastClick'
 /** A checkbox component with em styling. */
 const Checkbox = ({ checked }: { checked?: boolean }) => (
   <>
-    {/* Note: never preventDefault on a controlled checkbox in React.
-          See: https://stackoverflow.com/a/70030088/4806080 */}
-    <input type='checkbox' checked={checked} />
+    {/* Must set readOnly to avoid React error when onChange is not used, but the checkbox is not really read-only since tapping on CheckboxItem toggles it.
+        Never preventDefault on a controlled checkbox in React.
+        See: https://stackoverflow.com/a/70030088/4806080
+      */}
+    <input type='checkbox' checked={checked} readOnly />
     <span
       className='checkbox'
       // extend tap area without disrupting padding
