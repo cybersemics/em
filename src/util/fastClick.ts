@@ -1,27 +1,13 @@
 import _ from 'lodash'
 import { isTouch } from '../browser'
 
-// the number of pixels of scrolling or moving that are allowed to still trigger the tap event
+// the number of pixels of scrolling or dragging from touchStart that is allowed to still trigger fastClick
 const MOVE_THRESHOLD = 15
 
-// disable touchend when scrolling
-// allow 5px movement threshold
-let touchStart = { x: 0, y: 0 }
-let scrolling = false
+// track the touch start coordinates
+let touchStart: { x: number; y: number } | null = null
 
-if (isTouch) {
-  window.addEventListener('touchstart', () => {
-    scrolling = false
-  })
-  window.addEventListener(
-    'scroll',
-    _.throttle(() => {
-      scrolling = true
-    }, 16.666),
-  )
-}
-
-/** A faster alternative to onClick or checkbox onChange. Returns onTouchEnd or onMouseUp handler depending on if touch is supported. Disabled on scroll (with 15px error tolerance). */
+/** A faster alternative to onClick or checkbox onChange. Returns onTouchStart/Move/End or onMouseUp handler depending on if touch is supported. Cancelled on scroll (with 15px error tolerance). */
 const fastClick = isTouch
   ? (tapUp: (e: React.TouchEvent) => void, tapDown?: (e: React.TouchEvent) => void) => ({
       onTouchStart: (e: React.TouchEvent) => {
@@ -33,22 +19,32 @@ const fastClick = isTouch
 
         tapDown?.(e)
       },
-      onTouchEnd: (e: React.TouchEvent) => {
-        let disable = scrolling
-
-        if (e.changedTouches.length > 0) {
+      // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
+      onTouchMove: _.throttle((e: React.TouchEvent) => {
+        if (touchStart && e.changedTouches.length > 0) {
           const x = e.changedTouches[0].clientX
           const y = e.changedTouches[0].clientY
           if (Math.abs(touchStart.x - x) > MOVE_THRESHOLD || Math.abs(touchStart.y - y) > MOVE_THRESHOLD) {
-            disable = true
+            touchStart = null
+          }
+        }
+      }, 16.666),
+      onTouchEnd: (e: React.TouchEvent) => {
+        let cancel = !touchStart
+
+        if (touchStart && e.changedTouches.length > 0) {
+          const x = e.changedTouches[0].clientX
+          const y = e.changedTouches[0].clientY
+          if (Math.abs(touchStart.x - x) > MOVE_THRESHOLD || Math.abs(touchStart.y - y) > MOVE_THRESHOLD) {
+            cancel = true
           }
         }
 
-        if (!disable) {
+        if (!cancel) {
           tapUp(e)
         }
 
-        scrolling = false
+        touchStart = null
       },
     })
   : (tapUp: (e: React.MouseEvent) => void, tapDown?: (e: React.MouseEvent) => void) => ({
