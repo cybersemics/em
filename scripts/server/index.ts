@@ -8,7 +8,6 @@ import timestamp from '../../src/util/timestamp'
 
 const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
-const PERMISSIONS_DOC_NAME = 'permissions'
 
 // contains a top level map for each thoughtspace Map<Share> mapping token -> permission
 const permissionsServerDoc = new Y.Doc()
@@ -37,6 +36,27 @@ const log = (...args: any) => {
     method = lastArg.method
   }
   ;(console as any)[method](...args)
+}
+
+let ldbPermissions: LeveldbPersistence | undefined
+let ldbThoughtspace: LeveldbPersistence | undefined
+
+if (process.env.YPERMISSIONS) {
+  ldbPermissions = new LeveldbPersistence(process.env.YPERMISSIONS)
+}
+if (process.env.YPERSISTENCE) {
+  ldbThoughtspace = new LeveldbPersistence(process.env.YPERSISTENCE)
+}
+
+/** Syncs a doc with leveldb. */
+const syncLevelDb = async ({ db, docName, doc }: { db: any; docName: string; doc: Y.Doc }) => {
+  const docPersisted = await db.getYDoc(docName)
+  const updates = Y.encodeStateAsUpdate(doc)
+  db.storeUpdate(docName, updates)
+  Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
+  doc.on('update', update => {
+    db.storeUpdate(docName, update)
+  })
 }
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
@@ -75,7 +95,7 @@ export const onLoadDocument = async ({
   documentName: string
 }) => {
   const { token } = context
-  const { tsid } = parseDocumentName(documentName)
+  const { tsid, type } = parseDocumentName(documentName)
   const permissionsDocName = encodePermissionsDocumentName(tsid)
   const permissionsServerMap = permissionsServerDoc.getMap<Share>(tsid)
   let permission = permissionsServerMap.get(token)
@@ -109,22 +129,16 @@ export const onLoadDocument = async ({
   permissionsServerMap.forEach((permission: Share, token: string) => {
     permissionsClientMap.set(token, permission)
   })
+
+  if (ldbThoughtspace && type !== 'permissions') {
+    syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
+  }
 }
 
 // persist permissions to YPERMISSIONS with leveldb
 // TODO: encrypt
-if (process.env.YPERMISSIONS) {
-  // do not use process.env.YPERSISTENCE or it will overwrite the thoughtspace leveldb
-  const ldb = new LeveldbPersistence(process.env.YPERMISSIONS)
-  ;(async () => {
-    const persistedYdoc = await ldb.getYDoc(PERMISSIONS_DOC_NAME)
-    const newUpdates = Y.encodeStateAsUpdate(permissionsServerDoc)
-    ldb.storeUpdate(PERMISSIONS_DOC_NAME, newUpdates)
-    Y.applyUpdate(permissionsServerDoc, Y.encodeStateAsUpdate(persistedYdoc))
-    permissionsServerDoc.on('update', update => {
-      ldb.storeUpdate(PERMISSIONS_DOC_NAME, update)
-    })
-  })()
+if (ldbPermissions) {
+  syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
 }
 
 const server = Server.configure({
