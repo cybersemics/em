@@ -1,16 +1,10 @@
 import _ from 'lodash'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
-import { AlertText, AlertType } from '../constants'
-import alert from './alert'
 
-/** Reducer for highlighting a bullet on click and hold. */
+/** Reducer for dragging a shortcut in the customizeToolbar modal. */
 const dragShortcut = (state: State, { shortcutId }: { shortcutId: ShortcutId | null }) => ({
-  ...alert(state, {
-    alertType: AlertType.DragAndDropToolbarHint,
-    showCloseLink: false,
-    value: shortcutId ? AlertText.DragAndDropToolbar : null,
-  }),
+  ...state,
   dragShortcut: shortcutId,
 })
 
