@@ -27,6 +27,15 @@ declare global {
   }
 }
 
+// the width of the autoscroll zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
+const TOOLBAR_AUTOSCROLL_SIZE = 50
+const WINDOW_AUTOSCROLL_UP_SIZE = 120
+const WINDOW_AUTOSCROLL_DOWN_SIZE = 100
+
+// the top speed of the autoscroll expressed pixels per % of autoscroll zone
+const TOOLBAR_AUTOSCROLL_SPEED = 1.25
+const WINDOW_AUTOSCROLL_SPEED = 2
+
 /** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
 const autoscroll = (() => {
   /** Cubic easing function. */
@@ -147,13 +156,14 @@ const initEvents = (store: Store<State, any>) => {
 
     if (state.dragShortcut) {
       const x = e.touches[0].clientX
-      if (x < 50) {
-        const rate = 1 + (50 - x) / 25
+      if (x < TOOLBAR_AUTOSCROLL_SIZE) {
+        const rate = 1 + ((TOOLBAR_AUTOSCROLL_SIZE - x) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
         autoscroll.start({ x: -rate })
       }
       // start scrolling down when within 100px of the right edge of the screen
-      else if (x > window.innerWidth - 50) {
-        const rate = 1 + (x - window.innerWidth + 50) / 25
+      else if (x > window.innerWidth - TOOLBAR_AUTOSCROLL_SIZE) {
+        const rate =
+          1 + ((x - window.innerWidth + TOOLBAR_AUTOSCROLL_SIZE) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
         autoscroll.start({ x: rate })
       }
       // stop scrolling when not near the edge of the screen
@@ -169,13 +179,16 @@ const initEvents = (store: Store<State, any>) => {
       const y = e.touches[0].clientY
 
       // start scrolling up when within 120px of the top edge of the screen
-      if (y < 120) {
-        const rate = 1 + (120 - y) / 60
+      if (y < WINDOW_AUTOSCROLL_UP_SIZE) {
+        const rate = 1 + ((WINDOW_AUTOSCROLL_UP_SIZE - y) * WINDOW_AUTOSCROLL_SPEED) / WINDOW_AUTOSCROLL_UP_SIZE
         autoscroll.start({ y: -rate })
       }
       // start scrolling down when within 100px of the bottom edge of the screen
-      else if (y > window.innerHeight - 100) {
-        const rate = 1 + (y - window.innerHeight + 100) / 50
+      else if (y > window.innerHeight - WINDOW_AUTOSCROLL_DOWN_SIZE) {
+        const rate =
+          1 +
+          ((y - window.innerHeight + WINDOW_AUTOSCROLL_DOWN_SIZE) * WINDOW_AUTOSCROLL_SPEED) /
+            WINDOW_AUTOSCROLL_DOWN_SIZE
         autoscroll.start({ y: rate })
       }
       // stop scrolling when not near the edge of the screen
