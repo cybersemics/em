@@ -5,6 +5,7 @@ import Shortcut from '../../@types/Shortcut'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
 import themeColors from '../../selectors/themeColors'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from '.././ActionButton'
 import ShortcutRow from './../ShortcutRow'
 import ShortcutTable from './../ShortcutTable'
@@ -29,13 +30,13 @@ const ModalCustomizeToolbar: FC = () => {
       className='popup'
       actions={({ close }) => (
         <div style={{ textAlign: 'center' }}>
-          <ActionButton key='close' title='Close' onClick={() => close()} />
+          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
         </div>
       )}
     >
       <h1 className='modal-title'>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
-        &lt; <a onClick={() => dispatch(showModal({ id: 'settings' }))}>Back to Settings</a>
+        &lt; <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))}>Back to Settings</a>
       </p>
 
       <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>

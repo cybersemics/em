@@ -65,6 +65,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   distractionFreeTyping: false,
   dragHold: false,
   dragInProgress: false,
+  dragShortcut: false,
   editableRender: false,
   editing: false,
   editThought: true,

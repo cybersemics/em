@@ -32,11 +32,11 @@ const autoscroll = (() => {
   /** Cubic easing function. */
   const ease = (n: number) => Math.pow(n, 3)
 
-  // if true, the window will continue to be scrolled at the current rate without user interaction
-  let autoscrolling = false
+  // if true, the window or scroll container will continue to be scrolled at the current rate without user interaction
+  let autoscrolling = true
 
   // scroll speed (-1 to 1)
-  let rate = 1
+  const rate = { x: 0, y: 0 }
 
   // cache the autoscroll container on start for performance
   // if the Sidebar is open on touch start, this is set to the .sidebar element
@@ -46,17 +46,19 @@ const autoscroll = (() => {
   const scroll = () => {
     const el = scrollContainer || window
     // if scrollContainer is undefined or window, use the document scrollTop
+    const scrollLeft = (scrollContainer as HTMLElement).scrollLeft ?? document.documentElement.scrollLeft
+    const scrollLeftNew = Math.max(0, scrollLeft + rate.x)
     const scrollTop = (scrollContainer as HTMLElement).scrollTop ?? document.documentElement.scrollTop
-    const scrollTopNew = Math.max(0, scrollTop + rate)
+    const scrollTopNew = Math.max(0, scrollTop + rate.y)
 
     // if we have hit the end, stop autoscrolling
     // i.e. if the next increment would not change scrollTop
-    if (scrollTopNew === scrollTop) {
+    if (scrollLeftNew === scrollLeft && scrollTopNew === scrollTop) {
       autoscrolling = false
       return
     }
 
-    el.scrollTo(0, scrollTopNew)
+    el.scrollTo(scrollLeftNew, scrollTopNew)
     window.requestAnimationFrame(() => {
       if (autoscrolling) {
         scroll()
@@ -65,16 +67,24 @@ const autoscroll = (() => {
   }
 
   /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
-  const start = (rateNew?: number) => {
+  const start = ({ x, y }: { x?: number; y?: number }) => {
     // update the scroll rate
-    rate = ease(rateNew ?? 1)
+    if (x != null) {
+      rate.x = ease(x ?? 1)
+    }
+    if (y != null) {
+      rate.y = ease(y ?? 1)
+    }
 
-    // if we are already autoscrolling, do nothing
+    // if already scrolling, just adjust the scroll rate and bail
     if (autoscrolling) return
 
-    // otherwise kick off the autoscroll
+    // otherwise set the scroll container and kick off the autoscroll
+    scrollContainer =
+      (document.querySelector('.toolbar') as HTMLElement | null) ||
+      (document.querySelector('.sidebar') as HTMLElement | null) ||
+      window
     autoscrolling = true
-    scrollContainer = (document.querySelector('.sidebar') as HTMLElement | null) || window
     scroll()
   }
 
@@ -135,29 +145,43 @@ const initEvents = (store: Store<State, any>) => {
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
 
+    if (state.dragShortcut) {
+      const x = e.touches[0].clientX
+      if (x < 50) {
+        const rate = 1 + (50 - x) / 25
+        autoscroll.start({ x: -rate })
+      }
+      // start scrolling down when within 100px of the right edge of the screen
+      else if (x > window.innerWidth - 50) {
+        const rate = 1 + (x - window.innerWidth + 50) / 25
+        autoscroll.start({ x: rate })
+      }
+      // stop scrolling when not near the edge of the screen
+      else {
+        autoscroll.stop()
+      }
+    }
     // do not auto scroll when hovering over QuickDrop component
-    if (
-      !state.dragInProgress ||
-      state.alert?.alertType === AlertType.DeleteDropHint ||
-      state.alert?.alertType === AlertType.CopyOneDropHint
-    )
-      return
+    else if (
+      state.dragInProgress &&
+      !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
+    ) {
+      const y = e.touches[0].clientY
 
-    const y = e.touches[0].clientY
-
-    // start scrolling up when within 100px of the top edge of the screen
-    if (y < 120) {
-      const rate = 1 + (120 - y) / 60
-      autoscroll.start(-rate)
-    }
-    // start scrolling down when within 100px of the bottom edge of the screen
-    else if (y > window.innerHeight - 100) {
-      const rate = 1 + (y - window.innerHeight + 100) / 50
-      autoscroll.start(rate)
-    }
-    // stop scrolling when not near the edge of the screen
-    else {
-      autoscroll.stop()
+      // start scrolling up when within 120px of the top edge of the screen
+      if (y < 120) {
+        const rate = 1 + (120 - y) / 60
+        autoscroll.start({ y: -rate })
+      }
+      // start scrolling down when within 100px of the bottom edge of the screen
+      else if (y > window.innerHeight - 100) {
+        const rate = 1 + (y - window.innerHeight + 100) / 50
+        autoscroll.start({ y: rate })
+      }
+      // stop scrolling when not near the edge of the screen
+      else {
+        autoscroll.stop()
+      }
     }
   }
 

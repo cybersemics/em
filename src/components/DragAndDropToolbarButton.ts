@@ -8,10 +8,10 @@ import {
   DropTargetMonitor,
 } from 'react-dnd'
 import DragToolbarItem from '../@types/DragToolbarItem'
-import alert from '../action-creators/alert'
+import dragShortcut from '../action-creators/dragShortcut'
 import importText from '../action-creators/importText'
 import moveThought from '../action-creators/moveThought'
-import { AlertText, AlertType, EM_TOKEN, NOOP, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { EM_TOKEN, NOOP, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -34,27 +34,14 @@ const canDrag = (props: ToolbarButtonProps) => {
 /** Handles drag start. */
 const beginDrag = ({ shortcutId }: ToolbarButtonProps): DragToolbarItem => {
   // const offset = selection.offset()
-  store.dispatch(
-    alert(AlertText.DragAndDropToolbar, { alertType: AlertType.DragAndDropToolbarHint, showCloseLink: false }),
-  )
-  //   dragInProgress({
-  //     value: true,
-  //     draggingThought: simplePath,
-  //     sourceZone: DragThoughtZone.Thoughts,
-  //     ...(offset != null ? { offset } : null),
-  //   }),
-  // )
-  // return { path, simplePath, zone: DragThoughtZone.Thoughts }
+  store.dispatch(dragShortcut(shortcutId))
   const shortcut = shortcutById(shortcutId)
-  if (!shortcut) {
-    throw new Error('Missing shortcut: ' + shortcutId)
-  }
   return { shortcut }
 }
 
 /** Handles drag end. */
 const endDrag = () => {
-  store.dispatch(alert(null, { alertType: AlertType.DragAndDropToolbarHint }))
+  store.dispatch(dragShortcut(null))
   // setTimeout(() => {
   //   store.dispatch([
   //     dragInProgress({ value: false }),

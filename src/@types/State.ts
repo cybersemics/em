@@ -8,6 +8,7 @@ import Path from './Path'
 import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import Shortcut from './Shortcut'
+import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
@@ -38,6 +39,8 @@ interface State {
   // SimplePath of thought with drag hold activated
   draggedSimplePath?: SimplePath
   draggingThought?: SimplePath
+  // Dragging a shortcut or toolbar button in the customizeToolbar modal
+  dragShortcut?: ShortcutId | null
   // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
   // set to true while the user is dragging a thought
