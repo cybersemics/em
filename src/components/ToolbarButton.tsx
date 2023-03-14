@@ -20,8 +20,9 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapUp?: (e: React.MouseEvent | React.TouchEvent) => void
+  onTapCancel?: (e: React.TouchEvent) => void
   onTapDown?: (e: React.MouseEvent | React.TouchEvent) => void
+  onTapUp?: (e: React.MouseEvent | React.TouchEvent) => void
   selected?: boolean
   shortcutId: ShortcutId
 }
@@ -37,8 +38,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   isHovering,
   isPressing,
   lastScrollLeft,
-  onTapUp,
+  onTapCancel,
   onTapDown,
+  onTapUp,
   selected,
   shortcutId,
 }) => {
@@ -136,7 +138,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
-        {...fastClick(tapUp, tapDown)}
+        {...fastClick(tapUp, tapDown, onTapCancel)}
       >
         {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
 

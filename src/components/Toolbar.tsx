@@ -156,7 +156,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   }}
                   onTapUp={() => {
                     setPressingToolbarId(null)
-                    onSelect?.(shortcutById(id)!)
+                    onSelect?.(shortcutById(id))
+                  }}
+                  onTapCancel={() => {
+                    setPressingToolbarId(null)
                   }}
                   selected={selected === id}
                   shortcutId={id}

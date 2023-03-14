@@ -9,7 +9,15 @@ let touchStart: { x: number; y: number } | null = null
 
 /** A faster alternative to onClick or checkbox onChange. Returns onTouchStart/Move/End or onMouseUp handler depending on if touch is supported. Cancelled on scroll (with 15px error tolerance). */
 const fastClick = isTouch
-  ? (tapUp: (e: React.TouchEvent) => void, tapDown?: (e: React.TouchEvent) => void) => ({
+  ? (
+      // triggered on mouseup or touchend
+      // cancelled if the user scroll or drags
+      tapUp: (e: React.TouchEvent) => void,
+      // triggered on mousedown or touchstart
+      tapDown?: (e: React.TouchEvent) => void,
+      // triggered when tapUp is cancelled due to scrolling or dragging
+      tapCancel?: (e: React.TouchEvent) => void,
+    ) => ({
       onTouchStart: (e: React.TouchEvent) => {
         if (e.touches.length > 0) {
           const x = e.touches[0].clientX
@@ -40,7 +48,9 @@ const fastClick = isTouch
           }
         }
 
-        if (!cancel) {
+        if (cancel) {
+          tapCancel?.(e)
+        } else {
           tapUp(e)
         }
 
