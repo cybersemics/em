@@ -355,6 +355,10 @@ const About = () => {
           Metaprogramming icon by <a href='https://thenounproject.com/icon/inspect-element-4199164/'>Ary Prasetyo</a>{' '}
           from the <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Strikethrough icon by <a href='https://thenounproject.com/icon/strikethrough-1107500/'>Ary Prasetyo</a> from
+          the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
     </div>
   )
