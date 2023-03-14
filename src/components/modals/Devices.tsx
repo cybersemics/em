@@ -9,7 +9,6 @@ import Role from '../../@types/Role'
 import ShareType from '../../@types/Share'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
-import { isTouch } from '../../browser'
 import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
 import permissionsServer from '../../data-providers/yjs/permissionsServer'
 import * as selection from '../../device/selection'
@@ -22,7 +21,6 @@ import { ActionButton } from './../ActionButton'
 import ContentEditable, { ContentEditableEvent } from './../ContentEditable'
 import CopyClipboard from './../icons/CopyClipboard'
 import PencilIcon from './../icons/PencilIcon'
-import ShareIcon from './../icons/ShareIcon'
 import ModalComponent from './ModalComponent'
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
@@ -417,7 +415,7 @@ const ShareDetail = React.memo(
                 cursor: 'pointer',
               }}
             >
-              {isTouch ? <ShareIcon size={22} /> : <CopyClipboard size={22} />}
+              <CopyClipboard size={22} />
             </span>
           </div>
         )}
