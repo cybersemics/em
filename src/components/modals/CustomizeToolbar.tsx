@@ -75,20 +75,21 @@ const DropToRemoveFromToolbar = ((component: FC<{ isHovering?: boolean } & Retur
     if (!dragShortcut) return
 
     // get the screen-relative y coordinate of the toolbar
+    // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
     const toolbarTop = document.querySelector('.toolbar')?.getBoundingClientRect().top || 0
 
-    if (isHovering) {
+    if (toolbarTop < 50) {
+      dispatch(alert(null))
+    } else if (isHovering) {
       dispatch(
         alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
           alertType: AlertType.ToolbarButtonRemoveHint,
           showCloseLink: false,
         }),
       )
-    }
-    // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
-    else {
+    } else {
       dispatch(
-        alert(toolbarTop > 50 ? AlertText.DragAndDropToolbar : null, {
+        alert(AlertText.DragAndDropToolbar, {
           alertType: AlertType.DragAndDropToolbarHint,
           showCloseLink: false,
         }),
