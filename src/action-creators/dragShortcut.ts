@@ -7,6 +7,8 @@ import alert from './alert'
 const dragShortcutActionCreator =
   (shortcutId: ShortcutId | null): Thunk =>
   (dispatch, getState) => {
+    const state = getState()
+    const alertType = state.alert?.alertType
     // get the screen-relative y coordinate of the toolbar
     const toolbarTop = (shortcutId && document.querySelector('.toolbar')?.getBoundingClientRect().top) || 0
 
@@ -17,7 +19,11 @@ const dragShortcutActionCreator =
             alertType: AlertType.DragAndDropToolbarHint,
             showCloseLink: false,
           })
-        : alert(null),
+        : alertType === AlertType.ToolbarButtonRemoveHint ||
+          alertType === AlertType.DragAndDropToolbarAdd ||
+          alertType === AlertType.DragAndDropToolbarHint
+        ? alert(null)
+        : null,
       { type: 'dragShortcut', shortcutId },
     ])
   }

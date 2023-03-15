@@ -424,6 +424,7 @@ export const INITIAL_SETTING_KEY = 'EM_INITIAL_SETTING'
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
   DragAndDropToolbar: 'Drag and drop to rearrange toolbar',
+  DragAndDropToolbarAdd: 'Drag and drop to add to toolbar',
   ReorderFavorites: 'Drag and drop to rearrange favorites',
 }
 
@@ -440,6 +441,8 @@ export enum AlertType {
   DragAndDropHint = 'DragAndDropHint',
   // shown when dragging a toolbar button
   DragAndDropToolbarHint = 'DragAndDropToolbarHint',
+  // shown when dragging a toolbar button from the shortcut table
+  DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture

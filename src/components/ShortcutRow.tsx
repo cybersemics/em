@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { DragSource, DragSourceConnector, DragSourceMonitor } from 'react-dnd'
 import { useSelector } from 'react-redux'
+import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
@@ -24,17 +25,20 @@ type DraggableShortcutRowProps = ShortcutRowProps & ReturnType<typeof dragCollec
 const canDrag = (props: ShortcutRowProps) => !!props.shortcut && !!props.customize
 
 /** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: NOOP,
-  isDragging: monitor.isDragging(),
-})
+const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => {
+  return {
+    dragSource: connect.dragSource(),
+    dragPreview: NOOP,
+    isDragging: monitor.isDragging(),
+    zone: monitor.getItem()?.zone,
+  }
+}
 
 /** Handles drag start. */
 const beginDrag = (props: ShortcutRowProps): DragToolbarItem => {
   const shortcut = props.shortcut!
   store.dispatch(dragShortcut(shortcut.id))
-  return { shortcut: shortcut }
+  return { shortcut: shortcut, zone: DragShortcutZone.Remove }
 }
 
 /** Handles drag end. */

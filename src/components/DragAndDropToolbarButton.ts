@@ -35,7 +35,7 @@ const beginDrag = ({ shortcutId }: ToolbarButtonProps): DragToolbarItem => {
   // const offset = selection.offset()
   store.dispatch(dragShortcut(shortcutId))
   const shortcut = shortcutById(shortcutId)
-  return { shortcut }
+  return { shortcut, zone: DragShortcutZone.Toolbar }
 }
 
 /** Handles drag end. */
