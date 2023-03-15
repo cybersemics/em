@@ -1,12 +1,58 @@
 import classNames from 'classnames'
 import React from 'react'
-import ReactHamburger from 'react-hamburger-menu'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
 import toggleSidebar from '../action-creators/toggleSidebar'
-import { NOOP } from '../constants'
 import isTutorial from '../selectors/isTutorial'
+
+/** Basic menu. */
+function Menu(props: { className?: string; width?: number; height?: number; strokeWidth?: number }) {
+  const width = `${props.width || 36}px`
+  const height = `${props.height || 30}px`
+  const halfHeight = `${parseInt(height.replace('px', '')) / 2}px`
+  const strokeWidth = props.strokeWidth || 2
+  const halfStrokeWidth = `-${strokeWidth / 2}px`
+
+  /** Encodes translate3d. */
+  const getTransformValue = (defaultPos: string | number, rotateVal: number) =>
+    `translate3d(0,${defaultPos},0) rotate(0)`
+
+  const styles: Index<React.CSSProperties> = {
+    container: {
+      width,
+      height,
+      position: 'relative',
+    },
+    lineBase: {
+      display: 'block',
+      height: `${strokeWidth}px`,
+      width: '100%',
+      position: 'absolute',
+    },
+    firstLine: {
+      transform: getTransformValue(0, 45),
+      marginTop: halfStrokeWidth,
+    },
+    secondLine: {
+      top: halfHeight,
+      marginTop: halfStrokeWidth,
+    },
+    thirdLine: {
+      transform: getTransformValue(height, -45),
+      marginTop: halfStrokeWidth,
+    },
+  }
+
+  return (
+    <div style={styles.container} className={props.className}>
+      <span style={{ ...styles.lineBase, ...styles.firstLine }}></span>
+      <span style={{ ...styles.lineBase, ...styles.secondLine }}></span>
+      <span style={{ ...styles.lineBase, ...styles.thirdLine }}></span>
+    </div>
+  )
+}
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
@@ -42,17 +88,7 @@ const HamburgerMenu = () => {
           dispatch(toggleSidebar({}))
         }}
       >
-        <ReactHamburger
-          isOpen={showSidebar}
-          width={width}
-          height={width * 0.7}
-          strokeWidth={fontSize / 20}
-          menuClicked={NOOP}
-          rotate={0}
-          color=' ' // passing blank, non-empty string to avoid ReactHamburger to pass deault styles to the menu UI (for applying theme)
-          borderRadius={0}
-          animationDuration={0.8}
-        />
+        <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>
     </CSSTransition>
   )
