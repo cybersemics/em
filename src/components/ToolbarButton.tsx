@@ -55,7 +55,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const isDraggingAny = useSelector((state: State) => state.alert?.alertType === AlertType.DragAndDropToolbarHint)
+  const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
   const dropToRemove = useSelector(
