@@ -17,6 +17,8 @@ const fastClick = isTouch
       tapDown?: (e: React.TouchEvent) => void,
       // triggered when tapUp is cancelled due to scrolling or dragging
       tapCancel?: (e: React.TouchEvent) => void,
+      // triggered with touchMove
+      touchMove?: (e: React.TouchEvent) => void,
     ) => ({
       onTouchStart: (e: React.TouchEvent) => {
         if (e.touches.length > 0) {
@@ -29,6 +31,7 @@ const fastClick = isTouch
       },
       // cancel tap if touchmove exceeds threshold (e.g. with scrolling or dragging)
       onTouchMove: _.throttle((e: React.TouchEvent) => {
+        touchMove?.(e)
         if (touchStart && e.changedTouches.length > 0) {
           const x = e.changedTouches[0].clientX
           const y = e.changedTouches[0].clientY

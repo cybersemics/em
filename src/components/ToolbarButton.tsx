@@ -69,6 +69,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
+  const longPressTouchMove = longPress.props.onTouchMove
 
   // TODO: type svg correctly
   const SVG = svg as React.FC<Icon>
@@ -120,6 +121,19 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     [longPressTapDown, customize, isButtonExecutable, disabled],
   )
 
+  const tapCancel = useCallback(
+    (e: React.TouchEvent) => {
+      if (!disabled) {
+        onTapCancel?.(e)
+      }
+    },
+
+    [longPressTouchMove],
+  )
+
+  /** Handles the tapCancel. */
+  const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
+
   return dropTarget(
     dragSource(
       <div
@@ -151,11 +165,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
-        {...fastClick(tapUp, tapDown, onTapCancel)}
+        {...fastClick(tapUp, tapDown, tapCancel, touchMove)}
       >
         {
           // selected top dash
-          selected ? <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div> : null
+          selected && !dropToRemove ? (
+            <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div>
+          ) : null
         }
 
         {
