@@ -9,10 +9,10 @@ import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import deleteThought from '../../action-creators/deleteThought'
 import dragShortcutZone from '../../action-creators/dragShortcutZone'
+import initUserToolbar from '../../action-creators/initUserToolbar'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
-import { AlertText, AlertType, EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../../constants'
-import { importText } from '../../reducers'
+import { AlertText, AlertType, EM_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import findDescendant from '../../selectors/findDescendant'
 import { getChildrenRanked } from '../../selectors/getChildren'
@@ -33,20 +33,8 @@ const drop = (props: unknown, monitor: DropTargetMonitor) => {
   const from = shortcut
 
   // initialize EM/Settings/Toolbar/Visible with default shortcuts
+  store.dispatch(initUserToolbar())
   const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-  if (!userToolbarThoughtId) {
-    store.dispatch(
-      importText({
-        path: [EM_TOKEN],
-        text: `
-          - Settings
-            - Toolbar
-${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).join('\n')}
-        `,
-        preventSetCursor: true,
-      }),
-    )
-  }
   const userShortcutChildren = getChildrenRanked(store.getState(), userToolbarThoughtId)
   const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
 
