@@ -23,7 +23,7 @@ import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
 
-/** Handles dropping a toolbar button on a DropTarget. */
+/** Handles dropping a toolbar button on DropToRemoveFromToolbar. */
 const drop = (props: any, monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { shortcut } = monitor.getItem()
@@ -67,7 +67,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
-const DropToRemoveFromToolbar = ((component: FC<{ isHovering?: boolean } & ReturnType<typeof dropCollect>>) =>
+const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>) =>
   DropTarget('toolbar-button', { drop }, dropCollect)(component))(({ dropTarget, isHovering, children }) => {
   const dispatch = useDispatch()
   const dragShortcut = useSelector((state: State) => state.dragShortcut)
