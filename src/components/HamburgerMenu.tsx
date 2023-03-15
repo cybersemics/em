@@ -7,7 +7,6 @@ import State from '../@types/State'
 import toggleSidebar from '../action-creators/toggleSidebar'
 import { NOOP } from '../constants'
 import isTutorial from '../selectors/isTutorial'
-import fastClick from '../util/fastClick'
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
@@ -39,9 +38,9 @@ const HamburgerMenu = () => {
           transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
           top: 0,
         }}
-        {...fastClick(() => {
+        onClick={() => {
           dispatch(toggleSidebar({}))
-        })}
+        }}
       >
         <ReactHamburger
           isOpen={showSidebar}
