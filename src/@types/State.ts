@@ -1,6 +1,7 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
 import Context from './Context'
+import DragShortcutZone from './DragShortcutZone'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -41,6 +42,8 @@ interface State {
   draggingThought?: SimplePath
   // Dragging a shortcut or toolbar button in the customizeToolbar modal
   dragShortcut?: ShortcutId | null
+  // type of toolbar-sbutton drop target being hovered over
+  dragShortcutZone?: DragShortcutZone
   // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
   // set to true while the user is dragging a thought
@@ -62,7 +65,7 @@ interface State {
   // Thought currently being hovered over.
   // Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverDown/Top, and the visibility of drop-hover elements.
   hoveringPath?: Path
-  // type of drop target being hovered over
+  // type of thought drop target being hovered over
   hoverZone?: DropThoughtZone
   invalidState: boolean
   isLoading: boolean

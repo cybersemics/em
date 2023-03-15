@@ -2,10 +2,12 @@ import React, { FC, useEffect, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import DragShortcutZone from '../../@types/DragShortcutZone'
 import Shortcut from '../../@types/Shortcut'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import deleteThought from '../../action-creators/deleteThought'
+import dragShortcutZone from '../../action-creators/dragShortcutZone'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType, EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../../constants'
@@ -71,8 +73,11 @@ const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>)
   DropTarget('toolbar-button', { drop }, dropCollect)(component))(({ dropTarget, isHovering, children }) => {
   const dispatch = useDispatch()
   const dragShortcut = useSelector((state: State) => state.dragShortcut)
+
   useEffect(() => {
     if (!dragShortcut) return
+
+    dispatch(dragShortcutZone(isHovering ? DragShortcutZone.Remove : DragShortcutZone.Toolbar))
 
     // get the screen-relative y coordinate of the toolbar
     // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
@@ -81,21 +86,22 @@ const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>)
     if (toolbarTop < 50) {
       dispatch(alert(null))
     } else if (isHovering) {
-      dispatch(
+      dispatch([
         alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
           alertType: AlertType.ToolbarButtonRemoveHint,
           showCloseLink: false,
         }),
-      )
+      ])
     } else {
-      dispatch(
+      dispatch([
         alert(AlertText.DragAndDropToolbar, {
           alertType: AlertType.DragAndDropToolbarHint,
           showCloseLink: false,
         }),
-      )
+      ])
     }
   }, [dragShortcut, isHovering])
+
   return dropTarget(<div>{children}</div>)
 })
 

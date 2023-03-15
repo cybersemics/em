@@ -7,6 +7,7 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
+import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import dragShortcut from '../action-creators/dragShortcut'
 import importText from '../action-creators/importText'
@@ -105,10 +106,8 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 /** Collects props from the DropTarget. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
+  dropZone: DragShortcutZone.Toolbar,
   isHovering: monitor.isOver({ shallow: true }),
-  // is being hovered over current toolbar-button irrespective of whether the given item is droppable
-  isBeingHoveredOver: monitor.isOver({ shallow: true }),
-  isDeepHovering: monitor.isOver(),
 })
 
 /** A draggable and droppable toolbar button. */

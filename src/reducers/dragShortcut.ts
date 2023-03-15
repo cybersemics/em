@@ -6,6 +6,7 @@ import State from '../@types/State'
 const dragShortcut = (state: State, { shortcutId }: { shortcutId: ShortcutId | null }) => ({
   ...state,
   dragShortcut: shortcutId,
+  ...(!shortcutId ? { dragShortcutZone: null } : null),
 })
 
 export default _.curryRight(dragShortcut)

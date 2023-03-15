@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import DragToolbarZone from '../@types/DragToolbarZone'
+import DragShortcutZone from '../@types/DragShortcutZone'
 import Shortcut from '../@types/Shortcut'
 import alert from '../action-creators/alert'
 import toolbarLongPress from '../action-creators/toolbarLongPress'
@@ -17,7 +17,7 @@ const useToolbarLongPress = ({
   disabled: boolean
   isDragging: boolean
   shortcut: Shortcut
-  sourceZone: DragToolbarZone
+  sourceZone: DragShortcutZone
 }) => {
   // Set .pressed so that user-select: none can be applied to disable long press to select on iOS. If user-select: none is added after touchstart, it does not prevent magnifying glass text selection (unresolved). -webkit-touch-callout does not help. It seems the only way to disable it fully is to preventDefault on touchstart. However, this would break navigation in edit mode.
   // See: https://stackoverflow.com/questions/923782/disable-the-text-highlighting-magnifier-on-touch-hold-on-mobile-safari-webkit

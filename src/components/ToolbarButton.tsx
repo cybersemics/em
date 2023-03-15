@@ -1,11 +1,10 @@
 import React, { FC, MutableRefObject, useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import DragToolbarZone from '../@types/DragToolbarZone'
+import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { AlertType } from '../constants'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
@@ -56,16 +55,15 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   }
 
   const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
+  const dragShortcutZone = useSelector((state: State) => state.dragShortcutZone)
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
-  const dropToRemove = useSelector(
-    (state: State) => isDragging && state.alert?.alertType === AlertType.ToolbarButtonRemoveHint,
-  )
+  const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
     shortcut,
-    sourceZone: DragToolbarZone.Toolbar,
+    sourceZone: DragShortcutZone.Toolbar,
   })
   const longPressTapUp = longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp']
   const longPressTapDown = longPress.props[isTouch ? 'onTouchStart' : 'onMouseDown']
@@ -185,7 +183,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
                 backgroundColor: colors.gray33,
                 position: 'absolute',
                 top: 9,
-                left: 0,
+                left: 2,
               }}
             />
           )
@@ -196,9 +194,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           (isHovering || dropToRemove) && (
             <div
               style={{
-                borderRight: dropToRemove ? `dashed 2px ${colors.gray}` : undefined,
+                borderRight: dropToRemove ? `dashed 1px ${colors.gray}` : undefined,
                 position: 'absolute',
-                top: '0.5em',
+                top: fontSize / 2 + 3,
                 left: dropToRemove ? 15 : -2,
                 // match the height of the inverted button
                 height: fontSize * 1.5,
