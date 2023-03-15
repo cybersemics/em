@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import React, { FC, useEffect, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
@@ -7,6 +8,7 @@ import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
+import closeModal from '../../action-creators/closeModal'
 import deleteThought from '../../action-creators/deleteThought'
 import dragShortcutZone from '../../action-creators/dragShortcutZone'
 import initUserToolbar from '../../action-creators/initUserToolbar'
@@ -20,7 +22,6 @@ import themeColors from '../../selectors/themeColors'
 import { shortcutById } from '../../shortcuts'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
-import { ActionButton } from '.././ActionButton'
 import ShortcutRow from './../ShortcutRow'
 import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
@@ -139,11 +140,6 @@ const ModalCustomizeToolbar: FC = () => {
       // omit title since we need to make room for the toolbar
       title=''
       className='popup'
-      actions={({ close }) => (
-        <div style={{ textAlign: 'center' }}>
-          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
-        </div>
-      )}
     >
       <h1 className='modal-title'>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
@@ -192,6 +188,43 @@ const ModalCustomizeToolbar: FC = () => {
       <DropToRemoveFromToolbar>
         <ShortcutTable customize />
       </DropToRemoveFromToolbar>
+
+      <p style={{ marginTop: '2em', marginBottom: '2em' }}>
+        &lt; <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))}>Back to Settings</a>
+      </p>
+
+      <div className='center'>
+        <a
+          {...fastClick(() => dispatch(closeModal()))}
+          className={classNames({
+            button: true,
+            'action-button': true,
+          })}
+          style={{
+            color: colors.bg,
+            marginBottom: '1em',
+            marginTop: '2em',
+          }}
+        >
+          Close
+        </a>
+
+        <div className='text-small' style={{ marginTop: '4em' }}>
+          <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+            Reset the toolbar to its factory settings. Your current toolbar customization will be permanently deleted.
+          </p>
+          <a
+            {...fastClick(() => {
+              if (window.confirm('Reset toolbar to factory settings?')) {
+                dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
+              }
+            })}
+            style={{ color: colors.red }}
+          >
+            Reset toolbar
+          </a>
+        </div>
+      </div>
     </ModalComponent>
   )
 }

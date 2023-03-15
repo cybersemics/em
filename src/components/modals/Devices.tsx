@@ -436,7 +436,6 @@ const ShareDetail = React.memo(
             style={{
               color: colors.bg,
               fontSize,
-              lineHeight: 2,
               marginBottom: '1em',
             }}
           >
