@@ -18,8 +18,8 @@ const HomeLink = ({ color, size, style }: HomeLinkProps) => {
       <a
         tabIndex={-1}
         href='/'
-        {...fastClick(e => {
-          e.preventDefault()
+        onClick={e => e.preventDefault()}
+        {...fastClick(() => {
           dispatch(home())
         })}
       >
