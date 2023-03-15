@@ -381,7 +381,10 @@ const ModalManual = () => {
         <ManualMenu onSelect={setSection} />
       ) : (
         <span className='text-small'>
-          &lt; <a {...fastClick(back)}>Back</a>
+          &lt;{' '}
+          <a {...fastClick(back)} className='extend-tap'>
+            Back
+          </a>
         </span>
       )}
 
@@ -399,7 +402,10 @@ const ModalManual = () => {
         // TODO: Remove Section.Tutorials condition once it has more content.
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
-            &lt; <a {...fastClick(back)}>Back</a>
+            &lt;{' '}
+            <a {...fastClick(back)} className='extend-tap'>
+              Back
+            </a>
           </div>
         )
       }

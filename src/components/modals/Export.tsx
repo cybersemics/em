@@ -534,7 +534,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
         {exportContent !== null ? (
-          <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>
+          <a data-clipboard-text={exportContent} className='copy-clipboard-btn extend-tap'>
             Copy to clipboard
           </a>
         ) : (
@@ -546,7 +546,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
       <div className='advance-setting-wrapper'>
         <span>
           <a
-            className='advance-setting-link no-select'
+            className='advance-setting-link no-select extend-tap'
             {...fastClick(onAdvancedClick)}
             style={{ opacity: advancedSettings ? 1 : 0.5 }}
           >

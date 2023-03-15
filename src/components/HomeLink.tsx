@@ -23,7 +23,7 @@ const HomeLink = ({ color, size, style }: HomeLinkProps) => {
           dispatch(home())
         })}
       >
-        <HomeIcon fill={color} size={size} style={style} />
+        <HomeIcon className='extend-tap' fill={color} size={size} style={style} />
       </a>
     </span>
   )

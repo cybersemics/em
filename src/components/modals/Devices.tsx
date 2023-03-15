@@ -432,11 +432,12 @@ const ShareDetail = React.memo(
             className={classNames({
               button: true,
               'action-button': true,
+              'extend-tap': true,
             })}
             style={{
               color: colors.bg,
               fontSize,
-              marginBottom: '1em',
+              marginBottom: '1.5em',
             }}
           >
             Back
@@ -457,6 +458,7 @@ const ShareDetail = React.memo(
               permissionsServer.delete(accessToken, share)
               onBack()
             })}
+            className='extend-tap'
             style={{ color: colors.red }}
           >
             {isLastDevice ? 'Delete all thoughts' : 'Remove device'}

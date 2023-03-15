@@ -83,6 +83,10 @@ const ModalWelcome = () => {
                     endTutorial()
                     close()
                   })}
+                  style={{
+                    marginBottom: '-1em',
+                    paddingBottom: '1em',
+                  }}
                 >
                   This ain’t my first rodeo. Skip it.
                 </a>

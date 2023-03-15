@@ -143,7 +143,10 @@ const ModalCustomizeToolbar: FC = () => {
     >
       <h1 className='modal-title'>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
-        &lt; <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))}>Back to Settings</a>
+        &lt;{' '}
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+          Back to Settings
+        </a>
       </p>
 
       <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
@@ -190,7 +193,10 @@ const ModalCustomizeToolbar: FC = () => {
       </DropToRemoveFromToolbar>
 
       <p style={{ marginTop: '2em', marginBottom: '2em' }}>
-        &lt; <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))}>Back to Settings</a>
+        &lt;{' '}
+        <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
+          Back to Settings
+        </a>
       </p>
 
       <div className='center'>
@@ -219,7 +225,10 @@ const ModalCustomizeToolbar: FC = () => {
                 dispatch([initUserToolbar({ force: true }), alert('Toolbar reset', { clearDelay: 8000 })])
               }
             })}
-            style={{ color: colors.red }}
+            className='extend-tap'
+            style={{
+              color: colors.red,
+            }}
           >
             Reset toolbar
           </a>

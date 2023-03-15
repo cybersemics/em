@@ -63,7 +63,7 @@ const BreadCrumb: FC<{
         ) : label === HOME_TOKEN ? (
           <HomeLink color='gray' size={16} />
         ) : (
-          <Link simplePath={simplePath} label={label} />
+          <Link className='extend-tap-small' simplePath={simplePath} label={label} />
         ))}
       {!isDeleting && <Superscript simplePath={simplePath} />}
     </span>

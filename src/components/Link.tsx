@@ -18,13 +18,14 @@ import strip from '../util/strip'
 
 interface LinkProps {
   charLimit?: number
+  className?: string
   label?: string
   simplePath: SimplePath
   style?: React.CSSProperties
 }
 
 /** Renders a link to a thought. */
-const Link = React.memo(({ simplePath, label, charLimit = 32, style }: LinkProps) => {
+const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
   const value = useSelector((state: State) => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
@@ -33,7 +34,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style }: LinkProps
   return (
     <a
       tabIndex={-1}
-      className='link'
+      className={`link ${className}`}
       {...fastClick(e => {
         // eslint-disable-line react/no-danger-with-children
         e.preventDefault()

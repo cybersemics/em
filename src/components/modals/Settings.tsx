@@ -58,7 +58,10 @@ const ModalSettings = () => {
     >
       <form>
         <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
-          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))}>Customize Toolbar</a> &gt;
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className='extend-tap'>
+            Customize Toolbar
+          </a>{' '}
+          &gt;
         </p>
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>

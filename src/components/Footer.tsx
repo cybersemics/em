@@ -61,7 +61,14 @@ const LinkDivider = () => <span className='footer-divider'> | </span>
 const ModalLink = ({ id, children }: { id: Modal; children: React.ReactNode }) => {
   const dispatch = useDispatch()
   return (
-    <a tabIndex={-1} {...fastClick(() => dispatch(showModal({ id })))} style={{ whiteSpace: 'nowrap' }}>
+    <a
+      tabIndex={-1}
+      {...fastClick(() => dispatch(showModal({ id })))}
+      className='extend-tap'
+      style={{
+        whiteSpace: 'nowrap',
+      }}
+    >
       {children}
     </a>
   )
