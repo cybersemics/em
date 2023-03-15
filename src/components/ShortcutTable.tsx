@@ -97,7 +97,7 @@ if (shortcutsUngrouped.length > 0) {
 }
 
 /** Renders a table of shortcuts. */
-const ShortcutTable = () => {
+const ShortcutTable = ({ customize }: { customize?: boolean }) => {
   return (
     <div style={{ textAlign: 'left' }}>
       {groups.map(group => {
@@ -114,7 +114,7 @@ const ShortcutTable = () => {
             <table className='shortcuts'>
               <tbody>
                 {shortcuts.map(shortcut => (
-                  <ShortcutRow key={shortcut.id} shortcut={shortcut} />
+                  <ShortcutRow customize={customize} key={shortcut.id} shortcut={shortcut} />
                 ))}
               </tbody>
             </table>

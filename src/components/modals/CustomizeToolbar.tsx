@@ -51,7 +51,9 @@ ${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).j
 
   // user shortcuts must exist since it was created above
   const userShortcutsPath = contextToPath(store.getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-  const fromThoughtId = userShortcutChildren[userShortcutIds.indexOf(from.id)].id
+  const fromIndex = userShortcutIds.indexOf(from.id)
+  if (fromIndex === -1) return
+  const fromThoughtId = userShortcutChildren[fromIndex].id
 
   store.dispatch([
     alert(`Removed ${shortcut.label} from toolbar`, { alertType: AlertType.ToolbarButtonRemoved, clearDelay: 5000 }),
@@ -172,7 +174,7 @@ const ModalCustomizeToolbar: FC = () => {
       </CSSTransition>
 
       <DropToRemoveFromToolbar>
-        <ShortcutTable />
+        <ShortcutTable customize />
       </DropToRemoveFromToolbar>
     </ModalComponent>
   )

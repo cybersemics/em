@@ -12,6 +12,7 @@ import DragToolbarItem from '../@types/DragToolbarItem'
 import dragShortcut from '../action-creators/dragShortcut'
 import importText from '../action-creators/importText'
 import moveThought from '../action-creators/moveThought'
+import newThought from '../action-creators/newThought'
 import { EM_TOKEN, NOOP, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
@@ -83,17 +84,36 @@ ${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).j
 
   // user shortcuts must exist since it was created above
   const userShortcutsPath = contextToPath(store.getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-  const fromThoughtId = userShortcutChildren[userShortcutIds.indexOf(from.id)].id
-  const toThoughtId = userShortcutChildren[userShortcutIds.indexOf(to.id)].id
-  const fromPath = appendToPath(userShortcutsPath, fromThoughtId)
+  const fromIndex = userShortcutIds.indexOf(from.id)
+  const toIndex = userShortcutIds.indexOf(to.id)
+  if (toIndex === -1) {
+    console.error('Missing toIndex for', to.label)
+    return
+  }
+
+  const toThoughtId = userShortcutChildren[toIndex].id
   const toPath = appendToPath(userShortcutsPath, toThoughtId)
-  store.dispatch(
-    moveThought({
-      oldPath: fromPath,
-      newPath: fromPath,
-      newRank: getRankBefore(store.getState(), toPath),
-    }),
-  )
+
+  if (fromIndex === -1) {
+    store.dispatch(
+      newThought({
+        value: from.id,
+        at: toPath,
+        insertBefore: true,
+        preventSetCursor: true,
+      }),
+    )
+  } else {
+    const fromThoughtId = userShortcutChildren[fromIndex].id
+    const fromPath = appendToPath(userShortcutsPath, fromThoughtId)
+    store.dispatch(
+      moveThought({
+        oldPath: fromPath,
+        newPath: fromPath,
+        newRank: getRankBefore(store.getState(), toPath),
+      }),
+    )
+  }
 }
 
 /** Collects props from the DragSource. */
