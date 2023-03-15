@@ -15,9 +15,8 @@ import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
-import { AlertType, EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import findDescendant from '../selectors/findDescendant'
-import { getChildrenRanked } from '../selectors/getChildren'
+import { AlertType, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
@@ -94,14 +93,11 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
    * Render
    **********************************************************************/
 
-  // fallback to defaults if user does not have Settings defined
-  // const shortcutIds = TOOLBAR_DEFAULT_SHORTCUTS
+  // custom user toolbar
+  // fall back to defaults if user does not have Settings defined
   const shortcutIds = useSelector((state: State) => {
-    const userShortcutsThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-    const userShortcutIds = (userShortcutsThoughtId ? getChildrenRanked(state, userShortcutsThoughtId) : [])
-      .map(subthought => subthought.value)
-      .filter(shortcutIdString => !!shortcutById(shortcutIdString as ShortcutId)) as ShortcutId[]
-    return userShortcutIds.length > 0 ? userShortcutIds : TOOLBAR_DEFAULT_SHORTCUTS
+    const userShortcutIds = getUserToolbar(state)
+    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)
 
   return (

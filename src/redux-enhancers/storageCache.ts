@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
 import { getStateSetting } from '../selectors/getSetting'
+import getUserToolbar from '../selectors/getUserToolbar'
 import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 
@@ -21,6 +22,7 @@ const decoders: Record<StorageCacheKey, (s: string | null) => any> = {
   theme: s => s || 'Dark',
   tutorialComplete: s => s === 'true',
   tutorialStep: s => +(s || 1),
+  userToolbar: s => (s ? s.split(',') : undefined),
 }
 
 // functions to parse storage cache keys from state
@@ -29,14 +31,16 @@ const parsers: Record<StorageCacheKey, (s: string | null) => any> = {
   theme: s => s || 'Dark',
   tutorialComplete: s => s === 'Off',
   tutorialStep: s => +(s || 1),
+  userToolbar: s => (s ? s.split(',') : undefined),
 }
 
 // define the allowable cache keys and their selectors
-// selectors should return undefined if the thought is not loaded
+// selectors should return a string that can be parsed by its respective parser, or undefined if the thought is not loaded
 const selectors: Record<StorageCacheKey, Selector> = {
   theme: state => getStateSetting(state, 'Theme'),
   tutorialComplete: state => getStateSetting(state, 'Tutorial'),
   tutorialStep: state => getStateSetting(state, 'Tutorial Step'),
+  userToolbar: state => getUserToolbar(state)?.join(','),
 }
 
 // load the initial cache synchronously from local storage

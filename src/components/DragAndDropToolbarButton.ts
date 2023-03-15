@@ -74,8 +74,8 @@ const drop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
   const to = shortcutById(props.shortcutId)!
 
   // initialize EM/Settings/Toolbar/Visible with default shortcuts
-  const userShortcutsThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-  if (!userShortcutsThoughtId) {
+  const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
+  if (!userToolbarThoughtId) {
     store.dispatch(
       importText({
         path: [EM_TOKEN],
@@ -88,7 +88,7 @@ ${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).j
       }),
     )
   }
-  const userShortcutChildren = getChildrenRanked(store.getState(), userShortcutsThoughtId)
+  const userShortcutChildren = getChildrenRanked(store.getState(), userToolbarThoughtId)
   const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
 
   // user shortcuts must exist since it was created above

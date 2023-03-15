@@ -114,6 +114,7 @@ interface State {
     theme?: 'Dark' | 'Light'
     tutorialComplete?: boolean
     tutorialStep?: number
+    userToolbar?: ShortcutId[]
   }
   thoughts: ThoughtIndices
   // shortcut of a toolbar button that is being long pressed in the customize modal
