@@ -26,10 +26,7 @@ export type DraggableToolbarButtonProps = ToolbarButtonProps &
   ReturnType<typeof dropCollect>
 
 /** Returns true if the toolbar-button can be dragged. */
-const canDrag = (props: ToolbarButtonProps) => {
-  const state = store.getState()
-  return state.showModal === 'customizeToolbar'
-}
+const canDrag = (props: ToolbarButtonProps) => !!props.customize
 
 /** Handles drag start. */
 const beginDrag = ({ shortcutId }: ToolbarButtonProps): DragToolbarItem => {
@@ -53,14 +50,6 @@ const endDrag = () => {
   //     },
   //   ])
   // })
-}
-
-/** Returns true if the ThoughtContainer can be dropped at the given DropTarget. */
-const canDrop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
-  const { shortcut }: DragToolbarItem = monitor.getItem()
-
-  // TODO
-  return !!shortcut
 }
 
 /** Handles dropping a toolbar button on a DropTarget. */
@@ -116,7 +105,7 @@ const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) =
 /** Collects props from the DropTarget. */
 const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
   dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
+  isHovering: monitor.isOver({ shallow: true }),
   // is being hovered over current toolbar-button irrespective of whether the given item is droppable
   isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
@@ -128,6 +117,6 @@ const DragAndDropToolbarButton = (toolbarButton: FC<DraggableToolbarButtonProps>
     'toolbar-button',
     { canDrag, beginDrag, endDrag },
     dragCollect,
-  )(DropTarget('toolbar-button', { canDrop, drop }, dropCollect)(toolbarButton))
+  )(DropTarget('toolbar-button', { drop }, dropCollect)(toolbarButton))
 
 export default DragAndDropToolbarButton

@@ -58,6 +58,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const isDraggingAny = useSelector((state: State) => state.alert?.alertType === AlertType.DragAndDropToolbarHint)
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
+  const dropToRemove = useSelector((state: State) => state.alert?.alertType === AlertType.ToolbarButtonRemoveHint)
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
@@ -150,13 +151,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
               style={{
                 width: fontSize + 15,
                 height: fontSize + 15,
-                backgroundColor: colors.fg,
+                border: dropToRemove ? `dashed 1px ${colors.gray66}` : undefined,
+                backgroundColor: dropToRemove ? 'transparent' : colors.fg,
                 position: 'absolute',
-                zIndex: -1,
                 top: 9,
                 left: 2,
               }}
-            ></div>
+            />
           )
         }
         {
@@ -182,7 +183,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
             position: 'relative',
             cursor: isButtonExecutable ? 'pointer' : 'default',
             fill:
-              longPress.isPressed || isDragging ? colors.bg : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
+              longPress.isPressed || isDragging
+                ? dropToRemove
+                  ? colors.gray
+                  : colors.bg
+                : isButtonExecutable && isButtonActive
+                ? colors.fg
+                : colors.gray,
             width: fontSize + 4,
             height: fontSize + 4,
           }}
