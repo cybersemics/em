@@ -5,7 +5,7 @@ import { CSSTransition } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
 import toggleSidebar from '../action-creators/toggleSidebar'
-import isTutorial from '../selectors/isTutorial'
+import fastClick from '../util/fastClick'
 
 /** Basic menu. */
 function Menu(props: { className?: string; width?: number; height?: number; strokeWidth?: number }) {
@@ -14,10 +14,6 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
   const halfHeight = `${parseInt(height.replace('px', '')) / 2}px`
   const strokeWidth = props.strokeWidth || 2
   const halfStrokeWidth = `-${strokeWidth / 2}px`
-
-  /** Encodes translate3d. */
-  const getTransformValue = (defaultPos: string | number, rotateVal: number) =>
-    `translate3d(0,${defaultPos},0) rotate(0)`
 
   const styles: Index<React.CSSProperties> = {
     container: {
@@ -32,7 +28,6 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
       position: 'absolute',
     },
     firstLine: {
-      transform: getTransformValue(0, 45),
       marginTop: halfStrokeWidth,
     },
     secondLine: {
@@ -40,8 +35,7 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
       marginTop: halfStrokeWidth,
     },
     thirdLine: {
-      transform: getTransformValue(height, -45),
-      marginTop: halfStrokeWidth,
+      marginTop: height,
     },
   }
 
@@ -56,10 +50,6 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
-  const showModal = useSelector((state: State) => state.showModal)
-  const tutorial = useSelector(isTutorial)
-  const error = useSelector((state: State) => state.error)
-  const showSidebar = useSelector((state: State) => state.showSidebar)
   const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const dispatch = useDispatch()
   const fontSize = useSelector<State, number>((state: State) => state.fontSize)
@@ -73,20 +63,21 @@ const HamburgerMenu = () => {
         aria-label='menu'
         className={classNames({
           'hamburger-menu': true,
-          // z-index of the wrapper is increased used to prevent sidebar swipeWidth component blocking the click events.
-          [showSidebar || tutorial || error || showModal ? 'z-index-hide' : 'z-index-hamburger-menu']: true,
+          'z-index-hamburger-menu': true,
         })}
         style={{
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
-          // transisiton is used on z-index to only show up the hamburger menu after sidebar has properly closed.
-          transition: showSidebar || tutorial || error || showModal ? '' : 'z-index 800ms linear',
           top: 0,
         }}
-        onClick={() => {
-          dispatch(toggleSidebar({}))
-        }}
+        {...fastClick(() => {
+          // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
+          // onClick does not have the same problem
+          setTimeout(() => {
+            dispatch(toggleSidebar({}))
+          }, 10)
+        })}
       >
         <Menu width={width} height={width * 0.7} strokeWidth={fontSize / 20} />
       </div>
