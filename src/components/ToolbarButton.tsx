@@ -58,7 +58,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const isDraggingAny = useSelector((state: State) => state.alert?.alertType === AlertType.DragAndDropToolbarHint)
   const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
   const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
-  const dropToRemove = useSelector((state: State) => state.alert?.alertType === AlertType.ToolbarButtonRemoveHint)
+  const dropToRemove = useSelector(
+    (state: State) => isDragging && state.alert?.alertType === AlertType.ToolbarButtonRemoveHint,
+  )
   const longPress = useToolbarLongPress({
     disabled: !customize,
     isDragging,
@@ -125,6 +127,16 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         aria-label={shortcut.label}
         key={shortcutId}
         style={{
+          // animate maxWidth to avoid having to know the exact width of the toolbar icon
+          // maxWidth just needs to exceed the width
+          maxWidth: fontSize * 2,
+          ...(dropToRemove
+            ? {
+                // offset 1toolbar-icon padding
+                marginLeft: -10,
+                maxWidth: 10,
+              }
+            : null),
           // offset top to avoid changing container height
           // marginBottom: isPressing ? -10 : 0,
           // top: isButtonExecutable && isPressing ? 10 : 0,
@@ -133,7 +145,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'transform 200ms ease-out',
+          transition: 'transform 200ms ease-out, max-width 200ms ease-out, margin-left 200ms ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
@@ -146,13 +158,12 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         {
           // invert colors while long pressing or dragging
           // cannot wrap SVG and maintain proper height since SVG has top-padding
-          (longPress.isPressed || isDragging) && (
+          (longPress.isPressed || isDragging) && !dropToRemove && (
             <div
               style={{
                 width: fontSize + 15,
                 height: fontSize + 15,
-                border: dropToRemove ? `dashed 1px ${colors.gray66}` : undefined,
-                backgroundColor: dropToRemove ? 'transparent' : colors.fg,
+                backgroundColor: colors.fg,
                 position: 'absolute',
                 top: 9,
                 left: 2,
@@ -162,17 +173,18 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         }
         {
           // drop hover
-          isHovering && (
+          (isHovering || dropToRemove) && (
             <div
               style={{
-                borderRadius: 3,
+                borderRadius: dropToRemove ? 0 : 3,
+                borderRight: dropToRemove ? `dashed 2px ${colors.gray}` : undefined,
                 position: 'absolute',
                 top: '0.5em',
-                left: -2,
+                left: dropToRemove ? 15 : -2,
                 // match the height of the inverted button
                 height: '1.85em',
                 width: 3,
-                backgroundColor: colors.highlight,
+                backgroundColor: dropToRemove ? 'transparent' : colors.highlight,
               }}
             />
           )
@@ -184,14 +196,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
             cursor: isButtonExecutable ? 'pointer' : 'default',
             fill:
               longPress.isPressed || isDragging
-                ? dropToRemove
-                  ? colors.gray
-                  : colors.bg
+                ? colors.bg
                 : isButtonExecutable && isButtonActive
                 ? colors.fg
                 : colors.gray,
             width: fontSize + 4,
             height: fontSize + 4,
+            visibility: dropToRemove ? 'hidden' : undefined,
           }}
         />
       </div>,
