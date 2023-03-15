@@ -153,37 +153,41 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         className='toolbar-icon'
         {...fastClick(tapUp, tapDown, onTapCancel)}
       >
-        {selected && <div style={{ height: 2, backgroundColor: colors.highlight }}></div>}
+        {
+          // selected top dash
+          selected ? <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div> : null
+        }
 
         {
-          // invert colors while long pressing or dragging
-          // cannot wrap SVG and maintain proper height since SVG has top-padding
+          // drag-and-drop circle overlay
           (longPress.isPressed || isDragging) && !dropToRemove && (
             <div
               style={{
-                width: fontSize + 15,
-                height: fontSize + 15,
-                backgroundColor: colors.fg,
+                borderRadius: 999,
+                width: fontSize * 1.75,
+                height: fontSize * 1.75,
+                backgroundColor: colors.gray33,
                 position: 'absolute',
                 top: 9,
-                left: 2,
+                left: 0,
               }}
             />
           )
         }
+
         {
           // drop hover
           (isHovering || dropToRemove) && (
             <div
               style={{
-                borderRadius: dropToRemove ? 0 : 3,
                 borderRight: dropToRemove ? `dashed 2px ${colors.gray}` : undefined,
                 position: 'absolute',
                 top: '0.5em',
                 left: dropToRemove ? 15 : -2,
                 // match the height of the inverted button
-                height: '1.85em',
-                width: 3,
+                height: fontSize * 1.5,
+                width: dropToRemove ? 2 : 3,
+                // dropToRemove uses dashed border instead of background color
                 backgroundColor: dropToRemove ? 'transparent' : colors.highlight,
               }}
             />
@@ -196,13 +200,14 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
             cursor: isButtonExecutable ? 'pointer' : 'default',
             fill:
               longPress.isPressed || isDragging
-                ? colors.bg
+                ? colors.fg
                 : isButtonExecutable && isButtonActive
                 ? colors.fg
                 : colors.gray,
             width: fontSize + 4,
             height: fontSize + 4,
-            visibility: dropToRemove ? 'hidden' : undefined,
+            opacity: dropToRemove ? 0 : 1,
+            transition: 'opacity 200ms ease-out',
           }}
         />
       </div>,
