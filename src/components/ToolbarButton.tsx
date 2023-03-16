@@ -202,7 +202,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
                 height: fontSize * 1.5,
                 width: dropToRemove ? 2 : 3,
                 // dropToRemove uses dashed border instead of background color
-                backgroundColor: dropToRemove ? 'transparent' : colors.highlight,
+                backgroundColor: dropToRemove ? undefined : colors.highlight,
               }}
             />
           )
@@ -213,11 +213,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
             position: 'relative',
             cursor: isButtonExecutable ? 'pointer' : 'default',
             fill:
-              longPress.isPressed || isDragging
-                ? colors.fg
-                : isButtonExecutable && isButtonActive
-                ? colors.fg
-                : colors.gray,
+              longPress.isPressed || isDragging ? undefined : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
             width: fontSize + 4,
             height: fontSize + 4,
             opacity: dropToRemove ? 0 : 1,
