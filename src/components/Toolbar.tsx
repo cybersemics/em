@@ -89,6 +89,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [])
 
+  // disable pressing on drag
+  useEffect(() => {
+    if (isDraggingAny) {
+      setPressingToolbarId(null)
+    }
+  }, [isDraggingAny])
+
   /**********************************************************************
    * Render
    **********************************************************************/
@@ -130,9 +137,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='toolbar'
             ref={toolbarRef}
             className='toolbar'
-            onTouchEnd={e => {
-              setPressingToolbarId(null)
-            }}
             onScroll={onScroll}
             style={{
               marginLeft: customize ? -3 : 0,

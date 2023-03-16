@@ -16,6 +16,7 @@ const fastClick = isTouch
       // triggered on mousedown or touchstart
       tapDown?: (e: React.TouchEvent) => void,
       // triggered when tapUp is cancelled due to scrolling or dragging
+      // does not work with drag-and-drop on desktop (onMouseUp does not trigger)
       tapCancel?: (e: React.TouchEvent) => void,
       // triggered with touchMove
       touchMove?: (e: React.TouchEvent) => void,
