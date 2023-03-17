@@ -63,6 +63,13 @@ const updateLexemeReplicationCursor = _.throttle(
   { leading: false },
 )
 
+// thoughtObservationCursor marks the index of the last thought delta that has been observed
+// only needs to be stored in memory
+// used to recalculate the delta slice on multiple observe calls
+// presumably the initial slice up to the replication delta is adequate, but this can handle multiple observes until the replication delta has been reached
+let thoughtObservationCursor = 0
+let lexemeObservationCursor = 0
+
 /** Filters out null and undefined values and properly types the result. */
 const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
 
@@ -141,15 +148,17 @@ new HocuspocusProvider({
   document: doclog,
   token: accessToken,
 })
+
 // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
 // Clocks across clients are not monotonic, so we can't slice by clock.
 // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
 // Therefore, observe the deltas and slice from the replication cursor.
 thoughtLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
-  // since the doglogs are append-only, ids are only on .insert
   const startIndex = thoughtReplicationCursor
-  const deltas: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
+  // since the doglogs are append-only, ids are only on .insert
+  const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+  const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
   const tasks = deltas.map(([id, action], index) => {
     return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
@@ -174,6 +183,7 @@ thoughtLog.observe(e => {
   })
 
   replicationQueue.add(nonempty(tasks))
+  thoughtObservationCursor += deltasRaw.length
   thoughtLogLoaded = true
   if (lexemeLogLoaded) {
     replicationQueue.start()
@@ -183,9 +193,11 @@ thoughtLog.observe(e => {
 // See: thoughtLog.observe
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
-  // since the doglogs are append-only, ids are only on .insert
   const startIndex = lexemeReplicationCursor
-  const deltas: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
+  // since the doglogs are append-only, ids are only on .insert
+  const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+  const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
+
   const tasks = deltas.map(([key, action], index) => {
     return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
@@ -210,6 +222,7 @@ lexemeLog.observe(e => {
   })
 
   replicationQueue.add(nonempty(tasks))
+  lexemeObservationCursor += deltasRaw.length
   lexemeLogLoaded = true
   if (thoughtLogLoaded) {
     replicationQueue.start()
@@ -434,9 +447,9 @@ export const replicateThought = async (
     token: accessToken,
   })
 
-  // if replicating in the background, destroy the HocuspocusProvider once synced
   const idbSynced = persistence.whenSynced
     .then(() => {
+      // if replicating in the background, destroy the HocuspocusProvider once synced
       if (background) {
         persistence.destroy()
       } else if (id === HOME_TOKEN) {
@@ -448,17 +461,22 @@ export const replicateThought = async (
       store.dispatch(alert('Error loading thought'))
     })
 
-  // if replicating in the background, destroy the IndexedDBPersistence once synced
   const websocketSynced = new Promise<void>(resolve => {
-    websocketProvider.on('synced', () => {
-      // TODO: Why is document empty on first sync?
-      if (getThought(doc)) {
-        if (background) {
-          websocketProvider.destroy()
-        }
-        resolve()
+    /** Resolves the promise after a valid thought is observed. */
+    // TODO: Why is the document empty on synced?
+    const observeUntilValue = (e: Y.YMapEvent<unknown>) => {
+      if (e.transaction.origin !== websocketProvider || !getThought(doc)) return
+      // If replicating in the background, destroy the websocket provider once synced
+      // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
+      // Otherwise, this client will not see real-time edits from remote clients.
+      if (background) {
+        onThoughtChange(e)
+        websocketProvider.destroy()
       }
-    })
+      doc.getMap().unobserve(observeUntilValue)
+      resolve()
+    }
+    doc.getMap().observe(observeUntilValue)
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
@@ -501,6 +519,7 @@ export const replicateLexeme = async (
   // disable during tests because of infinite loop in sinon runAllAsync
   if (lexemeDocs[key] || process.env.NODE_ENV === 'test') return lexemeSynced[key] || Promise.resolve()
 
+  // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const websocketProvider = new HocuspocusProvider({
     websocketProvider: websocketThoughtspace,
@@ -509,7 +528,7 @@ export const replicateLexeme = async (
     token: accessToken,
   })
 
-  // if replicating in the background, destroy the HocuspocusProvider once synced
+  // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced
     .then(() => {
       if (background) {
@@ -521,17 +540,21 @@ export const replicateLexeme = async (
       store.dispatch(alert('Error loading thought'))
     })
 
-  // if replicating in the background, destroy the IndexedDBPersistence once synced
   const websocketSynced = new Promise<void>(resolve => {
-    websocketProvider.on('synced', () => {
-      // TODO: Why is document empty on first sync?
-      if (getLexeme(doc)) {
-        if (background) {
-          websocketProvider.destroy()
-        }
-        resolve()
+    /** Resolves the promise after a valid thought is observed. */
+    // TODO: Why is the document empty on synced?
+    const observeUntilValue = (e: Y.YMapEvent<unknown>) => {
+      if (e.transaction.origin !== websocketProvider || !getLexeme(doc)) return
+      // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
+      // Otherwise, this client will not see real-time edits from remote clients.
+      if (background) {
+        onLexemeChange(e)
+        websocketProvider.destroy()
       }
-    })
+      doc.getMap().unobserve(observeUntilValue)
+      resolve()
+    }
+    doc.getMap().observe(observeUntilValue)
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
