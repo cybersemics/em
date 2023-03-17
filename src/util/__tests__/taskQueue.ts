@@ -27,7 +27,7 @@ it('add multiple tasks', async () => {
   expect(counter).toBe(3)
 })
 
-it('onEnd', async () => {
+it('onEnd should return total', async () => {
   let counter = 0
   /** Increment counter. */
   const inc = () => counter++
@@ -168,4 +168,22 @@ it('pause', async () => {
 
   await done
   expect(counter).toBe(6)
+})
+
+it('falsey tasks should be ignored and not count towards total', async () => {
+  let counter = 0
+  let stepCounter = 0
+  let lowStepCounter = 0
+  /** Increment counter. */
+  const inc = () => counter++
+
+  const total = await new Promise(resolve => {
+    const queue = taskQueue({ onStep: () => stepCounter++, onLowStep: () => lowStepCounter++, onEnd: resolve })
+    queue.add([inc, null, inc])
+  })
+
+  expect(total).toBe(2)
+  expect(counter).toBe(2)
+  expect(lowStepCounter).toBe(2)
+  expect(stepCounter).toBe(2)
 })

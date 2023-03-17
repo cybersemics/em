@@ -98,13 +98,16 @@ const taskQueue = <T = any>({
 
   return {
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. */
-    add: (tasks: (() => T | Promise<T>) | (() => T | Promise<T>)[]) => {
+    add: (tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[]) => {
       if (typeof tasks === 'function') {
         tasks = [tasks]
       }
-      total += tasks.length
-      // eslint-disable-next-line fp/no-mutating-methods
-      tasks.forEach(task => queue.push(task))
+      tasks.forEach(task => {
+        if (!task) return
+        // eslint-disable-next-line fp/no-mutating-methods
+        queue.push(task)
+        total++
+      })
 
       if (autostart) {
         tick()

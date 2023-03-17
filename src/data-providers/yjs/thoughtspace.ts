@@ -78,9 +78,6 @@ const updateLexemeReplicationCursor = _.throttle(
 let thoughtObservationCursor = 0
 let lexemeObservationCursor = 0
 
-/** Filters out null and undefined values and properly types the result. */
-const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
-
 /** Deletes an IndexedDB database. */
 const deleteDB = (name: string): Promise<void> => {
   const request = indexedDB.deleteDatabase(name)
@@ -190,7 +187,7 @@ thoughtLog.observe(e => {
     }
   })
 
-  replicationQueue.add(nonempty(tasks))
+  replicationQueue.add(tasks)
   thoughtObservationCursor += deltasRaw.length
   thoughtLogLoaded = true
   if (lexemeLogLoaded) {
@@ -225,11 +222,11 @@ lexemeLog.observe(e => {
         await deleteLexeme(key)
       }
 
-      return { type: 'lexeme', id: key, index: startIndex + index } as ReplicationResult
+      return { type: 'lexeme', id: key, index: startIndex + index }
     }
   })
 
-  replicationQueue.add(nonempty(tasks))
+  replicationQueue.add(tasks)
   lexemeObservationCursor += deltasRaw.length
   lexemeLogLoaded = true
   if (thoughtLogLoaded) {
