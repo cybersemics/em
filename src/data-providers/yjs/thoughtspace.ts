@@ -42,20 +42,22 @@ enum DocLogAction {
   Update,
 }
 
+// thoughtReplicationCursor marks the number of contiguous delta insertions that have been replicated
+// used to slice the doclog and only replicate new changes
 let thoughtReplicationCursor = +(storage.getItem('thoughtReplicationCursor') || 0)
 let lexemeReplicationCursor = +(storage.getItem('lexemeReplicationCursor') || 0)
 const updateThoughtReplicationCursor = _.throttle(
   (index: number) => {
-    thoughtReplicationCursor = index
-    storage.setItem('thoughtReplicationCursor', index.toString())
+    thoughtReplicationCursor = index + 1
+    storage.setItem('thoughtReplicationCursor', (index + 1).toString())
   },
   100,
   { leading: false },
 )
 const updateLexemeReplicationCursor = _.throttle(
   (index: number) => {
-    lexemeReplicationCursor = index
-    storage.setItem('lexemeReplicationCursor', index.toString())
+    lexemeReplicationCursor = index + 1
+    storage.setItem('lexemeReplicationCursor', (index + 1).toString())
   },
   100,
   { leading: false },
@@ -146,7 +148,7 @@ new HocuspocusProvider({
 thoughtLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const startIndex = thoughtReplicationCursor + 1
+  const startIndex = thoughtReplicationCursor
   const deltas: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
   const tasks = deltas.map(([id, action], index) => {
     return async (): Promise<ReplicationResult> => {
@@ -182,7 +184,7 @@ thoughtLog.observe(e => {
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   // since the doglogs are append-only, ids are only on .insert
-  const startIndex = lexemeReplicationCursor + 1
+  const startIndex = lexemeReplicationCursor
   const deltas: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || []).slice(startIndex)
   const tasks = deltas.map(([key, action], index) => {
     return async (): Promise<ReplicationResult> => {
