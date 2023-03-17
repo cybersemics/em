@@ -5,6 +5,7 @@ import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import LexemeDb from '../../@types/LexemeDb'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
@@ -34,6 +35,12 @@ interface ReplicationResult {
   // the delta index that is saved as the replication cursor to enable partial replication
   index: number
 }
+
+// YMap takes a generic type representing the union of values
+// Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
+type ValueOf<T> = T[keyof T]
+type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'childrenMap'> & { childrenMap: Y.Map<ThoughtId> }>
+type LexemeYjs = ValueOf<Omit<LexemeDb, 'contexts'> & { contexts: Y.Map<true> }>
 
 // action types for the doclog
 // See: doclog
@@ -243,7 +250,7 @@ const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
 }
 
 /** A promise that resolves to true when the root thought has been synced from IndexedDB. */
-const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<ThoughtDb>()
+const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<Thought>()
 export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
@@ -270,7 +277,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
     .then(() => syncStatusStore.pushEnd(thought.id))
 
   thoughtDoc.transact(() => {
-    const thoughtMap = thoughtDoc.getMap()
+    const thoughtMap = thoughtDoc.getMap<ThoughtYjs>()
     Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
       // merge childrenMap Y.Map
       if (key === 'childrenMap') {
@@ -330,7 +337,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
     .then(() => syncStatusStore.pushEnd(key))
 
   lexemeDoc.transact(() => {
-    const lexemeMap = lexemeDoc.getMap()
+    const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
     Object.entries(lexeme).forEach(([key, value]) => {
       // merge contexts Y.Map
       if (key === 'contexts') {
@@ -368,8 +375,8 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
   return done
 }
 
-/** Handles the Thought observe event (foreground replication only). Ignores events from self. */
-const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
+/** Handles the Thought observe event. Ignores events from self. */
+const onThoughtChange = (e: Y.YMapEvent<ThoughtYjs>) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
   const thought = getThought(thoughtDoc)
@@ -391,8 +398,8 @@ const onThoughtChange = (e: Y.YMapEvent<unknown>) => {
   })
 }
 
-/** Handles the Lexeme observe event (foreground replication only). Ignores events from self. */
-const onLexemeChange = (e: Y.YMapEvent<unknown>) => {
+/** Handles the Lexeme observe event. Ignores events from self. */
+const onLexemeChange = (e: Y.YMapEvent<LexemeYjs>) => {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
   const lexeme = getLexeme(lexemeDoc)
@@ -432,6 +439,7 @@ export const replicateThought = async (
 ): Promise<void> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
+  const thoughtMap = doc.getMap<ThoughtYjs>()
 
   // if the doc has already been initialized and added to thoughtDocs, return immediately
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
@@ -453,7 +461,10 @@ export const replicateThought = async (
       if (background) {
         persistence.destroy()
       } else if (id === HOME_TOKEN) {
-        resolveRootSynced(doc.getMap().toJSON() as ThoughtDb)
+        const thought = getThought(doc)
+        if (thought) {
+          resolveRootSynced(thought)
+        }
       }
     })
     .catch(e => {
@@ -464,7 +475,7 @@ export const replicateThought = async (
   const websocketSynced = new Promise<void>(resolve => {
     /** Resolves the promise after a valid thought is observed. */
     // TODO: Why is the document empty on synced?
-    const observeUntilValue = (e: Y.YMapEvent<unknown>) => {
+    const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
       if (e.transaction.origin !== websocketProvider || !getThought(doc)) return
       // If replicating in the background, destroy the websocket provider once synced
       // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
@@ -473,10 +484,10 @@ export const replicateThought = async (
         onThoughtChange(e)
         websocketProvider.destroy()
       }
-      doc.getMap().unobserve(observeUntilValue)
+      thoughtMap.unobserve(observeUntilValue)
       resolve()
     }
-    doc.getMap().observe(observeUntilValue)
+    thoughtMap.observe(observeUntilValue)
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
@@ -494,7 +505,7 @@ export const replicateThought = async (
   // Subscribe to changes after first sync to ensure that pending is set properly.
   // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
   if (!background) {
-    doc.getMap().observe(onThoughtChange)
+    thoughtMap.observe(onThoughtChange)
   }
 }
 
@@ -513,6 +524,7 @@ export const replicateLexeme = async (
 ): Promise<void> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
+  const lexemeMap = doc.getMap<LexemeYjs>()
 
   // set up persistence and subscribe to changes
   // disable during tests because of TransactionInactiveError in fake-indexeddb
@@ -543,7 +555,7 @@ export const replicateLexeme = async (
   const websocketSynced = new Promise<void>(resolve => {
     /** Resolves the promise after a valid thought is observed. */
     // TODO: Why is the document empty on synced?
-    const observeUntilValue = (e: Y.YMapEvent<unknown>) => {
+    const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
       if (e.transaction.origin !== websocketProvider || !getLexeme(doc)) return
       // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
       // Otherwise, this client will not see real-time edits from remote clients.
@@ -551,10 +563,10 @@ export const replicateLexeme = async (
         onLexemeChange(e)
         websocketProvider.destroy()
       }
-      doc.getMap().unobserve(observeUntilValue)
+      lexemeMap.unobserve(observeUntilValue)
       resolve()
     }
-    doc.getMap().observe(observeUntilValue)
+    lexemeMap.observe(observeUntilValue)
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
@@ -572,7 +584,7 @@ export const replicateLexeme = async (
   // Subscribe to changes after first sync to ensure that pending is set properly.
   // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
   if (!background) {
-    doc.getMap().observe(onLexemeChange)
+    lexemeMap.observe(onLexemeChange)
   }
 }
 
@@ -610,7 +622,7 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 const deleteThought = (id: ThoughtId): Promise<void> => {
   syncStatusStore.pushStart(id)
   // destroying the doc does not remove top level shared type observers
-  thoughtDocs[id]?.getMap().unobserve(onThoughtChange)
+  thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
   thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
@@ -632,7 +644,7 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
 const deleteLexeme = (key: string): Promise<void> => {
   syncStatusStore.pushStart(key)
   // destroying the doc does not remove top level shared type observers
-  lexemeDocs[key]?.getMap().unobserve(onLexemeChange)
+  lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
   lexemeDocs[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
