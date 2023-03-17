@@ -13,6 +13,7 @@ import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
+import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -476,15 +477,25 @@ export const replicateThought = async (
     /** Resolves the promise after a valid thought is observed. */
     // TODO: Why is the document empty on synced?
     const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
-      if (e.transaction.origin !== websocketProvider || !getThought(doc)) return
-      // If replicating in the background, destroy the websocket provider once synced
-      // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
-      // Otherwise, this client will not see real-time edits from remote clients.
-      if (background) {
-        onThoughtChange(e)
-        websocketProvider.destroy()
-      }
+      if (e.transaction.origin !== websocketProvider) return
+      const thought = getThought(doc)
+      if (!thought) return
+
       thoughtMap.unobserve(observeUntilValue)
+
+      if (background) {
+        // If replicating in the background, destroy the websocket provider once synced
+        websocketProvider.destroy()
+
+        // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
+        // Otherwise, this client will not see real-time edits from remote clients.
+        // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
+        const state = store.getState()
+        if (getThoughtByIdSelector(state, id) || getThoughtByIdSelector(state, thought.parentId)) {
+          onThoughtChange(e)
+        }
+      }
+
       resolve()
     }
     thoughtMap.observe(observeUntilValue)
@@ -556,14 +567,24 @@ export const replicateLexeme = async (
     /** Resolves the promise after a valid thought is observed. */
     // TODO: Why is the document empty on synced?
     const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
-      if (e.transaction.origin !== websocketProvider || !getLexeme(doc)) return
-      // Since onThoughtChange is not added as an observe handler, so we need to call it manually.
-      // Otherwise, this client will not see real-time edits from remote clients.
-      if (background) {
-        onLexemeChange(e)
-        websocketProvider.destroy()
-      }
+      if (e.transaction.origin !== websocketProvider) return
+      const lexeme = getLexeme(doc)
+      if (!lexeme) return
+
       lexemeMap.unobserve(observeUntilValue)
+
+      if (background) {
+        websocketProvider.destroy()
+
+        // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of its contexts are already in state.
+        // Otherwise, this client will not see real-time edits from remote clients.
+        // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
+        const state = store.getState()
+        if (lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))) {
+          onLexemeChange(e)
+        }
+      }
+
       resolve()
     }
     lexemeMap.observe(observeUntilValue)
