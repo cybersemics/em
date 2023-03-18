@@ -87,7 +87,9 @@ const deleteDB = (name: string): Promise<void> => {
   })
 }
 
+/** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
 const replicationQueue = taskQueue<ReplicationResult>({
+  // begin paused, and only start after initial pull has completed
   autostart: false,
   onLowStep: ({ index, value }) => {
     if (value.type === 'thought') {
@@ -112,6 +114,7 @@ syncStatusStore.subscribeSelector(
     if (isPushingOrPulling) {
       replicationQueue.pause()
     } else {
+      // because replicationQueue starts paused, this line starts it for the first time after the initial pull
       replicationQueue.start()
     }
   },
@@ -136,10 +139,6 @@ const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 const doclog = new Y.Doc()
 const thoughtLog = doclog.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
 const lexemeLog = doclog.getArray<[string, DocLogAction]>('lexemeLog')
-// set to true after first observe from thoughtLog/lexemeLog
-// used to start rendering the replication progress
-let thoughtLogLoaded = false
-let lexemeLogLoaded = false
 const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
 doclogPersistence.whenSynced.catch(e => {
   console.error(e)
@@ -189,10 +188,6 @@ thoughtLog.observe(e => {
 
   replicationQueue.add(tasks)
   thoughtObservationCursor += deltasRaw.length
-  thoughtLogLoaded = true
-  if (lexemeLogLoaded) {
-    replicationQueue.start()
-  }
 })
 
 // See: thoughtLog.observe
@@ -228,10 +223,6 @@ lexemeLog.observe(e => {
 
   replicationQueue.add(tasks)
   lexemeObservationCursor += deltasRaw.length
-  lexemeLogLoaded = true
-  if (thoughtLogLoaded) {
-    replicationQueue.start()
-  }
 })
 
 /** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
