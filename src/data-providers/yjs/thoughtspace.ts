@@ -527,10 +527,12 @@ export const replicateThought = async (
 
   await synced
 
-  // Subscribe to changes on foreground replication
-  // Subscribe to changes after first sync to ensure that pending is set properly.
-  // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
-  if (!background) {
+  if (background) {
+    // do not resolve background replication until websocket has synced
+    await websocketSynced
+  } else {
+    // Subscribe to changes on foreground replication
+    // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
 }
@@ -618,9 +620,12 @@ export const replicateLexeme = async (
 
   await synced
 
-  // Subscribe to changes after first sync to ensure that pending is set properly.
-  // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
-  if (!background) {
+  if (background) {
+    // do not resolve background replication until websocket has synced
+    await websocketSynced
+  } else {
+    // Subscribe to changes after first sync to ensure that pending is set properly.
+    // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     lexemeMap.observe(onLexemeChange)
   }
 }
