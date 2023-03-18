@@ -7,7 +7,7 @@ const taskQueue = <T = any>({
   onEnd,
 }: {
   // starts running tasks as soon as they are added
-  // set to false to use pause
+  // set to false to start paused
   autostart?: boolean
   // number of concurrent tasks allowed
   concurrency?: number
@@ -37,7 +37,7 @@ const taskQueue = <T = any>({
 
   // stops the task runner from running new tasks that are added
   // running tests complete as usual
-  let paused = false
+  let paused = !autostart
 
   // the lowest index of task that has started
   let indexStarted = 0
@@ -109,7 +109,7 @@ const taskQueue = <T = any>({
         total++
       })
 
-      if (autostart) {
+      if (!paused) {
         tick()
       }
     },

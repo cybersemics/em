@@ -65,7 +65,7 @@ it('async tasks', async () => {
   expect(counter).toBe(3)
 })
 
-it('autostart: false', async () => {
+it('autostart:false should not start running tasks until start is called', async () => {
   let counter = 0
   /** Increment counter. */
   const inc = () => counter++
@@ -79,6 +79,19 @@ it('autostart: false', async () => {
     queue.add([inc, inc, inc])
     queue.start()
   })
+
+  expect(counter).toBe(6)
+})
+
+it('autostart:false should be ignored after start is called', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => counter++
+
+  const queue = taskQueue({ autostart: false })
+  queue.add([inc, inc, inc])
+  queue.start()
+  queue.add([inc, inc, inc])
 
   expect(counter).toBe(6)
 })
