@@ -496,15 +496,17 @@ export const replicateThought = async (
       thoughtMap.unobserve(observeUntilValue)
 
       if (background) {
-        // If replicating in the background, destroy the websocket provider once synced
-        websocketProvider.destroy()
-
         // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
         // Otherwise, this client will not see real-time edits from remote clients.
         // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
         const state = store.getState()
-        if (getThoughtByIdSelector(state, id) || getThoughtByIdSelector(state, thought.parentId)) {
+        const exists = !!getThoughtByIdSelector(state, id)
+        const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+        if (exists || existsParent) {
           onThoughtChange(e)
+          thoughtMap.observe(onThoughtChange)
+        } else {
+          websocketProvider.destroy()
         }
       }
 
@@ -525,6 +527,7 @@ export const replicateThought = async (
 
   await synced
 
+  // Subscribe to changes on foreground replication
   // Subscribe to changes after first sync to ensure that pending is set properly.
   // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
   if (!background) {
@@ -590,11 +593,12 @@ export const replicateLexeme = async (
 
         // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of its contexts are already in state.
         // Otherwise, this client will not see real-time edits from remote clients.
-        // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
-        const state = store.getState()
-        if (lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))) {
-          onLexemeChange(e)
-        }
+
+        // TODO: How to check if Lexeme is in view when context may not be replicated yet? We could only replicate lexemes after thoughts are replicated, but that would create a gap in state, and state really requires the thoughtIndex and lexemeIndex to be in sync.
+        // if (lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))) {
+        onLexemeChange(e)
+        lexemeMap.observe(onLexemeChange)
+        // }
       }
 
       resolve()
