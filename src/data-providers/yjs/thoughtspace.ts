@@ -160,10 +160,22 @@ new HocuspocusProvider({
 thoughtLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   const startIndex = thoughtReplicationCursor
+
   // since the doglogs are append-only, ids are only on .insert
   const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
+  // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
   const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
-  const tasks = deltas.map(([id, action], index) => {
+
+  // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
+  const replicated = new Map<ThoughtId, number>()
+  deltas.forEach(([id], i) => replicated.set(id, i))
+
+  const tasks = deltas.map(([id, action], i) => {
+    // ignore older updates to the same thought
+    if (i !== replicated.get(id)) return null
+
+    // update or delete the thought
     return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
         await replicateThought(id, { background: true })
@@ -182,7 +194,7 @@ thoughtLog.observe(e => {
         await deleteThought(id)
       }
 
-      return { type: 'thought', id, index: startIndex + index }
+      return { type: 'thought', id, index: startIndex + i }
     }
   })
 
@@ -194,11 +206,23 @@ thoughtLog.observe(e => {
 lexemeLog.observe(e => {
   if (e.transaction.origin === doclog.clientID) return
   const startIndex = lexemeReplicationCursor
+
   // since the doglogs are append-only, ids are only on .insert
   const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
+  // slice from the replication cursor (excluding lexemes that have already been sliced) in order to only replicate changed lexemes
+  // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
   const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
 
-  const tasks = deltas.map(([key, action], index) => {
+  // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+  const replicated = new Map<string, number>()
+  deltas.forEach(([key], i) => replicated.set(key, i))
+
+  const tasks = deltas.map(([key, action], i) => {
+    // ignore older updates to the same lexeme
+    if (i !== replicated.get(key)) return null
+
+    // update or delete the lexeme
     return async (): Promise<ReplicationResult> => {
       if (action === DocLogAction.Update) {
         await replicateLexeme(key, { background: true })
@@ -217,7 +241,7 @@ lexemeLog.observe(e => {
         await deleteLexeme(key)
       }
 
-      return { type: 'lexeme', id: key, index: startIndex + index }
+      return { type: 'lexeme', id: key, index: startIndex + i }
     }
   })
 
