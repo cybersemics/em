@@ -12,8 +12,8 @@ interface ReplicationResult {
 }
 
 interface Storage {
-  getItem: (key: string) => string | null
-  setItem: (key: string, value: any) => void
+  getItem: (key: string) => string | null | Promise<string | null>
+  setItem: (key: string, value: any) => void | Promise<void>
 }
 
 /** A replication controller that ensures that thought and lexeme updates are efficiently and reliably replicated. Does not dictate the replication method itself, but rather maintains a replication queue for throttled concurrency and a replication cursor for resumability. On load, triggers a replicaton for all thoughts and lexemes that have not been processed (via next). When a new update is received (via log), calls next to process the update. Provides start and pause for full control over when replication is running. */
@@ -53,8 +53,20 @@ const replicationController = ({
 
   // thoughtReplicationCursor marks the number of contiguous delta insertions that have been replicated
   // used to slice the doclog and only replicate new changes
-  let thoughtReplicationCursor = +(storage.getItem('thoughtReplicationCursor') || 0)
-  let lexemeReplicationCursor = +(storage.getItem('lexemeReplicationCursor') || 0)
+  let thoughtReplicationCursor = 0
+  let lexemeReplicationCursor = 0
+
+  // assume storage.getItem completes before thoughtLogs.observe fires
+  // otherwise we have to make the replication cursors async
+  const replicationCursorsInitialized = Promise.all([
+    Promise.resolve(storage.getItem('thoughtReplicationCursor')).then(value => {
+      thoughtReplicationCursor = +(value || 0)
+    }),
+    Promise.resolve(storage.getItem('lexemeReplicationCursor')).then(value => {
+      lexemeReplicationCursor = +(value || 0)
+    }),
+  ])
+
   const updateThoughtReplicationCursor = _.throttle(
     (index: number) => {
       thoughtReplicationCursor = index + 1
@@ -86,68 +98,71 @@ const replicationController = ({
     onEnd,
   })
 
-  // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
-  // Clocks across clients are not monotonic, so we can't slice by clock.
-  // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
-  // Therefore, observe the deltas and slice from the replication cursor.
-  thoughtLog.observe(e => {
-    if (e.transaction.origin === doc.clientID) return
-    const startIndex = thoughtReplicationCursor
+  // since storage is async, we need to wait for the replication cursor to be initialized before observing doclog updates
+  replicationCursorsInitialized.then(() => {
+    // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
+    // Clocks across clients are not monotonic, so we can't slice by clock.
+    // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
+    // Therefore, observe the deltas and slice from the replication cursor.
+    thoughtLog.observe(e => {
+      if (e.transaction.origin === doc.clientID) return
+      const startIndex = thoughtReplicationCursor
 
-    // since the doglogs are append-only, ids are only on .insert
-    const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+      // since the doglogs are append-only, ids are only on .insert
+      const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
-    // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
-    const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
+      // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
+      const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
 
-    // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
-    const replicated = new Map<ThoughtId, number>()
-    deltas.forEach(([id], i) => replicated.set(id, i))
+      // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
+      const replicated = new Map<ThoughtId, number>()
+      deltas.forEach(([id], i) => replicated.set(id, i))
 
-    const tasks = deltas.map(([id, action], i) => {
-      // ignore older updates to the same thought
-      if (i !== replicated.get(id)) return null
+      const tasks = deltas.map(([id, action], i) => {
+        // ignore older updates to the same thought
+        if (i !== replicated.get(id)) return null
 
-      // update or delete the thought
-      return async (): Promise<ReplicationResult> => {
-        await next({ action, id, index: startIndex + i, type: 'thought' })
-        return { type: 'thought', id, index: startIndex + i }
-      }
+        // update or delete the thought
+        return async (): Promise<ReplicationResult> => {
+          await next({ action, id, index: startIndex + i, type: 'thought' })
+          return { type: 'thought', id, index: startIndex + i }
+        }
+      })
+
+      replicationQueue.add(tasks)
+      thoughtObservationCursor += deltasRaw.length
     })
 
-    replicationQueue.add(tasks)
-    thoughtObservationCursor += deltasRaw.length
-  })
+    // See: thoughtLog.observe
+    lexemeLog.observe(e => {
+      if (e.transaction.origin === doc.clientID) return
+      const startIndex = lexemeReplicationCursor
 
-  // See: thoughtLog.observe
-  lexemeLog.observe(e => {
-    if (e.transaction.origin === doc.clientID) return
-    const startIndex = lexemeReplicationCursor
+      // since the doglogs are append-only, ids are only on .insert
+      const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
-    // since the doglogs are append-only, ids are only on .insert
-    const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+      // slice from the replication cursor (excluding lexemes that have already been sliced) in order to only replicate changed lexemes
+      // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
+      const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
 
-    // slice from the replication cursor (excluding lexemes that have already been sliced) in order to only replicate changed lexemes
-    // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
-    const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
+      // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+      const replicated = new Map<string, number>()
+      deltas.forEach(([key], i) => replicated.set(key, i))
 
-    // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
-    const replicated = new Map<string, number>()
-    deltas.forEach(([key], i) => replicated.set(key, i))
+      const tasks = deltas.map(([key, action], i) => {
+        // ignore older updates to the same lexeme
+        if (i !== replicated.get(key)) return null
 
-    const tasks = deltas.map(([key, action], i) => {
-      // ignore older updates to the same lexeme
-      if (i !== replicated.get(key)) return null
+        // update or delete the lexeme
+        return async (): Promise<ReplicationResult> => {
+          await next({ action, id: key, index: startIndex + i, type: 'lexeme' })
+          return { type: 'lexeme', id: key, index: startIndex + i }
+        }
+      })
 
-      // update or delete the lexeme
-      return async (): Promise<ReplicationResult> => {
-        await next({ action, id: key, index: startIndex + i, type: 'lexeme' })
-        return { type: 'lexeme', id: key, index: startIndex + i }
-      }
+      replicationQueue.add(tasks)
+      lexemeObservationCursor += deltasRaw.length
     })
-
-    replicationQueue.add(tasks)
-    lexemeObservationCursor += deltasRaw.length
   })
 
   /** Append thought or lexeme logs to doclog. */
