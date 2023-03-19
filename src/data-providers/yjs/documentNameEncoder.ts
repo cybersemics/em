@@ -2,17 +2,17 @@ import ThoughtId from '../../@types/ThoughtId'
 
 type DocType = 'doclog' | 'permissions' | 'thought' | 'lexeme'
 
-/** Generates a documentName for a given thought. */
+/** Generates a documentName for a thought. */
 export const encodeThoughtDocumentName = (tsid: string, id: ThoughtId) => `${tsid}/thought/${id}`
 
-/** Generates a documentName for a given thought. */
+/** Generates a documentName for a lexeme. */
 export const encodeLexemeDocumentName = (tsid: string, key: string) => `${tsid}/lexeme/${key}`
 
-/** Generates a documentName for a given thought. */
+/** Generates a permissions documentName. */
 export const encodePermissionsDocumentName = (tsid: string) => `${tsid}/permissions`
 
-/** Generates a documentName for a given thought. */
-export const encodeDocLogDocumentName = (tsid: string) => `${tsid}/doclog`
+/** Generates a doslog documentName with an optional key for meta information (e.g. thoughtReplicationCursor). */
+export const encodeDocLogDocumentName = (tsid: string, key?: string) => `${tsid}/doclog` + (key ? `/${key}` : '')
 
 /** Extracts the tsid from a document name. */
 export const parseDocumentName = (
