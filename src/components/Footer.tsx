@@ -20,6 +20,7 @@ const Status = () => {
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
     replicationProgress !== null ? Math.round(replicationProgress * 100) : null,
   )
+  const savingPercentage = syncStatusStore.useSelector(({ savingProgress }) => Math.round(savingProgress * 100))
   const status = offlineStatusStore.useState()
   return (
     <span
@@ -35,7 +36,7 @@ const Status = () => {
       }}
     >
       {isPushing
-        ? 'Saving'
+        ? `Saving ${savingPercentage}%`
         : status === 'preconnecting'
         ? 'Initializing'
         : status === 'connecting' || status === 'reconnecting'
