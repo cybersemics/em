@@ -10,6 +10,7 @@ import {
 } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragThoughtItem from '../@types/DragThoughtItem'
+import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
 import alert from '../action-creators/alert'
@@ -17,6 +18,7 @@ import createThought from '../action-creators/createThought'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
+import importFiles from '../action-creators/importFiles'
 import moveThought from '../action-creators/moveThought'
 import { isTouch } from '../browser'
 import { AlertType, NOOP } from '../constants'
@@ -30,6 +32,7 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
@@ -37,6 +40,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import isDocumentEditable from '../util/isDocumentEditable'
+import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -104,7 +108,9 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const item = monitor.getItem() as DragThoughtOrFiles
+
+  const thoughtsFrom = (item as DragThoughtItem).path
   const thoughtsTo = props.path
   const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
 
@@ -126,11 +132,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const state = store.getState()
+  const item = monitor.getItem() as DragThoughtOrFiles
+  if (isDraggedFile(item)) {
+    store.dispatch(importFiles({ path: props.path, files: item.files, insertBefore: true }))
+    return
+  }
 
-  const { path: thoughtsFrom } = monitor.getItem()
-
-  if (!thoughtsFrom) {
+  if (!item.path) {
     console.warn('item.path not defined')
     return
   } else if (!props.path) {
@@ -138,6 +146,8 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
     return
   }
 
+  const state = store.getState()
+  const thoughtsFrom = simplifyPath(state, item.path)
   const thoughtsTo = props.simplePath
   const toThought = pathToThought(state, thoughtsTo)
   const fromThought = pathToThought(state, thoughtsFrom)
@@ -164,7 +174,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       ? createThought({
           value: toThought.value,
           path: thoughtsFrom,
-          rank: getNextRank(state, thoughtsFrom),
+          rank: getNextRank(state, head(thoughtsFrom)),
         })
       : moveThought({
           oldPath: thoughtsFrom,

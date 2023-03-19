@@ -2,11 +2,13 @@ import { FC } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragThoughtItem from '../@types/DragThoughtItem'
+import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import alert from '../action-creators/alert'
 import error from '../action-creators/error'
+import importFiles from '../action-creators/importFiles'
 import moveThought from '../action-creators/moveThought'
 import { AlertType, HOME_TOKEN } from '../constants'
 import attribute from '../selectors/attribute'
@@ -25,6 +27,7 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import { isDescendantPath } from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
+import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
@@ -42,7 +45,8 @@ export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor)
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)
   if (!state.dragInProgress) return false
 
-  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const item = monitor.getItem() as DragThoughtOrFiles
+  const thoughtsFrom = (item as DragThoughtItem).path
   const thoughtsTo = props.path
 
   /** If the epxand hover top is active then all the descenendants of the current active expand hover top path should be droppable. */
@@ -76,13 +80,19 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { path: thoughtsFrom }: DragThoughtItem = monitor.getItem()
+  const item = monitor.getItem() as DragThoughtOrFiles
+  if (isDraggedFile(item)) {
+    store.dispatch(importFiles({ path: props.path, files: item.files }))
+    return
+  }
+
+  const thoughtsFrom = item.path
 
   if (!thoughtsFrom) {
-    console.warn('item.path not defined')
+    console.warn('item.path not defined', { item: monitor.getItem() })
     return
   } else if (!props.path) {
-    console.warn('props.path not defined')
+    console.warn('props.path not defined', { item: monitor.getItem() })
     return
   }
 
