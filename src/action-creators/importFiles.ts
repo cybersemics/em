@@ -8,6 +8,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
+import series from '../util/series'
 
 /** Stream a file by chunk size and return whole lines. */
 // See: https://stackoverflow.com/a/39505307/480608
@@ -76,7 +77,7 @@ const importFilesActionCreator =
     // insert the imported thoughts before the path instead of in the path
     insertBefore?: boolean
   }): Thunk =>
-  (dispatch, getState) => {
+  async (dispatch, getState) => {
     const state = getState()
 
     const importPath = insertBefore ? ([...parentOf(path), createId()] as Path) : path
@@ -93,13 +94,26 @@ const importFilesActionCreator =
       )
     }
 
-    files.forEach(file => {
-      readLines(file, {
-        data: text => {
-          dispatch(importText({ text, path: importPath, preventSetCursor: true }))
-        },
-      })
-    })
+    const tasks = files.map(
+      file => () =>
+        new Promise<void>((resolve, reject) => {
+          readLines(file, {
+            data: text => {
+              // TODO: Handle indentation levels of chunks
+              dispatch(importText({ text, path: importPath, preventSetCursor: true }))
+            },
+            complete: err => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve()
+              }
+            },
+          })
+        }),
+    )
+
+    await series(tasks)
   }
 
 export default importFilesActionCreator
