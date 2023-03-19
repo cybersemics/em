@@ -2,7 +2,7 @@
   "scripts": {
     "build": "rm -rf build ; npx tsc",
     "clear": "rm -rf ./.thoughts.level ; rm -rf ./.permissions.level; rm -rf .doclog.level",
-    "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level DB_DOCLOGMETA=./.doclogmeta.level node build/scripts/server/index.js"
+    "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level DB_DOCLOGMETA=./.doclogmeta.level node build/server/index.js"
   },
   "dependencies": {
     "@hocuspocus/server": "^2.0.0-alpha.0",

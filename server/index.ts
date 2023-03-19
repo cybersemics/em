@@ -3,17 +3,17 @@ import level from 'level'
 import _ from 'lodash'
 import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
-import Index from '../../src/@types/IndexType'
-import Share from '../../src/@types/Share'
-import ThoughtId from '../../src/@types/ThoughtId'
+import Index from '../src/@types/IndexType'
+import Share from '../src/@types/Share'
+import ThoughtId from '../src/@types/ThoughtId'
 import {
   encodeLexemeDocumentName,
   encodePermissionsDocumentName,
   encodeThoughtDocumentName,
   parseDocumentName,
-} from '../../src/data-providers/yjs/documentNameEncoder'
-import taskQueue from '../../src/util/taskQueue'
-import timestamp from '../../src/util/timestamp'
+} from '../src/data-providers/yjs/documentNameEncoder'
+import taskQueue from '../src/util/taskQueue'
+import timestamp from '../src/util/timestamp'
 
 interface ReplicationResult {
   type: 'thought' | 'lexeme'
