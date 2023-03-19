@@ -3,7 +3,6 @@ import level from 'level'
 import _ from 'lodash'
 import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
-import Index from '../src/@types/IndexType'
 import Share from '../src/@types/Share'
 import ThoughtId from '../src/@types/ThoughtId'
 import {
@@ -29,7 +28,6 @@ enum DocLogAction {
   Update,
 }
 
-const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
 
 // contains a top level map for each thoughtspace Map<Share> mapping token -> permission
@@ -58,6 +56,8 @@ const log = (...args: any) => {
     args = args.slice(0, -1)
     method = lastArg.method
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-extra-semi
   ;(console as any)[method](...args)
 }
 
@@ -90,7 +90,6 @@ const syncLevelDb = async ({ db, docName, doc }: { db: any; docName: string; doc
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
 export const onAuthenticate = async ({ token, documentName }: { documentName: string; token: string }) => {
   const { tsid } = parseDocumentName(documentName)
-  const permissionsDocName = encodePermissionsDocumentName(tsid)
   // the server-side permissions map
   // stores the permissions for all thoughtspaces as Map<Index<Share>> (indexed by tsid and access token)
   // only accessible on the server
@@ -112,7 +111,7 @@ export const onAuthenticate = async ({ token, documentName }: { documentName: st
   return { token }
 }
 
-/** Syncs permissions to permissionsClientDoc on load. permissionsServerDoc cannot be exposed since it contains permissions for all thoughtspaces. This must be done in onLoadDocument when permissionsClientDoc has been created through the websocket connection. */
+/** Syncs permissions to permissionsClientDoc on load. The permissionsServerDoc cannot be exposed since it contains permissions for all thoughtspaces. This must be done in onLoadDocument when permissionsClientDoc has been created through the websocket connection. */
 export const onLoadDocument = async ({
   context,
   document,
@@ -126,7 +125,7 @@ export const onLoadDocument = async ({
   const { tsid, type } = parseDocumentName(documentName)
   const permissionsDocName = encodePermissionsDocumentName(tsid)
   const permissionsServerMap = permissionsServerDoc.getMap<Share>(tsid)
-  let permission = permissionsServerMap.get(token)
+  const permission = permissionsServerMap.get(token)
 
   if (!permission || permission.role !== 'owner') return
 
