@@ -6,16 +6,15 @@ const taskQueue = <T = any>({
   onStep,
   onEnd,
 }: {
-  // starts running tasks as soon as they are added
-  // set to false to start paused
+  /** Starts running tasks as soon as they are added. Set to false to start paused. */
   autostart?: boolean
   // number of concurrent tasks allowed
   concurrency?: number
-  // onLowStep is fired once for each completed task, in order. The callback for individual completed tasks will be delayed until contiguous tasks have completed
+  /** An event that is fired once for each completed task, in order. The callback for individual completed tasks will be delayed until contiguous tasks have completed. */
   onLowStep?: (args: { completed: number; total: number; index: number; value: T }) => void
-  // onStep is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order.
+  /** An event tha is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order. */
   onStep?: (args: { completed: number; total: number; index: number; value: T }) => void
-  // called when all tasks have completed
+  /** An event that is called when all tasks have completed. */
   onEnd?: (total: number) => void
 } = {}) => {
   if (concurrency <= 0) {
