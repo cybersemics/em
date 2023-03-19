@@ -14,6 +14,8 @@ import {
 import taskQueue from '../src/util/taskQueue'
 import timestamp from '../src/util/timestamp'
 
+type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
+
 interface ReplicationResult {
   type: 'thought' | 'lexeme'
   id: ThoughtId | string
@@ -42,23 +44,23 @@ const getYDoc = (name: string): Y.Doc | undefined => server.documents.get(name)
 /** Make text gray in the console. */
 const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
 
-/** Logs a message to the console with an ISO timestamp. */
-const log = (...args: any) => {
+/** Logs a message to the console with an ISO timestamp. Optionally takes a console method for its last argument. Defaults to info. */
+const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
   // prepend timestamp
   if (process.env.LOG_TIMESTAMPS) {
     args = [gray(new Date().toISOString()), ...args]
   }
   // default to console.info
   // override the method by passing { method: 'error' } as the last argument
-  let method = 'info'
+  let method: ConsoleMethod = 'info'
   const lastArg = args[args.length - 1]
   if (typeof lastArg === 'object' && Object.keys(lastArg).length === 1 && lastArg.method) {
     args = args.slice(0, -1)
     method = lastArg.method
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-extra-semi
-  ;(console as any)[method](...args)
+  // eslint-disable-next-line no-console
+  console[method](...args)
 }
 
 // meta information about the doclog, mainly the thoughtReplicationCursor
