@@ -425,6 +425,7 @@ export enum ViewMode {
 // There may also be dynamic alert text, which would defined as selectors, e.g. deleteThoughtAlertText.
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
+  DragAndDropFile: 'Drop to import file',
   ReorderFavorites: 'Drag and drop to reorder favorites',
 }
 
@@ -437,6 +438,8 @@ export enum AlertType {
   DeleteDropHint = 'DeleteDropHint',
   // shown when a thought is deleted
   DeleteThoughtComplete = 'DeleteThoughtComplete',
+  // shown when dragging a file
+  DragAndDropFile = 'DragAndDropFile',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
   // shown when a dragged thought is hovering over the ExportDrop component

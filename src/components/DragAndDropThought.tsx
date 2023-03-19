@@ -8,6 +8,7 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
+import { NativeTypes } from 'react-dnd-html5-backend'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
@@ -108,7 +109,7 @@ const canDrop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   const showContexts = thoughtsTo && isContextViewActive(state, parentOf(thoughtsTo))
 
   // Disallow dropping on context view.
-  // This must be matched in isChildHovering to correctly highlight the hovering parent.
+  // This condition must be matched in isChildHovering to correctly highlight the hovering parent.
   return !showContexts && canDropPath(thoughtsFrom, thoughtsTo)
 }
 
@@ -212,6 +213,6 @@ const DragAndDropThought = (thoughtContainer: FC<ConnectedDraggableThoughtContai
     'thought',
     { canDrag, beginDrag, endDrag },
     dragCollect,
-  )(DropTarget('thought', { canDrop, drop }, dropCollect)(thoughtContainer))
+  )(DropTarget(['thought', NativeTypes.FILE], { canDrop, drop }, dropCollect)(thoughtContainer))
 
 export default DragAndDropThought

@@ -284,7 +284,8 @@ const ThoughtContainer = ({
       !!state.hoveringPath &&
       // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).
       // Reordering is a less destructive action that does not need to bring attention to the parent.
-      !equalPath(rootedParentOf(state, state.draggingThought!), simplePath) &&
+      state.draggingThought &&
+      !equalPath(rootedParentOf(state, state.draggingThought), simplePath) &&
       !isContextViewActive(state, path) &&
       // SubthoughtsDrop
       // Can drop on SubthoughtsDrop if this thought is being hovered over.
@@ -292,8 +293,8 @@ const ThoughtContainer = ({
         // ThoughtDrop
         // Can drop on ThoughtDrop if this thought is a parent of the hovered thought, and not a descendant of the dragging thought.
         (state.hoverZone === DropThoughtZone.ThoughtDrop &&
-          equalPath(rootedParentOf(state, state.hoveringPath!), simplePath) &&
-          !isDescendantPath(simplePath, state.draggingThought!))) &&
+          equalPath(rootedParentOf(state, state.hoveringPath), simplePath) &&
+          !isDescendantPath(simplePath, state.draggingThought))) &&
       state.alert?.alertType !== AlertType.DeleteDropHint &&
       state.alert?.alertType !== AlertType.CopyOneDropHint,
   )

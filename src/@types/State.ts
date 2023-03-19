@@ -40,10 +40,14 @@ interface State {
   distractionFreeTyping: boolean
   // SimplePath of thought with drag hold activated
   draggedSimplePath?: SimplePath
+  // set to true when dragging a native file
+  draggingFile?: boolean
+  // set to the dragging thought during dragInProgress
   draggingThought?: SimplePath
   // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
-  // set to true while the user is dragging a thought
+  // set to true while the user is dragging a thought or file
+  // draggingFile or draggingThought must be set while dragInProgress is true
   // may be set to false to abort the drag even while react-dnd is still dragging (e.g. by shaking)
   dragInProgress: boolean
   // forces content editable to update inner html if html has not changed

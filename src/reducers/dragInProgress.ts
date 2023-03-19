@@ -9,17 +9,20 @@ import alert from './alert'
 
 export interface DragInProgressPayload {
   value: boolean
+  // Sets state.draggingThought. Either hoveringPath or file must be set if value is true.
   draggingThought?: SimplePath
   hoveringPath?: Path
   hoverZone?: DropThoughtZone
+  // Sets state.draggingFile. Either hoveringPath or file must be set if value is true.
+  draggingFile?: boolean
   offset?: number
   sourceZone?: DragThoughtZone
 }
 
-/** Sets dragInProgress. */
+/** Sets state.dragInProgress to true. */
 const dragInProgress = (
   state: State,
-  { value, draggingThought, hoveringPath, hoverZone, offset, sourceZone }: DragInProgressPayload,
+  { value, draggingThought, draggingFile, hoveringPath, hoverZone, offset, sourceZone }: DragInProgressPayload,
 ): State => ({
   ...(value
     ? alert(state, {
@@ -29,6 +32,7 @@ const dragInProgress = (
       })
     : state),
   dragInProgress: value,
+  draggingFile: value && draggingFile,
   draggingThought,
   hoveringPath,
   hoverZone,

@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { NativeTypes } from 'react-dnd-html5-backend'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -140,6 +141,10 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 
 /** A droppable Subthoughts component. */
 const DragAndDropSubthoughts = <T extends VirtualThoughtProps>(virtualThoughtComponent: FC<T>) =>
-  DropTarget('thought', { canDrop, drop }, dropCollect)(virtualThoughtComponent as FC<VirtualThoughtProps>)
+  DropTarget(
+    ['thought', NativeTypes.FILE],
+    { canDrop, drop },
+    dropCollect,
+  )(virtualThoughtComponent as FC<VirtualThoughtProps>)
 
 export default DragAndDropSubthoughts

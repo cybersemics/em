@@ -6,9 +6,10 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import distractionFreeTyping from '../action-creators/distractionFreeTyping'
+import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
-import { AlertType } from '../constants'
+import { AlertText, AlertType } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -189,6 +190,44 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
+  /** Drag enter handler for file drag-and-drop. Sets state.dragInProgress and state.draggingFile to true. */
+  const dragEnter = (e: DragEvent) => {
+    // dragEnter and dragLeave are called in alternating pairs as the user drags over nested elements: ENTER, LEAVE, ENTER, LEAVE, ENTER
+    // In order to detect the end of dragging a file, we need to debounce the dragLeave event and cancel it if dragEnter occurs.
+    // Inspired by: https://stackoverflow.com/questions/3144881/how-do-i-detect-a-html5-drag-event-entering-and-leaving-the-window-like-gmail-d
+    setTimeout(() => {
+      dragLeave.cancel()
+    })
+    if (e.dataTransfer?.types.includes('Files')) {
+      store.dispatch([
+        alert(AlertText.DragAndDropFile, { alertType: AlertType.DragAndDropFile }),
+        dragInProgress({ value: true, draggingFile: true }),
+      ])
+    }
+  }
+
+  /** Drag leave handler for file drag-and-drop. Does not handle drag end. */
+  const dragLeave = _.debounce((e: DragEvent) => {
+    store.dispatch((dispatch, getState) => {
+      // e.dataTransfer.types is not available in dragLeave for some reason, so we check state.draggingFile
+      const state = getState()
+      if (state.draggingFile) {
+        dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
+      }
+    })
+  }, 100)
+
+  /** Drop handler for file drag-and-drop. */
+  const drop = (e: DragEvent) => {
+    if (e.dataTransfer?.types.includes('Files')) {
+      // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
+      // See: DragAndDropThought and DragAndDropSubthoughts
+      setTimeout(() => {
+        store.dispatch([alert(null, { alertType: AlertType.DragAndDropFile }), dragInProgress({ value: false })])
+      })
+    }
+  }
+
   // store input handlers so they can be removed on cleanup
   const { keyDown, keyUp } = (window.__inputHandlers = inputHandlers(store))
 
@@ -205,6 +244,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('resize', updateHeight)
   window.addEventListener('scroll', updateScrollTop)
+  window.addEventListener('dragenter', dragEnter)
+  window.addEventListener('dragleave', dragLeave)
+  window.addEventListener('drop', drop)
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -221,6 +263,9 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('resize', updateHeight)
     window.removeEventListener('scroll', updateScrollTop)
+    window.removeEventListener('dragenter', dragEnter)
+    window.removeEventListener('dragleave', dragLeave)
+    window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
   }
 
