@@ -25,3 +25,9 @@ Defaults:
 - `process.env.LOG_TIMESTAMPS` - Unset
 - `process.env.HOST` - localhost
 - `process.env.POST` - 8080
+
+Start script defaults:
+
+- `process.env.YPERSISTENCE` - .thoughts.level
+- `process.env.YPERMISSIONS` - .permissions.level
+- `process.env.DB_DOCLOGMETA` - .doclogmeta.level

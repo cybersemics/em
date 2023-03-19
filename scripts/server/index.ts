@@ -1,10 +1,33 @@
 import { Server } from '@hocuspocus/server'
+import level from 'level'
+import _ from 'lodash'
 import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
 import Index from '../../src/@types/IndexType'
 import Share from '../../src/@types/Share'
-import { encodePermissionsDocumentName, parseDocumentName } from '../../src/data-providers/yjs/documentNameEncoder'
+import ThoughtId from '../../src/@types/ThoughtId'
+import {
+  encodeLexemeDocumentName,
+  encodePermissionsDocumentName,
+  encodeThoughtDocumentName,
+  parseDocumentName,
+} from '../../src/data-providers/yjs/documentNameEncoder'
+import taskQueue from '../../src/util/taskQueue'
 import timestamp from '../../src/util/timestamp'
+
+interface ReplicationResult {
+  type: 'thought' | 'lexeme'
+  id: ThoughtId | string
+  // the delta index that is saved as the replication cursor to enable partial replication
+  index: number
+}
+
+// action types for the doclog
+// See: doclog
+enum DocLogAction {
+  Delete,
+  Update,
+}
 
 const host = process.env.HOST || 'localhost'
 const port = process.env.PORT ? +process.env.PORT : 8080
@@ -38,6 +61,8 @@ const log = (...args: any) => {
   ;(console as any)[method](...args)
 }
 
+// meta information about the doclog, mainly the thoughtReplicationCursor
+let doclogMeta: level.LevelDB<string, number> | undefined
 let ldbPermissions: LeveldbPersistence | undefined
 let ldbThoughtspace: LeveldbPersistence | undefined
 
@@ -46,6 +71,9 @@ if (process.env.YPERMISSIONS) {
 }
 if (process.env.YPERSISTENCE) {
   ldbThoughtspace = new LeveldbPersistence(process.env.YPERSISTENCE)
+}
+if (process.env.DB_DOCLOGMETA) {
+  doclogMeta = level(process.env.DB_DOCLOGMETA, { valueEncoding: 'json' })
 }
 
 /** Syncs a doc with leveldb. */
@@ -132,6 +160,131 @@ export const onLoadDocument = async ({
 
   if (ldbThoughtspace && type !== 'permissions') {
     syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
+  }
+
+  if (type === 'doclog') {
+    /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
+    const replicationQueue = taskQueue<ReplicationResult>({
+      onLowStep: ({ index, value }) => {
+        if (value.type === 'thought') {
+          updateThoughtReplicationCursor(value.index)
+        } else {
+          updateLexemeReplicationCursor(value.index)
+        }
+      },
+    })
+
+    // thoughtObservationCursor marks the index of the last thought delta that has been observed
+    // only needs to be stored in memory
+    // used to recalculate the delta slice on multiple observe calls
+    // presumably the initial slice up to the replication delta is adequate, but this can handle multiple observes until the replication delta has been reached
+    let thoughtObservationCursor = 0
+    let lexemeObservationCursor = 0
+    let thoughtReplicationCursor = 0
+    let lexemeReplicationCursor = 0
+
+    // thoughtReplicationCursor marks the number of contiguous delta insertions that have been replicated
+    // used to slice the doclog and only replicate new changes
+    if (doclogMeta) {
+      try {
+        thoughtReplicationCursor = await doclogMeta.get(`${documentName}-thoughtReplicationCursor`)
+        lexemeReplicationCursor = await doclogMeta.get(`${documentName}-lexemeReplicationCursor`)
+      } catch (e) {
+        // get will fail with "Key not found" the first time
+        // ignore it replication cursors will be set in next replication
+      }
+    }
+
+    const updateThoughtReplicationCursor = _.throttle(
+      (index: number) => {
+        thoughtReplicationCursor = index + 1
+        doclogMeta?.put(`${documentName}-thoughtReplicationCursor`, index + 1)
+      },
+      100,
+      { leading: false },
+    )
+    const updateLexemeReplicationCursor = _.throttle(
+      (index: number) => {
+        lexemeReplicationCursor = index + 1
+        doclogMeta?.put(`${documentName}-lexemeReplicationCursor`, index + 1)
+      },
+      100,
+      { leading: false },
+    )
+
+    const doclog = document
+    const thoughtLog = doclog.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
+    const lexemeLog = doclog.getArray<[string, DocLogAction]>('lexemeLog')
+
+    // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
+    // Clocks across clients are not monotonic, so we can't slice by clock.
+    // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
+    // Therefore, observe the deltas and slice from the replication cursor.
+    thoughtLog.observe(e => {
+      if (e.transaction.origin === doclog.clientID) return
+      const startIndex = thoughtReplicationCursor
+
+      // since the doglogs are append-only, ids are only on .insert
+      const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
+      // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
+      const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
+
+      // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
+      const replicated = new Map<ThoughtId, number>()
+      deltas.forEach(([id], i) => replicated.set(id, i))
+
+      const tasks = deltas.map(([id, action], i) => {
+        // ignore older updates to the same thought
+        if (i !== replicated.get(id)) return null
+
+        // update or delete the thought
+        return async (): Promise<ReplicationResult> => {
+          if (action === DocLogAction.Delete) {
+            await ldbThoughtspace?.clearDocument(encodeThoughtDocumentName(tsid, id))
+          }
+
+          return { type: 'thought', id, index: startIndex + i }
+        }
+      })
+
+      replicationQueue.add(tasks)
+      thoughtObservationCursor += deltasRaw.length
+    })
+
+    // See: thoughtLog.observe
+    lexemeLog.observe(e => {
+      if (e.transaction.origin === doclog.clientID) return
+      const startIndex = lexemeReplicationCursor
+
+      // since the doglogs are append-only, ids are only on .insert
+      const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
+      // slice from the replication cursor (excluding lexemes that have already been sliced) in order to only replicate changed lexemes
+      // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
+      const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
+
+      // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+      const replicated = new Map<string, number>()
+      deltas.forEach(([key], i) => replicated.set(key, i))
+
+      const tasks = deltas.map(([key, action], i) => {
+        // ignore older updates to the same lexeme
+        if (i !== replicated.get(key)) return null
+
+        // update or delete the lexeme
+        return async (): Promise<ReplicationResult> => {
+          if (action === DocLogAction.Delete) {
+            await ldbThoughtspace?.clearDocument(encodeLexemeDocumentName(tsid, key))
+          }
+
+          return { type: 'lexeme', id: key, index: startIndex + i }
+        }
+      })
+
+      replicationQueue.add(tasks)
+      lexemeObservationCursor += deltasRaw.length
+    })
   }
 }
 

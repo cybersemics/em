@@ -1,14 +1,16 @@
 {
   "scripts": {
     "build": "rm -rf build ; npx tsc",
-    "clear": "rm -rf ./.thoughts.level ; rm -rf ./.permissions.level",
-    "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level node build/scripts/server/index.js"
+    "clear": "rm -rf ./.thoughts.level ; rm -rf ./.permissions.level; rm -rf .doclog.level",
+    "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level DB_DOCLOGMETA=./.doclogmeta.level node build/scripts/server/index.js"
   },
   "dependencies": {
     "@hocuspocus/server": "^2.0.0-alpha.0",
+    "level": "^6.0.1",
     "y-leveldb": "^0.1.2"
   },
   "devDependencies": {
+    "@types/level": "^6.0.1",
     "typescript": "^4.9.4"
   },
   "peerDependencies": {
