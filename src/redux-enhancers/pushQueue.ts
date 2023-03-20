@@ -75,7 +75,7 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
   remote: batch.remote !== false,
 })
 
-/** Clears state.pushQueue on the next action when pushQueue has been invalidated by pushQueue, and then clear the invalidated flag. This is done to avoid an additional dispatch and thus selector recalculations on every thought change. Do not access state.pushQueue outside of a reducer, as it may be stale. */
+/** Merges state.pushQueue batches and pushes them to Yjs. Caches settings. */
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
