@@ -43,7 +43,7 @@ const Status = () => {
         ? 'Connecting'
         : status === 'connected' || status === 'synced'
         ? !replicationPercentage || replicationPercentage < 100
-          ? `Replicating ${replicationPercentage ?? '...'}%`
+          ? `Replicating ${replicationPercentage ? replicationPercentage + '%' : '...'}`
           : 'Online'
         : status === 'offline'
         ? 'Offline'
