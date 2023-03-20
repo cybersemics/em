@@ -20,6 +20,7 @@ import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import storage from '../../util/storage'
+import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
 import { DataProvider } from '../DataProvider'
 import {
@@ -115,6 +116,19 @@ const replication = replicationController({
   },
 })
 
+// limit the number of thoughts and lexemes that are updated in the Y.Doc at once
+const updateQueue = taskQueue({
+  // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
+  // this may vary based on # of cores and network conditions
+  concurrency: 16,
+  onStep: ({ completed, total }) => {
+    syncStatusStore.update({ isPushing: true, savingProgress: completed / total })
+  },
+  onEnd: () => {
+    syncStatusStore.update({ isPushing: false, savingProgress: 1 })
+  },
+})
+
 // pause replication during pushing and pulling
 syncStatusStore.subscribeSelector(
   ({ isPushing, isPulling }) => isPushing || isPulling,
@@ -153,20 +167,14 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
   }
   const thoughtDoc = thoughtDocs[id]
 
-  // set updateQueue and isPushing
-  // dequeued after syncing to IndexedDB
-  syncStatusStore.pushStart(thought.id)
-
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
-  const done = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
+  const transactionPromise = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
 
-  thoughtPersistence[thought.id]?.whenSynced
-    .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error saving thought'))
-    })
-    .then(() => syncStatusStore.pushEnd(thought.id))
+  const idbSynced = thoughtPersistence[thought.id]?.whenSynced.catch(e => {
+    console.error(e)
+    store.dispatch(alert('Error saving thought'))
+  })
 
   thoughtDoc.transact(() => {
     const thoughtMap = thoughtDoc.getMap<ThoughtYjs>()
@@ -202,31 +210,25 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
     })
   }, thoughtDoc.clientID)
 
-  return done
+  await Promise.all([transactionPromise, idbSynced])
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
-const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
+const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
   if (!lexemeDocs[key]) {
     replicateLexeme(key)
   }
   const lexemeDoc = lexemeDocs[key]
 
-  // set updateQueue and isPushing
-  // dequeued after syncing to IndexedDB
-  syncStatusStore.pushStart(key)
-
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
-  const done = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
+  const transactionPromise = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
 
-  lexemePersistence[key]?.whenSynced
-    .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error saving thought'))
-    })
-    .then(() => syncStatusStore.pushEnd(key))
+  const idbSynced = lexemePersistence[key]?.whenSynced.catch(e => {
+    console.error(e)
+    store.dispatch(alert('Error saving thought'))
+  })
 
   lexemeDoc.transact(() => {
     const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
@@ -264,7 +266,7 @@ const updateLexeme = (key: string, lexeme: Lexeme): Promise<void> => {
     })
   }, lexemeDoc.clientID)
 
-  return done
+  await Promise.all([transactionPromise, idbSynced])
 }
 
 /** Handles the Thought observe event. Ignores events from self. */
@@ -541,7 +543,6 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 
 /** Deletes a thought and clears the doc from IndexedDB. */
 const deleteThought = (id: ThoughtId): Promise<void> => {
-  syncStatusStore.pushStart(id)
   // destroying the doc does not remove top level shared type observers
   thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
   thoughtDocs[id]?.destroy()
@@ -551,19 +552,14 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   delete thoughtWebsocketProvider[id]
 
   // there may not be a persistence instance in memory at all, so delete the database directly
-  return deleteDB(encodeThoughtDocumentName(tsid, id))
-    .catch((e: Error) => {
-      console.error(e)
-      store.dispatch(alert('Error deleting thought'))
-    })
-    .finally(() => {
-      syncStatusStore.pushEnd(id)
-    })
+  return deleteDB(encodeThoughtDocumentName(tsid, id)).catch((e: Error) => {
+    console.error(e)
+    store.dispatch(alert('Error deleting thought'))
+  })
 }
 
 /** Deletes a lexemes and clears the doc from IndexedDB. */
 const deleteLexeme = (key: string): Promise<void> => {
-  syncStatusStore.pushStart(key)
   // destroying the doc does not remove top level shared type observers
   lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
   lexemeDocs[key]?.destroy()
@@ -573,18 +569,15 @@ const deleteLexeme = (key: string): Promise<void> => {
   delete lexemeWebsocketProvider[key]
 
   // there may not be a persistence instance in memory at all, so delete the database directly
-  return deleteDB(encodeLexemeDocumentName(tsid, key))
-    .catch((e: Error) => {
-      console.error(e)
-      store.dispatch(alert('Error deleting thought'))
-    })
-    .finally(() => {
-      syncStatusStore.pushEnd(key)
-    })
+  return deleteDB(encodeLexemeDocumentName(tsid, key)).catch((e: Error) => {
+    console.error(e)
+    store.dispatch(alert('Error deleting thought'))
+  })
 }
 
 /** Updates shared thoughts and lexemes. */
-export const updateThoughts = async (
+// Note: Does not await updates, but that could be added.
+export const updateThoughts = (
   thoughtIndexUpdates: Index<ThoughtDb | null>,
   lexemeIndexUpdates: Index<Lexeme | null>,
   schemaVersion: number,
@@ -605,13 +598,18 @@ export const updateThoughts = async (
     delete?: Index<null>
   }
 
-  const thoughtUpdatesPromise = Object.entries(thoughtUpdates || {}).map(([id, thought]) =>
-    updateThought(id as ThoughtId, thought),
-  )
-
-  const lexemeUpdatesPromise = Object.entries(lexemeUpdates || {}).map(async ([key, lexeme]) =>
-    updateLexeme(key, lexeme),
-  )
+  updateQueue.add([
+    ...Object.entries(thoughtUpdates || {}).map(
+      ([id, thought]) =>
+        () =>
+          updateThought(id as ThoughtId, thought),
+    ),
+    ...Object.entries(lexemeUpdates || {}).map(
+      ([key, lexeme]) =>
+        () =>
+          updateLexeme(key, lexeme),
+    ),
+  ])
 
   // When thought ids are pushed to the doclog, the first log is trimmed if it matches the last log.
   // This is done to reduce the growth of the doclog during the common operation of editing a single thought.
@@ -630,16 +628,18 @@ export const updateThoughts = async (
 
   // eslint-disable-next-line fp/no-mutating-methods
   replication.log({ thoughtLogs, lexemeLogs })
+  updateQueue.add([
+    ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
+    ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
+  ])
 
-  const thoughtDeleteIds = Object.keys(thoughtDeletes || {}) as ThoughtId[]
-  const lexemeDeleteKeys = Object.keys(lexemeDeletes || {})
-
-  return Promise.all([
-    ...thoughtUpdatesPromise,
-    ...lexemeUpdatesPromise,
-    ...thoughtDeleteIds.map(deleteThought),
-    ...lexemeDeleteKeys.map(deleteLexeme),
-  ] as Promise<void>[])
+  return Promise.resolve()
+  // return Promise.all([
+  //   ...thoughtUpdatesPromise,
+  //   ...lexemeUpdatesPromise,
+  //   ...thoughtDeleteIds.map(deleteThought),
+  //   ...lexemeDeleteKeys.map(deleteLexeme),
+  // ] as Promise<void>[])
 }
 
 /** Clears all thoughts and lexemes from the db. */
