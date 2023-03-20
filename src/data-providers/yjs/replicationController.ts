@@ -87,7 +87,7 @@ const replicationController = ({
   /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
   const replicationQueue = taskQueue<ReplicationResult>({
     autostart,
-    onLowStep: ({ index, value }) => {
+    onLowStep: ({ value }) => {
       if (value.type === 'thought') {
         updateThoughtReplicationCursor(value.index)
       } else {
@@ -120,12 +120,14 @@ const replicationController = ({
 
       const tasks = deltas.map(([id, action], i) => {
         // ignore older updates to the same thought
+        // no need to update the replication cursor since it will be updated to the newer update
         if (i !== replicated.get(id)) return null
 
         // update or delete the thought
         return async (): Promise<ReplicationResult> => {
-          await next({ action, id, index: startIndex + i, type: 'thought' })
-          return { type: 'thought', id, index: startIndex + i }
+          const result: ReplicationResult = { type: 'thought', id, index: startIndex + i }
+          await next({ ...result, action })
+          return result
         }
       })
 
@@ -151,12 +153,14 @@ const replicationController = ({
 
       const tasks = deltas.map(([key, action], i) => {
         // ignore older updates to the same lexeme
+        // no need to update the replication cursor since it will be updated to the newer update
         if (i !== replicated.get(key)) return null
 
         // update or delete the lexeme
         return async (): Promise<ReplicationResult> => {
-          await next({ action, id: key, index: startIndex + i, type: 'lexeme' })
-          return { type: 'lexeme', id: key, index: startIndex + i }
+          const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i }
+          await next({ ...result, action })
+          return result
         }
       })
 
