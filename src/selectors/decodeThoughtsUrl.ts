@@ -19,7 +19,8 @@ interface Options {
 const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
   url = url || window.location.href
   const urlRelative = url.replace(/^(?:\/\/|[^/]+)*(\/)?/, '')
-  const urlComponents = urlRelative.split('/')
+  const urlWithoutQueryString = urlRelative.split('?')[0]
+  const urlComponents = urlWithoutQueryString.split('/')
   const urlOwner = urlComponents[0] || '~' // ~ represents currently authenticated user
 
   if (urlOwner !== owner()) {
@@ -28,7 +29,7 @@ const decodeThoughtsUrl = (state: State, { exists, url }: Options = {}) => {
     )
   }
 
-  const urlPath = urlComponents.length > 1 ? urlComponents.slice(1) : [HOME_TOKEN]
+  const urlPath = urlComponents.length > 1 && urlWithoutQueryString.length > 3 ? urlComponents.slice(1) : [HOME_TOKEN]
 
   const pathUnranked = urlPath.map(componentToThought) as Path
 
