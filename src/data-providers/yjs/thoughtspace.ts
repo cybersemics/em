@@ -122,16 +122,16 @@ const updateQueue = taskQueue({
   // this may vary based on # of cores and network conditions
   concurrency: 16,
   onStep: ({ completed, total }) => {
-    syncStatusStore.update({ isPushing: true, savingProgress: completed / total })
+    syncStatusStore.update({ savingProgress: completed / total })
   },
   onEnd: () => {
-    syncStatusStore.update({ isPushing: false, savingProgress: 1 })
+    syncStatusStore.update({ savingProgress: 1 })
   },
 })
 
 // pause replication during pushing and pulling
 syncStatusStore.subscribeSelector(
-  ({ isPushing, isPulling }) => isPushing || isPulling,
+  ({ isPulling, savingProgress }) => savingProgress < 1 || isPulling,
   isPushingOrPulling => {
     if (isPushingOrPulling) {
       replication.pause()

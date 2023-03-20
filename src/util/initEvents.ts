@@ -169,7 +169,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Url change and reload listener. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
-    if (syncStatusStore.getState().isPushing) {
+    if (syncStatusStore.getState().savingProgress < 1) {
       // Note: Showing confirmation dialog can vary between browsers.
       // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()

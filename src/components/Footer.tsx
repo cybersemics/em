@@ -16,7 +16,6 @@ import syncStatusStore from '../stores/syncStatus'
 /** Show the user's connection status. */
 const Status = () => {
   const colors = useSelector(themeColors)
-  const isPushing = syncStatusStore.useSelector(({ isPushing }) => isPushing)
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
     replicationProgress !== null ? Math.round(replicationProgress * 100) : null,
   )
@@ -35,7 +34,7 @@ const Status = () => {
             : (new Error('test'), undefined),
       }}
     >
-      {isPushing
+      {savingPercentage < 100
         ? `Saving ${savingPercentage}%`
         : status === 'preconnecting'
         ? 'Initializing'
