@@ -13,7 +13,6 @@ import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
-import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -366,6 +365,9 @@ export const replicateThought = async (
       store.dispatch(alert('Error loading thought'))
     })
 
+  // TODO: How to tell if a thought exists on the websocket server?
+  // Thought is always empty on synced, and observe may never be called.
+  // We need to wait for the websocket to sync when replicating foreground thoughts that are not yet in IDB, without stalling if the thought is not on the websocket server.
   const websocketSynced = new Promise<void>(resolve => {
     /** Resolves the promise after a valid thought is observed. */
     // TODO: Why is the document empty on synced?
@@ -379,16 +381,17 @@ export const replicateThought = async (
       if (background) {
         // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
         // Otherwise, this client will not see real-time edits from remote clients.
+        // TODO: How to limit in-memory thoughts when they arrive out of order?
         // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
-        const state = store.getState()
-        const exists = !!getThoughtByIdSelector(state, id)
-        const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-        if (exists || existsParent) {
-          onThoughtChange(e)
-          thoughtMap.observe(onThoughtChange)
-        } else {
-          websocketProvider.destroy()
-        }
+        // const state = store.getState()
+        // const exists = !!getThoughtByIdSelector(state, id)
+        // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+        // if (exists || existsParent) {
+        onThoughtChange(e)
+        thoughtMap.observe(onThoughtChange)
+        // } else {
+        //   websocketProvider.destroy()
+        // }
       }
 
       resolve()

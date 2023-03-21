@@ -35,7 +35,17 @@ const replicationController = ({
   /** Event that fires when all doclogs in the queue have been processed. Invoked again whenever new updates are added to an empty queue. */
   onEnd?: (total: number) => void
   /** Event that fires after a thought or lexeme has been successfully replicated (See: next). */
-  onStep?: ({ completed, total }: { completed: number; total: number }) => void
+  onStep?: ({
+    completed,
+    index,
+    total,
+    value,
+  }: {
+    completed: number
+    index: number
+    total: number
+    value: ReplicationResult
+  }) => void
   /** An asynchronous function that replicates the next thought or lexeme in the queue. May be called multiple times if the process is interrupted and the replication cursor is not updated. */
   next: ({ action }: { action: DocLogAction } & ReplicationResult) => Promise<void>
   /** Local storage mechanism to persist the replication cursors. These are persisted outside of Yjs and are not supposed to be replicated across clients. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it it goes back online. Sets are throttled. */
