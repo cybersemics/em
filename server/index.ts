@@ -115,31 +115,32 @@ export const onLoadDocument = async ({
   // The server-side permissions doc keeps all permissions for all documents in memory.
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
   // update last accessed time on auth
-  permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
+  if (type === 'permissions') {
+    permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
 
-  const permissionsClientDoc = getYDoc(permissionsDocName)
-  if (!permissionsClientDoc) return
+    const permissionsClientDoc = getYDoc(permissionsDocName)
+    if (!permissionsClientDoc) return
 
-  const permissionsClientMap = permissionsClientDoc.getMap<Share>()
+    const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 
-  // sync client permissions to server
-  // TODO: Maybe we can 2-way sync only the updates for this tsid
-  permissionsClientMap?.observe(e => {
-    e.changes.keys.forEach((change, key) => {
-      if (change.action === 'delete') {
-        permissionsServerMap.delete(key)
-      } else {
-        permissionsServerMap.set(key, permissionsClientMap.get(key)!)
-      }
+    // sync client permissions to server
+    // TODO: Maybe we can 2-way sync only the updates for this tsid
+    permissionsClientMap?.observe(e => {
+      e.changes.keys.forEach((change, key) => {
+        if (change.action === 'delete') {
+          permissionsServerMap.delete(key)
+        } else {
+          permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+        }
+      })
     })
-  })
 
-  // copy server permissions to client
-  permissionsServerMap.forEach((permission: Share, token: string) => {
-    permissionsClientMap.set(token, permission)
-  })
-
-  if (ldbThoughtspace && type !== 'permissions') {
+    // copy server permissions to client
+    permissionsServerMap.forEach((permission: Share, token: string) => {
+      permissionsClientMap.set(token, permission)
+    })
+    // persist non-permissions docs
+  } else if (ldbThoughtspace) {
     syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
   }
 
