@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 import DocLogAction from '../src/@types/DocLogAction'
 import Share from '../src/@types/Share'
 import ThoughtId from '../src/@types/ThoughtId'
+import Timestamp from '../src/@types/Timestamp'
 import {
   encodeDocLogDocumentName,
   encodeLexemeDocumentName,
@@ -116,29 +117,42 @@ export const onLoadDocument = async ({
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
   // update last accessed time on auth
   if (type === 'permissions') {
-    permissionsServerMap.set(token, { ...permission, accessed: timestamp() })
+    // floor accessed to nearest second to avoid churn
+    permissionsServerMap.set(token, { ...permission, accessed: (Math.floor(timestamp() / 1000) * 1000) as Timestamp })
 
     const permissionsClientDoc = getYDoc(permissionsDocName)
     if (!permissionsClientDoc) return
 
     const permissionsClientMap = permissionsClientDoc.getMap<Share>()
 
+    // copy server permissions to client
+    permissionsServerMap.forEach((permission: Share, token: string) => {
+      permissionsClientMap.set(token, permission)
+    })
+
     // sync client permissions to server
-    // TODO: Maybe we can 2-way sync only the updates for this tsid
+    // TODO: Is there a way to 2-way sync only the updates for this tsid?
     permissionsClientMap?.observe(e => {
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'delete') {
           permissionsServerMap.delete(key)
         } else {
-          permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+          const clientShare = permissionsClientMap.get(key)
+          const serverShare = permissionsServerMap.get(key)
+
+          // do not copy empty clientShare to server
+          // (we can assume serverShare exists since onAuthenticate passed)
+          if (!clientShare) return
+
+          // compare name and role
+          // do not compare created and accessed, since the server is assumed to be the source of truth
+          if (clientShare?.name !== serverShare?.name || clientShare?.role !== serverShare?.role) {
+            permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+          }
         }
       })
     })
 
-    // copy server permissions to client
-    permissionsServerMap.forEach((permission: Share, token: string) => {
-      permissionsClientMap.set(token, permission)
-    })
     // persist non-permissions docs
   } else if (ldbThoughtspace) {
     syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
@@ -177,9 +191,11 @@ export const onLoadDocument = async ({
 
 // persist permissions to YPERMISSIONS with leveldb
 // TODO: encrypt
-if (ldbPermissions) {
-  syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
-}
+
+console.info('Loading permissions...')
+const permissionsServerSynced = ldbPermissions
+  ? syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
+  : Promise.resolve()
 
 const server = Server.configure({
   port,
@@ -187,4 +203,9 @@ const server = Server.configure({
   onLoadDocument,
 })
 
-server.listen()
+// do not start server until permissions have synced
+// otherwise owners could get overwritten
+permissionsServerSynced.then(() => {
+  console.info('Permissions loaded')
+  server.listen()
+})
