@@ -5,7 +5,6 @@ import * as Y from 'yjs'
 import DocLogAction from '../src/@types/DocLogAction'
 import Share from '../src/@types/Share'
 import ThoughtId from '../src/@types/ThoughtId'
-import Timestamp from '../src/@types/Timestamp'
 import {
   encodeDocLogDocumentName,
   encodeLexemeDocumentName,
@@ -117,8 +116,9 @@ export const onLoadDocument = async ({
   // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
   // update last accessed time on auth
   if (type === 'permissions') {
+    // disable accessed in the permissionsServerMap; it does not need a CRDT
     // floor accessed to nearest second to avoid churn
-    permissionsServerMap.set(token, { ...permission, accessed: (Math.floor(timestamp() / 1000) * 1000) as Timestamp })
+    // permissionsServerMap.set(token, { ...permission, accessed: (Math.floor(timestamp() / 1000) * 1000) as Timestamp })
 
     const permissionsClientDoc = getYDoc(permissionsDocName)
     if (!permissionsClientDoc) return
