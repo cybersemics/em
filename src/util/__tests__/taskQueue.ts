@@ -1,20 +1,17 @@
 import { delay } from '../../test-helpers/delay'
 import taskQueue from '../taskQueue'
 
-it('add single task', async () => {
+it('run tasks', async () => {
   let counter = 0
   /** Increment counter. */
   const inc = () => ++counter
 
-  await new Promise(resolve => {
-    const queue = taskQueue<number>({ onEnd: resolve })
-    queue.add(inc)
-  })
+  await taskQueue<number>({ tasks: [inc, inc, inc] }).end
 
-  expect(counter).toBe(1)
+  expect(counter).toBe(3)
 })
 
-it('add multiple tasks', async () => {
+it('add tasks after instantiation', async () => {
   let counter = 0
   /** Increment counter. */
   const inc = () => ++counter
@@ -23,26 +20,6 @@ it('add multiple tasks', async () => {
     const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([inc, inc, inc])
   })
-
-  expect(counter).toBe(3)
-})
-
-it('end promise', async () => {
-  let counter = 0
-  /** Increment counter. */
-  const inc = () => ++counter
-
-  await taskQueue<number>({ tasks: [inc, inc, inc] }).end
-
-  expect(counter).toBe(3)
-})
-
-it('add tasks in constructor', async () => {
-  let counter = 0
-  /** Increment counter. */
-  const inc = () => ++counter
-
-  await taskQueue<number>({ tasks: [inc, inc, inc] }).end
 
   expect(counter).toBe(3)
 })
