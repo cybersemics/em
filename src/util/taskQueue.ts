@@ -98,7 +98,7 @@ const taskQueue = <
           total = 0
         }
 
-        setTimeout(tick)
+        tick()
       })
 
       tick()
