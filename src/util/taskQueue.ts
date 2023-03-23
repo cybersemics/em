@@ -56,9 +56,6 @@ const taskQueue = <
   // A function is needed instead of simply referencing `started`, since we need closure over the index even after `started`` has been incremented by other tasks. */
   const nextIndex = () => indexStarted++
 
-  // map of currently running tasks
-  // const running = new Map<string, Promise<void>>()
-
   /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
   const tick = () => {
     if (paused || running >= concurrency) return
@@ -102,7 +99,12 @@ const taskQueue = <
 
   return {
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
-    add: (tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[]) => {
+    add: (
+      tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[],
+      {
+        onStep: onStepBatch,
+      }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
+    ) => {
       if (typeof tasks === 'function') {
         tasks = [tasks]
       }
@@ -115,9 +117,10 @@ const taskQueue = <
           new Promise(resolve => {
             // eslint-disable-next-line fp/no-mutating-methods
             queue.push(() =>
-              Promise.resolve(task()).then(result => {
-                resolve(result)
-                return result
+              Promise.resolve(task()).then(value => {
+                onStepBatch?.({ completed: completed + 1, total, value })
+                resolve(value)
+                return value
               }),
             )
             total++

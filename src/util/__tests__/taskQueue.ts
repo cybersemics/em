@@ -107,10 +107,8 @@ it('onStep', async () => {
 
   await new Promise(resolve => {
     const queue = taskQueue<string>({
-      onStep: ({ completed, total, index, value }) => {
-        // eslint-disable-next-line fp/no-mutating-methods
-        output.push({ completed, total, index, value })
-      },
+      // eslint-disable-next-line fp/no-mutating-methods
+      onStep: result => output.push(result),
       onEnd: resolve,
     })
 
@@ -124,6 +122,42 @@ it('onStep', async () => {
   ])
 })
 
+it('onStep per batch', async () => {
+  const output1: { completed: number; total: number; value: number }[] = []
+  const output2: { completed: number; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await delay(1)
+    return ++counter
+  }
+
+  await new Promise(resolve => {
+    const queue = taskQueue<number>({
+      autostart: false,
+      onEnd: resolve,
+    })
+    // eslint-disable-next-line fp/no-mutating-methods
+    queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output1.push(result) })
+    // eslint-disable-next-line fp/no-mutating-methods
+    queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output2.push(result) })
+    queue.start()
+  })
+
+  expect(output1).toEqual([
+    { completed: 1, total: 6, value: 1 },
+    { completed: 2, total: 6, value: 2 },
+    { completed: 3, total: 6, value: 3 },
+  ])
+
+  expect(output2).toEqual([
+    { completed: 4, total: 6, value: 4 },
+    { completed: 5, total: 6, value: 5 },
+    { completed: 6, total: 6, value: 6 },
+  ])
+})
+
 it('reset completed and total after each batch completes', async () => {
   const output: { completed: number; total: number; index: number; value: number }[] = []
   let counter = 0
@@ -131,10 +165,8 @@ it('reset completed and total after each batch completes', async () => {
   const inc = () => ++counter
 
   const queue = taskQueue<number>({
-    onStep: ({ completed, total, index, value }) => {
-      // eslint-disable-next-line fp/no-mutating-methods
-      output.push({ completed, total, index, value })
-    },
+    // eslint-disable-next-line fp/no-mutating-methods
+    onStep: result => output.push(result),
   })
   queue.add([inc, inc])
   await delay(10)
@@ -161,10 +193,8 @@ it('onLowStep', async () => {
 
   await new Promise(resolve => {
     const queue = taskQueue<string>({
-      onLowStep: ({ completed, total, index, value }) => {
-        // eslint-disable-next-line fp/no-mutating-methods
-        output.push({ completed, total, index, value })
-      },
+      // eslint-disable-next-line fp/no-mutating-methods
+      onLowStep: result => output.push(result),
       onEnd: resolve,
     })
 
