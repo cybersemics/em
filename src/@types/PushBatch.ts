@@ -7,6 +7,8 @@ import ThoughtId from './ThoughtId'
 
 /** Defines a single batch of updates added to the push queue. */
 interface PushBatch {
+  // callback for when the updates have been synced with IDB
+  idbSynced?: () => void
   lexemeIndexUpdates: Index<Lexeme | null>
   local?: boolean
   // contains the path of the pending thought to be deleted and all its siblings. Siblings may be resurrected from the pull, and the parent has already been deleted, so we need to store them to be deleted in flushDeletes.

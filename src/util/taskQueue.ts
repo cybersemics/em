@@ -90,6 +90,8 @@ const taskQueue = <
 
       if (queue.length === 0 && running === 0) {
         onEnd?.(total)
+        completed = 0
+        total = 0
       }
 
       setTimeout(tick)
@@ -99,21 +101,34 @@ const taskQueue = <
   }
 
   return {
-    /** Adds a task to the queue and immediately begins it if under the concurrency limit. */
+    /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
     add: (tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[]) => {
       if (typeof tasks === 'function') {
         tasks = [tasks]
       }
-      tasks.forEach(task => {
-        if (!task) return
-        // eslint-disable-next-line fp/no-mutating-methods
-        queue.push(task)
-        total++
-      })
+
+      const promises = tasks.map(
+        task =>
+          task &&
+          // wrap task in a promise that resolves when the task is complete
+          // this is necessary because we don't have access to the inner promise before the task is run
+          new Promise(resolve => {
+            // eslint-disable-next-line fp/no-mutating-methods
+            queue.push(() =>
+              Promise.resolve(task()).then(result => {
+                resolve(result)
+                return result
+              }),
+            )
+            total++
+          }),
+      )
 
       if (!paused) {
         tick()
       }
+
+      return Promise.all(promises)
     },
 
     /** Starts running tasks, or resumes after pause. */

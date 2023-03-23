@@ -54,6 +54,8 @@ const updateJumpHistory = (state: State): State => {
 
 export type UpdateThoughtsOptions = PushBatch & {
   contextChain?: SimplePath[]
+  // callback for when the updates have been synced with IDB
+  idbSynced?: () => void
   isLoading?: boolean
   pendingEdits?: editThoughtPayload[]
   // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
@@ -192,6 +194,7 @@ const updateThoughts = (
     preventExpandThoughts,
     local = true,
     remote = true,
+    idbSynced,
     isLoading,
     repairCursor,
   }: UpdateThoughtsOptions,
@@ -221,6 +224,7 @@ const updateThoughts = (
 
   // updates are queued, detected by the pushQueue middleware, and sync'd with the local and remote stores
   const batch: PushBatch = {
+    idbSynced,
     lexemeIndexUpdates,
     local,
     pendingDeletes,

@@ -4,10 +4,10 @@ import taskQueue from '../taskQueue'
 it('add single task', async () => {
   let counter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
   await new Promise(resolve => {
-    const queue = taskQueue({ onEnd: resolve })
+    const queue = taskQueue<number>({ onEnd: resolve })
     queue.add(inc)
   })
 
@@ -17,10 +17,10 @@ it('add single task', async () => {
 it('add multiple tasks', async () => {
   let counter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
   await new Promise(resolve => {
-    const queue = taskQueue({ onEnd: resolve })
+    const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([inc, inc, inc])
   })
 
@@ -30,10 +30,10 @@ it('add multiple tasks', async () => {
 it('onEnd should return total', async () => {
   let counter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
   const total = await new Promise(resolve => {
-    const queue = taskQueue({ onEnd: resolve })
+    const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([inc, inc, inc])
   })
 
@@ -42,7 +42,7 @@ it('onEnd should return total', async () => {
 
 it('onEnd with no tasks', async () => {
   const total = await new Promise(resolve => {
-    const queue = taskQueue({ onEnd: resolve })
+    const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([])
   })
 
@@ -54,11 +54,11 @@ it('async tasks', async () => {
   /** Increment counter after a delay. */
   const incDelayed = async () => {
     await delay(1)
-    counter++
+    return ++counter
   }
 
   await new Promise(resolve => {
-    const queue = taskQueue({ onEnd: resolve })
+    const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([incDelayed, incDelayed, incDelayed])
   })
 
@@ -68,10 +68,10 @@ it('async tasks', async () => {
 it('autostart:false should not start running tasks until start is called', async () => {
   let counter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
   await new Promise(resolve => {
-    const queue = taskQueue({
+    const queue = taskQueue<number>({
       autostart: false,
       onEnd: resolve,
     })
@@ -86,9 +86,9 @@ it('autostart:false should not start running tasks until start is called', async
 it('autostart:false should be ignored after start is called', async () => {
   let counter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
-  const queue = taskQueue({ autostart: false })
+  const queue = taskQueue<number>({ autostart: false })
   queue.add([inc, inc, inc])
   queue.start()
   queue.add([inc, inc, inc])
@@ -106,7 +106,7 @@ it('onStep', async () => {
   }
 
   await new Promise(resolve => {
-    const queue = taskQueue({
+    const queue = taskQueue<string>({
       onStep: ({ completed, total, index, value }) => {
         // eslint-disable-next-line fp/no-mutating-methods
         output.push({ completed, total, index, value })
@@ -124,6 +124,32 @@ it('onStep', async () => {
   ])
 })
 
+it('reset completed and total after each batch completes', async () => {
+  const output: { completed: number; total: number; index: number; value: number }[] = []
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => ++counter
+
+  const queue = taskQueue<number>({
+    onStep: ({ completed, total, index, value }) => {
+      // eslint-disable-next-line fp/no-mutating-methods
+      output.push({ completed, total, index, value })
+    },
+  })
+  queue.add([inc, inc])
+  await delay(10)
+  queue.add([inc, inc, inc])
+  await delay(10)
+
+  expect(output).toEqual([
+    { completed: 1, total: 2, index: 0, value: 1 },
+    { completed: 2, total: 2, index: 1, value: 2 },
+    { completed: 1, total: 3, index: 2, value: 3 },
+    { completed: 2, total: 3, index: 3, value: 4 },
+    { completed: 3, total: 3, index: 4, value: 5 },
+  ])
+})
+
 it('onLowStep', async () => {
   const output: { completed: number; total: number; index: number; value: string }[] = []
 
@@ -134,7 +160,7 @@ it('onLowStep', async () => {
   }
 
   await new Promise(resolve => {
-    const queue = taskQueue({
+    const queue = taskQueue<string>({
       onLowStep: ({ completed, total, index, value }) => {
         // eslint-disable-next-line fp/no-mutating-methods
         output.push({ completed, total, index, value })
@@ -157,12 +183,14 @@ it('pause', async () => {
   /** Increment counter after a delay. */
   const incDelayed = async () => {
     await delay(20)
-    counter++
+    return ++counter
   }
 
-  let queue: ReturnType<typeof taskQueue> = {} as any
+  /** Wrap taskQueue for typing. */
+  const makeTaskQueue = () => taskQueue<number>()
+  let queue: ReturnType<typeof makeTaskQueue> = {} as any
   const done = new Promise(resolve => {
-    queue = taskQueue({ onEnd: resolve })
+    queue = taskQueue<number>({ onEnd: resolve })
   })
 
   // add three tasks and pause midway through
@@ -188,10 +216,10 @@ it('falsey tasks should be ignored and not count towards total', async () => {
   let stepCounter = 0
   let lowStepCounter = 0
   /** Increment counter. */
-  const inc = () => counter++
+  const inc = () => ++counter
 
   const total = await new Promise(resolve => {
-    const queue = taskQueue({ onStep: () => stepCounter++, onLowStep: () => lowStepCounter++, onEnd: resolve })
+    const queue = taskQueue<number>({ onStep: () => stepCounter++, onLowStep: () => lowStepCounter++, onEnd: resolve })
     queue.add([inc, null, inc])
   })
 
@@ -199,4 +227,22 @@ it('falsey tasks should be ignored and not count towards total', async () => {
   expect(counter).toBe(2)
   expect(lowStepCounter).toBe(2)
   expect(stepCounter).toBe(2)
+})
+
+it('add should return a promise that resolves when all the added tasks have completed', async () => {
+  let counter = 0
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await delay(20)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>()
+
+  const results1 = await queue.add([incDelayed, incDelayed, incDelayed])
+  expect(counter).toBe(3)
+  expect(results1).toEqual([1, 2, 3])
+  const results2 = await queue.add([incDelayed, incDelayed, incDelayed])
+  expect(counter).toBe(6)
+  expect(results2).toEqual([4, 5, 6])
 })

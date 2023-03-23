@@ -116,7 +116,7 @@ const replication = replicationController({
 })
 
 // limit the number of thoughts and lexemes that are updated in the Y.Doc at once
-const updateQueue = taskQueue({
+const updateQueue = taskQueue<void>({
   // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
   // this may vary based on # of cores and network conditions
   concurrency: 16,
@@ -158,7 +158,7 @@ const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
 const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<Thought>()
 export const rootSynced = rootSyncedPromise
 
-/** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. */
+/** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   if (!thoughtDocs[id]) {
@@ -212,7 +212,7 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
   await Promise.all([transactionPromise, idbSynced])
 }
 
-/** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. */
+/** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
 const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
   if (!lexemeDocs[key]) {
@@ -544,7 +544,7 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
   } as Lexeme
 }
 
-/** Deletes a thought and clears the doc from IndexedDB. */
+/** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
 const deleteThought = (id: ThoughtId): Promise<void> => {
   // destroying the doc does not remove top level shared type observers
   thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
@@ -561,7 +561,7 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   })
 }
 
-/** Deletes a lexemes and clears the doc from IndexedDB. */
+/** Deletes a lexemes and clears the doc from IndexedDB. Resolves when local database is deleted. */
 const deleteLexeme = (key: string): Promise<void> => {
   // destroying the doc does not remove top level shared type observers
   lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
@@ -578,7 +578,7 @@ const deleteLexeme = (key: string): Promise<void> => {
   })
 }
 
-/** Updates shared thoughts and lexemes. */
+/** Updates shared thoughts and lexemes. Resolves when IDB is synced (not when websocket is synced). */
 // Note: Does not await updates, but that could be added.
 export const updateThoughts = (
   thoughtIndexUpdates: Index<ThoughtDb | null>,
@@ -601,7 +601,7 @@ export const updateThoughts = (
     delete?: Index<null>
   }
 
-  updateQueue.add([
+  const updatePromise = updateQueue.add([
     ...Object.entries(thoughtUpdates || {}).map(
       ([id, thought]) =>
         () =>
@@ -631,18 +631,12 @@ export const updateThoughts = (
 
   // eslint-disable-next-line fp/no-mutating-methods
   replication.log({ thoughtLogs, lexemeLogs })
-  updateQueue.add([
+  const deletePromise = updateQueue.add([
     ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
     ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
   ])
 
-  return Promise.resolve()
-  // return Promise.all([
-  //   ...thoughtUpdatesPromise,
-  //   ...lexemeUpdatesPromise,
-  //   ...thoughtDeleteIds.map(deleteThought),
-  //   ...lexemeDeleteKeys.map(deleteLexeme),
-  // ] as Promise<void>[])
+  return Promise.all([updatePromise, deletePromise])
 }
 
 /** Clears all thoughts and lexemes from the db. */
@@ -659,7 +653,7 @@ export const clear = async () => {
   }))
   const lexemeIndexUpdates = state.thoughts.lexemeIndex
 
-  updateThoughts(thoughtIndexUpdates, lexemeIndexUpdates, SCHEMA_LATEST)
+  await updateThoughts(thoughtIndexUpdates, lexemeIndexUpdates, SCHEMA_LATEST)
 }
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */

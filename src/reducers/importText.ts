@@ -43,6 +43,9 @@ export interface ImportTextPayload {
   // Prevents the default behavior of setting the cursor to the last thought at the first level.
   preventSetCursor?: boolean
 
+  // callback for when the updates have been synced with IDB
+  idbSynced?: () => void
+
   // When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
   rawDestValue?: string
 
@@ -69,6 +72,7 @@ const importText = (
   {
     path,
     text,
+    idbSynced,
     lastUpdated,
     preventSetCursor,
     rawDestValue,
@@ -231,7 +235,7 @@ const importText = (
 
     return reducerFlow([
       // thoughts will be expanded by setCursor
-      updateThoughts({ ...imported, preventExpandThoughts: true }),
+      updateThoughts({ ...imported, preventExpandThoughts: true, idbSynced }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? collapseContext({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.

@@ -50,6 +50,14 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
 /** Merges multiple push batches into a single batch. Last write wins. */
 const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
   ...accum,
+  // merge callbacks into a single callback function
+  idbSynced:
+    accum.idbSynced && batch.idbSynced
+      ? () => {
+          accum.idbSynced!()
+          batch.idbSynced!()
+        }
+      : accum.idbSynced || batch.idbSynced,
   thoughtIndexUpdates: {
     ...accum.thoughtIndexUpdates,
     ...batch.thoughtIndexUpdates,
@@ -101,11 +109,11 @@ const pushQueue: StoreEnhancer<any> =
       })
 
       // push batch updates to database
-      db.updateThoughts?.(
+      db.updateThoughts(
         mergedBatch.thoughtIndexUpdates,
         mergedBatch.lexemeIndexUpdates,
         mergedBatch.updates?.schemaVersion,
-      )
+      ).then(mergedBatch.idbSynced)
 
       // clear push queue
       return { ...stateNew, pushQueue: [] }
