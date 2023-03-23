@@ -1,6 +1,3 @@
-/** Filters out null and undefined values and properly types the result. */
-const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
-
 /** A simple task queue with concurrency. */
 const taskQueue = <
   // task return type (that gets passed to onStep and onLowStep)
@@ -31,7 +28,7 @@ const taskQueue = <
   }
 
   // queue of tasks to process in order, without exceeding concurrency
-  const queue: (() => T | Promise<T>)[] = tasks ? nonempty(tasks) : []
+  const queue: (() => T | Promise<T>)[] = []
 
   // number of tasks currently running
   let running = 0
@@ -62,88 +59,96 @@ const taskQueue = <
   // A function is needed instead of simply referencing `started`, since we need closure over the index even after `started`` has been incremented by other tasks. */
   const nextIndex = () => indexStarted++
 
-  /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
-  const tick = () => {
-    if (paused || running >= concurrency) return
-    // eslint-disable-next-line fp/no-mutating-methods
-    const task = queue.shift()
-    if (!task) {
-      if (total === 0) {
-        onEnd?.(0)
+  // wrap tick in a promise that resolves onEnd
+  let tick: () => void = null as any
+  const endPromise = new Promise(resolve => {
+    /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
+    tick = () => {
+      if (paused || running >= concurrency) return
+      // eslint-disable-next-line fp/no-mutating-methods
+      const task = queue.shift()
+      if (!task) {
+        if (total === 0) {
+          onEnd?.(0)
+        }
+        return
       }
-      return
+
+      const index = nextIndex()
+      running++
+      Promise.resolve(task()).then((value: T) => {
+        completed++
+        running--
+
+        onStep?.({ completed, total, index, value })
+
+        completedByIndex.set(index, { index, value })
+        // eslint-disable-next-line fp/no-loops
+        while (completedByIndex.has(indexCompleted)) {
+          const task = completedByIndex.get(indexCompleted)!
+          completedByIndex.delete(indexCompleted)
+          onLowStep?.({ ...task, completed, total })
+          indexCompleted++
+        }
+
+        if (queue.length === 0 && running === 0) {
+          onEnd?.(total)
+          resolve(total)
+          completed = 0
+          total = 0
+        }
+
+        setTimeout(tick)
+      })
+
+      tick()
+    }
+  })
+
+  /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
+  const add = (
+    tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[],
+    {
+      onStep: onStepBatch,
+    }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
+  ) => {
+    if (typeof tasks === 'function') {
+      tasks = [tasks]
     }
 
-    const index = nextIndex()
-    running++
-    Promise.resolve(task()).then((value: T) => {
-      completed++
-      running--
+    const promises = tasks.map(
+      task =>
+        task &&
+        // wrap task in a promise that resolves when the task is complete
+        // this is necessary because we don't have access to the inner promise before the task is run
+        new Promise(resolve => {
+          // eslint-disable-next-line fp/no-mutating-methods
+          queue.push(() =>
+            Promise.resolve(task()).then(value => {
+              onStepBatch?.({ completed: completed + 1, total, value })
+              resolve(value)
+              return value
+            }),
+          )
+          total++
+        }),
+    )
 
-      onStep?.({ completed, total, index, value })
+    if (!paused) {
+      tick()
+    }
 
-      completedByIndex.set(index, { index, value })
-      // eslint-disable-next-line fp/no-loops
-      while (completedByIndex.has(indexCompleted)) {
-        const task = completedByIndex.get(indexCompleted)!
-        completedByIndex.delete(indexCompleted)
-        onLowStep?.({ ...task, completed, total })
-        indexCompleted++
-      }
-
-      if (queue.length === 0 && running === 0) {
-        onEnd?.(total)
-        completed = 0
-        total = 0
-      }
-
-      setTimeout(tick)
-    })
-
-    tick()
+    return Promise.all(promises)
   }
 
   // start running initial tasks if provided
-  if (autostart && queue.length > 0) {
-    tick()
+  if (tasks && tasks.length > 0) {
+    add(tasks)
   }
 
   return {
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
-    add: (
-      tasks: (() => T | Promise<T>) | ((() => T | Promise<T>) | null | undefined)[],
-      {
-        onStep: onStepBatch,
-      }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
-    ) => {
-      if (typeof tasks === 'function') {
-        tasks = [tasks]
-      }
-
-      const promises = tasks.map(
-        task =>
-          task &&
-          // wrap task in a promise that resolves when the task is complete
-          // this is necessary because we don't have access to the inner promise before the task is run
-          new Promise(resolve => {
-            // eslint-disable-next-line fp/no-mutating-methods
-            queue.push(() =>
-              Promise.resolve(task()).then(value => {
-                onStepBatch?.({ completed: completed + 1, total, value })
-                resolve(value)
-                return value
-              }),
-            )
-            total++
-          }),
-      )
-
-      if (!paused) {
-        tick()
-      }
-
-      return Promise.all(promises)
-    },
+    add,
 
     /** Starts running tasks, or resumes after pause. */
     start: () => {
@@ -155,6 +160,9 @@ const taskQueue = <
     pause: () => {
       paused = true
     },
+
+    /** Convenience promise for onEnd. Do not use with multiple batches (where onEnd would be called multiple times). */
+    end: endPromise,
   }
 }
 

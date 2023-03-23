@@ -27,14 +27,22 @@ it('add multiple tasks', async () => {
   expect(counter).toBe(3)
 })
 
+it('end promise', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => ++counter
+
+  await taskQueue<number>({ tasks: [inc, inc, inc] }).end
+
+  expect(counter).toBe(3)
+})
+
 it('add tasks in constructor', async () => {
   let counter = 0
   /** Increment counter. */
   const inc = () => ++counter
 
-  await new Promise(resolve => {
-    taskQueue<number>({ onEnd: resolve, tasks: [inc, inc, inc] })
-  })
+  await taskQueue<number>({ tasks: [inc, inc, inc] }).end
 
   expect(counter).toBe(3)
 })
@@ -44,10 +52,7 @@ it('onEnd should return total', async () => {
   /** Increment counter. */
   const inc = () => ++counter
 
-  const total = await new Promise(resolve => {
-    const queue = taskQueue<number>({ onEnd: resolve })
-    queue.add([inc, inc, inc])
-  })
+  const total = await taskQueue<number>({ tasks: [inc, inc, inc] }).end
 
   expect(total).toBe(3)
 })
@@ -69,10 +74,7 @@ it('async tasks', async () => {
     return ++counter
   }
 
-  await new Promise(resolve => {
-    const queue = taskQueue<number>({ onEnd: resolve })
-    queue.add([incDelayed, incDelayed, incDelayed])
-  })
+  await taskQueue<number>({ tasks: [incDelayed, incDelayed, incDelayed] }).end
 
   expect(counter).toBe(3)
 })
@@ -129,15 +131,11 @@ it('onStep', async () => {
     return s
   }
 
-  await new Promise(resolve => {
-    const queue = taskQueue<string>({
-      // eslint-disable-next-line fp/no-mutating-methods
-      onStep: result => output.push(result),
-      onEnd: resolve,
-    })
-
-    queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
-  })
+  await taskQueue<string>({
+    // eslint-disable-next-line fp/no-mutating-methods
+    onStep: result => output.push(result),
+    tasks: [delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)],
+  }).end
 
   expect(output).toEqual([
     { completed: 1, total: 3, index: 2, value: 'c' },
@@ -215,15 +213,11 @@ it('onLowStep', async () => {
     return s
   }
 
-  await new Promise(resolve => {
-    const queue = taskQueue<string>({
-      // eslint-disable-next-line fp/no-mutating-methods
-      onLowStep: result => output.push(result),
-      onEnd: resolve,
-    })
-
-    queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
-  })
+  await taskQueue<string>({
+    // eslint-disable-next-line fp/no-mutating-methods
+    onLowStep: result => output.push(result),
+    tasks: [delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)],
+  }).end
 
   expect(output).toEqual([
     { completed: 2, total: 3, index: 0, value: 'a' },
@@ -272,10 +266,11 @@ it('falsey tasks should be ignored and not count towards total', async () => {
   /** Increment counter. */
   const inc = () => ++counter
 
-  const total = await new Promise(resolve => {
-    const queue = taskQueue<number>({ onStep: () => stepCounter++, onLowStep: () => lowStepCounter++, onEnd: resolve })
-    queue.add([inc, null, inc])
-  })
+  const total = await taskQueue<number>({
+    onStep: () => stepCounter++,
+    onLowStep: () => lowStepCounter++,
+    tasks: [inc, null, inc],
+  }).end
 
   expect(total).toBe(2)
   expect(counter).toBe(2)

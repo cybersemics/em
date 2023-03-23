@@ -115,13 +115,7 @@ const importFilesActionCreator =
       // No efficiency is gained by running the chunk tasks in parallel (see: CHUNK_SIZE).
       // However, we use a taskQueue with concurrency 2 to ensure a continuous flow of updates with no break in between.
       // This prevents the thoughtspace's updateQueue from emptying and resetting the save progress after each chunk.
-      await new Promise(resolve => {
-        taskQueue<void>({
-          concurrency: 2,
-          onEnd: resolve,
-          tasks: chunkTasks,
-        })
-      })
+      await taskQueue<void>({ concurrency: 2, tasks: chunkTasks }).end
     })
 
     // import files serially
