@@ -27,6 +27,18 @@ it('add multiple tasks', async () => {
   expect(counter).toBe(3)
 })
 
+it('add tasks in constructor', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => ++counter
+
+  await new Promise(resolve => {
+    taskQueue<number>({ onEnd: resolve, tasks: [inc, inc, inc] })
+  })
+
+  expect(counter).toBe(3)
+})
+
 it('onEnd should return total', async () => {
   let counter = 0
   /** Increment counter. */
@@ -81,6 +93,18 @@ it('autostart:false should not start running tasks until start is called', async
   })
 
   expect(counter).toBe(6)
+})
+
+it('autostart:false should not start initial tasks', async () => {
+  let counter = 0
+  /** Increment counter. */
+  const inc = () => ++counter
+
+  const queue = taskQueue<number>({ autostart: false, tasks: [inc, inc, inc] })
+  expect(counter).toBe(0)
+
+  queue.start()
+  expect(counter).toBe(3)
 })
 
 it('autostart:false should be ignored after start is called', async () => {

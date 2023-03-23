@@ -1,3 +1,6 @@
+/** Filters out null and undefined values and properly types the result. */
+const nonempty = <T>(arr: (T | null | undefined)[]) => arr.filter(x => x != null) as T[]
+
 /** A simple task queue with concurrency. */
 const taskQueue = <
   // task return type (that gets passed to onStep and onLowStep)
@@ -8,6 +11,7 @@ const taskQueue = <
   onLowStep,
   onStep,
   onEnd,
+  tasks,
 }: {
   /** Starts running tasks as soon as they are added. Set to false to start paused. */
   autostart?: boolean
@@ -19,13 +23,15 @@ const taskQueue = <
   onStep?: (args: { completed: number; total: number; index: number; value: T }) => void
   /** An event that is called when all tasks have completed. */
   onEnd?: (total: number) => void
+  /** Initial tasks to populate the queue with. */
+  tasks?: ((() => T | Promise<T>) | null | undefined)[]
 } = {}) => {
   if (concurrency <= 0) {
     throw new Error(`Invalid concurrency: ${concurrency}. Concurrency must be > 0.`)
   }
 
   // queue of tasks to process in order, without exceeding concurrency
-  const queue: (() => T | Promise<T>)[] = []
+  const queue: (() => T | Promise<T>)[] = tasks ? nonempty(tasks) : []
 
   // number of tasks currently running
   let running = 0
@@ -94,6 +100,11 @@ const taskQueue = <
       setTimeout(tick)
     })
 
+    tick()
+  }
+
+  // start running initial tasks if provided
+  if (autostart && queue.length > 0) {
     tick()
   }
 
