@@ -44,7 +44,7 @@
     "test": "react-scripts test --testPathIgnorePatterns=./src/e2e",
     "test:ios": "react-scripts test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-scripts test ./src/e2e/puppeteer",
-    "websocket-server": "cd ./scripts/server && npm run build && npm start"
+    "websocket-server": "cd server && npm run build && npm start"
   },
   "lockfile-lint": {
     "allowed-schemes": [
