@@ -34,36 +34,37 @@ import newThought from './newThought'
 
 // a list item tag
 const regexpListItem = /<li(?:\s|>)/gim
+
 export interface ImportTextPayload {
-  path?: Path
+  caretPosition?: number
 
-  // Set the lastUpdated timestamp on the imported thoughts. Default: now.
-  lastUpdated?: Timestamp
-
-  // Prevents the default behavior of setting the cursor to the last thought at the first level.
-  preventSetCursor?: boolean
-
-  // callback for when the updates have been synced with IDB
+  /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
 
-  // When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation.
+  path?: Path
+
+  /** Set the lastUpdated timestamp on the imported thoughts. Default: now. */
+  lastUpdated?: Timestamp
+
+  /** Prevents the default behavior of setting the cursor to the last thought at the first level. */
+  preventSetCursor?: boolean
+
+  /** When pasting after whitespace, e.g. Pasting "b" after "a ", the normal destValue has already been trimmed, which would result in "ab". We need to pass the untrimmed.destination value in so that it can be trimmed after concatenation. */
   rawDestValue?: string
 
-  // the character offset to end replacing text if the import is not multiline, such as the end of the selection
+  /* The character offset to end replacing text if the import is not multiline, such as the end of the selection. */
   replaceEnd?: number
 
-  // the character offset to start replacing text if the import is not multiline, such as the start of the selection
+  /* The character offset to start replacing text if the import is not multiline, such as the start of the selection. */
   replaceStart?: number
 
   skipRoot?: boolean
 
-  // text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only)
+  /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
 
-  // A user session id to associate with the update. Defaults to the current session.
+  /** A user session id to associate with the update. Defaults to the current session. */
   updatedBy?: string
-
-  caretPosition?: number
 }
 
 /** Imports thoughts from html or raw text. */

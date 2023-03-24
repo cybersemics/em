@@ -23,6 +23,13 @@ import series from '../util/series'
 import alert from './alert'
 import pull from './pull'
 
+interface VirtualFile {
+  lastModified: number
+  name: string
+  size: number
+  text: () => Promise<string>
+}
+
 /** Meta information for a file import that is stored in IDB and automatically resumed on initialize. */
 interface ResumeImport {
   /** Unique id for the import.
@@ -37,6 +44,8 @@ interface ResumeImport {
   size: number
 }
 
+type ResumableFile = VirtualFile & ResumeImport
+
 // The number of lines of text that are imported at once.
 // This is kept small to ensure that slower devices report steady progress, but large enough to reduce state churn.
 // The bottleneck is IDB, so the overhead for a high number of small chunks should be minimal as long as it involves the same number of IDB transactions. This is assumed to be the case since each thought and lexeme has a separate Y.Doc and thus separate IDB transaction, regardless of the import chunk size.
@@ -50,17 +59,17 @@ const resumeImportKey = (id: string) => `resumeImports-${id}`
 /** Action-creator for importFiles. */
 const importFilesActionCreator =
   ({
-    path,
     files,
-    resume,
     insertBefore,
+    path,
+    resume,
   }: {
     /** Files to import into the path. Either files or resume must be set. */
-    files?: File[]
-    /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
-    path?: Path
+    files?: VirtualFile[]
     /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
     insertBefore?: boolean
+    /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
+    path?: Path
     /** If true, resumes unfinished imports. Either files or resume must be set. */
     resume?: boolean
   }): Thunk =>
@@ -87,7 +96,7 @@ const importFilesActionCreator =
     }
 
     // normalize native files from drag-and-drop and resumed files stored in IDB
-    const filesNormalized = files
+    const resumableFiles: ResumableFile[] = files
       ? files.map(file => ({
           id: createId(),
           lastModified: file.lastModified,
@@ -115,8 +124,8 @@ const importFilesActionCreator =
         }))
 
     // import one file at a time
-    const fileTasks = filesNormalized.map((file, i) => async () => {
-      const fileProgressString = file.name + (filesNormalized.length > 1 ? ` (${i + 1}/${filesNormalized.length})` : '')
+    const fileTasks = resumableFiles.map((file, i) => async () => {
+      const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
       // read
       dispatch(
