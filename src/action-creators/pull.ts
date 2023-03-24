@@ -16,9 +16,8 @@ import mergeThoughts from '../util/mergeThoughts'
 const BUFFER_DEPTH = 2
 
 export interface PullOptions {
-  // force a pull from the remote
+  /** Pull descendants regardless of pending status. */
   force?: boolean
-  // remote only
   remote?: boolean
   maxDepth?: number
   onLocalThoughts?: (thoughts: ThoughtIndices) => void
@@ -33,15 +32,15 @@ async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) 
   }
 }
 
-/** Filters a list of ids to only pending thoughts. */
+/** Filters a list of ids to only missing or pending thoughts. */
 const filterPending = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
   thoughtIds.filter(thoughtId => {
     const thought = getThoughtById(state, thoughtId)
     return !thought || thought.pending
   })
 
-/** Returns a list of all pending descendants of the given thoughts (inclusive). */
-const filterPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
+/** Returns a list of all missing or pending descendants of the given thoughts (inclusive). */
+const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
   _.flatMap(thoughtIds, thoughtId => {
     const thought = getThoughtById(state, thoughtId)
 
@@ -72,8 +71,8 @@ const pull =
     const filteredThoughtIds = force
       ? thoughtIds
       : // if maxDepth is provided, find pending descendants (e.g. for exporting thoughts and their descendants)
-        // otherwise, just pull the specific thoughts given if they are pending
-        (Number(maxDepth) > 0 ? filterPendingDescendants : filterPending)(getState(), thoughtIds)
+        // otherwise, pull the provided thoughts that are missing or pending
+        (Number(maxDepth) > 0 ? getPendingDescendants : filterPending)(getState(), thoughtIds)
 
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []

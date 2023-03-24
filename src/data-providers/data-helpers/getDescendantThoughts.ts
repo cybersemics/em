@@ -17,12 +17,11 @@ import never from '../../util/never'
 import { DataProvider } from '../DataProvider'
 import { clientId } from '../yjs'
 
+// default maxDepth before thoughts become pending
 const MAX_DEPTH = 100
-const MAX_THOUGHTS_QUEUED = 100
 
-interface Options {
-  maxDepth?: number
-}
+// number of total thoughts that be be pulled before additional thoughts are marked pending
+const MAX_THOUGHTS_QUEUED = 100
 
 /** A very simple queue. */
 const queue = <T>(initialValue: T[] = []) => {
@@ -85,7 +84,13 @@ async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
   getState: () => State,
-  { maxDepth = MAX_DEPTH }: Options = {},
+  {
+    maxDepth = MAX_DEPTH,
+  }: {
+    // Set the depth at which thoughts become pending.
+    // If set to Infinity, pulls all available thoughts.
+    maxDepth?: number
+  } = {},
 ): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
   const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
@@ -142,7 +147,10 @@ async function* getDescendantThoughts(
         const isEmDescendant = thoughtId === EM_TOKEN
         const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
         const isMaxDepthReached = depth.get() >= maxDepth
-        const isMaxThoughtsReached = thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED
+        // If adding the children would exceed MAX_THOUGHTS_QUEUE, then mark thought as pending.
+        // Never mark thoughts as pending if maxDepth is Infinity.
+        const isMaxThoughtsReached =
+          thoughtIdQueue.total() + childrenIds.length > MAX_THOUGHTS_QUEUED && maxDepth !== Infinity
         const isExpanded = isThoughtExpanded(updatedState, thought.id)
         const parent = getThoughtById(updatedState, thought.parentId)
 
