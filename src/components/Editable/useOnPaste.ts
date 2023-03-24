@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
+import importFiles from '../../action-creators/importFiles'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import * as selection from '../../device/selection'
@@ -9,6 +10,7 @@ import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 import isHTML from '../../util/isHTML'
 import strip from '../../util/strip'
+import timestamp from '../../util/timestamp'
 
 /** Returns an onPaste handler that parses and inserts the pasted text or thoughts at the cursor. Handles plaintext and HTML, inline and nested paste. */
 const useOnPaste = ({
@@ -51,10 +53,6 @@ const useOnPaste = ({
         const { cursor, cursorOffset: cursorOffsetState } = store.getState()
         const path = cursor && equalPath(cursor, simplePath) ? cursor : simplePath
 
-        // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
-        // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
-        const rawDestValue = strip(contentRef.current!.innerHTML, { preventTrim: true })
-
         // If transient first add new thought and then import the text
         if (transient) {
           dispatch(
@@ -65,26 +63,45 @@ const useOnPaste = ({
           )
         }
 
-        dispatch(
-          importText({
-            path,
-            text: isHTML(plainText) ? plainText : htmlText || plainText,
-            rawDestValue,
-            // pass selection start and end for importText to replace (if the imported thoughts are one line)
-            ...(selection.isActive() && !selection.isCollapsed()
-              ? {
-                  replaceStart: selection.offsetStart()!,
-                  replaceEnd: selection.offsetEnd()!,
-                }
-              : null),
-            // pass caret position to correctly track the last navigated point for caret
-            // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keeps track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
-            caretPosition: (selection.isText() ? selection.offset() || 0 : cursorOffsetState) || 0,
-          }),
-        )
+        const text = isHTML(plainText) ? plainText : htmlText || plainText
 
-        // TODO: When importText was converted to a reducer, it no longer reducers newValue
-        // if (newValue) oldValueRef.current = newValue
+        // if the imported text is less than 1,000 characters, use a non-resumable importText and avoid the overhead of importFiles
+        if (text.length < 1000) {
+          dispatch(
+            importText({
+              // use caret position to correctly track the last navigated point for caret
+              // calculated on the basis of node type we are currently focused on. `state.cursorOffset` doesn't really keep track of updated caret position when navigating within single thought. Hence selection.offset() is also used depending upon which node type we are on.
+              caretPosition: (selection.isText() ? selection.offset() || 0 : cursorOffsetState) || 0,
+              path,
+              text,
+              // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+              // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
+              rawDestValue: strip(contentRef.current!.innerHTML, { preventTrim: true }),
+              // use selection start and end for importText to replace (if the imported thoughts are one line)
+              ...(selection.isActive() && !selection.isCollapsed()
+                ? {
+                    replaceStart: selection.offsetStart()!,
+                    replaceEnd: selection.offsetEnd()!,
+                  }
+                : null),
+            }),
+          )
+        } else {
+          dispatch(
+            importFiles({
+              path,
+              files: [
+                {
+                  lastModified: timestamp(),
+                  name: 'from clipboard',
+                  // approximate byte size of text
+                  size: text.length * 8,
+                  text: async () => text,
+                },
+              ],
+            }),
+          )
+        }
       }
     },
     [simplePath, transient],

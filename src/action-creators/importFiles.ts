@@ -212,7 +212,9 @@ const importFilesActionCreator =
             importText({
               text: chunk,
               path: file.path,
-              preventSetCursor: true,
+              // prevent setCursor on all but the first chunk
+              // the first chunk should set the cursor in case pasting into an empty destination and triggering shouldImportIntoDummy
+              preventSetCursor: chunkStartIndex + j !== 0,
               idbSynced: async () => {
                 const linesCompleted = (chunkStartIndex + j + 1) * CHUNK_SIZE
                 await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
