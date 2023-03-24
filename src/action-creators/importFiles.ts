@@ -17,7 +17,6 @@ import head from '../util/head'
 import initialState from '../util/initialState'
 import parentOf from '../util/parentOf'
 import series from '../util/series'
-import taskQueue from '../util/taskQueue'
 import alert from './alert'
 
 // The number of lines of text that are imported at once.
@@ -111,14 +110,13 @@ const importFilesActionCreator =
         })
       })
 
-      // Import Chunks
-      // No efficiency is gained by running the chunk tasks in parallel (see: CHUNK_SIZE).
-      // However, we use a taskQueue with concurrency 2 to ensure a continuous flow of updates with no break in between.
-      // This prevents the thoughtspace's updateQueue from emptying and resetting the save progress after each chunk.
-      await taskQueue<void>({ concurrency: 2, tasks: chunkTasks }).end
+      // import chunks serially
+      // otherwise thoughts will get imported out of order
+      await series(chunkTasks)
     })
 
     // import files serially
+    // this could be parallelized as long as they have different import destinations
     await series(fileTasks)
 
     dispatch(alert(null, { alertType: AlertType.ImportFile }))
