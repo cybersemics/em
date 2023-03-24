@@ -4,11 +4,13 @@ import Context from './@types/Context'
 import State from './@types/State'
 import Thunk from './@types/Thunk'
 import './App.css'
+import importFiles from './action-creators/importFiles'
 import loadFromUrl from './action-creators/loadFromUrl'
 import loadLocalState from './action-creators/loadLocalState'
 import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
 import setCursor from './action-creators/setCursor'
+import { HOME_PATH } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import * as db from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
@@ -70,6 +72,7 @@ export const initialize = async () => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
       store.dispatch(preloadSources)
+      store.dispatch(importFiles({ path: HOME_PATH, resume: true }))
     }, 500)
   })
 
