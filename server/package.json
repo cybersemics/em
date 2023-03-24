@@ -5,7 +5,7 @@
     "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level DB_DOCLOGMETA=./.doclogmeta.level node build/server/index.js"
   },
   "dependencies": {
-    "@hocuspocus/server": "^2.0.0-alpha.0",
+    "@hocuspocus/server": "^2.0.0-alpha.1",
     "level": "^6.0.1",
     "y-leveldb": "^0.1.2"
   },

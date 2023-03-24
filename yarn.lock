@@ -1856,21 +1856,22 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.0.0-alpha.0":
-  version "2.0.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.0.0-alpha.0.tgz#1b15a0ffcb6f50b43d6d43297450e6df0078f8c6"
-  integrity sha512-Ek/ZyLv+bfUgMMXspjCaj8SY9zKGlWZNiL+MiX2ltUyGAqCdbz53HJfXd4oFdmo/BjE2pd6KZ0d373D/FBg4Yw==
+"@hocuspocus/common@^2.0.0-alpha.1":
+  version "2.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.0.0-alpha.1.tgz#063f76658fde29396c344c7ab1057fed6c7cfa4d"
+  integrity sha512-/LgI8lbZSmCf8AbQXKIX0M6fBpPo12MUnlkuRflV/ZO5GPgyew1Mzt7VLYiSIvwV9X5n9PrRTkQeLQD4/Wwf7A==
   dependencies:
     lib0 "^0.2.47"
 
-"@hocuspocus/provider@2.0.0-alpha.0":
-  version "2.0.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.0.0-alpha.0.tgz#34c48c35fd803cd17fe4bc0affb918b29eb762f9"
-  integrity sha512-c80cCkpKhx4rYjd9Ifw60iLKLqi27HbYuthuAHllpfI7+n3Yl5nM62r7jvkh8X4pNbUqAl+QtmZBbh18cQC23g==
+"@hocuspocus/provider@^2.0.0-alpha.1":
+  version "2.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.0.0-alpha.1.tgz#c92b5ae3ec5ccea5a9088173c373c6f2cfcef782"
+  integrity sha512-cLJ6aj38OGhFVf30FnlU8N8WSlj6ODY81bos9Rt00Or6+1s+PWghqcZdCUgNemku/oQJHOxk+D5kvx9KQmmlRA==
   dependencies:
-    "@hocuspocus/common" "^2.0.0-alpha.0"
+    "@hocuspocus/common" "^2.0.0-alpha.1"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
+    ws "^7.5.9"
 
 "@ionic/cli-framework-output@^2.2.5":
   version "2.2.5"
@@ -18310,6 +18311,11 @@ ws@^7, ws@^7.2.3, ws@^7.4.5:
   version "7.4.6"
   resolved "https://registry.npmjs.org/ws/-/ws-7.4.6.tgz"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
+
+ws@^7.5.9:
+  version "7.5.9"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
+  integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
 
 xcode@^2.0.0:
   version "2.1.0"
