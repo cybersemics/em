@@ -51,12 +51,10 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 }
 
 // meta information about the doclog, mainly the thoughtReplicationCursor
-const doclogMeta: level.LevelDB<string, string> | undefined = process.env.DB_DOCLOGMETA
-  ? level(process.env.DB_DOCLOGMETA, { valueEncoding: 'json' })
-  : undefined
+const doclogMeta = level(process.env.DB_DOCLOGMETA || '.doclogmeta.level', { valueEncoding: 'json' })
 
-const ldbPermissions = process.env.YPERMISSIONS ? new LeveldbPersistence(process.env.YPERMISSIONS) : undefined
-const ldbThoughtspace = process.env.YPERSISTENCE ? new LeveldbPersistence(process.env.YPERSISTENCE) : undefined
+const ldbPermissions = new LeveldbPersistence(process.env.DB_PERMISSIONS || '.permissions.level')
+const ldbThoughtspace = new LeveldbPersistence(process.env.DB_THOUGHTSPACE || '.thoughts.level')
 
 /** Syncs a doc with leveldb. */
 const syncLevelDb = async ({ db, docName, doc }: { db: any; docName: string; doc: Y.Doc }) => {
@@ -189,7 +187,7 @@ export const onLoadDocument = async ({
   }
 }
 
-// persist permissions to YPERMISSIONS with leveldb
+// persist permissions to DB_PERMISSIONS with leveldb
 // TODO: encrypt
 
 console.info('Loading permissions...')

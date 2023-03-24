@@ -1,8 +1,8 @@
 {
   "scripts": {
     "build": "rm -rf build ; npx tsc",
-    "clear": "rm -rf ./.thoughts.level ; rm -rf ./.permissions.level; rm -rf .doclog.level",
-    "start": "YPERSISTENCE=./.thoughts.level YPERMISSIONS=./.permissions.level DB_DOCLOGMETA=./.doclogmeta.level pm2 start pm2.config.js",
+    "clear": "rm -rf ./.*.level",
+    "start": "pm2 start pm2.config.js",
     "logs": "pm2 logs pm2.config.js",
     "reload": "pm2 reload pm2.config.js",
     "stop": "pm2 stop pm2.config.js"
