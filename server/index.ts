@@ -34,9 +34,8 @@ const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
 /** Logs a message to the console with an ISO timestamp. Optionally takes a console method for its last argument. Defaults to info. */
 const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
   // prepend timestamp
-  if (process.env.LOG_TIMESTAMPS) {
-    args = [gray(new Date().toISOString()), ...args]
-  }
+  args = [gray(new Date().toISOString()), ...args]
+
   // default to console.info
   // override the method by passing { method: 'error' } as the last argument
   let method: ConsoleMethod = 'info'

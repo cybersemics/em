@@ -73,12 +73,6 @@ Some available commands:
 - `pm2 start pm2.config.js`
 - `pm2 stop pm2.config.js`
 
-With timestamps:
-
-```sh
-LOG_TIMESTAMPS=1 npm run start
-```
-
 ## Environment Variables
 
 The server uses environment variables for configuration.
@@ -87,7 +81,6 @@ Available environment variables and defaults are listed below:
 
 - `process.env.DB_DOCLOGMETA` - .doclogmeta.level
 - `process.env.HOST` - localhost
-- `process.env.LOG_TIMESTAMPS` - [none]
 - `process.env.POST` - 8080
 - `process.env.DB_PERMISSIONS` - .permissions.level
 - `process.env.DB_THOUGHTSPACE` - .thoughtspace.level
