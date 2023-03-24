@@ -8,7 +8,7 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import createThought from '../action-creators/createThought'
 import importText from '../action-creators/importText'
-import { AlertType, HOME_TOKEN } from '../constants'
+import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import { exportContext } from '../selectors/exportContext'
 import getRankBefore from '../selectors/getRankBefore'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -25,14 +25,14 @@ import pull from './pull'
 
 /** Meta information for a file import that is stored in IDB and automatically resumed on initialize. */
 interface ResumeImport {
-  // unique id for the import
-  // importing the same file a second time will generate a new ResumeImport with a new id
+  /** Unique id for the import.
+      importing the same file a second time will generate a new ResumeImport with a new id. */
   id: string
   lastModified: number
-  // lines of the file that have already been imported
+  /** Lines of the file that have already been imported. */
   linesCompleted: number
   name: string
-  // import destination path
+  /** Import destination path. */
   path: Path
   size: number
 }
@@ -55,15 +55,13 @@ const importFilesActionCreator =
     resume,
     insertBefore,
   }: {
-    // files to import into the path
-    // either files or resume must be set
+    /** Files to import into the path. Either files or resume must be set. */
     files?: File[]
-    path: Path
-    // insert the imported thoughts before the path instead of as children of the path
-    // creates a new empty thought to import into
+    /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
+    path?: Path
+    /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
     insertBefore?: boolean
-    // if true, resumes unfinished imports
-    // either files or resume must be set
+    /** If true, resumes unfinished imports. Either files or resume must be set. */
     resume?: boolean
   }): Thunk =>
   async (dispatch, getState) => {
@@ -73,11 +71,11 @@ const importFilesActionCreator =
 
     const state = getState()
 
-    const importPath = insertBefore ? ([...parentOf(path), createId()] as Path) : path
+    const importPath = insertBefore ? ([...parentOf(path!), createId()] as Path) : path || HOME_PATH
 
     // insert empty import destination when importing before the path
-    if (insertBefore) {
-      const simplePath = simplifyPath(state, path)
+    if (!resume && insertBefore) {
+      const simplePath = simplifyPath(state, path || HOME_PATH)
       dispatch(
         createThought({
           path: rootedParentOf(state, importPath),
