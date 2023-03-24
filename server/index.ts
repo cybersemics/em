@@ -56,9 +56,9 @@ if (!fs.existsSync('./data')) {
   fs.mkdirSync('./data', { recursive: true })
 }
 // meta information about the doclog, mainly the thoughtReplicationCursor
-const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || '.doclogmeta.level'), { valueEncoding: 'json' })
-const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_PERMISSIONS || '.permissions.level'))
-const ldbThoughtspace = new LeveldbPersistence(path.join('data', process.env.DB_THOUGHTSPACE || '.thoughts.level'))
+const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || 'doclogmeta.level'), { valueEncoding: 'json' })
+const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_PERMISSIONS || 'permissions.level'))
+const ldbThoughtspace = new LeveldbPersistence(path.join('data', process.env.DB_THOUGHTSPACE || 'thoughts.level'))
 
 // gracefully exist for pm2 reload
 // not that it matters... level has a lock on the db that prevents zero-downtime reload
