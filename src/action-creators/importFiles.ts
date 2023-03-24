@@ -21,6 +21,7 @@ import initialState from '../util/initialState'
 import parentOf from '../util/parentOf'
 import series from '../util/series'
 import alert from './alert'
+import pull from './pull'
 
 /** Meta information for a file import that is stored in IDB and automatically resumed on initialize. */
 interface ResumeImport {
@@ -100,9 +101,9 @@ const importFilesActionCreator =
         }))
       : Object.values((await idb.get<Index<ResumeImport>>('resumeImports')) || []).map(resumeImport => ({
           id: resumeImport.id,
-          name: resumeImport.name,
           lastModified: resumeImport.lastModified,
           linesCompleted: resumeImport.linesCompleted,
+          name: resumeImport.name,
           path: resumeImport.path,
           size: resumeImport.size,
           text: async () => {
@@ -134,7 +135,7 @@ const importFilesActionCreator =
             [file.id]: {
               id: file.id,
               lastModified: file.lastModified,
-              linesCompleted: 0,
+              linesCompleted: file.linesCompleted,
               name: file.name,
               path: file.path,
               size: file.size,
@@ -181,8 +182,20 @@ const importFilesActionCreator =
       // use to calculate proper chunk index (relative to the start of the file, not where import resumed)
       const chunkStartIndex = Math.floor(file.linesCompleted / CHUNK_SIZE)
 
-      const chunkTasks = chunks.slice(chunkStartIndex).map((chunk, j) => () => {
+      const chunkTasks = chunks.slice(chunkStartIndex).map((chunk, j) => async () => {
         const chunkProgressString = Math.floor(((j + chunkStartIndex + 1) / chunks.length) * 100)
+
+        // There is one limitation to using importText's automerge to incrementally import chunks.
+        // If the import destination is pending, duplicate contexts will not be merged.
+        // Thus, we need to pull the import destination path before resuming import to avoid duplicates.
+        // Use force to ignore pending status.
+        // WARNING: If all of the imported thoughts cannot be held in memory at once, the pull will crash the browser and block resume.
+        // TODO: Only pull necessary thoughts, or find a way to avoid merge conflicts to begin with.
+        if (resume) {
+          // await dispatch(pull([head(file.path)], { force: true, maxDepth: Infinity }))
+          await dispatch(pull([head(file.path)], { force: true, maxDepth: Infinity }))
+        }
+
         return new Promise<void>(resolve => {
           dispatch([
             alert(`Importing ${fileProgressString}... ${chunkProgressString}%`, {
