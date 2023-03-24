@@ -1,10 +1,10 @@
 {
   "scripts": {
     "build": "rm -rf build ; npx tsc",
-    "clear": "rm -rf ./.*.level",
+    "clear": "rm -rf ./data",
     "start": "pm2 start pm2.config.js",
-    "logs": "pm2 logs pm2.config.js",
-    "reload": "pm2 reload pm2.config.js",
+    "logs": "pm2 logs server",
+    "restart": "pm2 restart pm2.config.js",
     "stop": "pm2 stop pm2.config.js"
   },
   "dependencies": {

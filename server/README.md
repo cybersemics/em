@@ -79,10 +79,10 @@ The server uses environment variables for configuration.
 
 Available environment variables and defaults are listed below:
 
-- `process.env.DB_DOCLOGMETA` - .doclogmeta.level
+- `process.env.DB_DOCLOGMETA` - data/.doclogmeta.level
 - `process.env.HOST` - localhost
 - `process.env.POST` - 8080
-- `process.env.DB_PERMISSIONS` - .permissions.level
-- `process.env.DB_THOUGHTSPACE` - .thoughtspace.level
+- `process.env.DB_PERMISSIONS` - data/.permissions.level
+- `process.env.DB_THOUGHTSPACE` - data/.thoughtspace.level
 
 Note: `npm run clear` only clears the default db locations. If you override `DB_DOCLOGMETA`, `DB_PERMISSIONS`, or `DB_THOUGHTSPACE`, you will need to manually delete the db files.
