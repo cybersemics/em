@@ -60,6 +60,14 @@ const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || '.doclog
 const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_PERMISSIONS || '.permissions.level'))
 const ldbThoughtspace = new LeveldbPersistence(path.join('data', process.env.DB_THOUGHTSPACE || '.thoughts.level'))
 
+// gracefully exist for pm2 reload
+// not that it matters... level has a lock on the db that prevents zero-downtime reload
+process.on('SIGINT', function () {
+  doclogMeta.close(err => {
+    process.exit(err ? 1 : 0)
+  })
+})
+
 /** Syncs a doc with leveldb. */
 const syncLevelDb = async ({ db, docName, doc }: { db: any; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
@@ -202,6 +210,10 @@ const permissionsServerSynced = ldbPermissions
 const server = Server.configure({
   port,
   onAuthenticate,
+  onListen: async () => {
+    // notify pm2 that the app is ready
+    process.send?.('ready')
+  },
   onLoadDocument,
 })
 
