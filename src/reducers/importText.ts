@@ -11,7 +11,7 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
 import setCursor from '../reducers/setCursor'
 import updateThoughts from '../reducers/updateThoughts'
-import { findAnyChild, getAllChildren } from '../selectors/getChildren'
+import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -156,7 +156,7 @@ const importText = (
 
     const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : htmlToJson(sanitizedConvertedText)
 
-    const destIsLeaf = getAllChildren(state, head(simplePath)).length === 0
+    const destIsLeaf = !anyChild(state, head(simplePath))
 
     /** Check if destination's parent context has more than one children. */
     const isDestParentContextEmpty = () => getAllChildren(state, head(rootedParentOf(state, simplePath))).length <= 1
