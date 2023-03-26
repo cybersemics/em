@@ -19,7 +19,10 @@ const Status = () => {
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
     replicationProgress !== null ? Math.round(replicationProgress * 100) : null,
   )
-  const savingPercentage = syncStatusStore.useSelector(({ savingProgress }) => Math.round(savingProgress * 100))
+  // shows import progress or saving progress
+  const savingPercentage = syncStatusStore.useSelector(({ importProgress, savingProgress }) =>
+    Math.round((importProgress < 1 ? importProgress : savingProgress) * 100),
+  )
   const status = offlineStatusStore.useState()
   return (
     <span

@@ -5,15 +5,20 @@ const syncStatusStore = ministore<{
   isPulling: boolean
   replicationProgress: number | null
   savingProgress: number
+  importProgress: number
 }>({
   // Tracks if the pullQueue is currently pulling.
   isPulling: false,
-  // progress of replicating all thoughts for offline editing (between 0–1)
-  // null means replication has not started yet
+  // Progress of replicating all thoughts for offline editing (between 0–1).
+  // null means replication has not started yet.
   replicationProgress: null,
-  // progress of saving thoughts to IndexedDB (between 0–1)
-  // mainly needed when deleting or importing a large number of thoughts
+  // Progress of saving thoughts to IndexedDB (between 0–1).
   savingProgress: 1,
+  // Progress of importing thoughts to IndexedDB (between 0–1).
+  // Since files and large pastes are imported incrementally and serially in chunks, we need to maintain the overall import progress separately from savingProgress which constantly gets reset every time a chunk is succesfully imported.
+  // This is simpler than trying to delay taskQueue's onEnd
+  // Takes precendence over savingProgress.
+  importProgress: 1,
 })
 
 export default syncStatusStore

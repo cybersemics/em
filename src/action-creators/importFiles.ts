@@ -16,6 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import syncStatusStore from '../stores/syncStatus'
 import appendToPath from '../util/appendToPath'
 import chunkOutline from '../util/chunkOutline'
 import createChildrenMap from '../util/createChildrenMap'
@@ -210,12 +211,14 @@ const importFilesActionCreator =
       // divide into chunks
       const chunks = chunkOutline(exported, { chunkSize: CHUNK_SIZE })
 
+      syncStatusStore.update({ importProgress: 0 / chunks.length })
+      dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
+
       // use to calculate proper chunk index (relative to the start of the file, not where import resumed)
       const chunkStartIndex = Math.floor(file.linesCompleted / CHUNK_SIZE)
 
       const chunkTasks = chunks.slice(chunkStartIndex).map((chunk, j) => async () => {
         const chunkIndex = chunkStartIndex + j
-        const chunkProgressString = Math.floor(((chunkIndex + 1) / chunks.length) * 100)
 
         // There is one limitation to using importText's automerge to incrementally import chunks.
         // If the import destination is pending, duplicate contexts will not be merged.
@@ -230,10 +233,6 @@ const importFilesActionCreator =
 
         return new Promise<void>(resolve => {
           dispatch([
-            alert(`Importing ${fileProgressString}... ${chunkProgressString}%`, {
-              alertType: AlertType.ImportFile,
-              clearDelay: chunkIndex === chunks.length - 1 ? 5000 : undefined,
-            }),
             importText({
               text: chunk,
               // use the original import path for the first import of the first chunk
@@ -245,6 +244,15 @@ const importFilesActionCreator =
               idbSynced: async () => {
                 // update resumeImports with linesCompleted
                 const linesCompleted = (chunkIndex + 1) * CHUNK_SIZE
+                const importProgress = (chunkIndex + 1) / chunks.length
+                const chunkProgressString = Math.round(importProgress * 100)
+                syncStatusStore.update({ importProgress })
+                dispatch(
+                  alert(`Importing ${fileProgressString}... ${chunkProgressString}%`, {
+                    alertType: AlertType.ImportFile,
+                    clearDelay: chunkIndex === chunks.length - 1 ? 5000 : undefined,
+                  }),
+                )
                 await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
                   return {
                     ...(resumeImports || {}),
