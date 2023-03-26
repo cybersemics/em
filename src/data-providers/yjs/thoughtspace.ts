@@ -107,7 +107,7 @@ const replication = replicationController({
       }
     }
   },
-  onStep: ({ completed, total }) => {
+  onStep: ({ completed, index, total, value }) => {
     syncStatusStore.update({ replicationProgress: completed / total })
   },
   onEnd: () => {
@@ -269,7 +269,12 @@ const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
 }
 
 /** Handles the Thought observe event. Ignores events from self. */
-const onThoughtChange = (e: Y.YMapEvent<ThoughtYjs>) => {
+const onThoughtChange = (e: {
+  target: Y.Map<ThoughtYjs>
+  transaction: {
+    origin: any
+  }
+}) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
   const thought = getThought(thoughtDoc)
@@ -292,7 +297,12 @@ const onThoughtChange = (e: Y.YMapEvent<ThoughtYjs>) => {
 }
 
 /** Handles the Lexeme observe event. Ignores events from self. */
-const onLexemeChange = (e: Y.YMapEvent<LexemeYjs>) => {
+const onLexemeChange = (e: {
+  target: Y.Map<LexemeYjs>
+  transaction: {
+    origin: any
+  }
+}) => {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
   const lexeme = getLexeme(lexemeDoc)
@@ -365,38 +375,39 @@ export const replicateThought = async (
       store.dispatch(alert('Error loading thought'))
     })
 
-  // TODO: How to tell if a thought exists on the websocket server?
-  // Thought is always empty on synced, and observe may never be called.
-  // We need to wait for the websocket to sync when replicating foreground thoughts that are not yet in IDB, without stalling if the thought is not on the websocket server.
   const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves the promise after a valid thought is observed. */
-    // TODO: Why is the document empty on synced?
-    const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
-      if (e.transaction.origin !== websocketProvider) return
-      const thought = getThought(doc)
-      if (!thought) return
+    websocketProvider.on('synced', (e: { status: string }) => {
+      // Thought is empty when sync fires.
+      // However, observe may not fire at all if the thought has been deleted.
+      // Therefore, wait a short delay for the thought to be populated. Observe is expected to fire immediately after synced.
+      // If the thought is still empty by the then, it is safe (?) to assume the thought does not exist on the websocket server.
+      setTimeout(() => {
+        if (background) {
+          // TODO: How to limit in-memory thoughts when they arrive out of order?
+          // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
+          // Otherwise, this client will not see real-time edits from remote clients.
+          // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
+          // const state = store.getState()
+          // const exists = !!getThoughtByIdSelector(state, id)
+          // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+          // if (exists || existsParent) {
 
-      thoughtMap.unobserve(observeUntilValue)
+          // the synced event does not include a Yjs event, so reconstruct it
+          onThoughtChange({
+            target: doc.getMap<ThoughtYjs>(),
+            transaction: {
+              origin: websocketProvider,
+            },
+          })
+          thoughtMap.observe(onThoughtChange)
+          // } else {
+          //   websocketProvider.destroy()
+          // }
+        }
 
-      if (background) {
-        // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
-        // Otherwise, this client will not see real-time edits from remote clients.
-        // TODO: How to limit in-memory thoughts when they arrive out of order?
-        // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
-        // const state = store.getState()
-        // const exists = !!getThoughtByIdSelector(state, id)
-        // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-        // if (exists || existsParent) {
-        onThoughtChange(e)
-        thoughtMap.observe(onThoughtChange)
-        // } else {
-        //   websocketProvider.destroy()
-        // }
-      }
-
-      resolve()
-    }
-    thoughtMap.observe(observeUntilValue)
+        resolve()
+      }, 100)
+    })
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
@@ -465,31 +476,37 @@ export const replicateLexeme = async (
     })
 
   const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves the promise after a valid thought is observed. */
-    // TODO: Why is the document empty on synced?
-    const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
-      if (e.transaction.origin !== websocketProvider) return
-      const lexeme = getLexeme(doc)
-      if (!lexeme) return
+    websocketProvider.on('synced', (e: { string: number }) => {
+      // Lexeme is empty when sync fires.
+      // However, observe may not fire at all if the lexeme has been deleted.
+      // Therefore, wait a short delay for the lexeme to be populated. Observe is expected to fire immediately after synced.
+      // If the lexeme is still empty by the then, it is safe (?) to assume the lexeme does not exist on the websocket server.
+      setTimeout(() => {
+        if (background) {
+          // TODO: How to limit in-memory lexemes when they arrive out of order?
+          // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
+          // Otherwise, this client will not see real-time edits from remote clients.
+          // const state = store.getState()
+          // const exists = !!getThoughtByIdSelector(state, id)
+          // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+          // if (exists || existsParent) {
 
-      lexemeMap.unobserve(observeUntilValue)
+          // the synced event does not include a Yjs event, so reconstruct it
+          onLexemeChange({
+            target: doc.getMap<LexemeYjs>(),
+            transaction: {
+              origin: websocketProvider,
+            },
+          })
+          lexemeMap.observe(onLexemeChange)
+          // } else {
+          //   websocketProvider.destroy()
+          // }
+        }
 
-      if (background) {
-        websocketProvider.destroy()
-
-        // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of its contexts are already in state.
-        // Otherwise, this client will not see real-time edits from remote clients.
-
-        // TODO: How to check if Lexeme is in view when context may not be replicated yet? We could only replicate lexemes after thoughts are replicated, but that would create a gap in state, and state really requires the thoughtIndex and lexemeIndex to be in sync.
-        // if (lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))) {
-        onLexemeChange(e)
-        lexemeMap.observe(onLexemeChange)
-        // }
-      }
-
-      resolve()
-    }
-    lexemeMap.observe(observeUntilValue)
+        resolve()
+      }, 100)
+    })
   })
 
   const synced = Promise.race([idbSynced, websocketSynced])
@@ -556,8 +573,8 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
 
   // there may not be a persistence instance in memory at all, so delete the database directly
   return deleteDB(encodeThoughtDocumentName(tsid, id)).catch((e: Error) => {
-    console.error(e)
-    store.dispatch(alert('Error deleting thought'))
+    console.error('Error deleting thought', e)
+    store.dispatch(alert('Error deleting thought: ' + (e.message || e)))
   })
 }
 
@@ -573,8 +590,8 @@ const deleteLexeme = (key: string): Promise<void> => {
 
   // there may not be a persistence instance in memory at all, so delete the database directly
   return deleteDB(encodeLexemeDocumentName(tsid, key)).catch((e: Error) => {
-    console.error(e)
-    store.dispatch(alert('Error deleting thought'))
+    console.error('Error deleting lexeme', e)
+    store.dispatch(alert('Error deleting lexeme: ' + (e.message || e)))
   })
 }
 
