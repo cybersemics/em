@@ -446,9 +446,8 @@ export const replicateThought = async (
   } else {
     // Subscribe to changes on foreground replication
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+    thoughtMap.observe(onThoughtChange)
   }
-
-  thoughtMap.observe(onThoughtChange)
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
@@ -556,9 +555,8 @@ export const replicateLexeme = async (
   } else {
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+    lexemeMap.observe(onLexemeChange)
   }
-
-  lexemeMap.observe(onLexemeChange)
 }
 
 /** Gets a Thought from a thought Y.Doc. */
