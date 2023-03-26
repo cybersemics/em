@@ -4,6 +4,7 @@
     "clear": "rm -rf ./data",
     "start": "pm2 start pm2.config.js",
     "logs": "pm2 logs server",
+    "monit": "pm2 monit",
     "restart": "pm2 restart pm2.config.js",
     "stop": "pm2 stop pm2.config.js"
   },
