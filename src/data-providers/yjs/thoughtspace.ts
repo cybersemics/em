@@ -410,29 +410,14 @@ export const replicateThought = async (
     })
   })
 
-  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed]).then(e => {
-    onThoughtChange(e)
-
-    // TODO: How to limit in-memory thoughts when they arrive out of order?
-    // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
-    // Otherwise, this client will not see real-time edits from remote clients.
-    // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
-    // const state = store.getState()
-    // const exists = !!getThoughtByIdSelector(state, id)
-    // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-    // if (exists || existsParent) {
-    thoughtMap.observe(onThoughtChange)
-    // } else {
-    //   websocketProvider.destroy()
-    // }
-  })
+  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed])
 
   const synced = Promise.race([idbSynced, websocketSynced])
 
   // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
   if (!background) {
     thoughtDocs[id] = doc
-    thoughtSynced[id] = synced
+    thoughtSynced[id] = synced as Promise<void>
     thoughtPersistence[id] = persistence
     thoughtWebsocketProvider[id] = websocketProvider
   }
@@ -442,11 +427,28 @@ export const replicateThought = async (
   if (background) {
     // do not resolve background replication until websocket has synced
     await websocketSynced
+
+    // websocketSynced.then(e => {
+    // TODO: How to limit in-memory thoughts when they arrive out of order?
+    // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
+    // Otherwise, this client will not see real-time edits from remote clients.
+    // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
+    // const state = store.getState()
+    // const exists = !!getThoughtByIdSelector(state, id)
+    // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+    // if (exists || existsParent) {
+    // thoughtMap.observe(onThoughtChange)
+    // } else {
+    // websocketProvider.destroy()
+    // }
+    // })
+    // thoughtMap.observe(onThoughtChange)
   } else {
     // Subscribe to changes on foreground replication
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
-    thoughtMap.observe(onThoughtChange)
   }
+
+  thoughtMap.observe(onThoughtChange)
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
@@ -524,30 +526,13 @@ export const replicateLexeme = async (
     })
   })
 
-  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed]).then(e => {
-    onLexemeChange(e)
-
-    if (background) {
-      // TODO: How to limit in-memory lexemes when they arrive out of order?
-      // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
-      // Otherwise, this client will not see real-time edits from remote clients.
-      // const state = store.getState()
-      // const exists = !!getThoughtByIdSelector(state, id)
-      // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-      // if (exists || existsParent) {
-      lexemeMap.observe(onLexemeChange)
-      // } else {
-      //   websocketProvider.destroy()
-      // }
-    }
-  })
-
+  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed])
   const synced = Promise.race([idbSynced, websocketSynced])
 
   // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
   if (!background) {
     lexemeDocs[key] = doc
-    lexemeSynced[key] = synced
+    lexemeSynced[key] = synced as Promise<void>
     lexemePersistence[key] = persistence
     lexemeWebsocketProvider[key] = websocketProvider
   }
@@ -556,12 +541,24 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
+
+    // TODO: How to limit in-memory lexemes when they arrive out of order?
+    // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
+    // Otherwise, this client will not see real-time edits from remote clients.
+    // const state = store.getState()
+    // const exists = !!getThoughtByIdSelector(state, id)
+    // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
+    // if (exists || existsParent) {
+    // } else {
+    //   websocketProvider.destroy()
+    // }
     await websocketSynced
   } else {
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
-    lexemeMap.observe(onLexemeChange)
   }
+
+  lexemeMap.observe(onLexemeChange)
 }
 
 /** Gets a Thought from a thought Y.Doc. */
