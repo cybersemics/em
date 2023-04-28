@@ -11,6 +11,7 @@ import createThought from '../action-creators/createThought'
 import importText from '../action-creators/importText'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import { replicateThought } from '../data-providers/yjs/thoughtspace'
+import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild } from '../selectors/getChildren'
@@ -29,8 +30,10 @@ import initialState from '../util/initialState'
 import mapBlocks from '../util/mapBlocks'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
 import series from '../util/series'
 import textToHtml from '../util/textToHtml'
+import unroot from '../util/unroot'
 import alert from './alert'
 
 interface VirtualFile {
@@ -236,8 +239,18 @@ const importFilesActionCreator =
         json,
         (block, ancestors, i) => async (): Promise<void> => {
           const path = i === 0 ? importPath : file.path
-          const context = [...ancestors.map(block => block.scope), block.scope]
-          await replicateDuplicateDescendants(getState(), head(path), context)
+          // get the context relative to the import root
+          // the relative context is appended to the base context to get the destination context
+          const relativeAncestorContext = ancestors.map(block => block.scope)
+          // if inserting into an empty destination with a sibling afterwards, import into the parent
+          const baseContext = pathToContext(getState(), insertBeforeNew ? rootedParentOf(getState(), path) : path)
+          const parentContext = [...unroot(baseContext), ...relativeAncestorContext]
+          // TODO: It would be better to get the id from importText rather than contextToPath
+          const parentPath = contextToPath(getState(), parentContext)
+          if (!parentPath) {
+            throw new Error('Parent context does not exist to import into: ' + parentContext)
+          }
+          await replicateDuplicateDescendants(getState(), head(path), [...relativeAncestorContext, block.scope])
 
           return new Promise<void>(resolve => {
             dispatch([
@@ -247,7 +260,8 @@ const importFilesActionCreator =
                 text: block.scope,
                 // use the original import path for the first import of the first chunk
                 // See: pathNew
-                path,
+                path: i === 0 ? importPath : parentPath,
+                preventInline: true,
                 preventSetCursor: i > 0,
                 idbSynced: async () => {
                   // update resumeImports with thoughtsImported

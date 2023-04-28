@@ -46,6 +46,9 @@ export interface ImportTextPayload {
   /** Set the lastUpdated timestamp on the imported thoughts. Default: now. */
   lastUpdated?: Timestamp
 
+  /** Prevents pasting a single line of text into the destination thought, and always pastes as a child. */
+  preventInline?: boolean
+
   /** Prevents the default behavior of setting the cursor to the last thought at the first level. */
   preventSetCursor?: boolean
 
@@ -75,6 +78,7 @@ const importText = (
     text,
     idbSynced,
     lastUpdated,
+    preventInline,
     preventSetCursor,
     rawDestValue,
     replaceEnd,
@@ -113,7 +117,7 @@ const importText = (
   }
 
   // if we are only importing a single line of html, then simply modify the current thought
-  if (numLines <= 1 && !isRoam && !isRoot(path)) {
+  if (!preventInline && numLines <= 1 && !isRoam && !isRoot(path)) {
     // TODO: textToHtml already strips the text, but one test fails if we remove it
     // See: "single-line nested html tags" in importText test
     const textNormalized = strip(convertedText, { preserveFormatting: true })
