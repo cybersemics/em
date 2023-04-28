@@ -1,5 +1,6 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
+import sanitize from 'sanitize-html'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -8,8 +9,10 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import createThought from '../action-creators/createThought'
 import importText from '../action-creators/importText'
-import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import { replicateThought } from '../data-providers/yjs/thoughtspace'
 import { exportContext } from '../selectors/exportContext'
+import findDescendant from '../selectors/findDescendant'
 import { anyChild } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
@@ -18,15 +21,17 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import syncStatusStore from '../stores/syncStatus'
 import appendToPath from '../util/appendToPath'
-import chunkOutline from '../util/chunkOutline'
 import createChildrenMap from '../util/createChildrenMap'
 import createId from '../util/createId'
 import head from '../util/head'
+import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
+import mapBlocks from '../util/mapBlocks'
+import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
 import series from '../util/series'
+import textToHtml from '../util/textToHtml'
 import alert from './alert'
-import pull from './pull'
 
 interface VirtualFile {
   lastModified: number
@@ -43,8 +48,8 @@ interface ResumeImport {
   /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
   insertBefore?: boolean
   lastModified: number
-  /** Lines of the file that have already been imported. */
-  linesCompleted: number
+  /** Number of thoughts that have already been imported. */
+  thoughtsImported: number
   name: string
   /** Import destination path. */
   path: Path
@@ -53,15 +58,18 @@ interface ResumeImport {
 
 type ResumableFile = VirtualFile & ResumeImport
 
-// The number of lines of text that are imported at once.
-// This is kept small to ensure that slower devices report steady progress, but large enough to reduce state churn.
-// The bottleneck is IDB, so the overhead for a high number of small chunks should be minimal as long as it involves the same number of IDB transactions. This is assumed to be the case since each thought and lexeme has a separate Y.Doc and thus separate IDB transaction, regardless of the import chunk size.
-// Efficency may be improved by introducing parallelism.
-// Chunk sizes of 5, 20, and 500 when importing 300 thoughts result in about 15s, 12s, and 10s import time, respectively.
-const CHUNK_SIZE = 20
-
 /** Generate the IDB key for a ResumeImport file. */
 const resumeImportKey = (id: string) => `resumeImports-${id}`
+
+/** Replicates all descendant values that already exist. */
+const replicateDuplicateDescendants = async (state: State, id: ThoughtId, values: string[]) => {
+  await replicateThought(id)
+  if (values.length === 0) return
+  const duplicate = findDescendant(state, id, values[0])
+  if (duplicate) {
+    await replicateDuplicateDescendants(state, duplicate, values.slice(1))
+  }
+}
 
 /** Action-creator for importFiles. */
 const importFilesActionCreator =
@@ -121,7 +129,7 @@ const importFilesActionCreator =
             id: createId(),
             insertBefore: insertBeforeNew,
             lastModified: file.lastModified,
-            linesCompleted: 0,
+            thoughtsImported: 0,
             name: file.name,
             // this will be ignored in the first chunk
             path: pathNew,
@@ -133,7 +141,7 @@ const importFilesActionCreator =
           id: resumeImport.id,
           insertBefore: resumeImport.insertBefore,
           lastModified: resumeImport.lastModified,
-          linesCompleted: resumeImport.linesCompleted,
+          thoughtsImported: resumeImport.thoughtsImported,
           name: resumeImport.name,
           path: resumeImport.path,
           size: resumeImport.size,
@@ -167,7 +175,7 @@ const importFilesActionCreator =
               id: file.id,
               insertBefore: file.insertBefore,
               lastModified: file.lastModified,
-              linesCompleted: file.linesCompleted,
+              thoughtsImported: file.thoughtsImported,
               name: file.name,
               path: file.path,
               size: file.size,
@@ -208,80 +216,81 @@ const importFilesActionCreator =
         exported = exportContext(stateImported, HOME_TOKEN, 'text/plain')
       }
 
-      // divide into chunks
-      const chunks = chunkOutline(exported, { chunkSize: CHUNK_SIZE })
+      const html = textToHtml(exported)
 
-      syncStatusStore.update({ importProgress: 0 / chunks.length })
+      // Close incomplete tags, preserve only allowed tags and attributes and decode the html.
+      const htmlSanitized = unescape(
+        sanitize(html, {
+          allowedTags: ALLOWED_TAGS,
+          allowedAttributes: ALLOWED_ATTRIBUTES,
+          disallowedTagsMode: 'recursiveEscape',
+        }),
+      )
+      const json = htmlToJson(htmlSanitized)
+      const numThoughts = numBlocks(json)
+
+      syncStatusStore.update({ importProgress: 0 / numThoughts })
       dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
 
-      // use to calculate proper chunk index (relative to the start of the file, not where import resumed)
-      const chunkStartIndex = Math.floor(file.linesCompleted / CHUNK_SIZE)
+      const importTasks = mapBlocks(
+        json,
+        (block, ancestors, i) => async (): Promise<void> => {
+          const path = i === 0 ? importPath : file.path
+          const context = [...ancestors.map(block => block.scope), block.scope]
+          await replicateDuplicateDescendants(getState(), head(path), context)
 
-      const chunkTasks = chunks.slice(chunkStartIndex).map((chunk, j) => async () => {
-        const chunkIndex = chunkStartIndex + j
+          return new Promise<void>(resolve => {
+            dispatch([
+              importText({
+                // assume that all ancestors have already been created since we are importing in order
+                // TODO: What happens if an ancestor gets deleted during an import?
+                text: block.scope,
+                // use the original import path for the first import of the first chunk
+                // See: pathNew
+                path,
+                preventSetCursor: i > 0,
+                idbSynced: async () => {
+                  // update resumeImports with thoughtsImported
+                  const importProgress = (i + 1) / numThoughts
+                  const importProgressString = Math.round(importProgress * 100)
+                  syncStatusStore.update({ importProgress })
+                  dispatch(
+                    alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
+                      alertType: AlertType.ImportFile,
+                      clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+                    }),
+                  )
+                  await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
+                    return {
+                      ...(resumeImports || {}),
+                      [file.id]: {
+                        id: file.id,
+                        // use the original insertBefore for the first import of the first chunk
+                        // See: insertBeforeNew
+                        insertBefore: i === 0 ? insertBefore : file.insertBefore,
+                        lastModified: file.lastModified,
+                        thoughtsImported: i + 1,
+                        name: file.name,
+                        // use the original import path on the first chunk
+                        // See: pathNew
+                        path: file.path,
+                        size: file.size,
+                      },
+                    }
+                  })
 
-        // There is one limitation to using importText's automerge to incrementally import chunks.
-        // If the import destination is pending, duplicate contexts will not be merged.
-        // Thus, we need to pull the import destination path before resuming import to avoid duplicates.
-        // Use force to ignore pending status.
-        // WARNING: If all of the imported thoughts cannot be held in memory at once, the pull will crash the browser and block resume.
-        // TODO: Only pull necessary thoughts, or find a way to avoid merge conflicts to begin with.
-        if (resume) {
-          // await dispatch(pull([head(file.path)], { force: true, maxDepth: Infinity }))
-          await dispatch(pull([head(file.path)], { force: true, maxDepth: Infinity }))
-        }
+                  resolve()
+                },
+              }),
+            ])
+          })
+        },
+        { start: file.thoughtsImported },
+      )
 
-        return new Promise<void>(resolve => {
-          dispatch([
-            importText({
-              text: chunk,
-              // use the original import path for the first import of the first chunk
-              // See: pathNew
-              path: chunkIndex === 0 ? importPath : file.path,
-              // prevent setCursor on all but the first import of the first chunk
-              // the first chunk should set the cursor in case pasting into an empty destination and triggering shouldImportIntoDummy
-              preventSetCursor: chunkIndex !== 0,
-              idbSynced: async () => {
-                // update resumeImports with linesCompleted
-                const linesCompleted = (chunkIndex + 1) * CHUNK_SIZE
-                const importProgress = (chunkIndex + 1) / chunks.length
-                const chunkProgressString = Math.round(importProgress * 100)
-                syncStatusStore.update({ importProgress })
-                dispatch(
-                  alert(`Importing ${fileProgressString}... ${chunkProgressString}%`, {
-                    alertType: AlertType.ImportFile,
-                    clearDelay: chunkIndex === chunks.length - 1 ? 5000 : undefined,
-                  }),
-                )
-                await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
-                  return {
-                    ...(resumeImports || {}),
-                    [file.id]: {
-                      id: file.id,
-                      // use the original insertBefore for the first import of the first chunk
-                      // See: insertBeforeNew
-                      insertBefore: chunkIndex === 0 ? insertBefore : file.insertBefore,
-                      lastModified: file.lastModified,
-                      linesCompleted,
-                      name: file.name,
-                      // use the original import path on the first chunk
-                      // See: pathNew
-                      path: file.path,
-                      size: file.size,
-                    },
-                  }
-                })
-
-                resolve()
-              },
-            }),
-          ])
-        })
-      })
-
-      // import chunks serially
+      // import thoughts serially
       // otherwise thoughts will get imported out of order
-      await series(chunkTasks)
+      await series(importTasks)
 
       // delete the ResumeImport file and manifest after all chunks are imported
       await idb.del(resumeImportKey(file.id))
