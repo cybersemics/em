@@ -96,6 +96,11 @@ const importText = (
   const numLines = (convertedText.match(regexpListItem) || []).length
   const thoughtId = head(path)
   const destThought = getThoughtById(state, thoughtId)
+  if (!destThought) {
+    console.error({ path })
+    throw new Error(`Thought does not exist: ${thoughtId}`)
+  }
+
   const destValue = rawDestValue || destThought.value
 
   // import raw thoughts

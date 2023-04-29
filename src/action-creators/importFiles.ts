@@ -97,20 +97,7 @@ const importFilesActionCreator =
     }
 
     const state = getState()
-    const importPath = insertBefore ? ([...parentOf(path!), createId()] as Path) : path || HOME_PATH
-
-    // insert empty import destination when importing before the path
-    if (!resume && insertBefore) {
-      const simplePath = simplifyPath(state, path || HOME_PATH)
-      dispatch(
-        createThought({
-          path: rootedParentOf(state, importPath),
-          value: '',
-          rank: getRankBefore(state, simplePath),
-          id: head(importPath),
-        }),
-      )
-    }
+    const importPath = path || HOME_PATH
 
     // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent chunks
     // these will be saved to the ResumableFile but ignored in the first chunk
@@ -238,29 +225,59 @@ const importFilesActionCreator =
       const importTasks = mapBlocks(
         json,
         (block, ancestors, i) => async (): Promise<void> => {
-          const path = i === 0 ? importPath : file.path
+          let state = getState()
+          const path = ancestors.length === 0 ? importPath : file.path
           // get the context relative to the import root
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
           // if inserting into an empty destination with a sibling afterwards, import into the parent
-          const baseContext = pathToContext(getState(), insertBeforeNew ? rootedParentOf(getState(), path) : path)
-          const parentContext = [...unroot(baseContext), ...relativeAncestorContext]
+          const baseContext = pathToContext(
+            state,
+            insertBeforeNew
+              ? rootedParentOf(state, path)
+              : destEmpty && ancestors.length === 0
+              ? rootedParentOf(state, path)
+              : path,
+          )
+          const parentContext =
+            ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
           // TODO: It would be better to get the id from importText rather than contextToPath
-          const parentPath = contextToPath(getState(), parentContext)
+          const parentPath = contextToPath(state, parentContext)
+
           if (!parentPath) {
             throw new Error('Parent context does not exist to import into: ' + parentContext)
           }
-          await replicateDuplicateDescendants(getState(), head(path), [...relativeAncestorContext, block.scope])
+          await replicateDuplicateDescendants(state, head(path), [...relativeAncestorContext, block.scope])
+          state = getState()
+
+          const emptyImportDestId = createId()
+
+          const importThoughtPath =
+            ancestors.length === 0 && destEmpty
+              ? insertBeforeNew && !(destEmpty && i === 0)
+                ? appendToPath(parentOf(importPath), emptyImportDestId)
+                : i > 0
+                ? rootedParentOf(state, path)
+                : path
+              : parentPath
 
           return new Promise<void>(resolve => {
             dispatch([
+              ancestors.length === 0 && insertBeforeNew && !(destEmpty && i === 0)
+                ? createThought({
+                    path: rootedParentOf(state, importPath),
+                    value: '',
+                    rank: getRankBefore(state, simplifyPath(state, pathNew)),
+                    id: emptyImportDestId,
+                  })
+                : null,
               importText({
                 // assume that all ancestors have already been created since we are importing in order
                 // TODO: What happens if an ancestor gets deleted during an import?
                 text: block.scope,
                 // use the original import path for the first import of the first chunk
                 // See: pathNew
-                path: i === 0 ? importPath : parentPath,
+                path: importThoughtPath,
                 preventInline: true,
                 preventSetCursor: i > 0,
                 idbSynced: async () => {
