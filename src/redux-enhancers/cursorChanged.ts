@@ -1,9 +1,10 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
 import * as selection from '../device/selection'
+import getThoughtById from '../selectors/getThoughtById'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
-import headValue from '../util/headValue'
+import head from '../util/head'
 import isDivider from '../util/isDivider'
 
 /**
@@ -16,14 +17,23 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
     const cursorChangedReducer = (state: State | undefined = initialState, action: A): State => {
       if (!state) return reducer(initialState, action)
       const updatedState: State = reducer(state || initialState, action)
-      const value = updatedState.cursor ? headValue(updatedState, updatedState.cursor) : null
+      const thought = updatedState.cursor ? getThoughtById(updatedState, head(updatedState.cursor)) : null
+      if (updatedState.cursor && !thought) {
+        console.error('Cursor thought does not exist', {
+          action,
+          cursor: updatedState.cursor,
+          previousCursor: state.cursor,
+        })
+        throw new Error(`Cursor thought does not exist: ${updatedState.cursor}`)
+      }
+      const value = thought?.value || null
 
       // clears the cursor selection if on divider or cursor is null.
       if (
         // selection may still exist after jump to null
         (!updatedState.cursor && selection.isThought()) ||
         // clear selection when cursor is on divider
-        (!equalPath(state.cursor, updatedState.cursor) && isDivider(value!))
+        (!equalPath(state.cursor, updatedState.cursor) && isDivider(value))
       ) {
         selection.clear()
       }
