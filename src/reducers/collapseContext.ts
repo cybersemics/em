@@ -42,18 +42,18 @@ const collapseContext = (state: State, { at }: Options) => {
   if (children.length === 0) return state
 
   /** Returns first moved child path as new cursor after collapse. */
-  const getNewCursor = (state: State) => {
+  const getNewCursor = (state: State): Path | null => {
     const firstVisibleChildOfPrevCursor = (state.showHiddenThoughts ? children : children.filter(isVisible(state)))[0]
+
+    if (!firstVisibleChildOfPrevCursor) return path.length > 1 ? parentOf(path) : null
 
     const parentId = head(rootedParentOf(state, simplePath))
     const childrenOfMovedContext = getChildren(state, parentId)
 
-    if (!firstVisibleChildOfPrevCursor) return parentOf(path)
-
     const newChild =
       childrenOfMovedContext.find(child => child.id === firstVisibleChildOfPrevCursor.id) || childrenOfMovedContext[0]
 
-    return newChild && appendToPath(parentOf(path), newChild.id)
+    return newChild ? appendToPath(parentOf(path), newChild.id) : null
   }
 
   const thought = getThoughtById(state, head(simplePath))

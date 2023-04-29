@@ -58,6 +58,10 @@ const setCursor = (
       ),
     )
     return state
+  } else if (path && path.length === 0) {
+    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    console.error(new Error(`[] is not a valid path. Use [${HOME_TOKEN}].`))
+    return state
   }
 
   const simplePath = path ? simplifyPath(state, path) : HOME_PATH
