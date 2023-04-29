@@ -9,6 +9,7 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import createThought from '../action-creators/createThought'
 import importText from '../action-creators/importText'
+import setCursor from '../action-creators/setCursor'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import { replicateThought } from '../data-providers/yjs/thoughtspace'
 import contextToPath from '../selectors/contextToPath'
@@ -271,6 +272,7 @@ const importFilesActionCreator =
                     id: emptyImportDestId,
                   })
                 : null,
+              setCursor({ path: destEmpty ? rootedParentOf(state, importPath) : importPath }),
               importText({
                 // assume that all ancestors have already been created since we are importing in order
                 // TODO: What happens if an ancestor gets deleted during an import?
@@ -279,7 +281,7 @@ const importFilesActionCreator =
                 // See: pathNew
                 path: importThoughtPath,
                 preventInline: true,
-                preventSetCursor: i > 0,
+                preventSetCursor: true,
                 idbSynced: async () => {
                   // update resumeImports with thoughtsImported
                   const importProgress = (i + 1) / numThoughts
