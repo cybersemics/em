@@ -167,10 +167,14 @@ const initEvents = (store: Store<State, any>) => {
     autoscroll.stop()
   }
 
-  /** Url change and reload listener. */
+  /** Warns on close if saving is in progress. */
   const onBeforeUnload = (e: BeforeUnloadEvent) => {
     const syncStatus = syncStatusStore.getState()
-    if (syncStatus.importProgress < 1 || syncStatus.savingProgress < 1) {
+    if (
+      syncStatus.savingProgress < 1 &&
+      // do not warn user if importing, since it is resumable
+      store.getState().alert?.alertType !== AlertType.ImportFile
+    ) {
       // Note: Showing confirmation dialog can vary between browsers.
       // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
       e.preventDefault()
