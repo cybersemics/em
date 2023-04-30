@@ -101,6 +101,8 @@ const importFilesActionCreator =
       throw new Error('importFiles must specify files or resume.')
     }
 
+    // allow aborting the import if there is an error
+    let abort = false
     const state = getState()
     const importPath = path || HOME_PATH
 
@@ -230,6 +232,9 @@ const importFilesActionCreator =
       const importTasks = mapBlocks(
         json,
         (block, ancestors, i) => async (): Promise<void> => {
+          // cannot properly short circuit mapBlocks, so just discontinue all remaining iterations
+          if (abort) return
+
           let state = getState()
           const path = ancestors.length === 0 ? importPath : pathNew
           // get the context relative to the import root
@@ -256,7 +261,24 @@ const importFilesActionCreator =
           const emptyImportDestId = createId()
 
           if (!parentPath) {
-            throw new Error('Parent context does not exist to import into: ' + parentContext)
+            const partialPath = parentContext.map((id, i) =>
+              findDescendant(state, HOME_TOKEN, parentContext.slice(0, i + 1)),
+            )
+            const errorMessage = `Error importing ${parentContext.join('/')}.`
+            console.error(errorMessage, {
+              importPath,
+              baseContext,
+              parentContext,
+              parentPath: partialPath,
+            })
+
+            // ask user if they want to skip the thought or cancel the import
+            if (!window.confirm(`${errorMessage}\n\nSkip thought?`)) {
+              abort = true
+              await idb.del(resumeImportKey(file.id))
+              await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
+            }
+            return
           }
 
           // import into parent path after empty destination thought is destroyed
