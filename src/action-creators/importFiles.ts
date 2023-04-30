@@ -259,6 +259,7 @@ const importFilesActionCreator =
             throw new Error('Parent context does not exist to import into: ' + parentContext)
           }
 
+          // import into parent path after empty destination thought is destroyed
           const importThoughtPath =
             ancestors.length === 0 && destEmpty
               ? insertBeforeNew && !(destEmpty && i === 0)
@@ -283,8 +284,6 @@ const importFilesActionCreator =
                 // assume that all ancestors have already been created since we are importing in order
                 // TODO: What happens if an ancestor gets deleted during an import?
                 text: block.scope,
-                // use the original import path for the first import of the first thought
-                // See: pathNew
                 path: importThoughtPath,
                 preventInline: true,
                 preventSetCursor: true,
