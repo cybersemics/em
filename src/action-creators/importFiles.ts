@@ -1,6 +1,7 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import sanitize from 'sanitize-html'
+import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -11,7 +12,6 @@ import createThought from '../action-creators/createThought'
 import importText from '../action-creators/importText'
 import setCursor from '../action-creators/setCursor'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
-import { replicateThought } from '../data-providers/yjs/thoughtspace'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
@@ -36,7 +36,9 @@ import series from '../util/series'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import alert from './alert'
+import pull from './pull'
 
+/** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
 interface VirtualFile {
   lastModified: number
   name: string
@@ -65,15 +67,17 @@ type ResumableFile = VirtualFile & ResumeImport
 /** Generate the IDB key for a ResumeImport file. */
 const resumeImportKey = (id: string) => `resumeImports-${id}`
 
-/** Replicates all descendant values that already exist. */
-const replicateDuplicateDescendants = async (state: State, id: ThoughtId, values: string[]) => {
-  await replicateThought(id)
-  if (values.length === 0) return
-  const duplicate = findDescendant(state, id, values[0])
-  if (duplicate) {
-    await replicateDuplicateDescendants(state, duplicate, values.slice(1))
+/** Pulls the thoughts in the given context if they exist. */
+const pullDuplicateDescendants =
+  (id: ThoughtId, context: Context): Thunk =>
+  async (dispatch, getState) => {
+    await dispatch(pull([id], { force: true, maxDepth: 1 }))
+    if (context.length === 0) return
+    const duplicate = findDescendant(getState(), id, context[0])
+    if (duplicate) {
+      await dispatch(pullDuplicateDescendants(duplicate, context.slice(1)))
+    }
   }
-}
 
 /** Action-creator for importFiles. */
 const importFilesActionCreator =
@@ -100,8 +104,8 @@ const importFilesActionCreator =
     const state = getState()
     const importPath = path || HOME_PATH
 
-    // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent chunks
-    // these will be saved to the ResumableFile but ignored in the first chunk
+    // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent thoughts
+    // these will be saved to the ResumableFile but ignored on the first thought
     const destThought = getThoughtById(state, head(importPath))
     const destIsLeaf = !anyChild(state, head(importPath))
     const destEmpty = destThought.value === '' && destIsLeaf
@@ -122,8 +126,8 @@ const importFilesActionCreator =
             lastModified: file.lastModified,
             thoughtsImported: 0,
             name: file.name,
-            // this will be ignored in the first chunk
-            path: pathNew,
+            // this will be ignored on the first thought
+            path: destEmpty && siblingAfter ? rootedParentOf(state, importPath) : importPath,
             size: file.size,
             text: () => file.text(),
           }
@@ -227,10 +231,15 @@ const importFilesActionCreator =
         json,
         (block, ancestors, i) => async (): Promise<void> => {
           let state = getState()
-          const path = ancestors.length === 0 ? importPath : file.path
+          const path = ancestors.length === 0 ? importPath : pathNew
           // get the context relative to the import root
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
+
+          // must replicate descendants before calculating baseContext and parentContext
+          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
+          state = getState()
+
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const baseContext = pathToContext(
             state,
@@ -244,14 +253,11 @@ const importFilesActionCreator =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
           // TODO: It would be better to get the id from importText rather than contextToPath
           const parentPath = contextToPath(state, parentContext)
+          const emptyImportDestId = createId()
 
           if (!parentPath) {
             throw new Error('Parent context does not exist to import into: ' + parentContext)
           }
-          await replicateDuplicateDescendants(state, head(path), [...relativeAncestorContext, block.scope])
-          state = getState()
-
-          const emptyImportDestId = createId()
 
           const importThoughtPath =
             ancestors.length === 0 && destEmpty
@@ -277,7 +283,7 @@ const importFilesActionCreator =
                 // assume that all ancestors have already been created since we are importing in order
                 // TODO: What happens if an ancestor gets deleted during an import?
                 text: block.scope,
-                // use the original import path for the first import of the first chunk
+                // use the original import path for the first import of the first thought
                 // See: pathNew
                 path: importThoughtPath,
                 preventInline: true,
@@ -298,13 +304,13 @@ const importFilesActionCreator =
                       ...(resumeImports || {}),
                       [file.id]: {
                         id: file.id,
-                        // use the original insertBefore for the first import of the first chunk
+                        // use the original insertBefore for the first import of the first thought
                         // See: insertBeforeNew
                         insertBefore: i === 0 ? insertBefore : file.insertBefore,
                         lastModified: file.lastModified,
                         thoughtsImported: i + 1,
                         name: file.name,
-                        // use the original import path on the first chunk
+                        // use the original import path on the first thought
                         // See: pathNew
                         path: file.path,
                         size: file.size,
@@ -325,7 +331,7 @@ const importFilesActionCreator =
       // otherwise thoughts will get imported out of order
       await series(importTasks)
 
-      // delete the ResumeImport file and manifest after all chunks are imported
+      // delete the ResumeImport file and manifest after all thoughts are imported
       await idb.del(resumeImportKey(file.id))
       await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
     })
