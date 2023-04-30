@@ -1,11 +1,13 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
+import { HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
+import isRoot from '../util/isRoot'
 
 /**
  * Store enhancer to detect cursor change and trigger appropriate actions (clear selection for now).
@@ -19,12 +21,21 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
       const updatedState: State = reducer(state || initialState, action)
       const thought = updatedState.cursor ? getThoughtById(updatedState, head(updatedState.cursor)) : null
       if (updatedState.cursor && !thought) {
-        console.error('Cursor thought does not exist', {
+        const errorMessage = `Cursor thought does not exist: ${updatedState.cursor}`
+        console.error(errorMessage, {
           action,
           cursor: updatedState.cursor,
           previousCursor: state.cursor,
         })
-        throw new Error(`Cursor thought does not exist: ${updatedState.cursor}`)
+        throw new Error(errorMessage)
+      } else if (updatedState.cursor && updatedState.cursor.length > 1 && isRoot(updatedState.cursor)) {
+        const errorMessage = `Cursor should be set to null, not [${HOME_TOKEN}]`
+        console.error(errorMessage, {
+          action,
+          cursor: updatedState.cursor,
+          previousCursor: state.cursor,
+        })
+        throw new Error(errorMessage)
       }
       const value = thought?.value || null
 
