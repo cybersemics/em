@@ -9,7 +9,7 @@
     "stop": "pm2 stop pm2.config.js"
   },
   "dependencies": {
-    "@hocuspocus/server": "^2.0.0-alpha.1",
+    "@hocuspocus/server": "^2.0.6",
     "level": "^6.0.1",
     "y-leveldb": "^0.1.2"
   },
