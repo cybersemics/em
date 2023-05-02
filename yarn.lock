@@ -11098,17 +11098,17 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lib0@^0.2.35:
-  version "0.2.58"
-  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.58.tgz#bb5326a1e028f72fd3a5bdb20e61404bff08d0a5"
-  integrity sha512-6ovqPaYfOKU7GkkVxz/wjMR0zsqmNsISLvH+h9Lx5YNtWDZey69aYsTGXaSVpUPpJ+ZFtIvcZHsTGL3MbwOM8A==
-  dependencies:
-    isomorphic.js "^0.2.4"
-
 lib0@^0.2.43, lib0@^0.2.47:
   version "0.2.62"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.62.tgz#c4e6860751ba7674a0dca51bb3c23d80985852de"
   integrity sha512-DY0G8AaQloUvpiss7EpAo/t4R82b9m/AydbQRNAa9Khssn9oGDJnSN8Q1qQ8u82Wog4iaT1O8yM+DfhzGCrrpQ==
+  dependencies:
+    isomorphic.js "^0.2.4"
+
+lib0@^0.2.74:
+  version "0.2.74"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.74.tgz#7a4cc816a0420e76de85009423c8ab63655ff817"
+  integrity sha512-roj9i46/JwG5ik5KNTkxP2IytlnrssAkD/OhlAVtE+GqectrdkfR+pttszVLrOzMDeXNs1MPt6yo66MUolWSiA==
   dependencies:
     isomorphic.js "^0.2.4"
 
@@ -18385,12 +18385,11 @@ xtend@^4.0.0, xtend@~4.0.1:
   resolved "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz"
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
 
-y-indexeddb@^9.0.9:
-  version "9.0.9"
-  resolved "https://registry.yarnpkg.com/y-indexeddb/-/y-indexeddb-9.0.9.tgz#fd360f6b62ce1b2d4127671fe73b4feb08de70b2"
-  integrity sha512-GcJbiJa2eD5hankj46Hea9z4hbDnDjvh1fT62E5SpZRsv8GcEemw34l1hwI2eknGcv5Ih9JfusT37JLx9q3LFg==
+"y-indexeddb@https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex":
+  version "9.0.10-multiplex.0"
+  resolved "https://github.com/raineorshine/y-indexeddb#9d91add3956da54e8b168edc99a80f7bb72627a3"
   dependencies:
-    lib0 "^0.2.35"
+    lib0 "^0.2.74"
 
 y18n@^4.0.0:
   version "4.0.3"

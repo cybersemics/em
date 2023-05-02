@@ -128,7 +128,7 @@
     "ts-key-enum": "^2.0.6",
     "use-onclickoutside": "^0.3.2",
     "xhtml-purifier": "^0.4.1",
-    "y-indexeddb": "^9.0.9",
+    "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
     "yallist": "^4.0.0",
     "yjs": "13.5.29"
   },

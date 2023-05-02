@@ -70,11 +70,16 @@ const lexemeWebsocketProvider: Index<HocuspocusProvider> = {}
 // They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and regular compaction.
 // Deletes must be marked, otherwise there is no way to differentiate it from an update (because there is no way to tell if a websocket has no data for a thought, or just has not yet returned any data.)
 const doclog = new Y.Doc()
-const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-doclogPersistence.whenSynced.catch(e => {
-  console.error(e)
-  store.dispatch(alert('Error loading doclog'))
-})
+
+// TODO: dex.js:1 Error loading doclog. DOMException: Failed to execute 'transaction' on 'IDBDatabase': One of the specified object stores was not found.
+setTimeout(() => {
+  const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+  doclogPersistence.whenSynced.catch(e => {
+    const errorMessage = 'Error loading doclog.'
+    console.error(errorMessage, e)
+    store.dispatch(alert(errorMessage))
+  })
+}, 200)
 
 // eslint-disable-next-line no-new
 new HocuspocusProvider({
