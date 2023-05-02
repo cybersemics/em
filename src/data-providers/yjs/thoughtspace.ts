@@ -379,8 +379,9 @@ export const replicateThought = async (
       }
     })
     .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error loading thought'))
+      const errorMessage = `Error loading thought ${id}.`
+      console.error(errorMessage, e)
+      store.dispatch(alert(errorMessage))
     })
 
   // a promise that resolves if/when the thought observes a value
@@ -494,8 +495,9 @@ export const replicateLexeme = async (
       }
     })
     .catch(e => {
-      console.error(e)
-      store.dispatch(alert('Error loading thought'))
+      const errorMessage = `Error loading lexeme ${key}.`
+      console.error(errorMessage, e)
+      store.dispatch(alert(errorMessage))
     })
 
   // a promise that resolves if/when the lexeme observes a value
