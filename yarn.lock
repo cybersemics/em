@@ -18449,7 +18449,7 @@ xtend@^4.0.0, xtend@~4.0.1:
 
 "y-indexeddb@https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex":
   version "9.0.10-multiplex.0"
-  resolved "https://github.com/raineorshine/y-indexeddb#9d91add3956da54e8b168edc99a80f7bb72627a3"
+  resolved "https://github.com/raineorshine/y-indexeddb#53db7703e2c4e41c5a3f1943452e213e1946f07a"
   dependencies:
     lib0 "^0.2.74"
 
