@@ -2,7 +2,7 @@ import Path from '../@types/Path'
 import isRoot from './isRoot'
 
 /** Returns true if thoughts subset is contained within superset (inclusive by default). Returns false if either path is null. */
-export const isDescendantPath = (
+const isDescendantPath = (
   descendant: Path | null,
   ancestor: Path | null,
   { exclusive }: { exclusive?: boolean } = {},

@@ -9,7 +9,7 @@ import { GLOBAL_STYLE_ENV } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
-import { isDescendantPath } from '../util/isDescendantPath'
+import isDescendantPath from '../util/isDescendantPath'
 import { safeRefMerge } from '../util/safeRefMerge'
 
 const EMPTY_OBJECT = {}
