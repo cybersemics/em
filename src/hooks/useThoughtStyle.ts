@@ -7,7 +7,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
-import { safeRefMerge } from '../util/safeRefMerge'
+import safeRefMerge from '../util/safeRefMerge'
 
 const EMPTY_OBJECT = {}
 

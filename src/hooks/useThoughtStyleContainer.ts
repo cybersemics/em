@@ -10,7 +10,7 @@ import findDescendant from '../selectors/findDescendant'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isDescendantPath from '../util/isDescendantPath'
-import { safeRefMerge } from '../util/safeRefMerge'
+import safeRefMerge from '../util/safeRefMerge'
 
 const EMPTY_OBJECT = {}
 
