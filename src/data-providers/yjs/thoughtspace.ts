@@ -15,6 +15,7 @@ import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
 import syncStatusStore from '../../stores/syncStatus'
+import { delay } from '../../test-helpers/delay'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
@@ -398,27 +399,7 @@ export const replicateThought = async (
     thoughtMap.observe(observeUntilValue)
   })
 
-  // a promise that resolves 100ms after the synced event fires
-  const websocketSyncedDelayed = new Promise<SimpleYMapEvent<ThoughtYjs>>(resolve => {
-    websocketProvider.on('synced', (e: { string: number }) => {
-      // Thought is empty when syncid fires.
-      // However, observe may not fire at all if the thought has been deleted.
-      // Therefore, wait a short delay for the thought to be populated. Observe is expected to fire immediately after synced.
-      // If the thought is still empty by the then, it is safe (?) to assume the thought does not exist on the websocket server.
-      setTimeout(() => {
-        resolve({
-          target: thoughtMap,
-          transaction: {
-            origin: websocketProvider,
-          },
-        })
-      }, 100)
-    })
-  })
-
-  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed])
-
-  const synced = Promise.race([idbSynced, websocketSynced])
+  const synced = Promise.race([idbSynced, websocketValueObserved])
 
   // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
   if (!background) {
@@ -432,7 +413,12 @@ export const replicateThought = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await websocketSynced
+    await Promise.race([
+      websocketValueObserved,
+      delay(30000).then(() => {
+        console.warn('websocket thought timeout', id, getThought(doc))
+      }),
+    ])
 
     // websocketSynced.then(e => {
     // TODO: How to limit in-memory thoughts when they arrive out of order?
@@ -514,26 +500,7 @@ export const replicateLexeme = async (
     lexemeMap.observe(observeUntilValue)
   })
 
-  // a promise that resolves 100ms after the synced event fires
-  const websocketSyncedDelayed = new Promise<SimpleYMapEvent<LexemeYjs>>(resolve => {
-    websocketProvider.on('synced', (e: { string: number }) => {
-      // Lexeme is empty when syncid fires.
-      // However, observe may not fire at all if the lexeme has been deleted.
-      // Therefore, wait a short delay for the lexeme to be populated. Observe is expected to fire immediately after synced.
-      // If the lexeme is still empty by the then, it is safe (?) to assume the lexeme does not exist on the websocket server.
-      setTimeout(() => {
-        resolve({
-          target: lexemeMap,
-          transaction: {
-            origin: websocketProvider,
-          },
-        })
-      }, 100)
-    })
-  })
-
-  const websocketSynced = Promise.race([websocketValueObserved, websocketSyncedDelayed])
-  const synced = Promise.race([idbSynced, websocketSynced])
+  const synced = Promise.race([idbSynced, websocketValueObserved])
 
   // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
   if (!background) {
@@ -547,6 +514,12 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
+    await Promise.race([
+      websocketValueObserved,
+      delay(30000).then(() => {
+        console.warn('websocket lexeme timeout', key, getLexeme(doc))
+      }),
+    ])
 
     // TODO: How to limit in-memory lexemes when they arrive out of order?
     // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
@@ -558,7 +531,6 @@ export const replicateLexeme = async (
     // } else {
     //   websocketProvider.destroy()
     // }
-    await websocketSynced
   } else {
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
