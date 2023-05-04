@@ -1,7 +1,7 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
-import { delay } from '../../../test-helpers/delay'
+import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
 jest.setTimeout(20000)
@@ -30,14 +30,14 @@ it('load buffered ancestors of contexts when context view is activated', async (
   // wait for a re-render in case the lexeme was loaded after the parent
   // getEditingText will return undefined if we don't wait
   // we don't currently have a way to tell if a lexeme is missing or just loading
-  await delay(100)
+  await sleep(100)
 
   await clickThought('m')
   await click('.toolbar-icon[aria-label="Context View"]')
 
   // allow ancestors to be loaded
   // may not be practically necessary, but there could be a delay on slower machines
-  await delay(10)
+  await sleep(10)
 
   // assert that c is loaded
   await waitForEditable('c')

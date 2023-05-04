@@ -1,4 +1,4 @@
-import { delay } from '../../test-helpers/delay'
+import sleep from '../../util/sleep'
 import taskQueue from '../taskQueue'
 
 it('run tasks', async () => {
@@ -47,7 +47,7 @@ it('async tasks', async () => {
   let counter = 0
   /** Increment counter after a delay. */
   const incDelayed = async () => {
-    await delay(1)
+    await sleep(1)
     return ++counter
   }
 
@@ -104,7 +104,7 @@ it('onStep', async () => {
 
   /** Returns a task that returns a value after a given number of milliseconds. */
   const delayedValue = (s: string, n: number) => async () => {
-    await delay(n)
+    await sleep(n)
     return s
   }
 
@@ -128,7 +128,7 @@ it('onStep per batch', async () => {
   let counter = 0
   /** Increment counter after a delay. */
   const incDelayed = async () => {
-    await delay(1)
+    await sleep(1)
     return ++counter
   }
 
@@ -168,9 +168,9 @@ it('reset completed and total after each batch completes', async () => {
     onStep: result => output.push(result),
   })
   queue.add([inc, inc])
-  await delay(10)
+  await sleep(10)
   queue.add([inc, inc, inc])
-  await delay(10)
+  await sleep(10)
 
   expect(output).toEqual([
     { completed: 1, total: 2, index: 0, value: 1 },
@@ -186,7 +186,7 @@ it('onLowStep', async () => {
 
   /** Returns a task that returns a value after a given number of milliseconds. */
   const delayedValue = (s: string, n: number) => async () => {
-    await delay(n)
+    await sleep(n)
     return s
   }
 
@@ -207,7 +207,7 @@ it('pause', async () => {
   let counter = 0
   /** Increment counter after a delay. */
   const incDelayed = async () => {
-    await delay(20)
+    await sleep(20)
     return ++counter
   }
 
@@ -221,7 +221,7 @@ it('pause', async () => {
   // add three tasks and pause midway through
   // expect counter to not be incremented because tasks are still in progress
   queue.add([incDelayed, incDelayed, incDelayed])
-  await delay(10)
+  await sleep(10)
   queue.pause()
   expect(counter).toBe(0)
 
@@ -229,7 +229,7 @@ it('pause', async () => {
   // expect first three tasks to have completed after a delay
   queue.add([incDelayed, incDelayed, incDelayed])
   queue.start()
-  await delay(10)
+  await sleep(10)
   expect(counter).toBe(3)
 
   await done
@@ -259,7 +259,7 @@ it('add should return a promise that resolves when all the added tasks have comp
   let counter = 0
   /** Increment counter after a delay. */
   const incDelayed = async () => {
-    await delay(20)
+    await sleep(20)
     return ++counter
   }
 

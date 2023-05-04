@@ -7,7 +7,7 @@
  * See: https://github.com/americanexpress/jest-image-snapshot
  */
 import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
-import { delay } from '../../../test-helpers/delay'
+import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
 const toMatchImageSnapshot = configureToMatchImageSnapshot({
@@ -71,7 +71,7 @@ const testSuite = () => {
       `)
 
       // wait for render animation to complete
-      await delay(400)
+      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -92,7 +92,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await delay(800)
+      await sleep(800)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -106,7 +106,7 @@ const testSuite = () => {
       `)
 
       // wait for render animation to complete
-      await delay(400)
+      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -124,7 +124,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await delay(400)
+      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -148,7 +148,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await delay(400)
+      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -158,7 +158,7 @@ const testSuite = () => {
       await paste('https://thinkwithem.com')
 
       // wait for render animation to complete
-      await delay(400)
+      await sleep(400)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -175,7 +175,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await delay(800)
+      await sleep(800)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -192,7 +192,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await delay(800)
+      await sleep(800)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -208,7 +208,7 @@ describe('Font Size: 18 (default)', () => {
 describe('Font Size: 14', () => {
   beforeEach(async () => {
     // TODO: identify what needs to be waited for specifically
-    await delay(1000)
+    await sleep(1000)
 
     await click('.decrease-font') // 17
     await click('.decrease-font') // 16
@@ -222,7 +222,7 @@ describe('Font Size: 14', () => {
     await scroll(0, 0)
 
     // wait for toolbar size transitions to complete
-    await delay(400)
+    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
@@ -232,7 +232,7 @@ describe('Font Size: 14', () => {
 describe('Font Size: 13', () => {
   beforeEach(async () => {
     // TODO: identify what needs to be waited for specifically
-    await delay(1000)
+    await sleep(1000)
 
     await click('.decrease-font') // 17
     await click('.decrease-font') // 16
@@ -247,7 +247,7 @@ describe('Font Size: 13', () => {
     await scroll(0, 0)
 
     // wait for toolbar size transitions to complete
-    await delay(400)
+    await sleep(400)
   })
 
   // run the snapshot tests at font size 14
@@ -257,7 +257,7 @@ describe('Font Size: 13', () => {
 describe('Font Size: 22', () => {
   beforeEach(async () => {
     // TODO: identify what needs to be waited for specifically
-    await delay(1000)
+    await sleep(1000)
 
     await click('.increase-font') // 19
     await click('.increase-font') // 20
@@ -271,7 +271,7 @@ describe('Font Size: 22', () => {
     await scroll(0, 0)
 
     // wait for toolbar size transitions to complete
-    await delay(400)
+    await sleep(400)
   })
 
   // run the snapshot tests at font size 22

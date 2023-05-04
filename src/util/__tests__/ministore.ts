@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import ministore from '../../stores/ministore'
-import { delay } from '../../test-helpers/delay'
+import sleep from '../../util/sleep'
 
 it('getState', () => {
   const store = ministore(1)
@@ -25,7 +25,7 @@ describe('subscribe', () => {
     const store = ministore(0)
     store.subscribe(n => (counter += n))
     store.update(1)
-    await delay(0)
+    await sleep(0)
     expect(counter).toBe(1)
   })
 
@@ -35,7 +35,7 @@ describe('subscribe', () => {
     store.subscribe(n => counter++)
     store.update(1)
     store.update(1)
-    await delay(0)
+    await sleep(0)
     expect(counter).toBe(1)
   })
 })
@@ -49,7 +49,7 @@ describe('subscribeSelector', () => {
       a => (counter += a),
     )
     store.update({ a: 2 })
-    await delay(0)
+    await sleep(0)
     expect(counter).toBe(2)
   })
 
@@ -62,7 +62,7 @@ describe('subscribeSelector', () => {
     )
     store.update({ a: 2 })
     store.update({ a: 2, b: 5 })
-    await delay(0)
+    await sleep(0)
     expect(counter).toBe(1)
   })
 
@@ -76,7 +76,7 @@ describe('subscribeSelector', () => {
     )
     store.update({ a: 2 })
     store.update({ a: 2, b: 5 })
-    await delay(0)
+    await sleep(0)
     expect(counter).toBe(1)
   })
 })

@@ -1,4 +1,4 @@
-import { delay } from '../../test-helpers/delay'
+import sleep from '../../util/sleep'
 import series from '../series'
 
 it('execute promise-returning functions serially', async () => {
@@ -8,7 +8,7 @@ it('execute promise-returning functions serially', async () => {
   const makeDelay = (n: number) => {
     // eslint-disable-next-line fp/no-mutating-methods
     called.push(n)
-    return () => delay(n).then(() => n)
+    return () => sleep(n).then(() => n)
   }
 
   const result = await series([makeDelay(100), makeDelay(200), makeDelay(10)])

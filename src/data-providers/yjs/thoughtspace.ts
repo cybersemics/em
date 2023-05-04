@@ -15,10 +15,10 @@ import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import store from '../../stores/app'
 import syncStatusStore from '../../stores/syncStatus'
-import { delay } from '../../test-helpers/delay'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
+import sleep from '../../util/sleep'
 import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -415,7 +415,7 @@ export const replicateThought = async (
     // do not resolve background replication until websocket has synced
     await Promise.race([
       websocketValueObserved,
-      delay(30000).then(() => {
+      sleep(30000).then(() => {
         console.warn('websocket thought timeout', id, getThought(doc))
       }),
     ])
@@ -516,7 +516,7 @@ export const replicateLexeme = async (
     // do not resolve background replication until websocket has synced
     await Promise.race([
       websocketValueObserved,
-      delay(30000).then(() => {
+      sleep(30000).then(() => {
         console.warn('websocket lexeme timeout', key, getLexeme(doc))
       }),
     ])
