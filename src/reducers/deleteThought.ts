@@ -29,6 +29,8 @@ interface Payload {
   pathParent: Path
   thoughtId: ThoughtId
   orphaned?: boolean
+  local?: boolean
+  remote?: boolean
 }
 
 interface ThoughtUpdates {
@@ -43,7 +45,7 @@ interface ThoughtUpdates {
  *
  * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
-const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payload) => {
+const deleteThought = (state: State, { local = true, pathParent, thoughtId, orphaned, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId)
 
   if (!deletedThought) {
@@ -227,6 +229,8 @@ const deleteThought = (state: State, { pathParent, thoughtId, orphaned }: Payloa
       lexemeIndexUpdates,
       // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
+      local,
+      remote,
     }),
   ])(state)
 }

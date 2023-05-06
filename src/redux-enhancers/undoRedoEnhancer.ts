@@ -72,6 +72,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   expandHoverDown: false,
   expandHoverUp: false,
   extractThought: true,
+  freeThoughts: false,
   fontSize: false,
   heading: true,
   importSpeechToText: true,
