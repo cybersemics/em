@@ -28,7 +28,7 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
           previousCursor: state.cursor,
         })
         throw new Error(errorMessage)
-      } else if (updatedState.cursor && updatedState.cursor.length > 1 && isRoot(updatedState.cursor)) {
+      } else if (updatedState.cursor && isRoot(updatedState.cursor)) {
         const errorMessage = `Cursor should be set to null, not [${HOME_TOKEN}]`
         console.error(errorMessage, {
           action,

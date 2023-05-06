@@ -28,6 +28,7 @@ import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
+import isRoot from '../util/isRoot'
 import mapBlocks from '../util/mapBlocks'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -291,6 +292,10 @@ const importFilesActionCreator =
                 : path
               : parentPath
 
+          // set cursor to parent of empty destination, or null if pasting into a root child
+          const cursorPath = destEmpty ? rootedParentOf(state, importPath) : importPath
+          const cursorNew = isRoot(cursorPath) ? null : cursorPath
+
           return new Promise<void>(resolve => {
             dispatch([
               ancestors.length === 0 && insertBeforeNew && !(destEmpty && i === 0)
@@ -301,7 +306,7 @@ const importFilesActionCreator =
                     id: emptyImportDestId,
                   })
                 : null,
-              setCursor({ path: destEmpty ? rootedParentOf(state, importPath) : importPath }),
+              setCursor({ path: cursorNew }),
               importText({
                 // assume that all ancestors have already been created since we are importing in order
                 // TODO: What happens if an ancestor gets deleted during an import?
