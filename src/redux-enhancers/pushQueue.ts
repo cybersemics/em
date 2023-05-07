@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
 import PushBatch from '../@types/PushBatch'
@@ -83,7 +84,7 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
   remote: batch.remote !== false,
 })
 
-/** Merges state.pushQueue batches and pushes them to Yjs. Caches settings. */
+/** Merges state.pushQueue batches and pushes them to Yjs, frees memory from state-only batches, and caches settings. */
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
@@ -95,25 +96,39 @@ const pushQueue: StoreEnhancer<any> =
 
       if (stateNew.pushQueue.length === 0) return stateNew
 
+      // separate out updates for the database from state-only updates
+      // state-only updates are only used to free up memory
+      const { dbQueue, freeQueue } = _.groupBy(stateNew.pushQueue, batch =>
+        batch.local || batch.remote ? 'dbQueue' : 'freeQueue',
+      ) as { dbQueue?: PushBatch[]; freeQueue?: PushBatch[] }
+
       // merge batches
       // last write wins
-      const mergedBatch = stateNew.pushQueue.reduce(mergeBatch, {} as PushBatch)
+      const dbBatch = (dbQueue || []).reduce(mergeBatch, { thoughtIndexUpdates: {}, lexemeIndexUpdates: {} })
+      const freeBatch = (freeQueue || []).reduce(mergeBatch, { thoughtIndexUpdates: {}, lexemeIndexUpdates: {} })
 
-      // cache updated settings
-      const settingsIds = getSettingsIds(stateNew)
-      Object.entries(settingsIds).forEach(([name, id]) => {
-        if (id && id in mergedBatch.thoughtIndexUpdates) {
-          const thought = getThoughtById(stateNew, id) as Thought | undefined
-          cacheSetting(name, thought?.value || null)
+      if (Object.keys(dbBatch).length > 0) {
+        // cache updated settings
+        const settingsIds = getSettingsIds(stateNew)
+        Object.entries(settingsIds).forEach(([name, id]) => {
+          if (id && id in dbBatch.thoughtIndexUpdates) {
+            const thought = getThoughtById(stateNew, id) as Thought | undefined
+            cacheSetting(name, thought?.value || null)
+          }
+        })
+
+        // push batch updates to database
+        db.updateThoughts(dbBatch.thoughtIndexUpdates, dbBatch.lexemeIndexUpdates, dbBatch.updates?.schemaVersion).then(
+          dbBatch.idbSynced,
+        )
+      }
+
+      // free up memory of thoughts that have been
+      Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {
+        if (!thoughtUpdate) {
+          db.freeThought?.(id as ThoughtId)
         }
       })
-
-      // push batch updates to database
-      db.updateThoughts(
-        mergedBatch.thoughtIndexUpdates,
-        mergedBatch.lexemeIndexUpdates,
-        mergedBatch.updates?.schemaVersion,
-      ).then(mergedBatch.idbSynced)
 
       // clear push queue
       return { ...stateNew, pushQueue: [] }

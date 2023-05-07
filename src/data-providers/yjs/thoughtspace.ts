@@ -565,8 +565,8 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
   } as Lexeme
 }
 
-/** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteThought = (id: ThoughtId): Promise<void> => {
+/** Destroys the thoughtDoc and associated providers. */
+const freeThought = (id: ThoughtId): void => {
   // destroying the doc does not remove top level shared type observers
   thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
   thoughtDocs[id]?.destroy()
@@ -574,6 +574,11 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   delete thoughtPersistence[id]
   delete thoughtSynced[id]
   delete thoughtWebsocketProvider[id]
+}
+
+/** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
+const deleteThought = (id: ThoughtId): Promise<void> => {
+  freeThought(id)
 
   // there may not be a persistence instance in memory at all, so delete the database directly
   return deleteDB(encodeThoughtDocumentName(tsid, id)).catch((e: Error) => {
@@ -582,8 +587,8 @@ const deleteThought = (id: ThoughtId): Promise<void> => {
   })
 }
 
-/** Deletes a lexemes and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteLexeme = (key: string): Promise<void> => {
+/** Destroys the lexemeDoc and associated providers. */
+const freeLexeme = (key: string): void => {
   // destroying the doc does not remove top level shared type observers
   lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
   lexemeDocs[key]?.destroy()
@@ -591,6 +596,11 @@ const deleteLexeme = (key: string): Promise<void> => {
   delete lexemePersistence[key]
   delete lexemeSynced[key]
   delete lexemeWebsocketProvider[key]
+}
+
+/** Deletes a lexemes and clears the doc from IndexedDB. Resolves when local database is deleted. */
+const deleteLexeme = (key: string): Promise<void> => {
+  freeLexeme(key)
 
   // there may not be a persistence instance in memory at all, so delete the database directly
   return deleteDB(encodeLexemeDocumentName(tsid, key)).catch((e: Error) => {
@@ -699,6 +709,7 @@ export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | und
 
 const db: DataProvider = {
   clear,
+  freeThought,
   getLexemeById,
   getLexemesByIds,
   getThoughtById,

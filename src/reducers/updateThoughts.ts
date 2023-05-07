@@ -257,8 +257,7 @@ const updateThoughts = (
       // or isLoading can be forced by passing it directly to updateThoughts
       isLoading: state.isLoading && isStillLoading(),
       recentlyEdited: recentlyEditedNew,
-      // only push the batch to the pushQueue if syncing at least local or remote
-      ...(batch.local || batch.remote ? { pushQueue: [...state.pushQueue, batch] } : null),
+      pushQueue: [...state.pushQueue, batch],
       thoughts: {
         thoughtIndex,
         lexemeIndex,
