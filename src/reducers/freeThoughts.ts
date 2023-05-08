@@ -4,6 +4,7 @@ import { getAllChildren } from '../selectors/getChildren'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
 
 /** Frees thoughts from memory that have exceeded the memory limit. Note: May not free any thoughts if all thoughts are expanded. */
@@ -28,9 +29,14 @@ const freeThoughts = (state: State) => {
     // find a thought that can be deleted
     const markedThought = allThoughts.find(
       thought =>
+        // do not delete any thought or child of a thought in the preserve set
         !preserveSet.has(thought.id) &&
         !preserveSet.has(thought.parentId) &&
-        state.thoughts.thoughtIndex[thought.parentId],
+        // do not delete a thought with a missing parent
+        state.thoughts.thoughtIndex[thought.parentId] &&
+        // do not delete meta attributes, or their descendants
+        !isAttribute(thought.value) &&
+        !thoughtToPath(state, thought.parentId).some(id => isAttribute(state.thoughts.thoughtIndex[id]?.value)),
     )
 
     // If all thoughts are preserved, we should bail.
