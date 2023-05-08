@@ -190,6 +190,8 @@ const replicationController = ({
     thoughtLogs = thoughtLogs || []
     lexemeLogs = lexemeLogs || []
 
+    if (thoughtLogs.length === 0 && lexemeLogs.length === 0) return
+
     if (_.isEqual(thoughtLogs[0], thoughtLog.slice(-1)[0])) {
       // eslint-disable-next-line fp/no-mutating-methods
       thoughtLogs.shift()
