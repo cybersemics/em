@@ -18,7 +18,6 @@ import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
-import sleep from '../../util/sleep'
 import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -404,12 +403,7 @@ export const replicateThought = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await Promise.race([
-      websocketValueObserved,
-      sleep(30000).then(() => {
-        console.warn('websocket thought timeout', id, getThought(doc))
-      }),
-    ])
+    await websocketValueObserved
 
     // websocketSynced.then(e => {
     // TODO: How to limit in-memory thoughts when they arrive out of order?
@@ -505,12 +499,7 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await Promise.race([
-      websocketValueObserved,
-      sleep(30000).then(() => {
-        console.warn('websocket lexeme timeout', key, getLexeme(doc))
-      }),
-    ])
+    await websocketValueObserved
 
     // TODO: How to limit in-memory lexemes when they arrive out of order?
     // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
@@ -580,8 +569,8 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
     freeThought(id)
     await deleted
   } catch (e: any) {
-    // Ignore NotFoundError, which indicate that the object stores have already been deleted.
-    // This is currently expected on load, when the thoughtReplicationCursor is brought up to speed with the doclog
+    // Ignore NotFoundError, which indicates that the object stores have already been deleted.
+    // This is currently expected on load, when the thoughtReplicationCursor is synced with the doclog
     // TODO: Update the thoughtReplicationCursor immediateley rather than waiting till the next reload (is the order of updates preserved even when integrating changes from other clients?)
     if (e.name !== 'NotFoundError') {
       throw e
