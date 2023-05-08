@@ -31,6 +31,9 @@ import {
 } from './documentNameEncoder'
 import replicationController from './replicationController'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: string) => Promise<void> }
+
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
 type ValueOf<T> = T[keyof T]
@@ -43,15 +46,6 @@ interface SimpleYMapEvent<T> {
   transaction: {
     origin: any
   }
-}
-
-/** Deletes an IndexedDB database. */
-const deleteDB = (name: string): Promise<void> => {
-  const request = indexedDB.deleteDatabase(name)
-  return new Promise((resolve, reject) => {
-    request.onerror = (e: any) => reject(new Error(e.target.error))
-    request.onsuccess = (e: any) => resolve()
-  })
 }
 
 // map of all YJS thought Docs loaded into memory
@@ -565,7 +559,7 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
   } as Lexeme
 }
 
-/** Destroys the thoughtDoc and associated providers. */
+/** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
 const freeThought = (id: ThoughtId): void => {
   // destroying the doc does not remove top level shared type observers
   thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
@@ -577,17 +571,25 @@ const freeThought = (id: ThoughtId): void => {
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteThought = (id: ThoughtId): Promise<void> => {
-  freeThought(id)
+const deleteThought = async (id: ThoughtId): Promise<void> => {
+  const persistence = thoughtPersistence[id]
 
-  // there may not be a persistence instance in memory at all, so delete the database directly
-  return deleteDB(encodeThoughtDocumentName(tsid, id)).catch((e: Error) => {
-    console.error('Error deleting thought', e)
-    store.dispatch(alert('Error deleting thought: ' + (e.message || e)))
-  })
+  try {
+    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been freed), then we need to manually delete it from the db
+    const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, id))
+    freeThought(id)
+    await deleted
+  } catch (e: any) {
+    // Ignore NotFoundError, which indicate that the object stores have already been deleted.
+    // This is currently expected on load, when the thoughtReplicationCursor is brought up to speed with the doclog
+    // TODO: Update the thoughtReplicationCursor immediateley rather than waiting till the next reload (is the order of updates preserved even when integrating changes from other clients?)
+    if (e.name !== 'NotFoundError') {
+      throw e
+    }
+  }
 }
 
-/** Destroys the lexemeDoc and associated providers. */
+/** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
 const freeLexeme = (key: string): void => {
   // destroying the doc does not remove top level shared type observers
   lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
@@ -599,14 +601,20 @@ const freeLexeme = (key: string): void => {
 }
 
 /** Deletes a lexemes and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteLexeme = (key: string): Promise<void> => {
-  freeLexeme(key)
+const deleteLexeme = async (key: string): Promise<void> => {
+  const persistence = lexemePersistence[key]
 
-  // there may not be a persistence instance in memory at all, so delete the database directly
-  return deleteDB(encodeLexemeDocumentName(tsid, key)).catch((e: Error) => {
-    console.error('Error deleting lexeme', e)
-    store.dispatch(alert('Error deleting lexeme: ' + (e.message || e)))
-  })
+  try {
+    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been freed), then we need to manually delete it from the db
+    const deleted = persistence ? persistence.clearData() : clearDocument(encodeLexemeDocumentName(tsid, key))
+    freeLexeme(key)
+    await deleted
+  } catch (e: any) {
+    // See: deleteThought NotFoundError handler
+    if (e.name !== 'NotFoundError') {
+      throw e
+    }
+  }
 }
 
 /** Updates shared thoughts and lexemes. Resolves when IDB is synced (not when websocket is synced). */
