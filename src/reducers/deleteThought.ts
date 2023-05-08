@@ -68,7 +68,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // Note: When a thought is deleted and there are pending deletes, then on flushing the deletes, the parent won't be available in the tree. So for orphaned thoughts deletion we use special orphaned param
   if (!orphaned && !parent) {
-    console.error('Parent not found!')
+    console.error('Parent not found!', deletedThought.id, deletedThought.value)
     return state
   }
 

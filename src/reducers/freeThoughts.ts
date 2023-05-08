@@ -27,7 +27,10 @@ const freeThoughts = (state: State) => {
   while (allThoughts.length > MAX_THOUGHT_INDEX) {
     // find a thought that can be deleted
     const markedThought = allThoughts.find(
-      thought => !preserveSet.has(thought.id) && !preserveSet.has(thought.parentId),
+      thought =>
+        !preserveSet.has(thought.id) &&
+        !preserveSet.has(thought.parentId) &&
+        state.thoughts.thoughtIndex[thought.parentId],
     )
 
     // If all thoughts are preserved, we should bail.
@@ -38,14 +41,29 @@ const freeThoughts = (state: State) => {
     // delete the thought and all descendants to ensure thoughtIndex is still in integrity
     stateNew = deleteThought(stateNew, {
       thoughtId: markedThought.id,
-      pathParent: thoughtToPath(state, markedThought.id),
+      pathParent: thoughtToPath(state, markedThought.parentId),
       // do not persist deletions; just delete from state
       local: false,
       remote: false,
+      // prevent thought from being removed from parent
+      orphaned: true,
     })
 
     // set parent to pending to allow thoughts to be reloaded if they become visible again
-    stateNew.thoughts.thoughtIndex[markedThought.parentId].pending = true
+    const parentThought = stateNew.thoughts.thoughtIndex[markedThought.parentId]
+    stateNew = {
+      ...stateNew,
+      thoughts: {
+        ...stateNew.thoughts,
+        thoughtIndex: {
+          ...stateNew.thoughts.thoughtIndex,
+          [markedThought.parentId]: {
+            ...parentThought,
+            pending: true,
+          },
+        },
+      },
+    }
 
     // we do not know how many thoughts were deleted
     allThoughts = Object.values(stateNew.thoughts.thoughtIndex)
