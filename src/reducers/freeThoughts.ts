@@ -27,7 +27,7 @@ const freeThoughts = (state: State) => {
   // eslint-disable-next-line fp/no-loops
   while (allThoughts.length > MAX_THOUGHT_INDEX) {
     // find a thought that can be deleted
-    const markedThought = allThoughts.find(
+    const deletableThought = allThoughts.find(
       thought =>
         // do not delete any thought or child of a thought in the preserve set
         !preserveSet.has(thought.id) &&
@@ -42,12 +42,12 @@ const freeThoughts = (state: State) => {
     // If all thoughts are preserved, we should bail.
     // This is unlikely to happen, as MAX_THOUGHT_INDEX should usually exceed the number of visible thoughts.
     // In the worst case, this results in continuous attempts until the user collapses some thoughts, but will be throttled by the freeThoughts middleware.
-    if (!markedThought) break
+    if (!deletableThought) break
 
     // delete the thought and all descendants to ensure thoughtIndex is still in integrity
     stateNew = deleteThought(stateNew, {
-      thoughtId: markedThought.id,
-      pathParent: thoughtToPath(state, markedThought.parentId),
+      thoughtId: deletableThought.id,
+      pathParent: thoughtToPath(state, deletableThought.parentId),
       // do not persist deletions; just delete from state
       local: false,
       remote: false,
@@ -56,14 +56,14 @@ const freeThoughts = (state: State) => {
     })
 
     // set parent to pending to allow thoughts to be reloaded if they become visible again
-    const parentThought = stateNew.thoughts.thoughtIndex[markedThought.parentId]
+    const parentThought = stateNew.thoughts.thoughtIndex[deletableThought.parentId]
     stateNew = {
       ...stateNew,
       thoughts: {
         ...stateNew.thoughts,
         thoughtIndex: {
           ...stateNew.thoughts.thoughtIndex,
-          [markedThought.parentId]: {
+          [deletableThought.parentId]: {
             ...parentThought,
             pending: true,
           },
