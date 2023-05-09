@@ -74,11 +74,14 @@ const freeThoughts = (state: State) => {
           },
         },
       }
-    } else {
-      console.warn(
-        `Freed thought ${deletableThought.value} (${deletableThought.id}) parent is missing: ${deletableThought.parentId}`,
-      )
     }
+
+    // TODO: Why is parent missing?
+    // else {
+    //   console.warn(
+    //     `Deallocated thought ${deletableThought.value} (${deletableThought.id}) parent is missing: ${deletableThought.parentId}`,
+    //   )
+    // }
 
     // we do not know how many thoughts were deleted
     allThoughts = Object.values(stateNew.thoughts.thoughtIndex)

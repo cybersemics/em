@@ -564,7 +564,7 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
   const persistence = thoughtPersistence[id]
 
   try {
-    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been freed), then we need to manually delete it from the db
+    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, id))
     freeThought(id)
     await deleted
@@ -594,7 +594,7 @@ const deleteLexeme = async (key: string): Promise<void> => {
   const persistence = lexemePersistence[key]
 
   try {
-    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been freed), then we need to manually delete it from the db
+    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeLexemeDocumentName(tsid, key))
     freeLexeme(key)
     await deleted
