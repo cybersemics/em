@@ -8,19 +8,17 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
-import createThought from '../action-creators/createThought'
-import importText from '../action-creators/importText'
+import deleteThought from '../action-creators/deleteThought'
+import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild } from '../selectors/getChildren'
-import getRankBefore from '../selectors/getRankBefore'
+import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
 import syncStatusStore from '../stores/syncStatus'
 import appendToPath from '../util/appendToPath'
 import createChildrenMap from '../util/createChildrenMap'
@@ -28,7 +26,6 @@ import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
-import isRoot from '../util/isRoot'
 import mapBlocks from '../util/mapBlocks'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -129,8 +126,7 @@ const importFilesActionCreator =
             lastModified: file.lastModified,
             thoughtsImported: 0,
             name: file.name,
-            // this will be ignored on the first thought
-            path: destEmpty && siblingAfter ? rootedParentOf(state, importPath) : importPath,
+            path: pathNew,
             size: file.size,
             text: () => file.text(),
           }
@@ -157,7 +153,7 @@ const importFilesActionCreator =
     const fileTasks = resumableFiles.map((file, i) => async () => {
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
-      // read
+      // read file
       dispatch(
         alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, { alertType: AlertType.ImportFile }),
       )
@@ -237,7 +233,7 @@ const importFilesActionCreator =
           if (abort) return
 
           let state = getState()
-          const path = ancestors.length === 0 ? importPath : pathNew
+          const path = resume ? file.path : ancestors.length === 0 ? importPath : pathNew
           // get the context relative to the import root
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
@@ -259,14 +255,14 @@ const importFilesActionCreator =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
           // TODO: It would be better to get the id from importText rather than contextToPath
           const parentPath = contextToPath(state, parentContext)
-          const emptyImportDestId = createId()
 
+          // validate parentPath
           if (!parentPath) {
             const partialPath = parentContext.map((id, i) =>
               findDescendant(state, HOME_TOKEN, parentContext.slice(0, i + 1)),
             )
             const errorMessage = `Error importing ${parentContext.join('/')}.`
-            console.error(errorMessage, {
+            console.error(errorMessage, 'Missing parentPath.', {
               importPath,
               baseContext,
               parentContext,
@@ -283,71 +279,75 @@ const importFilesActionCreator =
           }
 
           // import into parent path after empty destination thought is destroyed
-          const importThoughtPath =
-            ancestors.length === 0 && destEmpty
-              ? insertBeforeNew && !(destEmpty && i === 0)
-                ? appendToPath(parentOf(importPath), emptyImportDestId)
-                : i > 0
-                ? rootedParentOf(state, path)
-                : path
-              : parentPath
-
-          // set cursor to parent of empty destination, or null if pasting into a root child
-          const cursorPath = destEmpty ? rootedParentOf(state, importPath) : importPath
-          const cursorNew = isRoot(cursorPath) ? null : cursorPath
+          const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
+          const duplicate = findAnyChild(state, head(importThoughtPath), child => child.value === block.scope)
 
           return new Promise<void>(resolve => {
-            dispatch([
-              ancestors.length === 0 && insertBeforeNew && !(destEmpty && i === 0)
-                ? createThought({
-                    path: rootedParentOf(state, importPath),
-                    value: '',
-                    rank: getRankBefore(state, simplifyPath(state, pathNew)),
-                    id: emptyImportDestId,
-                  })
-                : null,
-              setCursor({ path: cursorNew }),
-              importText({
-                // assume that all ancestors have already been created since we are importing in order
-                // TODO: What happens if an ancestor gets deleted during an import?
-                text: block.scope,
-                path: importThoughtPath,
-                preventInline: true,
-                preventSetCursor: true,
-                idbSynced: async () => {
-                  // update resumeImports with thoughtsImported
-                  const importProgress = (i + 1) / numThoughts
-                  const importProgressString = Math.round(importProgress * 100)
-                  syncStatusStore.update({ importProgress })
-                  dispatch(
-                    alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
-                      alertType: AlertType.ImportFile,
-                      clearDelay: i === numThoughts - 1 ? 5000 : undefined,
-                    }),
-                  )
-                  await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
-                    return {
-                      ...(resumeImports || {}),
-                      [file.id]: {
-                        id: file.id,
-                        // use the original insertBefore for the first import of the first thought
-                        // See: insertBeforeNew
-                        insertBefore: i === 0 ? insertBefore : file.insertBefore,
-                        lastModified: file.lastModified,
-                        thoughtsImported: i + 1,
-                        name: file.name,
-                        // use the original import path on the first thought
-                        // See: pathNew
-                        path: file.path,
-                        size: file.size,
-                      },
-                    }
-                  })
+            /** Updates importProgress and resumeImports. */
+            const updateImportProgress = async () => {
+              // update resumeImports with thoughtsImported
+              const importProgress = (i + 1) / numThoughts
+              const importProgressString = Math.round(importProgress * 100)
+              syncStatusStore.update({ importProgress })
+              dispatch(
+                alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
+                  alertType: AlertType.ImportFile,
+                  clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+                }),
+              )
 
-                  resolve()
-                },
-              }),
-            ])
+              const state = getState()
+              const resumePath = i === 0 ? contextToPath(state, unroot([...parentContext, block.scope]))! : file.path
+
+              await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
+                return {
+                  ...(resumeImports || {}),
+                  [file.id]: {
+                    id: file.id,
+                    // use the original insertBefore for the first import of the first thought
+                    // See: insertBeforeNew
+                    insertBefore: i === 0 ? insertBefore : file.insertBefore,
+                    lastModified: file.lastModified,
+                    thoughtsImported: i + 1,
+                    name: file.name,
+                    // use the original import path on the first thought
+                    // See: pathNew
+                    path: resumePath,
+                    size: file.size,
+                  },
+                }
+              })
+            }
+
+            // If the thought is a duplicate, immediately update the import progress and resolve the task.
+            // Otherwise insert the new thought.
+            if (duplicate) {
+              updateImportProgress().then(resolve)
+            } else {
+              dispatch([
+                // delete empty destination thought
+                i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
+                // insert new thought
+                !duplicate
+                  ? newThought({
+                      at: importThoughtPath,
+                      insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
+                      insertBefore: ancestors.length === 0 && insertBeforeNew,
+                      preventSetCursor: true,
+                      value: block.scope,
+                      idbSynced: () => updateImportProgress().then(resolve),
+                    })
+                  : null,
+                // set cursor to first imported thought
+                i === 0
+                  ? (dispatch, getState) => {
+                      const state = getState()
+                      const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
+                      dispatch(setCursor({ path: cursorNew }))
+                    }
+                  : null,
+              ])
+            }
           })
         },
         { start: file.thoughtsImported },

@@ -215,7 +215,11 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // if the deleted thought is the cursor or a descendant of the cursor, we need to calculate a new cursor.
   const cursorNew =
-    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought ? rootedParentOf(state, simplePath!) : state.cursor
+    isDeletedThoughtCursor || isCursorDescendantOfDeletedThought
+      ? simplePath.length > 1
+        ? rootedParentOf(state, simplePath)
+        : null
+      : state.cursor
 
   return reducerFlow([
     state => ({

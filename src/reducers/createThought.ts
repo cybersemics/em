@@ -22,6 +22,8 @@ interface Payload {
   // directly adds children to thought.childrenMap with no additional validation
   children?: ThoughtId[]
   id?: ThoughtId
+  /** Callback for when the updates have been synced with IDB. */
+  idbSynced?: () => void
   path: Path
   rank: number
   splitSource?: ThoughtId
@@ -32,7 +34,7 @@ interface Payload {
  *
  * @param addAsContext Adds the given context to the new thought.
  */
-const createThought = (state: State, { path, value, rank, id, children, splitSource }: Payload) => {
+const createThought = (state: State, { path, value, rank, id, idbSynced, children, splitSource }: Payload) => {
   id = id || createId()
 
   // create Lexeme if it does not exist
@@ -116,7 +118,7 @@ const createThought = (state: State, { path, value, rank, id, children, splitSou
       : null),
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates })
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
 }
 
 export default _.curryRight(createThought)

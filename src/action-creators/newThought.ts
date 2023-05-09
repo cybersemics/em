@@ -23,6 +23,7 @@ import head from '../util/head'
 const newThought =
   ({
     at,
+    idbSynced,
     insertBefore,
     insertNewSubthought,
     splitResult,
@@ -31,6 +32,8 @@ const newThought =
     value = '',
   }: {
     at?: Path
+    /** Callback for when the updates have been synced with IDB. */
+    idbSynced?: () => void
     insertBefore?: boolean
     insertNewSubthought?: boolean
     splitResult?: SplitResult | null
@@ -85,6 +88,7 @@ const newThought =
     dispatch({
       type: 'newThought',
       at: path,
+      idbSynced,
       insertBefore,
       insertNewSubthought,
       preventSetCursor,

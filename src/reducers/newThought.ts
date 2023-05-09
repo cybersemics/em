@@ -51,7 +51,10 @@ import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
 export interface NewThoughtPayload {
+  /** The Path which the new thought is inserted after, unless insertBefore or insertNewSubthought are specified. */
   at?: Path
+  /** Callback for when the updates have been synced with IDB. */
+  idbSynced?: () => void
   insertNewSubthought?: boolean
   insertBefore?: boolean
   value?: string
@@ -73,6 +76,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const {
     at,
+    idbSynced,
     insertNewSubthought,
     insertBefore,
     value = '',
@@ -154,6 +158,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       rank: newRank,
       value,
       id: newThoughtId,
+      idbSynced,
       splitSource,
     }),
 
