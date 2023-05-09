@@ -63,6 +63,43 @@ interface ResumeImport {
 
 type ResumableFile = VirtualFile & ResumeImport
 
+/** Creates a small object that can be used to manage the persistence of a ResumableFile. */
+const resumeImportsManager = (file: ResumableFile) => {
+  /** Initializes the ResumeImport file manifest and raw file in IDB. */
+  const init = async (text: string) => {
+    await update(file.path, 0, file.insertBefore)
+    await idb.set(resumeImportKey(file.id), text)
+  }
+
+  /** Deletes the ResumeImport file manifest and raw file in IDB. */
+  const del = async () => {
+    globals.lastImportedPath = undefined
+    await idb.del(resumeImportKey(file.id))
+    await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
+  }
+
+  /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
+  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) =>
+    idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
+      return {
+        ...(resumeImports || {}),
+        [file.id]: {
+          id: file.id,
+          // use the original insertBefore for the first import of the first thought
+          // See: insertBeforeNew
+          insertBefore: thoughtsImported === 1 ? insertBefore : file.insertBefore,
+          lastModified: file.lastModified,
+          thoughtsImported,
+          name: file.name,
+          path: path || file.path,
+          size: file.size,
+        },
+      }
+    })
+
+  return { del, init, update }
+}
+
 /** Generate the IDB key for a ResumeImport file. */
 const resumeImportKey = (id: string) => `resumeImports-${id}`
 
@@ -152,40 +189,8 @@ const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
+      const manager = resumeImportsManager(file)
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
-
-      /** Initializes the ResumeImport file manifest and raw file in IDB. */
-      const initResumeImportsManifest = async () => {
-        dispatch(alert(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
-        await updateResumeImportsManifest(file.path, 0)
-        await idb.set(resumeImportKey(file.id), text)
-      }
-
-      /** Deletes the ResumeImport file manifest and raw file in IDB. */
-      const deleteResumeImportsManifest = async () => {
-        globals.lastImportedPath = undefined
-        await idb.del(resumeImportKey(file.id))
-        await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
-      }
-
-      /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
-      const updateResumeImportsManifest = async (path: Path | null, thoughtsImported: number) =>
-        idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
-          return {
-            ...(resumeImports || {}),
-            [file.id]: {
-              id: file.id,
-              // use the original insertBefore for the first import of the first thought
-              // See: insertBeforeNew
-              insertBefore: thoughtsImported === 1 ? insertBefore : file.insertBefore,
-              lastModified: file.lastModified,
-              thoughtsImported,
-              name: file.name,
-              path: path || file.path,
-              size: file.size,
-            },
-          }
-        })
 
       // read file
       dispatch(
@@ -195,7 +200,8 @@ const importFilesActionCreator =
 
       // if importing a new file, initialize resumeImports in IDB as soon as possible
       if (!resume) {
-        initResumeImportsManifest()
+        dispatch(alert(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
+        manager.init(text)
       }
 
       // convert ThoughtIndices to plain text
@@ -291,7 +297,7 @@ const importFilesActionCreator =
             // ask user if they want to skip the thought or cancel the import
             if (!window.confirm(`${errorMessage}\n\nSkip thought?`)) {
               abort = true
-              await deleteResumeImportsManifest()
+              await manager.del()
             }
             return
           }
@@ -315,7 +321,7 @@ const importFilesActionCreator =
               )
 
               const resumePath = i === 0 ? contextToPath(state, unroot([...parentContext, block.scope]))! : file.path
-              await updateResumeImportsManifest(resumePath, i + 1)
+              await manager.update(resumePath, i + 1)
             }
 
             // If the thought is a duplicate, immediately update the import progress and resolve the task.
@@ -365,7 +371,7 @@ const importFilesActionCreator =
       // import thoughts serially
       // otherwise thoughts will get imported out of order
       await series(importTasks)
-      await deleteResumeImportsManifest()
+      await manager.del()
     })
 
     // import files serially
