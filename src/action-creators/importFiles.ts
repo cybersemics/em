@@ -12,6 +12,7 @@ import deleteThought from '../action-creators/deleteThought'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
@@ -287,7 +288,7 @@ const importFilesActionCreator =
             const updateImportProgress = async () => {
               // update resumeImports with thoughtsImported
               const importProgress = (i + 1) / numThoughts
-              const importProgressString = Math.round(importProgress * 100)
+              const importProgressString = (Math.round(importProgress * 1000) / 10).toFixed(1)
               syncStatusStore.update({ importProgress })
               dispatch(
                 alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
@@ -338,14 +339,22 @@ const importFilesActionCreator =
                       idbSynced: () => updateImportProgress().then(resolve),
                     })
                   : null,
-                // set cursor to first imported thought
-                i === 0
-                  ? (dispatch, getState) => {
-                      const state = getState()
-                      const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
-                      dispatch(setCursor({ path: cursorNew }))
-                    }
-                  : null,
+                // set cursor to new thought on the first iteration
+                // ensure the last imported thought is not deleted by freeThoughts
+                (dispatch, getState) => {
+                  const state = getState()
+                  const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
+
+                  // update the lastImportedPath so it can be protected from freeThoughts during import
+                  if (cursorNew) {
+                    globals.lastImportedPath = cursorNew
+                  }
+
+                  // set cursor to first imported thought
+                  if (i === 0) {
+                    dispatch(setCursor({ path: cursorNew }))
+                  }
+                },
               ])
             }
           })
@@ -360,6 +369,7 @@ const importFilesActionCreator =
       // delete the ResumeImport file and manifest after all thoughts are imported
       await idb.del(resumeImportKey(file.id))
       await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
+      globals.lastImportedPath = undefined
     })
 
     // import files serially

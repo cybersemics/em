@@ -1,4 +1,5 @@
 /* eslint-disable fp/no-let, prefer-const */
+import Path from './@types/Path'
 
 /** THE BAD PLACE where mutable globals are defined. */
 
@@ -21,6 +22,9 @@ let offlineTimer = 0
 
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
 let errorTimer = 0
+
+// The id of the last thought that was imported in importFiles. This is used to prevent freeThoughts from deallocating the import target.
+let lastImportedPath: Path | undefined
 
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
 let suppressExpansion = false // eslint-disable-line prefer-const
@@ -56,6 +60,7 @@ const globals = {
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
+  lastImportedPath,
   longpressing,
   rendered,
   simulateDrag,

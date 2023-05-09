@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHT_INDEX } from '../constants'
+import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -7,13 +8,15 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
 
-/** Frees thoughts from memory that have exceeded the memory limit. Note: May not free any thoughts if all thoughts are expanded. */
+/** Frees invisible thoughts from memory when the memory limit is exceeded. Note: May not free any thoughts if all thoughts are expanded. */
 const freeThoughts = (state: State) => {
   const expandedIds = Object.values(state.expanded).map(head)
   const preserveSet = new Set([
     ABSOLUTE_TOKEN,
     EM_TOKEN,
     HOME_TOKEN,
+    // prevent the last imported thought from being deallocated, as the thought or one of its ancestors needs to stay in memory for the next imported thought
+    ...(globals.lastImportedPath || []),
     ...expandedIds.flatMap(id => [id, ...getAllChildren(state, id)]),
     ...getDescendantThoughtIds(state, EM_TOKEN),
   ])
@@ -57,18 +60,24 @@ const freeThoughts = (state: State) => {
 
     // set parent to pending to allow thoughts to be reloaded if they become visible again
     const parentThought = stateNew.thoughts.thoughtIndex[deletableThought.parentId]
-    stateNew = {
-      ...stateNew,
-      thoughts: {
-        ...stateNew.thoughts,
-        thoughtIndex: {
-          ...stateNew.thoughts.thoughtIndex,
-          [deletableThought.parentId]: {
-            ...parentThought,
-            pending: true,
+    if (parentThought) {
+      stateNew = {
+        ...stateNew,
+        thoughts: {
+          ...stateNew.thoughts,
+          thoughtIndex: {
+            ...stateNew.thoughts.thoughtIndex,
+            [deletableThought.parentId]: {
+              ...parentThought,
+              pending: true,
+            },
           },
         },
-      },
+      }
+    } else {
+      console.warn(
+        `Freed thought ${deletableThought.value} (${deletableThought.id}) parent is missing: ${deletableThought.parentId}`,
+      )
     }
 
     // we do not know how many thoughts were deleted
