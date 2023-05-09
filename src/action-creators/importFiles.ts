@@ -79,6 +79,7 @@ const resumeImportsManager = (file: ResumableFile) => {
   }
 
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
+  // TODO: throttling update breaks resume file.path for some reason
   const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) =>
     idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
       return {
@@ -327,7 +328,8 @@ const importFilesActionCreator =
             // If the thought is a duplicate, immediately update the import progress and resolve the task.
             // Otherwise insert the new thought.
             if (duplicate) {
-              updateImportProgress().then(resolve)
+              updateImportProgress()
+              resolve()
             } else {
               dispatch([
                 // delete empty destination thought
@@ -341,7 +343,8 @@ const importFilesActionCreator =
                       preventSetCursor: true,
                       value: block.scope,
                       idbSynced: () => {
-                        updateImportProgress().then(resolve)
+                        updateImportProgress()
+                        resolve()
                       },
                     })
                   : null,
