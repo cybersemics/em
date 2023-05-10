@@ -4,15 +4,10 @@ import IconType from '../../@types/Icon'
 import State from '../../@types/State'
 import { HOME_PATH } from '../../constants'
 import getSortPreference from '../../selectors/getSortPreference'
-import simplifyPath from '../../selectors/simplifyPath'
 import head from '../../util/head'
 
 /** Get sort direction of cursor. */
-const getCursorSortDirection = (state: State) => {
-  const { cursor } = state
-  const simplePath = simplifyPath(state, cursor || HOME_PATH)
-  return getSortPreference(state, head(simplePath)).direction
-}
+const getCursorSortDirection = (state: State) => getSortPreference(state, head(state.cursor || HOME_PATH)).direction
 
 /** Ascending Icon Component. */
 const IconAsc = ({ size = 20, style }: IconType) => (
