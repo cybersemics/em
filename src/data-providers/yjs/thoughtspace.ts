@@ -550,8 +550,15 @@ const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
 const freeThought = (id: ThoughtId): void => {
-  // destroying the doc does not remove top level shared type observers
-  thoughtDocs[id]?.getMap<ThoughtYjs>().unobserve(onThoughtChange)
+  // destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange
+  // yjs logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
+  const thoughtMap: Y.Map<ThoughtYjs> | undefined = thoughtDocs[id]?.getMap<ThoughtYjs>()
+  const listeners = thoughtMap?._eH.l.slice(0) || []
+  if (listeners.some(l => l === onThoughtChange)) {
+    thoughtMap.unobserve(onThoughtChange)
+  }
+
   thoughtDocs[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
@@ -580,8 +587,15 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
 
 /** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
 const freeLexeme = (key: string): void => {
-  // destroying the doc does not remove top level shared type observers
-  lexemeDocs[key]?.getMap<LexemeYjs>().unobserve(onLexemeChange)
+  // destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange
+  // yjs logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
+  const lexemeMap: Y.Map<LexemeYjs> | undefined = lexemeDocs[key]?.getMap<LexemeYjs>()
+  const listeners = lexemeMap?._eH.l.slice(0) || []
+  if (listeners.some(l => l === onLexemeChange)) {
+    lexemeMap.unobserve(onLexemeChange)
+  }
+
   lexemeDocs[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
