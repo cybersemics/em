@@ -3,7 +3,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import isAttribute from '../util/isAttribute'
 
-/** Gets a rank that comes before all visible thoughts in a context. */
+/** Gets a new rank that comes before the first child of a thought. */
 // TODO: Take context not path
 const getPrevRank = (state: State, id: ThoughtId, { aboveMeta }: { aboveMeta?: boolean } = {}) => {
   const children = id ? getChildrenRanked(state, id) : []
