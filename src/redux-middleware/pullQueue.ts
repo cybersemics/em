@@ -6,7 +6,6 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import pull from '../action-creators/pull'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import expandThoughts from '../selectors/expandThoughts'
 import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
@@ -155,8 +154,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       state.searchContexts === lastSearchContexts ||
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
-    const expanded = expandThoughts(state, state.cursor)
-    const expandedPaths = expandedWithAncestors(state, expanded)
+    const expandedPaths = expandedWithAncestors(state, state.expanded)
 
     if (
       !forceFlush &&
