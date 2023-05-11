@@ -482,4 +482,4 @@ export const WEBSOCKET_CONNECTION_TIME = 3000
 export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
 
 /** The maximum size of state.thoughts.thoughtIndex before freeThoughts kicks in to free memory. */
-export const MAX_THOUGHT_INDEX = 50
+export const MAX_THOUGHTS = 50
