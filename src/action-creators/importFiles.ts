@@ -305,7 +305,8 @@ const importFilesActionCreator =
 
           // import into parent path after empty destination thought is destroyed
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
-          const duplicate = findAnyChild(state, head(importThoughtPath), child => child.value === block.scope)
+
+          const duplicate = findAnyChild(state, head(parentPath), child => child.value === block.scope)
 
           return new Promise<void>(resolve => {
             /** Updates importProgress and resumeImports. */
@@ -325,47 +326,44 @@ const importFilesActionCreator =
               await manager.update(resumePath, i + 1)
             }
 
-            // If the thought is a duplicate, immediately update the import progress and resolve the task.
-            // Otherwise insert the new thought.
-            if (duplicate) {
-              updateImportProgress()
-              resolve()
-            } else {
-              dispatch([
-                // delete empty destination thought
-                i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
-                // insert new thought
-                !duplicate
-                  ? newThought({
-                      at: importThoughtPath,
-                      insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
-                      insertBefore: ancestors.length === 0 && insertBeforeNew,
-                      preventSetCursor: true,
-                      value: block.scope,
-                      idbSynced: () => {
-                        updateImportProgress()
-                        resolve()
-                      },
-                    })
-                  : null,
-                // set cursor to new thought on the first iteration
-                // ensure the last imported thought is not deleted by freeThoughts
-                (dispatch, getState) => {
-                  const state = getState()
-                  const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
-
-                  // update the lastImportedPath so it can be protected from freeThoughts during import
-                  if (cursorNew) {
-                    globals.lastImportedPath = cursorNew
+            dispatch([
+              // delete empty destination thought
+              i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
+              // If the thought is a duplicate, immediately update the import progress and resolve the task.
+              // Otherwise insert the new thought.
+              duplicate
+                ? () => {
+                    updateImportProgress()
+                    resolve()
                   }
+                : newThought({
+                    at: importThoughtPath,
+                    insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
+                    insertBefore: ancestors.length === 0 && insertBeforeNew,
+                    preventSetCursor: true,
+                    value: block.scope,
+                    idbSynced: () => {
+                      updateImportProgress()
+                      resolve()
+                    },
+                  }),
+              // set cursor to new thought on the first iteration
+              // ensure the last imported thought is not deleted by freeThoughts
+              (dispatch, getState) => {
+                const state = getState()
+                const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
 
-                  // set cursor to first imported thought
-                  if (i === 0) {
-                    dispatch(setCursor({ path: cursorNew }))
-                  }
-                },
-              ])
-            }
+                // update the lastImportedPath so it can be protected from freeThoughts during import
+                if (cursorNew) {
+                  globals.lastImportedPath = cursorNew
+                }
+
+                // set cursor to first imported thought
+                if (i === 0) {
+                  dispatch(setCursor({ path: cursorNew }))
+                }
+              },
+            ])
           })
         },
         { start: file.thoughtsImported },
