@@ -6,7 +6,6 @@ import editingAction from '../../action-creators/editing'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
 import * as selection from '../../device/selection'
-import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
@@ -106,10 +105,12 @@ const useEditMode = ({
   useEffect(() => {
     // Set editing to false after unmount
     return () => {
-      const { cursor, editing } = store.getState()
-      if (editing && equalPath(cursor, path)) {
-        dispatch(editingAction({ value: false }))
-      }
+      dispatch((dispatch, getState) => {
+        const { cursor, editing } = getState()
+        if (editing && equalPath(cursor, path)) {
+          dispatch(editingAction({ value: false }))
+        }
+      })
     }
   }, [])
 
