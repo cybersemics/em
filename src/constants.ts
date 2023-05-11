@@ -482,4 +482,7 @@ export const WEBSOCKET_CONNECTION_TIME = 3000
 export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
 
 /** The maximum size of state.thoughts.thoughtIndex before freeThoughts kicks in to free memory. */
-export const MAX_THOUGHTS = 50
+export const MAX_THOUGHTS = 100
+
+/** The number of additional thoughts to free when MAX_THOUGHTS is reached. This provides some slack so that freeThoughts is not triggered on every action once MAX_THOUGHTS is reached. */
+export const MAX_THOUGHTS_MARGIN = 50

@@ -1,5 +1,5 @@
 import State from '../@types/State'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS, MAX_THOUGHTS_MARGIN } from '../constants'
 import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
@@ -28,7 +28,7 @@ const freeThoughts = (state: State) => {
   let allThoughts = Object.values(state.thoughts.thoughtIndex)
 
   // eslint-disable-next-line fp/no-loops
-  while (allThoughts.length > MAX_THOUGHTS) {
+  while (allThoughts.length > MAX_THOUGHTS - MAX_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
     const deletableThought = allThoughts.find(
       thought =>
