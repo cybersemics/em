@@ -108,8 +108,13 @@ const resumeImportKey = (id: string) => `resumeImports-${id}`
 const pullDuplicateDescendants =
   (id: ThoughtId, context: Context): Thunk =>
   async (dispatch, getState) => {
-    await dispatch(pull([id], { force: true, maxDepth: 1 }))
     if (context.length === 0) return
+
+    // if thought is pending, pull
+    if (!getThoughtById(getState(), id).pending) return
+    await dispatch(pull([id], { force: true, maxDepth: 1 }))
+
+    // if there is a duplicate, recurse
     const duplicate = findDescendant(getState(), id, context[0])
     if (duplicate) {
       await dispatch(pullDuplicateDescendants(duplicate, context.slice(1)))
@@ -264,10 +269,6 @@ const importFilesActionCreator =
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
 
-          // must replicate descendants before calculating baseContext and parentContext
-          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
-          state = getState()
-
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const baseContext = pathToContext(
             state,
@@ -302,6 +303,10 @@ const importFilesActionCreator =
             }
             return
           }
+
+          // must replicate descendants before calculating baseContext and parentContext
+          await dispatch(pullDuplicateDescendants(head(parentPath), [...relativeAncestorContext, block.scope]))
+          state = getState()
 
           // import into parent path after empty destination thought is destroyed
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
