@@ -50,38 +50,36 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
 
   const thoughtIndexUpdates: Index<Thought> = {}
 
-  if (path.length > 0) {
-    const newValue = value
+  const newValue = value
 
-    // TODO: Why is a duplicate id encountered sometimes?
-    // const duplicateId = getAllChildren(state, parentId).find(childId => childId === id)
-    // if (duplicateId) {
-    //   throw new Error(`Parent ${parent.value} (${parentId}) already contains thought ${duplicateId}`)
-    // }
+  // TODO: Why is a duplicate id encountered sometimes?
+  // const duplicateId = getAllChildren(state, parentId).find(childId => childId === id)
+  // if (duplicateId) {
+  //   throw new Error(`Parent ${parent.value} (${parentId}) already contains thought ${duplicateId}`)
+  // }
 
-    const thoughtNew: Thought = {
-      id,
-      parentId: parentId,
-      // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
-      childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
-      lastUpdated: timestamp(),
-      rank,
-      value: newValue,
-      updatedBy: clientId,
-      ...(splitSource ? { splitSource } : null),
-    }
+  const thoughtNew: Thought = {
+    id,
+    parentId: parentId,
+    // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
+    childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
+    lastUpdated: timestamp(),
+    rank,
+    value: newValue,
+    updatedBy: clientId,
+    ...(splitSource ? { splitSource } : null),
+  }
 
-    thoughtIndexUpdates[id] = thoughtNew
-    thoughtIndexUpdates[parentId] = {
-      ...parent,
-      id: parentId,
-      childrenMap: {
-        ...parent.childrenMap,
-        [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
-      },
-      lastUpdated: timestamp(),
-      updatedBy: clientId,
-    }
+  thoughtIndexUpdates[id] = thoughtNew
+  thoughtIndexUpdates[parentId] = {
+    ...parent,
+    id: parentId,
+    childrenMap: {
+      ...parent.childrenMap,
+      [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
+    },
+    lastUpdated: timestamp(),
+    updatedBy: clientId,
   }
 
   // if adding as the context of an existing thought
