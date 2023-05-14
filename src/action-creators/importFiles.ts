@@ -18,6 +18,7 @@ import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
@@ -110,9 +111,12 @@ const pullDuplicateDescendants =
   async (dispatch, getState) => {
     if (context.length === 0) return
 
-    // if thought is pending, pull
-    if (!getThoughtById(getState(), id).pending) return
-    await dispatch(pull([id], { force: true, maxDepth: 1 }))
+    // if thought is pending, pull it
+    if (isPending(getState(), getThoughtById(getState(), id))) {
+      // Must be forced, otherwise thoughts can be missed.
+      // (Not sure how, since pull calls getPendingDescentants, which should be the same.)
+      await dispatch(pull([id], { force: true, maxDepth: 1 }))
+    }
 
     // if there is a duplicate, recurse
     const duplicate = findDescendant(getState(), id, context[0])
@@ -269,6 +273,10 @@ const importFilesActionCreator =
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
 
+          // must replicate descendants before calculating baseContext and parentContext
+          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
+          state = getState()
+
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const baseContext = pathToContext(
             state,
@@ -304,17 +312,13 @@ const importFilesActionCreator =
             return
           }
 
-          // must replicate descendants before calculating baseContext and parentContext
-          await dispatch(pullDuplicateDescendants(head(parentPath), [...relativeAncestorContext, block.scope]))
-          state = getState()
-
           // import into parent path after empty destination thought is destroyed
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
 
           const duplicate = findAnyChild(state, head(parentPath), child => child.value === block.scope)
 
           return new Promise<void>(resolve => {
-            /** Updates importProgress and resumeImports. */
+            /** Updates importProgress alert and resumeImports. */
             const updateImportProgress = async () => {
               // update resumeImports with thoughtsImported
               const importProgress = (i + 1) / numThoughts
@@ -327,7 +331,8 @@ const importFilesActionCreator =
                 }),
               )
 
-              const resumePath = i === 0 ? contextToPath(state, unroot([...parentContext, block.scope]))! : file.path
+              const resumePath =
+                i === 0 ? contextToPath(getState(), unroot([...parentContext, block.scope]))! : file.path
               await manager.update(resumePath, i + 1)
             }
 
@@ -338,8 +343,7 @@ const importFilesActionCreator =
               // Otherwise insert the new thought.
               duplicate
                 ? () => {
-                    updateImportProgress()
-                    resolve()
+                    updateImportProgress().then(resolve)
                   }
                 : newThought({
                     at: importThoughtPath,
@@ -348,8 +352,7 @@ const importFilesActionCreator =
                     preventSetCursor: true,
                     value: block.scope,
                     idbSynced: () => {
-                      updateImportProgress()
-                      resolve()
+                      updateImportProgress().then(resolve)
                     },
                   }),
               // set cursor to new thought on the first iteration
