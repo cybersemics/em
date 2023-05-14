@@ -6,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import updateThoughts from '../reducers/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -18,6 +19,7 @@ import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
+import head from '../util/head'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
@@ -40,40 +42,35 @@ interface ThoughtUpdates {
   pendingDeletes?: PushBatch['pendingDeletes']
 }
 
-// @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directly. Find a better way to handle this.
-/** Removes a thought from a context. If it was the last thought in that context, removes it completely from the lexemeIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for high-level functions.
+/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions.
  *
  * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
  */
+// @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directly. Find a better way to handle this.
 const deleteThought = (state: State, { local = true, pathParent, thoughtId, orphaned, remote = true }: Payload) => {
-  const deletedThought = getThoughtById(state, thoughtId)
+  const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
 
-  if (!deletedThought) {
-    console.error(`deleteThought: Thought not found for id ${thoughtId}`)
-    return state
-  }
-
-  const { value } = deletedThought
+  const value = deletedThought?.value
 
   // guard against missing lexeme
   // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
-  if (!hasLexeme(state, value)) {
+  if (deletedThought && !hasLexeme(state, value!)) {
     console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
 
-  const key = hashThought(value)
-  const lexeme = getLexeme(state, value)
+  const key = deletedThought ? hashThought(value!) : null
+  const lexeme = deletedThought ? getLexeme(state, value!) : null
 
-  const parent = orphaned ? null : getThoughtById(state, deletedThought.parentId)
+  const parent = orphaned ? null : getThoughtById(state, deletedThought ? deletedThought.parentId : head(pathParent))
 
   // Note: When a thought is deleted and there are pending deletes, then on flushing the deletes, the parent won't be available in the tree. So for orphaned thoughts deletion we use special orphaned param
   if (!orphaned && !parent) {
-    console.error('Parent not found!', deletedThought.id, deletedThought.value)
+    console.error('Parent not found!', thoughtId, deletedThought?.value)
     return state
   }
 
   const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
-  const simplePath = thoughtToPath(state, deletedThought.id)
+  const simplePath = thoughtToPath(state, thoughtId)
   const path = [...pathParent, thoughtId] as Path
 
   // TODO: Re-enable Recently Edited
@@ -87,23 +84,20 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
   // }
 
   // the old Lexeme less the context
-  const lexemeNew =
-    lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, deletedThought.id) : null
+  const lexemeNew = lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, thoughtId) : null
 
   // update state so that we do not have to wait for the remote
-  if (lexemeNew) {
-    lexemeIndexNew[key] = lexemeNew
-  } else {
-    delete lexemeIndexNew[key]
+  if (key) {
+    if (lexemeNew) {
+      lexemeIndexNew[key] = lexemeNew
+    } else {
+      delete lexemeIndexNew[key]
+    }
   }
 
   // disable context view
   const contextViewsNew = { ...state.contextViews }
   delete contextViewsNew[hashPath(path)]
-
-  const childrenMap = keyValueBy(parent?.childrenMap || {}, (key, id) =>
-    id !== deletedThought.id ? { [key]: id } : null,
-  )
 
   /** Generates an update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
@@ -186,12 +180,16 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
   }
 
   // do not delete descendants when the thought has a duplicate sibling
-  const descendantUpdatesResult = recursiveDeletes(deletedThought)
+  const descendantUpdatesResult: ThoughtUpdates = deletedThought
+    ? recursiveDeletes(deletedThought)
+    : { lexemeIndex: {}, thoughtIndex: {}, path: HOME_PATH }
 
-  const lexemeIndexUpdates = {
-    [key]: lexemeNew,
-    ...descendantUpdatesResult.lexemeIndex,
-  }
+  const lexemeIndexUpdates = key
+    ? {
+        [key]: lexemeNew,
+        ...descendantUpdatesResult.lexemeIndex,
+      }
+    : {}
 
   const thoughtIndexUpdates = {
     // Deleted thought's parent
@@ -199,12 +197,12 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
     ...(parent && {
       [parent.id]: {
         ...parent,
-        childrenMap,
+        childrenMap: keyValueBy(parent?.childrenMap || {}, (key, id) => (id !== thoughtId ? { [key]: id } : null)),
         lastUpdated: timestamp(),
         updatedBy: clientId,
       } as Thought,
     }),
-    [deletedThought.id]: null,
+    [thoughtId]: null,
     // descendants
     ...descendantUpdatesResult.thoughtIndex,
   }

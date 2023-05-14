@@ -11,6 +11,7 @@ import Thunk from '../@types/Thunk'
 import deleteThought from '../action-creators/deleteThought'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
+import updateThoughts from '../action-creators/updateThoughts'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
@@ -28,6 +29,7 @@ import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
+import keyValueBy from '../util/keyValueBy'
 import mapBlocks from '../util/mapBlocks'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -340,21 +342,25 @@ const importFilesActionCreator =
               // delete empty destination thought
               i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
-              // Otherwise insert the new thought.
-              duplicate
-                ? () => {
-                    updateImportProgress().then(resolve)
-                  }
-                : newThought({
-                    at: importThoughtPath,
-                    insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
-                    insertBefore: ancestors.length === 0 && insertBeforeNew,
-                    preventSetCursor: true,
-                    value: block.scope,
-                    idbSynced: () => {
+              ...(duplicate
+                ? [
+                    () => {
                       updateImportProgress().then(resolve)
                     },
-                  }),
+                  ]
+                : [
+                    // import the new thought
+                    newThought({
+                      at: importThoughtPath,
+                      insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
+                      insertBefore: ancestors.length === 0 && insertBeforeNew,
+                      preventSetCursor: true,
+                      value: block.scope,
+                      idbSynced: () => {
+                        updateImportProgress().then(resolve)
+                      },
+                    }),
+                  ]),
               // set cursor to new thought on the first iteration
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
@@ -369,6 +375,32 @@ const importFilesActionCreator =
                 // set cursor to first imported thought
                 if (i === 0) {
                   dispatch(setCursor({ path: cursorNew }))
+                } else {
+                  const id = head(parentPath)
+                  const parentThought = getThoughtById(state, id)
+                  const missingChildren = _.filter(parentThought.childrenMap, (id, key) => !getThoughtById(state, id))
+
+                  dispatch(
+                    // It is possible for a child to be set in a thought's childrenMap but not exist in the thoughtIndex.
+                    // This only occurs on resume if the page is closed after the parent is saved to the database but before its child is saved.
+                    // (Persistence of thoughts is non-atomic due to the one-thought-per-Doc architecture in YJS.)
+                    // In this case, it is safe to delete extraneous siblings that do not exist in the thoughtSpace. Since we have already pulled, missing children must have been imported extraneously.
+                    // Note: For some reason deleteThought does not work here, so we manually remove missing thoughts from the parent's childrenMap
+                    missingChildren.map(childId => {
+                      const parent = getThoughtById(state, id)
+                      return updateThoughts({
+                        lexemeIndexUpdates: {},
+                        thoughtIndexUpdates: {
+                          [id]: {
+                            ...parent,
+                            childrenMap: keyValueBy(parent.childrenMap, (key, id) =>
+                              getThoughtById(state, id) ? { [key]: id } : null,
+                            ),
+                          },
+                        },
+                      })
+                    }),
+                  )
                 }
               },
             ])
