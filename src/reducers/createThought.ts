@@ -75,7 +75,16 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     ...parent,
     id: parentId,
     childrenMap: {
-      ...parent.childrenMap,
+      // Use this opportunity to delete any children that are missing.
+      // This was done for the missing children that are created by multiple refreshes during a large import.
+      // If any abberant behavior is observed, try reverting to the previous implementation in importFiles.
+      ...keyValueBy(parent.childrenMap, (key, childId) => {
+        const child = getThoughtById(state, childId)
+        if (!child) {
+          console.warn(`Sibling ${childId} with missing thought found while creating new thought ${value} (${id})`)
+        }
+        return child ? { [key]: childId } : null
+      }),
       [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
     },
     lastUpdated: timestamp(),

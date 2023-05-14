@@ -30,7 +30,6 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
-import keyValueBy from '../util/keyValueBy'
 import mapBlocks from '../util/mapBlocks'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
@@ -355,6 +354,7 @@ const importFilesActionCreator =
                   ]
                 : [
                     // import the new thought
+                    // Any missing children from previously interrupted imports are cleaned up in createThought.
                     newThought({
                       at: importThoughtPath,
                       insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
@@ -380,32 +380,6 @@ const importFilesActionCreator =
                 // set cursor to first imported thought
                 if (i === 0) {
                   dispatch(setCursor({ path: cursorNew }))
-                } else {
-                  const id = head(parentPath)
-                  const parentThought = getThoughtById(state, id)
-                  const missingChildren = _.filter(parentThought.childrenMap, (id, key) => !getThoughtById(state, id))
-
-                  dispatch(
-                    // It is possible for a child to be set in a thought's childrenMap but not exist in the thoughtIndex.
-                    // This only occurs on resume if the page is closed after the parent is saved to the database but before its child is saved.
-                    // (Persistence of thoughts is non-atomic due to the one-thought-per-Doc architecture in YJS.)
-                    // In this case, it is safe to delete extraneous siblings that do not exist in the thoughtSpace. Since we have already pulled, missing children must have been imported extraneously.
-                    // Note: For some reason deleteThought does not work here, so we manually remove missing thoughts from the parent's childrenMap
-                    missingChildren.map(childId => {
-                      const parent = getThoughtById(state, id)
-                      return updateThoughts({
-                        lexemeIndexUpdates: {},
-                        thoughtIndexUpdates: {
-                          [id]: {
-                            ...parent,
-                            childrenMap: keyValueBy(parent.childrenMap, (key, id) =>
-                              getThoughtById(state, id) ? { [key]: id } : null,
-                            ),
-                          },
-                        },
-                      })
-                    }),
-                  )
                 }
               },
             ])
