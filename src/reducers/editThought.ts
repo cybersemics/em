@@ -5,7 +5,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import Timestamp from '../@types/Timestamp'
 import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
@@ -85,10 +84,6 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     ])(state)
   }
 
-  const { rank } = editedThought
-
-  const archived = editedThought.archived
-
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
   // try {
@@ -116,7 +111,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
 
   const lexemeNew =
     lexemeOld && lexemeOld.contexts.length > 0
-      ? addContext(lexemeNewWithoutContext, rank, editedThoughtId, archived as Timestamp)
+      ? addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
       : lexemeNewWithoutContext
 
   // update local lexemeIndex so that we do not have to wait for the remote

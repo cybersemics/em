@@ -4,7 +4,6 @@ import sanitize from 'sanitize-html'
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
@@ -18,19 +17,22 @@ import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
+import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
+import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
-import createChildrenMap from '../util/createChildrenMap'
 import createId from '../util/createId'
+import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
 import keyValueBy from '../util/keyValueBy'
 import mapBlocks from '../util/mapBlocks'
+import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
@@ -112,16 +114,18 @@ const pullDuplicateDescendants =
   (id: ThoughtId, context: Context): Thunk =>
   async (dispatch, getState) => {
     if (context.length === 0) return
+    const stateBeforePull = getState()
 
     // if thought is pending, pull it
-    if (isPending(getState(), getThoughtById(getState(), id))) {
+    if (isPending(stateBeforePull, getThoughtById(stateBeforePull, id))) {
       // Must be forced, otherwise thoughts can be missed.
       // (Not sure how, since pull calls getPendingDescentants, which should be the same.)
       await dispatch(pull([id], { force: true, maxDepth: 1 }))
     }
 
     // if there is a duplicate, recurse
-    const duplicate = findDescendant(getState(), id, context[0])
+    const stateAfterPull = getState()
+    const duplicate = findDescendant(stateAfterPull, id, context[0])
     if (duplicate) {
       await dispatch(pullDuplicateDescendants(duplicate, context.slice(1)))
     }
@@ -221,26 +225,6 @@ const importFilesActionCreator =
       if (text.startsWith('{')) {
         dispatch(alert(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
         const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
-
-        // normalize
-        dispatch(alert(`Normalizing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
-        if (!Object.values(thoughtIndex)[0].childrenMap) {
-          Object.entries(thoughtIndex).forEach(([id, thought]) => {
-            thoughtIndex[id] = {
-              ...thought,
-              childrenMap: createChildrenMap(
-                {
-                  thoughts: {
-                    lexemeIndex,
-                    thoughtIndex,
-                  },
-                } as State,
-                Object.keys((thought as any).children || {}) as ThoughtId[],
-              ),
-            }
-          })
-        }
-
         const stateImported = initialState()
         stateImported.thoughts.thoughtIndex = thoughtIndex
         stateImported.thoughts.lexemeIndex = lexemeIndex
@@ -269,7 +253,23 @@ const importFilesActionCreator =
           // cannot properly short circuit mapBlocks, so just discontinue all remaining iterations
           if (abort) return
 
-          let state = getState()
+          /** Updates importProgress alert and resumeImports. */
+          const updateImportProgress = async () => {
+            // update resumeImports with thoughtsImported
+            const importProgress = (i + 1) / numThoughts
+            const importProgressString = (Math.round(importProgress * 1000) / 10).toFixed(1)
+            syncStatusStore.update({ importProgress })
+            dispatch(
+              alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
+                alertType: AlertType.ImportFile,
+                clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+              }),
+            )
+
+            const resumePath = i === 0 ? contextToPath(getState(), unroot([...parentContext, block.scope]))! : file.path
+            await manager.update(resumePath, i + 1)
+          }
+
           const path = resume ? file.path : ancestors.length === 0 ? importPath : pathNew
           // get the context relative to the import root
           // the relative context is appended to the base context to get the destination context
@@ -277,26 +277,27 @@ const importFilesActionCreator =
 
           // must replicate descendants before calculating baseContext and parentContext
           await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
-          state = getState()
+
+          const stateAfterPull = getState()
 
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const baseContext = pathToContext(
-            state,
+            stateAfterPull,
             insertBeforeNew
-              ? rootedParentOf(state, path)
+              ? rootedParentOf(stateAfterPull, path)
               : destEmpty && ancestors.length === 0
-              ? rootedParentOf(state, path)
+              ? rootedParentOf(stateAfterPull, path)
               : path,
           )
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
           // TODO: It would be better to get the id from importText rather than contextToPath
-          const parentPath = contextToPath(state, parentContext)
+          const parentPath = contextToPath(stateAfterPull, parentContext)
 
           // validate parentPath
           if (!parentPath) {
             const partialPath = parentContext.map((id, i) =>
-              findDescendant(state, HOME_TOKEN, parentContext.slice(0, i + 1)),
+              findDescendant(stateAfterPull, HOME_TOKEN, parentContext.slice(0, i + 1)),
             )
             const errorMessage = `Error importing ${parentContext.join('/')}.`
             console.error(errorMessage, 'Missing parentPath.', {
@@ -317,33 +318,37 @@ const importFilesActionCreator =
           // import into parent path after empty destination thought is destroyed
           const importThoughtPath = ancestors.length === 0 && insertBeforeNew ? pathNew : parentPath
 
-          const duplicate = findAnyChild(state, head(parentPath), child => child.value === block.scope)
+          const id = head(parentPath)
+          const duplicate = findAnyChild(stateAfterPull, id, child => child.value === block.scope)
+          const lexeme = getLexeme(stateAfterPull, block.scope)
+          const hasContext = !!lexeme?.contexts.includes(id)
 
           return new Promise<void>(resolve => {
-            /** Updates importProgress alert and resumeImports. */
-            const updateImportProgress = async () => {
-              // update resumeImports with thoughtsImported
-              const importProgress = (i + 1) / numThoughts
-              const importProgressString = (Math.round(importProgress * 1000) / 10).toFixed(1)
-              syncStatusStore.update({ importProgress })
-              dispatch(
-                alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
-                  alertType: AlertType.ImportFile,
-                  clearDelay: i === numThoughts - 1 ? 5000 : undefined,
-                }),
-              )
-
-              const resumePath =
-                i === 0 ? contextToPath(getState(), unroot([...parentContext, block.scope]))! : file.path
-              await manager.update(resumePath, i + 1)
-            }
-
             dispatch([
               // delete empty destination thought
               i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               ...(duplicate
                 ? [
+                    // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.
+                    // In this case, recreate the Lexeme.
+                    hasContext
+                      ? null
+                      : updateThoughts({
+                          lexemeIndexUpdates: {
+                            [hashThought(block.scope)]: lexeme
+                              ? addContext(lexeme, {
+                                  id: duplicate.id,
+                                })
+                              : newLexeme({
+                                  created: duplicate.lastUpdated,
+                                  id: duplicate.id,
+                                  lastUpdated: duplicate.lastUpdated,
+                                  value: block.scope,
+                                }),
+                          },
+                          thoughtIndexUpdates: {},
+                        }),
                     () => {
                       updateImportProgress().then(resolve)
                     },
