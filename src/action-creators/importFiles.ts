@@ -34,8 +34,10 @@ import mapBlocks from '../util/mapBlocks'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
+import parseJsonSafe from '../util/parseJsonSafe'
 import pathToContext from '../util/pathToContext'
 import series from '../util/series'
+import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import alert from './alert'
@@ -86,14 +88,17 @@ const resumeImportsManager = (file: ResumableFile) => {
   const del = async () => {
     globals.lastImportedPath = undefined
     await idb.del(resumeImportKey(file.id))
-    await idb.update<Index<ResumeImport>>(RESUME_IMPORTS_KEY, resumeImports => _.omit(resumeImports, file.id))
+    const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
+    storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, file.id)))
   }
 
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
-  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) =>
-    idb.update<Index<ResumeImport>>(RESUME_IMPORTS_KEY, resumeImports => {
-      return {
+  const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
+    const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
+    storage.setItem(
+      RESUME_IMPORTS_KEY,
+      JSON.stringify({
         ...(resumeImports || {}),
         [file.id]: {
           id: file.id,
@@ -106,15 +111,17 @@ const resumeImportsManager = (file: ResumableFile) => {
           path: path || file.path,
           size: file.size,
         },
-      }
-    })
+      }),
+    )
+  }
 
   return { del, init, update }
 }
 
 /** Gets all saved imports as ResumableFiles. */
-resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> =>
-  Object.values((await idb.get<Index<ResumeImport>>(RESUME_IMPORTS_KEY)) || []).map(resumeImport => ({
+resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
+  const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
+  return Object.values(resumeImports).map(resumeImport => ({
     id: resumeImport.id,
     insertBefore: resumeImport.insertBefore,
     lastModified: resumeImport.lastModified,
@@ -131,6 +138,7 @@ resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> =>
       return text
     },
   }))
+}
 
 /** Pulls the thoughts in the given context if they exist. */
 const pullDuplicateDescendants =
