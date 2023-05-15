@@ -67,6 +67,13 @@ interface ResumeImport {
 
 type ResumableFile = VirtualFile & ResumeImport
 
+// key for localStorage ResumeImport manifest
+// base for idb resume import file
+const RESUME_IMPORTS_KEY = 'resume-imports'
+
+/** Generate the IDB key for a ResumeImport file. */
+const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
+
 /** Creates a small object that can be used to manage the persistence of a ResumableFile. */
 const resumeImportsManager = (file: ResumableFile) => {
   /** Initializes the ResumeImport file manifest and raw file in IDB. */
@@ -79,13 +86,13 @@ const resumeImportsManager = (file: ResumableFile) => {
   const del = async () => {
     globals.lastImportedPath = undefined
     await idb.del(resumeImportKey(file.id))
-    await idb.update<Index<ResumeImport>>('resumeImports', resumeImports => _.omit(resumeImports, file.id))
+    await idb.update<Index<ResumeImport>>(RESUME_IMPORTS_KEY, resumeImports => _.omit(resumeImports, file.id))
   }
 
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
   const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) =>
-    idb.update<Index<ResumeImport>>('resumeImports', resumeImports => {
+    idb.update<Index<ResumeImport>>(RESUME_IMPORTS_KEY, resumeImports => {
       return {
         ...(resumeImports || {}),
         [file.id]: {
@@ -105,8 +112,25 @@ const resumeImportsManager = (file: ResumableFile) => {
   return { del, init, update }
 }
 
-/** Generate the IDB key for a ResumeImport file. */
-const resumeImportKey = (id: string) => `resumeImports-${id}`
+/** Gets all saved imports as ResumableFiles. */
+resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> =>
+  Object.values((await idb.get<Index<ResumeImport>>(RESUME_IMPORTS_KEY)) || []).map(resumeImport => ({
+    id: resumeImport.id,
+    insertBefore: resumeImport.insertBefore,
+    lastModified: resumeImport.lastModified,
+    thoughtsImported: resumeImport.thoughtsImported,
+    name: resumeImport.name,
+    path: resumeImport.path,
+    size: resumeImport.size,
+    text: async () => {
+      const text = await idb.get<string>(resumeImportKey(resumeImport.id))
+      if (text == null) {
+        console.warn(`Resume file missing from IDB: %{resumeImport.id}`, resumeImport)
+        return ''
+      }
+      return text
+    },
+  }))
 
 /** Pulls the thoughts in the given context if they exist. */
 const pullDuplicateDescendants =
@@ -154,53 +178,35 @@ const importFilesActionCreator =
 
     // allow aborting the import if there is an error
     let abort = false
-    const state = getState()
+    const stateStart = getState()
     const importPath = path || HOME_PATH
 
     // if the destination thought is empty, then it will get destroyed by importText, so we need to calculate a new insertBefore and path for subsequent thoughts
     // these will be saved to the ResumableFile but ignored on the first thought
-    const destThought = getThoughtById(state, head(importPath))
-    const destIsLeaf = !anyChild(state, head(importPath))
+    const destThought = getThoughtById(stateStart, head(importPath))
+    const destIsLeaf = !anyChild(stateStart, head(importPath))
     const destEmpty = destThought.value === '' && destIsLeaf
-    const siblingAfter = destEmpty ? nextSibling(state, importPath) : null
+    const siblingAfter = destEmpty ? nextSibling(stateStart, importPath) : null
     const insertBeforeNew = destEmpty && !!siblingAfter
     const pathNew = destEmpty
       ? siblingAfter
         ? appendToPath(parentOf(importPath), siblingAfter.id)
-        : rootedParentOf(state, importPath)
+        : rootedParentOf(stateStart, importPath)
       : importPath
 
     // normalize native files from drag-and-drop and resumed files stored in IDB
     const resumableFiles: ResumableFile[] = files
-      ? files.map(file => {
-          return {
-            id: createId(),
-            insertBefore: insertBeforeNew,
-            lastModified: file.lastModified,
-            thoughtsImported: 0,
-            name: file.name,
-            path: pathNew,
-            size: file.size,
-            text: () => file.text(),
-          }
-        })
-      : Object.values((await idb.get<Index<ResumeImport>>('resumeImports')) || []).map(resumeImport => ({
-          id: resumeImport.id,
-          insertBefore: resumeImport.insertBefore,
-          lastModified: resumeImport.lastModified,
-          thoughtsImported: resumeImport.thoughtsImported,
-          name: resumeImport.name,
-          path: resumeImport.path,
-          size: resumeImport.size,
-          text: async () => {
-            const text = await idb.get<string>(resumeImportKey(resumeImport.id))
-            if (text == null) {
-              console.warn(`Resume file missing from IDB: %{resumeImport.id}`, resumeImport)
-              return ''
-            }
-            return text
-          },
+      ? files.map(file => ({
+          id: createId(),
+          insertBefore: insertBeforeNew,
+          lastModified: file.lastModified,
+          thoughtsImported: 0,
+          name: file.name,
+          path: pathNew,
+          size: file.size,
+          text: () => file.text(),
         }))
+      : await resumeImportsManager.getFiles()
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
@@ -323,54 +329,49 @@ const importFilesActionCreator =
           const hasContext = !!lexeme?.contexts.includes(id)
 
           return new Promise<void>(resolve => {
+            /** Updates the progress and resolves the task. */
+            const updateAndResolve = () => updateImportProgress().then(resolve)
+
             dispatch([
               // delete empty destination thought
               i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
-              ...(duplicate
-                ? [
-                    // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.
-                    // In this case, recreate the Lexeme.
-                    hasContext
-                      ? null
-                      : updateThoughts({
-                          lexemeIndexUpdates: {
-                            [hashThought(block.scope)]: lexeme
-                              ? addContext(lexeme, {
-                                  id: duplicate.id,
-                                })
-                              : newLexeme({
-                                  created: duplicate.lastUpdated,
-                                  id: duplicate.id,
-                                  lastUpdated: duplicate.lastUpdated,
-                                  value: block.scope,
-                                }),
-                          },
-                          thoughtIndexUpdates: {},
-                        }),
-                    () => {
-                      updateImportProgress().then(resolve)
-                    },
-                  ]
-                : [
-                    // import the new thought
-                    // Any missing children from previously interrupted imports are cleaned up in createThought.
-                    newThought({
-                      at: importThoughtPath,
-                      insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
-                      insertBefore: ancestors.length === 0 && insertBeforeNew,
-                      preventSetCursor: true,
-                      value: block.scope,
-                      idbSynced: () => {
-                        updateImportProgress().then(resolve)
+              duplicate
+                ? // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.
+                  // In this case, recreate the Lexeme.
+                  hasContext
+                  ? updateAndResolve
+                  : updateThoughts({
+                      lexemeIndexUpdates: {
+                        [hashThought(block.scope)]: lexeme
+                          ? addContext(lexeme, {
+                              id: duplicate.id,
+                            })
+                          : newLexeme({
+                              created: duplicate.lastUpdated,
+                              id: duplicate.id,
+                              lastUpdated: duplicate.lastUpdated,
+                              value: block.scope,
+                            }),
                       },
-                    }),
-                  ]),
+                      thoughtIndexUpdates: {},
+                      idbSynced: updateAndResolve,
+                    })
+                : // import the new thought
+                  // Any missing children from previously interrupted imports are cleaned up in createThought.
+                  newThought({
+                    at: importThoughtPath,
+                    insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
+                    insertBefore: ancestors.length === 0 && insertBeforeNew,
+                    preventSetCursor: true,
+                    value: block.scope,
+                    idbSynced: updateAndResolve,
+                  }),
               // set cursor to new thought on the first iteration
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
-                const state = getState()
-                const cursorNew = contextToPath(state, unroot([...parentContext, block.scope]))
+                const stateAfterImport = getState()
+                const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
 
                 // update the lastImportedPath so it can be protected from freeThoughts during import
                 if (cursorNew) {
