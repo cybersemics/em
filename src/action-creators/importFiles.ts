@@ -26,11 +26,11 @@ import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
+import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
-import mapBlocks from '../util/mapBlocks'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -260,10 +260,10 @@ const importFilesActionCreator =
       syncStatusStore.update({ importProgress: 0 / numThoughts })
       dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
 
-      const importTasks = mapBlocks(
+      const importTasks = flattenTree(
         json,
         (block, ancestors, i) => async (): Promise<void> => {
-          // cannot properly short circuit mapBlocks, so just discontinue all remaining iterations
+          // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
           if (abort) return
 
           /** Updates importProgress alert and resumeImports. */

@@ -1,5 +1,5 @@
+import flattenTree from '../flattenTree'
 import htmlToJson from '../htmlToJson'
-import mapBlocks from '../mapBlocks'
 import textToHtml from '../textToHtml'
 
 it('one node', () => {
@@ -8,7 +8,7 @@ it('one node', () => {
 `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a'])
 })
 
 it('siblings', () => {
@@ -19,7 +19,7 @@ it('siblings', () => {
   `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a', 'b', 'c'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a', 'b', 'c'])
 })
 
 it('children', () => {
@@ -30,7 +30,7 @@ it('children', () => {
   `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a', 'b', 'c'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a', 'b', 'c'])
 })
 
 it('uncle', () => {
@@ -42,7 +42,7 @@ it('uncle', () => {
   `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd'])
 })
 
 it('great uncle', () => {
@@ -54,7 +54,7 @@ it('great uncle', () => {
   `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd'])
 })
 
 it('combo', () => {
@@ -69,7 +69,7 @@ it('combo', () => {
   `
 
   const json = htmlToJson(textToHtml(text))
-  expect(mapBlocks(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
+  expect(flattenTree(json, block => block.scope)).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g'])
 })
 
 describe('resume', () => {
@@ -81,7 +81,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 0 })).toEqual(['a', 'b', 'c'])
+    expect(flattenTree(json, block => block.scope, { start: 0 })).toEqual(['a', 'b', 'c'])
   })
 
   it('resume from second sibling', () => {
@@ -92,7 +92,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
+    expect(flattenTree(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
   })
 
   it('resume from second sibling with children', () => {
@@ -104,7 +104,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 1 })).toEqual(['b', 'c', 'd'])
+    expect(flattenTree(json, block => block.scope, { start: 1 })).toEqual(['b', 'c', 'd'])
   })
 
   it('resume from second level', () => {
@@ -115,7 +115,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
+    expect(flattenTree(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
   })
 
   it('resume from second level with uncle', () => {
@@ -126,7 +126,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
+    expect(flattenTree(json, block => block.scope, { start: 1 })).toEqual(['b', 'c'])
   })
 
   it('resume from second level of second sibling', () => {
@@ -139,7 +139,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 4 })).toEqual(['e'])
+    expect(flattenTree(json, block => block.scope, { start: 4 })).toEqual(['e'])
   })
 
   it('resume from third level with great uncle', () => {
@@ -152,7 +152,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 2 })).toEqual(['c', 'd', 'e'])
+    expect(flattenTree(json, block => block.scope, { start: 2 })).toEqual(['c', 'd', 'e'])
   })
 
   it('resume from second child of second level', () => {
@@ -165,7 +165,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 2 })).toEqual(['c', 'd', 'e'])
+    expect(flattenTree(json, block => block.scope, { start: 2 })).toEqual(['c', 'd', 'e'])
   })
 
   it('resume from third level with great uncle and multiple siblings', () => {
@@ -183,7 +183,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, block => block.scope, { start: 5 })).toEqual(['c1', 'd', 'd1', 'e', 'e1'])
+    expect(flattenTree(json, block => block.scope, { start: 5 })).toEqual(['c1', 'd', 'd1', 'e', 'e1'])
   })
 
   it('pass the index to the mapping function', () => {
@@ -201,7 +201,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, (block, ancestors, i) => i)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    expect(flattenTree(json, (block, ancestors, i) => i)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
   })
 
   it('mapping function index should be relative to the total number of blocks (not start index)', () => {
@@ -219,7 +219,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, (block, ancestors, i) => i, { start: 5 })).toEqual([5, 6, 7, 8, 9])
+    expect(flattenTree(json, (block, ancestors, i) => i, { start: 5 })).toEqual([5, 6, 7, 8, 9])
   })
 
   it('ancestors', () => {
@@ -237,7 +237,7 @@ describe('resume', () => {
     `
 
     const json = htmlToJson(textToHtml(text))
-    expect(mapBlocks(json, (block, ancestors, i) => ancestors.map(b => b.scope))).toMatchObject([
+    expect(flattenTree(json, (block, ancestors, i) => ancestors.map(b => b.scope))).toMatchObject([
       [],
       ['a'],
       ['a', 'b'],
