@@ -221,11 +221,10 @@ const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
-      /** Create a task that imports a block. */
-      const importBlockTask =
+      /** An action-creator that creates a task that imports a block. */
+      const importBlock =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
-        (dispatch: Dispatch, getState: () => State) =>
-        async (): Promise<void> => {
+        async (dispatch: Dispatch, getState: () => State): Promise<void> => {
           /** Updates importProgress alert and resumeImports. */
           const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
@@ -397,10 +396,25 @@ const importFilesActionCreator =
       syncStatusStore.update({ importProgress: 0 / numThoughts })
       dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
 
-      const importTasks = flattenTree(
-        json,
-        // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
-        (block, ancestors, i) => (abort ? null : dispatch(importBlockTask({ block, ancestors, i }))),
+      // use a descendant index to count blocks since flattenTree's i refers to the parent
+      let descendantIndex = 0
+
+      const importTasks: ((() => Promise<void>) | null)[] = flattenTree(
+        [{ scope: HOME_TOKEN, children: json }],
+        (block, ancestors, i) =>
+          // cannot properly short circuit flattenTree, so just discontinue all remaining iterations on abort
+          abort
+            ? null
+            : async () => {
+                await series(
+                  block.children.map(
+                    (child, j) => () =>
+                      dispatch(
+                        importBlock({ block: child, ancestors: [...ancestors.slice(1), block], i: descendantIndex++ }),
+                      ),
+                  ),
+                )
+              },
         { start: file.thoughtsImported },
       )
 
