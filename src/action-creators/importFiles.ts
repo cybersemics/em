@@ -1,9 +1,12 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import sanitize from 'sanitize-html'
+import Block from '../@types/Block'
 import Context from '../@types/Context'
+import Dispatch from '../@types/Dispatch'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
@@ -218,54 +221,11 @@ const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
-      const manager = resumeImportsManager(file)
-      const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
-
-      // read file
-      dispatch(
-        alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, { alertType: AlertType.ImportFile }),
-      )
-      const text = await file.text()
-
-      // if importing a new file, initialize resumeImports in IDB as soon as possible
-      if (!resume) {
-        dispatch(alert(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
-        manager.init(text)
-      }
-
-      // convert ThoughtIndices to plain text
-      let exported = text
-      if (text.startsWith('{')) {
-        dispatch(alert(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
-        const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
-        const stateImported = initialState()
-        stateImported.thoughts.thoughtIndex = thoughtIndex
-        stateImported.thoughts.lexemeIndex = lexemeIndex
-        exported = exportContext(stateImported, HOME_TOKEN, 'text/plain')
-      }
-
-      const html = textToHtml(exported)
-
-      // Close incomplete tags, preserve only allowed tags and attributes and decode the html.
-      const htmlSanitized = unescape(
-        sanitize(html, {
-          allowedTags: ALLOWED_TAGS,
-          allowedAttributes: ALLOWED_ATTRIBUTES,
-          disallowedTagsMode: 'recursiveEscape',
-        }),
-      )
-      const json = htmlToJson(htmlSanitized)
-      const numThoughts = numBlocks(json)
-
-      syncStatusStore.update({ importProgress: 0 / numThoughts })
-      dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
-
-      const importTasks = flattenTree(
-        json,
-        (block, ancestors, i) => async (): Promise<void> => {
-          // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
-          if (abort) return
-
+      /** Create a task that imports a block. */
+      const importBlockTask =
+        ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
+        (dispatch: Dispatch, getState: () => State) =>
+        async (): Promise<void> => {
           /** Updates importProgress alert and resumeImports. */
           const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
@@ -393,7 +353,54 @@ const importFilesActionCreator =
               },
             ])
           })
-        },
+        }
+
+      const manager = resumeImportsManager(file)
+      const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
+
+      // read file
+      dispatch(
+        alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, { alertType: AlertType.ImportFile }),
+      )
+      const text = await file.text()
+
+      // if importing a new file, initialize resumeImports in IDB as soon as possible
+      if (!resume) {
+        dispatch(alert(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
+        manager.init(text)
+      }
+
+      // convert ThoughtIndices to plain text
+      let exported = text
+      if (text.startsWith('{')) {
+        dispatch(alert(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
+        const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
+        const stateImported = initialState()
+        stateImported.thoughts.thoughtIndex = thoughtIndex
+        stateImported.thoughts.lexemeIndex = lexemeIndex
+        exported = exportContext(stateImported, HOME_TOKEN, 'text/plain')
+      }
+
+      const html = textToHtml(exported)
+
+      // Close incomplete tags, preserve only allowed tags and attributes and decode the html.
+      const htmlSanitized = unescape(
+        sanitize(html, {
+          allowedTags: ALLOWED_TAGS,
+          allowedAttributes: ALLOWED_ATTRIBUTES,
+          disallowedTagsMode: 'recursiveEscape',
+        }),
+      )
+      const json = htmlToJson(htmlSanitized)
+      const numThoughts = numBlocks(json)
+
+      syncStatusStore.update({ importProgress: 0 / numThoughts })
+      dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
+
+      const importTasks = flattenTree(
+        json,
+        // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
+        (block, ancestors, i) => (abort ? null : dispatch(importBlockTask({ block, ancestors, i }))),
         { start: file.thoughtsImported },
       )
 
