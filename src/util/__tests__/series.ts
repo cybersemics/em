@@ -16,3 +16,12 @@ it('execute promise-returning functions serially', async () => {
   expect(called).toEqual([100, 200, 10])
   expect(result).toEqual([100, 200, 10])
 })
+
+it('do not concatenate result arrays', async () => {
+  /** Generates an asynchronous task that pushes to called, delays, and returns. */
+  const makeDelay = (x: [number]) => () => sleep(x[0]).then(() => x)
+
+  const result = await series([makeDelay([100]), makeDelay([200]), makeDelay([10])])
+
+  expect(result).toEqual([[100], [200], [10]])
+})

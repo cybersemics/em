@@ -7,9 +7,6 @@
  *   await series(urls.map(url => () => $.ajax(url)))
  */
 const series = <T>(fs: (() => Promise<T>)[]) =>
-  fs.reduce(
-    (accum, f) => accum.then(result => f().then(Array.prototype.concat.bind(result))),
-    Promise.resolve([] as T[]),
-  )
+  fs.reduce((accum, f) => accum.then(result => f().then(x => [...result, x])), Promise.resolve([] as T[]))
 
 export default series
