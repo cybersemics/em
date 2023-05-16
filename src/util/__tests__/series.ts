@@ -25,3 +25,12 @@ it('do not concatenate result arrays', async () => {
 
   expect(result).toEqual([[100], [200], [10]])
 })
+
+it('ignore tasks that return null', async () => {
+  /** Takes a short nap then returns true. */
+  const nap = () => sleep(1).then(() => true)
+
+  const result = await series([nap, nap, () => null, nap])
+
+  expect(result).toEqual([true, true, true])
+})
