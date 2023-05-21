@@ -1,22 +1,21 @@
 import Block from '../@types/Block'
 
 /** Map nested Blocks with an optional start position. */
-const mapBlocks = <T extends Block, U>(
+const flattenTree = <T extends Block, U>(
   blocks: T[],
   mappingFunction: (block: T, ancestors: T[], index: number) => U,
   {
-    start,
+    start = 0,
   }: {
     /** The starting index as an in-order index. */
     // TODO: Optimize to O(depth)
     start?: number
   } = {},
 ): U[] => {
-  start = start || 0
   let count = 0
 
-  /** Recursive version of mapBlocks to allow global count for detection of start index. */
-  const mapBlocksRecursive = (
+  /** Recursive version of flattenTree to allow global count for detection of start index. */
+  const flattenTreeRecursive = (
     blocks: T[],
     ancestors: T[],
     mappingFunction: (block: T, ancestors: T[], index: number) => U,
@@ -30,8 +29,8 @@ const mapBlocks = <T extends Block, U>(
       arr.push(
         // Avoid calling the mapping function if we have not yet reached the start index.
         // They will be sliced off at the end anyway.
-        count >= (start || 0) ? mappingFunction(block, ancestors, count - 1) : null,
-        ...mapBlocksRecursive(block.children as T[], [...ancestors, block], mappingFunction),
+        count >= start ? mappingFunction(block, ancestors, count - 1) : null,
+        ...flattenTreeRecursive(block.children as T[], [...ancestors, block], mappingFunction),
       )
     }
 
@@ -39,7 +38,7 @@ const mapBlocks = <T extends Block, U>(
   }
 
   // slice to skip to the start index
-  return mapBlocksRecursive(blocks, [], mappingFunction).slice(start) as U[]
+  return flattenTreeRecursive(blocks, [], mappingFunction).slice(start) as U[]
 }
 
-export default mapBlocks
+export default flattenTree
