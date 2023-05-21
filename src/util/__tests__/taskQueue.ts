@@ -272,3 +272,48 @@ it('add should return a promise that resolves when all the added tasks have comp
   expect(counter).toBe(6)
   expect(results2).toEqual([4, 5, 6])
 })
+
+it('completed', async () => {
+  const completed: number[] = []
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    // eslint-disable-next-line fp/no-mutating-methods
+    completed.push(queue.completed())
+  }
+
+  const queue = taskQueue({ tasks: [incDelayed, incDelayed, incDelayed] })
+  await queue.end
+
+  expect(completed).toEqual([0, 1, 2])
+})
+
+it('running', async () => {
+  const running: number[] = []
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    // eslint-disable-next-line fp/no-mutating-methods
+    running.push(queue.running())
+  }
+
+  const queue = taskQueue({ tasks: [incDelayed, incDelayed, incDelayed] })
+  await queue.end
+
+  expect(running).toEqual([3, 2, 1])
+})
+
+it('total', async () => {
+  const total: number[] = []
+  /** Increment counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    // eslint-disable-next-line fp/no-mutating-methods
+    total.push(queue.total())
+  }
+
+  const queue = taskQueue({ tasks: [incDelayed, incDelayed, incDelayed] })
+  await queue.end
+
+  expect(total).toEqual([3, 3, 3])
+})

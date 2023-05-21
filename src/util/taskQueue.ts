@@ -146,19 +146,28 @@ const taskQueue = <
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
     add,
 
-    /** Starts running tasks, or resumes after pause. */
-    start: () => {
-      paused = false
-      tick()
-    },
+    /** Returns the number of completed tasks. */
+    completed: () => completed,
+
+    /** Convenience promise for onEnd. Do not use with multiple batches (where onEnd would be called multiple times). */
+    end: endPromise,
 
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
     pause: () => {
       paused = true
     },
 
-    /** Convenience promise for onEnd. Do not use with multiple batches (where onEnd would be called multiple times). */
-    end: endPromise,
+    /** Returns the number of running tasks. */
+    running: () => running,
+
+    /** Starts running tasks, or resumes after pause. */
+    start: () => {
+      paused = false
+      tick()
+    },
+
+    /** Returns the total number of tasks in the queue. This can increase over time if add is called multiple times. */
+    total: () => total,
   }
 }
 
