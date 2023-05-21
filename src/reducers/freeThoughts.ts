@@ -1,5 +1,4 @@
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS, MAX_THOUGHTS_MARGIN } from '../constants'
 import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
@@ -9,30 +8,18 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
 
-/** Efficiently creates a union set of one or more iterables. */
-// See: https://stackoverflow.com/a/41328397/480608
-const union = <T>(...iterables: Iterable<T>[]): Set<T> => {
-  const set = new Set<T>()
-  // eslint-disable-next-line fp/no-loops
-  for (const iterable of iterables) {
-    // eslint-disable-next-line fp/no-loops
-    for (const item of iterable) {
-      set.add(item)
-    }
-  }
-  return set
-}
-
 /** Frees invisible thoughts from memory when the memory limit is exceeded. Note: May not free any thoughts if all thoughts are expanded. */
 const freeThoughts = (state: State) => {
   const expandedIds = Object.values(state.expanded).map(head)
-  const preserveSet = union<ThoughtId>(
-    [ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN],
+  const preserveSet = new Set([
+    ABSOLUTE_TOKEN,
+    EM_TOKEN,
+    HOME_TOKEN,
     // prevent the last imported thought from being deallocated, as the thought or one of its ancestors needs to stay in memory for the next imported thought
-    expandedIds.flatMap(id => [id, ...getAllChildren(state, id)]),
-    [...globals.importingPaths.values()].flat(),
-    getDescendantThoughtIds(state, EM_TOKEN),
-  )
+    ...(globals.lastImportedPath || []),
+    ...expandedIds.flatMap(id => [id, ...getAllChildren(state, id)]),
+    ...getDescendantThoughtIds(state, EM_TOKEN),
+  ])
 
   // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
   let stateNew = state

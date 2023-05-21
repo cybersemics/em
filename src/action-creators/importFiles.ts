@@ -14,7 +14,7 @@ import deleteThought from '../action-creators/deleteThought'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import updateThoughts from '../action-creators/updateThoughts'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN, ID } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
@@ -29,6 +29,7 @@ import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
+import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
@@ -40,9 +41,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import pathToContext from '../util/pathToContext'
 import series from '../util/series'
 import storage from '../util/storage'
-import taskQueue from '../util/taskQueue'
 import textToHtml from '../util/textToHtml'
-import traverseTree from '../util/traverseTree'
 import unroot from '../util/unroot'
 import alert from './alert'
 import pull from './pull'
@@ -73,9 +72,6 @@ interface ResumeImport {
 
 type ResumableFile = VirtualFile & ResumeImport
 
-/** A numbered Block (such as by counting over a bread-first search). */
-type BlockNumbered = { scope: string; children: BlockNumbered[]; i: number }
-
 // key for localStorage ResumeImport manifest
 // base for idb resume import file
 const RESUME_IMPORTS_KEY = 'resume-imports'
@@ -93,6 +89,7 @@ const resumeImportsManager = (file: ResumableFile) => {
 
   /** Deletes the ResumeImport file manifest and raw file in IDB. */
   const del = async () => {
+    globals.lastImportedPath = undefined
     await idb.del(resumeImportKey(file.id))
     const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
     storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, file.id)))
@@ -224,12 +221,11 @@ const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
-      /** An action-creator that imports a block. */
-      const importBlock =
+      /** Create a task that imports a block. */
+      const importBlockTask =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
-        async (dispatch: Dispatch, getState: () => State): Promise<Path | null> => {
-          if (abort) return null
-
+        (dispatch: Dispatch, getState: () => State) =>
+        async (): Promise<void> => {
           /** Updates importProgress alert and resumeImports. */
           const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
@@ -276,9 +272,8 @@ const importFilesActionCreator =
             const partialPath = parentContext.map((id, i) =>
               findDescendant(stateAfterPull, HOME_TOKEN, parentContext.slice(0, i + 1)),
             )
-            const errorMessage = `Error importing "${block.scope}" into ${parentContext.join('/')}.`
+            const errorMessage = `Error importing ${parentContext.join('/')}.`
             console.error(errorMessage, 'Missing parentPath.', {
-              block: block.scope,
               importPath,
               baseContext,
               parentContext,
@@ -290,7 +285,7 @@ const importFilesActionCreator =
               abort = true
               await manager.del()
             }
-            return null
+            return
           }
 
           // import into parent path after empty destination thought is destroyed
@@ -301,13 +296,9 @@ const importFilesActionCreator =
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
 
-          return new Promise(resolve => {
+          return new Promise<void>(resolve => {
             /** Updates the progress and resolves the task. */
-            const updateAndResolve = () => {
-              const stateAfterImport = getState()
-              const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
-              return updateImportProgress().then(() => resolve(cursorNew))
-            }
+            const updateAndResolve = () => updateImportProgress().then(resolve)
 
             dispatch([
               // delete empty destination thought
@@ -346,86 +337,23 @@ const importFilesActionCreator =
                   }),
               // set cursor to new thought on the first iteration
               // ensure the last imported thought is not deleted by freeThoughts
-              i === 0
-                ? (dispatch, getState) => {
-                    const stateAfterImport = getState()
-                    const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
+              (dispatch, getState) => {
+                const stateAfterImport = getState()
+                const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
 
-                    // set cursor to first imported thought
-                    dispatch(setCursor({ path: cursorNew }))
-                  }
-                : null,
+                // update the lastImportedPath so it can be protected from freeThoughts during import
+                if (cursorNew) {
+                  globals.lastImportedPath = cursorNew
+                }
+
+                // set cursor to first imported thought
+                if (i === 0) {
+                  dispatch(setCursor({ path: cursorNew }))
+                }
+              },
             ])
           })
         }
-
-      /** Imports blocks in breadth-first order. Parents are imported before children, siblings are imported serially, and cousins are imported in parallel. */
-      const importBlocks = async (blocks: BlockNumbered[]) => {
-        // track the total imported
-        let imported = 0
-
-        // map of blocks whose children are waiting their place in line before being imported
-        const delayedImports = new Map<number, { block: BlockNumbered; ancestors: BlockNumbered[] }>()
-
-        const importQueue = taskQueue<number | null>({
-          // concurrency 2 is only about 5% faster than concurrency 1
-          // higher concurrencies offer no performance improvement at all
-          concurrency: 2,
-        })
-
-        /** Import all blocks recursively. */
-        const importRecursive = async (blocks: BlockNumbered[], ancestors: BlockNumbered[] = []): Promise<void> => {
-          if (abort) return
-          importQueue.add([
-            async () => {
-              const paths = await series(
-                blocks.map(block => async () => {
-                  delayedImports.delete(block.i)
-                  const path = await dispatch(importBlock({ block, ancestors, i: block.i }))
-                  imported++
-                  if (path && block.children.length > 0) {
-                    globals.importingPaths.set(head(path), path)
-                  }
-
-                  // continue delayed imports if it is their turn
-                  let nextIndex = block.i + 1
-                  let nextImport = delayedImports.get(nextIndex)
-                  // eslint-disable-next-line fp/no-loops
-                  while (nextImport) {
-                    const { block: blockNext, ancestors: ancestorsNext } = nextImport
-                    nextIndex++
-                    nextImport = delayedImports.get(nextIndex)
-                    delayedImports.delete(nextIndex)
-                    await importRecursive(blockNext.children, [...ancestorsNext, blockNext])
-                  }
-
-                  // if it is not the children's turn (i.e. if its index is higher than the number of thoughts imported so far), then store it in a map until it is
-                  if (block.children.length > 0 && block.children[0].i > imported) {
-                    delayedImports.set(block.children[0].i, { block, ancestors })
-                  } else {
-                    await importRecursive(block.children, [...ancestors, block])
-                  }
-
-                  return path
-                }),
-              )
-
-              // eslint-disable-next-line fp/no-mutating-methods
-              const lastBlockIndex = _.reverse(paths).findIndex(ID)
-              const path = paths[lastBlockIndex]
-              if (path && path.length > 1) {
-                globals.importingPaths.delete(head(parentOf(path)))
-              }
-
-              return lastBlockIndex === -1 ? null : blocks[lastBlockIndex].i
-            },
-          ])
-        }
-
-        importRecursive(jsonNumbered)
-
-        await importQueue.end
-      }
 
       const manager = resumeImportsManager(file)
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
@@ -469,16 +397,16 @@ const importFilesActionCreator =
       syncStatusStore.update({ importProgress: 0 / numThoughts })
       dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
 
-      // Number the blocks in breadth-first order.
-      // This is used to add import tasks in the same order, even if they asynchronously resolve in a different order, by delaying the task until it is its turn.
-      // Note: Depth-first search would not work at all in this implementation since child indexes are assumed to be contiguous for delay/continue
-      traverseTree({ children: json, i: 0 }, (block, i) => {
-        block.i = i - 1
-      })
+      const importTasks = flattenTree(
+        json,
+        // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
+        (block, ancestors, i) => (abort ? null : dispatch(importBlockTask({ block, ancestors, i }))),
+        { start: file.thoughtsImported },
+      )
 
-      const jsonNumbered = json as BlockNumbered[]
-
-      await importBlocks(jsonNumbered)
+      // import thoughts serially
+      // otherwise thoughts will get imported out of order
+      await series(importTasks)
       await manager.del()
     })
 
