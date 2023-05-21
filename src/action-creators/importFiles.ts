@@ -229,6 +229,7 @@ const importFilesActionCreator =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
         async (dispatch: Dispatch, getState: () => State): Promise<Path | null> => {
           if (abort) return null
+
           /** Updates importProgress alert and resumeImports. */
           const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
@@ -360,7 +361,17 @@ const importFilesActionCreator =
 
       /** Imports blocks in breadth-first order. Parents are imported before children, siblings are imported serially, and cousins are imported in parallel. */
       const importBlocks = async (blocks: BlockNumbered[]) => {
-        const importQueue = taskQueue<number | null>({ concurrency: 1 })
+        // track the total imported
+        let imported = 0
+
+        // map of blocks whose children are waiting their place in line before being imported
+        const delayedImports = new Map<number, { block: BlockNumbered; ancestors: BlockNumbered[] }>()
+
+        const importQueue = taskQueue<number | null>({
+          // concurrency 2 is only about 5% faster than concurrency 1
+          // higher concurrencies offer no performance improvement at all
+          concurrency: 2,
+        })
 
         /** Import all blocks recursively. */
         const importRecursive = async (blocks: BlockNumbered[], ancestors: BlockNumbered[] = []): Promise<void> => {
@@ -369,12 +380,31 @@ const importFilesActionCreator =
             async () => {
               const paths = await series(
                 blocks.map(block => async () => {
+                  delayedImports.delete(block.i)
                   const path = await dispatch(importBlock({ block, ancestors, i: block.i }))
+                  imported++
                   if (path && block.children.length > 0) {
                     globals.importingPaths.set(head(path), path)
                   }
 
-                  await importRecursive(block.children, [...ancestors, block])
+                  // continue delayed imports if it is their turn
+                  let nextIndex = block.i + 1
+                  let nextImport = delayedImports.get(nextIndex)
+                  // eslint-disable-next-line fp/no-loops
+                  while (nextImport) {
+                    const { block: blockNext, ancestors: ancestorsNext } = nextImport
+                    nextIndex++
+                    nextImport = delayedImports.get(nextIndex)
+                    delayedImports.delete(nextIndex)
+                    await importRecursive(blockNext.children, [...ancestorsNext, blockNext])
+                  }
+
+                  // if it is not the children's turn (i.e. if its index is higher than the number of thoughts imported so far), then store it in a map until it is
+                  if (block.children.length > 0 && block.children[0].i > imported) {
+                    delayedImports.set(block.children[0].i, { block, ancestors })
+                  } else {
+                    await importRecursive(block.children, [...ancestors, block])
+                  }
 
                   return path
                 }),
@@ -440,8 +470,8 @@ const importFilesActionCreator =
       dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
 
       // Number the blocks in breadth-first order.
-      // This is used as the low water mark for the resumeImport manifest.
-      // i.e. if the import is interrupted, it will resume at the highest contiguous import index.
+      // This is used to add import tasks in the same order, even if they asynchronously resolve in a different order, by delaying the task until it is its turn.
+      // Note: Depth-first search would not work at all in this implementation since child indexes are assumed to be contiguous for delay/continue
       traverseTree({ children: json, i: 0 }, (block, i) => {
         block.i = i - 1
       })
