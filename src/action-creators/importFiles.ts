@@ -221,8 +221,8 @@ const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
-      /** Create a task that imports a block. */
-      const importBlockTask =
+      /** An action-creator that imports a block. */
+      const importBlock =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
         (dispatch: Dispatch, getState: () => State) =>
         async (): Promise<void> => {
@@ -400,7 +400,7 @@ const importFilesActionCreator =
       const importTasks = flattenTree(
         json,
         // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
-        (block, ancestors, i) => (abort ? null : dispatch(importBlockTask({ block, ancestors, i }))),
+        (block, ancestors, i) => (abort ? null : dispatch(importBlock({ block, ancestors, i }))),
         { start: file.thoughtsImported },
       )
 
