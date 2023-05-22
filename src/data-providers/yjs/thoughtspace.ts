@@ -88,8 +88,8 @@ const replication = replicationController({
   next: async ({ action, id, type }) => {
     if (action === DocLogAction.Update) {
       await (type === 'thought'
-        ? replicateThought(id as ThoughtId, { background: true })
-        : replicateLexeme(id, { background: true }))
+        ? replicateThought(id as ThoughtId, { background: true, sync: true })
+        : replicateLexeme(id, { background: true, sync: true }))
     } else {
       store.dispatch(
         updateThoughtsActionCreator({
@@ -331,12 +331,15 @@ export const replicateThought = async (
   id: ThoughtId,
   {
     background,
+    sync,
   }: {
     // do not store thought doc in memory
     // do not update thoughtIndex
     // destroy IndexedDBPersistence after sync
     // destroy HocuspocusProvider after sync
     background?: boolean
+    // do not resolve until websocket is synced
+    sync?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
@@ -404,7 +407,9 @@ export const replicateThought = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await websocketValueObserved
+    if (sync) {
+      await websocketValueObserved
+    }
 
     // websocketSynced.then(e => {
     // TODO: How to limit in-memory thoughts when they arrive out of order?
@@ -435,12 +440,15 @@ export const replicateLexeme = async (
   key: string,
   {
     background,
+    sync,
   }: {
     // do not store lexeme doc in memory
     // do not update lexemeIndex
     // destroy IndexedDBPersistence after sync
     // destroy HocuspocusProvider after sync
     background?: boolean
+    // do not resolve until websocket is synced
+    sync?: boolean
   } = {},
 ): Promise<Lexeme | undefined> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
@@ -503,7 +511,9 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await websocketValueObserved
+    if (sync) {
+      await websocketValueObserved
+    }
 
     // TODO: How to limit in-memory lexemes when they arrive out of order?
     // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
@@ -724,17 +734,12 @@ export const getThoughtById = async (id: ThoughtId) => {
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
 
-/** Replicates an entire subtree, starting at a given thought. */
-export const replicateTree = async (
-  id: ThoughtId,
-  { background }: { background: boolean },
-): Promise<Index<Thought>> => {
-  const thought = await replicateThought(id)
+/** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
+export const replicateTree = async (id: ThoughtId): Promise<Index<Thought>> => {
+  const thought = await replicateThought(id, { background: true })
   if (!thought) return {}
 
-  const descendantThoughtIndices = await Promise.all(
-    Object.values(thought.childrenMap).map(childId => replicateTree(childId, { background })),
-  )
+  const descendantThoughtIndices = await Promise.all(Object.values(thought.childrenMap).map(replicateTree))
   return descendantThoughtIndices.reduce(
     (accum, curr) => ({
       ...accum,

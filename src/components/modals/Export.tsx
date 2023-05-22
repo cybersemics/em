@@ -97,7 +97,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     const id = head(simplePath)
 
-    replicateTree(id, { background: true }).then(thoughtIndex => {
+    replicateTree(id).then(thoughtIndex => {
       const initial = initialState()
       const exportedState: State = {
         ...initial,
