@@ -96,8 +96,16 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
     isMounted.current = true
 
     const id = head(simplePath)
+    let numDescendantsNew = 0
 
-    replicateTree(id).then(thoughtIndex => {
+    replicateTree(id, {
+      onThought: () => {
+        // do not update numDescendants directly, since this callback has a high throughput
+        // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
+        setNumDescendantsUnthrottled(++numDescendantsNew)
+        updateNumDescendantsThrottled()
+      },
+    }).then(thoughtIndex => {
       const initial = initialState()
       const exportedState: State = {
         ...initial,
@@ -114,16 +122,6 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
       // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
       if (isMounted.current) {
         setIsPulling(false)
-
-        // count the total number of new children pulled
-        const numDescendantsNew = Object.values(exportedState.thoughts.thoughtIndex).reduce((accum, thought) => {
-          return accum + Object.keys(thought.childrenMap).length
-        }, 0)
-
-        // do not update numDescendants directly, since this callback has a high throughput
-        // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
-        setNumDescendantsUnthrottled(numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew)
-        updateNumDescendantsThrottled()
       }
     })
 

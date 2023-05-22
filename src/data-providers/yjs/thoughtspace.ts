@@ -735,12 +735,20 @@ export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | und
   Promise.all(ids.map(getThoughtById))
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
-export const replicateTree = async (id: ThoughtId): Promise<Index<Thought>> => {
+export const replicateTree = async (
+  id: ThoughtId,
+  { onThought }: { onThought?: (thought: Thought) => void } = {},
+): Promise<Index<Thought>> => {
   const thought = await replicateThought(id, { background: true })
   if (!thought) return {}
 
-  const descendantThoughtIndices = await Promise.all(Object.values(thought.childrenMap).map(replicateTree))
-  return descendantThoughtIndices.reduce(
+  onThought?.(thought)
+
+  const descendantThoughtIndices = await Promise.all(
+    Object.values(thought.childrenMap).map(childId => replicateTree(childId, { onThought })),
+  )
+
+  const thoughtIndex = descendantThoughtIndices.reduce(
     (accum, curr) => ({
       ...accum,
       ...curr,
@@ -749,6 +757,8 @@ export const replicateTree = async (id: ThoughtId): Promise<Index<Thought>> => {
       [id]: thought,
     },
   )
+
+  return thoughtIndex
 }
 
 const db: DataProvider = {
