@@ -739,24 +739,23 @@ export const replicateTree = async (
   id: ThoughtId,
   { onThought }: { onThought?: (thought: Thought) => void } = {},
 ): Promise<Index<Thought>> => {
-  const thought = await replicateThought(id, { background: true })
-  if (!thought) return {}
+  // no significant performance gain above concurrency 4
+  const queue = taskQueue<void>({ concurrency: 4 })
+  const thoughtIndex: Index<Thought> = {}
 
-  onThought?.(thought)
+  /** Creates a task to replicate a thought and add it to the thoughtIndex. Queues up children replication. */
+  const replicateTask = (id: ThoughtId) => async () => {
+    const thought = await replicateThought(id, { background: true })
+    if (!thought) return
+    thoughtIndex[id] = thought
+    onThought?.(thought)
 
-  const descendantThoughtIndices = await Promise.all(
-    Object.values(thought.childrenMap).map(childId => replicateTree(childId, { onThought })),
-  )
+    queue.add(Object.values(thought.childrenMap).map(replicateTask))
+  }
 
-  const thoughtIndex = descendantThoughtIndices.reduce(
-    (accum, curr) => ({
-      ...accum,
-      ...curr,
-    }),
-    {
-      [id]: thought,
-    },
-  )
+  queue.add([replicateTask(id)])
+
+  await queue.end
 
   return thoughtIndex
 }
