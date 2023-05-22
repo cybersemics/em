@@ -41,19 +41,8 @@ import LoadingEllipsis from './../LoadingEllipsis'
 import ModalComponent from './ModalComponent'
 
 /** Use a throttled callback. */
-// https://stackoverflow.com/a/62017005/480608
-function useThrottle(cb: any, delay: number) {
-  const options = { leading: true, trailing: false } // add custom lodash options
-  const cbRef = useRef(cb)
-  // use mutable ref to make useCallback/throttle not depend on `cb` dep
-  useEffect(() => {
-    cbRef.current = cb
-  })
-  return useCallback(
-    _.throttle((...args) => cbRef.current(...args), delay, options),
-    [delay],
-  )
-}
+const useThrottle = <T extends any>(cb: (...args: T[]) => void, delay: number) =>
+  useCallback(_.throttle(cb, delay), [delay])
 
 /******************************************************************************
  * Contexts
@@ -77,13 +66,11 @@ ExportedStateContext.displayName = 'ExportedStateContext'
  */
 const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) => {
   const [isPulling, setIsPulling] = useState<boolean>(true)
-  // Update numDescendantsUnthrottled as descendants are pulled.
-  // Copy numDescendantsUnthrottled over to numDescendants every 100ms to throttle re-renders.
+  // Update numDescendants every 100ms to throttle re-renders.
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
-  const [numDescendantsUnthrottled, setNumDescendantsUnthrottled] = useState<number | null>(null)
   const [numDescendants, setNumDescendants] = useState<number | null>(null)
-  const updateNumDescendantsThrottled = useThrottle(() => setNumDescendants(numDescendantsUnthrottled), 100)
+  const setNumDescendantsThrottled = useThrottle(setNumDescendants, 100)
   const [exportedState, setExportedState] = useState<State | null>(null)
 
   const isMounted = useRef(false)
@@ -100,10 +87,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     replicateTree(id, {
       onThought: () => {
-        // do not update numDescendants directly, since this callback has a high throughput
-        // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
-        setNumDescendantsUnthrottled(++numDescendantsNew)
-        updateNumDescendantsThrottled()
+        setNumDescendantsThrottled(++numDescendantsNew)
       },
     }).then(thoughtIndex => {
       const initial = initialState()
