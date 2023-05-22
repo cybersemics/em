@@ -4,9 +4,7 @@ import _ from 'lodash'
 import React, { FC, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
-import Context from '../../@types/Context'
 import ExportOption from '../../@types/ExportOption'
-import Path from '../../@types/Path'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -20,22 +18,20 @@ import { replicateTree } from '../../data-providers/yjs/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
-import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import findDescendant from '../../selectors/findDescendant'
 import { anyChild } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
-import getThoughtById from '../../selectors/getThoughtById'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
 import themeColors from '../../selectors/themeColors'
 import ellipsize from '../../util/ellipsize'
 import exportPhrase from '../../util/exportPhrase'
 import head from '../../util/head'
+import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
 import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
-import pathToContext from '../../util/pathToContext'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
 import CheckboxItem from './../CheckboxItem'
@@ -79,7 +75,7 @@ ExportedStateContext.displayName = 'ExportedStateContext'
 /**
  * Context to handle pull status and number of descendants.
  */
-const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
+const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) => {
   const [isPulling, setIsPulling] = useState<boolean>(true)
   // Update numDescendantsUnthrottled as descendants are pulled.
   // Copy numDescendantsUnthrottled over to numDescendants every 100ms to throttle re-renders.
@@ -91,7 +87,6 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const [exportedState, setExportedState] = useState<State | null>(null)
 
   const isMounted = useRef(false)
-  const store = useStore()
 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
@@ -100,41 +95,37 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
     isMounted.current = true
 
-    const id = contextToThoughtId(store.getState(), context)
+    const id = head(simplePath)
 
-    if (id) {
-      replicateTree(id, { background: true }).then(thoughtIndex => {
-        const initial = initialState()
-        const exportedState: State = {
-          ...initial,
-          thoughts: {
-            ...initial.thoughts,
-            thoughtIndex: {
-              ...initial.thoughts.thoughtIndex,
-              ...thoughtIndex,
-            },
+    replicateTree(id, { background: true }).then(thoughtIndex => {
+      const initial = initialState()
+      const exportedState: State = {
+        ...initial,
+        thoughts: {
+          ...initial.thoughts,
+          thoughtIndex: {
+            ...initial.thoughts.thoughtIndex,
+            ...thoughtIndex,
           },
-        }
-        setExportedState(exportedState)
+        },
+      }
+      setExportedState(exportedState)
 
-        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-        if (isMounted.current) {
-          setIsPulling(false)
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      if (isMounted.current) {
+        setIsPulling(false)
 
-          // count the total number of new children pulled
-          const numDescendantsNew = Object.values(exportedState.thoughts.thoughtIndex).reduce((accum, thought) => {
-            return accum + Object.keys(thought.childrenMap).length
-          }, 0)
+        // count the total number of new children pulled
+        const numDescendantsNew = Object.values(exportedState.thoughts.thoughtIndex).reduce((accum, thought) => {
+          return accum + Object.keys(thought.childrenMap).length
+        }, 0)
 
-          // do not update numDescendants directly, since this callback has a high throughput
-          // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
-          setNumDescendantsUnthrottled(
-            numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew,
-          )
-          updateNumDescendantsThrottled()
-        }
-      })
-    }
+        // do not update numDescendants directly, since this callback has a high throughput
+        // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
+        setNumDescendantsUnthrottled(numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew)
+        updateNumDescendantsThrottled()
+      }
+    })
 
     return () => {
       isMounted.current = false
@@ -278,16 +269,16 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
  *****************************************************************************/
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath, cursor }) => {
+const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const store = useStore()
   const dispatch = useDispatch()
   const state = store.getState()
-  const context = pathToContext(state, simplePath)
   const id = head(simplePath)
   const titleId = findDescendant(state, id, ['=publish', 'Title'])
   const titleChild = titleId ? anyChild(state, titleId) : undefined
-  const cursorThought = getThoughtById(state, head(cursor))
-  const title = isRoot(cursor) ? 'home' : titleChild ? titleChild.value : cursorThought.value
+  const title = useSelector((state: State) =>
+    isRoot(simplePath) ? 'home' : titleChild ? titleChild.value : headValue(state, simplePath),
+  )
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
@@ -323,7 +314,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
     const exported =
       selected.type === 'application/json'
         ? JSON.stringify(exportedState.thoughts, null, 2)
-        : exportContext(exportedState, context, selected.type, {
+        : exportContext(exportedState, id, selected.type, {
             title: titleChild ? titleChild.value : undefined,
             excludeMeta: !shouldIncludeMetaAttributes,
             excludeArchived: !shouldIncludeArchived,
@@ -659,18 +650,14 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 }
 
 /**
- * ModalExport with necessary provider.
+ * Export component wrapped with pull provider.
  */
 const ModalExportWrapper = () => {
-  const store = useStore()
-  const state = store.getState()
-  const cursor = useSelector((state: State) => state.cursor || HOME_PATH)
-  const simplePath = simplifyPath(state, cursor)
-  const context = pathToContext(state, simplePath)
+  const simplePath = useSelector((state: State) => (state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH))
 
   return (
-    <PullProvider context={context}>
-      <ModalExport simplePath={simplePath} cursor={cursor} />
+    <PullProvider simplePath={simplePath}>
+      <ModalExport simplePath={simplePath} />
     </PullProvider>
   )
 }
