@@ -510,20 +510,38 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       </div>
 
       {/* Preview */}
-      <textarea
-        readOnly
+      <div
         style={{
-          backgroundColor: '#111',
-          border: 'none',
-          borderRadius: '10px',
-          color: '#aaa',
-          fontSize: '1em',
-          height: '120px',
-          marginBottom: 'calc(max(1.2em, 20px))',
-          width: '300px',
+          position: 'relative',
         }}
-        value={exportContent || ''}
-      ></textarea>
+      >
+        {exportContent === null && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(50% - 1em)',
+              textAlign: 'center',
+              width: ' 100%',
+            }}
+          >
+            <LoadingEllipsis />
+          </div>
+        )}
+        <textarea
+          readOnly
+          style={{
+            backgroundColor: '#111',
+            border: 'none',
+            borderRadius: '10px',
+            color: '#aaa',
+            fontSize: '1em',
+            height: '120px',
+            marginBottom: 'calc(max(1.2em, 20px))',
+            width: '300px',
+          }}
+          value={exportContent || ''}
+        ></textarea>
+      </div>
 
       {/* Download button */}
       <div className='modal-export-btns-wrapper'>
@@ -539,12 +557,10 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
-        {exportContent !== null ? (
+        {exportContent !== null && (
           <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>
             Copy to clipboard
           </a>
-        ) : (
-          <LoadingEllipsis />
         )}
       </div>
 
