@@ -338,7 +338,7 @@ export const replicateThought = async (
     // destroy HocuspocusProvider after sync
     background?: boolean
   } = {},
-): Promise<void> => {
+): Promise<Thought | undefined> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
   const thoughtMap = doc.getMap<ThoughtYjs>()
@@ -346,7 +346,8 @@ export const replicateThought = async (
   // if the doc has already been initialized and added to thoughtDocs, return immediately
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
   // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
-  if (thoughtDocs[id] || process.env.NODE_ENV === 'test') return thoughtSynced[id] || Promise.resolve()
+  if (thoughtDocs[id] || process.env.NODE_ENV === 'test')
+    return thoughtSynced[id]?.then(() => getThought(doc)) || Promise.resolve()
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -425,6 +426,8 @@ export const replicateThought = async (
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
+
+  return getThought(doc)
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
@@ -439,7 +442,7 @@ export const replicateLexeme = async (
     // destroy HocuspocusProvider after sync
     background?: boolean
   } = {},
-): Promise<void> => {
+): Promise<Lexeme | undefined> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs[key] || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
@@ -447,7 +450,8 @@ export const replicateLexeme = async (
   // set up persistence and subscribe to changes
   // disable during tests because of TransactionInactiveError in fake-indexeddb
   // disable during tests because of infinite loop in sinon runAllAsync
-  if (lexemeDocs[key] || process.env.NODE_ENV === 'test') return lexemeSynced[key] || Promise.resolve()
+  if (lexemeDocs[key] || process.env.NODE_ENV === 'test')
+    return lexemeSynced[key]?.then(() => getLexeme(doc)) || Promise.resolve()
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -516,6 +520,8 @@ export const replicateLexeme = async (
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     lexemeMap.observe(onLexemeChange)
   }
+
+  return getLexeme(doc)
 }
 
 /** Gets a Thought from a thought Y.Doc. */
@@ -717,6 +723,28 @@ export const getThoughtById = async (id: ThoughtId) => {
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
+
+/** Replicates an entire subtree, starting at a given thought. */
+export const replicateTree = async (
+  id: ThoughtId,
+  { background }: { background: boolean },
+): Promise<Index<Thought>> => {
+  const thought = await replicateThought(id)
+  if (!thought) return {}
+
+  const descendantThoughtIndices = await Promise.all(
+    Object.values(thought.childrenMap).map(childId => replicateTree(childId, { background })),
+  )
+  return descendantThoughtIndices.reduce(
+    (accum, curr) => ({
+      ...accum,
+      ...curr,
+    }),
+    {
+      [id]: thought,
+    },
+  )
+}
 
 const db: DataProvider = {
   clear,

@@ -11,13 +11,12 @@ import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
-import ThoughtIndices from '../../@types/ThoughtIndices'
 import alert from '../../action-creators/alert'
 import closeModal from '../../action-creators/closeModal'
 import error from '../../action-creators/error'
-import pull from '../../action-creators/pull'
 import { isTouch } from '../../browser'
 import { AlertType, HOME_PATH } from '../../constants'
+import { replicateTree } from '../../data-providers/yjs/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -33,6 +32,7 @@ import themeColors from '../../selectors/themeColors'
 import ellipsize from '../../util/ellipsize'
 import exportPhrase from '../../util/exportPhrase'
 import head from '../../util/head'
+import initialState from '../../util/initialState'
 import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
 import pathToContext from '../../util/pathToContext'
@@ -69,6 +69,9 @@ PullStatusContext.displayName = 'PullStatusContext'
 const DescendantNumberContext = createContext<number | null>(null)
 DescendantNumberContext.displayName = 'DescendantNumberContext'
 
+const ExportedStateContext = createContext<State | null>(null)
+ExportedStateContext.displayName = 'ExportedStateContext'
+
 /******************************************************************************
  * Context Providers
  *****************************************************************************/
@@ -85,24 +88,10 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
   const [numDescendantsUnthrottled, setNumDescendantsUnthrottled] = useState<number | null>(null)
   const [numDescendants, setNumDescendants] = useState<number | null>(null)
   const updateNumDescendantsThrottled = useThrottle(() => setNumDescendants(numDescendantsUnthrottled), 100)
+  const [exportedState, setExportedState] = useState<State | null>(null)
 
-  const dispatch = useDispatch()
   const isMounted = useRef(false)
   const store = useStore()
-
-  /** Handle new thoughts pulled. */
-  const onThoughts = useCallback((thoughts: ThoughtIndices) => {
-    if (!isMounted.current) return
-    // count the total number of new children pulled
-    const numDescendantsNew = Object.values(thoughts.thoughtIndex).reduce((accum, thought) => {
-      return accum + Object.keys(thought.childrenMap).length
-    }, 0)
-
-    // do not update numDescendants directly, since this callback has a high throughput
-    // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
-    setNumDescendantsUnthrottled(numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew)
-    updateNumDescendantsThrottled()
-  }, [])
 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
@@ -114,16 +103,35 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
     const id = contextToThoughtId(store.getState(), context)
 
     if (id) {
-      dispatch(
-        pull([id], {
-          onLocalThoughts: onThoughts,
-          // TODO: onRemoteThoughts ??
-          maxDepth: Infinity,
-        }),
-      ).then(() => {
+      replicateTree(id, { background: true }).then(thoughtIndex => {
+        const initial = initialState()
+        const exportedState: State = {
+          ...initial,
+          thoughts: {
+            ...initial.thoughts,
+            thoughtIndex: {
+              ...initial.thoughts.thoughtIndex,
+              ...thoughtIndex,
+            },
+          },
+        }
+        setExportedState(exportedState)
+
         // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
         if (isMounted.current) {
           setIsPulling(false)
+
+          // count the total number of new children pulled
+          const numDescendantsNew = Object.values(exportedState.thoughts.thoughtIndex).reduce((accum, thought) => {
+            return accum + Object.keys(thought.childrenMap).length
+          }, 0)
+
+          // do not update numDescendants directly, since this callback has a high throughput
+          // instead, set numDescendantsUnthrottled and copy them over to numDescendants every 100ms with updateNumDescendantsThrottled
+          setNumDescendantsUnthrottled(
+            numDescendantsUnthrottled => (numDescendantsUnthrottled ?? 0) + numDescendantsNew,
+          )
+          updateNumDescendantsThrottled()
         }
       })
     }
@@ -135,7 +143,9 @@ const PullProvider: FC<{ context: Context }> = ({ children, context }) => {
 
   return (
     <PullStatusContext.Provider value={isPulling}>
-      <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+      <ExportedStateContext.Provider value={exportedState}>
+        <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+      </ExportedStateContext.Provider>
     </PullStatusContext.Provider>
   )
 }
@@ -153,6 +163,11 @@ const usePullStatus = () => useContext(PullStatusContext)
  * Use number of descendants that will be exported.
  */
 const useDescendantsNumber = () => useContext(DescendantNumberContext)
+
+/**
+ * Use the exported state.
+ */
+const useExportedState = () => useContext(ExportedStateContext)
 
 interface AdvancedSetting {
   id: string
@@ -288,6 +303,7 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
   const exportWord = isTouch ? 'Share' : 'Download'
 
   const isPulling = usePullStatus()
+  const exportedState = useExportedState()
 
   // calculate the final number of descendants
   // uses a different method for text/plain and text/html
@@ -303,11 +319,11 @@ const ModalExport: FC<{ simplePath: SimplePath; cursor: Path }> = ({ simplePath,
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
-    const state = store.getState()
+    if (!exportedState) return
     const exported =
       selected.type === 'application/json'
-        ? JSON.stringify(state.thoughts, null, 2)
-        : exportContext(state, context, selected.type, {
+        ? JSON.stringify(exportedState.thoughts, null, 2)
+        : exportContext(exportedState, context, selected.type, {
             title: titleChild ? titleChild.value : undefined,
             excludeMeta: !shouldIncludeMetaAttributes,
             excludeArchived: !shouldIncludeArchived,
