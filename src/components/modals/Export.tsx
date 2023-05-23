@@ -1,5 +1,4 @@
 import ClipboardJS from 'clipboard'
-import { and } from 'fp-and-or'
 import _ from 'lodash'
 import React, { FC, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -28,7 +27,6 @@ import exportPhrase from '../../util/exportPhrase'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
-import isAttribute from '../../util/isAttribute'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
@@ -298,9 +296,9 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       selected.type === 'application/json'
         ? JSON.stringify(exportedState.thoughts, null, 2)
         : exportContext(exportedState, id, selected.type, {
-            excludeMeta: !shouldIncludeMetaAttributes,
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
+            excludeMeta: !shouldIncludeMetaAttributes,
           })
 
     setExportContent(removeHome(exported).trimStart())
@@ -315,18 +313,16 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
     if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-    if (selected.type === 'text/html') {
-      dispatch((dispatch, getState) => {
-        const state = getState()
-        setNumDescendantsInState(
-          getDescendantThoughtIds(state, id, {
-            filterFunction: and(
-              shouldIncludeMetaAttributes || ((thought: Thought) => !isAttribute(thought.value)),
-              shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
-            ),
-          }).length,
-        )
-      })
+    if (selected.type === 'text/html' && exportedState) {
+      setNumDescendantsInState(
+        getDescendantThoughtIds(exportedState, id, {
+          filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+          filterFunction: exportFilter({
+            excludeArchived: !shouldIncludeArchived,
+            excludeMeta: !shouldIncludeMetaAttributes,
+          }),
+        }).length,
+      )
     }
 
     if (!isPulling) {

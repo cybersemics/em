@@ -28,8 +28,8 @@ const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi,
 /** Creates a filter predicate that filters thoughts by various export options. */
 export const exportFilter = ({ excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean }) =>
   and(
-    !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
-    excludeMeta ? (child: Thought) => !isAttribute(child.value) || child.value === '=note' : true,
+    !excludeMeta || !excludeArchived || ((child: Thought) => child.value !== '=archive'),
+    !excludeMeta || ((child: Thought) => !isAttribute(child.value) || child.value === '=note'),
   )
 
 interface Options {

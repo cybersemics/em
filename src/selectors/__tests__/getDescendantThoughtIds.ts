@@ -111,3 +111,33 @@ it('filter descendants', () => {
   // [e, f, g, h] should never be touched
   expect(touched).toEqual(7)
 })
+
+it('filter and continue traversing', () => {
+  const text = `
+    - a
+      - b
+        - protected
+          - content
+      - c
+    - d
+      - e
+        - protected
+          - f
+  `
+  const state = importText({ text })(initialState())
+
+  const descendantsAll = childIdsToThoughts(
+    state,
+    getDescendantThoughtIds(state, HOME_TOKEN, {
+      filterFunction: thought => thought.value !== 'protected',
+      filterAndTraverse: thought => thought.value !== 'a',
+    }),
+  )
+
+  expect(descendantsAll).toMatchObject([
+    { value: 'b', rank: 0 },
+    { value: 'c', rank: 1 },
+    { value: 'd', rank: 1 },
+    { value: 'e', rank: 0 },
+  ])
+})
