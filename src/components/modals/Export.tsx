@@ -18,7 +18,7 @@ import { replicateTree } from '../../data-providers/yjs/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
-import exportContext from '../../selectors/exportContext'
+import exportContext, { exportFilter } from '../../selectors/exportContext'
 import findDescendant from '../../selectors/findDescendant'
 import { anyChild } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
@@ -51,8 +51,8 @@ const useThrottle = <T extends any>(cb: (...args: T[]) => void, delay: number) =
 const PullStatusContext = createContext<boolean>(false)
 PullStatusContext.displayName = 'PullStatusContext'
 
-const DescendantNumberContext = createContext<number | null>(null)
-DescendantNumberContext.displayName = 'DescendantNumberContext'
+const ExportingThoughtsContext = createContext<Thought[]>([])
+ExportingThoughtsContext.displayName = 'ExportingThoughtsContext'
 
 const ExportedStateContext = createContext<State | null>(null)
 ExportedStateContext.displayName = 'ExportedStateContext'
@@ -66,12 +66,13 @@ ExportedStateContext.displayName = 'ExportedStateContext'
  */
 const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) => {
   const [isPulling, setIsPulling] = useState<boolean>(true)
-  // Update numDescendants every 100ms to throttle re-renders.
+  const [exportedState, setExportedState] = useState<State | null>(null)
+  // list of thoughts as they are executed to provide accurate numDescendants count in real-time
+  const [exportingThoughts, setExportingThoughts] = useState<Thought[]>([])
+  // Update exportingThoughts every 100ms to throttle re-renders.
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
-  const [numDescendants, setNumDescendants] = useState<number | null>(null)
-  const setNumDescendantsThrottled = useThrottle(setNumDescendants, 100)
-  const [exportedState, setExportedState] = useState<State | null>(null)
+  const setExportingThoughtsThrottled = useThrottle(setExportingThoughts, 100)
 
   const isMounted = useRef(false)
 
@@ -83,11 +84,10 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
     isMounted.current = true
 
     const id = head(simplePath)
-    let numDescendantsNew = 0
 
     replicateTree(id, {
-      onThought: () => {
-        setNumDescendantsThrottled(++numDescendantsNew)
+      onThought: (thought, thoughtIndex) => {
+        setExportingThoughtsThrottled(thoughts => [...thoughts, thought])
       },
     }).then(thoughtIndex => {
       const initial = initialState()
@@ -103,6 +103,10 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
       }
       setExportedState(exportedState)
 
+      // clear exporting thoughts when replication completes to conserve memory
+      // numDescendantsFinal be used instead
+      setExportingThoughts([])
+
       // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
       if (isMounted.current) {
         setIsPulling(false)
@@ -117,7 +121,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
   return (
     <PullStatusContext.Provider value={isPulling}>
       <ExportedStateContext.Provider value={exportedState}>
-        <DescendantNumberContext.Provider value={numDescendants}>{children}</DescendantNumberContext.Provider>
+        <ExportingThoughtsContext.Provider value={exportingThoughts}>{children}</ExportingThoughtsContext.Provider>
       </ExportedStateContext.Provider>
     </PullStatusContext.Provider>
   )
@@ -135,7 +139,7 @@ const usePullStatus = () => useContext(PullStatusContext)
 /**
  * Use number of descendants that will be exported.
  */
-const useDescendantsNumber = () => useContext(DescendantNumberContext)
+const useExportingThoughts = () => useContext(ExportingThoughtsContext)
 
 /**
  * Use the exported state.
@@ -167,18 +171,34 @@ const exportOptions: ExportOption[] = [
 
 interface ExportThoughtsPhraseOptions {
   id: ThoughtId
+  excludeArchived: boolean
+  excludeMeta: boolean
   // the final number of descendants
   numDescendantsFinal: number | null
   title: string
 }
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
-const ExportThoughtsPhrase = ({ id, numDescendantsFinal, title }: ExportThoughtsPhraseOptions) => {
+const ExportThoughtsPhrase = ({
+  id,
+  excludeArchived,
+  excludeMeta,
+  numDescendantsFinal,
+  title,
+}: ExportThoughtsPhraseOptions) => {
   const store = useStore()
   const state = store.getState()
 
+  const thoughts = useExportingThoughts()
+  const thoughtsFiltered = thoughts.filter(
+    exportFilter(state, {
+      excludeMeta,
+      excludeArchived,
+    }),
+  )
+  const numDescendants = thoughtsFiltered.length
+
   // updates with latest number of descendants
-  const numDescendants = useDescendantsNumber()
   const n = numDescendantsFinal ?? numDescendants
 
   const exportThoughtsPhrase =
@@ -281,12 +301,12 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   // calculate the final number of descendants
   // uses a different method for text/plain and text/html
   // does not update in real-time (See: ExportThoughtsPhrase component)
-  const numDescendants = exportContent
+  const numDescendantsFinal = exportContent
     ? selected.type === 'text/plain'
       ? exportContent.split('\n').length - 1
       : numDescendantsInState ?? 0
     : null
-  const exportThoughtsPhrase = exportPhrase(state, id, numDescendants, {
+  const exportThoughtsPhrase = exportPhrase(state, id, numDescendantsFinal, {
     value: title,
   })
 
@@ -480,7 +500,13 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
               selected.type === 'application/json' ? (
                 'state'
               ) : (
-                <ExportThoughtsPhrase id={id} numDescendantsFinal={numDescendants} title={title} />
+                <ExportThoughtsPhrase
+                  id={id}
+                  excludeArchived={!shouldIncludeArchived}
+                  excludeMeta={!shouldIncludeMetaAttributes}
+                  numDescendantsFinal={numDescendantsFinal}
+                  title={title}
+                />
               )
             }
             <span>

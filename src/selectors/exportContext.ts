@@ -5,7 +5,6 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { REGEXP_TAGS } from '../constants'
-import attribute from '../selectors/attribute'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenSorted } from '../selectors/getChildren'
 import thoughtToContext from '../selectors/thoughtToContext'
@@ -25,6 +24,16 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
 
 /** Convert formatting HTML tags to markdown asterisks. */
 const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi, '**').replace(/(<\/?(i|em)>)/gi, '*')
+
+/** Creates a filter predicate that filters thoughts by various export options. */
+export const exportFilter = (
+  state: State,
+  { excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean },
+) =>
+  and(
+    !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
+    excludeMeta ? (child: Thought) => !isAttribute(child.value) || child.value === '=note' : true,
+  )
 
 interface Options {
   indent?: number
@@ -56,15 +65,7 @@ export const exportContext = (
   const context = Array.isArray(contextOrThoughtId) ? contextOrThoughtId : thoughtToContext(state, thoughtId!)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
-  const childrenFiltered = children.filter(
-    and(
-      excludeSrc && thoughtId && attribute(state, thoughtId, '=src')
-        ? (child: Thought) => isAttribute(child.value)
-        : true,
-      !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
-      excludeMeta ? (child: Thought) => !isAttribute(child.value) || child.value === '=note' : true,
-    ),
-  )
+  const childrenFiltered = children.filter(exportFilter(state, { excludeArchived, excludeMeta }))
 
   // Note: export single thought without bullet
   const linePrefix =

@@ -737,7 +737,7 @@ export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | und
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
 export const replicateTree = async (
   id: ThoughtId,
-  { onThought }: { onThought?: (thought: Thought) => void } = {},
+  { onThought }: { onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void } = {},
 ): Promise<Index<Thought>> => {
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
@@ -748,7 +748,7 @@ export const replicateTree = async (
     const thought = await replicateThought(id, { background: true })
     if (!thought) return
     thoughtIndex[id] = thought
-    onThought?.(thought)
+    onThought?.(thought, thoughtIndex)
 
     queue.add(Object.values(thought.childrenMap).map(replicateTask))
   }
