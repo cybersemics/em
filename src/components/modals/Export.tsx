@@ -40,6 +40,51 @@ import DropDownMenu from './../DropDownMenu'
 import LoadingEllipsis from './../LoadingEllipsis'
 import ModalComponent from './ModalComponent'
 
+/******************************************************************************
+ * Types
+ *****************************************************************************/
+
+interface AdvancedSetting {
+  id: string
+  onChange: () => void
+  checked: boolean
+  title: string
+  description: string
+  disabled?: boolean
+  /** Child settings are indented. */
+  child?: boolean
+  /** Parent settings have less margin-bottom. */
+  parent?: boolean
+}
+
+interface ExportThoughtsPhraseOptions {
+  id: ThoughtId
+  excludeArchived: boolean
+  excludeMeta: boolean
+  /** The final number of descendants. */
+  numDescendantsFinal: number | null
+  title: string
+}
+
+interface ExportDropdownProps {
+  selected: ExportOption
+  onSelect?: (option: ExportOption) => void
+}
+
+/******************************************************************************
+ * Constants
+ *****************************************************************************/
+
+const exportOptions: ExportOption[] = [
+  { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
+  { type: 'text/html', label: 'HTML', extension: 'html' },
+  { type: 'application/json', label: 'JSON Snapshot', extension: 'json' },
+]
+
+/******************************************************************************
+ * Hooks
+ *****************************************************************************/
+
 /** Use a throttled callback. */
 const useThrottle = <T extends any>(cb: (...args: T[]) => void, delay: number) =>
   useCallback(_.throttle(cb, delay), [delay])
@@ -51,11 +96,20 @@ const useThrottle = <T extends any>(cb: (...args: T[]) => void, delay: number) =
 const PullStatusContext = createContext<boolean>(false)
 PullStatusContext.displayName = 'PullStatusContext'
 
+/** Use the pulling status of export. */
+const usePullStatus = () => useContext(PullStatusContext)
+
 const ExportingThoughtsContext = createContext<Thought[]>([])
 ExportingThoughtsContext.displayName = 'ExportingThoughtsContext'
 
+/** Use number of descendants that will be exported. */
+const useExportingThoughts = () => useContext(ExportingThoughtsContext)
+
 const ExportedStateContext = createContext<State | null>(null)
 ExportedStateContext.displayName = 'ExportedStateContext'
+
+/** Use the exported state. */
+const useExportedState = () => useContext(ExportedStateContext)
 
 /******************************************************************************
  * Context Providers
@@ -128,55 +182,8 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 }
 
 /******************************************************************************
- * Hooks
+ * Components
  *****************************************************************************/
-
-/**
- * Use the pulling status of export.
- */
-const usePullStatus = () => useContext(PullStatusContext)
-
-/**
- * Use number of descendants that will be exported.
- */
-const useExportingThoughts = () => useContext(ExportingThoughtsContext)
-
-/**
- * Use the exported state.
- */
-const useExportedState = () => useContext(ExportedStateContext)
-
-interface AdvancedSetting {
-  id: string
-  onChange: () => void
-  checked: boolean
-  title: string
-  description: string
-  disabled?: boolean
-  // child settings are indented
-  child?: boolean
-  // parent settings have less margin-bottom
-  parent?: boolean
-}
-
-const exportOptions: ExportOption[] = [
-  { type: 'text/plain', label: 'Plain Text', extension: 'txt' },
-  { type: 'text/html', label: 'HTML', extension: 'html' },
-  { type: 'application/json', label: 'JSON Snapshot', extension: 'json' },
-]
-
-/******************************************************************************
- * ExportThoughtsPhrase component
- *****************************************************************************/
-
-interface ExportThoughtsPhraseOptions {
-  id: ThoughtId
-  excludeArchived: boolean
-  excludeMeta: boolean
-  // the final number of descendants
-  numDescendantsFinal: number | null
-  title: string
-}
 
 /** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
 const ExportThoughtsPhrase = ({
@@ -209,15 +216,6 @@ const ExportThoughtsPhrase = ({
       : 'thoughts'
 
   return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
-}
-
-/******************************************************************************
- * ExportDropdown component
- *****************************************************************************/
-
-interface ExportDropdownProps {
-  selected: ExportOption
-  onSelect?: (option: ExportOption) => void
 }
 
 /** A dropdown menu to select an export type. */
@@ -266,10 +264,6 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   )
 }
 
-/******************************************************************************
- * ModalExport component
- *****************************************************************************/
-
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const store = useStore()
@@ -306,9 +300,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       ? exportContent.split('\n').length - 1
       : numDescendantsInState ?? 0
     : null
-  const exportThoughtsPhrase = exportPhrase(state, id, numDescendantsFinal, {
-    value: title,
-  })
+  const exportThoughtsPhraseFinal = exportPhrase(state, id, numDescendantsFinal, { value: title })
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
@@ -360,7 +352,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
       dispatch([
         closeModal(),
-        alert(`Copied ${exportThoughtsPhrase} to the clipboard`, {
+        alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
           alertType: AlertType.Clipboard,
           clearDelay: 3000,
         }),
@@ -380,7 +372,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
     return () => {
       clipboard.destroy()
     }
-  }, [exportThoughtsPhrase])
+  }, [exportThoughtsPhraseFinal])
 
   // const [publishing, setPublishing] = useState(false)
   // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
