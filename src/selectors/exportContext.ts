@@ -26,10 +26,7 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
 const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi, '**').replace(/(<\/?(i|em)>)/gi, '*')
 
 /** Creates a filter predicate that filters thoughts by various export options. */
-export const exportFilter = (
-  state: State,
-  { excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean },
-) =>
+export const exportFilter = ({ excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean }) =>
   and(
     !excludeMeta && excludeArchived ? (child: Thought) => child.value !== '=archive' : true,
     excludeMeta ? (child: Thought) => !isAttribute(child.value) || child.value === '=note' : true,
@@ -65,7 +62,7 @@ export const exportContext = (
   const context = Array.isArray(contextOrThoughtId) ? contextOrThoughtId : thoughtToContext(state, thoughtId!)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 
-  const childrenFiltered = children.filter(exportFilter(state, { excludeArchived, excludeMeta }))
+  const childrenFiltered = children.filter(exportFilter({ excludeArchived, excludeMeta }))
 
   // Note: export single thought without bullet
   const linePrefix =

@@ -1,6 +1,4 @@
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
 import isRoot from '../util/isRoot'
 
@@ -10,9 +8,9 @@ interface Options {
 }
 
 /** Generates a user-friendly phrase describing how many thoughts will be exported. */
-const exportPhrase = (state: State, id: ThoughtId, numDescendants: number | null, { value }: Options = {}) => {
+const exportPhrase = (id: ThoughtId, numDescendants: number | null, { value }: Options = {}) => {
   // presumably getThoughtById will never fail, but guard for safety
-  const label = ellipsize(value || getThoughtById(state, id)?.value || 'thought')
+  const label = ellipsize(value || 'thought')
 
   return isRoot([id])
     ? numDescendants === 1

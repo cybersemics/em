@@ -40,7 +40,9 @@ const copyCursorShortcut: Shortcut = {
     copy(exported)
 
     const numDescendants = exported ? exported.split('\n').length - 1 : 0
-    const phrase = exportPhrase(stateAfterPull, head(simplePath), numDescendants)
+    const phrase = exportPhrase(head(simplePath), numDescendants, {
+      value: getThoughtById(stateAfterPull, head(simplePath))?.value,
+    })
 
     dispatch(
       alert(`Copied ${phrase} to the clipboard`, {

@@ -2,7 +2,7 @@ import ClipboardJS from 'clipboard'
 import { and } from 'fp-and-or'
 import _ from 'lodash'
 import React, { FC, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
@@ -19,8 +19,6 @@ import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
-import findDescendant from '../../selectors/findDescendant'
-import { anyChild } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
@@ -193,12 +191,9 @@ const ExportThoughtsPhrase = ({
   numDescendantsFinal,
   title,
 }: ExportThoughtsPhraseOptions) => {
-  const store = useStore()
-  const state = store.getState()
-
   const thoughts = useExportingThoughts()
   const thoughtsFiltered = thoughts.filter(
-    exportFilter(state, {
+    exportFilter({
       excludeMeta,
       excludeArchived,
     }),
@@ -208,23 +203,21 @@ const ExportThoughtsPhrase = ({
   // updates with latest number of descendants
   const n = numDescendantsFinal ?? numDescendants
 
-  const exportThoughtsPhrase =
+  const phrase =
     numDescendantsFinal || numDescendants
-      ? exportPhrase(state, id, n, { value: title })
+      ? exportPhrase(id, n, { value: title })
       : n === 0 || n === 1
       ? '1 thought'
       : 'thoughts'
 
-  return <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />
+  return <span dangerouslySetInnerHTML={{ __html: phrase }} />
 }
 
 /** A dropdown menu to select an export type. */
 const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
-  const store = useStore()
-  const state = store.getState()
   const [isOpen, setIsOpen] = useState(false)
 
-  const dark = theme(state) !== 'Light'
+  const dark = useSelector((state: State) => theme(state) !== 'Light')
   const colors = useSelector(themeColors)
 
   const closeDropdown = useCallback(() => {
@@ -266,15 +259,9 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
-  const store = useStore()
   const dispatch = useDispatch()
-  const state = store.getState()
   const id = head(simplePath)
-  const titleId = findDescendant(state, id, ['=publish', 'Title'])
-  const titleChild = titleId ? anyChild(state, titleId) : undefined
-  const title = useSelector((state: State) =>
-    isRoot(simplePath) ? 'home' : titleChild ? titleChild.value : headValue(state, simplePath),
-  )
+  const title = useSelector((state: State) => (isRoot(simplePath) ? 'home' : headValue(state, simplePath)))
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
@@ -285,7 +272,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
-  const dark = theme(state) !== 'Light'
+  const dark = useSelector((state: State) => theme(state) !== 'Light')
   const colors = useSelector(themeColors)
   const exportWord = isTouch ? 'Share' : 'Download'
 
@@ -300,7 +287,9 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       ? exportContent.split('\n').length - 1
       : numDescendantsInState ?? 0
     : null
-  const exportThoughtsPhraseFinal = exportPhrase(state, id, numDescendantsFinal, { value: title })
+  const exportThoughtsPhraseFinal = useSelector((state: State) =>
+    exportPhrase(id, numDescendantsFinal, { value: title }),
+  )
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
@@ -309,13 +298,12 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       selected.type === 'application/json'
         ? JSON.stringify(exportedState.thoughts, null, 2)
         : exportContext(exportedState, id, selected.type, {
-            title: titleChild ? titleChild.value : undefined,
             excludeMeta: !shouldIncludeMetaAttributes,
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
           })
 
-    setExportContent(titleChild ? exported : removeHome(exported).trimStart())
+    setExportContent(removeHome(exported).trimStart())
   }
 
   // Sets export content when pull is complete by useDescendants
@@ -328,14 +316,17 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
     // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
     if (selected.type === 'text/html') {
-      setNumDescendantsInState(
-        getDescendantThoughtIds(state, id, {
-          filterFunction: and(
-            shouldIncludeMetaAttributes || ((thought: Thought) => !isAttribute(thought.value)),
-            shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
-          ),
-        }).length,
-      )
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        setNumDescendantsInState(
+          getDescendantThoughtIds(state, id, {
+            filterFunction: and(
+              shouldIncludeMetaAttributes || ((thought: Thought) => !isAttribute(thought.value)),
+              shouldIncludeArchived || ((thought: Thought) => thought.value !== '=archive'),
+            ),
+          }).length,
+        )
+      })
     }
 
     if (!isPulling) {
