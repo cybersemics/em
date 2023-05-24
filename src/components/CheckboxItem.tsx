@@ -28,7 +28,7 @@ const CheckboxItem: FC<{
   disabled?: boolean
   child?: boolean
   parent?: boolean
-  onChange: React.ChangeEventHandler
+  onChange: () => void
   title?: string
 }> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
@@ -41,6 +41,11 @@ const CheckboxItem: FC<{
         marginLeft: child ? '2.2em' : undefined,
         pointerEvents: disabled ? 'none' : undefined,
         cursor: disabled ? 'default' : 'pointer',
+      }}
+      // prevent the default click behavior, which autoscrolls in chrome if there is a checkbox within the label
+      onClick={e => {
+        e.preventDefault()
+        onChange()
       }}
     >
       <div
