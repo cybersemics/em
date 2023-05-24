@@ -137,12 +137,21 @@ const taskQueue = <
     return Promise.all(promises)
   }
 
+  /** Clears the queue. */
+  const clear = () => {
+    // https://stackoverflow.com/questions/1232040/how-do-i-empty-an-array-in-javascript
+    queue.length = 0
+  }
+
   // start running initial tasks if provided
   if (tasks && tasks.length > 0) {
     add(tasks)
   }
 
   return {
+    /** Clears the task queue. */
+    clear,
+
     /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
     add,
 

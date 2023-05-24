@@ -47,6 +47,18 @@ interface SimpleYMapEvent<T> {
   }
 }
 
+/** A weak cancellable promise. The cancel function must be added to an existing promise and then cast to a Cancellable Promise. Promise chains created with then are not cancellable. */
+interface CancellablePromise<T> extends Promise<T> {
+  cancel: () => void
+}
+
+/** Attaches a cancel function to a promise. It is up to you to abort any functionality after the cancel function is called. */
+const cancellable = <T>(p: Promise<T>, cancel: () => void) => {
+  const promise = p as CancellablePromise<T>
+  promise.cancel = cancel
+  return promise
+}
+
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
 // parallel to thoughtIndex and lexemeIndex
@@ -735,18 +747,19 @@ export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | und
   Promise.all(ids.map(getThoughtById))
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
-export const replicateTree = async (
+export const replicateTree = (
   id: ThoughtId,
   { onThought }: { onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void } = {},
-): Promise<Index<Thought>> => {
+): CancellablePromise<Index<Thought>> => {
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
   const thoughtIndex: Index<Thought> = {}
+  let abort = false
 
   /** Creates a task to replicate a thought and add it to the thoughtIndex. Queues up children replication. */
   const replicateTask = (id: ThoughtId) => async () => {
     const thought = await replicateThought(id, { background: true })
-    if (!thought) return
+    if (!thought || abort) return
     thoughtIndex[id] = thought
     onThought?.(thought, thoughtIndex)
 
@@ -755,9 +768,12 @@ export const replicateTree = async (
 
   queue.add([replicateTask(id)])
 
-  await queue.end
-
-  return thoughtIndex
+  // return a promise that can cancel the replication
+  const promise = queue.end.then(() => thoughtIndex)
+  return cancellable(promise, () => {
+    queue.clear()
+    abort = true
+  })
 }
 
 const db: DataProvider = {

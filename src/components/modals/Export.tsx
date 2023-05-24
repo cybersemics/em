@@ -129,17 +129,20 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
   useEffect(() => {
-    if (isMounted.current) return
-
     isMounted.current = true
 
     const id = head(simplePath)
 
-    replicateTree(id, {
+    const promise = replicateTree(id, {
       onThought: (thought, thoughtIndex) => {
+        if (!isMounted.current) return
         setExportingThoughtsThrottled(thoughts => [...thoughts, thought])
       },
-    }).then(thoughtIndex => {
+    })
+
+    promise.then(thoughtIndex => {
+      if (!isMounted.current) return
+
       const initial = initialState()
       const exportedState: State = {
         ...initial,
@@ -151,20 +154,20 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
           },
         },
       }
+
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
       setExportedState(exportedState)
 
       // clear exporting thoughts when replication completes to conserve memory
       // numDescendantsFinal be used instead
       setExportingThoughts([])
 
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      if (isMounted.current) {
-        setIsPulling(false)
-      }
+      setIsPulling(false)
     })
 
     return () => {
       isMounted.current = false
+      promise.cancel()
     }
   }, [])
 
