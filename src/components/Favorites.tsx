@@ -33,7 +33,7 @@ import store from '../stores/app'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import splice from '../util/splice'
-import CheckboxItem from './CheckboxItem'
+import Checkbox from './Checkbox'
 import ThoughtLink from './ThoughtLink'
 import StarIcon from './icons/StarIcon'
 
@@ -277,7 +277,7 @@ const FavoritesOptions = ({
               padding: '1em',
             }}
           >
-            <CheckboxItem
+            <Checkbox
               checked={!hideContexts}
               title='Show full contexts'
               onChange={() => {

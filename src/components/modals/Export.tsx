@@ -30,7 +30,7 @@ import initialState from '../../util/initialState'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
-import CheckboxItem from './../CheckboxItem'
+import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
 import DropDownMenu from './../DropDownMenu'
 import LoadingEllipsis from './../LoadingEllipsis'
@@ -575,9 +575,9 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       {advancedSettings && (
         <div className='advance-setting-section'>
           {advancedSettingsArray.map(props => (
-            <CheckboxItem key={props.id} {...props}>
+            <Checkbox key={props.id} {...props}>
               {props.description}
-            </CheckboxItem>
+            </Checkbox>
           ))}
         </div>
       )}

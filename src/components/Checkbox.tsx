@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 
 /** A checkbox component with em styling. */
-const Checkbox = ({
+const CheckboxInput = ({
   checked,
   onChange,
 }: {
@@ -23,7 +23,7 @@ const Checkbox = ({
 }
 
 /** A checkbox item with a title and description. */
-const CheckboxItem: FC<{
+const Checkbox: FC<{
   checked?: boolean
   disabled?: boolean
   child?: boolean
@@ -63,9 +63,9 @@ const CheckboxItem: FC<{
         {children && <p className='checkbox-description text-medium dim'>{children}</p>}
       </div>
 
-      <Checkbox checked={checked} onChange={onChange} />
+      <CheckboxInput checked={checked} onChange={onChange} />
     </label>
   )
 }
 
-export default CheckboxItem
+export default Checkbox

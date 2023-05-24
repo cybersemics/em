@@ -6,7 +6,7 @@ import { Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
 import themeColors from '../../selectors/themeColors'
 import { ActionButton } from './../ActionButton'
-import CheckboxItem from './../CheckboxItem'
+import Checkbox from './../Checkbox'
 import GestureDiagram from './../GestureDiagram'
 import ModalComponent from './ModalComponent'
 
@@ -25,7 +25,7 @@ const Setting: FC<{
   const disabled = useSelector((state: State) => dependsOn && getUserSetting(state, dependsOn))
   const dispatch = useDispatch()
   return (
-    <CheckboxItem
+    <Checkbox
       checked={invert ? !value : value}
       disabled={disabled}
       title={title}
@@ -38,7 +38,7 @@ const Setting: FC<{
       }}
     >
       {children}
-    </CheckboxItem>
+    </Checkbox>
   )
 }
 
