@@ -386,7 +386,7 @@ export const replicateThought = async (
       }
     })
     .catch(e => {
-      const errorMessage = `Error loading thought ${id}.`
+      const errorMessage = `Error loading thought ${id}. ${e.message || e}`
       console.error(errorMessage, e)
       store.dispatch(alert(errorMessage))
     })
@@ -490,7 +490,7 @@ export const replicateLexeme = async (
       }
     })
     .catch(e => {
-      const errorMessage = `Error loading lexeme ${key}.`
+      const errorMessage = `Error loading lexeme ${key}. ${e.message || e}`
       console.error(errorMessage, e)
       store.dispatch(alert(errorMessage))
     })
