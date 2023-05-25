@@ -75,6 +75,7 @@ interface State {
   // Used by the Content component to determine if there are no root children and NoThoughts should be displayed.
   isLoading: boolean
   // History of edit points that can be navigated with the jump command.
+  // New edit points are added to the beginning of the list.
   // Cannot use undoHistory because it omits the cursor from some edits.
   // i.e. It causes the 'jump after new subthought' to fail.
   jumpHistory: (Path | null)[]

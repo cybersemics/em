@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS, MAX_THOUGHTS_MARGIN } from '../constants'
 import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
@@ -9,16 +10,21 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
 
+// the number of jumpHistory paths to preserve during deallocation
+const PRESERVE_JUMPS = 3
+
 /** Frees a random block of invisible thoughts from memory when the memory limit is exceeded. Note: May not free any thoughts if all thoughts are expanded. */
 const freeThoughts = (state: State) => {
-  const expandedIds = Object.values(state.expanded).map(head)
-  const preserveSet = new Set([
+  const preserveSet = new Set<ThoughtId>([
     ABSOLUTE_TOKEN,
     EM_TOKEN,
     HOME_TOKEN,
-    // prevent the last imported thought from being deallocated, as the thought or one of its ancestors needs to stay in memory for the next imported thought
+    // prevent the last few jump history points
+    ...state.jumpHistory.slice(0, PRESERVE_JUMPS).flatMap(path => path || []),
+    // preserve the last imported thought, as it needs to stay in memory for the next imported thought in case it is a child
     ...(globals.lastImportedPath || []),
-    ...expandedIds.flatMap(id => [id, ...getAllChildren(state, id)]),
+    // preserve expanded thoughts and their children
+    ...Object.values(state.expanded).flatMap(path => [...path, ...getAllChildren(state, head(path))]),
     ...getDescendantThoughtIds(state, EM_TOKEN),
   ])
 
