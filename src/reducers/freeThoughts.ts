@@ -13,6 +13,39 @@ import deleteThought from './deleteThought'
 // the number of jumpHistory paths to preserve during deallocation
 const PRESERVE_JUMPS = 3
 
+/** Find the next thought that can be safely deallocated. */
+const findDeletableThought = (
+  state: State,
+  preserveSet: Set<ThoughtId>,
+  { start }: { start?: number } = {},
+): Thought | null => {
+  const allThoughts = Object.values(state.thoughts.thoughtIndex)
+
+  /** Returns true if a thought is safe to deallocate. */
+  const isDeletable = (thought: Thought) =>
+    // do not delete any thought or child of a thought in the preserve set
+    !preserveSet.has(thought.id) &&
+    !preserveSet.has(thought.parentId) &&
+    // do not delete a thought with a missing parent
+    state.thoughts.thoughtIndex[thought.parentId] &&
+    // do not delete meta attributes, or their descendants
+    !isAttribute(thought.value) &&
+    !thoughtToPath(state, thought.parentId).some(id => isAttribute(state.thoughts.thoughtIndex[id]?.value))
+
+  // start searching at the start index and wrap around the end of the array of thoughts
+  let deletableThought: Thought | null = null
+  // eslint-disable-next-line fp/no-loops
+  for (let i = 0; i++; i < allThoughts.length) {
+    const thought = allThoughts[(i + (start || 0)) % allThoughts.length]
+    if (isDeletable(thought)) {
+      deletableThought = thought
+      break
+    }
+  }
+
+  return deletableThought
+}
+
 /** Frees a random block of invisible thoughts from memory when the memory limit is exceeded. Note: May not free any thoughts if all thoughts are expanded. */
 const freeThoughts = (state: State) => {
   const preserveSet = new Set<ThoughtId>([
@@ -32,35 +65,6 @@ const freeThoughts = (state: State) => {
   // Better would be to sort by lastUpdated or lastVisited, but this is much faster.
   const randomStartIndex = Math.floor(Math.random() * Object.values(state.thoughts.thoughtIndex).length)
 
-  /** Find the next thought that can be safely deallocated. */
-  const findDeletableThought = (state: State): Thought | null => {
-    const allThoughts = Object.values(state.thoughts.thoughtIndex)
-
-    /** Returns true if a thought is safe to deallocate. */
-    const isDeletable = (thought: Thought) =>
-      // do not delete any thought or child of a thought in the preserve set
-      !preserveSet.has(thought.id) &&
-      !preserveSet.has(thought.parentId) &&
-      // do not delete a thought with a missing parent
-      state.thoughts.thoughtIndex[thought.parentId] &&
-      // do not delete meta attributes, or their descendants
-      !isAttribute(thought.value) &&
-      !thoughtToPath(state, thought.parentId).some(id => isAttribute(state.thoughts.thoughtIndex[id]?.value))
-
-    // start searching at the randomStartIndex and wrap around the end of the array of thoughts
-    let deletableThought: Thought | null = null
-    // eslint-disable-next-line fp/no-loops
-    for (let i = 0; i++; i < allThoughts.length) {
-      const thought = allThoughts[(i + randomStartIndex) % allThoughts.length]
-      if (isDeletable(thought)) {
-        deletableThought = thought
-        break
-      }
-    }
-
-    return deletableThought
-  }
-
   // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
   let stateNew = state
 
@@ -68,7 +72,7 @@ const freeThoughts = (state: State) => {
   // eslint-disable-next-line fp/no-loops
   while (Object.values(stateNew.thoughts.thoughtIndex).length > MAX_THOUGHTS - MAX_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
-    const deletableThought = findDeletableThought(stateNew)
+    const deletableThought = findDeletableThought(stateNew, preserveSet, { start: randomStartIndex })
     // If all thoughts are preserved, we should bail.
     // This is unlikely to happen, as MAX_THOUGHT_INDEX should usually exceed the number of visible thoughts.
     // In the worst case, this results in continuous attempts until the user collapses some thoughts, but will be throttled by the freeThoughts middleware.
