@@ -57,34 +57,7 @@ const freeThoughts = (state: State) => {
       // do not persist deletions; just delete from stateNew
       local: false,
       remote: false,
-      // prevent thought from being removed from parent
-      orphaned: true,
     })
-
-    // set parent to pending to allow thoughts to be reloaded if they become visible again
-    const parentThought = stateNew.thoughts.thoughtIndex[deletableThought.parentId]
-    if (parentThought) {
-      stateNew = {
-        ...stateNew,
-        thoughts: {
-          ...stateNew.thoughts,
-          thoughtIndex: {
-            ...stateNew.thoughts.thoughtIndex,
-            [deletableThought.parentId]: {
-              ...parentThought,
-              pending: true,
-            },
-          },
-        },
-      }
-    }
-
-    // TODO: Why is parent missing?
-    // else {
-    //   console.warn(
-    //     `Deallocated thought ${deletableThought.value} (${deletableThought.id}) parent is missing: ${deletableThought.parentId}`,
-    //   )
-    // }
   }
 
   return stateNew

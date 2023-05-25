@@ -58,10 +58,14 @@ export type UpdateThoughtsOptions = PushBatch & {
   idbSynced?: () => void
   isLoading?: boolean
   pendingEdits?: editThoughtPayload[]
-  // By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought.
+  /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
   preventExpandThoughts?: boolean
-  // If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.
-  // This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
+  /** Allow set pending on non-pending thought. This is mainly used by freeThoughts. */
+  overwritePending?: boolean
+  /**
+   * If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.
+   * This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
+   */
   repairCursor?: boolean
 }
 
@@ -196,6 +200,7 @@ const updateThoughts = (
     remote = true,
     idbSynced,
     isLoading,
+    overwritePending,
     repairCursor,
   }: UpdateThoughtsOptions,
 ) => {
@@ -204,8 +209,9 @@ const updateThoughts = (
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
 
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates)
-  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates)
+  // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
+  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 

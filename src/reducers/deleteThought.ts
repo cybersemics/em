@@ -197,9 +197,15 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
     ...(parent && {
       [parent.id]: {
         ...parent,
-        childrenMap: keyValueBy(parent?.childrenMap || {}, (key, id) => (id !== thoughtId ? { [key]: id } : null)),
-        lastUpdated: timestamp(),
-        updatedBy: clientId,
+        ...(local || remote
+          ? {
+              childrenMap: keyValueBy(parent?.childrenMap || {}, (key, id) =>
+                id !== thoughtId ? { [key]: id } : null,
+              ),
+              lastUpdated: timestamp(),
+              updatedBy: clientId,
+            }
+          : { pending: true }),
       } as Thought,
     }),
     [thoughtId]: null,
@@ -233,6 +239,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
       local,
       remote,
+      overwritePending: !local && !remote,
     }),
   ])(state)
 }
