@@ -21,16 +21,10 @@ const freeThoughts = (state: State) => {
     ...getDescendantThoughtIds(state, EM_TOKEN),
   ])
 
-  // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
-  let stateNew = state
-
-  // all thoughts will be updated after each deletion
-  let allThoughts = Object.values(state.thoughts.thoughtIndex)
-
-  // eslint-disable-next-line fp/no-loops
-  while (allThoughts.length > MAX_THOUGHTS - MAX_THOUGHTS_MARGIN) {
-    // find a thought that can be deleted
-    const deletableThought = allThoughts.find(
+  /** Find the next thought that can be safely deallocated. */
+  const findDeletableThought = (state: State) => {
+    const allThoughts = Object.values(state.thoughts.thoughtIndex)
+    return allThoughts.find(
       thought =>
         // do not delete any thought or child of a thought in the preserve set
         !preserveSet.has(thought.id) &&
@@ -41,7 +35,16 @@ const freeThoughts = (state: State) => {
         !isAttribute(thought.value) &&
         !thoughtToPath(state, thought.parentId).some(id => isAttribute(state.thoughts.thoughtIndex[id]?.value)),
     )
+  }
 
+  // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
+  let stateNew = state
+
+  // free thoughts until MAX_THOUGHTS is reached (minus MAX_THOUGHTS_MARGIN to provide some slack)
+  // eslint-disable-next-line fp/no-loops
+  while (Object.values(stateNew.thoughts.thoughtIndex).length > MAX_THOUGHTS - MAX_THOUGHTS_MARGIN) {
+    // find a thought that can be deleted
+    const deletableThought = findDeletableThought(stateNew)
     // If all thoughts are preserved, we should bail.
     // This is unlikely to happen, as MAX_THOUGHT_INDEX should usually exceed the number of visible thoughts.
     // In the worst case, this results in continuous attempts until the user collapses some thoughts, but will be throttled by the freeThoughts middleware.
@@ -50,8 +53,8 @@ const freeThoughts = (state: State) => {
     // delete the thought and all descendants to ensure thoughtIndex is still in integrity
     stateNew = deleteThought(stateNew, {
       thoughtId: deletableThought.id,
-      pathParent: thoughtToPath(state, deletableThought.parentId),
-      // do not persist deletions; just delete from state
+      pathParent: thoughtToPath(stateNew, deletableThought.parentId),
+      // do not persist deletions; just delete from stateNew
       local: false,
       remote: false,
       // prevent thought from being removed from parent
@@ -82,9 +85,6 @@ const freeThoughts = (state: State) => {
     //     `Deallocated thought ${deletableThought.value} (${deletableThought.id}) parent is missing: ${deletableThought.parentId}`,
     //   )
     // }
-
-    // we do not know how many thoughts were deleted
-    allThoughts = Object.values(stateNew.thoughts.thoughtIndex)
   }
 
   return stateNew
