@@ -373,6 +373,18 @@ export const replicateThought = async (
     token: accessToken,
   })
 
+  // Subscribe to unsyncedChanges, which indicates a thought has not yet synced with the websocket server.
+  // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
+  // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
+  const unsyncedChanges = new Promise<void>((resolve, reject) => {
+    /** Resolves when unsyncedChanges fires unsubscribes. */
+    const onUnsyncedChanges = () => {
+      websocketProvider.off('unsyncedChanges', onUnsyncedChanges)
+      resolve()
+    }
+    websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
+  })
+
   const idbSynced = persistence.whenSynced
     .then(() => {
       // if replicating in the background, destroy the HocuspocusProvider once synced
@@ -393,7 +405,7 @@ export const replicateThought = async (
 
   // a promise that resolves if/when the thought observes a value
   const websocketValueObserved = new Promise<SimpleYMapEvent<ThoughtYjs>>(resolve => {
-    /** Observe if/when the thought is populated. */
+    /** Observes when the thought is populated (once). May never fire. */
     const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
       if (e.transaction.origin !== websocketProvider) return
       const thought = getThought(doc)
@@ -405,39 +417,24 @@ export const replicateThought = async (
     thoughtMap.observe(observeUntilValue)
   })
 
-  const synced = Promise.race([idbSynced, websocketValueObserved])
-
-  // if foreground replication (i.e. pull), set thoughtDoc so that further calls to replicateThought will not re-replicate
+  // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateThought will not re-replicate
   if (!background) {
     thoughtDocs[id] = doc
-    thoughtSynced[id] = synced as Promise<void>
+    thoughtSynced[id] = idbSynced
     thoughtPersistence[id] = persistence
     thoughtWebsocketProvider[id] = websocketProvider
   }
 
-  await synced
+  // always wait for IDB to sync
+  await idbSynced
 
+  // if background replication, wait until websocket has synced
   if (background) {
-    // do not resolve background replication until websocket has synced
     if (sync) {
-      await websocketValueObserved
+      // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
+      // Otherwise replication will hang.
+      await Promise.race([unsyncedChanges, websocketValueObserved])
     }
-
-    // websocketSynced.then(e => {
-    // TODO: How to limit in-memory thoughts when they arrive out of order?
-    // Since onThoughtChange is not added as an observe handler during background replication, we need to call it manually when the thought or its parent is already in state.
-    // Otherwise, this client will not see real-time edits from remote clients.
-    // TODO: Check state.visibleThoughts (needs to be added to state) instead of all in-memory thoughts to avoid loading hidden descendants
-    // const state = store.getState()
-    // const exists = !!getThoughtByIdSelector(state, id)
-    // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-    // if (exists || existsParent) {
-    // thoughtMap.observe(onThoughtChange)
-    // } else {
-    // websocketProvider.destroy()
-    // }
-    // })
-    // thoughtMap.observe(onThoughtChange)
   } else {
     // Subscribe to changes on foreground replication
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
@@ -495,9 +492,21 @@ export const replicateLexeme = async (
       store.dispatch(alert(errorMessage))
     })
 
+  // Subscribe to unsyncedChanges, which indicates a Lexeme has not yet synced with the websocket server.
+  // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
+  // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
+  const unsyncedChanges = new Promise<void>((resolve, reject) => {
+    /** Resolves when unsyncedChanges fires and unsubscribes. */
+    const onUnsyncedChanges = () => {
+      websocketProvider.off('unsyncedChanges', onUnsyncedChanges)
+      resolve()
+    }
+    websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
+  })
+
   // a promise that resolves if/when the lexeme observes a value
   const websocketValueObserved = new Promise<SimpleYMapEvent<LexemeYjs>>(resolve => {
-    /** Observe if/when the lexeme is populated. */
+    /** Observes when the lexeme is populated (once). May never fire. */
     const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
       if (e.transaction.origin !== websocketProvider) return
       const lexeme = getLexeme(doc)
@@ -509,22 +518,21 @@ export const replicateLexeme = async (
     lexemeMap.observe(observeUntilValue)
   })
 
-  const synced = Promise.race([idbSynced, websocketValueObserved])
-
-  // if foreground replication (i.e. pull), set lexemeDoc so that further calls to replicateLexeme will not re-replicate
+  // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
   if (!background) {
     lexemeDocs[key] = doc
-    lexemeSynced[key] = synced as Promise<void>
+    lexemeSynced[key] = idbSynced
     lexemePersistence[key] = persistence
     lexemeWebsocketProvider[key] = websocketProvider
   }
 
-  await synced
+  // always wait for IDB to sync
+  await idbSynced
 
   if (background) {
     // do not resolve background replication until websocket has synced
     if (sync) {
-      await websocketValueObserved
+      await Promise.race([unsyncedChanges, websocketValueObserved])
     }
 
     // TODO: How to limit in-memory lexemes when they arrive out of order?
