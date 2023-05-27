@@ -46,13 +46,13 @@ services:
     deploy_on_push: true
     repo: cybersemics/em
   health_check: {}
-  http_port: 8080
+  http_port: 3001
   instance_count: 1
   instance_size_slug: basic-xxs
   name: em
   routes:
   - path: /
-  run_command: cd server && HOST=0.0.0.0 PORT=8080 npm run start
+  run_command: cd server && HOST=0.0.0.0 PORT=3001 npm run start
   source_dir: /
 ```
 
@@ -81,7 +81,7 @@ Available environment variables and defaults are listed below:
 
 - `process.env.DB_DOCLOGMETA` - data/doclogmeta.level
 - `process.env.HOST` - localhost
-- `process.env.POST` - 8080
+- `process.env.POST` - 3001
 - `process.env.DB_PERMISSIONS` - data/permissions.level
 - `process.env.DB_THOUGHTSPACE` - data/thoughtspace.level
 

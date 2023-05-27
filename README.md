@@ -29,12 +29,14 @@ cd server && npm install
 Start the live-reload server for local development:
 
 ```sh
+# starts a live-reload server at http://localhost:3000
 npm start
 ```
 
 To enable device syncing, start the websocket server:
 
 ```sh
+# starts a hocuspocus server at http://localhost:3001
 npm run websocket-server
 ```
 

@@ -19,7 +19,7 @@ import timestamp from '../src/util/timestamp'
 
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
-const port = process.env.PORT ? +process.env.PORT : 8080
+const port = process.env.PORT ? +process.env.PORT : 3001
 
 // contains a top level map for each thoughtspace Map<Share> mapping token -> permission
 const permissionsServerDoc = new Y.Doc()
