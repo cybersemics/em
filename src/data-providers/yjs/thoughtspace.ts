@@ -735,23 +735,16 @@ export const clear = async () => {
 }
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
-export const getLexemeById = async (key: string) => {
-  await replicateLexeme(key)
-  return getLexeme(lexemeDocs[key])
-}
+export const getLexemeById = (key: string) => replicateLexeme(key)
 
 /** Gets multiple thoughts from the lexemeIndex by key. */
-export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> =>
-  Promise.all(keys.map(getLexemeById))
+export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]> => Promise.all(keys.map(getLexemeById))
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
-export const getThoughtById = async (id: ThoughtId) => {
-  await replicateThought(id)
-  return getThought(thoughtDocs[id])
-}
+export const getThoughtById = (id: ThoughtId) => replicateThought(id)
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
-export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
+export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
