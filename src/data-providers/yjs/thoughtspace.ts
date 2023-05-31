@@ -361,8 +361,9 @@ export const replicateThought = async (
   // if the doc has already been initialized and added to thoughtDocs, return immediately
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
   // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
-  if (thoughtDocs[id] || process.env.NODE_ENV === 'test')
+  if (thoughtDocs[id] || process.env.NODE_ENV === 'test') {
     return thoughtSynced[id]?.then(() => getThought(doc)) || Promise.resolve()
+  }
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
