@@ -11138,9 +11138,9 @@ lib0@^0.2.43, lib0@^0.2.47:
     isomorphic.js "^0.2.4"
 
 lib0@^0.2.74:
-  version "0.2.74"
-  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.74.tgz#7a4cc816a0420e76de85009423c8ab63655ff817"
-  integrity sha512-roj9i46/JwG5ik5KNTkxP2IytlnrssAkD/OhlAVtE+GqectrdkfR+pttszVLrOzMDeXNs1MPt6yo66MUolWSiA==
+  version "0.2.78"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.78.tgz#9aa34733075caafb3edf228da6e609d15ada0088"
+  integrity sha512-SV2nU43/6eaYnGH3l0lg2wg1ziB/TH3sAd2E8quXPGwrqo+aX98SNT2ZKucpUr5B8A52jD7ZMjAl+r87Fa/bLQ==
   dependencies:
     isomorphic.js "^0.2.4"
 
@@ -18448,8 +18448,8 @@ xtend@^4.0.0, xtend@~4.0.1:
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
 
 "y-indexeddb@https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex":
-  version "9.0.10-multiplex.0"
-  resolved "https://github.com/raineorshine/y-indexeddb#fe8554b2146b78afe1e5c0d64dbbb287738636cd"
+  version "9.0.11-multiplex.0"
+  resolved "https://github.com/raineorshine/y-indexeddb#1898239b6758a7192c6ce79ca345f5d1cea6c644"
   dependencies:
     lib0 "^0.2.74"
 
