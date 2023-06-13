@@ -97,6 +97,7 @@ const replicationController = ({
   /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
   const replicationQueue = taskQueue<ReplicationResult>({
     autostart,
+    concurrency,
     onLowStep: ({ index, value, total }) => {
       if (value.type === 'thought') {
         updateThoughtReplicationCursor(value.index)
