@@ -68,8 +68,8 @@ process.on('SIGINT', function () {
   })
 })
 
-/** Syncs a doc with leveldb. */
-const syncLevelDb = async ({ db, docName, doc }: { db: any; docName: string; doc: Y.Doc }) => {
+/** Syncs a doc with leveldb and subscribes to updates. */
+const syncLevelDb = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
   db.storeUpdate(docName, updates)
