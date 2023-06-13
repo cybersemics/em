@@ -164,7 +164,7 @@ export const onLoadDocument = async ({
     })
 
     // persist non-permissions docs
-  } else if (ldbThoughtspace) {
+  } else {
     syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
   }
 
@@ -177,7 +177,7 @@ export const onLoadDocument = async ({
           const name =
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id)
           document.destroy()
-          await ldbThoughtspace?.clearDocument(name)
+          await ldbThoughtspace.clearDocument(name)
         }
       },
 
@@ -204,9 +204,7 @@ export const onLoadDocument = async ({
 // TODO: encrypt
 
 console.info('Loading permissions...')
-const permissionsServerSynced = ldbPermissions
-  ? syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
-  : Promise.resolve()
+const permissionsServerSynced = syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
 
 const server = Server.configure({
   port,
