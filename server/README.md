@@ -83,6 +83,6 @@ Available environment variables and defaults are listed below:
 - `process.env.HOST` - localhost
 - `process.env.POST` - 3001
 - `process.env.DB_PERMISSIONS` - data/permissions.level
-- `process.env.DB_THOUGHTSPACE` - data/thoughtspace.level
+- `process.env.DB_THOUGHTSPACE` - data/thoughts/
 
 Note: `npm run clear` only clears the default db locations. If you override `DB_DOCLOGMETA`, `DB_PERMISSIONS`, or `DB_THOUGHTSPACE`, you will need to manually delete the db files.

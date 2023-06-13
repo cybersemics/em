@@ -52,13 +52,15 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 }
 
 // setup db data directory
-if (!fs.existsSync('./data')) {
-  fs.mkdirSync('./data', { recursive: true })
-}
+fs.mkdirSync('./data/thoughts', { recursive: true })
+
 // meta information about the doclog, mainly the thoughtReplicationCursor
 const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || 'doclogmeta.level'), { valueEncoding: 'json' })
 const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_PERMISSIONS || 'permissions.level'))
-const ldbThoughtspace = new LeveldbPersistence(path.join('data', process.env.DB_THOUGHTSPACE || 'thoughts.level'))
+// indexed by tsid
+// set on loadDocument (idempotent)
+// deleted when doclog disconnects
+const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 
 // gracefully exist for pm2 reload
 // not that it matters... level has a lock on the db that prevents zero-downtime reload
@@ -162,13 +164,14 @@ export const onLoadDocument = async ({
         }
       })
     })
-
-    // persist non-permissions docs
-  } else {
-    syncLevelDb({ db: ldbThoughtspace, docName: documentName, doc: document })
-  }
-
-  if (type === 'doclog') {
+  } else if (type === 'thought' || type === 'lexeme') {
+    let db = ldbThoughtspaces.get(tsid)
+    if (!db) {
+      db = new LeveldbPersistence(path.join(process.env.DB_THOUGHTSPACE || 'data/thoughts', tsid))
+      ldbThoughtspaces.set(tsid, db)
+    }
+    syncLevelDb({ db, docName: documentName, doc: document })
+  } else if (type === 'doclog') {
     /** Use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted. */
     replicationController({
       doc: document,
@@ -177,7 +180,12 @@ export const onLoadDocument = async ({
           const name =
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id)
           document.destroy()
-          await ldbThoughtspace.clearDocument(name)
+          const db = ldbThoughtspaces.get(tsid)
+          if (!db) {
+            console.error('LeveldbPersistence instance missing', documentName)
+            return
+          }
+          await db.clearDocument(name)
         }
       },
 
@@ -214,6 +222,17 @@ const server = Server.configure({
     process.send?.('ready')
   },
   onLoadDocument,
+  onDisconnect: async ({ documentName }) => {
+    // remove the cached ldb database when the doclog disconnects
+    const { tsid, type } = parseDocumentName(documentName)
+    if (type === 'doclog') {
+      const db = ldbThoughtspaces.get(tsid)
+      if (db) {
+        db.destroy()
+        ldbThoughtspaces.delete(tsid)
+      }
+    }
+  },
 })
 
 // do not start server until permissions have synced
