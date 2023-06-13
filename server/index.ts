@@ -176,6 +176,7 @@ export const onLoadDocument = async ({
         if (action === DocLogAction.Delete) {
           const name =
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id)
+          document.destroy()
           await ldbThoughtspace?.clearDocument(name)
         }
       },
