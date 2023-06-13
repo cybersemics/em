@@ -13,6 +13,8 @@ import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
+import getLexemeSelector from '../../selectors/getLexeme'
+import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -92,6 +94,10 @@ new HocuspocusProvider({
   token: accessToken,
 })
 
+// Track when the initial replication completes.
+// This allows us to avoid prematurely switching to foreground replication.
+let replicated = false
+
 const replication = replicationController({
   // begin paused, and only start after initial pull has completed
   autostart: false,
@@ -127,6 +133,7 @@ const replication = replicationController({
     syncStatusStore.update({ replicationProgress: completed / total })
   },
   onEnd: () => {
+    replicated = true
     syncStatusStore.update({ replicationProgress: 1 })
   },
 })
@@ -345,12 +352,16 @@ export const replicateThought = async (
     background,
     sync,
   }: {
-    // do not store thought doc in memory
-    // do not update thoughtIndex
-    // destroy IndexedDBPersistence after sync
-    // destroy HocuspocusProvider after sync
+    /**
+     * Replicate in the background, meaning:
+     * - *Do not update Redux state.
+     * - Do not store thought doc in memory.
+     * - Destroy IndexedDBPersistence after sync.
+     * - Destroy HocuspocusProvider after sync.
+     * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
+     */
     background?: boolean
-    // do not resolve until websocket is synced
+    /** Do not resolve until websocket is synced. Only used with background sync. */
     sync?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
@@ -436,6 +447,22 @@ export const replicateThought = async (
       // Otherwise replication will hang.
       await Promise.race([unsyncedChanges, websocketValueObserved])
     }
+
+    // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
+    // Otherwise remote changes will not be rendered.
+    const thought = getThought(doc)
+    if (!replicated || !thought) return
+    const state = store.getState()
+    const loaded = !!getThoughtByIdSelector(state, id) || !!getThoughtByIdSelector(state, thought.parentId)
+    if (loaded) {
+      onThoughtChange({
+        target: doc.getMap(),
+        transaction: {
+          origin: websocketProvider,
+        },
+      })
+      thoughtMap.observe(onThoughtChange)
+    }
   } else {
     // Subscribe to changes on foreground replication
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
@@ -452,12 +479,14 @@ export const replicateLexeme = async (
     background,
     sync,
   }: {
-    // do not store lexeme doc in memory
-    // do not update lexemeIndex
-    // destroy IndexedDBPersistence after sync
-    // destroy HocuspocusProvider after sync
+    /**
+     * Do not store thought doc in memory.
+     * Do not update thoughtIndex.
+     * Destroy IndexedDBPersistence after sync.
+     * Destroy HocuspocusProvider after sync.
+     */
     background?: boolean
-    // do not resolve until websocket is synced
+    /** Do not resolve until websocket is synced. Only used with background sync. */
     sync?: boolean
   } = {},
 ): Promise<Lexeme | undefined> => {
@@ -493,7 +522,7 @@ export const replicateLexeme = async (
       store.dispatch(alert(errorMessage))
     })
 
-  // Subscribe to unsyncedChanges, which indicates a Lexeme has not yet synced with the websocket server.
+  // Subscribe to websocketProvider's unsyncedChanges, which indicates a Lexeme was created locally and has not yet synced with the websocket server.
   // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
   // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
   const unsyncedChanges = new Promise<void>((resolve, reject) => {
@@ -536,16 +565,21 @@ export const replicateLexeme = async (
       await Promise.race([unsyncedChanges, websocketValueObserved])
     }
 
-    // TODO: How to limit in-memory lexemes when they arrive out of order?
-    // Since onLexemeChange is not added as an observe handler during background replication, we need to call it manually when any of the lexeme's contexts are already in state.
-    // Otherwise, this client will not see real-time edits from remote clients.
-    // const state = store.getState()
-    // const exists = !!getThoughtByIdSelector(state, id)
-    // const existsParent = !!getThoughtByIdSelector(state, thought.parentId)
-    // if (exists || existsParent) {
-    // } else {
-    //   websocketProvider.destroy()
-    // }
+    // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
+    // Otherwise remote changes will not be rendered.
+    const lexeme = getLexeme(doc)
+    if (!replicated || !lexeme) return
+    const state = store.getState()
+    const loaded = !!getLexemeSelector(state, key) || lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))
+    if (loaded) {
+      onLexemeChange({
+        target: doc.getMap(),
+        transaction: {
+          origin: websocketProvider,
+        },
+      })
+      lexemeMap.observe(onLexemeChange)
+    }
   } else {
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
