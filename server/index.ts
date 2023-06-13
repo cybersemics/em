@@ -72,7 +72,7 @@ process.on('SIGINT', function () {
 const syncLevelDb = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
-  db.storeUpdate(docName, updates)
+  await db.storeUpdate(docName, updates)
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
   doc.on('update', update => {
     db.storeUpdate(docName, update)
