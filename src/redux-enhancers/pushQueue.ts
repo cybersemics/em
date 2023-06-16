@@ -72,10 +72,6 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
     ...batch.recentlyEdited,
   },
   pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
-  pendingLexemes: {
-    ...(accum.pendingLexemes || {}),
-    ...(batch.pendingLexemes || {}),
-  },
   updates: {
     ...accum.updates,
     ...batch.updates,

@@ -16,7 +16,6 @@ interface PushBatch {
   local?: boolean
   // contains the path of the pending thought to be deleted and all its siblings. Siblings may be resurrected from the pull, and the parent has already been deleted, so we need to store them to be deleted in flushDeletes.
   pendingDeletes?: { path: Path; siblingIds: ThoughtId[] }[]
-  pendingLexemes?: Index<boolean>
   recentlyEdited?: RecentlyEditedTree
   // Update the remote server. Default: true.
   // Set to false to free memory (See: local)

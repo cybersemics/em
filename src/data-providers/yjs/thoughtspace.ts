@@ -5,7 +5,6 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
-import LexemeDb from '../../@types/LexemeDb'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
@@ -34,6 +33,11 @@ import replicationController from './replicationController'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: string) => Promise<void> }
+
+/** A Lexeme database type that defines contexts as separate keys. */
+type LexemeDb = Omit<Lexeme, 'contexts'> & {
+  [`cx-{string}`]: boolean
+}
 
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
@@ -237,11 +241,22 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
-const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
+const updateLexeme = async (key: string, lexemeNew: Lexeme): Promise<void> => {
+  // get the old Lexeme to determine context deletions
+  // TODO: Pass the diffed contexts all the way through from updateThouhgts.
+  // The YJS Lexeme should be the same as the old Lexeme in State, since they are synced.
+  // If the Lexeme has not yet been loaded from YJS, then we can ignore deletions, as a Lexeme normally cannot be deleted before it has been loaded. Unless the user creates and deletes the Lexeme so quickly that IDB is still loading (?).
+  // In light of all that, it would be better to get the deletions directly from the reducer.
+  const lexemeOld = getLexeme(lexemeDocs[key])
+
   if (!lexemeDocs[key]) {
-    replicateLexeme(key)
+    await replicateLexeme(key)
   }
+  const lexemeReplicated = getLexeme(lexemeDocs[key])
   const lexemeDoc = lexemeDocs[key]
+
+  // The Lexeme may be deleted if the user creates and deletes a thought very quickly
+  if (!lexemeDoc) return
 
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
@@ -254,30 +269,20 @@ const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
 
   lexemeDoc.transact(() => {
     const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
-    Object.entries(lexeme).forEach(([key, value]) => {
-      // merge contexts Y.Map
+    Object.entries(lexemeNew).forEach(([key, value]) => {
       if (key === 'contexts') {
-        const contextsObject = keyValueBy(value as ThoughtId[], cxid => ({ [cxid]: true }))
-        // keyed by context ThoughtId
-        let contextsMap = lexemeMap.get('contexts') as Y.Map<true>
+        const contextMapNew = keyValueBy(value as ThoughtId[], cxid => ({ [cxid]: true }))
 
-        // create new Y.Map for new lexeme
-        if (!contextsMap) {
-          contextsMap = new Y.Map()
-          lexemeMap.set('contexts', contextsMap)
-        }
-
-        // delete contexts from the yjs lexeme that are no longer in the state lexeme
-        contextsMap.forEach((value: true, cxid: string) => {
-          if (!contextsObject[cxid]) {
-            contextsMap.delete(cxid)
-          }
+        // add contexts to YJS that have been added to state
+        lexemeNew.contexts.forEach(cxid => {
+          lexemeMap.set(`cx-${cxid}`, true as any)
         })
 
-        // add children that are not in the yjs lexeme
-        lexeme.contexts.forEach(cxid => {
-          if (!contextsMap.has(cxid)) {
-            contextsMap.set(cxid, true)
+        // delete contexts from YJS that have been removed from state
+        // Note: It would be better to get this directly from the reducer. Not sure if this is completely safe.
+        lexemeOld?.contexts.forEach(cxid => {
+          if (!contextMapNew[cxid]) {
+            lexemeMap.delete(`cx-${cxid}`)
           }
         })
       }
@@ -286,6 +291,18 @@ const updateLexeme = async (key: string, lexeme: Lexeme): Promise<void> => {
         lexemeMap.set(key, value)
       }
     })
+
+    // If the Lexeme was pending, we need to update state with the new Lexeme with merged cxids.
+    // Otherwise, Redux state can become out of sync with YJS, and additional edits can result in missing Lexeme cxids.
+    // (It is not entirely clear how this occurs, as the delete case does not seem to be triggered.)
+    if (!lexemeOld && lexemeReplicated) {
+      onLexemeChange({
+        target: lexemeDoc.getMap(),
+        transaction: {
+          origin: lexemePersistence[key],
+        },
+      })
+    }
   }, lexemeDoc.clientID)
 
   await Promise.all([transactionPromise, idbSynced])
@@ -455,12 +472,6 @@ export const replicateThought = async (
     const state = store.getState()
     const loaded = !!getThoughtByIdSelector(state, id) || !!getThoughtByIdSelector(state, thought.parentId)
     if (loaded) {
-      onThoughtChange({
-        target: doc.getMap(),
-        transaction: {
-          origin: websocketProvider,
-        },
-      })
       thoughtMap.observe(onThoughtChange)
     }
   } else {
@@ -514,6 +525,13 @@ export const replicateLexeme = async (
     .then(() => {
       if (background) {
         persistence.destroy()
+      } else {
+        onLexemeChange({
+          target: doc.getMap(),
+          transaction: {
+            origin: websocketProvider,
+          },
+        })
       }
     })
     .catch(e => {
@@ -590,9 +608,10 @@ export const replicateLexeme = async (
 }
 
 /** Gets a Thought from a thought Y.Doc. */
-const getThought = (thoughtDoc: Y.Doc): Thought | undefined => {
+const getThought = (thoughtDoc: Y.Doc | undefined): Thought | undefined => {
+  if (!thoughtDoc) return
   const thoughtMap = thoughtDoc.getMap()
-  if (thoughtMap.size === 0) return undefined
+  if (thoughtMap.size === 0) return
   const thoughtRaw = thoughtMap.toJSON()
   return {
     ...thoughtRaw,
@@ -604,19 +623,22 @@ const getThought = (thoughtDoc: Y.Doc): Thought | undefined => {
 }
 
 /** Gets a Lexeme from a lexeme Y.Doc. */
-const getLexeme = (lexemeDoc: Y.Doc): Lexeme | undefined => {
+const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
+  if (!lexemeDoc) return
   const lexemeMap = lexemeDoc.getMap()
-  if (lexemeMap.size === 0) return undefined
-  const lexemeRaw = lexemeMap.toJSON()
-  return {
-    ...lexemeRaw,
-    // convert between yjs contexts and state contexts
-    // contexts are stored as an object { [key: ThoughtId]: true } in yjs
-    // contexts are stored as an array in local state
-    // TODO: Change state contexts to objects for consistency
-    // TODO: Why is contexts sometimes a YMap and sometimes a plain object?
-    contexts: Object.keys(lexemeRaw.contexts.toJSON ? lexemeRaw.contexts.toJSON() : lexemeRaw.contexts) as ThoughtId[],
-  } as Lexeme
+  if (lexemeMap.size === 0) return
+  const lexemeRaw = lexemeMap.toJSON() as LexemeDb
+  const lexeme = Object.entries(lexemeRaw).reduce<Partial<Lexeme>>(
+    (acc, [key, value]) => {
+      const cxid = key.split('cx-')[1] as ThoughtId | undefined
+      return {
+        ...acc,
+        [cxid ? 'contexts' : key]: cxid ? [...(acc.contexts || []), cxid] : value,
+      }
+    },
+    { contexts: [] },
+  )
+  return lexeme as Lexeme
 }
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
