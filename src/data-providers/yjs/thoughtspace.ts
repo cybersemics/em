@@ -112,7 +112,7 @@ const replication = replicationController({
       await (type === 'thought'
         ? replicateThought(id as ThoughtId, { background: true, sync: true })
         : replicateLexeme(id, { background: true, sync: true }))
-    } else {
+    } else if (action === DocLogAction.Delete) {
       store.dispatch(
         updateThoughtsActionCreator({
           thoughtIndexUpdates: {},
@@ -128,9 +128,11 @@ const replication = replicationController({
 
       if (type === 'thought') {
         await deleteThought(id as ThoughtId)
-      } else {
+      } else if (type === 'lexeme') {
         await deleteLexeme(id)
       }
+    } else {
+      throw new Error('Unknown DocLogAction: ' + action)
     }
   },
   onStep: ({ completed, index, total, value }) => {
