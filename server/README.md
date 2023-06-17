@@ -99,23 +99,15 @@ Note: `npm run clear` only clears the default db locations. If you override `DB_
 # Backups
 
 ```
-# setup
 cd server
-npm install s3-cli@https://github.com/raineorshine/node-s3-cli
-cd node_modules/s3
-npm install graceful-fs@latest
-cd ../../
 
 # config (enter AWS api key and secret)
 echo "[default]
 access_key=
 secret_key=
-endpoint=nyc3.digitaloceanspaces.com" > ~/.s3cfg
-vi ~/.s3cfg
+endpoint=nyc3.digitaloceanspaces.com" > .s3cfg
+vi .s3cfg
 
-# ls
-server/node_modules/s3-cli/cli.js ls s3://em-staging/
-
-# backup
-server/node_modules/s3-cli/cli.js sync data s3://em-staging/backup/2013/06/2023-06-13T23:44:05.346Z
+# backup to S3 endpoint (DigitalOcean Spaces)
+scripts/backup.sh
 ```

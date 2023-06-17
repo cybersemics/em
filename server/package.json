@@ -13,7 +13,8 @@
   "dependencies": {
     "@hocuspocus/server": "^2.0.6",
     "level": "^6.0.1",
-    "y-leveldb": "^0.1.2"
+    "y-leveldb": "^0.1.2",
+    "s3-cli": "https://github.com/raineorshine/node-s3-cli"
   },
   "devDependencies": {
     "@types/level": "^6.0.1",
@@ -22,5 +23,8 @@
   },
   "peerDependencies": {
     "yjs": "^13.5.29"
+  },
+  "overrides": {
+    "graceful-fs": "^4.2.11"
   }
 }
