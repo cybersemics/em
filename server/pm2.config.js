@@ -12,5 +12,18 @@ module.exports = {
       script: './build/server/index.js',
       wait_ready: true,
     },
+    {
+      name: 'backup',
+      script: './scripts/backup.sh',
+      // requires pm2 delete backup or pm2 restart backup --cron-restart 0 to stop
+      // pm2 stop does not terminate the cron
+      cron_restart: '0 0 * * *',
+      // stop_exit_codes is not working yet
+      // https://github.com/Unitech/pm2/issues/5208
+      // stop_exit_codes: [0],
+      // exp_backoff_restart_delay: 100,
+      autorestart: false,
+      max_memory_restart: '500M',
+    },
   ],
 }

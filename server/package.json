@@ -2,11 +2,13 @@
   "scripts": {
     "build": "rm -rf build ; npx tsc",
     "clear": "rm -rf ./data",
+    "kill": "pm2 kill",
     "start": "pm2 start pm2.config.js",
-    "logs": "pm2 logs server",
+    "logs": "pm2 logs",
     "monit": "pm2 monit",
     "restart": "pm2 restart pm2.config.js",
-    "stop": "pm2 stop pm2.config.js"
+    "status": "pm2 status pm2.config.js",
+    "stop": "pm2 delete backup ; pm2 stop pm2.config.js"
   },
   "dependencies": {
     "@hocuspocus/server": "^2.0.6",
