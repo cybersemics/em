@@ -331,3 +331,111 @@ it('clear', async () => {
 
   expect(counter).toBe(0)
 })
+
+it('retry once', async () => {
+  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  let attempts = 0
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValueTimeout = (s: string, n: number, forceTimeout?: number) => async () => {
+    if (forceTimeout && attempts < forceTimeout) {
+      attempts++
+      await sleep(999999)
+    }
+    await sleep(n)
+    return s
+  }
+
+  await taskQueue<string>({
+    // eslint-disable-next-line fp/no-mutating-methods
+    onStep: result => outputStep.push(result),
+    // eslint-disable-next-line fp/no-mutating-methods
+    onLowStep: result => outputLowStep.push(result),
+    retries: 2,
+    timeout: 50,
+    tasks: [delayedValueTimeout('a', 10), delayedValueTimeout('b', 20, 1), delayedValueTimeout('c', 30)],
+  }).end
+
+  expect(attempts).toEqual(1)
+
+  expect(outputStep).toEqual([
+    { completed: 1, total: 3, index: 0, value: 'a' },
+    { completed: 2, total: 3, index: 2, value: 'c' },
+    { completed: 3, total: 3, index: 1, value: 'b' },
+  ])
+
+  expect(outputLowStep).toEqual([
+    { completed: 1, total: 3, index: 0, value: 'a' },
+    { completed: 3, total: 3, index: 1, value: 'b' },
+    { completed: 3, total: 3, index: 2, value: 'c' },
+  ])
+})
+
+it('retry many', async () => {
+  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  let attempts = 0
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValueTimeout = (s: string, n: number) => async () => {
+    // hangs 10% of the time
+    if (Math.random() > 0.1) {
+      attempts++
+      await sleep(999999)
+    }
+    await sleep(n)
+    return s
+  }
+
+  await taskQueue<string>({
+    // eslint-disable-next-line fp/no-mutating-methods
+    onStep: result => outputStep.push(result),
+    // eslint-disable-next-line fp/no-mutating-methods
+    onLowStep: result => outputLowStep.push(result),
+    retries: 999,
+    timeout: 1,
+    tasks: [delayedValueTimeout('a', 0), delayedValueTimeout('b', 0), delayedValueTimeout('c', 0)],
+  }).end
+
+  expect(attempts).toBeGreaterThan(1)
+})
+
+it('retry exceeds timeout', async () => {
+  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  let attempts = 0
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValueTimeout = (s: string, n: number, forceTimeout?: number) => async () => {
+    if (forceTimeout && attempts < forceTimeout) {
+      attempts++
+      await sleep(999999)
+    }
+    await sleep(n)
+    return s
+  }
+
+  const queue = await taskQueue<string>({
+    // eslint-disable-next-line fp/no-mutating-methods
+    onStep: result => outputStep.push(result),
+    // eslint-disable-next-line fp/no-mutating-methods
+    onLowStep: result => outputLowStep.push(result),
+    retries: 2,
+    timeout: 50,
+    tasks: [delayedValueTimeout('a', 10), delayedValueTimeout('b', 20, 999), delayedValueTimeout('c', 30)],
+  })
+
+  const errorMessage = await queue.end.catch(e => e.message)
+
+  expect(errorMessage).toBe('Task timed out and retries exceeded.')
+
+  expect(attempts).toEqual(3)
+
+  expect(outputStep).toEqual([
+    { completed: 1, total: 3, index: 0, value: 'a' },
+    { completed: 2, total: 3, index: 2, value: 'c' },
+  ])
+
+  expect(outputLowStep).toEqual([{ completed: 1, total: 3, index: 0, value: 'a' }])
+})

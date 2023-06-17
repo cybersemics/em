@@ -1,3 +1,29 @@
+/** Returns a new task that retries the given task up to n times if it out. */
+const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (() => Promise<any>) => {
+  let retryTimer = 0
+
+  /** Recursive retry function with decrementing retries. */
+  const retry = (retries: number): Promise<any> =>
+    Promise.race([
+      Promise.resolve(f()).then(result => {
+        clearTimeout(retryTimer)
+        return result
+      }),
+      new Promise((resolve, reject) => {
+        retryTimer = window.setTimeout(() => {
+          if (retries <= 0) {
+            const errorMessage = 'Task timed out and retries exceeded.'
+            reject(new Error(errorMessage))
+            return
+          }
+          resolve(retry(retries - 1))
+        }, ms)
+      }),
+    ])
+
+  return () => retry(retries)
+}
+
 /** A simple task queue with concurrency. */
 const taskQueue = <
   // task return type (that gets passed to onStep and onLowStep)
@@ -8,7 +34,9 @@ const taskQueue = <
   onLowStep,
   onStep,
   onEnd,
+  retries,
   tasks,
+  timeout = 30000,
 }: {
   /** Starts running tasks as soon as they are added. Set to false to start paused. */
   autostart?: boolean
@@ -20,8 +48,12 @@ const taskQueue = <
   onStep?: (args: { completed: number; total: number; index: number; value: T }) => void
   /** An event that is called when all tasks have completed. */
   onEnd?: (total: number) => void
+  /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
+  retries?: number
   /** Initial tasks to populate the queue with. */
   tasks?: ((() => T | Promise<T>) | null | undefined)[]
+  /** Default timeout before retry. Only has an effect when retries option is set. Defaults to 30 sec. */
+  timeout?: number
 } = {}) => {
   if (concurrency <= 0) {
     throw new Error(`Invalid concurrency: ${concurrency}. Concurrency must be > 0.`)
@@ -61,7 +93,7 @@ const taskQueue = <
 
   // wrap tick in a promise that resolves onEnd
   let tick: () => void = null as any
-  const endPromise = new Promise(resolve => {
+  const endPromise = new Promise((resolve, reject) => {
     /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
     tick = () => {
       if (paused || running >= concurrency) return
@@ -76,30 +108,38 @@ const taskQueue = <
 
       const index = nextIndex()
       running++
-      Promise.resolve(task()).then((value: T) => {
-        completed++
-        running--
 
-        onStep?.({ completed, total, index, value })
+      const retriableTask = retries ? retriable(task, retries, timeout) : task
+      Promise.resolve(retriableTask())
+        .then((value: T) => {
+          completed++
+          running--
 
-        completedByIndex.set(index, { index, value })
-        // eslint-disable-next-line fp/no-loops
-        while (completedByIndex.has(indexCompleted)) {
-          const task = completedByIndex.get(indexCompleted)!
-          completedByIndex.delete(indexCompleted)
-          onLowStep?.({ ...task, completed, total })
-          indexCompleted++
-        }
+          onStep?.({ completed, total, index, value })
 
-        if (queue.length === 0 && running === 0) {
-          onEnd?.(total)
-          resolve(total)
-          completed = 0
-          total = 0
-        }
+          completedByIndex.set(index, { index, value })
+          // eslint-disable-next-line fp/no-loops
+          while (completedByIndex.has(indexCompleted)) {
+            const task = completedByIndex.get(indexCompleted)!
+            completedByIndex.delete(indexCompleted)
+            onLowStep?.({ ...task, completed, total })
+            indexCompleted++
+          }
 
-        tick()
-      })
+          if (queue.length === 0 && running === 0) {
+            onEnd?.(total)
+            resolve(total)
+            completed = 0
+            total = 0
+            return
+          }
+
+          tick()
+        })
+        .catch(err => {
+          paused = true
+          reject(err)
+        })
 
       tick()
     }
