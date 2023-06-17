@@ -107,6 +107,8 @@ const replicationController = ({
     },
     onStep,
     onEnd,
+    retries: 4,
+    timeout: 10000,
   })
 
   // since storage is async, we need to wait for the replication cursor to be initialized before observing doclog updates
