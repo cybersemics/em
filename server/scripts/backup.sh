@@ -39,9 +39,15 @@ zip -r "$ZIP_PATH" data &>/dev/null
 S3_UPLOAD_PATH="s3://em-staging/backup/$DATE_DIR/$DATE.zip"
 echo "uploading $S3_UPLOAD_PATH"
 s3-cli put "$ZIP_PATH" "$S3_UPLOAD_PATH"
+UPLOAD_EXIT_CODE=$?
 
 # delete zip
 rm -rf backup_temp
+
+if [ $UPLOAD_EXIT_CODE -ne 0 ]; then
+  echo "error uploading"
+  exit 1
+fi
 
 # Delete daily backup starting 3 months ago.
 # Do not delete the backup from the first of the month in order to preserve monthly backups.
@@ -50,6 +56,13 @@ then
   S3_DELETE_PATH="s3://em-staging/backup/$DATE_DIR_90DAYS/$DATE_90DAYS.zip"
   echo "deleting $S3_DELETE_PATH"
   s3-cli del "$S3_DELETE_PATH"
+  DELETE_EXIT_CODE=$?
+
+  if [ $DELETE_EXIT_CODE -ne 0 ]; then
+    echo "error deleting"
+    exit 1
+  fi
+
 fi
 
 echo "end"
