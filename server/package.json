@@ -1,4 +1,5 @@
 {
+  "name": "em-server",
   "scripts": {
     "build": "rm -rf build ; npx tsc",
     "clear": "rm -rf ./data",
