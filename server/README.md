@@ -96,8 +96,8 @@ The server uses its own environment variables for configuration (not to be confu
 - `process.env.DB_DOCLOGMETA` - Doclog db location. Default: `data/doclogmeta.level`
 - `process.env.HOST` - localhost
 - `process.env.PORT` - 3001
-- `process.env.DB_PERMISSIONS` - Permissions db location. Default: `data/permissions.level`
-- `process.env.DB_THOUGHTSPACE` - Directory for thoughtspace dbs. Default: `./data/thoughts/`
-- `process.env.AWS_ACCESS_KEY` - _You may need to use .s3cfg instead of an environment variable._
-- `process.env.AWS_SECRET_KEY` - _You may need to use .s3cfg instead of an environment variable._
-- `process.env.AWS_ENDPOINT` - _You may need to use .s3cfg instead of an environment variable._
+- `process.env.DB_PERMISSIONS` - Permissions leveldb location. Default: `data/permissions.level`
+- `process.env.DB_THOUGHTSPACE` - Directory for thoughtspace leveldbs. Default: `./data/thoughts/`
+- `process.env.AWS_ACCESS_KEY` - AWS access key for server/backup script.
+- `process.env.AWS_SECRET_KEY` - AWS secret key for server/backup script.
+- `process.env.AWS_ENDPOINT` - AWS endpoint for server/backup script. Default: nyc3.digitaloceanspaces.com
