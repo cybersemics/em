@@ -1,3 +1,4 @@
+shopt -s expand_aliases
 alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
 
 # Generates a date a given number of days in the past.
