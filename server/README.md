@@ -4,7 +4,10 @@ A HocusPocus websocket server that automatically connects to the em front-end, s
 
 1. `npm install`
 2. `npm run build`
-3. Create an `.s3cfg` file in the server directory and add an S3 configuration. This is used by the `backup` pm2 process which zips the database and uploads it to an S3 endpoint daily.
+3. Create an `.s3cfg` file in the server directory and add an S3 configuration.
+
+   - This is used by the `backup` pm2 process which zips the database and uploads it to an S3 endpoint daily.
+   - Daily backups are deleted after 90 days and monthly backups on the 1st of the month are retained.
 
    ```ini
    # See: https://github.com/raineorshine/node-s3-cli
