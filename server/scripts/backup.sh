@@ -1,8 +1,3 @@
-if [ ! -d data ]; then
-  echo "Nothing to backup; data directory does not yet exist."
-  exit 0
-fi
-
 shopt -s expand_aliases
 alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
 
@@ -74,10 +69,16 @@ if [ -n "$arg_restore" ]; then
     exit 1
   fi
 
-  # move data to a temporary location before deleting in case something goes wrong
-  echo "swapping data"
-  mv "$DATA_DIR" "$OLD_DIR" &&
-  mv "$NEW_DIR/$DATA_DIR" . &&
+  # move old data to a temporary location before deleting in case something goes wrong
+  if [ -d "$DATA_DIR" ]; then
+    echo "swapping data"
+     mv "$DATA_DIR" "$OLD_DIR"]
+  else
+    echo "no existing data"
+  fi
+
+  # move new data to /data
+  mv "$NEW_DIR/$DATA_DIR" . || exit 1
 
   # now it should be safe to delete everything
   echo "cleaning up"
@@ -90,6 +91,11 @@ fi
 ####################################################
 # Backup
 ####################################################
+
+if [ ! -d data ]; then
+  echo "Nothing to backup; data directory does not yet exist."
+  exit 0
+fi
 
 # Generates a date a given number of days in the past.
 # Normalizes OSX and Unix format for past dates.

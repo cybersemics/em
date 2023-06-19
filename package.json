@@ -36,6 +36,7 @@
     "deploy:patch": "npm run lint && npm version patch && npm run build && firebase deploy --only hosting",
     "deploy:staging": "npm run lint && npm run build && firebase hosting:channel:deploy staging --expires 30d",
     "postinstall": "husky install && patch-package",
+    "predeploy": "scripts/backup.sh --restore --path /backup/predeploy.zip",
     "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:lockfile": "npx lockfile-lint",
