@@ -1,3 +1,8 @@
+if [ ! -d data ]; then
+  echo "Nothing to backup; data directory does not yet exist."
+  exit 0
+fi
+
 shopt -s expand_aliases
 alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
 
