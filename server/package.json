@@ -1,6 +1,7 @@
 {
   "name": "em-server",
   "scripts": {
+    "backup": "pm2 restart backup --cron-restart 0",
     "build": "rm -rf build ; npx tsc",
     "clear": "rm -rf ./data",
     "kill": "pm2 kill",
