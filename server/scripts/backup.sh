@@ -12,6 +12,7 @@ while [[ "$#" -gt 0 ]]; do
 
     # key-value options
     --path) arg_path="$2"; shift ;;
+    --restore) arg_restore=1 ;;
 
     # binary options
     # --force) arg_force=1 ;;
@@ -21,9 +22,10 @@ while [[ "$#" -gt 0 ]]; do
 
 Zips the leveldb database and uploads it to S3. Maintains daily backups for 90 days and then monthly backups.
 
-  --path    Specify an S3 path to upload to. Defaults to yesterday in the format /backup/2023/19/2023-19-6.zip. When an 
-            explicit path is not provided, the script will delete the backup from 90 days ago as long as it is not the 
-            first of the month.
+  --path      Specify an S3 path to upload to. Defaults to yesterday in the format /backup/2023/19/2023-19-6.zip. When an 
+              explicit path is not provided, the script will delete the backup from 90 days ago as long as it is not the 
+              first of the month.
+  --restore   Restore a specified S3 backup stored at --path. Permanently overwrites the current database.
 "
       exit 0
     ;;
@@ -33,6 +35,61 @@ Zips the leveldb database and uploads it to S3. Maintains daily backups for 90 d
   esac
   shift
 done
+
+S3_RELATIVE_PATH=${arg_path:-"/backup/$DATE_DIR/$DATE.zip"}
+S3_UPLOAD_PATH="s3://em-staging$S3_RELATIVE_PATH"
+DATA_DIR="data"
+STAGING_DIR=_backup # include in .gitignore
+
+####################################################
+# Restore
+####################################################
+
+if [ -n "$arg_restore" ]; then
+  if [ -z "$arg_path" ]; then
+    echo "--path is required when using --restore"
+    exit 1
+  fi
+
+  RESTORE_ZIP="$STAGING_DIR/data.zip"
+  NEW_DIR="$STAGING_DIR/data_new"
+  OLD_DIR=$STAGING_DIR/data_old
+
+  # staging directory should not exist, but delete it just in case a previous execution failed
+  rm -rf "$STAGING_DIR"
+
+  echo "downloading"
+  s3-cli get "$S3_UPLOAD_PATH" "$RESTORE_ZIP" ; DOWNLOAD_EXIT_CODE="$?"
+
+  if [ $DOWNLOAD_EXIT_CODE -ne 0 ]; then
+    echo "Download error"
+    exit 1
+  fi
+
+  echo "unzipping"
+  unzip "$RESTORE_ZIP" -d "$NEW_DIR" &>/dev/null ; UNZIP_EXIT_CODE="$?"
+
+  if [ $UNZIP_EXIT_CODE -ne 0 ]; then
+    echo "Unzip error"
+    exit 1
+  fi
+
+  # move data to a temporary location before deleting in case something goes wrong
+  echo "swapping data"
+  mv "$DATA_DIR" "$OLD_DIR" &&
+  mv "$NEW_DIR/$DATA_DIR" . &&
+
+  # now it should be safe to delete everything
+  echo "cleaning up"
+  rm -rf "$STAGING_DIR"
+
+  echo "restored"
+  exit 0
+fi
+
+####################################################
+# Backup
+####################################################
 
 # Generates a date a given number of days in the past.
 # Normalizes OSX and Unix format for past dates.
@@ -63,20 +120,18 @@ DATE_90DAYS_DAY=$(daysago "+%d" 91)
 echo "backup $DATE"
 
 # zip
-mkdir -p backup_temp
-ZIP_PATH="backup_temp/$DATE.zip"
-zip -r "$ZIP_PATH" data &>/dev/null
+mkdir -p "$STAGING_DIR"
+ZIP_PATH="$STAGING_DIR/$DATE.zip"
+zip -r "$ZIP_PATH" "$DATA_DIR" &>/dev/null
 
 # upload to AWS
 # https://github.com/raineorshine/node-s3-cli
-S3_RELATIVE_PATH=${arg_path:="/backup/$DATE_DIR/$DATE.zip"}
-S3_UPLOAD_PATH="s3://em-staging$S3_RELATIVE_PATH"
 echo "uploading $S3_UPLOAD_PATH"
 s3-cli put "$ZIP_PATH" "$S3_UPLOAD_PATH"
 UPLOAD_EXIT_CODE=$?
 
 # delete zip
-rm -rf backup_temp
+rm -rf "$STAGING_DIR"
 
 if [ $UPLOAD_EXIT_CODE -ne 0 ]; then
   echo "error uploading"

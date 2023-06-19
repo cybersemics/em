@@ -2,3 +2,6 @@ build
 data
 backup_temp
 .s3cfg
+
+# temp directories for scripts/backup.sh
+_backup*
