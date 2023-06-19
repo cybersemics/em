@@ -10,14 +10,14 @@ const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (()
         return result
       }),
       new Promise((resolve, reject) => {
-        retryTimer = window.setTimeout(() => {
+        retryTimer = setTimeout(() => {
           if (retries <= 0) {
             const errorMessage = 'Task timed out and retries exceeded.'
             reject(new Error(errorMessage))
             return
           }
           resolve(retry(retries - 1))
-        }, ms)
+        }, ms) as unknown as number
       }),
     ])
 
