@@ -28,19 +28,23 @@ pm2 processes that are started and kept alive on `npm start`:
 - `server` - The HocusPocus server for syncing thoughts over a Websocket connection.
 - `backup` - Daily database backup and upload to S3. You can also run the backup script manually with `./scripts/backup.sh`.
 
-The server uses pm2 to manage server processes. Common pm2 commands have been aliased to `npm run` scripts.
+npm scripts:
 
+- `clear` - **!DANGER!** Deletes the entire database.
 - `logs` - Stream the pm2 logs.
 - `restart` - Restart the pm2 processes.
+- `postdeploy` - Safely restore the leveldb database from the last `predeploy`.
+- `predeploy` - Backup the leveldb database to S3 to be used by `postdeploy`. Overwrites the last `predeploy`.
 - `status` - Show the pm2 status.
 - `stop` - Stop all pm2 processes.
-- `clear` - **!DANGER!** Deletes the entire database.
 
 _Note: `clear` only deletes the default db locations. If you override `DB_DOCLOGMETA`, `DB_PERMISSIONS`, or `DB_THOUGHTSPACE`, you will need to manually delete the db files._
 
 ## Deployment
 
 The server can be deployed to a hosting platform. The instructions below are for Digital Ocean.
+
+**!DANGER!** You must manually execute `npm run predeploy` on the server before you deploy as DigitalOcean wipes the local fire system. This is necessary until we YJS server persistence with no down-time (e.g. PostgreSQL).
 
 Buildpacks:
 
