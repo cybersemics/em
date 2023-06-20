@@ -155,11 +155,13 @@ fi
 if [ -z "$arg_path" ] && [ "$DATE_90DAYS_DAY" != "01" ]; then
   S3_DELETE_PATH="s3://em-staging/backup/$DATE_DIR_90DAYS/$DATE_90DAYS.zip"
   echo "deleting $S3_DELETE_PATH"
-  s3cli del "$S3_DELETE_PATH"
+  ERROR=$(s3cli del "$S3_DELETE_PATH" 2>&1 >/dev/null)
   DELETE_EXIT_CODE=$?
 
-  if [ $DELETE_EXIT_CODE -ne 0 ]; then
+  # if the file does not exist, we can stifle stderr which will be empty
+  if [ $DELETE_EXIT_CODE -ne 0 ] && [ -n "$ERROR" ]; then
     echo "error deleting"
+    echo "$ERROR"
     exit 1
   fi
 
