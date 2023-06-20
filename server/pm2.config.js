@@ -6,11 +6,11 @@
 //   - Zero-downtime reload does does not work since level maintains a lock on the db.
 
 module.exports = {
-  time: true,
   apps: [
     {
       name: 'server',
       script: './build/server/index.js',
+      time: true,
       wait_ready: true,
     },
     {
@@ -25,6 +25,7 @@ module.exports = {
       // exp_backoff_restart_delay: 100,
       autorestart: false,
       max_memory_restart: '500M',
+      time: true,
     },
   ],
 }
