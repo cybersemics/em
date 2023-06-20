@@ -98,9 +98,7 @@ const ShareList = ({
 
   return (
     <>
-      <p className='modal-description'>
-        Add or remove devices from this thoughtspace. Thoughts will be synced in realtime.
-      </p>
+      <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
 
       {status === 'connected' ? (
         <>
