@@ -1,6 +1,3 @@
-shopt -s expand_aliases
-alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
-
 # parse args
 while [[ "$#" -gt 0 ]]; do
   case $1 in
@@ -31,9 +28,29 @@ Zips the leveldb database and uploads it to S3. Maintains daily backups for 90 d
   shift
 done
 
+shopt -s expand_aliases
+alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
+
+# Generates a date a given number of days in the past.
+# Normalizes OSX and Unix format for past dates.
+daysago() {
+  FORMAT="$1"
+  DAYS="$2"
+  case "$OSTYPE" in darwin*) date -v-"$DAYS"d "$FORMAT"; ;; *) date -d "$DAYS days ago" "$FORMAT"; esac
+}
+
+DATE_FORMAT="+%Y-%m-%d"
+DATE_DIR_FORMAT="+%Y/%m"
+# use yesterday's date since the backup only covers up until 00:00:00 today
+# OSX date subtract days is different
+DATE=$(daysago "$DATE_FORMAT" 1)
+DATE_DIR=$(daysago $DATE_DIR_FORMAT 1)
+DATE_90DAYS=$(daysago "$DATE_FORMAT" 91)
+DATE_DIR_90DAYS=$(daysago $DATE_DIR_FORMAT 91)
+DATE_90DAYS_DAY=$(daysago "+%d" 91)
+DATA_DIR="data"
 S3_RELATIVE_PATH=${arg_path:-"/backup/$DATE_DIR/$DATE.zip"}
 S3_UPLOAD_PATH="s3://em-staging$S3_RELATIVE_PATH"
-DATA_DIR="data"
 STAGING_DIR=_backup # include in .gitignore
 
 ####################################################
@@ -96,25 +113,6 @@ if [ ! -d data ]; then
   echo "Nothing to backup; data directory does not yet exist."
   exit 0
 fi
-
-# Generates a date a given number of days in the past.
-# Normalizes OSX and Unix format for past dates.
-daysago() {
-  FORMAT="$1"
-  DAYS="$2"
-  case "$OSTYPE" in darwin*) date -v-"$DAYS"d "$FORMAT"; ;; *) date -d "$DAYS days ago" "$FORMAT"; esac
-}
-
-DATE_FORMAT="+%Y-%m-%d"
-DATE_DIR_FORMAT="+%Y/%m"
-
-# use yesterday's date since the backup only covers up until 00:00:00 today
-# OSX date subtract days is different
-DATE=$(daysago "$DATE_FORMAT" 1)
-DATE_DIR=$(daysago $DATE_DIR_FORMAT 1)
-DATE_90DAYS=$(daysago "$DATE_FORMAT" 91)
-DATE_DIR_90DAYS=$(daysago $DATE_DIR_FORMAT 91)
-DATE_90DAYS_DAY=$(daysago "+%d" 91)
 
 # echo DATE $DATE
 # echo DATE_DIR $DATE_DIR
