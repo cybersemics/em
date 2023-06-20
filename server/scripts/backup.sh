@@ -39,7 +39,11 @@ s3cli() {
 daysago() {
   FORMAT="$1"
   DAYS="$2"
-  case "$OSTYPE" in darwin*) date -v-"$DAYS"d "$FORMAT"; ;; *) date -d "$DAYS days ago" "$FORMAT"; esac
+
+  case "$OSTYPE" in
+    darwin*) date -v-"$DAYS"d "$FORMAT"; ;;
+          *) date -d "$DAYS days ago" "$FORMAT";
+  esac
 }
 
 DATE_FORMAT="+%Y-%m-%d"
