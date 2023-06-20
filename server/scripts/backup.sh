@@ -28,8 +28,9 @@ Zips the leveldb database and uploads it to S3. Maintains daily backups for 90 d
   shift
 done
 
-shopt -s expand_aliases
-alias s3-cli="./node_modules/s3-cli/cli.js --config .s3cfg"
+s3cli() {
+  ./node_modules/s3-cli/cli.js --config .s3cfg "$@"
+}
 
 # Generates a date a given number of days in the past.
 # Normalizes OSX and Unix format for past dates.
@@ -71,7 +72,7 @@ if [ -n "$arg_restore" ]; then
   rm -rf "$STAGING_DIR"
 
   echo "downloading"
-  s3-cli get "$S3_UPLOAD_PATH" "$RESTORE_ZIP" ; DOWNLOAD_EXIT_CODE="$?"
+  s3cli get "$S3_UPLOAD_PATH" "$RESTORE_ZIP" ; DOWNLOAD_EXIT_CODE="$?"
 
   if [ $DOWNLOAD_EXIT_CODE -ne 0 ]; then
     echo "Download error"
@@ -131,7 +132,7 @@ zip -r "$ZIP_PATH" "$DATA_DIR" &>/dev/null
 # upload to AWS
 # https://github.com/raineorshine/node-s3-cli
 echo "uploading $S3_UPLOAD_PATH"
-s3-cli put "$ZIP_PATH" "$S3_UPLOAD_PATH"
+s3cli put "$ZIP_PATH" "$S3_UPLOAD_PATH"
 UPLOAD_EXIT_CODE=$?
 
 # delete zip
@@ -148,7 +149,7 @@ fi
 if [ -z "$arg_path" ] && [ "$DATE_90DAYS_DAY" != "01" ]; then
   S3_DELETE_PATH="s3://em-staging/backup/$DATE_DIR_90DAYS/$DATE_90DAYS.zip"
   echo "deleting $S3_DELETE_PATH"
-  s3-cli del "$S3_DELETE_PATH" 2>/dev/null
+  s3cli del "$S3_DELETE_PATH"
   DELETE_EXIT_CODE=$?
 
   if [ $DELETE_EXIT_CODE -ne 0 ]; then
