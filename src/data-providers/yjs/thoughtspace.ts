@@ -98,10 +98,6 @@ new HocuspocusProvider({
   token: accessToken,
 })
 
-// Track when the initial replication completes.
-// This allows us to avoid prematurely switching to foreground replication.
-let replicated = false
-
 const replication = replicationController({
   // begin paused, and only start after initial pull has completed
   autostart: false,
@@ -140,7 +136,6 @@ const replication = replicationController({
     syncStatusStore.update({ replicationProgress: completed / total })
   },
   onEnd: () => {
-    replicated = true
     syncStatusStore.update({ replicationProgress: 1 })
   },
 })
@@ -411,10 +406,19 @@ export const replicateThought = async (
     token: accessToken,
   })
 
+  const websocketSynced = new Promise<void>(resolve => {
+    /** Resolves when synced fires. */
+    const onSynced = () => {
+      websocketProvider.off('synced', onSynced)
+      resolve()
+    }
+    websocketProvider.on('synced', onSynced)
+  })
+
   // Subscribe to unsyncedChanges, which indicates a thought has not yet synced with the websocket server.
   // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
   // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
-  const unsyncedChanges = new Promise<void>((resolve, reject) => {
+  const unsyncedChanges = new Promise<void>(resolve => {
     /** Resolves when unsyncedChanges fires unsubscribes. */
     const onUnsyncedChanges = () => {
       websocketProvider.off('unsyncedChanges', onUnsyncedChanges)
@@ -430,6 +434,12 @@ export const replicateThought = async (
         persistence.destroy()
       } else if (id === HOME_TOKEN) {
         const thought = getThought(doc)
+        onThoughtChange({
+          target: doc.getMap(),
+          transaction: {
+            origin: websocketProvider,
+          },
+        })
         if (thought) {
           resolveRootSynced(thought)
         }
@@ -441,7 +451,8 @@ export const replicateThought = async (
       store.dispatch(alert(errorMessage))
     })
 
-  // a promise that resolves if/when the thought observes a value
+  // A promise that resolves if/when the thought observes a value.
+  // Note that on a public server the synced event fires before the Doc has been populated (Why?), so we cannot rely on synced.
   const websocketValueObserved = new Promise<SimpleYMapEvent<ThoughtYjs>>(resolve => {
     /** Observes when the thought is populated (once). May never fire. */
     const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
@@ -477,14 +488,28 @@ export const replicateThought = async (
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     const thought = getThought(doc)
-    if (!replicated || !thought) return
+    if (!thought) return
     const state = store.getState()
     const loaded = !!getThoughtByIdSelector(state, id) || !!getThoughtByIdSelector(state, thought.parentId)
     if (loaded) {
+      onThoughtChange({
+        target: doc.getMap(),
+        transaction: {
+          origin: websocketProvider,
+        },
+      })
       thoughtMap.observe(onThoughtChange)
     }
   } else {
-    // Subscribe to changes on foreground replication
+    // During foreground replication, if there is no value in IndexedDB, wait for a websocket value before resolving.
+    // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
+    // This can be observed when a thought appears pending on load and its child is missing.
+    if (!getThought(doc)) {
+      await websocketSynced
+    }
+
+    // Note: onThoughtChange is not pending-aware.
+    // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
@@ -529,6 +554,15 @@ export const replicateLexeme = async (
     token: accessToken,
   })
 
+  const websocketSynced = new Promise<void>(resolve => {
+    /** Resolves when synced fires. */
+    const onSynced = () => {
+      websocketProvider.off('synced', onSynced)
+      resolve()
+    }
+    websocketProvider.on('synced', onSynced)
+  })
+
   // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced
     .then(() => {
@@ -561,7 +595,8 @@ export const replicateLexeme = async (
     websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
   })
 
-  // a promise that resolves if/when the lexeme observes a value
+  // A promise that resolves if/when the lexeme observes a value.
+  // Note that on a public server the synced event fires before the Doc has been populated (Why?), so we cannot rely on synced.
   const websocketValueObserved = new Promise<SimpleYMapEvent<LexemeYjs>>(resolve => {
     /** Observes when the lexeme is populated (once). May never fire. */
     const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
@@ -595,7 +630,7 @@ export const replicateLexeme = async (
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     const lexeme = getLexeme(doc)
-    if (!replicated || !lexeme) return
+    if (!lexeme) return
     const state = store.getState()
     const loaded = !!getLexemeSelector(state, key) || lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))
     if (loaded) {
@@ -608,8 +643,10 @@ export const replicateLexeme = async (
       lexemeMap.observe(onLexemeChange)
     }
   } else {
-    // Subscribe to changes after first sync to ensure that pending is set properly.
-    // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+    if (!getLexeme(doc)) {
+      await websocketSynced
+    }
+
     lexemeMap.observe(onLexemeChange)
   }
 

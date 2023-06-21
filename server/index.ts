@@ -170,7 +170,7 @@ export const onLoadDocument = async ({
       db = new LeveldbPersistence(path.join(process.env.DB_THOUGHTSPACE || 'data/thoughts', tsid))
       ldbThoughtspaces.set(tsid, db)
     }
-    syncLevelDb({ db, docName: documentName, doc: document })
+    await syncLevelDb({ db, docName: documentName, doc: document })
   } else if (type === 'doclog') {
     /** Use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted. */
     replicationController({
