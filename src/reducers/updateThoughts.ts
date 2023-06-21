@@ -101,7 +101,12 @@ const repairCursorReducer = (state: State) => {
   }
 }
 
-/** Creates a reducer spy that throws an error if any data integrity issues are found, including invalid parentIds and missing Lexemes. */
+/** Creates a reducer spy that throws an error if any data integrity issues are found.
+ * - No missing thought values.
+ * - thought.parentId exists.
+ * - child.parentId matches parent.children id.
+ * - Each thought has a corresponding Lexeme.
+ */
 const dataIntegrityCheck =
   (thoughtIndexUpdates: Index<Thought | null>, lexemeIndexUpdates: Index<Lexeme | null>) => (state: State) => {
     // undefined thought value
@@ -116,14 +121,6 @@ const dataIntegrityCheck =
 
     Object.values(thoughtIndexUpdates).forEach(thought => {
       if (!thought) return
-
-      // disallow children property
-      if ('children' in thought) {
-        console.error('thought', thought)
-        throw new Error(
-          'Thoughts in State should not have children property. Only the database should contain inline children.',
-        )
-      }
 
       // make sure thought.parentId exists in thoughtIndex
       if (
