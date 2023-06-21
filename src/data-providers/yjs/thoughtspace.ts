@@ -261,7 +261,7 @@ const updateLexeme = async (
   }
   const lexemeReplicated = getLexeme(lexemeDocs[key])
   const lexemeDoc = lexemeDocs[key]
-  const contextMapOld = keyValueBy(lexemeOld?.contexts || [], cxid => ({ [cxid]: true }))
+  const contextsOld = new Set(lexemeOld?.contexts)
 
   // The Lexeme may be deleted if the user creates and deletes a thought very quickly
   if (!lexemeDoc) return
@@ -279,18 +279,18 @@ const updateLexeme = async (
     const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
     Object.entries(lexemeNew).forEach(([key, value]) => {
       if (key === 'contexts') {
-        const contextMapNew = keyValueBy(value as ThoughtId[], cxid => ({ [cxid]: true }))
+        const contextsNew = new Set(value)
 
         // add contexts to YJS that have been added to state
         lexemeNew.contexts.forEach(cxid => {
-          if (!contextMapOld[cxid]) {
+          if (!contextsOld.has(cxid)) {
             lexemeMap.set(`cx-${cxid}`, true)
           }
         })
 
         // delete contexts that have been deleted, i.e. exist in lexemeOld but not lexemeNew
         lexemeOld?.contexts.forEach(cxid => {
-          if (!contextMapNew[cxid]) {
+          if (!contextsNew.has(cxid)) {
             lexemeMap.delete(`cx-${cxid}`)
           }
         })
