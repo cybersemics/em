@@ -117,6 +117,7 @@ const replication = replicationController({
         updateThoughtsActionCreator({
           thoughtIndexUpdates: {},
           lexemeIndexUpdates: {},
+          // override thought/lexemeIndexUpdates based on type
           [`${type}IndexUpdates`]: {
             [id]: null,
           },
@@ -243,19 +244,24 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
-const updateLexeme = async (key: string, lexemeNew: Lexeme): Promise<void> => {
+const updateLexeme = async (
+  key: string,
+  lexemeNew: Lexeme,
+  // undefined only if Lexeme is completely new
+  lexemeOld: Lexeme | undefined,
+): Promise<void> => {
   // get the old Lexeme to determine context deletions
   // TODO: Pass the diffed contexts all the way through from updateThouhgts.
   // The YJS Lexeme should be the same as the old Lexeme in State, since they are synced.
   // If the Lexeme has not yet been loaded from YJS, then we can ignore deletions, as a Lexeme normally cannot be deleted before it has been loaded. Unless the user creates and deletes the Lexeme so quickly that IDB is still loading (?).
   // In light of all that, it would be better to get the deletions directly from the reducer.
-  const lexemeOld = getLexeme(lexemeDocs[key])
 
   if (!lexemeDocs[key]) {
     await replicateLexeme(key)
   }
   const lexemeReplicated = getLexeme(lexemeDocs[key])
   const lexemeDoc = lexemeDocs[key]
+  const contextMapOld = keyValueBy(lexemeOld?.contexts || [], cxid => ({ [cxid]: true }))
 
   // The Lexeme may be deleted if the user creates and deletes a thought very quickly
   if (!lexemeDoc) return
@@ -277,11 +283,12 @@ const updateLexeme = async (key: string, lexemeNew: Lexeme): Promise<void> => {
 
         // add contexts to YJS that have been added to state
         lexemeNew.contexts.forEach(cxid => {
-          lexemeMap.set(`cx-${cxid}`, true as any)
+          if (!contextMapOld[cxid]) {
+            lexemeMap.set(`cx-${cxid}`, true)
+          }
         })
 
-        // delete contexts from YJS that have been removed from state
-        // Note: It would be better to get this directly from the reducer. Not sure if this is completely safe.
+        // delete contexts that have been deleted, i.e. exist in lexemeOld but not lexemeNew
         lexemeOld?.contexts.forEach(cxid => {
           if (!contextMapNew[cxid]) {
             lexemeMap.delete(`cx-${cxid}`)
@@ -717,11 +724,17 @@ const deleteLexeme = async (key: string): Promise<void> => {
 
 /** Updates shared thoughts and lexemes. Resolves when IDB is synced (not when websocket is synced). */
 // Note: Does not await updates, but that could be added.
-export const updateThoughts = (
-  thoughtIndexUpdates: Index<ThoughtDb | null>,
-  lexemeIndexUpdates: Index<Lexeme | null>,
-  schemaVersion: number,
-) => {
+export const updateThoughts = ({
+  thoughtIndexUpdates,
+  lexemeIndexUpdates,
+  lexemeIndexUpdatesOld,
+  schemaVersion,
+}: {
+  thoughtIndexUpdates: Index<ThoughtDb | null>
+  lexemeIndexUpdates: Index<Lexeme | null>
+  lexemeIndexUpdatesOld: Index<Lexeme | undefined>
+  schemaVersion: number
+}) => {
   // group thought updates and deletes so that we can use the db bulk functions
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
     thought ? 'update' : 'delete',
@@ -747,7 +760,7 @@ export const updateThoughts = (
     ...Object.entries(lexemeUpdates || {}).map(
       ([key, lexeme]) =>
         () =>
-          updateLexeme(key, lexeme),
+          updateLexeme(key, lexeme, lexemeIndexUpdatesOld[key]),
     ),
   ])
 
@@ -790,7 +803,12 @@ export const clear = async () => {
   }))
   const lexemeIndexUpdates = state.thoughts.lexemeIndex
 
-  await updateThoughts(thoughtIndexUpdates, lexemeIndexUpdates, SCHEMA_LATEST)
+  await updateThoughts({
+    thoughtIndexUpdates,
+    lexemeIndexUpdates,
+    lexemeIndexUpdatesOld: {},
+    schemaVersion: SCHEMA_LATEST,
+  })
 }
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */

@@ -12,11 +12,12 @@ export interface DataProvider {
   getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
   getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
-  updateThoughts: (
-    thoughtIndexUpdates: Index<ThoughtDb | null>,
-    lexemeIndexUpdates: Index<Lexeme | null>,
-    schemaVersion: number,
-  ) => Promise<unknown>
+  updateThoughts: (args: {
+    thoughtIndexUpdates: Index<ThoughtDb | null>
+    lexemeIndexUpdates: Index<Lexeme | null>
+    lexemeIndexUpdatesOld: Index<Lexeme | undefined>
+    schemaVersion: number
+  }) => Promise<unknown>
 
   /****************************************
    * Used by dataProviderTest only

@@ -10,6 +10,9 @@ interface PushBatch {
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void
   lexemeIndexUpdates: Index<Lexeme | null>
+  // needed to determine deleted Lexeme.contexts
+  // undefined if Lexeme is completely new
+  lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   // Update the local device. Default: true.
   // If local and remote are false, null updates will still cause the YJS providers to be destroyed to free up memory.
   // In particular, this is used by the freeThoughts middleware.

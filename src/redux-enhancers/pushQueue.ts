@@ -67,6 +67,10 @@ const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => (
     ...accum.lexemeIndexUpdates,
     ...batch.lexemeIndexUpdates,
   },
+  lexemeIndexUpdatesOld: {
+    ...accum.lexemeIndexUpdatesOld,
+    ...batch.lexemeIndexUpdatesOld,
+  },
   recentlyEdited: {
     ...accum.recentlyEdited,
     ...batch.recentlyEdited,
@@ -100,8 +104,16 @@ const pushQueue: StoreEnhancer<any> =
 
       // merge batches
       // last write wins
-      const dbBatch = (dbQueue || []).reduce(mergeBatch, { thoughtIndexUpdates: {}, lexemeIndexUpdates: {} })
-      const freeBatch = (freeQueue || []).reduce(mergeBatch, { thoughtIndexUpdates: {}, lexemeIndexUpdates: {} })
+      const dbBatch = (dbQueue || []).reduce(mergeBatch, {
+        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
+        lexemeIndexUpdatesOld: {},
+      })
+      const freeBatch = (freeQueue || []).reduce(mergeBatch, {
+        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
+        lexemeIndexUpdatesOld: {},
+      })
 
       if (Object.keys(dbBatch).length > 0) {
         // cache updated settings
@@ -114,9 +126,12 @@ const pushQueue: StoreEnhancer<any> =
         })
 
         // push batch updates to database
-        db.updateThoughts(dbBatch.thoughtIndexUpdates, dbBatch.lexemeIndexUpdates, dbBatch.updates?.schemaVersion).then(
-          dbBatch.idbSynced,
-        )
+        db.updateThoughts({
+          thoughtIndexUpdates: dbBatch.thoughtIndexUpdates,
+          lexemeIndexUpdates: dbBatch.lexemeIndexUpdates,
+          lexemeIndexUpdatesOld: dbBatch.lexemeIndexUpdatesOld,
+          schemaVersion: dbBatch.updates?.schemaVersion,
+        }).then(dbBatch.idbSynced)
       }
 
       // free up memory of thoughts that have been

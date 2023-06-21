@@ -16,6 +16,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
@@ -52,7 +53,7 @@ const updateJumpHistory = (state: State): State => {
     : state
 }
 
-export type UpdateThoughtsOptions = PushBatch & {
+export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
   contextChain?: SimplePath[]
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void
@@ -204,6 +205,7 @@ const updateThoughts = (
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
+  const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
   const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
@@ -215,6 +217,7 @@ const updateThoughts = (
   const batch: PushBatch = {
     idbSynced,
     lexemeIndexUpdates,
+    lexemeIndexUpdatesOld,
     local,
     pendingDeletes,
     recentlyEdited: recentlyEditedNew,
