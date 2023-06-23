@@ -10,7 +10,7 @@ import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
-import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
+import { EM_TOKEN, HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import getLexemeSelector from '../../selectors/getLexeme'
 import getThoughtByIdSelector from '../../selectors/getThoughtById'
@@ -499,8 +499,8 @@ export const replicateThought = async (
     // During foreground replication, if there is no value in IndexedDB, wait for a websocket value before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
-    if (!getThought(doc)) {
-      await websocketSynced
+    if (!getThought(doc) && id !== HOME_TOKEN && id !== EM_TOKEN) {
+      await Promise.race([websocketSynced, unsyncedChanges])
     }
 
     // Note: onThoughtChange is not pending-aware.
@@ -544,15 +544,6 @@ export const replicateLexeme = async (
     name: documentName,
     document: doc,
     token: accessToken,
-  })
-
-  const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves when synced fires. */
-    const onSynced = () => {
-      websocketProvider.off('synced', onSynced)
-      resolve()
-    }
-    websocketProvider.on('synced', onSynced)
   })
 
   // if replicating in the background, destroy the IndexeddbProvider once synced
@@ -633,9 +624,11 @@ export const replicateLexeme = async (
       lexemeMap.observe(onLexemeChange)
     }
   } else {
-    if (!getLexeme(doc)) {
-      await websocketSynced
-    }
+    // TODO: Why does unsyncedChanges never resolve for EM descendants on new thoughtspace?
+    // Yes onUnsyncedChanges eventually fires if we don't await here
+    // if (!getLexeme(doc)) {
+    //   await Promise.race([unsyncedChanges, websocketSynced])
+    // }
 
     lexemeMap.observe(onLexemeChange)
   }
