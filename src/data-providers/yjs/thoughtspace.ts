@@ -106,8 +106,8 @@ const replication = replicationController({
   next: async ({ action, id, type }) => {
     if (action === DocLogAction.Update) {
       await (type === 'thought'
-        ? replicateThought(id as ThoughtId, { background: true, sync: true })
-        : replicateLexeme(id, { background: true, sync: true }))
+        ? replicateThought(id as ThoughtId, { background: true })
+        : replicateLexeme(id, { background: true }))
     } else if (action === DocLogAction.Delete) {
       store.dispatch(
         updateThoughtsActionCreator({
@@ -371,7 +371,6 @@ export const replicateThought = async (
   id: ThoughtId,
   {
     background,
-    sync,
   }: {
     /**
      * Replicate in the background, meaning:
@@ -382,8 +381,6 @@ export const replicateThought = async (
      * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
-    /** Do not resolve until websocket is synced. Only used with background sync. */
-    sync?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
   const documentName = encodeThoughtDocumentName(tsid, id)
@@ -479,11 +476,9 @@ export const replicateThought = async (
 
   // if background replication, wait until websocket has synced
   if (background) {
-    if (sync) {
-      // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
-      // Otherwise replication will hang.
-      await Promise.race([unsyncedChanges, websocketValueObserved])
-    }
+    // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
+    // Otherwise replication will hang.
+    await Promise.race([unsyncedChanges, websocketValueObserved])
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
@@ -522,7 +517,6 @@ export const replicateLexeme = async (
   key: string,
   {
     background,
-    sync,
   }: {
     /**
      * Do not store thought doc in memory.
@@ -531,8 +525,6 @@ export const replicateLexeme = async (
      * Destroy HocuspocusProvider after sync.
      */
     background?: boolean
-    /** Do not resolve until websocket is synced. Only used with background sync. */
-    sync?: boolean
   } = {},
 ): Promise<Lexeme | undefined> => {
   const documentName = encodeLexemeDocumentName(tsid, key)
@@ -623,9 +615,7 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    if (sync) {
-      await Promise.race([unsyncedChanges, websocketValueObserved])
-    }
+    await Promise.race([unsyncedChanges, websocketValueObserved])
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
