@@ -6,11 +6,13 @@ import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
+import { deleteResumableFile } from '../action-creators/importFiles'
 import GestureDiagram from '../components/GestureDiagram'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
+import syncStatusStore from '../stores/syncStatus'
 
 interface AlertProps {
   alert?: Alert | null
@@ -176,6 +178,17 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
       >
         {children}
       </div>
+      {alert.importFileId && (
+        <a
+          onClick={() => {
+            deleteResumableFile(alert.importFileId!)
+            syncStatusStore.update({ importProgress: 1 })
+            onClose()
+          }}
+        >
+          cancel
+        </a>
+      )}
       {alert.showCloseLink ? (
         <a className='upper-right status-close-x text-small no-swipe-to-dismiss' onClick={onClose}>
           ✕

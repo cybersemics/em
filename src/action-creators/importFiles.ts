@@ -79,20 +79,20 @@ const RESUME_IMPORTS_KEY = 'resume-imports'
 /** Generate the IDB key for a ResumeImport file. */
 const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
 
+/** Deletes the ResumeImport file manifest and raw file in IDB. */
+export const deleteResumableFile = async (id: string) => {
+  globals.lastImportedPath = undefined
+  await idb.del(resumeImportKey(id))
+  const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
+  storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, id)))
+}
+
 /** Creates a small object that can be used to manage the persistence of a ResumableFile. */
 const resumeImportsManager = (file: ResumableFile) => {
   /** Initializes the ResumeImport file manifest and raw file in IDB. */
   const init = async (text: string) => {
     await update(file.path, 0, file.insertBefore)
     await idb.set(resumeImportKey(file.id), text)
-  }
-
-  /** Deletes the ResumeImport file manifest and raw file in IDB. */
-  const del = async () => {
-    globals.lastImportedPath = undefined
-    await idb.del(resumeImportKey(file.id))
-    const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
-    storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, file.id)))
   }
 
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
@@ -118,7 +118,7 @@ const resumeImportsManager = (file: ResumableFile) => {
     )
   }
 
-  return { del, init, update }
+  return { del: () => deleteResumableFile(file.id), init, update }
 }
 
 /** Gets all saved imports as ResumableFiles. */
@@ -236,6 +236,7 @@ const importFilesActionCreator =
               alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
                 alertType: AlertType.ImportFile,
                 clearDelay: i === numThoughts - 1 ? 5000 : undefined,
+                importFileId: file.id,
               }),
             )
 
@@ -360,7 +361,10 @@ const importFilesActionCreator =
 
       // read file
       dispatch(
-        alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, { alertType: AlertType.ImportFile }),
+        alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, {
+          alertType: AlertType.ImportFile,
+          importFileId: file.id,
+        }),
       )
       const text = await file.text()
 
@@ -395,7 +399,12 @@ const importFilesActionCreator =
       const numThoughts = numBlocks(json)
 
       syncStatusStore.update({ importProgress: 0 / numThoughts })
-      dispatch(alert(`Importing ${fileProgressString}...`, { alertType: AlertType.ImportFile }))
+      dispatch(
+        alert(`Importing ${fileProgressString}...`, {
+          alertType: AlertType.ImportFile,
+          importFileId: file.id,
+        }),
+      )
 
       const importTasks = flattenTree(
         json,

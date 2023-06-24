@@ -5,6 +5,8 @@ type Alert = {
   showCloseLink?: boolean
   value: string | null
   isInline?: boolean
+  // used to cancel imports
+  importFileId?: string
 }
 
 export default Alert

@@ -1,12 +1,9 @@
 import { FunctionComponent } from 'react'
+import Alert from '../@types/Alert'
 import Thunk from '../@types/Thunk'
-import { AlertType } from '../constants'
 
-interface Options {
-  alertType?: keyof typeof AlertType
-  showCloseLink?: boolean
+type Options = Omit<Alert, 'value'> & {
   clearDelay?: number
-  isInline?: boolean
 }
 
 let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-disable-line fp/no-let
@@ -20,7 +17,10 @@ let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-d
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (value: string | FunctionComponent | null, { alertType, showCloseLink, clearDelay, isInline }: Options = {}): Thunk =>
+  (
+    value: string | FunctionComponent | null,
+    { alertType, showCloseLink, clearDelay, isInline, importFileId }: Options = {},
+  ): Thunk =>
   (dispatch, getState) => {
     const { alert } = getState()
 
@@ -57,6 +57,7 @@ const alert =
       alertType,
       showCloseLink,
       value,
+      importFileId,
       isInline,
     })
   }

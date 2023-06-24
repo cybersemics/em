@@ -7,10 +7,12 @@ interface Options {
   showCloseLink?: boolean
   value: string | null
   isInline?: boolean
+  // used to cancel imports
+  importFileId?: string
 }
 
 /** Set an alert with an optional close link. */
-const alert = (state: State, { alertType, showCloseLink, value, isInline = false }: Options) => {
+const alert = (state: State, { alertType, showCloseLink, value, isInline = false, importFileId }: Options) => {
   if (value === state.alert?.value) return state
   return {
     ...state,
@@ -19,6 +21,7 @@ const alert = (state: State, { alertType, showCloseLink, value, isInline = false
           alertType,
           showCloseLink: showCloseLink !== false,
           value,
+          importFileId,
           isInline,
         }
       : null,
