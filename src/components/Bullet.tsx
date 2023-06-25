@@ -74,7 +74,6 @@ const BulletLeaf = ({
 const BulletParent = ({
   currentScale,
   fill,
-  isHighlighted,
   missing,
   pending,
   showContexts,
@@ -116,11 +115,7 @@ const BulletParent = ({
 
 /** A larger circle that surrounds the bullet of the cursor thought. */
 const BulletCursorOverlay = ({
-  isEditing,
   isHighlighted,
-  leaf,
-  publish,
-  simplePath,
 }: {
   isEditing?: boolean
   isHighlighted?: boolean
