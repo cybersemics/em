@@ -1,6 +1,7 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
 import Context from './Context'
+import DragShortcutZone from './DragShortcutZone'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -8,6 +9,7 @@ import Path from './Path'
 import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import Shortcut from './Shortcut'
+import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
@@ -44,6 +46,10 @@ interface State {
   draggingFile?: boolean
   // set to the dragging thought during dragInProgress
   draggingThought?: SimplePath
+  // Dragging a shortcut or toolbar button in the customizeToolbar modal
+  dragShortcut?: ShortcutId | null
+  // type of toolbar-sbutton drop target being hovered over
+  dragShortcutZone?: DragShortcutZone
   // set to true while the user is long pressing a thought in preparation for a drag
   dragHold?: boolean
   // set to true while the user is dragging a thought or file
@@ -67,7 +73,7 @@ interface State {
   // Thought currently being hovered over.
   // Used to determine the parent of state.hoveringPath to be highlighted (via isChildHovering in the Thought components), expandHoverDown/Top, and the visibility of drop-hover elements.
   hoveringPath?: Path
-  // type of drop target being hovered over
+  // type of thought drop target being hovered over
   hoverZone?: DropThoughtZone
   invalidState: boolean
   // Displays a loading screen when the app starts.
@@ -96,7 +102,6 @@ interface State {
   resourceCache: Index<string>
   rootContext: Context
   schemaVersion: number
-  scrollPrioritized: boolean
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
@@ -119,8 +124,18 @@ interface State {
       'offline'        Disconnected and working in offline mode.
     */
   status: string
+  // Thought values that are needed on startup before thoughts have loaded (e.g. theme, tutorial, etc) are cached to local storage.
+  // storageCache is populated initially with the values in local storage and updated as the state changes.
+  // See: /redux-enhancers/storageCache.ts
+  storageCache?: {
+    theme?: 'Dark' | 'Light'
+    tutorialComplete?: boolean
+    tutorialStep?: number
+    userToolbar?: ShortcutId[]
+  }
   thoughts: ThoughtIndices
-  toolbarOverlay?: string | null
+  // shortcut of a toolbar button that is being long pressed in the customize modal
+  toolbarLongPress?: Shortcut
   transientFocus?: boolean
   tutorialStep?: number
   undoPatches: Patch[]

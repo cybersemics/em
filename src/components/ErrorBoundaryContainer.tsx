@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useSelector } from 'react-redux'
 import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 
 /** A triangular toggle component. */
 const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean; title?: string }) => {
@@ -10,7 +11,10 @@ const Toggle = ({ children, expand, title }: { children?: any; expand?: boolean;
 
   return (
     <div>
-      <div onClick={() => setExpanded(!expanded)} style={{ cursor: 'pointer', marginBottom: 20, userSelect: 'none' }}>
+      <div
+        {...fastClick(() => setExpanded(!expanded))}
+        style={{ cursor: 'pointer', marginBottom: 20, userSelect: 'none' }}
+      >
         <svg
           viewBox='0 0 600 600'
           style={{
@@ -55,7 +59,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
         </div>
       )}
       <pre style={{ whiteSpace: 'normal' }}>{componentStack}</pre>
-      <a onClick={() => window.location.reload()} className='button' style={{ minWidth: 0 }}>
+      <a {...fastClick(() => window.location.reload())} className='button' style={{ minWidth: 0 }}>
         Refresh
       </a>
     </div>

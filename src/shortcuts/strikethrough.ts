@@ -1,7 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import formatSelection from '../action-creators/formatSelection'
-// TODO: Get strikethrough icon
-import Icon from '../components/icons/StarIcon'
+import Icon from '../components/icons/StrikethroughIcon'
 import getThoughtById from '../selectors/getThoughtById'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -10,11 +9,12 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const strikethrough: Shortcut = {
   id: 'strikethrough',
   label: 'Strikethrough',
-  description: 'Crosses out a thought.',
+  description: 'Crosses out a thought. Done. Finis. Kaput.',
   svg: Icon,
-  keyboard: { key: 'k', meta: true },
+  keyboard: { key: 's', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
-  exec: dispatch => {
+  exec: (dispatch, getState, e) => {
+    e.preventDefault()
     dispatch(formatSelection('strikethrough'))
   },
   isActive: getState => {

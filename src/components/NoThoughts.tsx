@@ -11,11 +11,7 @@ import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
 import LoadingEllipsis from './LoadingEllipsis'
 
-// assert the search shortcut at load time
 const newThoughtShortcut = shortcutById('newThought')
-if (!newThoughtShortcut) {
-  throw new Error('newThought shortcut not found.')
-}
 
 /** An absolutely centered LoadingEllipsis. */
 const CenteredLoadingEllipsis = ({ text }: { text?: string }) => (

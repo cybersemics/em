@@ -11,6 +11,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import decodeCharacterEntities from '../util/decodeCharacterEntities'
 import ellipsize from '../util/ellipsize'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -62,14 +63,14 @@ const BreadCrumb: FC<{
         ) : label === HOME_TOKEN ? (
           <HomeLink color='gray' size={16} />
         ) : (
-          <Link simplePath={simplePath} label={label} />
+          <Link className='extend-tap-small' simplePath={simplePath} label={label} />
         ))}
       {!isDeleting && <Superscript simplePath={simplePath} />}
     </span>
   ) : (
     <span>
       <span style={delimiterStyle}> • </span>
-      <span onClick={onClickEllipsis} style={{ cursor: 'pointer' }}>
+      <span {...fastClick(onClickEllipsis)} style={{ cursor: 'pointer' }}>
         {' '}
         ...{' '}
       </span>

@@ -13,6 +13,7 @@ import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
 import syncStatusStore from '../stores/syncStatus'
+import fastClick from '../util/fastClick'
 
 interface AlertProps {
   alert?: Alert | null
@@ -190,7 +191,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         </a>
       )}
       {alert.showCloseLink ? (
-        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' onClick={onClose}>
+        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' {...fastClick(onClose)}>
           ✕
         </a>
       ) : null}

@@ -5,6 +5,7 @@ import ModalType from '../../@types/Modal'
 import closeModal from '../../action-creators/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
 import store from '../../stores/app'
+import fastClick from '../../util/fastClick'
 
 interface ModalActionHelpers {
   close: (duration?: number) => void
@@ -97,7 +98,7 @@ class ModalComponent extends React.Component<ModalProps> {
         }
       >
         {!this.props.preventCloseOnEscape && !hideClose && (
-          <a className='upper-right popup-close-x' onClick={this.close}>
+          <a className='upper-right popup-close-x' {...fastClick(this.close)}>
             ✕
           </a>
         )}
@@ -117,7 +118,7 @@ class ModalComponent extends React.Component<ModalProps> {
             </div>
           )}
           {!hideClose && (
-            <a className='modal-close' onClick={() => this.close()}>
+            <a className='modal-close' {...fastClick(() => this.close())}>
               <span>✕</span>
             </a>
           )}

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import State from '../../@types/State'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import getSetting from '../../selectors/getSetting'
+import fastClick from '../../util/fastClick'
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
 const TutorialHint: FC = ({ children }) => {
@@ -16,7 +17,7 @@ const TutorialHint: FC = ({ children }) => {
       {!hint ? (
         <a
           className='button button-variable-width button-status button-less-padding text-small button-dim'
-          onClick={() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 }))}
+          {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
         >
           hint
         </a>

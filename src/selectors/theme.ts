@@ -24,9 +24,7 @@ import publishMode from '../util/publishMode'
 /** Gets the theme. */
 const theme = (state: State) => {
   if (publishMode()) return 'Light'
-
-  // return ancestorTheme(state) || getSetting(state, 'Theme') || 'Dark'
-  return getSetting(state, 'Theme') || 'Dark'
+  return getSetting(state, 'Theme') || state.storageCache?.theme || 'Dark'
 }
 
 export default theme

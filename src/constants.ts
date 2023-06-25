@@ -1,8 +1,8 @@
 /** Defines app-wide constants. */
+import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { emojiRegex } from './emojiRegex'
-import * as shortcuts from './shortcuts/index'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -154,12 +154,6 @@ export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
 // time before gesture hint appears
 export const GESTURE_HINT_EXTENDED_TIMEOUT = 400
 
-// time before shortcut hint overlay appears
-export const SHORTCUT_HINT_OVERLAY_TIMEOUT = 500
-
-// time before scroll prioritization is disabled
-export const SCROLL_PRIORITIZATION_TIMEOUT = 500
-
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
 
@@ -172,7 +166,7 @@ export const MAX_EXPAND_DEPTH = 10
 
 // shortcut ids of default buttons that appear in the toolbar
 // otherwise read from Settings thought
-export const TOOLBAR_DEFAULT_SHORTCUTS: (keyof typeof shortcuts)[] = [
+export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'undo',
   'redo',
   'favorite',
@@ -426,6 +420,8 @@ export enum ViewMode {
 export const AlertText = {
   DragAndDrop: 'Drag and drop to move thought',
   DragAndDropFile: 'Drop to import file',
+  DragAndDropToolbar: 'Drag and drop to reorder toolbar',
+  DragAndDropToolbarAdd: 'Drag and drop to add to toolbar',
   ReorderFavorites: 'Drag and drop to reorder favorites',
 }
 
@@ -442,6 +438,10 @@ export enum AlertType {
   DragAndDropFile = 'DragAndDropFile',
   // shown when dragging a thought
   DragAndDropHint = 'DragAndDropHint',
+  // shown when dragging a toolbar button
+  DragAndDropToolbarHint = 'DragAndDropToolbarHint',
+  // shown when dragging a toolbar button from the shortcut table
+  DragAndDropToolbarAdd = 'DragAndDropToolbarAdd',
   // shown when a dragged thought is hovering over the ExportDrop component
   ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
@@ -458,18 +458,23 @@ export enum AlertType {
   ThoughtDeleted = 'ThoughtDeleted',
   // shown when a thought has been moved to a different context
   ThoughtMoved = 'ThoughtMoved',
+  // shown when a toolbar button is hovering over the area for removal in the CustomizeToolbar modal
+  ToolbarButtonRemoveHint = 'ToolbarButtonRemoveHint',
+  // shown when a toolbar button has been removed from the toolbar in the CustomizeToolbar modal
+  ToolbarButtonRemoved = 'ToolbarButtonRemoved',
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
 }
 
-// Allowable settings that can be saved to /EM/Settings/
-// See ModalSettings for full descriptions.
+// User settings that can be saved to /EM/Settings/
+// See Settings modal for full descriptions.
 export enum Settings {
   disableGestureTracing = 'disableGestureTracing',
   experienceMode = 'experienceMode',
+  hideScrollZone = 'hideScrollZone',
+  leftHanded = 'leftHanded',
   favoritesHideContexts = 'favoritesHideContexts',
   hideSuperscripts = 'hideSuperscripts',
-  disableGestureTracingBackForward = 'disableGestureTracingBackForward',
 }
 
 // maximum size of state.jumpHistory

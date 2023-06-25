@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import setCursor from '../action-creators/setCursor'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 
 /** A custom horizontal rule. */
@@ -12,7 +13,7 @@ const Divider = ({ path }: { path: Path }) => {
   const dispatch = useDispatch()
 
   /** Sets the cursor to the divider. */
-  const setCursorToDivider = (e: React.MouseEvent) => {
+  const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     dispatch(setCursor({ path }))
   }
@@ -45,7 +46,7 @@ const Divider = ({ path }: { path: Path }) => {
         width: 85,
       }}
       className='divider-container z-index-stack'
-      onClick={setCursorToDivider}
+      {...fastClick(setCursorToDivider)}
     >
       <div
         className={classNames({

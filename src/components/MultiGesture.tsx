@@ -1,9 +1,13 @@
 /* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
+import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import { NOOP } from '../constants'
+import State from '../@types/State'
+import { NOOP, Settings } from '../constants'
+import getUserSetting from '../selectors/getUserSetting'
+import themeColors from '../selectors/themeColors'
 import ministore from '../stores/ministore'
 import TraceGesture from './TraceGesture'
 
@@ -27,6 +31,8 @@ interface GestureState {
 interface MultiGestureProps {
   // if true, does not draw the gesture as the user is making it
   disableTrace?: boolean
+  // moves the scroll zone to the left side of the screen and the gesture zone to the right
+  leftHanded?: boolean
   // fired when a new gesture is added to the sequence
   onGesture?: (args: {
     gesture: Direction | null
@@ -55,6 +61,9 @@ interface MultiGestureProps {
   scrollThreshold?: number
 }
 
+const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
+const TOOLBAR_HEIGHT = 50
+
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
   NW: -Math.PI * (3 / 4),
@@ -81,12 +90,40 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
     : 'l'
 }
 
+/** An overlay for the scroll zone. */
+const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
+  const colors = useSelector(themeColors)
+  const hideScrollZone = useSelector(
+    (state: State) => state.showModal || getUserSetting(state, Settings.hideScrollZone),
+  )
+  if (hideScrollZone) return null
+
+  return (
+    <div
+      className='z-index-scroll-zone'
+      style={{
+        background: `linear-gradient(90deg, ${colors.bg} -100%, ${colors.fg} 100%)`,
+        backgroundColor: colors.gray50,
+        [leftHanded ? 'borderRight' : 'borderLeft']: `solid 1px ${colors.gray33}`,
+        position: 'fixed',
+        left: leftHanded ? 0 : undefined,
+        right: leftHanded ? undefined : 0,
+        height: '100%',
+        opacity: 0.18,
+        pointerEvents: 'none',
+        width: SCROLL_ZONE_WIDTH,
+      }}
+    />
+  )
+}
+
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
   clientStart: Point | null = null
   currentStart: Point | null = null
   disableTrace = false
+  leftHanded = false
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
@@ -101,6 +138,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // square the minDistance once for more efficient distance comparisons
     this.minDistanceSquared = Math.pow(props.minDistance || 10, 2)
+
+    // this.leftHanded is updated when props change by UNSAFE_componentWillReceiveProps
+    this.leftHanded = !!props.leftHanded
 
     this.reset()
 
@@ -121,9 +161,18 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     document.body.addEventListener('touchstart', e => {
       if (e?.touches.length > 0) {
-        this.clientStart = {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
+        const x = e.touches[0].clientX
+        const y = e.touches[0].clientY
+        this.clientStart = { x, y }
+
+        // disable gestures in the scroll zone on the right side of the screen
+        // disable scroll in the gesture zone on the left side of the screen
+        const isInGestureZone =
+          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) && y > TOOLBAR_HEIGHT
+        if (isInGestureZone && !props.shouldCancelGesture?.()) {
+          this.disableScroll = true
+        } else {
+          this.abandon = true
         }
       }
     })
@@ -135,34 +184,27 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is always called.
     // Fixes https://github.com/cybersemics/em/issues/1242
     document.body.addEventListener('touchend', e => {
-      // manually reset everything except sequence and abandon, in case reset does not get called
-      // Fixes https://github.com/cybersemics/em/issues/1189
-      this.currentStart = null
-      this.scrollYStart = null
-      this.disableScroll = false
-      this.scrolling = false
+      // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
+      setTimeout(() => {
+        // call onEnd if there is a gesture that has not been reset
+        if (!this.abandon && this.sequence) {
+          const clientEnd =
+            e?.touches.length > 0
+              ? {
+                  x: e.touches[0].clientX,
+                  y: e.touches[0].clientY,
+                }
+              : null
+          this.props.onEnd?.({
+            sequence: this.sequence,
+            clientStart: this.clientStart!,
+            clientEnd,
+            e: e as unknown as GestureResponderEvent,
+          })
+        }
 
-      if (this.sequence) {
-        // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
-        setTimeout(() => {
-          if (!this.abandon && this.sequence) {
-            const clientEnd =
-              e?.touches.length > 0
-                ? {
-                    x: e.touches[0].clientX,
-                    y: e.touches[0].clientY,
-                  }
-                : null
-            this.props.onEnd?.({
-              sequence: this.sequence,
-              clientStart: this.clientStart!,
-              clientEnd,
-              e: e as unknown as GestureResponderEvent,
-            })
-            this.reset()
-          }
-        })
-      }
+        this.reset()
+      })
     })
 
     document.addEventListener('visibilitychange', () => {
@@ -240,10 +282,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
 
           if (g !== this.sequence[this.sequence.length - 1]) {
-            // abandon gestures that start with d or u
+            // abandon gestures that start with d or u when scroll is not disabled
             // this can occur when dragging down at the top of the screen on mobile
             // since scrollY is already 0,  this.scrolling will not be set to true to abandon the gesture
-            if (this.sequence.length === 0 && (g === 'd' || g === 'u')) {
+            if (this.sequence.length === 0 && !this.disableScroll && (g === 'd' || g === 'u')) {
               this.abandon = true
             }
             // otherwise append the gesture to the sequence and call the onGesture handler
@@ -272,6 +314,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     })
   }
 
+  // update leftHanded when props change
+  // TODO: Why is the component no re-rendered automatically when a prop changes?
+  UNSAFE_componentWillReceiveProps(nextProps: MultiGestureProps) {
+    this.leftHanded = !!nextProps.leftHanded
+  }
+
   reset() {
     this.abandon = false
     this.currentStart = null
@@ -287,6 +335,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     return (
       <View {...this.panResponder.panHandlers}>
         <TraceGesture eventNodeRef={ref} gestureStore={this.sequenceStore} />
+        <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>
       </View>
     )
@@ -294,6 +343,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
   static defaultProps: MultiGestureProps = {
     disableTrace: false,
+    leftHanded: false,
     minDistance: 10,
     scrollThreshold: 15,
     onStart: NOOP,

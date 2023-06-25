@@ -7,6 +7,7 @@ import GesturePath from './@types/GesturePath'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
 import Shortcut from './@types/Shortcut'
+import ShortcutId from './@types/ShortcutId'
 import State from './@types/State'
 import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
@@ -140,10 +141,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
   handleGestureSegment: ({ gesture, sequence }: { gesture: Direction | null; sequence: GesturePath }) => {
     const state = store.getState()
-    const { toolbarOverlay, scrollPrioritized } = state
     const experienceMode = getUserSetting(state, Settings.experienceMode)
 
-    if (toolbarOverlay || scrollPrioritized || state.showModal || state.dragInProgress) return
+    if (state.showModal || state.dragInProgress) return
 
     const shortcut = shortcutGestureIndex[sequence as string]
 
@@ -195,9 +195,6 @@ export const inputHandlers = (store: Store<State, any>) => ({
   /** Executes a valid gesture and closes the gesture hint. */
   handleGestureEnd: ({ sequence, e }: { sequence: GesturePath | null; e: GestureResponderEvent }) => {
     const state = store.getState()
-    const { scrollPrioritized } = state
-
-    if (scrollPrioritized) return
 
     // Get the shortcut from the shortcut gesture index.
     // When the extended gesture hint is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
@@ -267,15 +264,12 @@ export const inputHandlers = (store: Store<State, any>) => ({
   /** Global keyDown handler. */
   keyDown: (e: KeyboardEvent) => {
     const state = store.getState()
-    const { toolbarOverlay, scrollPrioritized } = state
 
     // track meta key for expansion algorithm
     if (!(isMac ? e.metaKey : e.ctrlKey)) {
       // disable suppress expansion without triggering re-render
       globals.suppressExpansion = false
     }
-
-    if (toolbarOverlay || scrollPrioritized) return
 
     // disable when welcome, shortcuts, or feeback modals are displayed
     if (
@@ -327,8 +321,8 @@ export const formatKeyboardShortcut = (keyboardOrString: Key | string): string =
   )
 }
 
-/** Finds a shortcut by its id. */
-export const shortcutById = (id: string): Shortcut | null => shortcutIdIndex[id]
+/** Get a shortcut by its id. */
+export const shortcutById = (id: ShortcutId): Shortcut => shortcutIdIndex[id]
 
 /** Gets the canonical gesture of the shortcut as a string, ignoring aliases. Returns an empty string if the shortcut does not have a gesture. */
 export const gestureString = (shortcut: Shortcut): string =>

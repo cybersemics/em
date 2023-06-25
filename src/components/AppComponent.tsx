@@ -10,9 +10,10 @@ import Modal from '../@types/Modal'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
-import { BASE_FONT_SIZE } from '../constants'
+import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
@@ -28,7 +29,6 @@ import LatestShortcutsDiagram from './LatestShortcutsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
-import Scale from './Scale'
 import Sidebar from './Sidebar'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
@@ -46,7 +46,6 @@ interface StateProps {
   dragInProgress?: boolean
   isLoading?: boolean
   showModal?: Modal | null
-  scale?: number
   showSplitView?: boolean
   splitPosition?: number
   fontSize: number
@@ -59,9 +58,9 @@ interface StateProps {
 //   return (
 //     <div style={{ position: 'relative' }}>
 //       <div
-//         onClick={() => {
+//         {...fastClick(() => {
 //           store.dispatch(toggleSidebar({}))
-//         }}
+//         })}
 //         style={{ position: 'absolute', height: 9999, width: 30, bottom: 30, zIndex: 1 }}
 //       ></div>
 //     </div>
@@ -130,12 +129,10 @@ const useDisableLongPressToSelect = () => {
 const mapStateToProps = (state: State): StateProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
   const dark = theme(state) !== 'Light'
-  const scale = state.fontSize / BASE_FONT_SIZE
   return {
     dark,
     dragInProgress,
     isLoading,
-    scale,
     showModal,
     splitPosition,
     showSplitView,
@@ -147,14 +144,17 @@ const mapStateToProps = (state: State): StateProps => {
 type Props = StateProps
 
 /** Cancel gesture if there is an active text selection or active drag. */
-const shouldCancelGesture = () => (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress
+const shouldCancelGesture = () =>
+  (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
-const MultiGestureIfTouch: FC = ({ children }) =>
-  isTouch ? (
+const MultiGestureIfTouch: FC = ({ children }) => {
+  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+  return isTouch ? (
     <MultiGesture
+      leftHanded={leftHanded}
       onGesture={handleGestureSegment}
       onEnd={handleGestureEnd}
       shouldCancelGesture={shouldCancelGesture}
@@ -165,6 +165,7 @@ const MultiGestureIfTouch: FC = ({ children }) =>
   ) : (
     <>{children}</>
   )
+}
 
 /**
  * The main app component.
@@ -176,7 +177,6 @@ const AppComponent: FC<Props> = props => {
     enableLatestShortcutsDiagram,
     isLoading,
     showModal,
-    scale,
     showSplitView,
     splitPosition,
     fontSize,
@@ -324,19 +324,7 @@ const AppComponent: FC<Props> = props => {
               </SplitPane>
             )}
 
-            <div
-              className='z-index-stack'
-              style={{
-                position: 'sticky',
-                // cannot use safe-area-inset because of mobile Safari z-index issues
-                bottom: 0,
-              }}
-            >
-              {/* {isTouch && <SidebarGutter />} */}
-              <Scale amount={scale!} origin='bottom left'>
-                <NavBar position='bottom' />
-              </Scale>
-            </div>
+            <NavBar position='bottom' />
           </>
         )}
 

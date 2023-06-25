@@ -27,7 +27,7 @@ interface BulletProps {
   isDragging?: boolean
   isEditing?: boolean
   leaf?: boolean
-  onClick?: (event: React.MouseEvent) => void
+  onClick?: (event: React.MouseEvent | React.TouchEvent) => void
   publish?: boolean
   showContexts?: boolean
   simplePath: SimplePath

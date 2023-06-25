@@ -20,6 +20,7 @@ import getNextRank from '../selectors/getNextRank'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 import unroot from '../util/unroot'
 
@@ -116,7 +117,7 @@ const NewThought = ({
               button: type === 'button',
               'button-variable-width': type === 'button',
             })}
-            onClick={() => onClick && onClick({ distance, showContexts, path, value })}
+            {...fastClick(() => onClick && onClick({ distance, showContexts, path, value }))}
           >
             {label || <>Add a {showContexts ? 'context' : 'thought'}</>}
           </a>

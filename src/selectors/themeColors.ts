@@ -14,6 +14,7 @@ const colors = {
     fgOverlay80: 'rgba(20, 20, 20, 0.8)',
     fgOverlay90: 'rgba(20, 20, 20, 0.9)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
+    gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
@@ -41,6 +42,7 @@ const colors = {
     fgOverlay80: 'rgba(235, 235, 235, 0.8)',
     fgOverlay90: 'rgba(235, 235, 235, 0.9)',
     gray15: 'rgba(38, 38, 38, 1)', // #262626
+    gray33: 'rgba(85, 85, 85, 1)',
     gray50: 'rgba(128, 128, 128, 1)', // #808080 (gray)
     gray66: 'rgba(169, 169, 169, 1)', // #a9a9a9
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9

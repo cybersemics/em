@@ -1,4 +1,5 @@
 import React, { FC } from 'react'
+import fastClick from '../util/fastClick'
 
 /** A checkbox component with em styling. */
 const CheckboxInput = ({
@@ -28,7 +29,7 @@ const Checkbox: FC<{
   disabled?: boolean
   child?: boolean
   parent?: boolean
-  onChange: () => void
+  onChange: (e: React.MouseEvent | React.TouchEvent | React.ChangeEvent) => void
   title?: string
 }> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
@@ -43,10 +44,10 @@ const Checkbox: FC<{
         cursor: disabled ? 'default' : 'pointer',
       }}
       // prevent the default click behavior, which autoscrolls in chrome if there is a checkbox within the label
-      onClick={e => {
+      {...fastClick(e => {
         e.preventDefault()
-        onChange()
-      }}
+        onChange(e)
+      })}
     >
       <div
         style={{

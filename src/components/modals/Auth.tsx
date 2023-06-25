@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import alert from '../../action-creators/alert'
 import login from '../../action-creators/login'
+import fastClick from '../../util/fastClick'
 import storage from '../../util/storage'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -134,14 +135,14 @@ const ModalAuth = () => {
             title={activeMode.modalTitle}
             active={true}
             isLoading={isSubmitting}
-            onClick={() => submitAction(closeModal, email, password)}
+            {...fastClick(() => submitAction(closeModal, email, password))}
           />
 
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
               className='button'
-              onClick={showLogin}
+              {...fastClick(showLogin)}
               style={{ textDecoration: 'underline', marginTop: 15 }}
             >
               {isModeActive(modes.resetPassword) ? 'Back to Login' : 'Log in'}
@@ -153,7 +154,7 @@ const ModalAuth = () => {
               disabled={isSubmitting}
               className='button'
               style={{ textDecoration: 'underline', marginTop: 15 }}
-              onClick={signInWithGoogle}
+              {...fastClick(signInWithGoogle)}
             >
               Sign in with Google
             </button>
@@ -167,11 +168,11 @@ const ModalAuth = () => {
           >
             <a
               id='cancel-login'
-              onClick={() => {
+              {...fastClick(() => {
                 // prevent the login modal on refresh once working offline
                 storage.setItem('modal-to-show', '')
                 closeModal()
-              }}
+              })}
             >
               Work Offline
             </a>
@@ -187,7 +188,7 @@ const ModalAuth = () => {
         )}
 
         {isModeActive(modes.login) && (
-          <button disabled={isSubmitting} className='button' onClick={showForgotPassword}>
+          <button disabled={isSubmitting} className='button' {...fastClick(showForgotPassword)}>
             Forgot Password?
           </button>
         )}

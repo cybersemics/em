@@ -30,6 +30,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
+import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -435,9 +436,9 @@ const ThoughtContainer = ({
           <span className='ellipsis'>
             <a
               tabIndex={-1}
-              onClick={() => {
+              {...fastClick(() => {
                 dispatch(expandContextThought(path))
-              }}
+              })}
             >
               ...{' '}
             </a>

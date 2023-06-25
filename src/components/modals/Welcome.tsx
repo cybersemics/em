@@ -3,6 +3,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
 
@@ -72,15 +73,19 @@ const ModalWelcome = () => {
         onClose={endTutorial}
         actions={() => (
           <div>
-            <ActionButton key='start' title='START TUTORIAL' onClick={close} />
+            <ActionButton key='start' title='START TUTORIAL' {...fastClick(close)} />
             {
               <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
                 <a
                   id='skip-tutorial'
                   className='text-small'
-                  onClick={() => {
+                  {...fastClick(() => {
                     endTutorial()
                     close()
+                  })}
+                  style={{
+                    marginBottom: '-1em',
+                    paddingBottom: '1em',
                   }}
                 >
                   This ain’t my first rodeo. Skip it.

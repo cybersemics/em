@@ -5,7 +5,7 @@ import State from '../../@types/State'
 import themeColors from '../../selectors/themeColors'
 
 /** A home icon. */
-const HomeIcon = ({ fill, size, style }: IconType) => {
+const HomeIcon = ({ className, fill, size, style }: IconType) => {
   const sizeCalculated = useSelector((state: State) => size || state.fontSize)
   const colors = useSelector(themeColors)
   return (
@@ -15,7 +15,7 @@ const HomeIcon = ({ fill, size, style }: IconType) => {
         width={sizeCalculated}
         height={sizeCalculated}
         viewBox='0 0 24 24'
-        className='logo'
+        className={`logo ${className}`}
         fill={fill || colors.fg}
         style={{
           height: sizeCalculated,

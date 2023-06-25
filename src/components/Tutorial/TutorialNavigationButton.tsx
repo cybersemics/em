@@ -1,6 +1,7 @@
 import classNames from 'classnames'
 import React from 'react'
 import Index from '../../@types/IndexType'
+import fastClick from '../../util/fastClick'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialNavigationButton = ({
@@ -18,6 +19,7 @@ const TutorialNavigationButton = ({
     className={classNames('tutorial-button button button-variable-width', classes)}
     onClick={clickHandler}
     {...{ disabled }}
+    {...fastClick(clickHandler)}
   >
     {value}
   </a>

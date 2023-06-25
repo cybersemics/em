@@ -2,6 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
+import fastClick from '../../util/fastClick'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepSuccess = () => {
@@ -15,7 +16,7 @@ const Tutorial2StepSuccess = () => {
       <p>
         That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
         {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
-        <a onClick={() => dispatch(showModal({ id: 'manual' }))}>Help</a> link in the footer.
+        <a {...fastClick(() => dispatch(showModal({ id: 'manual' })))}>Help</a> link in the footer.
       </p>
       <p>Happy Sensemaking!</p>
     </>

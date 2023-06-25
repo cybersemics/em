@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
@@ -25,6 +25,25 @@ const TraceGestureWrapper = (props: TraceGestureProps) => {
   return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
 }
 
+/** A hook that returns true a given number of milliseconds after its condition is set to true. Returns false immediately if the condition becomes false. */
+const useConditionDelay = (condition: boolean, milliseconds: number) => {
+  const [value, setValue] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  useEffect(() => {
+    clearTimeout(timer.current!)
+    if (condition) {
+      timer.current = setTimeout(() => {
+        setValue(true)
+      }, milliseconds)
+    } else {
+      setValue(false)
+    }
+  }, [condition])
+
+  return value
+}
+
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
@@ -47,8 +66,10 @@ const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
     return false
   })
 
-  const disableGestureTracingBackForward = useSelector(getUserSetting(Settings.disableGestureTracingBackForward))
-  const show = gestureStore.useState()?.length > (disableGestureTracingBackForward ? 1 : 0)
+  const gestureStarted = gestureStore.useSelector(gesturePath => gesturePath.length > 0)
+  // 100 millisecond delay before gesture trace is rendered feels about right given the fade in
+  // it correctly avoids rendering quick gestures like back/forward
+  const show = useConditionDelay(gestureStarted, 100)
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
   const fadeTimer = useRef(0)

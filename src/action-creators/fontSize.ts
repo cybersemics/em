@@ -1,13 +1,13 @@
 import Thunk from '../@types/Thunk'
-import storage from '../util/storage'
+import storageModel from '../stores/storageModel'
 
-/** Sets fontSize in state and localStorage.. */
+/** Sets fontSize in state and localStorage. */
 const fontSize =
-  (value: number): Thunk =>
+  (n: number): Thunk =>
   (dispatch, getState) => {
-    dispatch({ type: 'fontSize', value })
+    dispatch({ type: 'fontSize', value: n })
     setTimeout(() => {
-      storage.setItem('fontSize', String(value))
+      storageModel.set('fontSize', n)
     })
   }
 

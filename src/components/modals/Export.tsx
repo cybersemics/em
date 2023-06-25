@@ -24,6 +24,7 @@ import theme from '../../selectors/theme'
 import themeColors from '../../selectors/themeColors'
 import ellipsize from '../../util/ellipsize'
 import exportPhrase from '../../util/exportPhrase'
+import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
@@ -230,7 +231,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   return (
     <span ref={dropDownRef} style={{ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' }}>
-      <a style={{ color: colors.fg }} onClick={() => setIsOpen(!isOpen)}>
+      <a style={{ color: colors.fg }} {...fastClick(() => setIsOpen(!isOpen))}>
         {selected.label}
       </a>
       <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
@@ -538,7 +539,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
         <button
           className='modal-btn-export'
           disabled={exportContent === null}
-          onClick={onExportClick}
+          {...fastClick(onExportClick)}
           style={{ color: colors.bg, backgroundColor: colors.fg }}
         >
           {exportWord}
@@ -548,7 +549,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       {/* Copy to clipboard */}
       <div className='cp-clipboard-wrapper'>
         {exportContent !== null && (
-          <a data-clipboard-text={exportContent} className='copy-clipboard-btn'>
+          <a data-clipboard-text={exportContent} className='copy-clipboard-btn extend-tap'>
             Copy to clipboard
           </a>
         )}
@@ -558,8 +559,8 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       <div className='advance-setting-wrapper'>
         <span>
           <a
-            className='advance-setting-link no-select'
-            onClick={onAdvancedClick}
+            className='advance-setting-link no-select extend-tap'
+            {...fastClick(onAdvancedClick)}
             style={{ opacity: advancedSettings ? 1 : 0.5 }}
           >
             Advanced
@@ -628,7 +629,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
             <button
               className='modal-btn-export'
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              onClick={publish}
+              {...fastClick(publish))}
               style={{ color: colors.bg, backgroundColor: colors.fg }}
             >
               Publish
@@ -637,9 +638,9 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
             {(publishing || publishedCIDs.length > 0) && (
               <button
                 className='modal-btn-cancel'
-                onClick={() => {
+                {...fastClick(()) => {
                   dispatch([alert(null), closeModal()])
-                }}
+                })}
                 style={{
                   color: colors.fg,
                   fontSize: '14px',

@@ -40,6 +40,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
+import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import ellipsize from '../util/ellipsize'
 import ellipsizeUrl from '../util/ellipsizeUrl'
@@ -433,6 +434,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = useCallback(() => {
+    if (suppressFocusStore.getState()) return
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
 
@@ -440,13 +442,11 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       positionFixed.start()
     }
 
-    // get new state
     const { dragHold, dragInProgress } = store.getState()
-
     if (!dragHold && !dragInProgress) {
       setCursorOnThought({ editing: true })
     }
-  }, [value, setCursorOnThought])
+  }, [value])
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(

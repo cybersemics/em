@@ -7,31 +7,32 @@ import tutorial from '../../action-creators/tutorial'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import { TUTORIAL2_STEP_START, TUTORIAL_STEP_START, TUTORIAL_STEP_SUCCESS } from '../../constants'
 import getSetting from '../../selectors/getSetting'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ShortcutTable from './../ShortcutTable'
-import CommandCenterIcon from './../icons/CommandCenterIcon'
+import GestureLibraryIcon from './../icons/GestureLibraryIcon'
 import MetaIcon from './../icons/MetaIcon'
 import TutorialsIcon from './../icons/TutorialsIcon'
 import ModalComponent from './ModalComponent'
 
 enum Section {
-  Menu = 'Menu',
-  CommandCenter = 'Shortcuts',
-  Tutorials = 'Tutorials',
-  Metaprogramming = 'Metaprogramming',
   About = 'About',
+  GestureLibrary = 'GestureLibrary',
+  Menu = 'Menu',
+  Metaprogramming = 'Metaprogramming',
+  Tutorials = 'Tutorials',
 }
 
 /** An item within the manual menu. */
-const ManualMenuItem: FC<{ Icon: FC<Icon>; onClick: () => void; title: string; description: string }> = ({
+const ManualMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; description: string }> = ({
   Icon,
-  onClick,
+  onTap,
   title,
   description,
 }) => {
   const fontSize = useSelector((state: State) => state.fontSize)
   return (
-    <div onClick={onClick} style={{ display: 'flex', marginBottom: '1em' }}>
+    <div {...fastClick(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
       <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
         <Icon size={fontSize * 3} />
       </div>
@@ -46,30 +47,28 @@ const ManualMenuItem: FC<{ Icon: FC<Icon>; onClick: () => void; title: string; d
 }
 
 /** Menu of manual sections. */
-const ManualMenu = ({ onClick }: { onClick: (section: Section) => void }) => {
-  return (
-    <div>
-      <ManualMenuItem
-        Icon={TutorialsIcon}
-        onClick={() => onClick(Section.Tutorials)}
-        title='Tutorials'
-        description={`Play the interactive tutorials to learn the basics.`}
-      />
-      <ManualMenuItem
-        Icon={CommandCenterIcon}
-        onClick={() => onClick(Section.CommandCenter)}
-        title={'Command Center'}
-        description='View all gestures, keyboard shortcuts, and toolbar icons.'
-      />
-      <ManualMenuItem
-        Icon={MetaIcon}
-        onClick={() => onClick(Section.Metaprogramming)}
-        title='Metaprogramming'
-        description={`Explore em's unique metaprogramming feature to customize the appearance and behavior of em.`}
-      />
-    </div>
-  )
-}
+const ManualMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
+  <div>
+    <ManualMenuItem
+      Icon={TutorialsIcon}
+      onTap={() => onSelect(Section.Tutorials)}
+      title='Tutorials'
+      description='Play the interactive tutorials to learn the basics.'
+    />
+    <ManualMenuItem
+      Icon={GestureLibraryIcon}
+      onTap={() => onSelect(Section.GestureLibrary)}
+      title='Gesture Library'
+      description='View a list of all available gestures.'
+    />
+    <ManualMenuItem
+      Icon={MetaIcon}
+      onTap={() => onSelect(Section.Metaprogramming)}
+      title='Metaprogramming'
+      description={`Explore em's unique metaprogramming feature for customizing the appearance and behavior of individual thoughts.`}
+    />
+  </div>
+)
 
 /** Tutorials section. */
 const Tutorials = () => {
@@ -83,7 +82,7 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            onClick={() => {
+            {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
@@ -91,7 +90,7 @@ const Tutorials = () => {
                 setTutorialStep({ value: tutorialStep > TUTORIAL_STEP_SUCCESS ? TUTORIAL_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            }}
+            })}
           >
             Part I: Intro
           </a>
@@ -99,14 +98,14 @@ const Tutorials = () => {
         <div>
           <a
             className='button'
-            onClick={() => {
+            {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
                 // allow resume
                 setTutorialStep({ value: tutorialStep < TUTORIAL2_STEP_START ? TUTORIAL2_STEP_START : tutorialStep }),
                 closeModal(),
               ])
-            }}
+            })}
           >
             Part II: Contexts
           </a>
@@ -356,6 +355,10 @@ const About = () => {
           Metaprogramming icon by <a href='https://thenounproject.com/icon/inspect-element-4199164/'>Ary Prasetyo</a>{' '}
           from the <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Strikethrough icon by <a href='https://thenounproject.com/icon/strikethrough-1107500/'>Ary Prasetyo</a> from
+          the <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
     </div>
   )
@@ -371,33 +374,23 @@ const ModalManual = () => {
       id='manual'
       title='The Manual'
       className='popup'
-      actions={({ close }) => <ActionButton key='close' title='Close' onClick={() => close()} />}
+      actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
-      <div>
-        <p
-          style={{
-            textAlign: 'center',
-            marginTop: -30,
-            marginBottom: 40,
-            opacity: 0.8,
-          }}
-        >
-          Learn all the things.
-        </p>
-      </div>
-
       {section === Section.Menu ? (
-        <ManualMenu onClick={setSection} />
+        <ManualMenu onSelect={setSection} />
       ) : (
         <span className='text-small'>
-          &lt; <a onClick={back}>Back</a>
+          &lt;{' '}
+          <a {...fastClick(back)} className='extend-tap'>
+            Back
+          </a>
         </span>
       )}
 
       {section === Section.Tutorials ? (
         <Tutorials />
-      ) : section === Section.CommandCenter ? (
+      ) : section === Section.GestureLibrary ? (
         <CommandCenter />
       ) : section === Section.Metaprogramming ? (
         <Metaprogramming />
@@ -409,7 +402,10 @@ const ModalManual = () => {
         // TODO: Remove Section.Tutorials condition once it has more content.
         section !== Section.Menu && section !== Section.Tutorials && (
           <div className='text-small' style={{ marginTop: '2em' }}>
-            &lt; <a onClick={back}>Back</a>
+            &lt;{' '}
+            <a {...fastClick(back)} className='extend-tap'>
+              Back
+            </a>
           </div>
         )
       }

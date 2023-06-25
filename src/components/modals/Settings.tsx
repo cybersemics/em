@@ -1,13 +1,13 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import State from '../../@types/State'
+import showModal from '../../action-creators/showModal'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'
 import { Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
-import themeColors from '../../selectors/themeColors'
+import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import Checkbox from './../Checkbox'
-import GestureDiagram from './../GestureDiagram'
 import ModalComponent from './ModalComponent'
 
 /** A boolean setting checkbox, title, and description. */
@@ -44,8 +44,7 @@ const Setting: FC<{
 
 /** User settings modal. */
 const ModalSettings = () => {
-  const colors = useSelector(themeColors)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const dispatch = useDispatch()
   return (
     <ModalComponent
       id='settings'
@@ -53,14 +52,25 @@ const ModalSettings = () => {
       className='popup'
       actions={({ close }) => (
         <div style={{ textAlign: 'center' }}>
-          <ActionButton key='close' title='Close' onClick={() => close()} />
+          <ActionButton key='close' title='Close' {...fastClick(() => close())} />
         </div>
       )}
     >
-      <form style={{ fontSize: undefined }}>
+      <form>
+        <p style={{ marginBottom: '3em', marginTop: '-1em' }}>
+          <a {...fastClick(() => dispatch(showModal({ id: 'customizeToolbar' })))} className='extend-tap'>
+            Customize Toolbar
+          </a>{' '}
+          &gt;
+        </p>
+
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
           learning gestures and want an extra bit of feedback.
+        </Setting>
+
+        <Setting settingsKey={Settings.hideScrollZone} title='Hide Scroll Zone'>
+          Hide the overlay that indicates where the scroll zone is.
         </Setting>
 
         <Setting settingsKey={Settings.hideSuperscripts} title='Superscripts' invert>
@@ -68,46 +78,13 @@ const ModalSettings = () => {
           superscript will not be visible, but the context view can still be activated and used as normal.
         </Setting>
 
-        <Setting
-          settingsKey={Settings.disableGestureTracing}
-          title='Gesture Tracing'
-          invert
-          dependee={Settings.disableGestureTracingBackForward}
-        >
+        <Setting settingsKey={Settings.disableGestureTracing} title='Gesture Tracing' invert>
           Draw a trace onto the screen while making a gesture on a touch screen device.
         </Setting>
 
-        <div style={{ marginLeft: '2em' }}>
-          <Setting
-            settingsKey={Settings.disableGestureTracingBackForward}
-            title='Disable Gesture Tracing for back/forward'
-            dependsOn={Settings.disableGestureTracing}
-          >
-            Do not show the gesture trace for single-swipe gestures, i.e. back
-            <span style={{ whiteSpace: 'nowrap' }}>
-              (
-              <GestureDiagram
-                path='r'
-                size={fontSize * 2}
-                color={colors.gray66}
-                style={{ height: 9, marginLeft: '-0.2em', marginRight: '-0.9em' }}
-              />
-              )
-            </span>{' '}
-            and forward{' '}
-            <span style={{ whiteSpace: 'nowrap' }}>
-              (
-              <GestureDiagram
-                path='l'
-                size={fontSize * 2}
-                color={colors.gray66}
-                style={{ height: 9, marginLeft: '-0.2em', marginRight: '-0.9em' }}
-              />
-              )
-            </span>
-            .
-          </Setting>
-        </div>
+        <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
+          Moves the scroll zone to the left side of the screen and the gesture zone to the right.
+        </Setting>
       </form>
     </ModalComponent>
   )

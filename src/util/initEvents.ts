@@ -28,16 +28,25 @@ declare global {
   }
 }
 
+// the width of the autoscroll zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
+const TOOLBAR_AUTOSCROLL_SIZE = 50
+const WINDOW_AUTOSCROLL_UP_SIZE = 120
+const WINDOW_AUTOSCROLL_DOWN_SIZE = 100
+
+// the top speed of the autoscroll expressed pixels per % of autoscroll zone
+const TOOLBAR_AUTOSCROLL_SPEED = 1.25
+const WINDOW_AUTOSCROLL_SPEED = 2
+
 /** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
 const autoscroll = (() => {
   /** Cubic easing function. */
   const ease = (n: number) => Math.pow(n, 3)
 
-  // if true, the window will continue to be scrolled at the current rate without user interaction
-  let autoscrolling = false
+  // if true, the window or scroll container will continue to be scrolled at the current rate without user interaction
+  let autoscrolling = true
 
   // scroll speed (-1 to 1)
-  let rate = 1
+  const rate = { x: 0, y: 0 }
 
   // cache the autoscroll container on start for performance
   // if the Sidebar is open on touch start, this is set to the .sidebar element
@@ -47,17 +56,19 @@ const autoscroll = (() => {
   const scroll = () => {
     const el = scrollContainer || window
     // if scrollContainer is undefined or window, use the document scrollTop
+    const scrollLeft = (scrollContainer as HTMLElement).scrollLeft ?? document.documentElement.scrollLeft
+    const scrollLeftNew = Math.max(0, scrollLeft + rate.x)
     const scrollTop = (scrollContainer as HTMLElement).scrollTop ?? document.documentElement.scrollTop
-    const scrollTopNew = Math.max(0, scrollTop + rate)
+    const scrollTopNew = Math.max(0, scrollTop + rate.y)
 
     // if we have hit the end, stop autoscrolling
     // i.e. if the next increment would not change scrollTop
-    if (scrollTopNew === scrollTop) {
+    if (scrollLeftNew === scrollLeft && scrollTopNew === scrollTop) {
       autoscrolling = false
       return
     }
 
-    el.scrollTo(0, scrollTopNew)
+    el.scrollTo(scrollLeftNew, scrollTopNew)
     window.requestAnimationFrame(() => {
       if (autoscrolling) {
         scroll()
@@ -66,25 +77,33 @@ const autoscroll = (() => {
   }
 
   /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
-  const startOrUpdate = (rateNew?: number) => {
+  const start = ({ x, y }: { x?: number; y?: number }) => {
     // update the scroll rate
-    rate = ease(rateNew ?? 1)
+    if (x != null) {
+      rate.x = ease(x ?? 1)
+    }
+    if (y != null) {
+      rate.y = ease(y ?? 1)
+    }
 
-    // if we are already autoscrolling, do nothing
+    // if already scrolling, just adjust the scroll rate and bail
     if (autoscrolling) return
 
-    // otherwise kick off the autoscroll
+    // otherwise set the scroll container and kick off the autoscroll
+    scrollContainer =
+      (document.querySelector('.toolbar') as HTMLElement | null) ||
+      (document.querySelector('.sidebar') as HTMLElement | null) ||
+      window
     autoscrolling = true
-    scrollContainer = (document.querySelector('.sidebar') as HTMLElement | null) || window
     scroll()
   }
 
   /** Stops scrolling. */
-  startOrUpdate.stop = () => {
+  const stop = () => {
     autoscrolling = false
   }
 
-  return startOrUpdate
+  return { start, stop }
 })()
 
 /** Add window event handlers. */
@@ -136,29 +155,47 @@ const initEvents = (store: Store<State, any>) => {
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
 
+    if (state.dragShortcut) {
+      const x = e.touches[0].clientX
+      if (x < TOOLBAR_AUTOSCROLL_SIZE) {
+        const rate = 1 + ((TOOLBAR_AUTOSCROLL_SIZE - x) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
+        autoscroll.start({ x: -rate })
+      }
+      // start scrolling down when within 100px of the right edge of the screen
+      else if (x > window.innerWidth - TOOLBAR_AUTOSCROLL_SIZE) {
+        const rate =
+          1 + ((x - window.innerWidth + TOOLBAR_AUTOSCROLL_SIZE) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
+        autoscroll.start({ x: rate })
+      }
+      // stop scrolling when not near the edge of the screen
+      else {
+        autoscroll.stop()
+      }
+    }
     // do not auto scroll when hovering over QuickDrop component
-    if (
-      !state.dragInProgress ||
-      state.alert?.alertType === AlertType.DeleteDropHint ||
-      state.alert?.alertType === AlertType.CopyOneDropHint
-    )
-      return
+    else if (
+      state.dragInProgress &&
+      !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
+    ) {
+      const y = e.touches[0].clientY
 
-    const y = e.touches[0].clientY
-
-    // start scrolling up when within 100px of the top edge of the screen
-    if (y < 120) {
-      const rate = 1 + (120 - y) / 60
-      autoscroll(-rate)
-    }
-    // start scrolling down when within 100px of the bottom edge of the screen
-    else if (y > window.innerHeight - 100) {
-      const rate = 1 + (y - window.innerHeight + 100) / 50
-      autoscroll(rate)
-    }
-    // stop scrolling when not near the edge of the screen
-    else {
-      autoscroll.stop()
+      // start scrolling up when within 120px of the top edge of the screen
+      if (y < WINDOW_AUTOSCROLL_UP_SIZE) {
+        const rate = 1 + ((WINDOW_AUTOSCROLL_UP_SIZE - y) * WINDOW_AUTOSCROLL_SPEED) / WINDOW_AUTOSCROLL_UP_SIZE
+        autoscroll.start({ y: -rate })
+      }
+      // start scrolling down when within 100px of the bottom edge of the screen
+      else if (y > window.innerHeight - WINDOW_AUTOSCROLL_DOWN_SIZE) {
+        const rate =
+          1 +
+          ((y - window.innerHeight + WINDOW_AUTOSCROLL_DOWN_SIZE) * WINDOW_AUTOSCROLL_SPEED) /
+            WINDOW_AUTOSCROLL_DOWN_SIZE
+        autoscroll.start({ y: rate })
+      }
+      // stop scrolling when not near the edge of the screen
+      else {
+        autoscroll.stop()
+      }
     }
   }
 
