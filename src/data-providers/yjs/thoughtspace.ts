@@ -316,11 +316,12 @@ const updateLexeme = async (
 const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
-  const thought = getThought(thoughtDoc)
-  if (!thought) return
 
   // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
   setTimeout(() => {
+    const thought = getThought(thoughtDoc)
+    if (!thought) return
+
     store.dispatch(
       updateThoughtsActionCreator({
         thoughtIndexUpdates: {
@@ -344,14 +345,15 @@ const onLexemeChange = (e: {
 }) => {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
-  const lexeme = getLexeme(lexemeDoc)
-  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
-  const { id: key } = parseDocumentName(lexemeDoc!.guid) as { id: string }
-
-  if (!lexeme) return
 
   // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
   setTimeout(() => {
+    const lexeme = getLexeme(lexemeDoc)
+    if (!lexeme) return
+
+    // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
+    const { id: key } = parseDocumentName(lexemeDoc.guid) as { id: string }
+
     store.dispatch(
       updateThoughtsActionCreator({
         thoughtIndexUpdates: {},
