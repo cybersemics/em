@@ -322,17 +322,30 @@ const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
     const thought = getThought(thoughtDoc)
     if (!thought) return
 
-    store.dispatch(
-      updateThoughtsActionCreator({
-        thoughtIndexUpdates: {
-          [thought.id]: thought,
-        },
-        lexemeIndexUpdates: {},
-        local: false,
-        remote: false,
-        repairCursor: true,
-      }),
-    )
+    store.dispatch((dispatch, getState) => {
+      // if parent is pending, the thought must be marked pending.
+      // Note: Do not clear pending from the parent, because other children may not be loaded.
+      // The next pull should handle that automatically.
+      const state = getState()
+      const thoughtInState = getThoughtByIdSelector(state, thought.id)
+      const parentInState = getThoughtByIdSelector(state, thought.parentId)
+      const pending = !thoughtInState || thoughtInState?.pending || parentInState?.pending
+
+      dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thought,
+              ...(pending ? { pending } : null),
+            },
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          repairCursor: true,
+        }),
+      )
+    })
   })
 }
 
@@ -466,8 +479,9 @@ export const replicateThought = async (
     const thought = getThought(doc)
     if (!thought) return
     const state = store.getState()
-    const loaded = !!getThoughtByIdSelector(state, id) || !!getThoughtByIdSelector(state, thought.parentId)
-    if (loaded) {
+    const thoughtInState = getThoughtByIdSelector(state, id)
+    const parentIntState = getThoughtByIdSelector(state, thought.parentId)
+    if (thoughtInState || parentIntState) {
       onThoughtChange({
         target: doc.getMap(),
         transaction: {
