@@ -107,7 +107,7 @@ const BulletParent = ({
       }}
       d={path}
       strokeWidth={showContexts ? 30 : undefined}
-      stroke={showContexts ? 'none' : colors.fg85}
+      stroke={colors.fg85}
       fill={showContexts ? 'none' : fill}
     />
   )
