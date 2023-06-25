@@ -442,21 +442,6 @@ export const replicateThought = async (
       store.dispatch(alert(errorMessage))
     })
 
-  // A promise that resolves if/when the thought observes a value.
-  // Note that on a public server the synced event fires before the Doc has been populated (Why?), so we cannot rely on synced.
-  const websocketValueObserved = new Promise<SimpleYMapEvent<ThoughtYjs>>(resolve => {
-    /** Observes when the thought is populated (once). May never fire. */
-    const observeUntilValue = (e: Y.YMapEvent<ThoughtYjs>) => {
-      if (e.transaction.origin !== websocketProvider) return
-      const thought = getThought(doc)
-      if (!thought) return
-
-      thoughtMap.unobserve(observeUntilValue)
-      resolve(e)
-    }
-    thoughtMap.observe(observeUntilValue)
-  })
-
   // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateThought will not re-replicate
   if (!background) {
     thoughtDocs[id] = doc
@@ -472,7 +457,7 @@ export const replicateThought = async (
   if (background) {
     // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
     // Otherwise replication will hang.
-    await Promise.race([unsyncedChanges, websocketValueObserved])
+    await Promise.race([unsyncedChanges, websocketSynced])
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
@@ -539,6 +524,15 @@ export const replicateLexeme = async (
     token: accessToken,
   })
 
+  const websocketSynced = new Promise<void>(resolve => {
+    /** Resolves when synced fires. */
+    const onSynced = () => {
+      websocketProvider.off('synced', onSynced)
+      resolve()
+    }
+    websocketProvider.on('synced', onSynced)
+  })
+
   // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced
     .then(() => {
@@ -572,21 +566,6 @@ export const replicateLexeme = async (
     websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
   })
 
-  // A promise that resolves if/when the lexeme observes a value.
-  // Note that on a public server the synced event fires before the Doc has been populated (Why?), so we cannot rely on synced.
-  const websocketValueObserved = new Promise<SimpleYMapEvent<LexemeYjs>>(resolve => {
-    /** Observes when the lexeme is populated (once). May never fire. */
-    const observeUntilValue = (e: Y.YMapEvent<LexemeYjs>) => {
-      if (e.transaction.origin !== websocketProvider) return
-      const lexeme = getLexeme(doc)
-      if (!lexeme) return
-
-      lexemeMap.unobserve(observeUntilValue)
-      resolve(e)
-    }
-    lexemeMap.observe(observeUntilValue)
-  })
-
   // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
   if (!background) {
     lexemeDocs[key] = doc
@@ -600,7 +579,7 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await Promise.race([unsyncedChanges, websocketValueObserved])
+    await Promise.race([unsyncedChanges, websocketSynced])
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
