@@ -431,12 +431,6 @@ export const replicateThought = async (
         persistence.destroy()
       } else if (id === HOME_TOKEN) {
         const thought = getThought(doc)
-        onThoughtChange({
-          target: doc.getMap(),
-          transaction: {
-            origin: persistence,
-          },
-        })
         if (thought) {
           resolveRootSynced(thought)
         }
@@ -551,6 +545,7 @@ export const replicateLexeme = async (
       if (background) {
         persistence.destroy()
       } else {
+        // TODO: Is this necessary?
         onLexemeChange({
           target: doc.getMap(),
           transaction: {
@@ -624,7 +619,7 @@ export const replicateLexeme = async (
     }
   } else {
     // TODO: Why does unsyncedChanges never resolve for EM descendants on new thoughtspace?
-    // Yes onUnsyncedChanges eventually fires if we don't await here
+    // Yet onUnsyncedChanges eventually fires if we don't await here
     // if (!getLexeme(doc)) {
     //   await Promise.race([unsyncedChanges, websocketSynced])
     // }
