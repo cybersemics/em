@@ -434,7 +434,7 @@ export const replicateThought = async (
         onThoughtChange({
           target: doc.getMap(),
           transaction: {
-            origin: websocketProvider,
+            origin: persistence,
           },
         })
         if (thought) {
@@ -555,7 +555,7 @@ export const replicateLexeme = async (
         onLexemeChange({
           target: doc.getMap(),
           transaction: {
-            origin: websocketProvider,
+            origin: persistence,
           },
         })
       }
