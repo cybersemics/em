@@ -10,7 +10,7 @@ import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import alert from '../../action-creators/alert'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
-import { EM_TOKEN, HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
+import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import getLexemeSelector from '../../selectors/getLexeme'
 import getThoughtByIdSelector from '../../selectors/getThoughtById'
@@ -499,7 +499,7 @@ export const replicateThought = async (
     // During foreground replication, if there is no value in IndexedDB, wait for a websocket value before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
-    if (!getThought(doc) && id !== HOME_TOKEN && id !== EM_TOKEN) {
+    if (!getThought(doc)) {
       await Promise.race([websocketSynced, unsyncedChanges])
     }
 
@@ -508,7 +508,6 @@ export const replicateThought = async (
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
-
   return getThought(doc)
 }
 
