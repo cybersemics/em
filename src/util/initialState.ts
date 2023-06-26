@@ -24,7 +24,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
-      // start pending to trigger pullQueue fetch
+      // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
       rank: 0,
@@ -35,7 +35,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
-      // start pending to trigger pullQueue fetch
+      // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
       rank: 0,
@@ -46,7 +46,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
-      // start pending to trigger pullQueue fetch
+      // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
       rank: 0,

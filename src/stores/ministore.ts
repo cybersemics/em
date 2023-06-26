@@ -3,19 +3,19 @@ import { useEffect, useRef, useState } from 'react'
 import { act } from 'react-dom/test-utils'
 
 export interface Ministore<T> {
-  // get the full state of the store
+  /* Get the full state of the store. */
   getState: () => T
-  // subscribe to changes
+  /** Subscribes to changes. Returns an unsubscribe function. */
   subscribe: (f: (state: T) => void) => void
-  // subscribe to changes to a slice of the state
+  /** Subscribes to changes to a slice of the state. */
   subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
-  // Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state.
+  /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
-  // a hook that invokes a callback with side effects when the state changes
+  /** A hook that invokes a callback with side effects when the state changes. */
   useEffect: (f: (state: T) => void) => void
-  // a hook that subscribes to a slice of the state
+  /** A hook that subscribes to a slice of the state. */
   useSelector: <U>(selector: (state: T) => U) => U
-  // a hook that subscribes to the entire state
+  /** A hook that subscribes to the entire state. */
   useState: () => T
 }
 
