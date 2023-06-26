@@ -427,18 +427,6 @@ export const replicateThought = async (
     websocketProvider.on('synced', onSynced)
   })
 
-  // Subscribe to unsyncedChanges, which indicates a thought has not yet synced with the websocket server.
-  // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
-  // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
-  const unsyncedChanges = new Promise<void>(resolve => {
-    /** Resolves when unsyncedChanges fires unsubscribes. */
-    const onUnsyncedChanges = () => {
-      websocketProvider.off('unsyncedChanges', onUnsyncedChanges)
-      resolve()
-    }
-    websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
-  })
-
   const idbSynced = persistence.whenSynced
     .then(() => {
       // if replicating in the background, destroy the HocuspocusProvider once synced
@@ -472,7 +460,7 @@ export const replicateThought = async (
   if (background) {
     // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
     // Otherwise replication will hang.
-    await Promise.race([unsyncedChanges, websocketSynced])
+    await websocketSynced
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
@@ -495,7 +483,7 @@ export const replicateThought = async (
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
     if (!getThought(doc)) {
-      await Promise.race([websocketSynced, unsyncedChanges])
+      await websocketSynced
     }
 
     // Note: onThoughtChange is not pending-aware.
@@ -570,18 +558,6 @@ export const replicateLexeme = async (
       store.dispatch(alert(errorMessage))
     })
 
-  // Subscribe to websocketProvider's unsyncedChanges, which indicates a Lexeme was created locally and has not yet synced with the websocket server.
-  // This allows us to resolve background replication, rather than waiting for an observed value and hanging replication.
-  // The observe event does not fire with the websocketProvider origin if there are unsyncedChanges.
-  const unsyncedChanges = new Promise<void>((resolve, reject) => {
-    /** Resolves when unsyncedChanges fires and unsubscribes. */
-    const onUnsyncedChanges = () => {
-      websocketProvider.off('unsyncedChanges', onUnsyncedChanges)
-      resolve()
-    }
-    websocketProvider.on('unsyncedChanges', onUnsyncedChanges)
-  })
-
   // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
   if (!background) {
     lexemeDocs[key] = doc
@@ -595,7 +571,7 @@ export const replicateLexeme = async (
 
   if (background) {
     // do not resolve background replication until websocket has synced
-    await Promise.race([unsyncedChanges, websocketSynced])
+    await websocketSynced
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
