@@ -1,5 +1,4 @@
 import { HocuspocusProvider } from '@hocuspocus/provider'
-import Emitter from 'emitter20'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
@@ -15,6 +14,7 @@ import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/y
 import getLexemeSelector from '../../selectors/getLexeme'
 import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import store from '../../stores/app'
+import offlineStatusStore from '../../stores/offlineStatusStore'
 import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
@@ -165,23 +165,6 @@ syncStatusStore.subscribeSelector(
     }
   },
 )
-
-/** Returns a [promise, resolve] pair. The promise is resolved when resolve(value) is called. */
-const promiseOnDemand = <T>(): [Promise<T>, (value: T) => void] => {
-  const emitter = new Emitter()
-  const promise = new Promise<T>((resolve, reject) => {
-    emitter.on('resolve', resolve)
-  })
-
-  /** Triggers the emitter to resolve the promise. */
-  const resolve = (value: T) => emitter.trigger('resolve', value)
-
-  return [promise, resolve]
-}
-
-/** A promise that resolves to true when the root thought has been synced from IndexedDB. */
-const [rootSyncedPromise, resolveRootSynced] = promiseOnDemand<Thought>()
-export const rootSynced = rootSyncedPromise
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
@@ -432,10 +415,14 @@ export const replicateThought = async (
       // if replicating in the background, destroy the HocuspocusProvider once synced
       if (background) {
         persistence.destroy()
-      } else if (id === HOME_TOKEN) {
+      }
+      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
+      else if (id === HOME_TOKEN) {
         const thought = getThought(doc)
-        if (thought) {
-          resolveRootSynced(thought)
+        if (Object.keys(thought?.childrenMap || {}).length > 0) {
+          offlineStatusStore.update(statusOld =>
+            statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
+          )
         }
       }
     })
@@ -479,7 +466,7 @@ export const replicateThought = async (
       thoughtMap.observe(onThoughtChange)
     }
   } else {
-    // During foreground replication, if there is no value in IndexedDB, wait for a websocket value before resolving.
+    // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
     if (!getThought(doc)) {
@@ -491,6 +478,7 @@ export const replicateThought = async (
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
+
   return getThought(doc)
 }
 

@@ -2,7 +2,6 @@ import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
 import { WEBSOCKET_CONNECTION_TIME } from '../constants'
 import { websocket } from '../data-providers/yjs'
-import { rootSynced } from '../data-providers/yjs/thoughtspace'
 import ministore from './ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
@@ -32,15 +31,6 @@ websocket.on('status', ({ status }: { status: WebsocketStatus }) => {
       ? (startConnecting(), 'reconnecting')
       : (new Error('Unknown connection status: ' + status), statusOld),
   )
-})
-
-// If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
-rootSynced.then(rootThought => {
-  if (Object.keys(rootThought.childrenMap || {}).length > 0) {
-    offlineStatusStore.update(statusOld =>
-      statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
-    )
-  }
 })
 
 /** Enter a connecting state and then switch to offline after a delay. */
