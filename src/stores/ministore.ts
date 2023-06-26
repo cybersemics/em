@@ -6,7 +6,7 @@ export interface Ministore<T> {
   /* Get the full state of the store. */
   getState: () => T
   /** Subscribes to changes. Returns an unsubscribe function. */
-  subscribe: (f: (state: T) => void) => void
+  subscribe: (f: (state: T) => void) => () => void
   /** Subscribes to changes to a slice of the state. */
   subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
@@ -79,8 +79,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     return localState
   }
 
-  /** Subscribe directly to the state. */
-  const subscribe = (f: (state: T) => void) => {
+  /** Subscribe directly to the state. Returns on unsubscribe function. */
+  const subscribe = (f: (state: T) => void): (() => void) => {
     // We need to wrap the callback in act when the tests are running.
     // Do this once here rather than in every test.
     // TODO: Move this to a stubbing function.
