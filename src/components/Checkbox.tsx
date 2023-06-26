@@ -1,19 +1,14 @@
 import React, { FC } from 'react'
 import fastClick from '../util/fastClick'
 
-/** A checkbox component with em styling. */
-const CheckboxInput = ({
-  checked,
-  onChange,
-}: {
-  checked?: boolean
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
-}) => {
+/** A static checkbox component with em styling. */
+const CheckboxInput = ({ checked }: { checked?: boolean }) => {
   return (
     <>
-      {/* Note: never preventDefault on a controlled checkbox in React.
+      {/* Ignore onChange and just use parent onClick, otherwise it triggers twice on desktop. It may be possible if the second onChange is prevented. readOnly is only set to avoid a React warning.
+          Note: never preventDefault on a controlled checkbox onChange in React.
           See: https://stackoverflow.com/a/70030088/4806080 */}
-      <input type='checkbox' checked={checked} onChange={onChange} />
+      <input type='checkbox' checked={checked} readOnly />
       <span
         className='checkbox'
         // extend tap area without disrupting padding
@@ -64,7 +59,7 @@ const Checkbox: FC<{
         {children && <p className='checkbox-description text-medium dim'>{children}</p>}
       </div>
 
-      <CheckboxInput checked={checked} onChange={onChange} />
+      <CheckboxInput checked={checked} />
     </label>
   )
 }

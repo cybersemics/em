@@ -1,6 +1,6 @@
 import ClipboardJS from 'clipboard'
 import _ from 'lodash'
-import React, { FC, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { FC, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import ExportOption from '../../@types/ExportOption'
@@ -442,34 +442,37 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const onChangeFormattingCheckbox = () => setShouldIncludeMarkdownFormatting(!shouldIncludeMarkdownFormatting)
 
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
-  const advancedSettingsArray: AdvancedSetting[] = [
-    {
-      id: 'meta',
-      onChange: onChangeMetaCheckbox,
-      checked: shouldIncludeMetaAttributes,
-      title: 'Metaprogramming Attributes',
-      description:
-        'When checked, include all metaprogramming attributes such pins, table view, etc. Check this option if the text is intended to be pasted back into em. Uncheck this option for social sharing or public display. ',
-      parent: true,
-    },
-    {
-      id: 'archived',
-      onChange: onChangeArchivedCheckbox,
-      checked: shouldIncludeArchived,
-      title: 'Archived',
-      description: 'When checked, the exported thoughts include archived thoughts.',
-      disabled: !shouldIncludeMetaAttributes,
-      child: true,
-    },
-    {
-      id: 'formatting',
-      onChange: onChangeFormattingCheckbox,
-      checked: shouldIncludeMarkdownFormatting,
-      title: 'Formatting Characters',
-      description:
-        'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
-    },
-  ]
+  const advancedSettingsArray: AdvancedSetting[] = useMemo(
+    () => [
+      {
+        id: 'meta',
+        onChange: onChangeMetaCheckbox,
+        checked: shouldIncludeMetaAttributes,
+        title: 'Metaprogramming Attributes',
+        description:
+          'When checked, include all metaprogramming attributes such pins, table view, etc. Check this option if the text is intended to be pasted back into em. Uncheck this option for social sharing or public display. ',
+        parent: true,
+      },
+      {
+        id: 'archived',
+        onChange: onChangeArchivedCheckbox,
+        checked: shouldIncludeArchived,
+        title: 'Archived',
+        description: 'When checked, the exported thoughts include archived thoughts.',
+        disabled: !shouldIncludeMetaAttributes,
+        child: true,
+      },
+      {
+        id: 'formatting',
+        onChange: onChangeFormattingCheckbox,
+        checked: shouldIncludeMarkdownFormatting,
+        title: 'Formatting Characters',
+        description:
+          'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
+      },
+    ],
+    [shouldIncludeArchived, shouldIncludeMetaAttributes, shouldIncludeMarkdownFormatting],
+  )
 
   return (
     <ModalComponent id='export' title={isTouch ? 'Share' : 'Export'} className='popup'>
