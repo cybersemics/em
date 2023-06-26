@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import React, { FC, useMemo, useRef, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -34,38 +34,20 @@ const TransientEditable = (
   <Editable transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
 )
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { isLoading, search, rootContext } = state
-
-  const isAbsoluteContext = isAbsolute(rootContext)
-
-  const rankedRoot = isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH
-  const rootThoughtsLength = filterAllChildren(
-    state,
-    head(rankedRoot),
-    childrenFilterPredicate(state, rankedRoot),
-  ).length
-
-  return {
-    search,
-    rootThoughtsLength,
-    isAbsoluteContext,
-    isLoading,
-    rootContext,
-  }
-}
-
-type ContentComponent = FC<ReturnType<typeof mapStateToProps>>
-
 /** The main content section of em. */
-const Content: ContentComponent = props => {
-  const { search, rootThoughtsLength, isAbsoluteContext } = props
+const Content: FC = () => {
   const dispatch = useDispatch()
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
+  const search = useSelector((state: State) => state.search)
+  const rootThoughtsLength = useSelector((state: State) => {
+    const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
+    const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
+    return children.length
+  })
+  const isAbsoluteContext = useSelector((state: State) => isAbsolute(state.rootContext))
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
@@ -129,4 +111,7 @@ const Content: ContentComponent = props => {
   )
 }
 
-export default connect(mapStateToProps)(Content)
+const ContentMemo = React.memo(Content)
+ContentMemo.displayName = 'Content'
+
+export default Content
