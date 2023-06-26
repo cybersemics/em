@@ -469,8 +469,18 @@ export const replicateThought = async (
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
-    if (!getThought(doc)) {
-      await websocketSynced
+    if (!getThought(doc) && offlineStatusStore.getState() !== 'offline') {
+      // abort websocketSynced if the user goes offline
+      let unsubscribe: null | (() => void) = null
+      const offline = new Promise<void>(resolve => {
+        unsubscribe = offlineStatusStore.subscribe(status => {
+          if (status === 'offline') {
+            unsubscribe?.()
+            resolve()
+          }
+        })
+      })
+      await Promise.race([websocketSynced.then(unsubscribe), offline])
     }
 
     // Note: onThoughtChange is not pending-aware.
