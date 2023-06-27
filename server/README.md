@@ -38,8 +38,6 @@ npm scripts:
 - `status` - Show the pm2 status.
 - `stop` - Stop all pm2 processes.
 
-_Note: `clear` only deletes the default db locations. If you override `DB_DOCLOGMETA`, `DB_PERMISSIONS`, or `DB_THOUGHTSPACE`, you will need to manually delete the db files._
-
 ## Deployment
 
 The server can be deployed to a hosting platform. The instructions below are for Digital Ocean.
@@ -97,11 +95,9 @@ REACT_APP_WEBSOCKET_PORT=80
 
 The server uses its own environment variables for configuration (not to be confused with the `.env` files on the front-end).
 
-- `process.env.DB_DOCLOGMETA` - Doclog db location. Default: `data/doclogmeta.level`
+- `process.env.AWS_ACCESS_KEY` - AWS access key for server/backup script.
+- `process.env.AWS_ENDPOINT` - AWS endpoint for server/backup script. Default: nyc3.digitaloceanspaces.com
+- `process.env.AWS_SECRET_KEY` - AWS secret key for server/backup script.
+- `process.env.DB_DIR` - Level db directory. Default: `./db`
 - `process.env.HOST` - localhost
 - `process.env.PORT` - 3001
-- `process.env.DB_PERMISSIONS` - Permissions leveldb location. Default: `data/permissions.level`
-- `process.env.DB_THOUGHTSPACE` - Directory for thoughtspace leveldbs. Default: `./data/thoughts/`
-- `process.env.AWS_ACCESS_KEY` - AWS access key for server/backup script.
-- `process.env.AWS_SECRET_KEY` - AWS secret key for server/backup script.
-- `process.env.AWS_ENDPOINT` - AWS endpoint for server/backup script. Default: nyc3.digitaloceanspaces.com

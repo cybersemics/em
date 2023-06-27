@@ -1,5 +1,5 @@
 build
-data
+db
 backup_temp
 .s3cfg
 

@@ -46,6 +46,7 @@ daysago() {
   esac
 }
 
+DB_DIR="db"
 DATE_FORMAT="+%Y-%m-%d"
 DATE_DIR_FORMAT="+%Y/%m"
 # use yesterday's date since the backup only covers up until 00:00:00 today
@@ -55,7 +56,6 @@ DATE_DIR=$(daysago $DATE_DIR_FORMAT 1)
 DATE_90DAYS=$(daysago "$DATE_FORMAT" 91)
 DATE_DIR_90DAYS=$(daysago $DATE_DIR_FORMAT 91)
 DATE_90DAYS_DAY=$(daysago "+%d" 91)
-DATA_DIR="data"
 S3_RELATIVE_PATH=${arg_path:-"/backup/$DATE_DIR/$DATE.zip"}
 S3_UPLOAD_PATH="s3://em-staging$S3_RELATIVE_PATH"
 STAGING_DIR=_backup # include in .gitignore
@@ -70,9 +70,9 @@ if [ -n "$arg_restore" ]; then
     exit 1
   fi
 
-  RESTORE_ZIP="$STAGING_DIR/data.zip"
-  NEW_DIR="$STAGING_DIR/data_new"
-  OLD_DIR=$STAGING_DIR/data_old
+  RESTORE_ZIP="$STAGING_DIR/$DB_DIR.zip"
+  NEW_DIR="$STAGING_DIR/$DATA_DIR_new"
+  OLD_DIR=$STAGING_DIR/$DATA_DIR_old
 
   # staging directory should not exist, but delete it just in case a previous execution failed
   rm -rf "$STAGING_DIR"
@@ -94,15 +94,15 @@ if [ -n "$arg_restore" ]; then
   fi
 
   # move old data to a temporary location before deleting in case something goes wrong
-  if [ -d "$DATA_DIR" ]; then
+  if [ -d "$DB_DIR" ]; then
     echo "swapping data"
-     mv "$DATA_DIR" "$OLD_DIR"]
+     mv "$DB_DIR" "$OLD_DIR"]
   else
     echo "no existing data"
   fi
 
   # move new data to /data
-  mv "$NEW_DIR/$DATA_DIR" . || exit 1
+  mv "$NEW_DIR/$DB_DIR" . || exit 1
 
   # now it should be safe to delete everything
   echo "cleaning up"
@@ -116,7 +116,7 @@ fi
 # Backup
 ####################################################
 
-if [ ! -d data ]; then
+if [ ! -d "$DB_DIR" ]; then
   echo "Nothing to backup; data directory does not yet exist."
   exit 0
 fi
@@ -133,7 +133,7 @@ echo "backup $DATE"
 # zip
 mkdir -p "$STAGING_DIR"
 ZIP_PATH="$STAGING_DIR/$DATE.zip"
-zip -r "$ZIP_PATH" "$DATA_DIR" &>/dev/null
+zip -r "$ZIP_PATH" "$DB_DIR" &>/dev/null
 
 # upload to AWS
 # https://github.com/raineorshine/node-s3-cli

@@ -20,6 +20,10 @@ import timestamp from '../src/util/timestamp'
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
 const port = process.env.PORT ? +process.env.PORT : 3001
+// must match the db directory used in backup.sh and the clear npm script
+const dbDir = process.env.DB_DIR || 'db'
+const thoughtsDbBasePath = `${dbDir}/thoughts`
+const doclogDbBasePath = `${dbDir}/doclogs`
 
 // contains a top level map for each thoughtspace Map<Share> mapping token -> permission
 const permissionsServerDoc = new Y.Doc()
@@ -53,14 +57,14 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 
 // setup db data directory
 // TODO: How to create data/thoughtspaces/${tsid}/ and then persist into thoughts/ or doclogs/? That would be a nicer file structure, but it causes "directory does not exist" or lock errors.
-const thoughtsDbBasePath = process.env.DB_THOUGHTSPACE || 'data/thoughts'
-const doclogDbBasePath = process.env.DB_THOUGHTSPACE || 'data/doclogs'
 fs.mkdirSync(thoughtsDbBasePath, { recursive: true })
 fs.mkdirSync(doclogDbBasePath, { recursive: true })
 
 // meta information about the doclog, mainly the thoughtReplicationCursor
-const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || 'doclogmeta.level'), { valueEncoding: 'json' })
-const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_PERMISSIONS || 'permissions.level'))
+const replicationCursorLevelDb = level(`${dbDir}/replicationCursor`, {
+  valueEncoding: 'json',
+})
+const ldbPermissions = new LeveldbPersistence(`${dbDir}/permissions`)
 // indexed by tsid
 // set on loadDocument (idempotent)
 // deleted when doclog disconnects
@@ -70,7 +74,7 @@ const ldbDoclogs = new Map<string, LeveldbPersistence>()
 // gracefully exist for pm2 reload
 // not that it matters... level has a lock on the db that prevents zero-downtime reload
 process.on('SIGINT', function () {
-  doclogMeta.close(err => {
+  replicationCursorLevelDb.close(err => {
     process.exit(err ? 1 : 0)
   })
 })
@@ -202,12 +206,12 @@ export const onLoadDocument = async ({
         }
       },
 
-      // storage interface for doclogMeta that prepends the tsid.
+      // storage interface for replicationCursorLevelDb that prepends the tsid.
       storage: {
         getItem: async (key: string) => {
           let results: any = null
           try {
-            results = await doclogMeta?.get(encodeDocLogDocumentName(tsid, key))
+            results = await replicationCursorLevelDb?.get(encodeDocLogDocumentName(tsid, key))
           } catch (e) {
             // get will fail with "Key not found" the first time
             // ignore it and replication cursors will be set in next replication
@@ -215,7 +219,7 @@ export const onLoadDocument = async ({
           return results
         },
         setItem: (key: string, value: string) => {
-          doclogMeta?.put(encodeDocLogDocumentName(tsid, key), value)
+          replicationCursorLevelDb?.put(encodeDocLogDocumentName(tsid, key), value)
         },
       },
     })
