@@ -30,7 +30,6 @@ pm2 processes that are started and kept alive on `npm start`:
 
 npm scripts:
 
-- `clear` - **!DANGER!** Deletes the entire database.
 - `logs` - Stream the pm2 logs.
 - `restart` - Restart the pm2 processes.
 - `postdeploy` - Safely restore the leveldb database from the last `predeploy`.
@@ -41,8 +40,6 @@ npm scripts:
 ## Deployment
 
 The server can be deployed to a hosting platform. The instructions below are for Digital Ocean.
-
-**!DANGER!** You must manually execute `npm run predeploy` on the server before you deploy as DigitalOcean wipes the local fire system. This is necessary until we YJS server persistence with no down-time (e.g. PostgreSQL).
 
 Buildpacks:
 
