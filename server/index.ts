@@ -52,7 +52,11 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 }
 
 // setup db data directory
-fs.mkdirSync('./data/thoughts', { recursive: true })
+// TODO: How to create data/thoughtspaces/${tsid}/ and then persist into thoughts/ or doclogs/? That would be a nicer file structure, but it causes "directory does not exist" or lock errors.
+const thoughtsDbBasePath = process.env.DB_THOUGHTSPACE || 'data/thoughts'
+const doclogDbBasePath = process.env.DB_THOUGHTSPACE || 'data/doclogs'
+fs.mkdirSync(thoughtsDbBasePath, { recursive: true })
+fs.mkdirSync(doclogDbBasePath, { recursive: true })
 
 // meta information about the doclog, mainly the thoughtReplicationCursor
 const doclogMeta = level(path.join('data', process.env.DB_DOCLOGMETA || 'doclogmeta.level'), { valueEncoding: 'json' })
@@ -61,6 +65,7 @@ const ldbPermissions = new LeveldbPersistence(path.join('data', process.env.DB_P
 // set on loadDocument (idempotent)
 // deleted when doclog disconnects
 const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
+const ldbDoclogs = new Map<string, LeveldbPersistence>()
 
 // gracefully exist for pm2 reload
 // not that it matters... level has a lock on the db that prevents zero-downtime reload
@@ -167,12 +172,20 @@ export const onLoadDocument = async ({
   } else if (type === 'thought' || type === 'lexeme') {
     let db = ldbThoughtspaces.get(tsid)
     if (!db) {
-      db = new LeveldbPersistence(path.join(process.env.DB_THOUGHTSPACE || 'data/thoughts', tsid))
+      db = new LeveldbPersistence(path.join(thoughtsDbBasePath, tsid))
       ldbThoughtspaces.set(tsid, db)
     }
     await syncLevelDb({ db, docName: documentName, doc: document })
   } else if (type === 'doclog') {
-    /** Use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted. */
+    let db = ldbDoclogs.get(tsid)
+    if (!db) {
+      db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
+      ldbDoclogs.set(tsid, db)
+    }
+
+    await syncLevelDb({ db, docName: documentName, doc: document })
+
+    // use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted
     replicationController({
       doc: document,
       next: async ({ action, id, type }) => {
@@ -199,12 +212,15 @@ export const onLoadDocument = async ({
             // get will fail with "Key not found" the first time
             // ignore it and replication cursors will be set in next replication
           }
-
           return results
         },
-        setItem: (key: string, value: string) => doclogMeta?.put(encodeDocLogDocumentName(tsid, key), value),
+        setItem: (key: string, value: string) => {
+          doclogMeta?.put(encodeDocLogDocumentName(tsid, key), value)
+        },
       },
     })
+  } else {
+    console.error('Unrecognized doc type', type)
   }
 }
 
@@ -223,13 +239,18 @@ const server = Server.configure({
   },
   onLoadDocument,
   onDisconnect: async ({ documentName }) => {
-    // remove the cached ldb database when the doclog disconnects
+    // destroy the cached ldb database when the doclog disconnects
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {
-      const db = ldbThoughtspaces.get(tsid)
-      if (db) {
-        db.destroy()
+      const thoughtsDb = ldbThoughtspaces.get(tsid)
+      if (thoughtsDb) {
+        thoughtsDb.destroy()
         ldbThoughtspaces.delete(tsid)
+      }
+      const doclogDb = ldbDoclogs.get(tsid)
+      if (doclogDb) {
+        doclogDb.destroy()
+        ldbDoclogs.delete(tsid)
       }
     }
   },
