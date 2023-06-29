@@ -412,12 +412,8 @@ export const replicateThought = async (
 
   const idbSynced = persistence.whenSynced
     .then(() => {
-      // if replicating in the background, destroy the HocuspocusProvider once synced
-      if (background) {
-        persistence.destroy()
-      }
       // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
-      else if (id === HOME_TOKEN) {
+      if (!background && id === HOME_TOKEN) {
         const thought = getThought(doc)
         if (Object.keys(thought?.childrenMap || {}).length > 0) {
           offlineStatusStore.update(statusOld =>
@@ -465,6 +461,10 @@ export const replicateThought = async (
       })
       thoughtMap.observe(onThoughtChange)
     }
+
+    // destroy the providers once fully synced
+    persistence.destroy()
+    websocketProvider.destroy()
   } else {
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
@@ -538,9 +538,7 @@ export const replicateLexeme = async (
   // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced
     .then(() => {
-      if (background) {
-        persistence.destroy()
-      } else {
+      if (!background) {
         // TODO: Is this necessary?
         onLexemeChange({
           target: doc.getMap(),
@@ -586,6 +584,10 @@ export const replicateLexeme = async (
       })
       lexemeMap.observe(onLexemeChange)
     }
+
+    // destroy the providers once fully synced
+    persistence.destroy()
+    websocketProvider.destroy()
   } else {
     // TODO: Why does unsyncedChanges never resolve for EM descendants on new thoughtspace?
     // Yet onUnsyncedChanges eventually fires if we don't await here
