@@ -441,8 +441,6 @@ export const replicateThought = async (
 
   // if background replication, wait until websocket has synced
   if (background) {
-    // Resolve when there are unsyncedChanges, which indicates a thought that has not yet synced with the websocket server.
-    // Otherwise replication will hang.
     await websocketSynced
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
@@ -589,12 +587,6 @@ export const replicateLexeme = async (
     persistence.destroy()
     websocketProvider.destroy()
   } else {
-    // TODO: Why does unsyncedChanges never resolve for EM descendants on new thoughtspace?
-    // Yet onUnsyncedChanges eventually fires if we don't await here
-    // if (!getLexeme(doc)) {
-    //   await Promise.race([unsyncedChanges, websocketSynced])
-    // }
-
     lexemeMap.observe(onLexemeChange)
   }
 
