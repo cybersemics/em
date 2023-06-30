@@ -116,16 +116,22 @@ const useExportedState = () => useContext(ExportedStateContext)
  * Context to handle pull status and number of descendants.
  */
 const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) => {
+  const isMounted = useRef(false)
   const [isPulling, setIsPulling] = useState<boolean>(true)
   const [exportedState, setExportedState] = useState<State | null>(null)
-  // list of thoughts as they are executed to provide accurate numDescendants count in real-time
+  // list of thoughts as they are exported to provide accurate numDescendants count in real-time (throttled)
   const [exportingThoughts, setExportingThoughts] = useState<Thought[]>([])
   // Update exportingThoughts every 100ms to throttle re-renders.
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
   const setExportingThoughtsThrottled = useThrottle(setExportingThoughts, 100)
-
-  const isMounted = useRef(false)
+  // queue thoughts to be pushed onto exportingThoughts the next time setExportingThoughtsThrottled fires
+  const exportingThoughtsRef = useRef<Thought[]>([])
+  const pushExportingThought = useCallback((thought: Thought) => {
+    // eslint-disable-next-line fp/no-mutating-methods
+    exportingThoughtsRef.current.push(thought)
+    setExportingThoughtsThrottled([...exportingThoughtsRef.current])
+  }, [])
 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
@@ -137,12 +143,14 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
     const promise = replicateTree(id, {
       onThought: (thought, thoughtIndex) => {
         if (!isMounted.current) return
-        setExportingThoughtsThrottled(thoughts => [...thoughts, thought])
+        pushExportingThought(thought)
       },
     })
 
     promise.then(thoughtIndex => {
       if (!isMounted.current) return
+
+      setExportingThoughtsThrottled.flush()
 
       const initial = initialState()
       const exportedState: State = {
@@ -160,9 +168,8 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
       setExportedState(exportedState)
 
       // clear exporting thoughts when replication completes to conserve memory
-      // numDescendantsFinal be used instead
+      // numDescendantsFinal will be used instead
       setExportingThoughts([])
-
       setIsPulling(false)
     })
 
