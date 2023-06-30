@@ -24,6 +24,7 @@ const port = process.env.PORT ? +process.env.PORT : 3001
 const dbDir = process.env.DB_DIR || 'db'
 const thoughtsDbBasePath = `${dbDir}/thoughts`
 const doclogDbBasePath = `${dbDir}/doclogs`
+const replicationCursorDbBasePath = `${dbDir}/replicationCursor`
 
 // contains a top level map for each thoughtspace Map<Share> mapping token -> permission
 const permissionsServerDoc = new Y.Doc()
@@ -59,25 +60,14 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 // TODO: How to create data/thoughtspaces/${tsid}/ and then persist into thoughts/ or doclogs/? That would be a nicer file structure, but it causes "directory does not exist" or lock errors.
 fs.mkdirSync(thoughtsDbBasePath, { recursive: true })
 fs.mkdirSync(doclogDbBasePath, { recursive: true })
+fs.mkdirSync(replicationCursorDbBasePath, { recursive: true })
 
-// meta information about the doclog, mainly the thoughtReplicationCursor
-const replicationCursorLevelDb = level(`${dbDir}/replicationCursor`, {
-  valueEncoding: 'json',
-})
 const ldbPermissions = new LeveldbPersistence(`${dbDir}/permissions`)
 // indexed by tsid
 // set on loadDocument (idempotent)
 // deleted when doclog disconnects
 const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
-
-// gracefully exist for pm2 reload
-// not that it matters... level has a lock on the db that prevents zero-downtime reload
-process.on('SIGINT', function () {
-  replicationCursorLevelDb.close(err => {
-    process.exit(err ? 1 : 0)
-  })
-})
 
 /** Syncs a doc with leveldb and subscribes to updates. */
 const syncLevelDb = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
@@ -186,6 +176,9 @@ export const onLoadDocument = async ({
       db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
       ldbDoclogs.set(tsid, db)
     }
+
+    // persist a replication cursor to track deletes
+    const replicationCursorLevelDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
 
     await syncLevelDb({ db, docName: documentName, doc: document })
 
