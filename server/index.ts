@@ -71,7 +71,7 @@ const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
 /** Syncs a doc with leveldb and subscribes to updates. */
-const syncLevelDb = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
+const bindState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
   await db.storeUpdate(docName, updates)
@@ -170,7 +170,7 @@ export const onLoadDocument = async ({
       db = new LeveldbPersistence(path.join(thoughtsDbBasePath, tsid))
       ldbThoughtspaces.set(tsid, db)
     }
-    await syncLevelDb({ db, docName: documentName, doc: document })
+    await bindState({ db, docName: documentName, doc: document })
   } else if (type === 'doclog') {
     let db = ldbDoclogs.get(tsid)
     if (!db) {
@@ -185,7 +185,7 @@ export const onLoadDocument = async ({
       ldbReplicationCursors.set(tsid, replicationCursorDb)
     }
 
-    await syncLevelDb({ db, docName: documentName, doc: document })
+    await bindState({ db, docName: documentName, doc: document })
 
     // use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted
     replicationController({
@@ -230,7 +230,7 @@ export const onLoadDocument = async ({
 // TODO: encrypt
 
 console.info('Loading permissions...')
-const permissionsServerSynced = syncLevelDb({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
+const permissionsServerSynced = bindState({ db: ldbPermissions, docName: 'permissions', doc: permissionsServerDoc })
 
 const server = Server.configure({
   port,
