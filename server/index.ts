@@ -68,6 +68,7 @@ const ldbPermissions = new LeveldbPersistence(`${dbDir}/permissions`)
 // deleted when doclog disconnects
 const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
+const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
 /** Syncs a doc with leveldb and subscribes to updates. */
 const syncLevelDb = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
@@ -178,7 +179,11 @@ export const onLoadDocument = async ({
     }
 
     // persist a replication cursor to track deletes
-    const replicationCursorLevelDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
+    let replicationCursorDb = ldbReplicationCursors.get(tsid)!
+    if (!replicationCursorDb) {
+      replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
+      ldbReplicationCursors.set(tsid, replicationCursorDb)
+    }
 
     await syncLevelDb({ db, docName: documentName, doc: document })
 
@@ -199,12 +204,12 @@ export const onLoadDocument = async ({
         }
       },
 
-      // storage interface for replicationCursorLevelDb that prepends the tsid.
+      // persist to level db
       storage: {
         getItem: async (key: string) => {
           let results: any = null
           try {
-            results = await replicationCursorLevelDb?.get(encodeDocLogDocumentName(tsid, key))
+            results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e) {
             // get will fail with "Key not found" the first time
             // ignore it and replication cursors will be set in next replication
@@ -212,7 +217,7 @@ export const onLoadDocument = async ({
           return results
         },
         setItem: (key: string, value: string) => {
-          replicationCursorLevelDb?.put(encodeDocLogDocumentName(tsid, key), value)
+          replicationCursorDb.put(encodeDocLogDocumentName(tsid, key), value)
         },
       },
     })
@@ -249,8 +254,27 @@ const server = Server.configure({
         doclogDb.destroy()
         ldbDoclogs.delete(tsid)
       }
+      const replicationCursorDb = ldbReplicationCursors.get(tsid)
+      if (replicationCursorDb) {
+        await replicationCursorDb.close()
+        ldbReplicationCursors.delete(tsid)
+      }
     }
   },
+})
+
+// gracefully exist for pm2 reload
+// not that it matters... level has a lock on the db that prevents zero-downtime reload
+process.on('SIGINT', function () {
+  ldbThoughtspaces.forEach(db => {
+    db.destroy()
+  })
+  ldbDoclogs.forEach(db => {
+    db.destroy()
+  })
+  ldbReplicationCursors.forEach(db => {
+    db.close()
+  })
 })
 
 // do not start server until permissions have synced
