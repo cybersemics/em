@@ -1,5 +1,4 @@
 import ClipboardJS from 'clipboard'
-import _ from 'lodash'
 import React, { FC, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
@@ -30,6 +29,7 @@ import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
+import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
@@ -79,14 +79,6 @@ const exportOptions: ExportOption[] = [
 ]
 
 /******************************************************************************
- * Hooks
- *****************************************************************************/
-
-/** Use a throttled callback. */
-const useThrottle = <T extends any>(cb: (...args: T[]) => void, delay: number) =>
-  useCallback(_.throttle(cb, delay), [delay])
-
-/******************************************************************************
  * Contexts
  *****************************************************************************/
 
@@ -124,14 +116,10 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
   // Update exportingThoughts every 100ms to throttle re-renders.
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
-  const setExportingThoughtsThrottled = useThrottle(setExportingThoughts, 100)
-  // queue thoughts to be pushed onto exportingThoughts the next time setExportingThoughtsThrottled fires
-  const exportingThoughtsRef = useRef<Thought[]>([])
-  const pushExportingThought = useCallback((thought: Thought) => {
-    // eslint-disable-next-line fp/no-mutating-methods
-    exportingThoughtsRef.current.push(thought)
-    setExportingThoughtsThrottled([...exportingThoughtsRef.current])
-  }, [])
+  const setExportingThoughtsThrottled = useCallback(
+    throttleConcat<Thought>(queue => setExportingThoughts(thoughtsOld => [...thoughtsOld, ...queue]), 100),
+    [],
+  )
 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
@@ -143,7 +131,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
     const promise = replicateTree(id, {
       onThought: (thought, thoughtIndex) => {
         if (!isMounted.current) return
-        pushExportingThought(thought)
+        setExportingThoughtsThrottled(thought)
       },
     })
 
