@@ -369,6 +369,7 @@ export const replicateThought = async (
   id: ThoughtId,
   {
     background,
+    remote,
   }: {
     /**
      * Replicate in the background, meaning:
@@ -379,8 +380,13 @@ export const replicateThought = async (
      * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
+    /** Wait for websocket to sync before resolving (background replication only). Default: true. */
+    remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
+  if (remote == null) {
+    remote = true
+  }
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
   const thoughtMap = doc.getMap<ThoughtYjs>()
@@ -441,7 +447,9 @@ export const replicateThought = async (
 
   // if background replication, wait until websocket has synced
   if (background) {
-    await websocketSynced
+    if (remote) {
+      await websocketSynced
+    }
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
@@ -801,11 +809,21 @@ export const getThoughtById = (id: ThoughtId) => replicateThought(id)
 export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
   Promise.all(ids.map(getThoughtById))
 
-/** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Uses the first value returned by IndexedDB or the WebsocketProvider. */
+/** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
 export const replicateTree = (
   id: ThoughtId,
-  { onThought }: { onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void } = {},
+  {
+    remote,
+    onThought,
+  }: {
+    /** Wait for Websocket to sync before resolving. Default: true. */
+    remote?: boolean
+    onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
+  } = {},
 ): CancellablePromise<Index<Thought>> => {
+  if (remote == null) {
+    remote = true
+  }
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
   const thoughtIndex: Index<Thought> = {}
@@ -813,7 +831,7 @@ export const replicateTree = (
 
   /** Creates a task to replicate a thought and add it to the thoughtIndex. Queues up children replication. */
   const replicateTask = (id: ThoughtId) => async () => {
-    const thought = await replicateThought(id, { background: true })
+    const thought = await replicateThought(id, { background: true, remote })
     if (!thought || abort) return
     thoughtIndex[id] = thought
     onThought?.(thought, thoughtIndex)

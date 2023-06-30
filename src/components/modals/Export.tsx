@@ -129,6 +129,8 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
     const id = head(simplePath)
 
     const promise = replicateTree(id, {
+      // TODO: Warn the user if offline or not fully replicated
+      remote: false,
       onThought: (thought, thoughtIndex) => {
         if (!isMounted.current) return
         setExportingThoughtsThrottled(thought)
