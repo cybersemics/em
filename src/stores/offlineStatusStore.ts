@@ -4,7 +4,7 @@ import { WEBSOCKET_CONNECTION_TIME } from '../constants'
 import { websocket } from '../data-providers/yjs'
 import ministore from './ministore'
 
-/** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). See: OfflineStatus. */
+/** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
 export const offlineStatusStore = ministore<OfflineStatus>(
   websocket.status === 'connected' ? 'connected' : 'preconnecting',
 )

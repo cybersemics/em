@@ -3,6 +3,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
+import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import ModalComponent from './ModalComponent'
@@ -53,6 +54,11 @@ const ModalWelcome = () => {
 
   /** End the tutorial. */
   const endTutorial = () => {
+    // If the websocket is still connecting for the first time when the tutorial is dismissed, change the status to reconnecting (which occurs in the background) to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
+    offlineStatusStore.update(statusOld =>
+      statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
+    )
+
     dispatch(
       tutorial({
         value: false,
