@@ -690,9 +690,15 @@ const freeLexeme = (key: string): void => {
   delete lexemeWebsocketProvider[key]
 }
 
-/** Deletes a lexemes and clears the doc from IndexedDB. Resolves when local database is deleted. */
+/** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
 const deleteLexeme = async (key: string): Promise<void> => {
   const persistence = lexemePersistence[key]
+
+  // When deleting a Lexeme, clear out the contexts first to ensure that if a new Lexeme with the same key gets created, it doesn't accidentally pull the old contexts.
+  const lexemeOld = getLexeme(lexemeDocs[key] || persistence?.doc || lexemeWebsocketProvider[key]?.document)
+  if (lexemeOld) {
+    await updateLexeme(key, { ...lexemeOld, contexts: [] }, lexemeOld)
+  }
 
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db

@@ -187,20 +187,22 @@ export const onLoadDocument = async ({
 
     await bindState({ db, docName: documentName, doc: document })
 
-    // use a replicationController to track thought and lexeme deletes in the doclog. Clears persisted documents that have been deleted
+    // Use a replicationController to track thought and lexeme deletes in the doclog.
+    // Clears persisted documents that have been deleted.
+    // Note: It is recommended to clear all contexts from a Lexeme before deleting it to mitigate re-entry bugs if a new Lexeme with the same key is created.
     replicationController({
       doc: document,
       next: async ({ action, id, type }) => {
         if (action === DocLogAction.Delete) {
-          const name =
-            type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id)
           document.destroy()
-          const db = ldbThoughtspaces.get(tsid)
-          if (!db) {
+          const thoughtspaceDb = ldbThoughtspaces.get(tsid)
+          if (!thoughtspaceDb) {
             console.error('LeveldbPersistence instance missing', documentName)
             return
           }
-          await db.clearDocument(name)
+          await thoughtspaceDb.clearDocument(
+            type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id),
+          )
         }
       },
 
