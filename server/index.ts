@@ -15,9 +15,13 @@ import {
   parseDocumentName,
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
+import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
 
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
+
+/** Number of milliseconds to throttle bindState writing to leveldb. */
+const THROTTLE_BINDSTATE = 1000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -70,15 +74,30 @@ const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
-/** Syncs a doc with leveldb and subscribes to updates. */
+/** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
+// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own custom throttling with throttleConcat.
+// https://tiptap.dev/hocuspocus/server/extensions#database
 const bindState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
   await db.storeUpdate(docName, updates)
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
-  doc.on('update', update => {
-    db.storeUpdate(docName, update)
-  })
+
+  // throttled update handler accumulates and merges updates
+  const storeUpdateThrottled = throttleConcat(
+    // Note: Is it a problem that mergeUpdates does not perform garbage collection?
+    // https://discuss.yjs.dev/t/throttling-yjs-updates-with-garbage-collection/1423
+    (updates: Uint8Array[]) => {
+      if (updates.length === 0) return
+      db.storeUpdate(docName, Y.mergeUpdates(updates))
+    },
+    THROTTLE_BINDSTATE,
+  )
+
+  doc.on('update', storeUpdateThrottled)
+
+  // TODO: Flushing updates on destroy completely negates the benefits of throttling during editing, since Lexemes are radidly created and deleted. Is there a way to defer updates without causing a race condition during editing?
+  doc.on('destroy', storeUpdateThrottled.flush)
 }
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
