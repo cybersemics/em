@@ -74,6 +74,16 @@ const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
+/** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
+const loadReplicationCursor = (tsid: string): level.LevelDB => {
+  let replicationCursorDb = ldbReplicationCursors.get(tsid)!
+  if (!replicationCursorDb) {
+    replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
+    ldbReplicationCursors.set(tsid, replicationCursorDb)
+  }
+  return replicationCursorDb
+}
+
 /** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
 // Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own custom throttling with throttleConcat.
 // https://tiptap.dev/hocuspocus/server/extensions#database
@@ -197,13 +207,6 @@ export const onLoadDocument = async ({
       ldbDoclogs.set(tsid, db)
     }
 
-    // persist a replication cursor to track deletes
-    let replicationCursorDb = ldbReplicationCursors.get(tsid)!
-    if (!replicationCursorDb) {
-      replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
-      ldbReplicationCursors.set(tsid, replicationCursorDb)
-    }
-
     await bindState({ db, docName: documentName, doc: document })
 
     // Use a replicationController to track thought and lexeme deletes in the doclog.
@@ -230,6 +233,7 @@ export const onLoadDocument = async ({
         getItem: async (key: string) => {
           let results: any = null
           try {
+            const replicationCursorDb = loadReplicationCursor(tsid)
             results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e) {
             // get will fail with "Key not found" the first time
@@ -238,6 +242,7 @@ export const onLoadDocument = async ({
           return results
         },
         setItem: (key: string, value: string) => {
+          const replicationCursorDb = loadReplicationCursor(tsid)
           replicationCursorDb.put(encodeDocLogDocumentName(tsid, key), value)
         },
       },
@@ -261,20 +266,32 @@ const server = Server.configure({
     process.send?.('ready')
   },
   onLoadDocument,
+  onConnect: async ({ documentName }) => {
+    // Load the replicationCursor into memory in preparation for the replicationController.
+    const { tsid, type } = parseDocumentName(documentName)
+    if (type === 'doclog') {
+      loadReplicationCursor(tsid)
+    }
+  },
   onDisconnect: async ({ documentName }) => {
     // destroy the cached ldb database when the doclog disconnects
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {
+      // unload thoughtsDb
       const thoughtsDb = ldbThoughtspaces.get(tsid)
       if (thoughtsDb) {
         thoughtsDb.destroy()
         ldbThoughtspaces.delete(tsid)
       }
+
+      // unload doclogDb
       const doclogDb = ldbDoclogs.get(tsid)
       if (doclogDb) {
         doclogDb.destroy()
         ldbDoclogs.delete(tsid)
       }
+
+      // unload replicationCursorDb
       const replicationCursorDb = ldbReplicationCursors.get(tsid)
       if (replicationCursorDb) {
         await replicationCursorDb.close()
