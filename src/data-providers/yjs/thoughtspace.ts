@@ -312,7 +312,7 @@ const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
       const state = getState()
       const thoughtInState = getThoughtByIdSelector(state, thought.id)
       const parentInState = getThoughtByIdSelector(state, thought.parentId)
-      const pending = !thoughtInState || thoughtInState?.pending || parentInState?.pending
+      const pending = thoughtInState?.pending || parentInState?.pending
 
       dispatch(
         updateThoughtsActionCreator({
