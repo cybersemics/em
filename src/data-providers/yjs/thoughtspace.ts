@@ -380,7 +380,7 @@ export const replicateThought = async (
      * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
-    /** Wait for websocket to sync before resolving (background replication only). Default: true. */
+    /** Wait for websocket to sync before resolving (background replication only). Default: true. This is currently set to false during export. */
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
@@ -568,6 +568,10 @@ export const replicateLexeme = async (
     lexemeWebsocketProvider[key] = websocketProvider
   }
 
+  // Start observing before websocketSynced since we don't need to worry about pending (See: replicateThought).
+  // This will be unobserved in background replication.
+  lexemeMap.observe(onLexemeChange)
+
   // always wait for IDB to sync
   await idbSynced
 
@@ -578,24 +582,27 @@ export const replicateLexeme = async (
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     const lexeme = getLexeme(doc)
-    if (!lexeme) return
     const state = store.getState()
-    const loaded = !!getLexemeSelector(state, key) || lexeme.contexts.some(cxid => getThoughtByIdSelector(state, cxid))
+    const loaded = !!getLexemeSelector(state, key) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid))
+    if (!lexeme) return
     if (loaded) {
+      lexemeDocs[key] = doc
+      lexemeSynced[key] = idbSynced
+      lexemePersistence[key] = persistence
+      lexemeWebsocketProvider[key] = websocketProvider
       onLexemeChange({
         target: doc.getMap(),
         transaction: {
           origin: websocketProvider,
         },
       })
-      lexemeMap.observe(onLexemeChange)
+    } else {
+      // destroy the providers once fully synced
+      const lexeme = getLexeme(doc)
+      doc.destroy()
+      lexemeMap.unobserve(onLexemeChange)
+      return lexeme
     }
-
-    // destroy the providers once fully synced
-    persistence.destroy()
-    websocketProvider.destroy()
-  } else {
-    lexemeMap.observe(onLexemeChange)
   }
 
   return getLexeme(doc)
