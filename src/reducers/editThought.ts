@@ -109,10 +109,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
   // the old thought less the context
   const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
 
-  const lexemeNew =
-    lexemeOld && lexemeOld.contexts.length > 0
-      ? addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
-      : lexemeNewWithoutContext
+  const lexemeNew = addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
 
   // update local lexemeIndex so that we do not have to wait for the remote
   lexemeIndex[newKey] = lexemeNew
