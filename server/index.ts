@@ -216,7 +216,6 @@ export const onLoadDocument = async ({
       doc: document,
       next: async ({ action, id, type }) => {
         if (action === DocLogAction.Delete) {
-          document.destroy()
           const thoughtspaceDb = ldbThoughtspaces.get(tsid)
           if (!thoughtspaceDb) {
             console.error('LeveldbPersistence instance missing', documentName)
@@ -225,6 +224,7 @@ export const onLoadDocument = async ({
           await thoughtspaceDb.clearDocument(
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id),
           )
+          await thoughtspaceDb.destroy()
         }
       },
 
