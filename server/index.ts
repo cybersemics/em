@@ -274,6 +274,9 @@ const server = Server.configure({
     }
   },
   onDisconnect: async ({ documentName }) => {
+    // for some reason documentName can be empty (bug?)
+    if (!documentName) return
+
     // destroy the cached ldb database when the doclog disconnects
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {

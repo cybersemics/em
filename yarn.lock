@@ -1856,19 +1856,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.0.6.tgz#ed004e2d6f438ae43ddada0ba96f21a66a49b13f"
-  integrity sha512-IutSEWCkpJc81nKJX9Yzeqg87NuExKv7C2ccVfld7P+cNAHDhOvmNX9Xdol04AGf/8wMH5/a6eqaKT/wafnNpw==
+"@hocuspocus/common@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.2.0.tgz#6e09c75d269fe08f0e9246c978a537350b99f513"
+  integrity sha512-PkpbFfMC2Tryv5XH/waRMq79zYdrSUc86U6mSHY4+cirvl+U15/ZMV/pdI+sx+HYzZXN/351JT9FiGbKOI/JrQ==
   dependencies:
     lib0 "^0.2.47"
 
-"@hocuspocus/provider@^2.0.6":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.0.6.tgz#62f0ed8ab174eca42d530c1630f05ae4f113e470"
-  integrity sha512-ANGZN2JUhUUNb/RJkUU3bwYWiqY/FmA8w06GbHe3iFnb4qQYAT+8UIpA9C+JnkgoSTgeEXDdJTBjEE3jVCgVtw==
+"@hocuspocus/provider@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.2.0.tgz#5354633a486f344a3bf236d25d817729a6de735d"
+  integrity sha512-K7OXfUYdmOzoSVQTB2suVmlsM4CVayMg9Scz7qTcWADxHIC811UQzhAjqDoLBjXRjCiYtZf3kLEJnIvf8dCc8A==
   dependencies:
-    "@hocuspocus/common" "^2.0.6"
+    "@hocuspocus/common" "^2.2.0"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
     ws "^7.5.9"
@@ -3150,13 +3150,6 @@
   version "2.6.8"
   resolved "https://registry.npmjs.org/@types/react-gravatar/-/react-gravatar-2.6.8.tgz"
   integrity sha512-VMk0bF0w72l+opBm+EqLs0JqUG+hPowMBWCVGrbTwUWm/oDncvwNrf7P/ImwYwkTCKiLnU8Rc+/lyhehaIE/Rw==
-  dependencies:
-    "@types/react" "*"
-
-"@types/react-hamburger-menu@0.0.3":
-  version "0.0.3"
-  resolved "https://registry.npmjs.org/@types/react-hamburger-menu/-/react-hamburger-menu-0.0.3.tgz"
-  integrity sha512-JScOY0iQxK0H8Y/DjFxhM2FOnDTp5h+V2BFgaSQOzWmREtQkD1elikV7du3OcVQ0CLScgpnlpIrY0XGfP+d/2g==
   dependencies:
     "@types/react" "*"
 
