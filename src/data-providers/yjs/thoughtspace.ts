@@ -420,8 +420,9 @@ export const replicateThought = async (
     .then(() => {
       // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
       if (!background && id === HOME_TOKEN) {
-        const thought = getThought(doc)
-        if (Object.keys(thought?.childrenMap || {}).length > 0) {
+        const rootThought = getThought(doc)
+        const hasRootChildren = Object.keys(rootThought?.childrenMap || {}).length > 0
+        if (hasRootChildren) {
           offlineStatusStore.update(statusOld =>
             statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
           )
@@ -458,7 +459,8 @@ export const replicateThought = async (
     const state = store.getState()
     const thoughtInState = getThoughtByIdSelector(state, id)
     const parentIntState = getThoughtByIdSelector(state, thought.parentId)
-    if (thoughtInState || parentIntState) {
+    const loaded = thoughtInState || parentIntState
+    if (loaded) {
       onThoughtChange({
         target: doc.getMap(),
         transaction: {
