@@ -461,6 +461,10 @@ export const replicateThought = async (
     const parentIntState = getThoughtByIdSelector(state, thought.parentId)
     const loaded = thoughtInState || parentIntState
     if (loaded) {
+      thoughtDocs[id] = doc
+      thoughtSynced[id] = idbSynced
+      thoughtPersistence[id] = persistence
+      thoughtWebsocketProvider[id] = websocketProvider
       onThoughtChange({
         target: doc.getMap(),
         transaction: {
@@ -468,11 +472,10 @@ export const replicateThought = async (
         },
       })
       thoughtMap.observe(onThoughtChange)
+    } else {
+      doc.destroy()
+      return thought
     }
-
-    // destroy the providers once fully synced
-    persistence.destroy()
-    websocketProvider.destroy()
   } else {
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
