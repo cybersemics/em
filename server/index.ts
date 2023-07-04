@@ -37,7 +37,7 @@ const permissionsServerDoc = new Y.Doc()
 const mask = (s: string, n = 4) => `${s.slice(0, n)}...`
 
 /** Gets a permissionsServerDoc by name that is synced by the server. */
-const getYDoc = (name: string): Y.Doc | undefined => server.documents.get(name)
+const getYDoc = (name: string): Y.Doc | undefined => server?.documents.get(name)
 
 /** Make text gray in the console. */
 const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
@@ -182,6 +182,7 @@ export const onLoadDocument = async ({
 
     // sync client permissions to server
     // TODO: Is there a way to 2-way sync only the updates for this tsid?
+    // TODO: unobserve
     permissionsClientMap?.observe(e => {
       e.changes.keys.forEach((change, key) => {
         if (change.action === 'delete') {
