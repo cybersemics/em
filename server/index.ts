@@ -84,14 +84,23 @@ const loadReplicationCursor = (tsid: string): level.LevelDB => {
   return replicationCursorDb
 }
 
-/** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
-// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own custom throttling with throttleConcat.
-// https://tiptap.dev/hocuspocus/server/extensions#database
-const bindState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
+/** Sync the initial state of the given in-memory doc with the level db. */
+// WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
+// https://github.com/cybersemics/em/issues/1725
+const initState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
   await db.storeUpdate(docName, updates)
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
+}
+
+/** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
+// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own custom throttling with throttleConcat.
+// https://tiptap.dev/hocuspocus/server/extensions#database
+const bindState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
+  // do not await
+  // https://github.com/cybersemics/em/issues/1725
+  initState({ db, docName, doc })
 
   // throttled update handler accumulates and merges updates
   const storeUpdateThrottled = throttleConcat(
