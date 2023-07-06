@@ -75,7 +75,7 @@ const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
 /** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
-const loadReplicationCursor = (tsid: string): level.LevelDB => {
+const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
   let replicationCursorDb = ldbReplicationCursors.get(tsid)!
   if (!replicationCursorDb) {
     replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
@@ -243,7 +243,7 @@ export const onLoadDocument = async ({
         getItem: async (key: string) => {
           let results: any = null
           try {
-            const replicationCursorDb = loadReplicationCursor(tsid)
+            const replicationCursorDb = loadReplicationCursorDb(tsid)
             results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e) {
             // get will fail with "Key not found" the first time
@@ -252,7 +252,7 @@ export const onLoadDocument = async ({
           return results
         },
         setItem: (key: string, value: string) => {
-          const replicationCursorDb = loadReplicationCursor(tsid)
+          const replicationCursorDb = loadReplicationCursorDb(tsid)
           replicationCursorDb.put(encodeDocLogDocumentName(tsid, key), value)
         },
       },
@@ -280,7 +280,7 @@ const server = Server.configure({
     // Load the replicationCursor into memory in preparation for the replicationController.
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {
-      loadReplicationCursor(tsid)
+      loadReplicationCursorDb(tsid)
     }
   },
   onDisconnect: async ({ documentName }) => {
@@ -290,10 +290,10 @@ const server = Server.configure({
     // destroy the cached ldb database when the doclog disconnects
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {
-      // unload thoughtsDb
-      const thoughtsDb = ldbThoughtspaces.get(tsid)
-      if (thoughtsDb) {
-        thoughtsDb.destroy()
+      // unload thoughtspaceDb
+      const thoughtspaceDb = ldbThoughtspaces.get(tsid)
+      if (thoughtspaceDb) {
+        thoughtspaceDb.destroy()
         ldbThoughtspaces.delete(tsid)
       }
 
