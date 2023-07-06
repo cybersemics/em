@@ -74,6 +74,16 @@ const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
+/** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
+const loadThoughtspaceDb = (tsid: string): LeveldbPersistence => {
+  let db = ldbThoughtspaces.get(tsid)
+  if (!db) {
+    db = new LeveldbPersistence(path.join(thoughtsDbBasePath, tsid))
+    ldbThoughtspaces.set(tsid, db)
+  }
+  return db
+}
+
 /** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
 const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
   let replicationCursorDb = ldbReplicationCursors.get(tsid)!
@@ -226,11 +236,8 @@ export const onLoadDocument = async ({
       doc: document,
       next: async ({ action, id, type }) => {
         if (action === DocLogAction.Delete) {
-          const thoughtspaceDb = ldbThoughtspaces.get(tsid)
-          if (!thoughtspaceDb) {
-            console.error('LeveldbPersistence instance missing', documentName)
-            return
-          }
+          // if the client becomes disconnected before replication completes, its thoughtspaceDb will be destroyed and needs to be re-loaded to finish processing deletes from the doclog
+          const thoughtspaceDb = loadThoughtspaceDb(tsid)
           await thoughtspaceDb.clearDocument(
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id),
           )
