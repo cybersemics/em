@@ -548,23 +548,11 @@ export const replicateLexeme = async (
   })
 
   // if replicating in the background, destroy the IndexeddbProvider once synced
-  const idbSynced = persistence.whenSynced
-    .then(() => {
-      if (!background) {
-        // TODO: Is this necessary?
-        onLexemeChange({
-          target: doc.getMap(),
-          transaction: {
-            origin: persistence,
-          },
-        })
-      }
-    })
-    .catch(e => {
-      const errorMessage = `Error loading lexeme ${key}. ${e.message || e}`
-      console.error(errorMessage, e)
-      store.dispatch(alert(errorMessage))
-    })
+  const idbSynced = persistence.whenSynced.catch(e => {
+    const errorMessage = `Error loading lexeme ${key}. ${e.message || e}`
+    console.error(errorMessage, e)
+    store.dispatch(alert(errorMessage))
+  }) as Promise<void>
 
   // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
   if (!background) {
