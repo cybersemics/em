@@ -33,7 +33,9 @@ const useEllipsizedThoughts = (
   const thoughtValuesLive = useSelector(
     (state: State) =>
       path.map(id =>
-        editingValue && state.cursor && id === head(state.cursor) ? editingValue : getThoughtById(state, id)?.value,
+        editingValue && state.cursor && id === head(state.cursor)
+          ? editingValue
+          : ((getThoughtById(state, id)?.value || null) as string | null),
       ),
     _.isEqual,
   )
@@ -42,10 +44,12 @@ const useEllipsizedThoughts = (
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
     const value = thoughtValuesLive[i]
     return {
-      value,
+      // It is possible that the thought is no longer in state, in which case value will be null.
+      // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
+      value: value ?? '',
       id,
       // add ellipsized label
-      ...(!disabled
+      ...(!disabled && value != null
         ? {
             label: strip(
               // subtract 2 so that additional '...' is still within the char limit
