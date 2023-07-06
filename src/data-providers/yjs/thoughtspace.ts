@@ -474,6 +474,7 @@ export const replicateThought = async (
       thoughtMap.observe(onThoughtChange)
     } else {
       doc.destroy()
+      websocketProvider.destroy()
       return thought
     }
   } else {
@@ -604,8 +605,9 @@ export const replicateLexeme = async (
     } else {
       // destroy the providers once fully synced
       const lexeme = getLexeme(doc)
-      doc.destroy()
       lexemeMap.unobserve(onLexemeChange)
+      doc.destroy()
+      websocketProvider.destroy()
       return lexeme
     }
   }
@@ -658,7 +660,10 @@ const freeThought = (id: ThoughtId): void => {
     thoughtMap.unobserve(onThoughtChange)
   }
 
+  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed
+  // HocuspocusProvider is not automatically destroyed when the Doc is destroyed
   thoughtDocs[id]?.destroy()
+  thoughtWebsocketProvider[id]?.destroy()
   delete thoughtDocs[id]
   delete thoughtPersistence[id]
   delete thoughtSynced[id]
@@ -695,7 +700,10 @@ const freeLexeme = (key: string): void => {
     lexemeMap.unobserve(onLexemeChange)
   }
 
+  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed
+  // HocuspocusProvider is not automatically destroyed when the Doc is destroyed
   lexemeDocs[key]?.destroy()
+  lexemeWebsocketProvider[key]?.destroy()
   delete lexemeDocs[key]
   delete lexemePersistence[key]
   delete lexemeSynced[key]
