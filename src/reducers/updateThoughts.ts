@@ -13,6 +13,7 @@ import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -71,17 +72,19 @@ export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
 }
 
 /** A reducer that repairs the cursor if it moved or was deleted. */
-const repairCursorReducer = (state: State) => {
+// TODO: Not fully tested when cursor is in a context view.
+const repairCursorReducer = (state: State): State => {
   if (!state.cursor) return state
 
-  let cursorNew: Path | null = state.cursor
-  const cursorThought = pathToThought(state, state.cursor)
+  const simplePath = simplifyPath(state, state.cursor)
+  let cursorNew: Path | null | undefined
 
   // cursor was moved but still exists
   // update the cursor to the new path
+  const cursorThought = pathToThought(state, state.cursor)
   if (cursorThought) {
-    const recalculatedCursor = thoughtToPath(state, head(state.cursor))
-    if (!_.isEqual(recalculatedCursor, state.cursor)) {
+    const recalculatedCursor = thoughtToPath(state, head(simplePath))
+    if (!_.isEqual(recalculatedCursor, simplePath)) {
       cursorNew = recalculatedCursor
     }
   }
@@ -96,10 +99,12 @@ const repairCursorReducer = (state: State) => {
     cursorNew = closestAncestorIndex > 0 ? (state.cursor.slice(0, closestAncestorIndex) as Path) : null
   }
 
-  return {
-    ...state,
-    cursor: cursorNew,
-  }
+  return cursorNew !== undefined
+    ? {
+        ...state,
+        cursor: cursorNew,
+      }
+    : state
 }
 
 /** Creates a reducer spy that throws an error if any data integrity issues are found.
