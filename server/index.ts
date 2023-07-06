@@ -230,18 +230,28 @@ export const onLoadDocument = async ({
     await bindState({ db, docName: documentName, doc: document })
 
     // Use a replicationController to track thought and lexeme deletes in the doclog.
-    // Clears persisted documents that have been deleted.
-    // Note: It is recommended to clear all contexts from a Lexeme before deleting it to mitigate re-entry bugs if a new Lexeme with the same key is created.
+    // Clears persisted documents that have been deleted, even if the client disconnects.
+    // Note: It is recommended to clear all contexts from a Lexeme before deleting it to mitigate re-entry bugs if a new Lexeme with the same key is created quickly after a delete.
     replicationController({
       doc: document,
+      // If the client has already disconnected, then we need to destroy the db reference and delete the ldbThoughtspace entry.
+      // Not yet observed in practice, but could happen in theory.
+      onEnd: async () => {
+        const db = ldbThoughtspaces.get(tsid)
+        // if the tsid does not exist in server.documents, we can safely (?) assume the client has disconnected
+        if (db && !getYDoc(encodeDocLogDocumentName(tsid))) {
+          await db.destroy()
+          ldbThoughtspaces.delete(tsid)
+        }
+      },
       next: async ({ action, id, type }) => {
         if (action === DocLogAction.Delete) {
-          // if the client becomes disconnected before replication completes, its thoughtspaceDb will be destroyed and needs to be re-loaded to finish processing deletes from the doclog
+          // If the client becomes disconnected before replication completes, its thoughtspaceDb will be destroyed and needs to be re-loaded to finish processing deletes from the doclog.
+          // Just make sure to destroy it on end.
           const thoughtspaceDb = loadThoughtspaceDb(tsid)
           await thoughtspaceDb.clearDocument(
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id),
           )
-          await thoughtspaceDb.destroy()
         }
       },
 
