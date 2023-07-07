@@ -31,6 +31,9 @@ import {
 } from './documentNameEncoder'
 import replicationController from './replicationController'
 
+/** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
+const IDB_ERROR_RETRY = 1000
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: string) => Promise<void> }
 
@@ -85,7 +88,7 @@ const doclog = new Y.Doc()
 
 const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
 doclogPersistence.whenSynced.catch(e => {
-  const errorMessage = 'Error loading doclog.'
+  const errorMessage = `Error loading doclog: ${e.message}`
   console.error(errorMessage, e)
   store.dispatch(alert(errorMessage))
 })
@@ -179,8 +182,17 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
   const transactionPromise = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
 
   const idbSynced = thoughtPersistence[thought.id]?.whenSynced.catch(e => {
-    console.error(e)
-    store.dispatch(alert('Error saving thought'))
+    // AbortError happens if the app is closed during replication.
+    // Not sure if the timeout will be preserved, but at least we can retry.
+    if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
+      setTimeout(() => {
+        updateThought(id, thought)
+      }, IDB_ERROR_RETRY)
+      return
+    }
+    const errorMessage = `Error saving thought ${id}: ${e.message}`
+    console.error(errorMessage, e)
+    store.dispatch(alert(errorMessage))
   })
 
   thoughtDoc.transact(() => {
@@ -249,8 +261,17 @@ const updateLexeme = async (
   const transactionPromise = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
 
   const idbSynced = lexemePersistence[key]?.whenSynced.catch(e => {
-    console.error(e)
-    store.dispatch(alert('Error saving thought'))
+    // AbortError happens if the app is closed during replication.
+    // Not sure if the timeout will be preserved, but at least we can retry.
+    if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
+      setTimeout(() => {
+        updateLexeme(key, lexemeNew, lexemeOld)
+      }, IDB_ERROR_RETRY)
+      return
+    }
+    const errorMessage = `Error saving lexeme: ${e.message}`
+    console.error(errorMessage, e)
+    store.dispatch(alert(errorMessage))
   })
 
   lexemeDoc.transact(() => {
@@ -430,7 +451,16 @@ export const replicateThought = async (
       }
     })
     .catch(e => {
-      const errorMessage = `Error loading thought ${id}. ${e.message || e}`
+      // AbortError happens if the app is closed during replication.
+      // Not sure if the timeout will be preserved, but we can at least try to re-replicate.
+      if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
+        freeThought(id)
+        setTimeout(() => {
+          replicateThought(id, { background, remote })
+        }, IDB_ERROR_RETRY)
+        return
+      }
+      const errorMessage = `Error loading thought ${id}: ${e.message}`
       console.error(errorMessage, e)
       store.dispatch(alert(errorMessage))
     })
@@ -549,7 +579,16 @@ export const replicateLexeme = async (
 
   // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced.catch(e => {
-    const errorMessage = `Error loading lexeme ${key}. ${e.message || e}`
+    // AbortError happens if the app is closed during replication.
+    // Not sure if the timeout will be preserved, but we can at least try to re-replicate.
+    if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
+      freeLexeme(key)
+      setTimeout(() => {
+        replicateLexeme(key, { background })
+      }, IDB_ERROR_RETRY)
+      return
+    }
+    const errorMessage = `Error loading lexeme ${key}: ${e.message}`
     console.error(errorMessage, e)
     store.dispatch(alert(errorMessage))
   }) as Promise<void>
