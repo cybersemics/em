@@ -15,6 +15,7 @@ import {
   parseDocumentName,
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
+import sleep from '../src/util/sleep'
 import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
 
@@ -22,6 +23,9 @@ type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
 /** Number of milliseconds to throttle bindState writing to leveldb. */
 const THROTTLE_BINDSTATE = 1000
+
+/** Timeout for bindState before throwing an error. */
+const BIND_TIMEOUT = 2000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -97,20 +101,42 @@ const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
 /** Sync the initial state of the given in-memory doc with the level db. */
 // WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
 // https://github.com/cybersemics/em/issues/1725
-const initState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
+const initState = async ({
+  db,
+  docName,
+  doc,
+}: {
+  db: LeveldbPersistence
+  docName: string
+  doc: Y.Doc
+}): Promise<number> => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
-  await db.storeUpdate(docName, updates)
+  const result = await db.storeUpdate(docName, updates)
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
+  return result
 }
 
 /** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
-// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own custom throttling with throttleConcat.
+// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own throttled storage with throttleConcat.
 // https://tiptap.dev/hocuspocus/server/extensions#database
-const bindState = async ({ db, docName, doc }: { db: LeveldbPersistence; docName: string; doc: Y.Doc }) => {
-  // do not await
+const bindState = async ({
+  db,
+  docName,
+  doc,
+}: {
+  db: LeveldbPersistence
+  docName: string
+  doc: Y.Doc
+}): Promise<void> => {
+  // We must await initState in order to block onLoadDocument, otherwise the server can return an empty Doc.
+  // WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
   // https://github.com/cybersemics/em/issues/1725
-  initState({ db, docName, doc })
+  const initialized = await Promise.race([sleep(BIND_TIMEOUT), initState({ db, docName, doc })])
+  if (!initialized) {
+    console.error(`Level db timed out: ${docName}`)
+    return
+  }
 
   // throttled update handler accumulates and merges updates
   const storeUpdateThrottled = throttleConcat(
