@@ -146,6 +146,7 @@ export const onAuthenticate = async ({ token, documentName }: { documentName: st
   // authenicate existing owner
   // authenticate new documents
   if (permissionsServerMap.get(token)?.role !== 'owner') {
+    console.error(`${mask(token)} not authorized to access thoughtspace ${tsid}`)
     throw new Error('Not authorized')
   }
 
