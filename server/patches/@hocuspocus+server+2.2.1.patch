@@ -1,0 +1,26 @@
+diff --git a/node_modules/@hocuspocus/server/src/DirectConnection.ts b/node_modules/@hocuspocus/server/src/DirectConnection.ts
+index 327f2f3..9b6ceb8 100644
+--- a/node_modules/@hocuspocus/server/src/DirectConnection.ts
++++ b/node_modules/@hocuspocus/server/src/DirectConnection.ts
+@@ -1,7 +1,7 @@
+ import { URLSearchParams } from 'url'
+ import Document from './Document.js'
+ import type { Hocuspocus } from './Hocuspocus.js'
+-import type { DirectConnection as DirectConnectionInterface } from './types'
++import type { DirectConnection as DirectConnectionInterface } from './types.js'
+ 
+ export class DirectConnection implements DirectConnectionInterface {
+   document: Document | null = null
+diff --git a/node_modules/@hocuspocus/server/src/Hocuspocus.ts b/node_modules/@hocuspocus/server/src/Hocuspocus.ts
+index ec3a439..4e29e05 100644
+--- a/node_modules/@hocuspocus/server/src/Hocuspocus.ts
++++ b/node_modules/@hocuspocus/server/src/Hocuspocus.ts
+@@ -26,7 +26,7 @@ import {
+   onListenPayload,
+   onStoreDocumentPayload,
+ } from './types.js'
+-import { getParameters } from './util/getParameters'
++import { getParameters } from './util/getParameters.js'
+ 
+ export const defaultConfiguration = {
+   name: null,

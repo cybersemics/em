@@ -14,10 +14,10 @@
     "stop": "pm2 delete backup ; pm2 stop pm2.config.js"
   },
   "dependencies": {
-    "@hocuspocus/server": "^2.0.6",
+    "@hocuspocus/server": "^2.2.1",
     "level": "^6.0.1",
-    "y-leveldb": "^0.1.2",
-    "s3-cli": "https://github.com/raineorshine/node-s3-cli"
+    "s3-cli": "https://github.com/raineorshine/node-s3-cli",
+    "y-leveldb": "^0.1.2"
   },
   "devDependencies": {
     "@types/level": "^6.0.1",

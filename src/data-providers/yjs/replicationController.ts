@@ -31,7 +31,10 @@ const replicationController = ({
   /** Number of thoughts/lexemes to replicate in parallel. Default: 8. */
   concurrency?: number
   /** The doclog Y.Doc that contains thoughtLog and lexemeLog Y.Arrays. */
-  doc: Y.Doc
+  // TODO: There is a type mismatch between client and server YJS dependency versions.
+  // doc: Y.Doc
+  doc: any
+  // doc: any
   /** Event that fires when all doclogs in the queue have been processed. Invoked again whenever new updates are added to an empty queue. */
   onEnd?: (total: number) => void
   /** Event that fires after a thought or lexeme has been successfully replicated (See: next). */
@@ -51,8 +54,11 @@ const replicationController = ({
   /** Local storage mechanism to persist the replication cursors. These are persisted outside of Yjs and are not supposed to be replicated across clients. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it it goes back online. Sets are throttled. */
   storage: Storage
 }) => {
-  const thoughtLog = doc.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
-  const lexemeLog = doc.getArray<[string, DocLogAction]>('lexemeLog')
+  // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
+  // const thoughtLog = doc.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
+  // const lexemeLog = doc.getArray<[string, DocLogAction]>('lexemeLog')
+  const thoughtLog = doc.getArray('thoughtLog')
+  const lexemeLog = doc.getArray('lexemeLog')
 
   // thoughtObservationCursor marks the index of the last thought delta that has been observed
   // only needs to be stored in memory
@@ -117,7 +123,7 @@ const replicationController = ({
     // Clocks across clients are not monotonic, so we can't slice by clock.
     // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
     // Therefore, observe the deltas and slice from the replication cursor.
-    thoughtLog.observe(e => {
+    thoughtLog.observe((e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
       if (e.transaction.origin === doc.clientID) return
       const startIndex = thoughtReplicationCursor
 
@@ -149,7 +155,7 @@ const replicationController = ({
     })
 
     // See: thoughtLog.observe
-    lexemeLog.observe(e => {
+    lexemeLog.observe((e: Y.YArrayEvent<[string, DocLogAction]>) => {
       if (e.transaction.origin === doc.clientID) return
       const startIndex = lexemeReplicationCursor
 
