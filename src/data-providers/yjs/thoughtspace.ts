@@ -4,6 +4,7 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
@@ -67,6 +68,14 @@ const cancellable = <T>(p: Promise<T>, cancel: () => void) => {
   promise.cancel = cancel
   return promise
 }
+
+/** Returns true if the Thought or its parent is in State. */
+const isThoughtLoaded = (state: State, thought: Thought | undefined): boolean =>
+  !!(thought && (getThoughtByIdSelector(state, thought.parentId) || getThoughtByIdSelector(state, thought.id)))
+
+/** Returns true if the Lexeme or one of its contexts are in State. */
+const isLexemeLoaded = (state: State, key: string, lexeme: Lexeme | undefined): boolean =>
+  !!((lexeme && getLexemeSelector(state, key)) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid)))
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
@@ -485,12 +494,7 @@ export const replicateThought = async (
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     const thought = getThought(doc)
-    if (!thought) return
-    const state = store.getState()
-    const thoughtInState = getThoughtByIdSelector(state, id)
-    const parentIntState = getThoughtByIdSelector(state, thought.parentId)
-    const loaded = thoughtInState || parentIntState
-    if (loaded) {
+    if (isThoughtLoaded(store.getState(), thought)) {
       thoughtDocs[id] = doc
       thoughtSynced[id] = idbSynced
       thoughtPersistence[id] = persistence
@@ -614,11 +618,7 @@ export const replicateLexeme = async (
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
-    const lexeme = getLexeme(doc)
-    const state = store.getState()
-    const loaded = !!getLexemeSelector(state, key) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid))
-    if (!lexeme) return
-    if (loaded) {
+    if (isLexemeLoaded(store.getState(), key, getLexeme(doc))) {
       lexemeDocs[key] = doc
       lexemeSynced[key] = idbSynced
       lexemePersistence[key] = persistence
@@ -678,8 +678,9 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
 const freeThought = (id: ThoughtId): void => {
-  // destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange
-  // yjs logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
+  // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
   // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
   const thoughtMap: Y.Map<ThoughtYjs> | undefined = thoughtDocs[id]?.getMap<ThoughtYjs>()
   const listeners = thoughtMap?._eH.l.slice(0) || []
@@ -687,8 +688,7 @@ const freeThought = (id: ThoughtId): void => {
     thoughtMap.unobserve(onThoughtChange)
   }
 
-  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed
-  // HocuspocusProvider is not automatically destroyed when the Doc is destroyed
+  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
   thoughtDocs[id]?.destroy()
   thoughtWebsocketProvider[id]?.destroy()
   delete thoughtDocs[id]
@@ -718,8 +718,9 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
 
 /** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
 const freeLexeme = (key: string): void => {
-  // destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange
-  // yjs logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
+  // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
+  // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
   // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
   const lexemeMap: Y.Map<LexemeYjs> | undefined = lexemeDocs[key]?.getMap<LexemeYjs>()
   const listeners = lexemeMap?._eH.l.slice(0) || []
@@ -727,8 +728,7 @@ const freeLexeme = (key: string): void => {
     lexemeMap.unobserve(onLexemeChange)
   }
 
-  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed
-  // HocuspocusProvider is not automatically destroyed when the Doc is destroyed
+  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
   lexemeDocs[key]?.destroy()
   lexemeWebsocketProvider[key]?.destroy()
   delete lexemeDocs[key]
