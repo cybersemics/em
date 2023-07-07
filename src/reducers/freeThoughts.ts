@@ -82,7 +82,8 @@ const freeThoughts = (state: State) => {
     stateNew = deleteThought(stateNew, {
       thoughtId: deletableThought.id,
       pathParent: thoughtToPath(stateNew, deletableThought.parentId),
-      // do not persist deletions; just delete from stateNew
+      // Do not persist deletions; just delete from Redux state.
+      // The pushQueue will enhancer will detect this batch and deallocate YJS providers.
       local: false,
       remote: false,
     })

@@ -62,7 +62,7 @@ export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
   pendingEdits?: editThoughtPayload[]
   /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
   preventExpandThoughts?: boolean
-  /** Allow set pending on non-pending thought. This is mainly used by freeThoughts. */
+  /** Allow non-pending thoughts to become pending. This is mainly used by freeThoughts. */
   overwritePending?: boolean
   /**
    * If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.

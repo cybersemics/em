@@ -16,6 +16,7 @@ interface PushBatch {
   // Update the local device. Default: true.
   // If local and remote are false, null updates will still cause the YJS providers to be destroyed to free up memory.
   // In particular, this is used by the freeThoughts middleware.
+  // (The freeThoughts middleware calls the freeThoughts reducer when the cache limit has been reached. The reducer calls deleteThought with local:false and remote:false, which creates a batch that triggers freeThought/freeLexeme in the pushQueue.)
   local?: boolean
   // contains the path of the pending thought to be deleted and all its siblings. Siblings may be resurrected from the pull, and the parent has already been deleted, so we need to store them to be deleted in flushDeletes.
   pendingDeletes?: { path: Path; siblingIds: ThoughtId[] }[]

@@ -5,7 +5,7 @@ import { Thunk } from '../@types/Thunk'
 import freeThoughts from '../action-creators/freeThoughts'
 import { MAX_THOUGHTS } from '../constants'
 
-/** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees memory in the thoughtIndex, lexemeIndex, and IndexedDBProviders. */
+/** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees memory in the thoughtIndex, lexemeIndex, and YJS providers. */
 const check: Thunk = (dispatch, getState): void => {
   const state = getState()
   if (Object.keys(state.thoughts.thoughtIndex).length > MAX_THOUGHTS) {
