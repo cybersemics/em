@@ -271,15 +271,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
       globals.suppressExpansion = false
     }
 
-    // disable when welcome, shortcuts, or feeback modals are displayed
-    if (
-      state.showModal === 'auth' ||
-      state.showModal === 'feedback' ||
-      state.showModal === 'invites' ||
-      state.showModal === 'manual' ||
-      state.showModal === 'welcome'
-    )
-      return
+    // disable if modal is displayed
+    if (state.showModal) return
 
     const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
