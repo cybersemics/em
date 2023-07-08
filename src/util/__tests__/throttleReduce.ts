@@ -35,72 +35,150 @@ it('asynchronous: once on the leading edge and once on the trailing edge', async
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[]>(f, append, [] as number[], 51)
+  const g = throttleReduce<number, number[]>(f, append, [] as number[], 101)
 
   // Call the throttled function every 10 ms, completing in 100 ms.
 
-  // The first call is immediately output (leading edge)
+  // The 1st call is immediately output (leading edge)
   g(0)
   expect(calls).toBe(1)
   expect(output).toEqual([0])
-  await sleep(10)
+  await sleep(20)
 
   // The 2nd call is suppressed (10ms)
   g(1)
   expect(calls).toBe(1)
   expect(output).toEqual([0])
-  await sleep(10)
+  await sleep(20)
 
   // The 3rd call is suppressed (30ms)
   g(2)
   expect(calls).toBe(1)
   expect(output).toEqual([0])
-  await sleep(10)
+  await sleep(20)
 
   // The 4th call is suppressed (40ms)
   g(3)
   expect(calls).toBe(1)
   expect(output).toEqual([0])
-  await sleep(10)
+  await sleep(20)
 
   // The 5th call is suppressed (40ms)
   g(4)
   expect(calls).toBe(1)
   expect(output).toEqual([0])
-  await sleep(10)
+  await sleep(20)
 
   // The 6th call is triggered (50ms)
   g(5)
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(10)
+  await sleep(20)
 
   // The 7th call is suppressed (60ms)
   g(6)
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(10)
+  await sleep(20)
 
   // The 8th call is suppressed (70ms)
   g(7)
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(10)
+  await sleep(20)
 
   // The 9th call is suppressed (80ms)
   g(8)
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(10)
+  await sleep(20)
 
   // The 10th call is suppressed (90ms)
   g(9)
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(10)
+  await sleep(20)
 
   // The final call is triggered on the trailing edge (100ms)
   expect(calls).toBe(3)
+  expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+})
+
+it('asynchronous: trailing edge only', async () => {
+  let calls = 0
+  let output: number[] = []
+
+  /** Increment calls and append output values. */
+  const f = (values: number[]) => {
+    calls++
+    output = [...output, ...values]
+  }
+  const g = throttleReduce<number, number[]>(f, append, [] as number[], 101, { leading: false })
+
+  // Call the throttled function every 10 ms, completing in 100 ms.
+
+  // The 1st call is suppressed
+  g(0)
+  expect(calls).toBe(0)
+  expect(output).toEqual([])
+  await sleep(20)
+
+  // The 2nd call is suppressed (10ms)
+  g(1)
+  expect(calls).toBe(0)
+  expect(output).toEqual([])
+  await sleep(20)
+
+  // The 3rd call is suppressed (30ms)
+  g(2)
+  expect(calls).toBe(0)
+  expect(output).toEqual([])
+  await sleep(20)
+
+  // The 4th call is suppressed (40ms)
+  g(3)
+  expect(calls).toBe(0)
+  expect(output).toEqual([])
+  await sleep(20)
+
+  // The 5th call is suppressed (40ms)
+  g(4)
+  expect(calls).toBe(0)
+  expect(output).toEqual([])
+  await sleep(20)
+
+  // The 6th call is triggered (50ms)
+  g(5)
+  expect(calls).toBe(1)
+  expect(output).toEqual([0, 1, 2, 3, 4])
+  await sleep(20)
+
+  // The 7th call is suppressed (60ms)
+  g(6)
+  expect(calls).toBe(1)
+  expect(output).toEqual([0, 1, 2, 3, 4])
+  await sleep(20)
+
+  // The 8th call is suppressed (70ms)
+  g(7)
+  expect(calls).toBe(1)
+  expect(output).toEqual([0, 1, 2, 3, 4])
+  await sleep(20)
+
+  // The 9th call is suppressed (80ms)
+  g(8)
+  expect(calls).toBe(1)
+  expect(output).toEqual([0, 1, 2, 3, 4])
+  await sleep(20)
+
+  // The 10th call is suppressed (90ms)
+  g(9)
+  expect(calls).toBe(1)
+  expect(output).toEqual([0, 1, 2, 3, 4])
+  await sleep(20)
+
+  // The final call is triggered on the trailing edge (100ms)
+  expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 })
 
