@@ -15,7 +15,6 @@ import {
   parseDocumentName,
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
-import sleep from '../src/util/sleep'
 import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
 
@@ -24,8 +23,8 @@ type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 /** Number of milliseconds to throttle bindState writing to leveldb. */
 const THROTTLE_BINDSTATE = 1000
 
-/** Timeout for bindState before throwing an error. */
-const BIND_TIMEOUT = 10000
+/** Timeout for bindState before logging a warning. */
+const BIND_TIMEOUT = 1000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -109,7 +108,7 @@ const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
 }
 
 /** Sync the initial state of the given in-memory doc with the level db. */
-// WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
+// WARNING: There is currently a bug that causes db.getYDoc to hang or take an inordinate amount of time (~265 sec) on a large initial replication.
 // https://github.com/cybersemics/em/issues/1725
 const initState = async ({
   db,
@@ -119,16 +118,16 @@ const initState = async ({
   db: LeveldbPersistence
   docName: string
   doc: Y.Doc
-}): Promise<number> => {
+}): Promise<void> => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
+
   // do not store empty doc
-  let result = -1
   if (updates.length > 2) {
-    result = await db.storeUpdate(docName, updates)
+    await db.storeUpdate(docName, updates)
   }
+
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
-  return result
 }
 
 /** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
@@ -143,13 +142,22 @@ const bindState = async ({
   docName: string
   doc: Y.Doc
 }): Promise<void> => {
+  // measures the time that initState takes when BIND_TIMEOUT is exceeded
+  let t: number | undefined
+
+  const timeout = setTimeout(() => {
+    console.warn(`bindState is taking taking more than ${BIND_TIMEOUT / 1000} seconds`, docName)
+    t = performance.now() + BIND_TIMEOUT
+  }, BIND_TIMEOUT)
+
   // We must await initState in order to block onLoadDocument, otherwise the server can return an empty Doc.
-  // WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
+  // WARNING: There is currently a bug that causes db.getYDoc to hang or take an inordinate amount of time (~265 sec) on a large initial replication.
   // https://github.com/cybersemics/em/issues/1725
-  const initialized = await Promise.race([sleep(BIND_TIMEOUT), initState({ db, docName, doc })])
-  if (initialized == null) {
-    console.error(`Level db timed out: ${docName}`)
-    return
+  await initState({ db, docName, doc })
+  clearTimeout(timeout)
+
+  if (t) {
+    console.error(`bindState resolved in ${performance.now() - t} ms`, docName)
   }
 
   // throttled update handler accumulates and merges updates
