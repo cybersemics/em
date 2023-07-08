@@ -4,6 +4,7 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import PushBatch from '../../@types/PushBatch'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
@@ -20,9 +21,11 @@ import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
+import mergeBatch from '../../util/mergeBatch'
 import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
+import throttleConcat from '../../util/throttleConcat'
 import { DataProvider } from '../DataProvider'
 import {
   encodeDocLogDocumentName,
@@ -70,6 +73,9 @@ interface CancellablePromise<T> extends Promise<T> {
 /** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
 const IDB_ERROR_RETRY = 1000
 
+/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
+const UPDATE_THOUGHTS_THROTTLE = 100
+
 /**********************************************************************
  * Helper Functions
  **********************************************************************/
@@ -88,6 +94,16 @@ const isThoughtLoaded = (state: State, thought: Thought | undefined): boolean =>
 /** Returns true if the Lexeme or one of its contexts are in State. */
 const isLexemeLoaded = (state: State, key: string, lexeme: Lexeme | undefined): boolean =>
   !!((lexeme && getLexemeSelector(state, key)) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid)))
+
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+  store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+}, UPDATE_THOUGHTS_THROTTLE)
 
 /**********************************************************************
  * Module variables
@@ -141,19 +157,15 @@ const replication = replicationController({
         ? replicateThought(id as ThoughtId, { background: true })
         : replicateLexeme(id, { background: true }))
     } else if (action === DocLogAction.Delete) {
-      store.dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {},
-          // override thought/lexemeIndexUpdates based on type
-          [`${type}IndexUpdates`]: {
-            [id]: null,
-          },
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
+      updateThoughtsThrottled({
+        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
+        // override thought/lexemeIndexUpdates based on type
+        [`${type}IndexUpdates`]: {
+          [id]: null,
+        },
+        lexemeIndexUpdatesOld: {},
+      })
 
       if (type === 'thought') {
         await deleteThought(id as ThoughtId)
@@ -354,34 +366,28 @@ const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
 
-  // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
-  setTimeout(() => {
-    const thought = getThought(thoughtDoc)
-    if (!thought) return
+  const thought = getThought(thoughtDoc)
+  if (!thought) return
 
-    store.dispatch((dispatch, getState) => {
-      // if parent is pending, the thought must be marked pending.
-      // Note: Do not clear pending from the parent, because other children may not be loaded.
-      // The next pull should handle that automatically.
-      const state = getState()
-      const thoughtInState = getThoughtByIdSelector(state, thought.id)
-      const parentInState = getThoughtByIdSelector(state, thought.parentId)
-      const pending = thoughtInState?.pending || parentInState?.pending
+  store.dispatch((dispatch, getState) => {
+    // if parent is pending, the thought must be marked pending.
+    // Note: Do not clear pending from the parent, because other children may not be loaded.
+    // The next pull should handle that automatically.
+    // TODO: Do we need to use fresh State when updateThoughtsThrottled resolves?
+    const state = getState()
+    const thoughtInState = getThoughtByIdSelector(state, thought.id)
+    const parentInState = getThoughtByIdSelector(state, thought.parentId)
+    const pending = thoughtInState?.pending || parentInState?.pending
 
-      dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {
-            [thought.id]: {
-              ...thought,
-              ...(pending ? { pending } : null),
-            },
-          },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          repairCursor: true,
-        }),
-      )
+    updateThoughtsThrottled({
+      thoughtIndexUpdates: {
+        [thought.id]: {
+          ...thought,
+          ...(pending ? { pending } : null),
+        },
+      },
+      lexemeIndexUpdates: {},
+      lexemeIndexUpdatesOld: {},
     })
   })
 }
@@ -396,25 +402,18 @@ const onLexemeChange = (e: {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
 
-  // dispatch on the next tick, since observe is fired synchronously and a reducer may be running
-  setTimeout(() => {
-    const lexeme = getLexeme(lexemeDoc)
-    if (!lexeme) return
+  const lexeme = getLexeme(lexemeDoc)
+  if (!lexeme) return
 
-    // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
-    const { id: key } = parseDocumentName(lexemeDoc.guid) as { id: string }
+  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
+  const { id: key } = parseDocumentName(lexemeDoc.guid) as { id: string }
 
-    store.dispatch(
-      updateThoughtsActionCreator({
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {
-          [key]: lexeme,
-        },
-        local: false,
-        remote: false,
-        repairCursor: true,
-      }),
-    )
+  updateThoughtsThrottled({
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {
+      [key]: lexeme,
+    },
+    lexemeIndexUpdatesOld: {},
   })
 }
 

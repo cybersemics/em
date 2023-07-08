@@ -12,6 +12,7 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
+import mergeBatch from '../util/mergeBatch'
 import storage from '../util/storage'
 
 // Critical settings (e.g. EM/Settings/Tutorial) are cached in local storage so there is no gap on startup.
@@ -47,42 +48,6 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
     storage.removeItem(key)
   }
 }
-
-/** Merges multiple push batches into a single batch. Last write wins. */
-const mergeBatch = (accum: PushBatch, batch: Partial<PushBatch>): PushBatch => ({
-  ...accum,
-  // merge callbacks into a single callback function
-  idbSynced:
-    accum.idbSynced && batch.idbSynced
-      ? () => {
-          accum.idbSynced!()
-          batch.idbSynced!()
-        }
-      : accum.idbSynced || batch.idbSynced,
-  thoughtIndexUpdates: {
-    ...accum.thoughtIndexUpdates,
-    ...batch.thoughtIndexUpdates,
-  },
-  lexemeIndexUpdates: {
-    ...accum.lexemeIndexUpdates,
-    ...batch.lexemeIndexUpdates,
-  },
-  lexemeIndexUpdatesOld: {
-    ...accum.lexemeIndexUpdatesOld,
-    ...batch.lexemeIndexUpdatesOld,
-  },
-  recentlyEdited: {
-    ...accum.recentlyEdited,
-    ...batch.recentlyEdited,
-  },
-  pendingDeletes: [...(accum.pendingDeletes || []), ...(batch.pendingDeletes || [])],
-  updates: {
-    ...accum.updates,
-    ...batch.updates,
-  },
-  local: batch.local !== false,
-  remote: batch.remote !== false,
-})
 
 /** Merges state.pushQueue batches and pushes them to Yjs, frees memory from state-only batches, and caches settings. */
 const pushQueue: StoreEnhancer<any> =
