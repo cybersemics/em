@@ -112,7 +112,11 @@ const initState = async ({
 }): Promise<number> => {
   const docPersisted = await db.getYDoc(docName)
   const updates = Y.encodeStateAsUpdate(doc)
-  const result = await db.storeUpdate(docName, updates)
+  // do not store empty doc
+  let result = -1
+  if (updates.length > 2) {
+    result = await db.storeUpdate(docName, updates)
+  }
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
   return result
 }
