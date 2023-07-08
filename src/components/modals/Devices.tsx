@@ -353,10 +353,24 @@ const ShareDetail = React.memo(
     const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
 
     /** Copy the share link to the clipboard. */
-    const copyShareUrl = () => {
+    const copyShareUrl = useCallback(() => {
+      // flash the share url input without re-rendering the whole component
+      const color = shareUrlInputRef.current?.style.color || ''
+      const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
+      if (shareUrlInputRef.current) {
+        shareUrlInputRef.current.style.color = colors.highlight
+        shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
+      }
+      setTimeout(() => {
+        if (shareUrlInputRef.current) {
+          shareUrlInputRef.current.style.color = color
+          shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+        }
+      }, 200)
+
       navigator.clipboard.writeText(url)
       dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
-    }
+    }, [url])
 
     const onChangeName = useCallback(
       _.debounce((e: ContentEditableEvent) => {
