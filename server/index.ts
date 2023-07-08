@@ -25,7 +25,7 @@ type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 const THROTTLE_BINDSTATE = 1000
 
 /** Timeout for bindState before throwing an error. */
-const BIND_TIMEOUT = 2000
+const BIND_TIMEOUT = 10000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -133,7 +133,7 @@ const bindState = async ({
   // WARNING: There is currently a bug that causes db.getYDoc to hang sometimes.
   // https://github.com/cybersemics/em/issues/1725
   const initialized = await Promise.race([sleep(BIND_TIMEOUT), initState({ db, docName, doc })])
-  if (!initialized) {
+  if (initialized == null) {
     console.error(`Level db timed out: ${docName}`)
     return
   }
