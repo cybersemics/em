@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../../@types/IndexType'
@@ -9,6 +9,7 @@ import Role from '../../@types/Role'
 import Share from '../../@types/Share'
 import State from '../../@types/State'
 import alert from '../../action-creators/alert'
+import { isMac } from '../../browser'
 import { accessToken as accessTokenCurrent, permissionsClientDoc, tsid } from '../../data-providers/yjs'
 import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
@@ -342,6 +343,7 @@ const ShareDetail = React.memo(
     onBack: () => void
     share: Share
   }) => {
+    const shareUrlInputRef = useRef<HTMLInputElement>(null)
     const dispatch = useDispatch()
     const fontSize = useSelector((state: State) => state.fontSize)
     const colors = useSelector(themeColors)
@@ -362,6 +364,28 @@ const ShareDetail = React.memo(
       }, 500),
       [],
     )
+
+    /** Copy the share url on Cmd/Ctrl + C. */
+    const onKeyDown = useCallback((e: KeyboardEvent) => {
+      if (
+        e.key === 'c' &&
+        (isMac ? e.metaKey : e.ctrlKey) &&
+        // do not override copy shortcut if user has text selected
+        selection.isCollapsed() !== false &&
+        // input selection is not reflected in window.getSelection()
+        shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd
+      ) {
+        e.stopPropagation()
+        copyShareUrl()
+      }
+    }, [])
+
+    useEffect(() => {
+      window.addEventListener('keydown', onKeyDown)
+      return () => {
+        window.removeEventListener('keydown', onKeyDown)
+      }
+    }, [])
 
     return (
       <div>
@@ -386,7 +410,8 @@ const ShareDetail = React.memo(
           <div style={{ position: 'relative' }}>
             <span>
               <input
-                type={'text'}
+                ref={shareUrlInputRef}
+                type='text'
                 value={url}
                 readOnly
                 style={{
