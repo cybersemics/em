@@ -102,7 +102,11 @@ const updateThoughtsThrottled = throttleConcat<PushBatch>((batches: PushBatch[])
     lexemeIndexUpdates: {},
     lexemeIndexUpdatesOld: {},
   })
-  store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+
+  // dispatch on next tick, since the leading edge can be triggered during a reducer
+  setTimeout(() => {
+    store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+  })
 }, UPDATE_THOUGHTS_THROTTLE)
 
 /**********************************************************************
