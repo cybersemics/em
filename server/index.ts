@@ -88,6 +88,16 @@ const loadThoughtspaceDb = (tsid: string): LeveldbPersistence => {
   return db
 }
 
+/** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
+const loadDoclogDb = (tsid: string): LeveldbPersistence => {
+  let db = ldbDoclogs.get(tsid)
+  if (!db) {
+    db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
+    ldbDoclogs.set(tsid, db)
+  }
+  return db
+}
+
 /** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
 const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
   let replicationCursorDb = ldbReplicationCursors.get(tsid)!
@@ -245,19 +255,10 @@ export const onLoadDocument = async ({
       })
     })
   } else if (type === 'thought' || type === 'lexeme') {
-    let db = ldbThoughtspaces.get(tsid)
-    if (!db) {
-      db = new LeveldbPersistence(path.join(thoughtsDbBasePath, tsid))
-      ldbThoughtspaces.set(tsid, db)
-    }
+    const db = loadThoughtspaceDb(tsid)
     await bindState({ db, docName: documentName, doc: document })
   } else if (type === 'doclog') {
-    let db = ldbDoclogs.get(tsid)
-    if (!db) {
-      db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
-      ldbDoclogs.set(tsid, db)
-    }
-
+    const db = loadDoclogDb(tsid)
     await bindState({ db, docName: documentName, doc: document })
 
     // Use a replicationController to track thought and lexeme deletes in the doclog.
