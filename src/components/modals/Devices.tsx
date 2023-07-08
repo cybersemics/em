@@ -394,7 +394,18 @@ const ShareDetail = React.memo(
         </div>
 
         {!isCurrent ? (
-          <QRCodeSVG value={url} style={{ width: '100%', height: '100%' }} />
+          <QRCodeSVG
+            value={url}
+            style={{
+              width: '100%',
+              height: '100%',
+              minWidth: '200px',
+              minHeight: '200px',
+              // keep visible by sizing it to the shortest screen dimension, leaving room for the top margin and share url input
+              maxWidth: 'calc(min(100vw, 100vh - 270px))',
+              maxHeight: 'calc(min(100vw, 100vh - 270px))',
+            }}
+          />
         ) : (
           <div
             style={{
