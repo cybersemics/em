@@ -32,11 +32,12 @@ import {
 } from './documentNameEncoder'
 import replicationController from './replicationController'
 
-/** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
-const IDB_ERROR_RETRY = 1000
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: string) => Promise<void> }
+
+/**********************************************************************
+ * Types
+ **********************************************************************/
 
 /** A Lexeme database type that defines contexts as separate keys. */
 type LexemeDb = Omit<Lexeme, 'contexts'> & {
@@ -62,6 +63,17 @@ interface CancellablePromise<T> extends Promise<T> {
   cancel: () => void
 }
 
+/**********************************************************************
+ * Constants
+ **********************************************************************/
+
+/** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
+const IDB_ERROR_RETRY = 1000
+
+/**********************************************************************
+ * Helper Functions
+ **********************************************************************/
+
 /** Attaches a cancel function to a promise. It is up to you to abort any functionality after the cancel function is called. */
 const cancellable = <T>(p: Promise<T>, cancel: () => void) => {
   const promise = p as CancellablePromise<T>
@@ -76,6 +88,10 @@ const isThoughtLoaded = (state: State, thought: Thought | undefined): boolean =>
 /** Returns true if the Lexeme or one of its contexts are in State. */
 const isLexemeLoaded = (state: State, key: string, lexeme: Lexeme | undefined): boolean =>
   !!((lexeme && getLexemeSelector(state, key)) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid)))
+
+/**********************************************************************
+ * Module variables
+ **********************************************************************/
 
 // map of all YJS thought Docs loaded into memory
 // indexed by ThoughtId
@@ -109,6 +125,10 @@ new HocuspocusProvider({
   document: doclog,
   token: accessToken,
 })
+
+/**********************************************************************
+ * Module variables
+ **********************************************************************/
 
 const replication = replicationController({
   // begin paused, and only start after initial pull has completed
@@ -177,6 +197,10 @@ syncStatusStore.subscribeSelector(
     }
   },
 )
+
+/**********************************************************************
+ * Methods
+ **********************************************************************/
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
