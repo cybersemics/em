@@ -558,7 +558,7 @@ export const replicateThought = async (
           }
         })
       })
-      await Promise.race([websocketSynced?.then(unsubscribe), offline])
+      await Promise.race([websocketSynced, offline]).then(unsubscribe)
     }
 
     // Note: onThoughtChange is not pending-aware.
