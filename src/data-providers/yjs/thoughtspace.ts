@@ -426,7 +426,7 @@ export const replicateThought = async (
   id: ThoughtId,
   {
     background,
-    remote,
+    remote = true,
   }: {
     /**
      * Replicate in the background, meaning:
@@ -437,13 +437,10 @@ export const replicateThought = async (
      * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
-    /** Wait for websocket to sync before resolving (background replication only). Default: true. This is currently set to false during export. */
+    /** Sync with websocket server. Default: true. This is currently set to false during export. */
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
-  if (remote == null) {
-    remote = true
-  }
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs[id] || new Y.Doc({ guid: documentName })
   const thoughtMap = doc.getMap<ThoughtYjs>()
@@ -457,21 +454,25 @@ export const replicateThought = async (
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
-  const websocketProvider = new HocuspocusProvider({
-    websocketProvider: websocketThoughtspace,
-    name: documentName,
-    document: doc,
-    token: accessToken,
-  })
+  const websocketProvider = remote
+    ? new HocuspocusProvider({
+        websocketProvider: websocketThoughtspace,
+        name: documentName,
+        document: doc,
+        token: accessToken,
+      })
+    : null
 
-  const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves when synced fires. */
-    const onSynced = () => {
-      websocketProvider.off('synced', onSynced)
-      resolve()
-    }
-    websocketProvider.on('synced', onSynced)
-  })
+  const websocketSynced = websocketProvider
+    ? new Promise<void>(resolve => {
+        /** Resolves when synced fires. */
+        const onSynced = () => {
+          websocketProvider.off('synced', onSynced)
+          resolve()
+        }
+        websocketProvider.on('synced', onSynced)
+      })
+    : null
 
   const idbSynced = persistence.whenSynced
     .then(() => {
@@ -506,7 +507,9 @@ export const replicateThought = async (
     thoughtDocs[id] = doc
     thoughtSynced[id] = idbSynced
     thoughtPersistence[id] = persistence
-    thoughtWebsocketProvider[id] = websocketProvider
+    if (websocketProvider) {
+      thoughtWebsocketProvider[id] = websocketProvider
+    }
   }
 
   // always wait for IDB to sync
@@ -525,7 +528,9 @@ export const replicateThought = async (
       thoughtDocs[id] = doc
       thoughtSynced[id] = idbSynced
       thoughtPersistence[id] = persistence
-      thoughtWebsocketProvider[id] = websocketProvider
+      if (websocketProvider) {
+        thoughtWebsocketProvider[id] = websocketProvider
+      }
       onThoughtChange({
         target: doc.getMap(),
         transaction: {
@@ -535,7 +540,7 @@ export const replicateThought = async (
       thoughtMap.observe(onThoughtChange)
     } else {
       doc.destroy()
-      websocketProvider.destroy()
+      websocketProvider?.destroy()
       return thought
     }
   } else {
@@ -553,7 +558,7 @@ export const replicateThought = async (
           }
         })
       })
-      await Promise.race([websocketSynced.then(unsubscribe), offline])
+      await Promise.race([websocketSynced?.then(unsubscribe), offline])
     }
 
     // Note: onThoughtChange is not pending-aware.
@@ -893,17 +898,14 @@ export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined
 export const replicateTree = (
   id: ThoughtId,
   {
-    remote,
+    remote = true,
     onThought,
   }: {
-    /** Wait for Websocket to sync before resolving. Default: true. */
+    /** Sync with Websocket. Default: true. */
     remote?: boolean
     onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
   } = {},
 ): CancellablePromise<Index<Thought>> => {
-  if (remote == null) {
-    remote = true
-  }
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
   const thoughtIndex: Index<Thought> = {}
