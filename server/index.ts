@@ -99,7 +99,7 @@ const loadDoclogDb = (tsid: string): LeveldbPersistence => {
 
 /** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
 const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
-  let replicationCursorDb = ldbReplicationCursors.get(tsid)!
+  let replicationCursorDb = ldbReplicationCursors.get(tsid)
   if (!replicationCursorDb) {
     replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
     ldbReplicationCursors.set(tsid, replicationCursorDb)
@@ -119,12 +119,45 @@ const initState = async ({
   docName: string
   doc: Y.Doc
 }): Promise<void> => {
+  // measures the time that getYDoc or storeUpdate takes when BIND_TIMEOUT is exceeded
+  let t: number | undefined
+
+  let timeout = setTimeout(() => {
+    t = performance.now()
+  }, BIND_TIMEOUT)
+
   const docPersisted = await db.getYDoc(docName)
-  const updates = Y.encodeStateAsUpdate(doc)
+
+  clearTimeout(timeout)
+
+  if (t) {
+    console.warn(
+      `Slow db.getYDoc completed in ${Math.round((performance.now() - t + BIND_TIMEOUT) / 1000)} sec`,
+      docName,
+    )
+  }
 
   // do not store empty doc
+  const updates = Y.encodeStateAsUpdate(doc)
   if (updates.length > 2) {
-    await db.storeUpdate(docName, updates)
+    timeout = setTimeout(() => {
+      t = performance.now()
+    }, BIND_TIMEOUT)
+
+    try {
+      await db.storeUpdate(docName, updates)
+    } catch (e) {
+      console.error('initState: ERROR', e)
+    }
+
+    clearTimeout(timeout)
+
+    if (t) {
+      console.warn(
+        `Slow db.storeUpdate completed in ${Math.round((performance.now() - t + BIND_TIMEOUT) / 1000)} sec`,
+        docName,
+      )
+    }
   }
 
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
@@ -142,23 +175,10 @@ const bindState = async ({
   docName: string
   doc: Y.Doc
 }): Promise<void> => {
-  // measures the time that initState takes when BIND_TIMEOUT is exceeded
-  let t: number | undefined
-
-  const timeout = setTimeout(() => {
-    console.warn(`bindState is taking taking more than ${BIND_TIMEOUT / 1000} seconds`, docName)
-    t = performance.now() + BIND_TIMEOUT
-  }, BIND_TIMEOUT)
-
   // We must await initState in order to block onLoadDocument, otherwise the server can return an empty Doc.
   // WARNING: There is currently a bug that causes db.getYDoc to hang or take an inordinate amount of time (~265 sec) on a large initial replication.
   // https://github.com/cybersemics/em/issues/1725
   await initState({ db, docName, doc })
-  clearTimeout(timeout)
-
-  if (t) {
-    console.error(`bindState resolved in ${performance.now() - t} ms`, docName)
-  }
 
   // throttled update handler accumulates and merges updates
   const storeUpdateThrottled = throttleConcat(
@@ -173,7 +193,7 @@ const bindState = async ({
 
   doc.on('update', storeUpdateThrottled)
 
-  // TODO: Flushing updates on destroy completely negates the benefits of throttling during editing, since Lexemes are radidly created and deleted. Is there a way to defer updates without causing a race condition during editing?
+  // TODO: Flushing updates on destroy negates the benefits of throttling during editing, since Lexemes are radidly created and deleted. Is there a way to defer updates without causing a race condition during editing?
   doc.on('destroy', storeUpdateThrottled.flush)
 }
 
@@ -295,7 +315,7 @@ export const onLoadDocument = async ({
         }
       },
 
-      // persist to level db
+      // persist replication cursor to level db
       storage: {
         getItem: async (key: string) => {
           let results: any = null
