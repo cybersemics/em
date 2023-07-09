@@ -51,7 +51,7 @@ const replicationController = ({
   }) => void
   /** An asynchronous function that replicates the next thought or lexeme in the queue. May be called multiple times if the process is interrupted and the replication cursor is not updated. */
   next: ({ action }: { action: DocLogAction } & ReplicationResult) => Promise<void>
-  /** Local storage mechanism to persist the replication cursors. These are persisted outside of Yjs and are not supposed to be replicated across clients. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it it goes back online. Sets are throttled. */
+  /** Local storage mechanism to persist the replication cursors onLowStep. These are persisted outside of Yjs and are not supposed to be replicated across devices. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it goes back online. Sets are throttled. */
   storage: Storage
 }) => {
   // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
