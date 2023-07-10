@@ -39,8 +39,8 @@ const permissionsServerDoc = new Y.Doc()
 /** Shows the first n characters of a string and replaces the rest with an ellipsis. */
 const mask = (s: string, n = 4) => `${s.slice(0, n)}...`
 
-/** Gets a permissionsServerDoc by name that is synced by the server. */
-const getYDoc = (name: string): Y.Doc | undefined => server?.documents.get(name)
+/** Gets a Doc that is loaded on the server by name. Docs are added to the server onLoadDocument, and (presumably) removed on disconnect. */
+const getServerDoc = (name: string): Y.Doc | undefined => server?.documents.get(name)
 
 /** Make text gray in the console. */
 const gray = (s: string) => `\x1B[90m${s}\x1b[0m`
@@ -137,15 +137,15 @@ const initState = async ({
     )
   }
 
-  // do not store empty doc
-  const updates = Y.encodeStateAsUpdate(doc)
-  if (updates.length > 2) {
+  // store initial state of Doc if non-empty
+  const update = Y.encodeStateAsUpdate(doc)
+  if (update.length > 2) {
     timeout = setTimeout(() => {
       t = performance.now()
     }, BIND_TIMEOUT)
 
     try {
-      await db.storeUpdate(docName, updates)
+      await db.storeUpdate(docName, update)
     } catch (e) {
       console.error('initState: ERROR', e)
     }
@@ -249,7 +249,7 @@ export const onLoadDocument = async ({
     // floor accessed to nearest second to avoid churn
     // permissionsServerMap.set(token, { ...permission, accessed: (Math.floor(timestamp() / 1000) * 1000) as Timestamp })
 
-    const permissionsClientDoc = getYDoc(permissionsDocName)
+    const permissionsClientDoc = getServerDoc(permissionsDocName)
     if (!permissionsClientDoc) return
 
     const permissionsClientMap = permissionsClientDoc.getMap<Share>()
@@ -299,7 +299,7 @@ export const onLoadDocument = async ({
       onEnd: async () => {
         const db = ldbThoughtspaces.get(tsid)
         // if the tsid does not exist in server.documents, we can safely (?) assume the client has disconnected
-        if (db && !getYDoc(encodeDocLogDocumentName(tsid))) {
+        if (db && !getServerDoc(encodeDocLogDocumentName(tsid))) {
           await db.destroy()
           ldbThoughtspaces.delete(tsid)
         }
