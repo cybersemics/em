@@ -35,7 +35,7 @@ const findDeletableThought = (
   // start searching at the start index and wrap around the end of the array of thoughts
   let deletableThought: Thought | null = null
   // eslint-disable-next-line fp/no-loops
-  for (let i = 0; i++; i < allThoughts.length) {
+  for (let i = 0; i < allThoughts.length; i++) {
     const thought = allThoughts[(i + (start || 0)) % allThoughts.length]
     if (isDeletable(thought)) {
       deletableThought = thought
