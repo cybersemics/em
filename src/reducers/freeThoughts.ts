@@ -17,7 +17,7 @@ const PRESERVE_JUMPS = 3
 const findDeletableThought = (
   state: State,
   preserveSet: Set<ThoughtId>,
-  { start }: { start?: number } = {},
+  { start = 0 }: { start?: number } = {},
 ): Thought | null => {
   const allThoughts = Object.values(state.thoughts.thoughtIndex)
 
@@ -36,7 +36,7 @@ const findDeletableThought = (
   let deletableThought: Thought | null = null
   // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < allThoughts.length; i++) {
-    const thought = allThoughts[(i + (start || 0)) % allThoughts.length]
+    const thought = allThoughts[(start + i) % allThoughts.length]
     if (isDeletable(thought)) {
       deletableThought = thought
       break
