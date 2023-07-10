@@ -709,7 +709,7 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 }
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
-const freeThought = (id: ThoughtId): void => {
+export const freeThought = (id: ThoughtId): void => {
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
@@ -749,7 +749,7 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
 }
 
 /** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
-const freeLexeme = (key: string): void => {
+export const freeLexeme = (key: string): void => {
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
@@ -933,6 +933,7 @@ export const replicateTree = (
 
 const db: DataProvider = {
   clear,
+  freeLexeme,
   freeThought,
   getLexemeById,
   getLexemesByIds,

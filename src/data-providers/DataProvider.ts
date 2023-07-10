@@ -18,8 +18,8 @@ export interface DataProvider {
     lexemeIndexUpdatesOld: Index<Lexeme | undefined>
     schemaVersion: number
   }) => Promise<unknown>
-  freeThought?: (id: ThoughtId) => void
-  freeLexeme?: (key: string) => void
+  freeThought: (id: ThoughtId) => void
+  freeLexeme: (key: string) => void
 
   /****************************************
    * Used by dataProviderTest only
