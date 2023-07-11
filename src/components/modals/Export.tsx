@@ -117,7 +117,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
   const setExportingThoughtsThrottled = useCallback(
-    throttleConcat<Thought>(queue => setExportingThoughts(thoughtsOld => [...thoughtsOld, ...queue]), 100),
+    throttleConcat((queue: Thought[]) => setExportingThoughts(thoughtsOld => [...thoughtsOld, ...queue]), 100),
     [],
   )
 

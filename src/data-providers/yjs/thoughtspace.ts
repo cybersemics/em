@@ -96,7 +96,7 @@ const isLexemeLoaded = (state: State, key: string, lexeme: Lexeme | undefined): 
   !!((lexeme && getLexemeSelector(state, key)) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid)))
 
 /** Dispatches updateThoughts with all updates in the throttle period. */
-const updateThoughtsThrottled = throttleConcat<PushBatch>((batches: PushBatch[]) => {
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
   const merged = batches.reduce(mergeBatch, {
     thoughtIndexUpdates: {},
     lexemeIndexUpdates: {},

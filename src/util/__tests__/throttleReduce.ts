@@ -13,7 +13,7 @@ it('synchronous: once on the leading edge and once on the trailing edge', async 
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[]>(f, append, [] as number[], 10)
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10)
 
   // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
@@ -35,7 +35,7 @@ it('asynchronous: once on the leading edge and once on the trailing edge', async
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[]>(f, append, [] as number[], 101)
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 101)
 
   // Call the throttled function every 10 ms, completing in 100 ms.
 
@@ -113,7 +113,7 @@ it('asynchronous: trailing edge only', async () => {
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[]>(f, append, [] as number[], 101, { leading: false })
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 103, { leading: false })
 
   // Call the throttled function every 10 ms, completing in 100 ms.
 
@@ -191,7 +191,7 @@ it('flush', async () => {
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[]>(f, append, [] as number[], 10)
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10)
 
   // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
@@ -203,4 +203,23 @@ it('flush', async () => {
   // leading and trailing edge
   expect(calls).toBe(2)
   expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+})
+
+it('return function result from last from flush', async () => {
+  /** Squares each item in an array. */
+  const f = (values: number[]) => values.map(x => x * x)
+  const g = throttleReduce<number, number[], number[]>(f, append, [] as number[], 10)
+
+  // eslint-disable-next-line fp/no-loops
+  for (let i = 0; i < 10; i++) {
+    g(i)
+  }
+
+  // return flushed values
+  expect(g.size()).toEqual(9)
+  expect(g.flush()).toEqual([1, 4, 9, 16, 25, 36, 49, 64, 81])
+
+  // return undefined when there is nothing to flush
+  expect(g.size()).toEqual(0)
+  expect(g.flush()).toEqual(undefined)
 })
