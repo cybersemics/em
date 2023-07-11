@@ -7,7 +7,6 @@ index 28ec0ea..fdd2908 100644
    constructor (location, /* istanbul ignore next */ { level = defaultLevel__default["default"], levelOptions = {} } = {}) {
      const db = level(location, { ...levelOptions, valueEncoding, keyEncoding });
 -    this.tr = promise__namespace.resolve();
-+    this.location = location
 +
 +    // global lock
 +    this.trAll = promise__namespace.resolve();
@@ -174,7 +173,6 @@ index 28ec0ea..fdd2908 100644
     */
    destroy () {
 -    return this._transact(db => db.close())
-+    console.log('close', this.location)
 +    return this._transact(null, db => db.close())
    }
  
