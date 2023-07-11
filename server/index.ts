@@ -15,6 +15,7 @@ import {
   parseDocumentName,
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
+import sleep from '../src/util/sleep'
 import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
 
@@ -77,8 +78,17 @@ const ldbThoughtspaces = new Map<string, LeveldbPersistence>()
 const ldbDoclogs = new Map<string, LeveldbPersistence>()
 const ldbReplicationCursors = new Map<string, level.LevelDB>()
 
+// Store promises per tsid that resolve when the database is ready to be created.
+// An unset value is ready.
+// Otherwise we can get an IO LOCK error from level db when trying to re-create a db at the same location before previous transactions have been flushed and the connection closed.
+const ldbThoughtspacesReady = new Map<string, Promise<void>>()
+const ldbDoclogsReady = new Map<string, Promise<void>>()
+
 /** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
-const loadThoughtspaceDb = (tsid: string): LeveldbPersistence => {
+const openThoughtspaceDb = async (tsid: string): Promise<LeveldbPersistence> => {
+  // wait a tick, otherwise ldbThoughtspacesReady might not be populated with the promise from the last onDisconnect
+  await sleep(0)
+  await ldbThoughtspacesReady.get(tsid)
   let db = ldbThoughtspaces.get(tsid)
   if (!db) {
     db = new LeveldbPersistence(path.join(thoughtsDbBasePath, tsid))
@@ -88,7 +98,10 @@ const loadThoughtspaceDb = (tsid: string): LeveldbPersistence => {
 }
 
 /** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
-const loadDoclogDb = (tsid: string): LeveldbPersistence => {
+const openDoclogDb = async (tsid: string): Promise<LeveldbPersistence> => {
+  // wait a tick, otherwise ldbThoughtspacesReady might not be populated with the promise from the last onDisconnect
+  await sleep(0)
+  await ldbDoclogsReady.get(tsid)
   let db = ldbDoclogs.get(tsid)
   if (!db) {
     db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
@@ -186,14 +199,18 @@ const bindState = async ({
     // https://discuss.yjs.dev/t/throttling-yjs-updates-with-garbage-collection/1423
     (updates: Uint8Array[]) => {
       if (updates.length === 0) return
-      db.storeUpdate(docName, Y.mergeUpdates(updates))
+      return db.storeUpdate(docName, Y.mergeUpdates(updates)).catch(e => {
+        console.error('storeUpdate: ERROR', e)
+        throw e
+      })
     },
     THROTTLE_BINDSTATE,
   )
 
   doc.on('update', storeUpdateThrottled)
 
-  // TODO: Flushing updates on destroy negates the benefits of throttling during editing, since Lexemes are radidly created and deleted. Is there a way to defer updates without causing a race condition during editing?
+  // Immediately store all updates on destroy, otherwise queued updates can be missed when the db closes.
+  // TODO: Flushing updates on destroy negates the benefits of throttling during editing, since Lexemes are rapidly created and deleted. Is there a way to defer updates without causing a race condition during editing?
   doc.on('destroy', storeUpdateThrottled.flush)
 }
 
@@ -283,10 +300,10 @@ export const onLoadDocument = async ({
       })
     })
   } else if (type === 'thought' || type === 'lexeme') {
-    const db = loadThoughtspaceDb(tsid)
+    const db = await openThoughtspaceDb(tsid)
     await bindState({ db, docName: documentName, doc: document })
   } else if (type === 'doclog') {
-    const db = loadDoclogDb(tsid)
+    const db = await openDoclogDb(tsid)
     await bindState({ db, docName: documentName, doc: document })
 
     // Use a replicationController to track thought and lexeme deletes in the doclog.
@@ -300,15 +317,19 @@ export const onLoadDocument = async ({
         const db = ldbThoughtspaces.get(tsid)
         // if the tsid does not exist in server.documents, we can safely (?) assume the client has disconnected
         if (db && !getServerDoc(encodeDocLogDocumentName(tsid))) {
-          await db.destroy()
-          ldbThoughtspaces.delete(tsid)
+          const destroyed = db.destroy()
+          ldbDoclogsReady.set(tsid, destroyed)
+          destroyed.finally(() => {
+            ldbDoclogsReady.delete(tsid)
+            ldbThoughtspaces.delete(tsid)
+          })
         }
       },
       next: async ({ action, id, type }) => {
         if (action === DocLogAction.Delete) {
           // If the client becomes disconnected before replication completes, its thoughtspaceDb will be destroyed and needs to be re-loaded to finish processing deletes from the doclog.
           // Just make sure to destroy it on end.
-          const thoughtspaceDb = loadThoughtspaceDb(tsid)
+          const thoughtspaceDb = await openThoughtspaceDb(tsid)
           await thoughtspaceDb.clearDocument(
             type === 'thought' ? encodeThoughtDocumentName(tsid, id as ThoughtId) : encodeLexemeDocumentName(tsid, id),
           )
@@ -370,15 +391,22 @@ const server = Server.configure({
       // unload thoughtspaceDb
       const thoughtspaceDb = ldbThoughtspaces.get(tsid)
       if (thoughtspaceDb) {
-        thoughtspaceDb.destroy()
+        const destroyed = thoughtspaceDb.destroy()
+        ldbThoughtspacesReady.set(tsid, destroyed)
         ldbThoughtspaces.delete(tsid)
+        destroyed.finally(() => {
+          ldbThoughtspacesReady.delete(tsid)
+        })
       }
 
       // unload doclogDb
       const doclogDb = ldbDoclogs.get(tsid)
       if (doclogDb) {
-        doclogDb.destroy()
+        const destroyed = doclogDb.destroy()
         ldbDoclogs.delete(tsid)
+        destroyed.finally(() => {
+          ldbDoclogsReady.delete(tsid)
+        })
       }
 
       // unload replicationCursorDb
