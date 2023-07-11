@@ -243,6 +243,17 @@ const AddDeviceForm = ({
           ref={el => el?.focus()}
           type='text'
           onChange={e => setName(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.stopPropagation()
+              onSubmit({ name, role: 'owner' })
+            }
+            // TODO: The modal escape currently takes precedence
+            else if (e.key === 'Escape') {
+              e.stopPropagation()
+              onCancel()
+            }
+          }}
           value={name}
           style={{ display: 'inline', width: '10em', minWidth: '5em', marginRight: '1em' }}
         />
