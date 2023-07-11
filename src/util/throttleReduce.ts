@@ -1,5 +1,11 @@
 import { ThrottleSettings, throttle } from 'lodash'
 
+export type ThrottledFunction<T> = ((value: T) => void) & {
+  flush: () => void
+  cancel: () => void
+  size: () => number
+}
+
 /** Generates a throttled function that will be invoked with an accumulated value reduced from the batch of calls queued during the cooldown. */
 const throttleReduce = <T, U>(
   f: (accum: U) => void,
@@ -7,7 +13,7 @@ const throttleReduce = <T, U>(
   initialValue: U,
   ms: number,
   throttleSettings?: ThrottleSettings,
-): ((value: T) => void) & { flush: () => void } => {
+): ThrottledFunction<T> => {
   let accum: U = initialValue
   const queue: T[] = []
 
@@ -32,9 +38,9 @@ const throttleReduce = <T, U>(
     throttled()
   }
 
-  enqueue.flush = () => {
-    throttled.flush()
-  }
+  enqueue.cancel = () => throttled.flush()
+  enqueue.flush = () => throttled.flush()
+  enqueue.size = () => queue.length
 
   return enqueue
 }
