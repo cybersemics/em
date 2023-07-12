@@ -87,6 +87,7 @@ const ldbDoclogsReady = new Map<string, Promise<void>>()
 /** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
 const openThoughtspaceDb = async (tsid: string): Promise<LeveldbPersistence> => {
   // wait a tick, otherwise ldbThoughtspacesReady might not be populated with the promise from the last onDisconnect
+  // i.e. the database is closing
   await sleep(0)
   await ldbThoughtspacesReady.get(tsid)
   let db = ldbThoughtspaces.get(tsid)
@@ -99,7 +100,8 @@ const openThoughtspaceDb = async (tsid: string): Promise<LeveldbPersistence> => 
 
 /** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
 const openDoclogDb = async (tsid: string): Promise<LeveldbPersistence> => {
-  // wait a tick, otherwise ldbThoughtspacesReady might not be populated with the promise from the last onDisconnect
+  // wait a tick, otherwise ldbDoclogsReady might not be populated with the promise from the last onDisconnect
+  // i.e. the database is closing
   await sleep(0)
   await ldbDoclogsReady.get(tsid)
   let db = ldbDoclogs.get(tsid)
