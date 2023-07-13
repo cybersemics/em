@@ -16,12 +16,13 @@ import {
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
 import sleep from '../src/util/sleep'
+import taskQueue from '../src/util/taskQueue'
 import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
 
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
-/** Number of milliseconds to throttle bindState writing to leveldb. */
+/** Number of milliseconds to throttle db.storeUpdate on Doc update. */
 const THROTTLE_BINDSTATE = 1000
 
 /** Timeout for bindState before logging a warning. */
@@ -84,6 +85,12 @@ const ldbReplicationCursors = new Map<string, level.LevelDB>()
 const ldbThoughtspacesReady = new Map<string, Promise<void>>()
 const ldbDoclogsReady = new Map<string, Promise<void>>()
 
+// In order to safely unload dbs on disconnect, we need to wait for all storeUpdates to resolve.
+// Otherwise, when the user refreshes the page during an import, it can cause [ReadError]: Database is not open.
+// Each thoughtspace is given a taskQueue which tracks storeUpdate promises.
+// onDisconnect can thus await the taskQueue to ensure that all updates are saved to disk.
+const storeUpdateTaskQueues = new Map<string, ReturnType<typeof taskQueue>>()
+
 /** Open the thoughtspace db and cache the db reference in ldbThoughtspaces. */
 const openThoughtspaceDb = async (tsid: string): Promise<LeveldbPersistence> => {
   // wait a tick, otherwise ldbThoughtspacesReady might not be populated with the promise from the last onDisconnect
@@ -103,12 +110,21 @@ const openDoclogDb = async (tsid: string): Promise<LeveldbPersistence> => {
   // wait a tick, otherwise ldbDoclogsReady might not be populated with the promise from the last onDisconnect
   // i.e. the database is closing
   await sleep(0)
+
   await ldbDoclogsReady.get(tsid)
   let db = ldbDoclogs.get(tsid)
   if (!db) {
     db = new LeveldbPersistence(path.join(doclogDbBasePath, tsid))
     ldbDoclogs.set(tsid, db)
   }
+
+  // initialize storeUpdate taskQueue for the thoughtspace
+  let queue = storeUpdateTaskQueues.get(tsid)
+  if (!queue) {
+    queue = taskQueue({ concurrency: Infinity })
+    storeUpdateTaskQueues.set(tsid, queue)
+  }
+
   return db
 }
 
@@ -159,11 +175,12 @@ const initState = async ({
       t = performance.now()
     }, BIND_TIMEOUT)
 
-    try {
-      await db.storeUpdate(docName, update)
-    } catch (e) {
-      console.error('initState: ERROR', e)
-    }
+    const stored = db.storeUpdate(docName, update).catch(e => {
+      console.error('initState: storeUpdate', e)
+    })
+    const { tsid } = parseDocumentName(docName)
+    storeUpdateTaskQueues.get(tsid)?.add([() => stored])
+    await stored
 
     clearTimeout(timeout)
 
@@ -201,10 +218,14 @@ const bindState = async ({
     // https://discuss.yjs.dev/t/throttling-yjs-updates-with-garbage-collection/1423
     (updates: Uint8Array[]) => {
       if (updates.length === 0) return
-      return db.storeUpdate(docName, Y.mergeUpdates(updates)).catch(e => {
-        console.error('storeUpdate: ERROR', e)
-        throw e
+      const stored = db.storeUpdate(docName, Y.mergeUpdates(updates)).catch(e => {
+        console.error('bindState: storeUpdate', e)
       })
+
+      const { tsid } = parseDocumentName(docName)
+      storeUpdateTaskQueues.get(tsid)?.add([() => stored])
+
+      return stored
     },
     THROTTLE_BINDSTATE,
   )
@@ -387,10 +408,24 @@ const server = Server.configure({
     // for some reason documentName can be empty (bug?)
     if (!documentName) return
 
-    // destroy the cached ldb database when the doclog disconnects
+    // unload resources for this thoughtspace when the doclog disconnects
     const { tsid, type } = parseDocumentName(documentName)
     if (type === 'doclog') {
-      // unload thoughtspaceDb
+      // Wait for all updates to be stored in the db.
+      // Otherwise, the taskQueue will not yet have the storeUpdate promises.
+      const storeUpdateQueue = storeUpdateTaskQueues.get(tsid)
+      storeUpdateTaskQueues.delete(tsid)
+
+      // this shouldn't be necessary since all updates have been flushed, but it might mitigate the issue
+      await sleep(THROTTLE_BINDSTATE)
+
+      if (storeUpdateQueue && storeUpdateQueue.running() > 0) {
+        await storeUpdateQueue.once('end')
+
+        // if the client has reconnected before the storeUpdateQueue finished, abort the disconnect
+        if (storeUpdateTaskQueues.has(tsid)) return
+      }
+
       const thoughtspaceDb = ldbThoughtspaces.get(tsid)
       if (thoughtspaceDb) {
         const destroyed = thoughtspaceDb.destroy()
