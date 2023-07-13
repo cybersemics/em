@@ -59,6 +59,15 @@ export const websocketThoughtspace = websocket
 //   connect: false,
 // })
 
+// Reconnect on disconnect in order to mitigate a bug in Hocuspocus that causes idle connection timeouts.
+// https://github.com/ueberdosis/hocuspocus/issues/566#issuecomment-1582525932
+websocketThoughtspace.on('disconnect', () => {
+  setTimeout(() => {
+    console.warn('Reconnecting websocket')
+    websocketThoughtspace.connect()
+  })
+})
+
 /** If there is more than one device, connects the thoughtspace Websocket provider. */
 const connectThoughtspaceProvider = () => {
   if (permissionsClientMap.size > 1) {
