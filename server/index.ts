@@ -23,10 +23,10 @@ import timestamp from '../src/util/timestamp'
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
 /** Number of milliseconds to throttle db.storeUpdate on Doc update. */
-const THROTTLE_BINDSTATE = 1000
+const THROTTLE_STOREUPDATE = 1000
 
 /** Timeout for bindState before logging a warning. */
-const BIND_TIMEOUT = 1000
+const SLOW_LEVELDB_WARNING_TIMEOUT = 1000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -155,7 +155,7 @@ const initState = async ({
 
   let timeout = setTimeout(() => {
     t = performance.now()
-  }, BIND_TIMEOUT)
+  }, SLOW_LEVELDB_WARNING_TIMEOUT)
 
   const docPersisted = await db.getYDoc(docName)
 
@@ -163,7 +163,7 @@ const initState = async ({
 
   if (t) {
     console.warn(
-      `Slow db.getYDoc completed in ${Math.round((performance.now() - t + BIND_TIMEOUT) / 1000)} sec`,
+      `Slow db.getYDoc completed in ${Math.round((performance.now() - t + SLOW_LEVELDB_WARNING_TIMEOUT) / 1000)} sec`,
       docName,
     )
   }
@@ -173,7 +173,7 @@ const initState = async ({
   if (update.length > 2) {
     timeout = setTimeout(() => {
       t = performance.now()
-    }, BIND_TIMEOUT)
+    }, SLOW_LEVELDB_WARNING_TIMEOUT)
 
     const stored = db.storeUpdate(docName, update).catch(e => {
       console.error('initState: storeUpdate', e)
@@ -186,7 +186,9 @@ const initState = async ({
 
     if (t) {
       console.warn(
-        `Slow db.storeUpdate completed in ${Math.round((performance.now() - t + BIND_TIMEOUT) / 1000)} sec`,
+        `Slow db.storeUpdate completed in ${Math.round(
+          (performance.now() - t + SLOW_LEVELDB_WARNING_TIMEOUT) / 1000,
+        )} sec`,
         docName,
       )
     }
@@ -227,7 +229,7 @@ const bindState = async ({
 
       return stored
     },
-    THROTTLE_BINDSTATE,
+    THROTTLE_STOREUPDATE,
   )
 
   doc.on('update', storeUpdateThrottled)
@@ -417,7 +419,7 @@ const server = Server.configure({
       storeUpdateTaskQueues.delete(tsid)
 
       // this shouldn't be necessary since all updates have been flushed, but it might mitigate the issue
-      await sleep(THROTTLE_BINDSTATE)
+      await sleep(THROTTLE_STOREUPDATE)
 
       if (storeUpdateQueue && storeUpdateQueue.running() > 0) {
         await storeUpdateQueue.once('end')
