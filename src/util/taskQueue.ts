@@ -222,6 +222,9 @@ const taskQueue = <
       emitter.on(eventName, f)
     },
 
+    // TODO: Type args
+    once: (eventName: EventName): Promise<any> => new Promise(resolve => emitter.on(eventName, resolve)),
+
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
     pause: () => {
       paused = true

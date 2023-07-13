@@ -48,6 +48,19 @@ it(`on('end', ...) syntax`, async () => {
   expect(counter).toBe(3)
 })
 
+it(`once('end', ...) promise`, async () => {
+  let counter = 0
+  /** Increments the counter. */
+  const inc = () => ++counter
+
+  const queue = taskQueue<number>()
+  const p = queue.once('end')
+  queue.add([inc, inc, inc])
+  await p
+
+  expect(counter).toBe(3)
+})
+
 it('onEnd with no tasks', async () => {
   const total = await new Promise(resolve => {
     const queue = taskQueue<number>({ onEnd: resolve })
