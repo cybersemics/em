@@ -1,3 +1,7 @@
+import Emitter from 'emitter20'
+
+type EventName = 'end' | 'step' | 'lowStep'
+
 /** Returns a new task that retries the given task up to n times if it out. */
 const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (() => Promise<any>) => {
   let retryTimer = 0
@@ -59,6 +63,13 @@ const taskQueue = <
     throw new Error(`Invalid concurrency: ${concurrency}. Concurrency must be > 0.`)
   }
 
+  // event emitter
+  const emitter = new Emitter()
+
+  if (onEnd) {
+    emitter.on('end', onEnd)
+  }
+
   // queue of tasks to process in order, without exceeding concurrency
   const queue: (() => T | Promise<T>)[] = []
 
@@ -101,7 +112,7 @@ const taskQueue = <
       const task = queue.shift()
       if (!task) {
         if (total === 0) {
-          onEnd?.(0)
+          emitter.trigger('end', 0)
         }
         return
       }
@@ -127,7 +138,7 @@ const taskQueue = <
           }
 
           if (queue.length === 0 && running === 0) {
-            onEnd?.(total)
+            emitter.trigger('end', total)
             resolve(total)
             completed = 0
             total = 0
@@ -198,8 +209,18 @@ const taskQueue = <
     /** Returns the number of completed tasks. */
     completed: () => completed,
 
-    /** Convenience promise for onEnd. Do not use with multiple batches (where onEnd would be called multiple times). */
+    /** Convenience promise for the first end event. Do not use with multiple batches (where onEnd would be called multiple times). */
     end: endPromise,
+
+    // TODO: Type args
+    off: (eventName: EventName, f: (...args: any) => void) => {
+      emitter.off(eventName, f)
+    },
+
+    // TODO: Type args
+    on: (eventName: EventName, f: (...args: any) => void) => {
+      emitter.on(eventName, f)
+    },
 
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
     pause: () => {

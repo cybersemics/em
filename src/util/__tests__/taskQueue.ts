@@ -24,7 +24,7 @@ it('add tasks after instantiation', async () => {
   expect(counter).toBe(3)
 })
 
-it('onEnd should return total', async () => {
+it('end should resolve to total', async () => {
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter
@@ -32,6 +32,20 @@ it('onEnd should return total', async () => {
   const total = await taskQueue<number>({ tasks: [inc, inc, inc] }).end
 
   expect(total).toBe(3)
+})
+
+it(`on('end', ...) syntax`, async () => {
+  let counter = 0
+  /** Increments the counter. */
+  const inc = () => ++counter
+
+  await new Promise(resolve => {
+    const queue = taskQueue<number>()
+    queue.on('end', resolve)
+    queue.add([inc, inc, inc])
+  })
+
+  expect(counter).toBe(3)
 })
 
 it('onEnd with no tasks', async () => {
