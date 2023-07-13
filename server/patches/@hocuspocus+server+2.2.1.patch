@@ -1,3 +1,25 @@
+diff --git a/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs b/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
+index d40a314..ef22d3e 100644
+--- a/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
++++ b/node_modules/@hocuspocus/server/dist/hocuspocus-server.cjs
+@@ -2375,10 +2375,14 @@ class ClientConnection {
+                 this.websocket.close(common.Unauthorized.code, common.Unauthorized.reason);
+             }
+         };
++
+         // Make sure to close an idle connection after a while.
+-        this.closeIdleConnectionTimeout = setTimeout(() => {
+-            websocket.close(common.Unauthorized.code, common.Unauthorized.reason);
+-        }, opts.timeout);
++        if (opts.timeout) {
++          this.closeIdleConnectionTimeout = setTimeout(() => {
++              websocket.close(common.Unauthorized.code, common.Unauthorized.reason);
++          }, opts.timeout);
++        }
++
+         websocket.on('message', this.messageHandler);
+     }
+     /**
 diff --git a/node_modules/@hocuspocus/server/src/DirectConnection.ts b/node_modules/@hocuspocus/server/src/DirectConnection.ts
 index 327f2f3..9b6ceb8 100644
 --- a/node_modules/@hocuspocus/server/src/DirectConnection.ts
