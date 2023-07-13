@@ -1,8 +1,8 @@
 diff --git a/node_modules/y-leveldb/dist/y-leveldb.cjs b/node_modules/y-leveldb/dist/y-leveldb.cjs
-index 28ec0ea..fdd2908 100644
+index 28ec0ea..473cc99 100644
 --- a/node_modules/y-leveldb/dist/y-leveldb.cjs
 +++ b/node_modules/y-leveldb/dist/y-leveldb.cjs
-@@ -385,33 +385,55 @@ class LeveldbPersistence {
+@@ -385,33 +385,54 @@ class LeveldbPersistence {
     */
    constructor (location, /* istanbul ignore next */ { level = defaultLevel__default["default"], levelOptions = {} } = {}) {
      const db = level(location, { ...levelOptions, valueEncoding, keyEncoding });
@@ -57,7 +57,7 @@ index 28ec0ea..fdd2908 100644
 -      return this.tr
 +
 +      if (docName === null) {
-+        // this.trAll = Promise.all([...this.tr.values()]).then(() => tr).then(() => res);
++        this.trAll = Promise.all([...this.tr.values()]).then(() => tr).then(() => res);
 +      } else {
 +        this.tr.set(mutexKey, tr);
 +      }
@@ -66,7 +66,7 @@ index 28ec0ea..fdd2908 100644
      };
    }
  
-@@ -419,7 +441,7 @@ class LeveldbPersistence {
+@@ -419,7 +440,7 @@ class LeveldbPersistence {
     * @param {string} docName
     */
    flushDocument (docName) {
@@ -75,7 +75,7 @@ index 28ec0ea..fdd2908 100644
        const updates = await getLevelUpdates(db, docName);
        const { update, sv } = mergeUpdates(updates);
        await flushDocument(db, docName, update, sv);
-@@ -431,7 +453,7 @@ class LeveldbPersistence {
+@@ -431,7 +452,7 @@ class LeveldbPersistence {
     * @return {Promise<Y.Doc>}
     */
    getYDoc (docName) {
@@ -84,7 +84,7 @@ index 28ec0ea..fdd2908 100644
        const updates = await getLevelUpdates(db, docName);
        const ydoc = new Y__namespace.Doc();
        ydoc.transact(() => {
-@@ -451,7 +473,7 @@ class LeveldbPersistence {
+@@ -451,7 +472,7 @@ class LeveldbPersistence {
     * @return {Promise<Uint8Array>}
     */
    getStateVector (docName) {
@@ -93,7 +93,7 @@ index 28ec0ea..fdd2908 100644
        const { clock, sv } = await readStateVector(db, docName);
        let curClock = -1;
        if (sv !== null) {
-@@ -475,7 +497,7 @@ class LeveldbPersistence {
+@@ -475,7 +496,7 @@ class LeveldbPersistence {
     * @return {Promise<number>} Returns the clock of the stored update
     */
    storeUpdate (docName, update) {
@@ -102,7 +102,7 @@ index 28ec0ea..fdd2908 100644
    }
  
    /**
-@@ -492,9 +514,10 @@ class LeveldbPersistence {
+@@ -492,9 +513,10 @@ class LeveldbPersistence {
     * @return {Promise<void>}
     */
    clearDocument (docName) {
@@ -114,7 +114,7 @@ index 28ec0ea..fdd2908 100644
      })
    }
  
-@@ -505,7 +528,7 @@ class LeveldbPersistence {
+@@ -505,7 +527,7 @@ class LeveldbPersistence {
     * @return {Promise<void>}
     */
    setMeta (docName, metaKey, value) {
@@ -123,7 +123,7 @@ index 28ec0ea..fdd2908 100644
    }
  
    /**
-@@ -514,7 +537,7 @@ class LeveldbPersistence {
+@@ -514,7 +536,7 @@ class LeveldbPersistence {
     * @return {Promise<any>}
     */
    delMeta (docName, metaKey) {
@@ -132,7 +132,7 @@ index 28ec0ea..fdd2908 100644
    }
  
    /**
-@@ -523,7 +546,7 @@ class LeveldbPersistence {
+@@ -523,7 +545,7 @@ class LeveldbPersistence {
     * @return {Promise<any>}
     */
    getMeta (docName, metaKey) {
@@ -141,7 +141,7 @@ index 28ec0ea..fdd2908 100644
        const res = await levelGet(db, createDocumentMetaKey(docName, metaKey));
        if (res === null) {
          return// return void
-@@ -536,7 +559,7 @@ class LeveldbPersistence {
+@@ -536,7 +558,7 @@ class LeveldbPersistence {
     * @return {Promise<Array<string>>}
     */
    getAllDocNames () {
@@ -150,7 +150,7 @@ index 28ec0ea..fdd2908 100644
        const docKeys = await getAllDocs(db, false, true);
        return docKeys.map(key => key[1])
      })
-@@ -546,7 +569,7 @@ class LeveldbPersistence {
+@@ -546,7 +568,7 @@ class LeveldbPersistence {
     * @return {Promise<Array<{ name: string, sv: Uint8Array, clock: number }>>}
     */
    getAllDocStateVectors () {
@@ -159,7 +159,7 @@ index 28ec0ea..fdd2908 100644
        const docs = /** @type {any} */ (await getAllDocs(db, true, true));
        return docs.map(doc => {
          const { sv, clock } = decodeLeveldbStateVector(doc.value);
-@@ -560,7 +583,7 @@ class LeveldbPersistence {
+@@ -560,7 +582,7 @@ class LeveldbPersistence {
     * @return {Promise<Map<string, any>>}
     */
    getMetas (docName) {
@@ -168,7 +168,7 @@ index 28ec0ea..fdd2908 100644
        const data = await getLevelBulkData(db, {
          gte: createDocumentMetaKey(docName, ''),
          lt: createDocumentMetaEndKey(docName),
-@@ -579,14 +602,15 @@ class LeveldbPersistence {
+@@ -579,14 +601,14 @@ class LeveldbPersistence {
     * @return {Promise<void>}
     */
    destroy () {
