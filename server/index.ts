@@ -364,13 +364,16 @@ export const onLoadDocument = async ({
       // persist replication cursor to level db
       storage: {
         getItem: async (key: string) => {
-          let results: any = null
+          let results: string | null = null
           try {
             const replicationCursorDb = loadReplicationCursorDb(tsid)
             results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
-          } catch (e) {
-            // get will fail with "Key not found" the first time
-            // ignore it and replication cursors will be set in next replication
+          } catch (e: any) {
+            // If a value does not exist for the key, return null.
+            // Otherwise, throw the error.
+            if (e.name !== 'NotFoundError') {
+              throw e
+            }
           }
           return results
         },
