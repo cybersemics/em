@@ -72,8 +72,7 @@ const replicationController = ({
   let thoughtReplicationCursor = 0
   let lexemeReplicationCursor = 0
 
-  // assume storage.getItem completes before thoughtLogs.observe fires
-  // otherwise we have to make the replication cursors async
+  // load thoughtReplicationCursor and lexemeReplicationCursor into memory
   const replicationCursorsInitialized = Promise.all([
     Promise.resolve(storage.getItem('thoughtReplicationCursor')).then(value => {
       thoughtReplicationCursor = +(value || 0)
@@ -83,6 +82,7 @@ const replicationController = ({
     }),
   ])
 
+  /** Updates the persisted thoughtReplicationCursor (throttled). */
   const updateThoughtReplicationCursor = _.throttle(
     (index: number) => {
       thoughtReplicationCursor = index + 1
@@ -91,6 +91,8 @@ const replicationController = ({
     100,
     { leading: false },
   )
+
+  /** Updates the persisted lexemeReplicationCursor (throttled). */
   const updateLexemeReplicationCursor = _.throttle(
     (index: number) => {
       lexemeReplicationCursor = index + 1
@@ -124,7 +126,6 @@ const replicationController = ({
     // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
     // Therefore, observe the deltas and slice from the replication cursor.
     thoughtLog.observe((e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
-      if (e.transaction.origin === doc.clientID) return
       const startIndex = thoughtReplicationCursor
 
       // since the doglogs are append-only, ids are only on .insert
@@ -133,30 +134,35 @@ const replicationController = ({
       // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
       const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
 
-      // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
-      const replicated = new Map<ThoughtId, number>()
-      deltas.forEach(([id], i) => replicated.set(id, i))
-
-      const tasks = deltas.map(([id, action], i) => {
-        // ignore older updates to the same thought
-        // no need to update the replication cursor since it will be updated to the newer update
-        if (i !== replicated.get(id)) return null
-
-        // update or delete the thought
-        return async (): Promise<ReplicationResult> => {
-          const result: ReplicationResult = { type: 'thought', id, index: startIndex + i }
-          await next({ ...result, action })
-          return result
-        }
-      })
-
-      replicationQueue.add(tasks)
       thoughtObservationCursor += deltasRaw.length
+
+      // if the change comes from self, update the lexemeReplicationCursor but do not fire next
+      if (e.transaction.origin === doc.clientID) {
+        updateThoughtReplicationCursor(startIndex + deltas.length)
+      } else {
+        // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
+        // e.g. if a Lexeme is created, deleted, and then created again, the replicationController will only replicate the last creation
+        const replicated = new Map<ThoughtId, number>()
+        deltas.forEach(([id], i) => replicated.set(id, i))
+
+        const tasks = deltas.map(([id, action], i) => {
+          // ignore older updates to the same thought
+          if (i !== replicated.get(id)) return null
+
+          // trigger next (e.g. save the thought locally)
+          return async (): Promise<ReplicationResult> => {
+            const result: ReplicationResult = { type: 'thought', id, index: startIndex + i }
+            await next({ ...result, action })
+            return result
+          }
+        })
+
+        replicationQueue.add(tasks)
+      }
     })
 
     // See: thoughtLog.observe
     lexemeLog.observe((e: Y.YArrayEvent<[string, DocLogAction]>) => {
-      if (e.transaction.origin === doc.clientID) return
       const startIndex = lexemeReplicationCursor
 
       // since the doglogs are append-only, ids are only on .insert
@@ -166,25 +172,30 @@ const replicationController = ({
       // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
       const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
 
-      // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
-      const replicated = new Map<string, number>()
-      deltas.forEach(([key], i) => replicated.set(key, i))
-
-      const tasks = deltas.map(([key, action], i) => {
-        // ignore older updates to the same lexeme
-        // no need to update the replication cursor since it will be updated to the newer update
-        if (i !== replicated.get(key)) return null
-
-        // update or delete the lexeme
-        return async (): Promise<ReplicationResult> => {
-          const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i }
-          await next({ ...result, action })
-          return result
-        }
-      })
-
-      replicationQueue.add(tasks)
       lexemeObservationCursor += deltasRaw.length
+
+      // if the change comes from self, update the lexemeReplicationCursor but do not fire next
+      if (e.transaction.origin === doc.clientID) {
+        updateLexemeReplicationCursor(startIndex + deltas.length)
+      } else {
+        // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+        const replicated = new Map<string, number>()
+        deltas.forEach(([key], i) => replicated.set(key, i))
+
+        const tasks = deltas.map(([key, action], i) => {
+          // ignore older updates to the same lexeme
+          if (i !== replicated.get(key)) return null
+
+          // trigger next (e.g. save the lexeme locally)
+          return async (): Promise<ReplicationResult> => {
+            const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i }
+            await next({ ...result, action })
+            return result
+          }
+        })
+
+        replicationQueue.add(tasks)
+      }
     })
   })
 
