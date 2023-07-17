@@ -65,10 +65,10 @@ const appendVisiblePaths = (
         // pending thought
         ...(thought.pending ? { [thoughtId]: true } : null),
         // children
-        ...keyValueBy(children, child => {
+        ...keyValueBy(children, child =>
           // pending child
-          return !child || child.pending ? { [child.id]: true } : null
-        }),
+          child ? { [child.id]: true } : null,
+        ),
       }
     },
     pullQueue,
