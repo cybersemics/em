@@ -1,7 +1,14 @@
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS, MAX_THOUGHTS_MARGIN } from '../constants'
+import {
+  ABSOLUTE_TOKEN,
+  EM_TOKEN,
+  FREE_THOUGHTS_MARGIN,
+  FREE_THOUGHTS_THRESHOLD,
+  FREE_THOUGHT_JUMPS,
+  HOME_TOKEN,
+} from '../constants'
 import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -12,9 +19,6 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
-
-// the number of jumpHistory paths to preserve during deallocation
-const PRESERVE_JUMPS = 3
 
 /** Find the next thought that can be safely deallocated. */
 const findDeletableThought = (
@@ -56,7 +60,7 @@ const freeThoughts = (state: State) => {
     EM_TOKEN,
     HOME_TOKEN,
     // prevent the last few jump history points
-    ...state.jumpHistory.slice(0, PRESERVE_JUMPS).flatMap(path => path || []),
+    ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
     // preserve the last imported thought, as it needs to stay in memory for the next imported thought in case it is a child
     ...(globals.lastImportedPath || []),
     // preserve expanded thoughts and their children
@@ -84,7 +88,7 @@ const freeThoughts = (state: State) => {
 
   // free thoughts until MAX_THOUGHTS is reached (minus MAX_THOUGHTS_MARGIN to provide some slack)
   // eslint-disable-next-line fp/no-loops
-  while (Object.values(stateNew.thoughts.thoughtIndex).length > MAX_THOUGHTS - MAX_THOUGHTS_MARGIN) {
+  while (Object.values(stateNew.thoughts.thoughtIndex).length > FREE_THOUGHTS_THRESHOLD - FREE_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
     const deletableThought = findDeletableThought(stateNew, preserveSet, { start: randomStartIndex })
     // If all thoughts are preserved, we should bail.
