@@ -30,7 +30,9 @@ import timestamp from '../util/timestamp'
 interface Payload {
   pathParent: Path
   thoughtId: ThoughtId
+  /** In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated. */
   orphaned?: boolean
+  /** If both local and remote are false, enter deallocation mode. Marks the parent as pending and preserves Lexeme contexts so that the thought will be automatically restored if it becomes visible again. */
   local?: boolean
   remote?: boolean
 }
@@ -42,18 +44,17 @@ interface ThoughtUpdates {
   pendingDeletes?: PushBatch['pendingDeletes']
 }
 
-/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions.
- *
- * @param orphaned - In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated.
- */
+/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
 // @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directly. Find a better way to handle this.
 const deleteThought = (state: State, { local = true, pathParent, thoughtId, orphaned, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
-
   const value = deletedThought?.value
 
+  // See: Payload.local
+  const persist = local || remote
+
   // guard against missing lexeme
-  // while this should never happen, there are some concurrency issues that can cause it to happen, so we should print an error and just delete the Parent
+  // while this ideally shouldn't happen, there are some concurrency issues that can cause it to happen, as well as freeThoughts, so we should print an error and just delete the Parent
   if (deletedThought && !hasLexeme(state, value!)) {
     console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
   }
@@ -83,8 +84,18 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
   //   console.error(e)
   // }
 
-  // the old Lexeme less the context
-  const lexemeNew = lexeme?.contexts && lexeme.contexts.length > 1 ? removeContext(state, lexeme, thoughtId) : null
+  // The new Lexeme is typically the old Lexeme less the deleted context.
+  // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact, only deleting the Lexeme from memory when all its Contexts have been deallocated.
+  const lexemeWithoutContext = lexeme ? removeContext(state, lexeme, thoughtId) : null
+
+  const lexemeNew = persist
+    ? lexemeWithoutContext && lexemeWithoutContext.contexts.length > 0
+      ? lexemeWithoutContext
+      : null
+    : (lexemeWithoutContext?.contexts || []).every(cxid => !getThoughtById(state, cxid))
+    ? null
+    : // lexeme must be defined, otherwise lexemeWithoutContexts would be null and the first branch of the ternary would have been taken
+      lexeme!
 
   // update state so that we do not have to wait for the remote
   if (key) {
@@ -184,9 +195,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
     ? recursiveDeletes(deletedThought)
     : { lexemeIndex: {}, thoughtIndex: {}, path: HOME_PATH }
 
-  const lexemeIndexUpdates = key
+  const lexemeIndexUpdates: ThoughtUpdates['lexemeIndex'] = key
     ? {
-        [key]: lexemeNew,
+        ...(lexemeNew !== lexeme ? { [key]: lexemeNew } : null),
         ...descendantUpdatesResult.lexemeIndex,
       }
     : {}
@@ -197,7 +208,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
     ...(parent && {
       [parent.id]: {
         ...parent,
-        ...(local || remote
+        ...(persist
           ? {
               childrenMap: keyValueBy(parent?.childrenMap || {}, (key, id) =>
                 id !== thoughtId ? { [key]: id } : null,
@@ -239,7 +250,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
       local,
       remote,
-      overwritePending: !local && !remote,
+      overwritePending: !persist,
     }),
   ])(state)
 }
