@@ -17,22 +17,18 @@ import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
-import isRoot from '../util/isRoot'
 import isURL from '../util/isURL'
 import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import useMultiline from './Editable/useMultiline'
-import HomeLink from './HomeLink'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
@@ -40,7 +36,6 @@ interface ThoughtAnnotationProps {
   editingValue?: string | null
   env?: LazyEnv
   focusOffset?: number
-  homeContext?: boolean
   invalidState?: boolean
   isEditing?: boolean
   minContexts?: number
@@ -138,12 +133,6 @@ const ThoughtAnnotation = ({
   const fontSize = useSelector((state: State) => state.fontSize)
   const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
 
-  const homeContext = useSelector((state: State) => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
-
   const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
   const url = useSelector((state: State) => {
     const childrenUrls = filterAllChildren(state, head(simplePath), child => isURL(child.value))
@@ -211,39 +200,34 @@ const ThoughtAnnotation = ({
       className='thought-annotation'
       ref={contentRef}
       style={{
-        ...(homeContext ? { height: '1em' } : null),
         // must match marginLeft of StaticThought
         marginLeft: fontSize - 13,
       }}
     >
-      {homeContext ? (
-        <HomeLink />
-      ) : (
-        <div
-          className={classNames({
-            'editable-annotation': true,
-            multiline,
-            // disable intrathought linking until add, edit, delete, and expansion can be implemented
-            // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
-          })}
-          style={{
-            // add a little padding for highlighting
-            padding: '0 3px',
-            marginLeft: -3,
-            ...styleAnnotation,
-          }}
-        >
-          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
-          {
-            // do not render url icon on root thoughts in publish mode
-            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-          }
-          {
-            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
-          }
-        </div>
-      )}
+      <div
+        className={classNames({
+          'editable-annotation': true,
+          multiline,
+          // disable intrathought linking until add, edit, delete, and expansion can be implemented
+          // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
+        })}
+        style={{
+          // add a little padding for highlighting
+          padding: '0 3px',
+          marginLeft: -3,
+          ...styleAnnotation,
+        }}
+      >
+        <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
+        {
+          // do not render url icon on root thoughts in publish mode
+          url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+        }
+        {
+          // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+          showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
+        }
+      </div>
     </div>
   )
 }
