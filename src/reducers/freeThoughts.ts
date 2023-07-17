@@ -4,7 +4,10 @@ import ThoughtId from '../@types/ThoughtId'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_THOUGHTS, MAX_THOUGHTS_MARGIN } from '../constants'
 import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
+import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
+import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -57,7 +60,18 @@ const freeThoughts = (state: State) => {
     // preserve the last imported thought, as it needs to stay in memory for the next imported thought in case it is a child
     ...(globals.lastImportedPath || []),
     // preserve expanded thoughts and their children
-    ...Object.values(state.expanded).flatMap(path => [...path, ...getAllChildren(state, head(path))]),
+    ...Object.values(state.expanded).flatMap(path => {
+      const showContexts = isContextViewActive(state, path)
+      return [
+        ...path,
+        // preserve normal children even if context view is active, so that it is instantly available when the user switches back
+        ...getAllChildren(state, head(path)),
+        // preserve context view (including context ancestors)
+        ...(showContexts
+          ? getContexts(state, getThoughtById(state, head(path)).value).flatMap(cxid => thoughtToPath(state, cxid))
+          : []),
+      ]
+    }),
     ...getDescendantThoughtIds(state, EM_TOKEN),
   ])
 
