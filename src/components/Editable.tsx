@@ -446,7 +446,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
     if (!dragHold && !dragInProgress) {
       setCursorOnThought({ editing: true })
     }
-  }, [value])
+  }, [value, setCursorOnThought])
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
@@ -489,7 +489,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         allowDefaultSelection()
       }
     },
-    [disabled, isVisible, path],
+    [disabled, isVisible, path, setCursorOnThought],
   )
 
   const styleMemo = useMemo(
