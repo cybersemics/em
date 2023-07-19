@@ -26,7 +26,7 @@ type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 const THROTTLE_STOREUPDATE = 1000
 
 /** Timeout for bindState before logging a warning. */
-const SLOW_LEVELDB_WARNING_TIMEOUT = 1000
+const SLOW_LEVELDB_WARNING_TIMEOUT = 5000
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
