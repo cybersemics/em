@@ -284,11 +284,13 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
-  window.addEventListener('resize', updateHeight)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
   window.addEventListener('drop', drop)
+
+  const resizeHost = window.visualViewport || window
+  resizeHost.addEventListener('resize', updateHeight)
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -303,12 +305,12 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
-    window.removeEventListener('resize', updateHeight)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
+    resizeHost.removeEventListener('resize', updateHeight)
   }
 
   // return input handlers as another way to remove them on cleanup

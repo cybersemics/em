@@ -41,6 +41,7 @@ import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import suppressFocusStore from '../stores/suppressFocus'
+import viewportStore from '../stores/viewport'
 import addEmojiSpace from '../util/addEmojiSpace'
 import ellipsize from '../util/ellipsize'
 import ellipsizeUrl from '../util/ellipsizeUrl'
@@ -80,6 +81,27 @@ interface EditableProps {
 // otherwise it can trigger unnecessary re-renders
 // intended to be global, not local state
 let blurring = false
+
+/** Prevent the browser from autoscrolling to this editable element. Assumes the element is not using the transform property. */
+const preventAutoscroll = (el: HTMLElement | null | undefined) => {
+  if (!el) return
+
+  const { height, y } = el.getBoundingClientRect()
+  const { innerHeight, virtualKeyboardHeight } = viewportStore.getState()
+  const yOffset = (innerHeight - virtualKeyboardHeight) / 2 - height / 2 - y
+
+  // position the element to the center of the viewport so that the browser does not think it needs to autoscroll
+  el.style.transform = `translateY(${yOffset}px)`
+
+  setTimeout(() => preventAutoscrollEnd(el), 10)
+}
+
+/** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
+const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
+  if (el?.style.transform) {
+    el.style.transform = ''
+  }
+}
 
 /**
  * An editable thought with throttled editing.
@@ -434,6 +456,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
    * Prevented by mousedown event above for hidden thoughts.
    */
   const onFocus = useCallback(() => {
+    preventAutoscrollEnd(contentRef.current)
     if (suppressFocusStore.getState()) return
     // do not allow blur to setEditingValue when it is followed immediately by a focus
     blurring = false
@@ -485,6 +508,11 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
           setCursorOnThought()
         }
       } else {
+        // for some reason doesn't work ontouchend
+        if (editingOrOnCursor && e.type === 'mousedown' && isTouch) {
+          preventAutoscroll(contentRef.current)
+        }
+
         // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
         allowDefaultSelection()
       }
