@@ -580,71 +580,7 @@ export const replicateThought = async (
   }
 
   // repair
-  websocketSynced?.then(() => {
-    // Repair Lexeme with invalid context by removing cxid of missing thought.
-    // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
-    const state = store.getState()
-    const cursorValue = state.cursor ? headValue(state, state.cursor) : null
-    const cursorLexeme =
-      state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
-
-    if (cursorLexeme?.contexts.includes(id)) {
-      const thought = getThought(doc)
-
-      // check for missing context
-      // a thought should never be undefined after IDB and the Websocket server have synced
-      if (!thought) {
-        console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
-
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {},
-            lexemeIndexUpdates: {
-              [hashThought(cursorValue!)]: removeContext(state, cursorLexeme, id),
-            },
-          }),
-        )
-        console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
-          cursorLexeme,
-        })
-      }
-      // repair invalid parent
-      else {
-        // replicating the parent should use the cached synced promise
-        replicateThought(thought.parentId, { background: true }).then(parent => {
-          if (parent) {
-            const childKey = isFunction(thought.value) ? thought.value : thought.id
-            if (!parent.childrenMap[childKey]) {
-              // restore thought to parent
-              store.dispatch((dispatch, getState) => {
-                dispatch([
-                  // delete the thought from its Lexeme first, as it may be incorrect and it will be recreated in createThought
-                  updateThoughtsActionCreator({
-                    thoughtIndexUpdates: {},
-                    lexemeIndexUpdates: {
-                      [hashThought(cursorValue!)]: removeContext(getState(), cursorLexeme, id),
-                    },
-                  }),
-                  // add the missing thought to its parent
-                  createThoughtActionCreator({
-                    id: thought.id,
-                    path: thoughtToPath(getState(), parent.id),
-                    value: thought.value,
-                    rank: thought.rank,
-                  }),
-                ])
-              })
-              console.warn(
-                `Repaired invalid Lexeme context: Thought ${id} restored to its parent ${thought.parentId} after not found in providers.`,
-              )
-            }
-          } else {
-            console.error(`Thought ${id} has a missing parent ${thought.parentId}.`)
-          }
-        })
-      }
-    }
-  })
+  websocketSynced?.then(() => repairThought(id, doc))
 
   return getThought(doc)
 }
@@ -1012,6 +948,73 @@ export const replicateTree = (
     queue.clear()
     abort = true
   })
+}
+
+/** Checks for and repairs data integrity issues that are detected after a thought is fully replicated. Namely, it can remove Lexeme contexts that no longer have a corresponding thought, and it can restore Lexeme context parent's that have been removed. Unfortunately, data integrity issues are quite possible given that Thoughts and Lexemes are stored in separate Docs. */
+const repairThought = (id: ThoughtId, doc: Y.Doc) => {
+  // Repair Lexeme with invalid context by removing cxid of missing thought.
+  // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
+  const state = store.getState()
+  const cursorValue = state.cursor ? headValue(state, state.cursor) : null
+  const cursorLexeme =
+    state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
+
+  if (cursorLexeme?.contexts.includes(id)) {
+    const thought = getThought(doc)
+
+    // check for missing context
+    // a thought should never be undefined after IDB and the Websocket server have synced
+    if (!thought) {
+      console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
+
+      store.dispatch(
+        updateThoughtsActionCreator({
+          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {
+            [hashThought(cursorValue!)]: removeContext(state, cursorLexeme, id),
+          },
+        }),
+      )
+      console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
+        cursorLexeme,
+      })
+    }
+    // repair invalid parent
+    else {
+      // replicating the parent should use the cached synced promise
+      replicateThought(thought.parentId, { background: true }).then(parent => {
+        if (parent) {
+          const childKey = isFunction(thought.value) ? thought.value : thought.id
+          if (!parent.childrenMap[childKey]) {
+            // restore thought to parent
+            store.dispatch((dispatch, getState) => {
+              dispatch([
+                // delete the thought from its Lexeme first, as it may be incorrect and it will be recreated in createThought
+                updateThoughtsActionCreator({
+                  thoughtIndexUpdates: {},
+                  lexemeIndexUpdates: {
+                    [hashThought(cursorValue!)]: removeContext(getState(), cursorLexeme, id),
+                  },
+                }),
+                // add the missing thought to its parent
+                createThoughtActionCreator({
+                  id: thought.id,
+                  path: thoughtToPath(getState(), parent.id),
+                  value: thought.value,
+                  rank: thought.rank,
+                }),
+              ])
+            })
+            console.warn(
+              `Repaired invalid Lexeme context: Thought ${id} restored to its parent ${thought.parentId} after not found in providers.`,
+            )
+          }
+        } else {
+          console.error(`Thought ${id} has a missing parent ${thought.parentId}.`)
+        }
+      })
+    }
+  }
 }
 
 const db: DataProvider = {
