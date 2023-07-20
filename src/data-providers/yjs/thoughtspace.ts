@@ -1,4 +1,5 @@
 import { HocuspocusProvider } from '@hocuspocus/provider'
+import { isFunction } from 'lodash'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
@@ -10,12 +11,14 @@ import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import alert from '../../action-creators/alert'
+import createThoughtActionCreator from '../../action-creators/createThought'
 import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
 import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import getLexemeSelector from '../../selectors/getLexeme'
 import getThoughtByIdSelector from '../../selectors/getThoughtById'
 import isContextViewActive from '../../selectors/isContextViewActive'
+import thoughtToPath from '../../selectors/thoughtToPath'
 import store from '../../stores/app'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import syncStatusStore from '../../stores/syncStatus'
@@ -578,18 +581,21 @@ export const replicateThought = async (
 
   // repair
   websocketSynced?.then(() => {
-    // a thought should never be undefined after IDB and the Websocket server have synced
-    if (!getThought(doc)) {
-      console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
+    // Repair Lexeme with invalid context by removing cxid of missing thought.
+    // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
+    const state = store.getState()
+    const cursorValue = state.cursor ? headValue(state, state.cursor) : null
+    const cursorLexeme =
+      state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
 
-      // Repair Lexeme with invalid context by removing cxid of missing thought.
-      // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
-      const state = store.getState()
-      const cursorValue = state.cursor ? headValue(state, state.cursor) : null
-      const cursorLexeme =
-        state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
+    if (cursorLexeme?.contexts.includes(id)) {
+      const thought = getThought(doc)
 
-      if (cursorLexeme?.contexts.includes(id)) {
+      // check for missing context
+      // a thought should never be undefined after IDB and the Websocket server have synced
+      if (!thought) {
+        console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
+
         store.dispatch(
           updateThoughtsActionCreator({
             thoughtIndexUpdates: {},
@@ -600,6 +606,41 @@ export const replicateThought = async (
         )
         console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
           cursorLexeme,
+        })
+      }
+      // repair invalid parent
+      else {
+        // replicating the parent should use the cached synced promise
+        replicateThought(thought.parentId, { background: true }).then(parent => {
+          if (parent) {
+            const childKey = isFunction(thought.value) ? thought.value : thought.id
+            if (!parent.childrenMap[childKey]) {
+              // restore thought to parent
+              store.dispatch((dispatch, getState) => {
+                dispatch([
+                  // delete the thought from its Lexeme first, as it may be incorrect and it will be recreated in createThought
+                  updateThoughtsActionCreator({
+                    thoughtIndexUpdates: {},
+                    lexemeIndexUpdates: {
+                      [hashThought(cursorValue!)]: removeContext(getState(), cursorLexeme, id),
+                    },
+                  }),
+                  // add the missing thought to its parent
+                  createThoughtActionCreator({
+                    id: thought.id,
+                    path: thoughtToPath(getState(), parent.id),
+                    value: thought.value,
+                    rank: thought.rank,
+                  }),
+                ])
+              })
+              console.warn(
+                `Repaired invalid Lexeme context: Thought ${id} restored to its parent ${thought.parentId} after not found in providers.`,
+              )
+            }
+          } else {
+            console.error(`Thought ${id} has a missing parent ${thought.parentId}.`)
+          }
         })
       }
     }
