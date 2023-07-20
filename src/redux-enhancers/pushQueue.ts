@@ -80,7 +80,7 @@ const pushQueue: StoreEnhancer<any> =
         lexemeIndexUpdatesOld: {},
       })
 
-      if (Object.keys(dbBatch).length > 0) {
+      if (Object.keys(dbBatch.thoughtIndexUpdates).length > 0 || Object.keys(dbBatch.lexemeIndexUpdates).length > 0) {
         // cache updated settings
         const settingsIds = getSettingsIds(stateNew)
         Object.entries(settingsIds).forEach(([name, id]) => {
