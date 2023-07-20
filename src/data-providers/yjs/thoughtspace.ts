@@ -15,13 +15,17 @@ import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
 import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
 import getLexemeSelector from '../../selectors/getLexeme'
 import getThoughtByIdSelector from '../../selectors/getThoughtById'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import store from '../../stores/app'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import syncStatusStore from '../../stores/syncStatus'
 import groupObjectBy from '../../util/groupObjectBy'
+import hashThought from '../../util/hashThought'
+import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import mergeBatch from '../../util/mergeBatch'
+import removeContext from '../../util/removeContext'
 import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -566,6 +570,35 @@ export const replicateThought = async (
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
   }
+
+  // repair
+  websocketSynced?.then(() => {
+    // a thought should never be undefined after IDB and the Websocket server have synced
+    if (!getThought(doc)) {
+      console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
+
+      // Repair Lexeme with invalid context by removing cxid of missing thought.
+      // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
+      const state = store.getState()
+      const cursorValue = state.cursor ? headValue(state, state.cursor) : null
+      const cursorLexeme =
+        state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
+
+      if (cursorLexeme?.contexts.includes(id)) {
+        store.dispatch(
+          updateThoughtsActionCreator({
+            thoughtIndexUpdates: {},
+            lexemeIndexUpdates: {
+              [hashThought(cursorValue!)]: removeContext(state, cursorLexeme, id),
+            },
+          }),
+        )
+        console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
+          cursorLexeme,
+        })
+      }
+    }
+  })
 
   return getThought(doc)
 }
