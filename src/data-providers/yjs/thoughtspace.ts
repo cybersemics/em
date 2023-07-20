@@ -121,13 +121,15 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 // keyed by ThoughtId
 // parallel to thoughtIndex and lexemeIndex
 const thoughtDocs: Map<ThoughtId, Y.Doc> = new Map()
-const thoughtSynced: Map<ThoughtId, Promise<void>> = new Map()
 const thoughtPersistence: Map<ThoughtId, IndexeddbPersistence> = new Map()
 const thoughtWebsocketProvider: Map<ThoughtId, HocuspocusProvider> = new Map()
+const thoughtSynced: Map<ThoughtId, Promise<void>> = new Map()
+const thoughtWebsocketSynced: Map<ThoughtId, Promise<void>> = new Map()
 const lexemeDocs: Map<string, Y.Doc> = new Map()
-const lexemeSynced: Map<string, Promise<void>> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
+const lexemeSynced: Map<string, Promise<void>> = new Map()
+const lexemeWebsocketSynced: Map<string, Promise<void>> = new Map()
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
@@ -453,7 +455,9 @@ export const replicateThought = async (
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
   // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
   if (thoughtDocs.get(id) || process.env.NODE_ENV === 'test') {
-    return thoughtSynced.get(id)?.then(() => getThought(doc)) || Promise.resolve(undefined)
+    const idbSynced = thoughtSynced.get(id)
+    const websocketSynced = thoughtWebsocketSynced.get(id)
+    return Promise.all([idbSynced, background ? websocketSynced : null]).then(() => getThought(doc))
   }
 
   // set up idb and websocket persistence and subscribe to changes
@@ -513,6 +517,7 @@ export const replicateThought = async (
     thoughtPersistence.set(id, persistence)
     if (websocketProvider) {
       thoughtWebsocketProvider.set(id, websocketProvider)
+      thoughtWebsocketSynced.set(id, websocketSynced!)
     }
   }
 
@@ -625,8 +630,11 @@ export const replicateLexeme = async (
   // set up persistence and subscribe to changes
   // disable during tests because of TransactionInactiveError in fake-indexeddb
   // disable during tests because of infinite loop in sinon runAllAsync
-  if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test')
-    return lexemeSynced.get(key)?.then(() => getLexeme(doc)) || Promise.resolve(undefined)
+  if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
+    const idbSynced = lexemeSynced.get(key)
+    const websocketSynced = lexemeWebsocketSynced.get(key)
+    return Promise.all([idbSynced, background ? websocketSynced : null]).then(() => getLexeme(doc))
+  }
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -666,6 +674,7 @@ export const replicateLexeme = async (
   if (!background) {
     lexemeDocs.set(key, doc)
     lexemeSynced.set(key, idbSynced)
+    lexemeWebsocketSynced.set(key, websocketSynced)
     lexemePersistence.set(key, persistence)
     lexemeWebsocketProvider.set(key, websocketProvider)
   }
