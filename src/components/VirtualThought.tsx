@@ -66,7 +66,7 @@ const VirtualThought = ({
   leaf: boolean
   path: Path
   prevChildId?: ThoughtId
-  onResize?: (id: ThoughtId, height: number | null) => void
+  onResize?: (path: Path, height: number | null) => void
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
@@ -115,7 +115,7 @@ const VirtualThought = ({
     const heightNew = ref.current.clientHeight
     if (heightNew === heightRef.current) return
     heightRef.current = ref.current.clientHeight
-    onResize?.(thought.id, heightRef.current)
+    onResize?.(path, heightRef.current)
   }, [])
 
   // Read the element's height from the DOM on cursor change, but do not re-render.
@@ -135,7 +135,7 @@ const VirtualThought = ({
   // trigger onResize with null to allow subscribes to clean up
   useEffect(() => {
     return () => {
-      onResize?.(thought.id, null)
+      onResize?.(path, null)
     }
   }, [])
 
