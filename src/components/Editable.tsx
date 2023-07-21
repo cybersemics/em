@@ -84,7 +84,7 @@ let blurring = false
 
 /** Prevent the browser from autoscrolling to this editable element. Assumes the element is not using the transform property. */
 const preventAutoscroll = (el: HTMLElement | null | undefined) => {
-  if (!el) return
+  if (!el || el === document.activeElement) return
 
   const { height, y } = el.getBoundingClientRect()
   const { innerHeight, virtualKeyboardHeight } = viewportStore.getState()
