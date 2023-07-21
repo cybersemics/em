@@ -58,6 +58,57 @@ const HEIGHT_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
+/** Dynamically update and remove heights for different keys. */
+const useHeightTracking = () => {
+  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
+  const [heights, setHeights] = useState<Index<number>>({})
+
+  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const setHeight = useCallback((key: string, height: number | null) => {
+    if (height) {
+      setHeights(heightsOld =>
+        height === heightsOld[key]
+          ? heightsOld
+          : {
+              ...heightsOld,
+              [key]: height,
+            },
+      )
+    } else {
+      removeHeight(key)
+    }
+  }, [])
+
+  // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
+  // Debouncing height removal mitigates the issue.
+  // Use throttleConcat to accumulate all keys to be removed during the interval.
+  // TODO: Is a root cause of the mount-unmount loop.
+  const removeHeight = useCallback(
+    throttleConcat(
+      (keys: string[]) => {
+        setHeights(heightsOld => {
+          keys.forEach(key => {
+            delete heightsOld[key]
+          })
+          return heightsOld
+        })
+      },
+      HEIGHT_REMOVAL_DEBOUNCE,
+      { leading: false, trailing: true },
+    ),
+    [],
+  )
+
+  return useMemo(
+    () => ({
+      heights,
+      setHeight,
+      removeHeight,
+    }),
+    [heights, setHeight, removeHeight],
+  )
+}
+
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
 const virtualTree = (
   state: State,
@@ -172,46 +223,7 @@ const virtualTree = (
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
-  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
-  const [heights, setHeights] = useState<Index<number>>({})
-
-  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const updateHeight = useCallback((key: string, height: number | null) => {
-    // const key = hashPath(path)
-    if (height) {
-      setHeights(heightsOld =>
-        height === heightsOld[key]
-          ? heightsOld
-          : {
-              ...heightsOld,
-              [key]: height,
-            },
-      )
-    } else {
-      removeHeight(key)
-    }
-  }, [])
-
-  // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing height removal mitigates the issue.
-  // Use throttleConcat to accumulate all keys to be removed during the interval.
-  // TODO: Is a root cause of the mount-unmount loop.
-  const removeHeight = useCallback(
-    throttleConcat(
-      (keys: string[]) => {
-        setHeights(heightsOld => {
-          keys.forEach(key => {
-            delete heightsOld[key]
-          })
-          return heightsOld
-        })
-      },
-      HEIGHT_REMOVAL_DEBOUNCE,
-      { leading: false, trailing: true },
-    ),
-    [],
-  )
-
+  const { heights, setHeight } = useHeightTracking()
   const virtualThoughts = useSelector(virtualTree)
   const fontSize = useSelector((state: State) => state.fontSize)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
@@ -344,7 +356,7 @@ const LayoutTree = () => {
                 // isMultiColumnTable={isMultiColumnTable}
                 isMultiColumnTable={false}
                 leaf={leaf}
-                onResize={(id, height) => updateHeight(key, height)}
+                onResize={(id, height) => setHeight(key, height)}
                 path={path}
                 prevChildId={prevChild?.id}
                 showContexts={showContexts}
