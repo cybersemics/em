@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -27,6 +27,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
+import throttleConcat from '../util/throttleConcat'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
@@ -49,6 +50,9 @@ type TreeThought = {
   style?: React.CSSProperties | null
   thought: Thought
 }
+
+// ms to debounce removal of height entries as VirtualThoughts are unmounted
+const HEIGHT_REMOVAL_DEBOUNCE = 1000
 
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
@@ -170,6 +174,44 @@ const virtualTree = (
 const LayoutTree = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
   const [heights, setHeights] = useState<Index<number>>({})
+
+  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const updateHeight = useCallback((key: string, height: number | null) => {
+    // const key = hashPath(path)
+    if (height) {
+      setHeights(heightsOld =>
+        height === heightsOld[key]
+          ? heightsOld
+          : {
+              ...heightsOld,
+              [key]: height,
+            },
+      )
+    } else {
+      removeHeight(key)
+    }
+  }, [])
+
+  // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
+  // Debouncing height removal mitigates the issue.
+  // Use throttleConcat to accumulate all keys to be removed during the interval.
+  // TODO: Is a root cause of the mount-unmount loop.
+  const removeHeight = useCallback(
+    throttleConcat(
+      (keys: string[]) => {
+        setHeights(heightsOld => {
+          keys.forEach(key => {
+            delete heightsOld[key]
+          })
+          return heightsOld
+        })
+      },
+      HEIGHT_REMOVAL_DEBOUNCE,
+      { leading: false, trailing: true },
+    ),
+    [],
+  )
+
   const virtualThoughts = useSelector(virtualTree)
   const fontSize = useSelector((state: State) => state.fontSize)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
@@ -214,21 +256,6 @@ const LayoutTree = () => {
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
-
-  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const updateHeight = (key: string, height: number | null) =>
-    setHeights(heightsOld => {
-      // Delete height record when thought unmounts, otherwise heights will consume a non-decreasing amount of memory.
-      if (!height && heightsOld[key]) {
-        delete heightsOld[key]
-      }
-      return heightsOld[key] !== height
-        ? {
-            ...heightsOld,
-            ...(height ? { [key]: height } : null),
-          }
-        : heightsOld
-    })
 
   // memoized style for padding at a cliff
   const cliffPaddingStyle = useMemo(
