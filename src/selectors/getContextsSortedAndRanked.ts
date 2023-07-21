@@ -59,7 +59,7 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   // sort by hashed ancestor values
   const contextsSorted = _.sortBy(contexts, lexicalHash)
     // generate dynamic ranks in sort order
-    .map((thought, i) => ({ ...thought, rank: i } as Thought))
+    .map((thought, i) => ({ ...thought, rank: i }) as Thought)
 
   return contextsSorted
 }

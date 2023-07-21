@@ -36,7 +36,7 @@ const rotateClockwise = (dir: Direction) =>
     r: 'd',
     u: 'r',
     d: 'l',
-  }[dir])
+  })[dir]
 
 /** Returns the opposite direction of the given direction l/r/d/u. */
 const oppositeDirection = (dir: Direction) =>
@@ -45,7 +45,7 @@ const oppositeDirection = (dir: Direction) =>
     r: 'l',
     u: 'd',
     d: 'u',
-  }[dir])
+  })[dir]
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: GestureDiagramProps) => ({

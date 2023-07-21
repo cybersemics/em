@@ -28,27 +28,30 @@ const contextToPath = (state: State, context: string[]): SimplePath | null => {
   const contextUnrooted = context.slice(isEmContext ? 1 : 0)
 
   try {
-    const path = contextUnrooted.reduce<Path>((acc, value, i) => {
-      const simplePathAccum = simplifyPath(state, acc)
-      const prevParentId: ThoughtId = head(simplePathAccum) || startingThoughtId
-      const showContexts = prevParentId && isContextViewActive(state, acc)
-      const prevParent = showContexts && prevParentId ? getThoughtById(state, prevParentId) : null
-      const childIds = prevParent ? getContexts(state, prevParent.value) : getAllChildren(state, prevParentId)
-      const firstChildId =
-        childIds.find(childId => {
-          const child = getThoughtById(state, childId)
-          return (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value
-        }) || null
+    const path = contextUnrooted.reduce<Path>(
+      (acc, value, i) => {
+        const simplePathAccum = simplifyPath(state, acc)
+        const prevParentId: ThoughtId = head(simplePathAccum) || startingThoughtId
+        const showContexts = prevParentId && isContextViewActive(state, acc)
+        const prevParent = showContexts && prevParentId ? getThoughtById(state, prevParentId) : null
+        const childIds = prevParent ? getContexts(state, prevParent.value) : getAllChildren(state, prevParentId)
+        const firstChildId =
+          childIds.find(childId => {
+            const child = getThoughtById(state, childId)
+            return (showContexts ? getThoughtById(state, child.parentId)?.value : child.value) === value
+          }) || null
 
-      if (!firstChildId) throw Error('Thought not found')
+        if (!firstChildId) throw Error('Thought not found')
 
-      const isEm = i === 0 && value === EM_TOKEN
+        const isEm = i === 0 && value === EM_TOKEN
 
-      return appendToPath(
-        acc,
-        isEm ? EM_TOKEN : showContexts ? getThoughtById(state, firstChildId).parentId : firstChildId,
-      )
-    }, [] as any as Path)
+        return appendToPath(
+          acc,
+          isEm ? EM_TOKEN : showContexts ? getThoughtById(state, firstChildId).parentId : firstChildId,
+        )
+      },
+      [] as any as Path,
+    )
     // TODO: return Path
     return path as SimplePath
   } catch (e) {

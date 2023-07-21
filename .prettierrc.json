@@ -4,6 +4,7 @@
   "importOrder": ["^\\.\\./", "^\\./"],
   "importOrderSortSpecifiers": true,
   "overrides": [{ "files": "*.ts", "options": { "parser": "typescript" } }],
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "printWidth": 120,
   "semi": false,
   "singleQuote": true,

@@ -704,7 +704,9 @@ a.text-link {
   padding: 80px 10px 153px 50px
     /* padding-bottom must cover the footer (logged out: 79px, logged in: 93px) plus some additional visual spacing */;
   position: relative;
-  transition: transform 0 ease-out, margin 0 ease-out; /* add transition time after initial load and scroll into place */
+  transition:
+    transform 0 ease-out,
+    margin 0 ease-out; /* add transition time after initial load and scroll into place */
   box-sizing: border-box; /* make height include padding so that the min-height can be exctly 100vh */
   max-width: 66%;
   margin: 0 auto;
@@ -1245,7 +1247,9 @@ h1 .num-contexts {
 }
 
 .child > .thought-container > .bullet .glyph .glyph-fg {
-  transition: transform 0.1s ease-out, fill-opacity 0.5s ease-out;
+  transition:
+    transform 0.1s ease-out,
+    fill-opacity 0.5s ease-out;
 }
 
 .search-container > .bullet-search {
