@@ -5,6 +5,7 @@ import State from '../../@types/State'
 import editingAction from '../../action-creators/editing'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
+import preventAutoscroll from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import equalPath from '../../util/equalPath'
 
@@ -83,6 +84,8 @@ const useEditMode = ({
     // }
 
     if (shouldSetSelection) {
+      preventAutoscroll(contentRef.current)
+
       /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
