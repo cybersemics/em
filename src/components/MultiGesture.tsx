@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
+import { isSafari, isTouch } from '../browser'
 import { NOOP, Settings } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -63,6 +64,9 @@ interface MultiGestureProps {
 
 const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
 const TOOLBAR_HEIGHT = 50
+
+/** The height of the disabled swipe zone on the bottom edge of the newer iPhones. In informal testing, the initial y value when swiping the bottom edge to switch apps never exceeded 43px. Add 5px to be safe. */
+const BOTTOM_SWIPE_ZONE = 48
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
@@ -144,6 +148,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     this.reset()
 
+    /** Disable the bottom edge of the screen if the device is an iPhone without a physical home button (and thus uses swipe from bottom edge to go home). This is used to disable gestures at the bottom edge to avoid false positives while switching apps. */
+    // https://stackoverflow.com/a/63947940/480608
+    const disableBottomEdge =
+      isTouch &&
+      isSafari() &&
+      // uses :root { --safe-area-bottom: env(safe-area-inset-bottom); } defined in App.css
+      parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom')) > 0
+
     // disable scroll by preventing default touchmove
     // allow enabling/disabling scroll with this.disableScroll
     // Note: This breaks window.scrollTo on Mobile Safari when using asyncFocus and scrollY is 0.
@@ -165,10 +177,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const y = e.touches[0].clientY
         this.clientStart = { x, y }
 
-        // disable gestures in the scroll zone on the right side of the screen
+        // disable gestures in the scroll zone on the right side of the screen, and the bottom edge
         // disable scroll in the gesture zone on the left side of the screen
         const isInGestureZone =
-          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) && y > TOOLBAR_HEIGHT
+          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) &&
+          y > TOOLBAR_HEIGHT &&
+          (!disableBottomEdge || window.innerHeight - y > BOTTOM_SWIPE_ZONE)
         if (isInGestureZone && !props.shouldCancelGesture?.()) {
           this.disableScroll = true
         } else {
