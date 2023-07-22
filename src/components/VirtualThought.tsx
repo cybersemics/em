@@ -89,6 +89,10 @@ const VirtualThought = ({
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
   const ref = useRef<HTMLDivElement>(null)
+  // Set to true when note has loaded.
+  // childrenMap['=note'] exists sooner, but the height is not updated until the note is loaded.
+  // There is a further delay before the note is rendered.
+  const hasNote = useSelector((state: State) => !!findDescendant(state, thought.id, '=note'))
 
   /***************************
    * VirtualThought properties
@@ -144,6 +148,14 @@ const VirtualThought = ({
       return editingValueStore.subscribe(updateHeight)
     }
   }, [isEditing])
+
+  // re-calculate height after note renders
+  // TODO: Is there a way to detect when the note renders without an arbitrary delay?
+  useEffect(() => {
+    if (hasNote) {
+      setTimeout(updateHeight, 50)
+    }
+  }, [hasNote])
 
   // trigger onResize with null to allow subscribes to clean up
   useEffect(() => {
