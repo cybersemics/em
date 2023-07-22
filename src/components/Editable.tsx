@@ -85,17 +85,29 @@ let blurring = false
 // store the old transform property so it can be restored after preventAutoscroll
 let transformOld = ''
 
-/** Prevent the browser from autoscrolling to this editable element. */
-const preventAutoscroll = (el: HTMLElement | null | undefined) => {
+/** Prevent the browser from autoscrolling to this editable element. If the element would be hidden by the virtual keyboard, scrolls just enough to make it visible. */
+const preventAutoscroll = (
+  el: HTMLElement | null | undefined,
+  {
+    bottomMargin = 0,
+  }: {
+    /** Number of pixels to leave between the top edge of the virtual keyboard and the autoscroll element. */
+    bottomMargin?: number
+  } = {},
+) => {
   if (!el || el === document.activeElement) return
 
+  // find the center of the viewport so that the browser does not think it needs to autoscroll
   const { height, y } = el.getBoundingClientRect()
   const { innerHeight, virtualKeyboardHeight } = viewportStore.getState()
-  const yOffsetCenter = (innerHeight - virtualKeyboardHeight) / 2 - height / 2 - y
+  const viewportHeight = innerHeight - virtualKeyboardHeight
+  const yOffsetCenter = viewportHeight / 2 - height / 2 - y
 
-  // position the element to the center of the viewport so that the browser does not think it needs to autoscroll
+  // get the distance of the thought below the keyboard which we can offset to keep the thought in view.
+  const yBelowKeyboard = Math.max(0, y + height + bottomMargin - viewportHeight)
+
   transformOld = el.style.transform
-  el.style.transform = `translateY(${yOffsetCenter}px)`
+  el.style.transform = `translateY(${yOffsetCenter + yBelowKeyboard}px)`
 
   setTimeout(() => preventAutoscrollEnd(el), 10)
 }
@@ -513,7 +525,10 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       } else {
         // for some reason doesn't work ontouchend
         if (editingOrOnCursor && e.type === 'mousedown' && isTouch) {
-          preventAutoscroll(contentRef.current)
+          preventAutoscroll(contentRef.current, {
+            // about the height of a single-line thought
+            bottomMargin: fontSize * 2,
+          })
         }
 
         // We need to check if the user clicked the thought to not set the caret programmatically, because the caret will is set to the exact position of the tap by browser. See: #981.
