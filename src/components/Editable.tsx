@@ -82,25 +82,28 @@ interface EditableProps {
 // intended to be global, not local state
 let blurring = false
 
-/** Prevent the browser from autoscrolling to this editable element. Assumes the element is not using the transform property. */
+// store the old transform property so it can be restored after preventAutoscroll
+let transformOld = ''
+
+/** Prevent the browser from autoscrolling to this editable element. */
 const preventAutoscroll = (el: HTMLElement | null | undefined) => {
   if (!el || el === document.activeElement) return
 
   const { height, y } = el.getBoundingClientRect()
   const { innerHeight, virtualKeyboardHeight } = viewportStore.getState()
-  const yOffset = (innerHeight - virtualKeyboardHeight) / 2 - height / 2 - y
+  const yOffsetCenter = (innerHeight - virtualKeyboardHeight) / 2 - height / 2 - y
 
   // position the element to the center of the viewport so that the browser does not think it needs to autoscroll
-  el.style.transform = `translateY(${yOffset}px)`
+  transformOld = el.style.transform
+  el.style.transform = `translateY(${yOffsetCenter}px)`
 
   setTimeout(() => preventAutoscrollEnd(el), 10)
 }
 
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
-  if (el?.style.transform) {
-    el.style.transform = ''
-  }
+  if (!el) return
+  el.style.transform = transformOld
 }
 
 /**
