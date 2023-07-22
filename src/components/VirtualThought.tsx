@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -82,9 +82,12 @@ const VirtualThought = ({
   crossContextualKey: string
   zoomCursor?: boolean
 }) => {
+  const fontSize = useSelector((state: State) => state.fontSize)
+  const estimatedHeight = fontSize * 2 - 2
+  // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
+  const [height, setHeight] = useState<number | null>(estimatedHeight)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
-  const heightRef = useRef<number | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************
@@ -99,7 +102,7 @@ const VirtualThought = ({
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
     selector: (autofocusAfterAnimation: Autofocus) =>
-      autofocus === 'hide' && autofocusAfterAnimation === 'hide' && !!heightRef.current,
+      autofocus === 'hide' && autofocusAfterAnimation === 'hide' && !!height,
   })
 
   // console.info('<VirtualThought>', prettyPath(childPath))
@@ -123,12 +126,12 @@ const VirtualThought = ({
   const updateHeight = useCallback(() => {
     if (!ref.current) return
     const heightNew = ref.current.clientHeight
-    if (heightNew === heightRef.current) return
-    heightRef.current = ref.current.clientHeight
-    onResize?.({ height: heightRef.current, id: thought.id, key: crossContextualKey })
+    if (heightNew === height) return
+    setHeight(heightNew)
+    onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
   }, [])
 
-  // Read the element's height from the DOM on cursor change, but do not re-render.
+  // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
   useEffect(updateHeight)
@@ -161,7 +164,7 @@ const VirtualThought = ({
       style={{
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
         // Must include DropEmpty, or it will shift when the cursor moves.
-        height: shimHiddenThought ? heightRef.current! : undefined,
+        height: shimHiddenThought ? height! : undefined,
       }}
     >
       {

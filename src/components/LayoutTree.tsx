@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -27,7 +27,6 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
-import throttleConcat from '../util/throttleConcat'
 import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
@@ -67,51 +66,49 @@ const useHeightTracking = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
   const [heights, setHeights] = useState<Index<number>>({})
 
+  // Track debounced height removals
+  // See: removeHeight
+  const heightRemovalTimeouts = useRef<Map<string, number>>(new Map())
+
   /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setHeight = useCallback(
-    ({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
-      if (height) {
-        setHeights(heightsOld =>
-          height === heightsOld[key]
-            ? heightsOld
-            : {
-                ...heightsOld,
-                [key]: height,
-              },
-        )
-      } else {
-        removeHeight(key)
-      }
-    },
-    // TODO: heights is only used to force a re-render of VirtualThoughts. Without it, it does not re-render after the first height observe fires. Why?
-    [heights],
-  )
+  const setHeight = useCallback(({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
+    if (height) {
+      // cancel thought removal timeout
+      clearTimeout(heightRemovalTimeouts.current.get(key))
+      heightRemovalTimeouts.current.delete(key)
+
+      setHeights(heightsOld =>
+        height === heightsOld[key]
+          ? heightsOld
+          : {
+              ...heightsOld,
+              [key]: height,
+            },
+      )
+    } else {
+      removeHeight(key)
+    }
+  }, [])
 
   // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
   // Debouncing height removal mitigates the issue.
   // Use throttleConcat to accumulate all keys to be removed during the interval.
   // TODO: Is a root cause of the mount-unmount loop.
-  const removeHeight = useCallback(
-    throttleConcat(
-      (keys: string[]) => {
-        setHeights(heightsOld => {
-          keys.forEach(key => {
-            delete heightsOld[key]
-          })
-          return heightsOld
-        })
-      },
-      HEIGHT_REMOVAL_DEBOUNCE,
-      { leading: false, trailing: true },
-    ),
-    [],
-  )
+  const removeHeight = useCallback((key: string) => {
+    clearTimeout(heightRemovalTimeouts.current.get(key))
+    const timeout = setTimeout(() => {
+      setHeights(heightsOld => {
+        delete heightsOld[key]
+        return heightsOld
+      })
+    }, HEIGHT_REMOVAL_DEBOUNCE) as unknown as number
+    heightRemovalTimeouts.current.set(key, timeout)
+  }, [])
 
   return useMemo(
     () => ({
       heights,
       setHeight,
-      removeHeight,
     }),
     [heights],
   )
