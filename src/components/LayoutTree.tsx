@@ -33,6 +33,8 @@ import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
 type TreeThought = {
+  // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
+  contextChain?: SimplePath[]
   depth: number
   env?: LazyEnv
   // index among visible siblings at the same level
@@ -56,6 +58,10 @@ const HEIGHT_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
+/** Generates a VirtualThought key that is unique across context views. */
+const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
+  `${(contextChain || []).map(head).join('')}|${id}`
+
 /** Dynamically update and remove heights for different keys. */
 const useHeightTracking = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
@@ -63,8 +69,7 @@ const useHeightTracking = () => {
 
   /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
   const setHeight = useCallback(
-    (path: Path, height: number | null) => {
-      const key = hashPath(path)
+    ({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
       if (height) {
         setHeights(heightsOld =>
           height === heightsOld[key]
@@ -123,6 +128,8 @@ const virtualTree = (
     // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
     // If we rendered the children as usual, the Lexeme would be repeated in each context, i.e. a/~m/a/m/x and a/~m/b/m/y. There is no need to render m a second time since we know the context view is activated on m.
     contextId,
+    // accumulate the context chain in order to provide a unique key for rendering the same thought in normal view and context view
+    contextChain,
     depth,
     env,
     indexDescendant,
@@ -133,6 +140,7 @@ const virtualTree = (
   }: {
     basePath?: Path
     contextId?: ThoughtId
+    contextChain?: SimplePath[]
     depth: number
     env?: LazyEnv
     indexDescendant: number
@@ -151,6 +159,7 @@ const virtualTree = (
   const thought = getThoughtById(state, thoughtId)
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
+  const contextChainNew = contextViewActive ? [...(contextChain || []), simplePath] : contextChain
   const children = contextViewActive
     ? getContextsSortedAndRanked(state, thought.value)
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
@@ -183,6 +192,7 @@ const virtualTree = (
     const descendants = virtualTree(state, {
       basePath: childPath,
       contextId: contextViewActive ? filteredChild.id : undefined,
+      contextChain: contextChainNew,
       depth: depth + 1,
       env: envNew,
       indexDescendant: virtualIndexNew,
@@ -198,6 +208,7 @@ const virtualTree = (
     return [
       ...accum,
       {
+        contextChain: contextChainNew,
         depth,
         env: envNew || undefined,
         indexChild: i,
@@ -290,11 +301,24 @@ const LayoutTree = () => {
     >
       {virtualThoughts.map(
         (
-          { depth, env, indexChild, indexDescendant, leaf, path, prevChild, showContexts, simplePath, style, thought },
+          {
+            contextChain,
+            depth,
+            env,
+            indexChild,
+            indexDescendant,
+            leaf,
+            path,
+            prevChild,
+            showContexts,
+            simplePath,
+            style,
+            thought,
+          },
           i,
         ) => {
           // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
-          const key = hashPath(path)
+          const key = crossContextualKey(contextChain, thought.id)
           const next = virtualThoughts[i + 1]
           // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
           // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -348,6 +372,7 @@ const LayoutTree = () => {
                 // Add a bit of space after a cliff to give nested lists some breathing room.
                 // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                 style={cliff < 0 ? cliffPaddingStyle : undefined}
+                crossContextualKey={key}
               />
 
               {/* DropEnd (cliff) */}

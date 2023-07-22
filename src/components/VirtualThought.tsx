@@ -55,8 +55,10 @@ const VirtualThought = ({
   showContexts,
   simplePath,
   style,
+  crossContextualKey,
   zoomCursor,
 }: {
+  // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
   dropBefore?: boolean
@@ -66,10 +68,18 @@ const VirtualThought = ({
   leaf: boolean
   path: Path
   prevChildId?: ThoughtId
-  onResize?: (path: Path, height: number | null) => void
+  onResize?: (args: {
+    /** The real, measured height of the thought after a render. Set to null on unmount. */
+    height: number | null
+    id: ThoughtId
+    /** A key that uniquely identifies the thought across context views. */
+    key: string
+  }) => void
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
+  /** A key that uniquely identifies the thought across context views. */
+  crossContextualKey: string
   zoomCursor?: boolean
 }) => {
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
@@ -115,7 +125,7 @@ const VirtualThought = ({
     const heightNew = ref.current.clientHeight
     if (heightNew === heightRef.current) return
     heightRef.current = ref.current.clientHeight
-    onResize?.(path, heightRef.current)
+    onResize?.({ height: heightRef.current, id: thought.id, key: crossContextualKey })
   }, [])
 
   // Read the element's height from the DOM on cursor change, but do not re-render.
@@ -135,7 +145,7 @@ const VirtualThought = ({
   // trigger onResize with null to allow subscribes to clean up
   useEffect(() => {
     return () => {
-      onResize?.(path, null)
+      onResize?.({ height: null, id: thought.id, key: crossContextualKey })
     }
   }, [])
 
