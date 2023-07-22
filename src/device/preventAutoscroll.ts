@@ -26,7 +26,7 @@ const preventAutoscroll = (
   const yBelowKeyboard = Math.max(0, y + height + bottomMargin - viewportHeight)
 
   transformOld = el.style.transform
-  el.style.transform = `translateY(${yOffsetCenter + yBelowKeyboard}px)`
+  el.style.transform = `translate(-9999px, ${yOffsetCenter + yBelowKeyboard}px)`
 
   setTimeout(() => preventAutoscrollEnd(el), 10)
 
