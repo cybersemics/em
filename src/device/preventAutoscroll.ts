@@ -1,3 +1,4 @@
+import { isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 
 // store the old transform property so it can be restored after preventAutoscroll
@@ -13,7 +14,7 @@ const preventAutoscroll = (
     bottomMargin?: number
   } = {},
 ) => {
-  if (el === document.activeElement || !el) return
+  if (!isTouch || el === document.activeElement || !el) return
 
   // find the center of the viewport so that the browser does not think it needs to autoscroll
   const { height, y } = el.getBoundingClientRect()
