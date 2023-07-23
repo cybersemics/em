@@ -460,7 +460,7 @@ export const replicateThought = async (
   if (thoughtDocs.get(id) || process.env.NODE_ENV === 'test') {
     const idbSynced = thoughtSynced.get(id)
     const websocketSynced = thoughtWebsocketSynced.get(id)
-    return Promise.all([idbSynced, background ? websocketSynced : null]).then(() => getThought(doc))
+    return Promise.all([idbSynced, background && remote ? websocketSynced : null]).then(() => getThought(doc))
   }
 
   // set up idb and websocket persistence and subscribe to changes
