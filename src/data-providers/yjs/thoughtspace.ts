@@ -126,12 +126,12 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 const thoughtDocs: Map<ThoughtId, Y.Doc> = new Map()
 const thoughtPersistence: Map<ThoughtId, IndexeddbPersistence> = new Map()
 const thoughtWebsocketProvider: Map<ThoughtId, HocuspocusProvider> = new Map()
-const thoughtSynced: Map<ThoughtId, Promise<void>> = new Map()
+const thoughtIDBSynced: Map<ThoughtId, Promise<void>> = new Map()
 const thoughtWebsocketSynced: Map<ThoughtId, Promise<void>> = new Map()
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
-const lexemeSynced: Map<string, Promise<void>> = new Map()
+const lexemeIDBSynced: Map<string, Promise<void>> = new Map()
 const lexemeWebsocketSynced: Map<string, Promise<void>> = new Map()
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
@@ -458,7 +458,7 @@ export const replicateThought = async (
   // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
   // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
   if (thoughtDocs.get(id) || process.env.NODE_ENV === 'test') {
-    const idbSynced = thoughtSynced.get(id)
+    const idbSynced = thoughtIDBSynced.get(id)
     const websocketSynced = thoughtWebsocketSynced.get(id)
     return Promise.all([idbSynced, background && remote ? websocketSynced : null]).then(() => getThought(doc))
   }
@@ -516,7 +516,7 @@ export const replicateThought = async (
   // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateThought will not re-replicate
   if (!background) {
     thoughtDocs.set(id, doc)
-    thoughtSynced.set(id, idbSynced)
+    thoughtIDBSynced.set(id, idbSynced)
     thoughtPersistence.set(id, persistence)
     if (websocketProvider) {
       thoughtWebsocketProvider.set(id, websocketProvider)
@@ -538,7 +538,7 @@ export const replicateThought = async (
     const thought = getThought(doc)
     if (isThoughtLoaded(store.getState(), thought)) {
       thoughtDocs.set(id, doc)
-      thoughtSynced.set(id, idbSynced)
+      thoughtIDBSynced.set(id, idbSynced)
       thoughtPersistence.set(id, persistence)
       if (websocketProvider) {
         thoughtWebsocketProvider.set(id, websocketProvider)
@@ -608,7 +608,7 @@ export const replicateLexeme = async (
   // disable during tests because of TransactionInactiveError in fake-indexeddb
   // disable during tests because of infinite loop in sinon runAllAsync
   if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
-    const idbSynced = lexemeSynced.get(key)
+    const idbSynced = lexemeIDBSynced.get(key)
     const websocketSynced = lexemeWebsocketSynced.get(key)
     return Promise.all([idbSynced, background ? websocketSynced : null]).then(() => getLexeme(doc))
   }
@@ -650,7 +650,7 @@ export const replicateLexeme = async (
   // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
   if (!background) {
     lexemeDocs.set(key, doc)
-    lexemeSynced.set(key, idbSynced)
+    lexemeIDBSynced.set(key, idbSynced)
     lexemeWebsocketSynced.set(key, websocketSynced)
     lexemePersistence.set(key, persistence)
     lexemeWebsocketProvider.set(key, websocketProvider)
@@ -671,7 +671,7 @@ export const replicateLexeme = async (
     // Otherwise remote changes will not be rendered.
     if (isLexemeLoaded(store.getState(), key, getLexeme(doc))) {
       lexemeDocs.set(key, doc)
-      lexemeSynced.set(key, idbSynced)
+      lexemeIDBSynced.set(key, idbSynced)
       lexemePersistence.set(key, persistence)
       lexemeWebsocketProvider.set(key, websocketProvider)
       onLexemeChange({
@@ -744,7 +744,7 @@ export const freeThought = (id: ThoughtId): void => {
   thoughtWebsocketProvider.get(id)?.destroy()
   thoughtDocs.delete(id)
   thoughtPersistence.delete(id)
-  thoughtSynced.delete(id)
+  thoughtIDBSynced.delete(id)
   thoughtWebsocketProvider.delete(id)
 }
 
@@ -755,7 +755,7 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, id))
-    freeThought(id)
+    await freeThought(id)
     await deleted
   } catch (e: any) {
     // Ignore NotFoundError, which indicates that the object stores have already been deleted.
@@ -784,7 +784,7 @@ export const freeLexeme = (key: string): void => {
   lexemeWebsocketProvider.get(key)?.destroy()
   lexemeDocs.delete(key)
   lexemePersistence.delete(key)
-  lexemeSynced.delete(key)
+  lexemeIDBSynced.delete(key)
   lexemeWebsocketProvider.delete(key)
 }
 
