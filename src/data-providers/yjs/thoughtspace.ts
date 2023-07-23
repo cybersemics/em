@@ -728,7 +728,11 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 }
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
-export const freeThought = (id: ThoughtId): void => {
+export const freeThought = async (id: ThoughtId): Promise<void> => {
+  // await idbSynced to ensure that export is not interrupted
+  // do not await websocketSynced as it is not guaranteed to resolve
+  await thoughtIDBSynced.get(id)
+
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
@@ -768,7 +772,9 @@ const deleteThought = async (id: ThoughtId): Promise<void> => {
 }
 
 /** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
-export const freeLexeme = (key: string): void => {
+export const freeLexeme = async (key: string): Promise<void> => {
+  await lexemeIDBSynced.get(key)
+
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
@@ -801,7 +807,7 @@ const deleteLexeme = async (key: string): Promise<void> => {
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
     const deleted = persistence ? persistence.clearData() : clearDocument(encodeLexemeDocumentName(tsid, key))
-    freeLexeme(key)
+    await freeLexeme(key)
     await deleted
   } catch (e: any) {
     // See: deleteThought NotFoundError handler
