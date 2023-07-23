@@ -9,6 +9,7 @@ import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
+import { isSafari, isTouch } from '../browser'
 import { AlertText, AlertType } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
@@ -36,6 +37,10 @@ const WINDOW_AUTOSCROLL_DOWN_SIZE = 100
 // the top speed of the autoscroll expressed pixels per % of autoscroll zone
 const TOOLBAR_AUTOSCROLL_SPEED = 1.25
 const WINDOW_AUTOSCROLL_SPEED = 2
+
+// Store a timeout to determine if the device stays in the passive state.
+// See: onStateChange
+let passiveTimeout = 0
 
 /** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
 const autoscroll = (() => {
@@ -222,13 +227,27 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
+    clearTimeout(passiveTimeout)
+
+    // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
-      // dismiss the gesture alert if active
       const alertType = store.getState().alert?.alertType
       if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
         store.dispatch(alert(null))
       }
       // we could also persist unsaved data here
+    }
+    // If the app is backgounded while in edit mode, then the keyboard will not open when switching back to the app, even when focusNode, document.activeElement, and visualViewport.height all indicate that the keyboard is open. Strangely, the app enters the 'passive' state after hidden -> passive -> active completes. The invalid state can be detected with document.hasFocus(). Since there is no way to force the app to be active when it is passive, then we do not bother trying to re-open the keyboard, and instead disable edit mode so that at least it matches what the user sees. Use a timeout to ensure that this is called only when the device stays in the passive state, not when it is moving from hidden -> passive -> active.
+    // https://github.com/cybersemics/em/issues/1468
+    else if (
+      isTouch &&
+      isSafari() &&
+      oldState === 'active' &&
+      newState === 'passive' &&
+      document.activeElement &&
+      !document.hasFocus()
+    ) {
+      passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
     }
   }
 
