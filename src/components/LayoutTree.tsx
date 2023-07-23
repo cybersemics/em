@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -65,6 +65,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 const useHeightTracking = () => {
   // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
   const [heights, setHeights] = useState<Index<number>>({})
+  const unmounted = useRef(false)
 
   // Track debounced height removals
   // See: removeHeight
@@ -97,12 +98,19 @@ const useHeightTracking = () => {
   const removeHeight = useCallback((key: string) => {
     clearTimeout(heightRemovalTimeouts.current.get(key))
     const timeout = setTimeout(() => {
+      if (unmounted) return
       setHeights(heightsOld => {
         delete heightsOld[key]
         return heightsOld
       })
     }, HEIGHT_REMOVAL_DEBOUNCE) as unknown as number
     heightRemovalTimeouts.current.set(key, timeout)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      unmounted.current = true
+    }
   }, [])
 
   return useMemo(
