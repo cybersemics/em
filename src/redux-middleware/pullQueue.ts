@@ -105,14 +105,14 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   let extendedPullQueuePullingId = 0
 
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
-  const flushPullQueue = async ({ forceRemote }: { forceRemote?: boolean } = {}) => {
+  const flushPullQueue = async ({ force }: { force?: boolean } = {}) => {
     syncStatusStore.update({ isPulling: true })
 
     // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
 
     // filter out thoughts that are currently being pulled, except when forcing the initial remote pull
-    const extendedPullQueueFiltered = forceRemote
+    const extendedPullQueueFiltered = force
       ? extendedPullQueue
       : keyValueBy(extendedPullQueue, id => {
           const isPulling = Object.values(pullQueuePulling).some(pullQueueObject => id in pullQueueObject)
@@ -126,7 +126,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     pullQueuePulling[pullKey] = extendedPullQueueFiltered
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
-    await dispatch(pull(extendedPullQueueIds, { force: forceRemote, remote: forceRemote }))
+    await dispatch(pull(extendedPullQueueIds, { force }))
 
     syncStatusStore.update({ isPulling: false })
     delete pullQueuePulling[pullKey]
@@ -138,13 +138,13 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
    * @param forceFlush   Calculates a new pullQueue and ignores memoization so that flush is guaranteed.
    * @param forceRemote    Passes force: true to pull to fetch all descendants up to the buffer depth, not just pending. Implies forceFlush.
    */
-  const updatePullQueue = ({ forceFlush, forceRemote }: { forceFlush?: boolean; forceRemote?: boolean } = {}) => {
+  const updatePullQueue = ({ forceFlush, force }: { forceFlush?: boolean; force?: boolean } = {}) => {
     // if updatePullQueue is called directly, do not allow updatePullQueueDebounced to call it again
     updatePullQueueDebounced.cancel()
 
     // If we are forcing, cancel the existing throttled flush since it could outrace this flush and pull without force.
     // This can cause remote thoughts to not be pulled on load if thoughts are already loaded from the local db.
-    if (forceFlush || forceRemote) {
+    if (forceFlush || force) {
       flushPullQueueThrottled.cancel()
     }
 
@@ -158,7 +158,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     if (
       !forceFlush &&
-      !forceRemote &&
+      !force &&
       state.contextViews === lastContextViews &&
       equalArrays(Object.keys(expandedPaths), Object.keys(lastExpandedPaths)) &&
       isSearchSame
@@ -172,9 +172,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // do not throttle initial flush or flush on authenticate
     if (isLoaded) {
-      flushPullQueueThrottled({ forceRemote })
+      flushPullQueueThrottled({ force })
     } else {
-      flushPullQueue({ forceRemote })
+      flushPullQueue({ force })
       isLoaded = true
     }
   }
@@ -198,7 +198,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     else if (action.type === 'authenticate' && action.value && action.connected) {
       pullQueue = { ...pullQueue, ...initialPullQueue() }
       // do not debounce, as forceRemote could be overwritten by other calls to the debounced function
-      updatePullQueue({ forceRemote: true })
+      updatePullQueue({ force: true })
     }
     // do not pull before cursor has been initialized
     else if (state.cursorInitialized) {

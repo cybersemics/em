@@ -18,10 +18,8 @@ const BUFFER_DEPTH = 2
 export interface PullOptions {
   /** Pull descendants regardless of pending status. */
   force?: boolean
-  remote?: boolean
   maxDepth?: number
-  onLocalThoughts?: (thoughts: ThoughtIndices) => void
-  onRemoteThoughts?: (thoughts: ThoughtIndices) => void
+  onThoughts?: (thoughts: ThoughtIndices) => void
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
@@ -62,10 +60,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 const pull =
-  (
-    thoughtIds: ThoughtId[],
-    { force, maxDepth, onLocalThoughts, onRemoteThoughts, remote }: PullOptions = {},
-  ): Thunk<Promise<Thought[]>> =>
+  (thoughtIds: ThoughtId[], { force, maxDepth, onThoughts }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
     const filteredThoughtIds = force
@@ -77,19 +72,16 @@ const pull =
     // short circuit if there are no contexts to fetch
     if (filteredThoughtIds.length === 0) return []
 
-    const thoughtLocalChunks: ThoughtIndices[] = []
-    const thoughtRemoteChunks: ThoughtIndices[] = []
+    const thoughtChunks: ThoughtIndices[] = []
 
-    // when forcing a pull for the remote on authenticate, do not re-pull local thoughts
-    const thoughtsLocalIterable = getManyDescendants(db, remote ? [] : filteredThoughtIds, getState, {
+    const thoughtsIterable = getManyDescendants(db, filteredThoughtIds, getState, {
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    // pull local before remote
     // parallelizing may result in conficts since there is no conflict resolution mechanism currently
-    await itForEach(thoughtsLocalIterable, (thoughtsChunk: ThoughtIndices) => {
+    await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       // eslint-disable-next-line fp/no-mutating-methods
-      thoughtLocalChunks.push(thoughtsChunk)
+      thoughtChunks.push(thoughtsChunk)
 
       // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
       const { autologin, isLoading, status } = getState()
@@ -111,28 +103,20 @@ const pull =
         }),
       )
 
-      onLocalThoughts?.(thoughtsChunk)
+      onThoughts?.(thoughtsChunk)
     })
 
     // get remote thoughts
     const status = getState().status
 
     // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtIndices is expected
-    const thoughtsLocal = thoughtLocalChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
-      thoughtIndex: {},
-      lexemeIndex: {},
-    })
-
-    // limit arity of mergeThoughts to 2 so that index does not get passed where a ThoughtIndices is expected
-    const thoughtsRemote = thoughtRemoteChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
+    const thoughts = thoughtChunks.reduce<ThoughtIndices>(_.ary(mergeThoughts, 2), {
       thoughtIndex: {},
       lexemeIndex: {},
     })
 
     // If the buffer size is reached on any loaded thoughts that are still within view, we will need to invoke flushPending recursively. Queueing updatePending will properly check visibleContexts and fetch any pending thoughts that are visible.
-    const pendingThoughts = Object.values({ ...thoughtsLocal.thoughtIndex, ...thoughtsRemote.thoughtIndex }).filter(
-      thought => thought.pending,
-    )
+    const pendingThoughts = Object.values(thoughts.thoughtIndex).filter(thought => thought.pending)
 
     // if we are pulling the home context and there are no pending thoughts, but the home parent is marked as pending, it means there are no children and we need to clear the pending status manually
     // https://github.com/cybersemics/em/issues/1344
