@@ -21,12 +21,10 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
 } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import alert from '../reducers/alert'
 import createThought from '../reducers/createThought'
 import setCursor from '../reducers/setCursor'
 import tutorialNext from '../reducers/tutorialNext'
 import tutorialStepReducer from '../reducers/tutorialStep'
-import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
@@ -35,13 +33,11 @@ import getRankBefore from '../selectors/getRankBefore'
 import getRootPath from '../selectors/getRootPath'
 import getSetting from '../selectors/getSetting'
 import getSortPreference from '../selectors/getSortPreference'
-import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
-import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
@@ -105,20 +101,21 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const parentPath = rootedParentOf(state, simplePath)
   const thoughtId = head(simplePath)
-  const parentId = head(parentPath)
 
+  // TODO: Disable =readonly during resumable import.
   // prevent adding Subthought to readonly or unextendable Thought
-  const sourceId = insertNewSubthought ? thoughtId : parentId
-  const sourceThought = getThoughtById(state, sourceId)
-  if (findDescendant(state, sourceId, '=readonly')) {
-    return alert(state, {
-      value: `"${ellipsize(sourceThought.value)}" is read-only. No subthoughts may be added.`,
-    })
-  } else if (findDescendant(state, sourceId, '=unextendable')) {
-    return alert(state, {
-      value: `"${ellipsize(sourceThought.value)}" is unextendable. No subthoughts may be added.`,
-    })
-  }
+  // const parentId = head(parentPath)
+  // const sourceId = insertNewSubthought ? thoughtId : parentId
+  // const sourceThought = getThoughtById(state, sourceId)
+  // if (findDescendant(state, sourceId, '=readonly')) {
+  //   return alert(state, {
+  //     value: `"${ellipsize(sourceThought.value)}" is read-only. No subthoughts may be added.`,
+  //   })
+  // } else if (findDescendant(state, sourceId, '=unextendable')) {
+  //   return alert(state, {
+  //     value: `"${ellipsize(sourceThought.value)}" is unextendable. No subthoughts may be added.`,
+  //   })
+  // }
 
   const showContexts = isContextViewActive(state, path)
   const showContextsParent = isContextViewActive(state, rootedParentOf(state, path))
