@@ -349,7 +349,7 @@ const importFilesActionCreator =
 
                 // set cursor to first imported thought
                 if (i === 0) {
-                  dispatch(setCursor({ path: cursorNew }))
+                  dispatch(setCursor({ path: cursorNew, editing: false }))
                 }
               },
             ])
