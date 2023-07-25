@@ -49,9 +49,9 @@ const replicationController = ({
     total: number
     value: ReplicationResult
   }) => void
-  /** An asynchronous function that replicates the next thought or lexeme in the queue. May be called multiple times if the process is interrupted and the replication cursor is not updated. */
+  /** Called whenever the doclog changes from a provider. May be called multiple times if the process is interrupted and the replication cursor is not updated. */
   next: ({ action }: { action: DocLogAction } & ReplicationResult) => Promise<void>
-  /** Local storage mechanism to persist the replication cursors onLowStep. These are persisted outside of Yjs and are not supposed to be replicated across devices. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it goes back online. Sets are throttled. */
+  /** Local storage mechanism to persist the replication cursors on lowStep. These are persisted outside of Yjs and are not supposed to be replicated across devices. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it goes back online (similar to a state vector). Updates are throttled. */
   storage: Storage
 }) => {
   // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
@@ -64,43 +64,51 @@ const replicationController = ({
   // only needs to be stored in memory
   // used to recalculate the delta slice on multiple observe calls
   // presumably the initial slice up to the replication delta is adequate, but this can handle multiple observes until the replication delta has been reached
-  let thoughtObservationCursor = 0
-  let lexemeObservationCursor = 0
+  let thoughtObservationCursor = -1
+  let lexemeObservationCursor = -1
 
   // thoughtReplicationCursor marks the number of contiguous delta insertions that have been replicated
   // used to slice the doclog and only replicate new changes
-  let thoughtReplicationCursor = 0
-  let lexemeReplicationCursor = 0
+  let thoughtReplicationCursor = -1
+  let lexemeReplicationCursor = -1
 
   // load thoughtReplicationCursor and lexemeReplicationCursor into memory
   const replicationCursorsInitialized = Promise.all([
     Promise.resolve(storage.getItem('thoughtReplicationCursor')).then(value => {
-      thoughtReplicationCursor = +(value || 0)
+      if (value == null) return
+      thoughtReplicationCursor = +value
     }),
     Promise.resolve(storage.getItem('lexemeReplicationCursor')).then(value => {
-      lexemeReplicationCursor = +(value || 0)
+      if (value == null) return
+      lexemeReplicationCursor = +value
     }),
   ])
 
-  /** Updates the persisted thoughtReplicationCursor (throttled). */
-  const updateThoughtReplicationCursor = _.throttle(
-    (index: number) => {
-      thoughtReplicationCursor = index + 1
-      storage.setItem('thoughtReplicationCursor', (index + 1).toString())
-    },
+  /** Persist the thoughtReplicationCursor (throttled). */
+  const storeThoughtReplicationCursor = _.throttle(
+    (index: number) => storage.setItem('thoughtReplicationCursor', index.toString()),
     100,
     { leading: false },
   )
 
-  /** Updates the persisted lexemeReplicationCursor (throttled). */
-  const updateLexemeReplicationCursor = _.throttle(
-    (index: number) => {
-      lexemeReplicationCursor = index + 1
-      storage.setItem('lexemeReplicationCursor', (index + 1).toString())
-    },
+  /** Persist the persisted lexemeReplicationCursor (throttled). */
+  const storeLexemeReplicationCursor = _.throttle(
+    (index: number) => storage.setItem('lexemeReplicationCursor', index.toString()),
     100,
     { leading: false },
   )
+
+  /** Updates the thoughtReplicationCursor immediately. Saves it to storage in the background (throttled). */
+  const updateThoughtReplicationCursor = (index: number) => {
+    thoughtReplicationCursor = index
+    storeThoughtReplicationCursor(index)
+  }
+
+  /** Updates the lexemeReplicationCursor immediately. Saves it to storage in the background (throttled). */
+  const updateLexemeReplicationCursor = (index: number) => {
+    lexemeReplicationCursor = index
+    storeLexemeReplicationCursor(index)
+  }
 
   /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
   const replicationQueue = taskQueue<ReplicationResult>({
