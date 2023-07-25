@@ -20,12 +20,8 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import deleteThought from './deleteThought'
 
-/** Find the next thought that can be safely deallocated. */
-const findDeletableThought = (
-  state: State,
-  preserveSet: Set<ThoughtId>,
-  { start = 0 }: { start?: number } = {},
-): Thought | null => {
+/** Find the next thought that can be safely deallocated. Deletes from the beginning of state.thoughts.thoughtIndex, which is efficient, deterministic, and approximates an LRU cache due to the javascript runtime adding new entries to the end of the thoughtIndex. */
+const findDeletableThought = (state: State, preserveSet: Set<ThoughtId>): Thought | null => {
   const allThoughts = Object.values(state.thoughts.thoughtIndex)
 
   /** Returns true if a thought is safe to deallocate. */
@@ -43,7 +39,7 @@ const findDeletableThought = (
   let deletableThought: Thought | null = null
   // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < allThoughts.length; i++) {
-    const thought = allThoughts[(start + i) % allThoughts.length]
+    const thought = allThoughts[i % allThoughts.length]
     if (isDeletable(thought)) {
       deletableThought = thought
       break
@@ -53,7 +49,7 @@ const findDeletableThought = (
   return deletableThought
 }
 
-/** Frees a random block of invisible thoughts from memory when the memory limit is exceeded. Note: May not free any thoughts if all thoughts are expanded. */
+/** Frees a block of thoughts that are not visible from memory when the memory limit is exceeded. May not free any thoughts if all thoughts are expanded. */
 const freeThoughts = (state: State) => {
   const preserveSet = new Set<ThoughtId>([
     ABSOLUTE_TOKEN,
@@ -79,10 +75,6 @@ const freeThoughts = (state: State) => {
     ...getDescendantThoughtIds(state, EM_TOKEN),
   ])
 
-  // Split the list at a random index to avoid the same thoughts getting deallocated every time.
-  // Better would be to sort by lastUpdated or lastVisited, but this is much faster.
-  const randomStartIndex = Math.floor(Math.random() * Object.values(state.thoughts.thoughtIndex).length)
-
   // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
   let stateNew = state
 
@@ -90,7 +82,7 @@ const freeThoughts = (state: State) => {
   // eslint-disable-next-line fp/no-loops
   while (Object.values(stateNew.thoughts.thoughtIndex).length > FREE_THOUGHTS_THRESHOLD - FREE_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
-    const deletableThought = findDeletableThought(stateNew, preserveSet, { start: randomStartIndex })
+    const deletableThought = findDeletableThought(stateNew, preserveSet)
     // If all thoughts are preserved, we should bail.
     // This is unlikely to happen, as MAX_THOUGHT_INDEX should usually exceed the number of visible thoughts.
     // In the worst case, this results in continuous attempts until the user collapses some thoughts, but will be throttled by the freeThoughts middleware.
