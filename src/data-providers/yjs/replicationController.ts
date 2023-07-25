@@ -99,13 +99,13 @@ const replicationController = ({
   )
 
   /** Updates the thoughtReplicationCursor immediately. Saves it to storage in the background (throttled). */
-  const updateThoughtReplicationCursor = (index: number) => {
+  const setThoughtReplicationCursor = (index: number) => {
     thoughtReplicationCursor = index
     storeThoughtReplicationCursor(index)
   }
 
   /** Updates the lexemeReplicationCursor immediately. Saves it to storage in the background (throttled). */
-  const updateLexemeReplicationCursor = (index: number) => {
+  const setLexemeReplicationCursor = (index: number) => {
     lexemeReplicationCursor = index
     storeLexemeReplicationCursor(index)
   }
@@ -116,9 +116,9 @@ const replicationController = ({
     concurrency,
     onLowStep: ({ index, value, total }) => {
       if (value.type === 'thought') {
-        updateThoughtReplicationCursor(value.index)
+        setThoughtReplicationCursor(value.index)
       } else {
-        updateLexemeReplicationCursor(value.index)
+        setLexemeReplicationCursor(value.index)
       }
     },
     onStep,
@@ -134,24 +134,29 @@ const replicationController = ({
     // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
     // Therefore, observe the deltas and slice from the replication cursor.
     thoughtLog.observe((e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
-      const startIndex = thoughtReplicationCursor
-
       // since the doglogs are append-only, ids are only on .insert
       const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
       // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
-      const deltas = deltasRaw.slice(startIndex - thoughtObservationCursor)
+      const deltas = deltasRaw.slice(thoughtReplicationCursor - thoughtObservationCursor)
 
+      // thoughtObservationCursor is updated as soon as the deltas have been seen and the replication tasks are added to the queue
+      // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       thoughtObservationCursor += deltasRaw.length
 
-      // if the change comes from self, update the lexemeReplicationCursor but do not fire next
+      // If the change comes from self, do not trigger next, but update the replication cursor.
+      // Otherwise, trigger next and the replication cursor will be updated on lowStep.
       if (e.transaction.origin === doc.clientID) {
-        updateThoughtReplicationCursor(startIndex + deltas.length)
+        setThoughtReplicationCursor(thoughtReplicationCursor + deltas.length)
       } else {
         // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
         // e.g. if a Lexeme is created, deleted, and then created again, the replicationController will only replicate the last creation
         const replicated = new Map<ThoughtId, number>()
         deltas.forEach(([id], i) => replicated.set(id, i))
+
+        // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+        // Otherwise thoughtReplicationCursor may increase before the task completes.
+        const startIndex = thoughtReplicationCursor
 
         const tasks = deltas.map(([id, action], i) => {
           // ignore older updates to the same thought
@@ -159,7 +164,7 @@ const replicationController = ({
 
           // trigger next (e.g. save the thought locally)
           return async (): Promise<ReplicationResult> => {
-            const result: ReplicationResult = { type: 'thought', id, index: startIndex + i }
+            const result: ReplicationResult = { type: 'thought', id, index: startIndex + i + 1 }
             await next({ ...result, action })
             return result
           }
@@ -171,24 +176,29 @@ const replicationController = ({
 
     // See: thoughtLog.observe
     lexemeLog.observe((e: Y.YArrayEvent<[string, DocLogAction]>) => {
-      const startIndex = lexemeReplicationCursor
-
       // since the doglogs are append-only, ids are only on .insert
       const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
       // slice from the replication cursor (excluding lexemes that have already been sliced) in order to only replicate changed lexemes
       // reverse the deltas so that we can mark lexemes as replicated from newest to oldest without an extra filter loop
-      const deltas = deltasRaw.slice(startIndex - lexemeObservationCursor)
+      const deltas = deltasRaw.slice(lexemeReplicationCursor - lexemeObservationCursor)
 
+      // thoughtObservationCursor is updated as soon as the deltas have been seen and the replication tasks are added to the queue
+      // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       lexemeObservationCursor += deltasRaw.length
 
-      // if the change comes from self, update the lexemeReplicationCursor but do not fire next
+      // If the change comes from self, do not trigger next, but update the replication cursor.
+      // Otherwise, trigger next and the replication cursor will be updated on lowStep.
       if (e.transaction.origin === doc.clientID) {
-        updateLexemeReplicationCursor(startIndex + deltas.length)
+        setLexemeReplicationCursor(lexemeReplicationCursor + deltas.length)
       } else {
         // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
         const replicated = new Map<string, number>()
         deltas.forEach(([key], i) => replicated.set(key, i))
+
+        // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+        // Otherwise thoughtReplicationCursor may increase before the task completes.
+        const startIndex = lexemeReplicationCursor
 
         const tasks = deltas.map(([key, action], i) => {
           // ignore older updates to the same lexeme
@@ -196,7 +206,7 @@ const replicationController = ({
 
           // trigger next (e.g. save the lexeme locally)
           return async (): Promise<ReplicationResult> => {
-            const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i }
+            const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i + 1 }
             await next({ ...result, action })
             return result
           }
