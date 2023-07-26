@@ -1,5 +1,5 @@
 import { isSafari, isTouch } from '../browser'
-import { NOOP } from '../constants'
+import { noop } from '../constants'
 
 /**
  * Allow a focus to be set asynchronously on Mobile Safari.
@@ -9,7 +9,7 @@ import { NOOP } from '../constants'
  * See: https://stackoverflow.com/a/45703019/480608.
  */
 export const AsyncFocus = (): (() => void) => {
-  if (!isTouch || !isSafari()) return NOOP
+  if (!isTouch || !isSafari()) return noop
 
   // create invisible dummy input to receive the focus
   const hiddenInput = document.createElement('input')

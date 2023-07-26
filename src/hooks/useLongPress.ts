@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
 import { isTouch } from '../browser'
-import { NOOP } from '../constants'
+import { noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 
@@ -15,9 +15,9 @@ let lock = false
 
 /** Custom hook to manage long press. */
 const useLongPress = (
-  onLongPressStart: (() => void) | null = NOOP,
-  onLongPressEnd: (() => void) | null = NOOP,
-  onTouchStart: (() => void) | null = NOOP,
+  onLongPressStart: (() => void) | null = noop,
+  onLongPressEnd: (() => void) | null = noop,
+  onTouchStart: (() => void) | null = noop,
   ms = 250,
 ) => {
   const [pressed, setPressed] = useState(false)

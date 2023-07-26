@@ -129,8 +129,8 @@ export const ALLOW_SINGLE_CONTEXT = false
 /** An identify function that returns the value passed to it. */
 export const ID = <T = any>(x: T): T => x
 
-/** A void function that does nothing. NOOP means "no operation". */
-export const NOOP = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+/** A void function that does nothing (noop means "no operation"). */
+export const noop = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
 
 // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
 export const AUTO_PROSE_VIEW_MIN_CHARS = 200

@@ -8,7 +8,7 @@ import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import dragShortcut from '../action-creators/dragShortcut'
 import { isTouch } from '../browser'
-import { NOOP } from '../constants'
+import { noop } from '../constants'
 import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut } from '../shortcuts'
 import store from '../stores/app'
@@ -28,7 +28,7 @@ const canDrag = (props: ShortcutRowProps) => !!props.shortcut && !!props.customi
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => {
   return {
     dragSource: connect.dragSource(),
-    dragPreview: NOOP,
+    dragPreview: noop,
     isDragging: monitor.isDragging(),
     zone: monitor.getItem()?.zone,
   }

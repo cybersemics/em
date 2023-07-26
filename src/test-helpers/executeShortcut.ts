@@ -2,7 +2,7 @@ import { Store } from 'redux'
 import Shortcut from '../@types/Shortcut'
 import ShortcutType from '../@types/ShortcutType'
 import State from '../@types/State'
-import { NOOP } from '../constants'
+import { noop } from '../constants'
 import globalStore from '../stores/app'
 
 interface Options {
@@ -11,7 +11,7 @@ interface Options {
   event?: Event
 }
 
-const eventNoop = { preventDefault: NOOP } as Event
+const eventNoop = { preventDefault: noop } as Event
 
 /** Execute shortcut. Defaults to global store and keyboard shortcut. */
 const executeShortcut = (shortcut: Shortcut, { store, type, event }: Options = {}) => {

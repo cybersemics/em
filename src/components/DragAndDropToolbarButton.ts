@@ -13,7 +13,7 @@ import dragShortcut from '../action-creators/dragShortcut'
 import initUserToolbar from '../action-creators/initUserToolbar'
 import moveThought from '../action-creators/moveThought'
 import newThought from '../action-creators/newThought'
-import { EM_TOKEN, NOOP } from '../constants'
+import { EM_TOKEN, noop } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -111,7 +111,7 @@ const drop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
 /** Collects props from the DragSource. */
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
-  dragPreview: NOOP,
+  dragPreview: noop,
   isDragging: monitor.isDragging(),
 })
 

@@ -21,7 +21,7 @@ import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import toggleUserSetting from '../action-creators/toggleUserSetting'
 import updateThoughts from '../action-creators/updateThoughts'
-import { AlertType, NOOP, Settings } from '../constants'
+import { AlertType, Settings, noop } from '../constants'
 import * as selection from '../device/selection'
 import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
@@ -144,7 +144,7 @@ const drop = (
 /** Collects props from the DragSource. */
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
-  dragPreview: NOOP,
+  dragPreview: noop,
   isDragging: monitor.isDragging(),
 })
 

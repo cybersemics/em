@@ -21,7 +21,7 @@ import error from '../action-creators/error'
 import importFiles from '../action-creators/importFiles'
 import moveThought from '../action-creators/moveThought'
 import { isTouch } from '../browser'
-import { AlertType, NOOP } from '../constants'
+import { AlertType, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -204,7 +204,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 /** Collects props from the DragSource. */
 const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
   dragSource: connect.dragSource(),
-  dragPreview: NOOP,
+  dragPreview: noop,
   isDragging: monitor.isDragging(),
 })
 

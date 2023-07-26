@@ -6,7 +6,7 @@ import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
-import { NOOP, Settings } from '../constants'
+import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import ministore from '../stores/ministore'
@@ -360,9 +360,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     leftHanded: false,
     minDistance: 10,
     scrollThreshold: 15,
-    onStart: NOOP,
-    onGesture: NOOP,
-    onEnd: NOOP,
+    onStart: noop,
+    onGesture: noop,
+    onEnd: noop,
   }
 }
 
