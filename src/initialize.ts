@@ -1,18 +1,25 @@
 import _ from 'lodash'
 import moize from 'moize'
 import Context from './@types/Context'
+import Lexeme from './@types/Lexeme'
+import PushBatch from './@types/PushBatch'
 import State from './@types/State'
+import Thought from './@types/Thought'
 import Thunk from './@types/Thunk'
 import './App.css'
+import alert from './action-creators/alert'
 import importFiles from './action-creators/importFiles'
 import loadFromUrl from './action-creators/loadFromUrl'
 import loadLocalState from './action-creators/loadLocalState'
 import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
+import repairThoughtActionCreator from './action-creators/repairThought'
 import setCursor from './action-creators/setCursor'
+import updateThoughtsActionCreator from './action-creators/updateThoughts'
+import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { websocket } from './data-providers/yjs'
-import * as db from './data-providers/yjs/thoughtspace'
+import { accessToken, tsid, websocket, websocketUrl } from './data-providers/yjs'
+import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -22,14 +29,21 @@ import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
-import { init as initOfflineStatusStore } from './stores/offlineStatusStore'
+import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
+import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
+import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
+import storage from './util/storage'
+import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
+
+/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
+const UPDATE_THOUGHTS_THROTTLE = 100
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -52,9 +66,98 @@ const initializeCursor = async () => {
   }
 }
 
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+
+  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+  setTimeout(() => {
+    store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+  })
+}, UPDATE_THOUGHTS_THROTTLE)
+
 /** Initilaize local db and window events. */
 export const initialize = async () => {
-  await initOfflineStatusStore(websocket)
+  initOfflineStatusStore(websocket)
+  await initThoughtspace({
+    accessToken: Promise.resolve(accessToken),
+    /** Returns true if the Thought or its parent is in State. */
+    isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {
+      const state = store.getState()
+      return !!(thought && (getThoughtById(state, thought.parentId) || getThoughtById(state, thought.id)))
+    },
+    /** Returns true if the Lexeme or one of its contexts are in State. */
+    isLexemeLoaded: async (key: string, lexeme: Lexeme | undefined): Promise<boolean> => {
+      const state = store.getState()
+      return !!((lexeme && getLexeme(state, key)) || lexeme?.contexts.some(cxid => getThoughtById(state, cxid)))
+    },
+    onError: (message, object) => {
+      console.error(message, object)
+      store.dispatch(alert(message))
+    },
+    onProgress: syncStatusStore.update,
+    onThoughtChange: (thought: Thought) => {
+      store.dispatch((dispatch, getState) => {
+        // if parent is pending, the thought must be marked pending.
+        // Note: Do not clear pending from the parent, because other children may not be loaded.
+        // The next pull should handle that automatically.
+        // TODO: Do we need to use fresh State when updateThoughtsThrottled resolves?
+        const state = getState()
+        const thoughtInState = getThoughtById(state, thought.id)
+        const parentInState = getThoughtById(state, thought.parentId)
+        const pending = thoughtInState?.pending || parentInState?.pending
+
+        updateThoughtsThrottled({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thought,
+              ...(pending ? { pending } : null),
+            },
+          },
+          lexemeIndexUpdates: {},
+          lexemeIndexUpdatesOld: {},
+        })
+      })
+    },
+    onThoughtIDBSynced: (thought, { background }) => {
+      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
+      if (!background && thought?.id === HOME_TOKEN) {
+        const hasRootChildren = Object.keys(thought?.childrenMap || {}).length > 0
+        if (hasRootChildren) {
+          offlineStatusStore.update(statusOld =>
+            statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
+          )
+        }
+      }
+    },
+    onThoughtReplicated: (id, thought) => {
+      store.dispatch(repairThoughtActionCreator(id, thought))
+    },
+    onUpdateThoughts: options => {
+      store.dispatch(updateThoughtsActionCreator(options))
+    },
+    getItem: storage.getItem,
+    setItem: storage.setItem,
+    tsid: Promise.resolve(tsid),
+    websocketUrl: Promise.resolve(websocketUrl),
+  })
+
+  // pause replication during pushing and pulling
+  syncStatusStore.subscribeSelector(
+    ({ isPulling, savingProgress }) => savingProgress < 1 || isPulling,
+    isPushingOrPulling => {
+      if (isPushingOrPulling) {
+        pauseReplication()
+      } else {
+        // because replicationQueue starts paused, this line starts it for the first time after the initial pull
+        startReplication()
+      }
+    },
+  )
 
   // load local state unless loading a public context or source url
   // await initDB()

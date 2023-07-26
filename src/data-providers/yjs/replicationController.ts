@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
+import Storage from '../../@types/Storage'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
 
@@ -9,11 +10,6 @@ interface ReplicationResult {
   id: ThoughtId | string
   // the delta index that is saved as the replication cursor to enable partial replication
   index: number
-}
-
-interface Storage {
-  getItem: (key: string) => string | null | Promise<string | null>
-  setItem: (key: string, value: any) => void | Promise<void>
 }
 
 /** A replication controller that ensures that thought and lexeme updates are efficiently and reliably replicated. Does not dictate the replication method itself, but rather maintains a replication queue for throttled concurrency and a replication cursor for resumability. On load, triggers a replicaton for all thoughts and lexemes that have not been processed (via next). When a new update is received (via log), calls next to process the update. Provides start and pause for full control over when replication is running. */

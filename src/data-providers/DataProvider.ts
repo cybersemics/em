@@ -5,9 +5,10 @@ import ThoughtDb from '../@types/ThoughtDb'
 import ThoughtId from '../@types/ThoughtId'
 
 /** A standard interface for data providers that can sync thoughts. See data-providers/README.md. */
-export interface DataProvider {
+export interface DataProvider<T extends any[] = any> {
   name?: string
   clear: () => Promise<unknown>
+  init?: (...args: T) => void
   getLexemeById: (key: string) => Promise<Lexeme | undefined>
   getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
@@ -18,8 +19,8 @@ export interface DataProvider {
     lexemeIndexUpdatesOld: Index<Lexeme | undefined>
     schemaVersion: number
   }) => Promise<unknown>
-  freeThought: (id: ThoughtId) => void
-  freeLexeme: (key: string) => void
+  freeThought: (id: ThoughtId) => Promise<void>
+  freeLexeme: (key: string) => Promise<void>
 
   /****************************************
    * Used by dataProviderTest only

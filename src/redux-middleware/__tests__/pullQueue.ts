@@ -22,7 +22,7 @@ import testTimer from '../../test-helpers/testTimer'
 import sleep from '../../util/sleep'
 
 /*
-  Note: sinon js fake timer is used to overcome some short comming we have with jest's fake timer.
+  Note: sinon js fake timer is used to overcome some shortcomings we have with jest's fake timer.
   For details: https://github.com/cybersemics/em/issues/919#issuecomment-739135971
 */
 

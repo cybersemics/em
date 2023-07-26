@@ -1,35 +1,21 @@
-import { HocuspocusProvider } from '@hocuspocus/provider'
-import { isFunction } from 'lodash'
+/** Thoughtspace worker accessed from the main thread via thoughtspace.main.ts. */
+import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
 import PushBatch from '../../@types/PushBatch'
-import State from '../../@types/State'
+import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
-import alert from '../../action-creators/alert'
-import createThoughtActionCreator from '../../action-creators/createThought'
-import updateThoughtsActionCreator from '../../action-creators/updateThoughts'
-import { HOME_TOKEN, SCHEMA_LATEST } from '../../constants'
-import { accessToken, tsid, websocketThoughtspace } from '../../data-providers/yjs/index'
-import getLexemeSelector from '../../selectors/getLexeme'
-import getThoughtByIdSelector from '../../selectors/getThoughtById'
-import isContextViewActive from '../../selectors/isContextViewActive'
-import thoughtToPath from '../../selectors/thoughtToPath'
-import store from '../../stores/app'
-import offlineStatusStore from '../../stores/offlineStatusStore'
-import syncStatusStore from '../../stores/syncStatus'
+import WebsocketStatus from '../../@types/WebsocketStatus'
+import { WEBSOCKET_CONNECTION_TIME } from '../../constants'
+import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
+import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
-import hashThought from '../../util/hashThought'
-import headValue from '../../util/headValue'
-import initialState from '../../util/initialState'
-import keyValueBy from '../../util/keyValueBy'
 import mergeBatch from '../../util/mergeBatch'
-import removeContext from '../../util/removeContext'
-import storage from '../../util/storage'
 import taskQueue from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
 import throttleConcat from '../../util/throttleConcat'
@@ -68,9 +54,33 @@ interface SimpleYMapEvent<T> {
   }
 }
 
-/** A weak cancellable promise. The cancel function must be added to an existing promise and then cast to a Cancellable Promise. Promise chains created with then are not cancellable. */
-interface CancellablePromise<T> extends Promise<T> {
-  cancel: () => void
+/** Creates a promise that is resolved with promise.resolve and rejected with promise.reject. */
+interface ResolvablePromise<T, E = any> extends Promise<T> {
+  resolve: (arg: T) => void
+  reject: (err: E) => void
+}
+
+export interface ThoughtspaceOptions {
+  accessToken: string
+  isLexemeLoaded: (key: string, lexeme: Lexeme | undefined) => Promise<boolean>
+  isThoughtLoaded: (thought: Thought | undefined) => Promise<boolean>
+  onThoughtIDBSynced: (thought: Thought | undefined, options: { background: boolean }) => void
+  onError: (message: string, objects: any[]) => void
+  onProgress: (args: { replicationProgress?: number; savingProgress?: number }) => void
+  onThoughtChange: (thought: Thought) => void
+  onThoughtReplicated: (id: ThoughtId, thought: Thought | undefined) => void
+  onUpdateThoughts: (args: UpdateThoughtsOptions) => void
+  // offlineStatusStore.once(status => status === 'offline')
+  getItem: Storage['getItem']
+  setItem: Storage['setItem']
+  tsid: string
+  websocketUrl: string
+}
+
+type ThoughtspaceConfig = ThoughtspaceOptions & {
+  replication: ReturnType<typeof replicationController>
+  updateQueue: any
+  websocket: HocuspocusProviderWebsocket
 }
 
 /**********************************************************************
@@ -87,20 +97,19 @@ const UPDATE_THOUGHTS_THROTTLE = 100
  * Helper Functions
  **********************************************************************/
 
-/** Attaches a cancel function to a promise. It is up to you to abort any functionality after the cancel function is called. */
-const cancellable = <T>(p: Promise<T>, cancel: () => void) => {
-  const promise = p as CancellablePromise<T>
-  promise.cancel = cancel
-  return promise
+/** Attaches a resolve function to a promise. */
+const resolvable = <T, E = any>() => {
+  let _resolve: (value: T) => void
+  let _reject: (err: E) => void
+  const promise = new Promise<T>((resolve, reject) => {
+    _resolve = resolve
+    _reject = reject
+  })
+  const p = promise as ResolvablePromise<T, E>
+  p.resolve = _resolve!
+  p.reject = _reject!
+  return promise as ResolvablePromise<T, E>
 }
-
-/** Returns true if the Thought or its parent is in State. */
-const isThoughtLoaded = (state: State, thought: Thought | undefined): boolean =>
-  !!(thought && (getThoughtByIdSelector(state, thought.parentId) || getThoughtByIdSelector(state, thought.id)))
-
-/** Returns true if the Lexeme or one of its contexts are in State. */
-const isLexemeLoaded = (state: State, key: string, lexeme: Lexeme | undefined): boolean =>
-  !!((lexeme && getLexemeSelector(state, key)) || lexeme?.contexts.some(cxid => getThoughtByIdSelector(state, cxid)))
 
 /** Dispatches updateThoughts with all updates in the throttle period. */
 const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
@@ -112,7 +121,10 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 
   // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
   setTimeout(() => {
-    store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+    config.then(
+      ({ onUpdateThoughts: updateThoughts }) =>
+        updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+    )
   })
 }, UPDATE_THOUGHTS_THROTTLE)
 
@@ -140,88 +152,128 @@ const lexemeWebsocketSynced: Map<string, Promise<void>> = new Map()
 // Deletes must be marked, otherwise there is no way to differentiate it from an update (because there is no way to tell if a websocket has no data for a thought, or just has not yet returned any data.)
 const doclog = new Y.Doc()
 
-const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-doclogPersistence.whenSynced.catch(e => {
-  const errorMessage = `Error loading doclog: ${e.message}`
-  console.error(errorMessage, e)
-  store.dispatch(alert(errorMessage))
-})
-
-// eslint-disable-next-line no-new
-new HocuspocusProvider({
-  websocketProvider: websocketThoughtspace,
-  name: encodeDocLogDocumentName(tsid),
-  document: doclog,
-  token: accessToken,
-})
-
 /**********************************************************************
  * Module variables
  **********************************************************************/
 
-const replication = replicationController({
-  // begin paused, and only start after initial pull has completed
-  autostart: false,
-  doc: doclog,
-  storage,
-  next: async ({ action, id, type }) => {
-    if (action === DocLogAction.Update) {
-      await (type === 'thought'
-        ? replicateThought(id as ThoughtId, { background: true })
-        : replicateLexeme(id, { background: true }))
-    } else if (action === DocLogAction.Delete) {
-      updateThoughtsThrottled({
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {},
-        // override thought/lexemeIndexUpdates based on type
-        [`${type}IndexUpdates`]: {
-          [id]: null,
-        },
-        lexemeIndexUpdatesOld: {},
-      })
+/** The thoughtspace config that is resolved after init is called. Mainly used to pass objects and callbacks into the worker that it cannot access natively, e.g. localStorage. */
+const config = resolvable<ThoughtspaceConfig>()
 
-      if (type === 'thought') {
-        await deleteThought(id as ThoughtId)
-      } else if (type === 'lexeme') {
-        await deleteLexeme(id)
+/** Initialize the thoughtspace with a storage module; localStorage cannot be accessed from within a web worker. */
+export const init = async (
+  options: Omit<ThoughtspaceOptions, 'accessToken' | 'tsid' | 'websocketUrl'> & {
+    accessToken: Promise<string>
+    tsid: Promise<string>
+    websocketUrl: Promise<string>
+  },
+) => {
+  const {
+    isLexemeLoaded,
+    isThoughtLoaded,
+    getItem,
+    setItem,
+    onError,
+    onProgress,
+    onThoughtChange,
+    onThoughtIDBSynced,
+    onThoughtReplicated,
+    onUpdateThoughts,
+  } = options
+
+  const accessToken = await options.accessToken
+  const tsid = await options.tsid
+  const websocketUrl = await options.websocketUrl
+
+  const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+  doclogPersistence.whenSynced.catch(e => {
+    const errorMessage = `Error loading doclog: ${e.message}`
+    onError?.(errorMessage, e)
+  })
+  // websocket provider
+  // TODO: Reuse websocket connection from ./index?
+  const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
+
+  // eslint-disable-next-line no-new
+  new HocuspocusProvider({
+    websocketProvider: websocket,
+    name: encodeDocLogDocumentName(tsid),
+    document: doclog,
+    token: accessToken,
+  })
+
+  const replication = replicationController({
+    // begin paused, and only start after initial pull has completed
+    autostart: false,
+    doc: doclog,
+    storage: {
+      getItem,
+      setItem,
+    },
+    next: async ({ action, id, type }) => {
+      if (action === DocLogAction.Update) {
+        await (type === 'thought'
+          ? replicateThought(id as ThoughtId, { background: true })
+          : replicateLexeme(id, { background: true }))
+      } else if (action === DocLogAction.Delete) {
+        updateThoughtsThrottled({
+          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {},
+          // override thought/lexemeIndexUpdates based on type
+          [`${type}IndexUpdates`]: {
+            [id]: null,
+          },
+          lexemeIndexUpdatesOld: {},
+        })
+
+        if (type === 'thought') {
+          await deleteThought(id as ThoughtId)
+        } else if (type === 'lexeme') {
+          await deleteLexeme(id)
+        }
+      } else {
+        throw new Error('Unknown DocLogAction: ' + action)
       }
-    } else {
-      throw new Error('Unknown DocLogAction: ' + action)
-    }
-  },
-  onStep: ({ completed, index, total, value }) => {
-    syncStatusStore.update({ replicationProgress: completed / total })
-  },
-  onEnd: () => {
-    syncStatusStore.update({ replicationProgress: 1 })
-  },
-})
+    },
+    onStep: ({ completed, index, total, value }) => {
+      onProgress({ replicationProgress: completed / total })
+    },
+    onEnd: () => {
+      onProgress({ replicationProgress: 1 })
+    },
+  })
 
-// limit the number of thoughts and lexemes that are updated in the Y.Doc at once
-const updateQueue = taskQueue<void>({
-  // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
-  // this may vary based on # of cores and network conditions
-  concurrency: 16,
-  onStep: ({ completed, total }) => {
-    syncStatusStore.update({ savingProgress: completed / total })
-  },
-  onEnd: () => {
-    syncStatusStore.update({ savingProgress: 1 })
-  },
-})
+  // limit the number of thoughts and lexemes that are updated in the Y.Doc at once
+  const updateQueue = taskQueue<void>({
+    // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
+    // this may vary based on # of cores and network conditions
+    concurrency: 16,
+    onStep: ({ completed, total }) => {
+      onProgress({ savingProgress: completed / total })
+    },
+    onEnd: () => {
+      onProgress({ savingProgress: 1 })
+    },
+  })
 
-// pause replication during pushing and pulling
-syncStatusStore.subscribeSelector(
-  ({ isPulling, savingProgress }) => savingProgress < 1 || isPulling,
-  isPushingOrPulling => {
-    if (isPushingOrPulling) {
-      replication.pause()
-    } else {
-      // because replicationQueue starts paused, this line starts it for the first time after the initial pull
-      replication.start()
-    }
-  },
-)
+  config.resolve({
+    accessToken,
+    isLexemeLoaded,
+    isThoughtLoaded,
+    onError,
+    onProgress,
+    onThoughtChange,
+    onThoughtIDBSynced,
+    onThoughtReplicated,
+    onUpdateThoughts,
+    replication,
+    getItem,
+    setItem,
+    tsid,
+    updateQueue,
+    websocket,
+    websocketUrl,
+  })
+}
 
 /**********************************************************************
  * Methods
@@ -229,11 +281,14 @@ syncStatusStore.subscribeSelector(
 
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
-const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
-  if (!thoughtDocs.has(id)) {
-    replicateThought(id)
-  }
-  const thoughtDoc = thoughtDocs.get(id)!
+export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
+  // Get the thought Doc if it has been cached, or initiate a replication.
+  // Do not wait for thought to full replicate.
+  const thoughtDoc =
+    thoughtDocs.get(id) ||
+    (await new Promise<Y.Doc>(resolve => {
+      replicateThought(id, { onDoc: resolve })
+    }))
 
   // Must add afterTransaction handler BEFORE transact.
   // Resolves after in-memory transaction is complete, not after synced with providers.
@@ -248,9 +303,9 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
       }, IDB_ERROR_RETRY)
       return
     }
-    const errorMessage = `Error saving thought ${id}: ${e.message}`
-    console.error(errorMessage, e)
-    store.dispatch(alert(errorMessage))
+    config.then(({ onError }) => {
+      onError?.(`Error saving thought ${id}: ${e.message}`, e)
+    })
   })
 
   thoughtDoc.transact(() => {
@@ -292,19 +347,18 @@ const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => 
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
-const updateLexeme = async (
+export const updateLexeme = async (
   key: string,
   lexemeNew: Lexeme,
-  // undefined only if Lexeme is completely new
-  lexemeOld: Lexeme | undefined,
-): Promise<void> => {
-  // get the old Lexeme to determine context deletions
-  // TODO: Pass the diffed contexts all the way through from updateThouhgts.
+  /** The old Lexeme to determine context deletions. Should be undefined only if Lexeme is completely new. */
+  // TODO: Pass the diffed contexts all the way through from updateThoughts.
   // The YJS Lexeme should be the same as the old Lexeme in State, since they are synced.
   // If the Lexeme has not yet been loaded from YJS, then we can ignore deletions, as a Lexeme normally cannot be deleted before it has been loaded. Unless the user creates and deletes the Lexeme so quickly that IDB is still loading (?).
   // In light of all that, it would be better to get the deletions directly from the reducer.
-
+  lexemeOld: Lexeme | undefined,
+): Promise<void> => {
   if (!lexemeDocs.has(key)) {
+    // TODO: Why is replication awaited here, but not in updateThought?
     await replicateLexeme(key)
   }
   const lexemeDoc = lexemeDocs.get(key)
@@ -327,9 +381,9 @@ const updateLexeme = async (
       }, IDB_ERROR_RETRY)
       return
     }
-    const errorMessage = `Error saving lexeme: ${e.message}`
-    console.error(errorMessage, e)
-    store.dispatch(alert(errorMessage))
+    config.then(({ onError }) => {
+      onError?.(`Error saving lexeme ${lexemeNew.lemma}: ${e.message}`, e)
+    })
   })
 
   lexemeDoc.transact(() => {
@@ -382,27 +436,7 @@ const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
   const thought = getThought(thoughtDoc)
   if (!thought) return
 
-  store.dispatch((dispatch, getState) => {
-    // if parent is pending, the thought must be marked pending.
-    // Note: Do not clear pending from the parent, because other children may not be loaded.
-    // The next pull should handle that automatically.
-    // TODO: Do we need to use fresh State when updateThoughtsThrottled resolves?
-    const state = getState()
-    const thoughtInState = getThoughtByIdSelector(state, thought.id)
-    const parentInState = getThoughtByIdSelector(state, thought.parentId)
-    const pending = thoughtInState?.pending || parentInState?.pending
-
-    updateThoughtsThrottled({
-      thoughtIndexUpdates: {
-        [thought.id]: {
-          ...thought,
-          ...(pending ? { pending } : null),
-        },
-      },
-      lexemeIndexUpdates: {},
-      lexemeIndexUpdatesOld: {},
-    })
-  })
+  config.then(({ onThoughtChange }) => onThoughtChange?.(thought))
 }
 
 /** Handles the Lexeme observe event. Ignores events from self. */
@@ -435,6 +469,7 @@ export const replicateThought = async (
   id: ThoughtId,
   {
     background,
+    onDoc,
     remote = true,
   }: {
     /**
@@ -446,12 +481,16 @@ export const replicateThought = async (
      * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
+    /** Callback with the doc as soon as it has been instantiated. */
+    onDoc?: (doc: Y.Doc) => void
     /** Sync with websocket server. Default: true. This is currently set to false during export. */
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
+  const { isThoughtLoaded, onError, onThoughtIDBSynced, onThoughtReplicated, tsid, websocket } = await config
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs.get(id) || new Y.Doc({ guid: documentName })
+  onDoc?.(doc)
   const thoughtMap = doc.getMap<ThoughtYjs>()
 
   // if the doc has already been initialized and added to thoughtDocs, return immediately
@@ -467,10 +506,10 @@ export const replicateThought = async (
   const persistence = new IndexeddbPersistence(documentName, doc)
   const websocketProvider = remote
     ? new HocuspocusProvider({
-        websocketProvider: websocketThoughtspace,
+        websocketProvider: websocket,
         name: documentName,
         document: doc,
-        token: accessToken,
+        token: (await config).accessToken,
       })
     : null
 
@@ -487,16 +526,8 @@ export const replicateThought = async (
 
   const idbSynced = persistence.whenSynced
     .then(() => {
-      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
-      if (!background && id === HOME_TOKEN) {
-        const rootThought = getThought(doc)
-        const hasRootChildren = Object.keys(rootThought?.childrenMap || {}).length > 0
-        if (hasRootChildren) {
-          offlineStatusStore.update(statusOld =>
-            statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
-          )
-        }
-      }
+      const thought = getThought(doc)
+      onThoughtIDBSynced?.(thought, { background: !!background })
     })
     .catch(e => {
       // AbortError happens if the app is closed during replication.
@@ -508,9 +539,7 @@ export const replicateThought = async (
         }, IDB_ERROR_RETRY)
         return
       }
-      const errorMessage = `Error loading thought ${id}: ${e.message}`
-      console.error(errorMessage, e)
-      store.dispatch(alert(errorMessage))
+      onError?.(`Error loading thought ${id}: ${e.message}`, e)
     })
 
   // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateThought will not re-replicate
@@ -536,7 +565,7 @@ export const replicateThought = async (
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     const thought = getThought(doc)
-    if (isThoughtLoaded(store.getState(), thought)) {
+    if (await isThoughtLoaded(thought)) {
       thoughtDocs.set(id, doc)
       thoughtIDBSynced.set(id, idbSynced)
       thoughtPersistence.set(id, persistence)
@@ -559,18 +588,25 @@ export const replicateThought = async (
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
-    if (!getThought(doc) && offlineStatusStore.getState() !== 'offline') {
+    if (!getThought(doc)) {
       // abort websocketSynced if the user goes offline
-      let unsubscribe: null | (() => void) = null
-      const offline = new Promise<void>(resolve => {
-        unsubscribe = offlineStatusStore.subscribe(status => {
-          if (status === 'offline') {
-            unsubscribe?.()
-            resolve()
+
+      let offlineTimeout = 0
+      const offline = cancellable(
+        new Promise((resolve, reject) => {
+          /** Set offlineTimeout when the websocket becomes disconnected. */
+          const onStatusChange = ({ status }: { status: WebsocketStatus }) => {
+            clearTimeout(offlineTimeout)
+            if (status === 'disconnected') {
+              offlineTimeout = setTimeout(resolve, WEBSOCKET_CONNECTION_TIME) as unknown as number
+            }
           }
-        })
-      })
-      await Promise.race([websocketSynced, offline]).then(unsubscribe)
+          websocket.on('status', onStatusChange)
+        }),
+        () => clearTimeout(offlineTimeout),
+      )
+
+      await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
     }
 
     // Note: onThoughtChange is not pending-aware.
@@ -580,7 +616,7 @@ export const replicateThought = async (
   }
 
   // repair
-  websocketSynced?.then(() => repairThought(id, doc))
+  websocketSynced?.then(() => onThoughtReplicated?.(id, getThought(doc)))
 
   return getThought(doc)
 }
@@ -600,6 +636,7 @@ export const replicateLexeme = async (
     background?: boolean
   } = {},
 ): Promise<Lexeme | undefined> => {
+  const { accessToken, isLexemeLoaded, onError, tsid, websocket } = await config
   const documentName = encodeLexemeDocumentName(tsid, key)
   const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
@@ -616,7 +653,7 @@ export const replicateLexeme = async (
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const websocketProvider = new HocuspocusProvider({
-    websocketProvider: websocketThoughtspace,
+    websocketProvider: websocket,
     name: documentName,
     document: doc,
     token: accessToken,
@@ -642,9 +679,7 @@ export const replicateLexeme = async (
       }, IDB_ERROR_RETRY)
       return
     }
-    const errorMessage = `Error loading lexeme ${key}: ${e.message}`
-    console.error(errorMessage, e)
-    store.dispatch(alert(errorMessage))
+    onError?.(`Error loading lexeme ${key}: ${e.message}`, e)
   }) as Promise<void>
 
   // if foreground replication (i.e. pull), set the lexemeDocs entry so that further calls to replicateLexeme will not re-replicate
@@ -669,7 +704,7 @@ export const replicateLexeme = async (
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
-    if (isLexemeLoaded(store.getState(), key, getLexeme(doc))) {
+    if (await isLexemeLoaded(key, getLexeme(doc))) {
       lexemeDocs.set(key, doc)
       lexemeIDBSynced.set(key, idbSynced)
       lexemePersistence.set(key, persistence)
@@ -754,6 +789,7 @@ export const freeThought = async (id: ThoughtId): Promise<void> => {
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
 const deleteThought = async (id: ThoughtId): Promise<void> => {
+  const { tsid } = await config
   const persistence = thoughtPersistence.get(id)
 
   try {
@@ -796,6 +832,7 @@ export const freeLexeme = async (key: string): Promise<void> => {
 
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
 const deleteLexeme = async (key: string): Promise<void> => {
+  const { tsid } = await config
   const persistence = lexemePersistence.get(key)
 
   // When deleting a Lexeme, clear out the contexts first to ensure that if a new Lexeme with the same key gets created, it doesn't accidentally pull the old contexts.
@@ -819,7 +856,7 @@ const deleteLexeme = async (key: string): Promise<void> => {
 
 /** Updates shared thoughts and lexemes. Resolves when IDB is synced (not when websocket is synced). */
 // Note: Does not await updates, but that could be added.
-export const updateThoughts = ({
+export const updateThoughts = async ({
   thoughtIndexUpdates,
   lexemeIndexUpdates,
   lexemeIndexUpdatesOld,
@@ -830,6 +867,8 @@ export const updateThoughts = ({
   lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   schemaVersion: number
 }) => {
+  const { replication, updateQueue } = await config
+
   // group thought updates and deletes so that we can use the db bulk functions
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
     thought ? 'update' : 'delete',
@@ -891,19 +930,19 @@ export const clear = async () => {
 
   await Promise.all([...deleteThoughtPromises, ...deleteLexemePromises])
 
-  // reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
-  const state = initialState()
-  const thoughtIndexUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => ({
-    [id]: thoughtToDb(thought),
-  }))
-  const lexemeIndexUpdates = state.thoughts.lexemeIndex
+  // TODO: reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
+  // const state = initialState()
+  // const thoughtIndexUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => ({
+  //   [id]: thoughtToDb(thought),
+  // }))
+  // const lexemeIndexUpdates = state.thoughts.lexemeIndex
 
-  await updateThoughts({
-    thoughtIndexUpdates,
-    lexemeIndexUpdates,
-    lexemeIndexUpdatesOld: {},
-    schemaVersion: SCHEMA_LATEST,
-  })
+  // await updateThoughts({
+  //   thoughtIndexUpdates,
+  //   lexemeIndexUpdates,
+  //   lexemeIndexUpdatesOld: {},
+  //   schemaVersion: SCHEMA_LATEST,
+  // })
 }
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
@@ -920,17 +959,21 @@ export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined
   Promise.all(ids.map(getThoughtById))
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
-export const replicateTree = (
+export const replicateTree = async (
   id: ThoughtId,
-  {
-    remote = true,
-    onThought,
-  }: {
+  options: {
     /** Sync with Websocket. Default: true. */
-    remote?: boolean
+    remote?: Promise<boolean>
     onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
   } = {},
-): CancellablePromise<Index<Thought>> => {
+): Promise<{
+  promise: Promise<Index<Thought>>
+  // CancellablePromise use an ad hoc property that cannot cross the worker boundary, so we need to return a cancel function separately from the promise.
+  cancel: () => void
+}> => {
+  const remote = await options.remote
+  const onThought = options.onThought
+
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
   const thoughtIndex: Index<Thought> = {}
@@ -950,77 +993,25 @@ export const replicateTree = (
 
   // return a promise that can cancel the replication
   const promise = queue.end.then(() => thoughtIndex)
-  return cancellable(promise, () => {
-    queue.clear()
-    abort = true
-  })
+  return {
+    promise,
+    cancel: () => {
+      queue.clear()
+      abort = true
+    },
+  }
 }
 
-/** Checks for and repairs data integrity issues that are detected after a thought is fully replicated. Namely, it can remove Lexeme contexts that no longer have a corresponding thought, and it can restore Lexeme context parent's that have been removed. Unfortunately, data integrity issues are quite possible given that Thoughts and Lexemes are stored in separate Docs. */
-const repairThought = (id: ThoughtId, doc: Y.Doc) => {
-  // Repair Lexeme with invalid context by removing cxid of missing thought.
-  // This can happen if thoughts with the same value are rapidly created and deleted, though it is rare.
-  const state = store.getState()
-  const cursorValue = state.cursor ? headValue(state, state.cursor) : null
-  const cursorLexeme =
-    state.cursor && isContextViewActive(state, state.cursor) ? getLexemeSelector(state, cursorValue!) : null
+/** Pauses replication. */
+export const pauseReplication = async () => {
+  const { replication } = await config
+  replication.pause()
+}
 
-  if (cursorLexeme?.contexts.includes(id)) {
-    const thought = getThought(doc)
-
-    // check for missing context
-    // a thought should never be undefined after IDB and the Websocket server have synced
-    if (!thought) {
-      console.warn(`Thought ${id} missing from IndexedDB and Websocket server.`)
-
-      store.dispatch(
-        updateThoughtsActionCreator({
-          thoughtIndexUpdates: {},
-          lexemeIndexUpdates: {
-            [hashThought(cursorValue!)]: removeContext(state, cursorLexeme, id),
-          },
-        }),
-      )
-      console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
-        cursorLexeme,
-      })
-    }
-    // repair invalid parent
-    else {
-      // replicating the parent should use the cached synced promise
-      replicateThought(thought.parentId, { background: true }).then(parent => {
-        if (parent) {
-          const childKey = isFunction(thought.value) ? thought.value : thought.id
-          if (!parent.childrenMap[childKey]) {
-            // restore thought to parent
-            store.dispatch((dispatch, getState) => {
-              dispatch([
-                // delete the thought from its Lexeme first, as it may be incorrect and it will be recreated in createThought
-                updateThoughtsActionCreator({
-                  thoughtIndexUpdates: {},
-                  lexemeIndexUpdates: {
-                    [hashThought(cursorValue!)]: removeContext(getState(), cursorLexeme, id),
-                  },
-                }),
-                // add the missing thought to its parent
-                createThoughtActionCreator({
-                  id: thought.id,
-                  path: thoughtToPath(getState(), parent.id),
-                  value: thought.value,
-                  rank: thought.rank,
-                }),
-              ])
-            })
-            console.warn(
-              `Repaired invalid Lexeme context: Thought ${id} restored to its parent ${thought.parentId} after not found in providers.`,
-            )
-          }
-        } else {
-          console.error(`Thought ${id} has a missing parent ${thought.parentId}.`)
-        }
-      })
-    }
-  }
+/** Resumes replication. */
+export const startReplication = async () => {
+  const { replication } = await config
+  replication.start()
 }
 
 const db: DataProvider = {

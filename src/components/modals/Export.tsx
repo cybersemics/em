@@ -128,44 +128,48 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     const id = head(simplePath)
 
-    const promise = replicateTree(id, {
+    const p = replicateTree(id, {
       // TODO: Warn the user if offline or not fully replicated
-      remote: false,
+      remote: Promise.resolve(false),
       onThought: (thought, thoughtIndex) => {
         if (!isMounted.current) return
         setExportingThoughtsThrottled(thought)
       },
     })
 
-    promise.then(thoughtIndex => {
-      if (!isMounted.current) return
+    p.then(({ promise }) => {
+      promise.then(thoughtIndex => {
+        if (!isMounted.current) return
 
-      setExportingThoughtsThrottled.flush()
+        setExportingThoughtsThrottled.flush()
 
-      const initial = initialState()
-      const exportedState: State = {
-        ...initial,
-        thoughts: {
-          ...initial.thoughts,
-          thoughtIndex: {
-            ...initial.thoughts.thoughtIndex,
-            ...thoughtIndex,
+        const initial = initialState()
+        const exportedState: State = {
+          ...initial,
+          thoughts: {
+            ...initial.thoughts,
+            thoughtIndex: {
+              ...initial.thoughts.thoughtIndex,
+              ...thoughtIndex,
+            },
           },
-        },
-      }
+        }
 
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-      setExportedState(exportedState)
+        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+        setExportedState(exportedState)
 
-      // clear exporting thoughts when replication completes to conserve memory
-      // numDescendantsFinal will be used instead
-      setExportingThoughts([])
-      setIsPulling(false)
+        // clear exporting thoughts when replication completes to conserve memory
+        // numDescendantsFinal will be used instead
+        setExportingThoughts([])
+        setIsPulling(false)
+      })
     })
 
     return () => {
       isMounted.current = false
-      promise.cancel()
+      p.then(({ cancel }) => {
+        cancel()
+      })
     }
   }, [])
 
