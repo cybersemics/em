@@ -126,9 +126,6 @@ export const ABSOLUTE_PATH = [ABSOLUTE_TOKEN] as SimplePath
 
 export const ALLOW_SINGLE_CONTEXT = false
 
-/** An identify function that returns the value passed to it. */
-export const ID = <T = any>(x: T): T => x
-
 /** A void function that does nothing (noop means "no operation"). */
 export const noop = () => {} // eslint-disable-line @typescript-eslint/no-empty-function
 

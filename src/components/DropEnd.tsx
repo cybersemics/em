@@ -6,7 +6,6 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { ID } from '../constants'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -21,6 +20,9 @@ import isRoot from '../util/isRoot'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import DragOnly from './DragOnly'
+
+/** An identify function that returns the value passed to it. */
+const identity = <T,>(x: T): T => x
 
 /** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
 const DropEnd = ({
@@ -87,7 +89,7 @@ const DropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  return (dropTarget || ID)(
+  return (dropTarget || identity)(
     <li
       className={classNames({
         'drop-end': true,
