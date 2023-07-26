@@ -8,10 +8,15 @@ import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
 import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
 import db from '../data-providers/yjs/thoughtspace'
+import dbapi from '../data-providers/yjs/thoughtspace.main'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import mergeThoughts from '../util/mergeThoughts'
+
+setTimeout(() => {
+  dbapi()
+}, 100)
 
 const BUFFER_DEPTH = 2
 
