@@ -1,12 +1,15 @@
 import Emitter from 'emitter20'
 import { useEffect, useRef, useState } from 'react'
 import { act } from 'react-dom/test-utils'
+import cancellable, { CancellablePromise } from '../util/cancellable'
 
 export interface Ministore<T> {
   /* Get the full state of the store. */
   getState: () => T
   /** Subscribes to changes. Returns an unsubscribe function. */
   subscribe: (f: (state: T) => void) => () => void
+  /** Subscribes to one update. Returns an unsubscribe function. */
+  once: (predicate?: (state: T) => boolean) => CancellablePromise<T>
   /** Subscribes to changes to a slice of the state. */
   subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
@@ -79,19 +82,23 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     return localState
   }
 
-  /** Subscribe directly to the state. Returns on unsubscribe function. */
+  /**
+   * Subscribe directly to the state.
+   *
+   * @returns Unsubscribe function.
+   */
   const subscribe = (f: (state: T) => void): (() => void) => {
     // We need to wrap the callback in act when the tests are running.
-    // Do this once here rather than in every test.
+    // Do this here rather than in every test.
     // TODO: Move this to a stubbing function.
-    if (process.env.NODE_ENV === 'test') {
-      emitter.on('change', async (state: T) => {
-        await act(() => Promise.resolve(f(state)))
-      })
-    } else {
-      emitter.on('change', f)
-    }
-    return () => emitter.off('change', f)
+    const onChange =
+      process.env.NODE_ENV === 'test'
+        ? async (state: T) => {
+            await act(() => Promise.resolve(f(state)))
+          }
+        : f
+    emitter.on('change', onChange)
+    return () => emitter.off('change', onChange)
   }
 
   /** Subscribe to a slice of the state. */
@@ -110,8 +117,42 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     })
   }
 
+  /**
+   * Subscribes to a single update. Optionally takes a predicate that can be used to wait until a specific condition is met before resolving.
+   *
+   * @returns Unsubscribe function.
+   */
+  const once = (predicate: (state: T) => boolean = () => true): CancellablePromise<T> => {
+    let onChange: any
+
+    /** Unsubscribes from the emitter. */
+    const unsubscribe = () => emitter.off('change', onChange)
+
+    const promise = new Promise<T>(resolve => {
+      /** We need to wrap the callback in act when the tests are running.
+       * Do this here rather than in every test. */
+      // TODO: Move this to a stubbing function.
+      onChange = (stateNew: T) => {
+        if (!predicate(stateNew)) return
+        const done =
+          process.env.NODE_ENV === 'test'
+            ? async (state: T) => {
+                await act(() => Promise.resolve(resolve(state)))
+              }
+            : resolve
+
+        unsubscribe()
+        done(stateNew)
+      }
+      emitter.on('change', onChange)
+    })
+
+    return cancellable<T>(promise, unsubscribe)
+  }
+
   return {
     getState: () => state,
+    once,
     subscribe,
     subscribeSelector,
     update,
