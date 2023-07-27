@@ -11,6 +11,7 @@ import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
 import setCursor from './action-creators/setCursor'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
+import { websocket } from './data-providers/yjs'
 import * as db from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -53,7 +54,7 @@ const initializeCursor = async () => {
 
 /** Initilaize local db and window events. */
 export const initialize = async () => {
-  await initOfflineStatusStore()
+  await initOfflineStatusStore(websocket)
 
   // load local state unless loading a public context or source url
   // await initDB()
