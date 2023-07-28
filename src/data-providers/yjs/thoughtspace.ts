@@ -159,6 +159,9 @@ const doclog = new Y.Doc()
 /** The thoughtspace config that is resolved after init is called. Mainly used to pass objects and callbacks into the worker that it cannot access natively, e.g. localStorage. */
 const config = resolvable<ThoughtspaceConfig>()
 
+/** Track if the doclog has been initialized and connected to the providers. This needs to be delayed until replication starts (after the first pull) because the doclog is huge and will block the worker thread for 10+ seconds. */
+let doclogConnected = false
+
 /** Initialize the thoughtspace with a storage module; localStorage cannot be accessed from within a web worker. */
 export const init = async (
   options: Omit<ThoughtspaceOptions, 'accessToken' | 'tsid' | 'websocketUrl'> & {
@@ -184,22 +187,9 @@ export const init = async (
   const tsid = await options.tsid
   const websocketUrl = await options.websocketUrl
 
-  const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-  doclogPersistence.whenSynced.catch(e => {
-    const errorMessage = `Error loading doclog: ${e.message}`
-    onError?.(errorMessage, e)
-  })
   // websocket provider
   // TODO: Reuse websocket connection from ./index?
   const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
-
-  // eslint-disable-next-line no-new
-  new HocuspocusProvider({
-    websocketProvider: websocket,
-    name: encodeDocLogDocumentName(tsid),
-    document: doclog,
-    token: accessToken,
-  })
 
   const replication = replicationController({
     // begin paused, and only start after initial pull has completed
@@ -1002,16 +992,34 @@ export const replicateTree = async (
   }
 }
 
-/** Pauses replication. */
+/** Pauses replication for higher priority network activity, such as push or pull. */
 export const pauseReplication = async () => {
   const { replication } = await config
   replication.pause()
 }
 
-/** Resumes replication. */
+/** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. The first time startReplication is called, it will block the worker thread as the doclog loads. */
 export const startReplication = async () => {
-  const { replication } = await config
+  const { accessToken, onError, replication, tsid, websocket } = await config
   replication.start()
+
+  if (!doclogConnected) {
+    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+    doclogPersistence.whenSynced.catch(e => {
+      const errorMessage = `Error loading doclog: ${e.message}`
+      onError?.(errorMessage, e)
+    })
+
+    // eslint-disable-next-line no-new
+    new HocuspocusProvider({
+      websocketProvider: websocket,
+      name: encodeDocLogDocumentName(tsid),
+      document: doclog,
+      token: accessToken,
+    })
+
+    doclogConnected = true
+  }
 }
 
 const db: DataProvider = {
