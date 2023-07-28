@@ -128,7 +128,9 @@ fi
 # echo DATE_90DAYS_DAY $DATE_90DAYS_DAY
 # exit 1
 
-echo "backup $DATE"
+if [ -z $arg_path ]; then
+  echo "backup $DATE"
+fi
 
 # zip
 mkdir -p "$STAGING_DIR"
