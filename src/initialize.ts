@@ -19,7 +19,11 @@ import updateThoughtsActionCreator from './action-creators/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, tsid, websocket, websocketUrl } from './data-providers/yjs'
-import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
+import db, {
+  init as initThoughtspace,
+  pauseReplication,
+  startReplication,
+} from './data-providers/yjs/thoughtspace.main'
 import * as selection from './device/selection'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -84,7 +88,7 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 export const initialize = async () => {
   initOfflineStatusStore(websocket)
   await initThoughtspace({
-    accessToken: Promise.resolve(accessToken),
+    accessToken,
     /** Returns true if the Thought or its parent is in State. */
     isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {
       const state = store.getState()
@@ -142,8 +146,8 @@ export const initialize = async () => {
     },
     getItem: storage.getItem,
     setItem: storage.setItem,
-    tsid: Promise.resolve(tsid),
-    websocketUrl: Promise.resolve(websocketUrl),
+    tsid,
+    websocketUrl,
   })
 
   // pause replication during pushing and pulling

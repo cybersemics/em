@@ -12,7 +12,7 @@ import closeModal from '../../action-creators/closeModal'
 import error from '../../action-creators/error'
 import { isTouch } from '../../browser'
 import { AlertType, HOME_PATH } from '../../constants'
-import { replicateTree } from '../../data-providers/yjs/thoughtspace'
+import { replicateTree } from '../../data-providers/yjs/thoughtspace.main'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -128,48 +128,44 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     const id = head(simplePath)
 
-    const p = replicateTree(id, {
+    const promise = replicateTree(id, {
       // TODO: Warn the user if offline or not fully replicated
-      remote: Promise.resolve(false),
+      remote: false,
       onThought: (thought, thoughtIndex) => {
         if (!isMounted.current) return
         setExportingThoughtsThrottled(thought)
       },
     })
 
-    p.then(({ promise }) => {
-      promise.then(thoughtIndex => {
-        if (!isMounted.current) return
+    promise.then(thoughtIndex => {
+      if (!isMounted.current) return
 
-        setExportingThoughtsThrottled.flush()
+      setExportingThoughtsThrottled.flush()
 
-        const initial = initialState()
-        const exportedState: State = {
-          ...initial,
-          thoughts: {
-            ...initial.thoughts,
-            thoughtIndex: {
-              ...initial.thoughts.thoughtIndex,
-              ...thoughtIndex,
-            },
+      const initial = initialState()
+      const exportedState: State = {
+        ...initial,
+        thoughts: {
+          ...initial.thoughts,
+          thoughtIndex: {
+            ...initial.thoughts.thoughtIndex,
+            ...thoughtIndex,
           },
-        }
+        },
+      }
 
-        // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
-        setExportedState(exportedState)
+      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
+      setExportedState(exportedState)
 
-        // clear exporting thoughts when replication completes to conserve memory
-        // numDescendantsFinal will be used instead
-        setExportingThoughts([])
-        setIsPulling(false)
-      })
+      // clear exporting thoughts when replication completes to conserve memory
+      // numDescendantsFinal will be used instead
+      setExportingThoughts([])
+      setIsPulling(false)
     })
 
     return () => {
       isMounted.current = false
-      p.then(({ cancel }) => {
-        cancel()
-      })
+      promise.cancel()
     }
   }, [])
 
