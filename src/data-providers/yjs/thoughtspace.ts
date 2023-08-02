@@ -477,7 +477,8 @@ export const replicateThought = async (
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
-  const { isThoughtLoaded, onError, onThoughtIDBSynced, onThoughtReplicated, tsid, websocket } = await config
+  const { accessToken, isThoughtLoaded, onError, onThoughtIDBSynced, onThoughtReplicated, tsid, websocket } =
+    await config
   const documentName = encodeThoughtDocumentName(tsid, id)
   const doc = thoughtDocs.get(id) || new Y.Doc({ guid: documentName })
   onDoc?.(doc)
@@ -499,7 +500,7 @@ export const replicateThought = async (
         websocketProvider: websocket,
         name: documentName,
         document: doc,
-        token: (await config).accessToken,
+        token: accessToken,
       })
     : null
 
