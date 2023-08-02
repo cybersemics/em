@@ -4,16 +4,19 @@ import Thought from '../../@types/Thought'
 import * as thoughtspace from './thoughtspace'
 
 /** Proxy replicateTree since it takes a callback and CancellablePromise cannot cross the worker boundary. */
-export const replicateTree = async (
-  ...args: Parameters<typeof api.replicateTree>
+const replicateTree = async (
+  ...args: Parameters<typeof thoughtspace.replicateTree>
 ): Promise<{ promise: Promise<Index<Thought>>; cancel: () => void }> => {
-  const { promise, cancel } = await api.replicateTree(...args)
+  const { promise, cancel } = await thoughtspace.replicateTree(...args)
   return proxy({ promise, cancel })
 }
 
 // eslint-disable-next-line export-default-identifier/export-default-identifier
 export default {} as typeof Worker & { new (): Worker }
 
-export const api = thoughtspace
+export const api = {
+  ...thoughtspace,
+  replicateTree,
+}
 
 expose(api)
