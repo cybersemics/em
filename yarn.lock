@@ -1802,19 +1802,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.2.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.2.0.tgz#6e09c75d269fe08f0e9246c978a537350b99f513"
-  integrity sha512-PkpbFfMC2Tryv5XH/waRMq79zYdrSUc86U6mSHY4+cirvl+U15/ZMV/pdI+sx+HYzZXN/351JT9FiGbKOI/JrQ==
+"@hocuspocus/common@^2.3.1":
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.3.1.tgz#635e75e49ecaabcebfa15dcb31ab6bc84c9a8438"
+  integrity sha512-OUPj5NUBnrcaCLAotMD1O5QRu48kJYCYGz/ZzobTqLbs6PtfrmfQfrB0hAzU3GYxPPEWvBrL3sRivrUvpyb48w==
   dependencies:
     lib0 "^0.2.47"
 
 "@hocuspocus/provider@^2.2.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.2.0.tgz#5354633a486f344a3bf236d25d817729a6de735d"
-  integrity sha512-K7OXfUYdmOzoSVQTB2suVmlsM4CVayMg9Scz7qTcWADxHIC811UQzhAjqDoLBjXRjCiYtZf3kLEJnIvf8dCc8A==
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.3.1.tgz#f2a10292f208288f2d4fd3b443c55b3471e33e32"
+  integrity sha512-GbTFRld6/a2EEB0+dIre9HCUIDhIWYgrbqMngDu4whvjISgl1Wqr48+dkvnjKm9d/hAO3+6c0kN3AVSSdP51jQ==
   dependencies:
-    "@hocuspocus/common" "^2.2.0"
+    "@hocuspocus/common" "^2.3.1"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
     ws "^7.5.9"
@@ -11196,14 +11196,14 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lib0@^0.2.43, lib0@^0.2.47:
+lib0@^0.2.43:
   version "0.2.62"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.62.tgz#c4e6860751ba7674a0dca51bb3c23d80985852de"
   integrity sha512-DY0G8AaQloUvpiss7EpAo/t4R82b9m/AydbQRNAa9Khssn9oGDJnSN8Q1qQ8u82Wog4iaT1O8yM+DfhzGCrrpQ==
   dependencies:
     isomorphic.js "^0.2.4"
 
-lib0@^0.2.74:
+lib0@^0.2.47, lib0@^0.2.74:
   version "0.2.78"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.78.tgz#9aa34733075caafb3edf228da6e609d15ada0088"
   integrity sha512-SV2nU43/6eaYnGH3l0lg2wg1ziB/TH3sAd2E8quXPGwrqo+aX98SNT2ZKucpUr5B8A52jD7ZMjAl+r87Fa/bLQ==
