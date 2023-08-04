@@ -544,35 +544,8 @@ export const replicateThought = async (
       })
     : null
 
-  // if background replication, wait until websocket has synced
-  if (background) {
-    if (remote) {
-      await websocketSynced
-    }
-
-    // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
-    // Otherwise remote changes will not be rendered.
-    const thought = getThought(doc)
-    if (await isThoughtLoaded(thought)) {
-      thoughtDocs.set(id, doc)
-      thoughtIDBSynced.set(id, idbSynced)
-      thoughtPersistence.set(id, persistence)
-      if (websocketProvider) {
-        thoughtWebsocketProvider.set(id, websocketProvider)
-      }
-      onThoughtChange({
-        target: doc.getMap(),
-        transaction: {
-          origin: websocketProvider,
-        },
-      })
-      thoughtMap.observe(onThoughtChange)
-    } else {
-      doc.destroy()
-      websocketProvider?.destroy()
-      return thought
-    }
-  } else {
+  // foreground
+  if (!background) {
     if (websocketProvider) {
       thoughtWebsocketProvider.set(id, websocketProvider)
       thoughtWebsocketSynced.set(id, websocketSynced!)
@@ -605,6 +578,35 @@ export const replicateThought = async (
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     thoughtMap.observe(onThoughtChange)
+  }
+  // background
+  else {
+    if (remote) {
+      await websocketSynced
+    }
+
+    // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
+    // Otherwise remote changes will not be rendered.
+    const thought = getThought(doc)
+    if (await isThoughtLoaded(thought)) {
+      thoughtDocs.set(id, doc)
+      thoughtIDBSynced.set(id, idbSynced)
+      thoughtPersistence.set(id, persistence)
+      if (websocketProvider) {
+        thoughtWebsocketProvider.set(id, websocketProvider)
+      }
+      onThoughtChange({
+        target: doc.getMap(),
+        transaction: {
+          origin: websocketProvider,
+        },
+      })
+      thoughtMap.observe(onThoughtChange)
+    } else {
+      doc.destroy()
+      websocketProvider?.destroy()
+      return thought
+    }
   }
 
   // repair
@@ -689,7 +691,13 @@ export const replicateLexeme = async (
     websocketProvider.on('synced', onSynced)
   })
 
-  if (background) {
+  // foreground
+  if (!background) {
+    lexemeWebsocketSynced.set(key, websocketSynced)
+    lexemeWebsocketProvider.set(key, websocketProvider)
+  }
+  // background
+  else {
     // do not resolve background replication until websocket has synced
     await websocketSynced
 
@@ -714,9 +722,6 @@ export const replicateLexeme = async (
       websocketProvider.destroy()
       return lexeme
     }
-  } else {
-    lexemeWebsocketSynced.set(key, websocketSynced)
-    lexemeWebsocketProvider.set(key, websocketProvider)
   }
 
   return getLexeme(doc)
