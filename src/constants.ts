@@ -487,10 +487,12 @@ export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
 export const FREE_THOUGHT_JUMPS = 3
 
 /** The number of additional thoughts to free when the threshold is reached. This provides some slack so that freeThoughts is not triggered on every action. */
-export const FREE_THOUGHTS_MARGIN = 50
+export const FREE_THOUGHTS_MARGIN = 100
 
 /** The maximum size of the thoughtIndex before freeThoughts kicks in to free memory. */
-export const FREE_THOUGHTS_THRESHOLD = 200
+// e.g. Art • Buddhist Art • :: • Regions • China • Period • Era of North-South division • North • East • Northern Qi
+// = 455 thoughts loaded into memory
+export const FREE_THOUGHTS_THRESHOLD = 1000
 
 /** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
 export const FREE_THOUGHTS_THROTTLE = 1000
