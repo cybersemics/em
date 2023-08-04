@@ -28,7 +28,7 @@ const moveThoughtUpShortcut: Shortcut = {
   id: 'moveThoughtUp',
   label: 'Move Thought Up',
   description: 'Move the current thought up.',
-  gesture: 'u',
+  gesture: 'udu',
   keyboard: { key: Key.ArrowUp, meta: true, shift: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
