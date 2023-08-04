@@ -12,7 +12,7 @@ import closeModal from '../../action-creators/closeModal'
 import error from '../../action-creators/error'
 import { isTouch } from '../../browser'
 import { AlertType, HOME_PATH } from '../../constants'
-import { replicateTree } from '../../data-providers/yjs/thoughtspace.main'
+import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -128,7 +128,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     const id = head(simplePath)
 
-    const promise = replicateTree(id, {
+    const { promise, cancel } = replicateTree(id, {
       // TODO: Warn the user if offline or not fully replicated
       remote: false,
       onThought: (thought, thoughtIndex) => {
@@ -165,7 +165,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
     return () => {
       isMounted.current = false
-      promise.cancel()
+      cancel()
     }
   }, [])
 

@@ -1,12 +1,7 @@
 /** API on the main thread to access the thoughtspace web worker at thoughtspace.worker.ts. */
 import { proxy, wrap } from 'comlink'
-import Index from '../../@types/IndexType'
-import Thought from '../../@types/Thought'
-import ThoughtId from '../../@types/ThoughtId'
-import cancellable, { CancellablePromise } from '../../util/cancellable'
 import { DataProvider } from '../DataProvider'
 import { ThoughtspaceOptions } from './thoughtspace'
-// import { DataProvider } from '../DataProvider'
 import ThoughtspaceWorker, { api } from './thoughtspace.worker'
 
 /** Convert a Remote type back into a regular promise. */
@@ -42,35 +37,6 @@ export const init = (options: ThoughtspaceOptions) =>
       websocketUrl: Promise.resolve(options.websocketUrl),
     }),
   )
-
-/** Proxy replicateTree since it takes a callback. */
-export const replicateTree = (
-  id: ThoughtId,
-  {
-    remote,
-    onThought,
-  }: {
-    /** Sync with Websocket. Default: true. */
-    remote?: boolean
-    onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
-  } = {},
-): CancellablePromise<Index<Thought>> => {
-  // outer Promise is for the proxy call
-  // inner Promise resolves when the replication is complete
-  const proxyPromise = workerApi.replicateTree(
-    id,
-    proxy({
-      remote: Promise.resolve(!!remote),
-      onThought,
-    }),
-  )
-  return cancellable(
-    proxyPromise.then(({ promise }) => promise),
-    () => {
-      proxyPromise.then(({ cancel }) => cancel())
-    },
-  )
-}
 
 const db: DataProvider = {
   clear,
