@@ -495,26 +495,6 @@ export const replicateThought = async (
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
-  const websocketProvider = remote
-    ? new HocuspocusProvider({
-        websocketProvider: websocket,
-        name: documentName,
-        document: doc,
-        token: accessToken,
-      })
-    : null
-
-  const websocketSynced = websocketProvider
-    ? new Promise<void>(resolve => {
-        /** Resolves when synced fires. */
-        const onSynced = () => {
-          websocketProvider.off('synced', onSynced)
-          resolve()
-        }
-        websocketProvider.on('synced', onSynced)
-      })
-    : null
-
   const idbSynced = persistence.whenSynced
     .then(() => {
       const thought = getThought(doc)
@@ -538,14 +518,31 @@ export const replicateThought = async (
     thoughtDocs.set(id, doc)
     thoughtIDBSynced.set(id, idbSynced)
     thoughtPersistence.set(id, persistence)
-    if (websocketProvider) {
-      thoughtWebsocketProvider.set(id, websocketProvider)
-      thoughtWebsocketSynced.set(id, websocketSynced!)
-    }
   }
 
   // always wait for IDB to sync
   await idbSynced
+
+  // sync Websocket after IDB to ensure that only the latest updates since the local state vector are synced
+  const websocketProvider = remote
+    ? new HocuspocusProvider({
+        websocketProvider: websocket,
+        name: documentName,
+        document: doc,
+        token: accessToken,
+      })
+    : null
+
+  const websocketSynced = websocketProvider
+    ? new Promise<void>(resolve => {
+        /** Resolves when synced fires. */
+        const onSynced = () => {
+          websocketProvider.off('synced', onSynced)
+          resolve()
+        }
+        websocketProvider.on('synced', onSynced)
+      })
+    : null
 
   // if background replication, wait until websocket has synced
   if (background) {
@@ -576,6 +573,10 @@ export const replicateThought = async (
       return thought
     }
   } else {
+    if (websocketProvider) {
+      thoughtWebsocketProvider.set(id, websocketProvider)
+      thoughtWebsocketSynced.set(id, websocketSynced!)
+    }
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
@@ -643,21 +644,6 @@ export const replicateLexeme = async (
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
-  const websocketProvider = new HocuspocusProvider({
-    websocketProvider: websocket,
-    name: documentName,
-    document: doc,
-    token: accessToken,
-  })
-
-  const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves when synced fires. */
-    const onSynced = () => {
-      websocketProvider.off('synced', onSynced)
-      resolve()
-    }
-    websocketProvider.on('synced', onSynced)
-  })
 
   // if replicating in the background, destroy the IndexeddbProvider once synced
   const idbSynced = persistence.whenSynced.catch(e => {
@@ -677,9 +663,7 @@ export const replicateLexeme = async (
   if (!background) {
     lexemeDocs.set(key, doc)
     lexemeIDBSynced.set(key, idbSynced)
-    lexemeWebsocketSynced.set(key, websocketSynced)
     lexemePersistence.set(key, persistence)
-    lexemeWebsocketProvider.set(key, websocketProvider)
   }
 
   // Start observing before websocketSynced since we don't need to worry about pending (See: replicateThought).
@@ -688,6 +672,22 @@ export const replicateLexeme = async (
 
   // always wait for IDB to sync
   await idbSynced
+
+  const websocketProvider = new HocuspocusProvider({
+    websocketProvider: websocket,
+    name: documentName,
+    document: doc,
+    token: accessToken,
+  })
+
+  const websocketSynced = new Promise<void>(resolve => {
+    /** Resolves when synced fires. */
+    const onSynced = () => {
+      websocketProvider.off('synced', onSynced)
+      resolve()
+    }
+    websocketProvider.on('synced', onSynced)
+  })
 
   if (background) {
     // do not resolve background replication until websocket has synced
@@ -714,6 +714,9 @@ export const replicateLexeme = async (
       websocketProvider.destroy()
       return lexeme
     }
+  } else {
+    lexemeWebsocketSynced.set(key, websocketSynced)
+    lexemeWebsocketProvider.set(key, websocketProvider)
   }
 
   return getLexeme(doc)
