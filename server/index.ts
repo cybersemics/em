@@ -7,6 +7,7 @@ import path from 'path'
 import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
 import DocLogAction from '../src/@types/DocLogAction'
+import Index from '../src/@types/IndexType'
 import Share from '../src/@types/Share'
 import ThoughtId from '../src/@types/ThoughtId'
 import {
@@ -378,12 +379,12 @@ export const onLoadDocument = async ({
       // persist replication cursor to level db
       storage: {
         getItem: async (key: string) => {
-          let results: string | null = null
+          let results: Index<{ thoughts: number; lexemes: number }> = {}
           try {
             const replicationCursorDb = loadReplicationCursorDb(tsid)
             results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e: any) {
-            // If a value does not exist for the key, return null.
+            // If a value does not exist for the key, return an empty object.
             // Otherwise, throw the error.
             if (e.name !== 'NotFoundError') {
               throw e
@@ -391,7 +392,7 @@ export const onLoadDocument = async ({
           }
           return results
         },
-        setItem: (key: string, value: string) => {
+        setItem: (key: string, value: Index<{ thoughts: number; lexemes: number }>) => {
           const replicationCursorDb = loadReplicationCursorDb(tsid)
           replicationCursorDb.put(encodeDocLogDocumentName(tsid, key), value)
         },

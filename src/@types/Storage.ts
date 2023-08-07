@@ -1,7 +1,7 @@
 /** Simple async storage interface. */
-interface Storage {
-  getItem: (key: string) => string | null | Promise<string | null>
-  setItem: (key: string, value: any) => void | Promise<void>
+interface Storage<T> {
+  getItem: (key: string) => T | null | Promise<T | null>
+  setItem: (key: string, value: T) => void | Promise<void>
 }
 
 export default Storage

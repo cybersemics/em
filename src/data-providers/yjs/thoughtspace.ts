@@ -1,5 +1,6 @@
 /** Thoughtspace worker accessed from the main thread via thoughtspace.main.ts. */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
+import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
@@ -15,7 +16,6 @@ import WebsocketStatus from '../../@types/WebsocketStatus'
 import { WEBSOCKET_CONNECTION_TIME } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
-import createId from '../../util/createId'
 import groupObjectBy from '../../util/groupObjectBy'
 import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
@@ -73,9 +73,11 @@ export interface ThoughtspaceOptions {
   onThoughtReplicated: (id: ThoughtId, thought: Thought | undefined) => void
   onUpdateThoughts: (args: UpdateThoughtsOptions) => void
   // offlineStatusStore.once(status => status === 'offline')
-  getItem: Storage['getItem']
-  setItem: Storage['setItem']
+  // TODO: Index<ReplicationCursor>
+  getItem: Storage<Index<any>>['getItem']
+  setItem: Storage<Index<any>>['setItem']
   tsid: string
+  tsidShared: string | null
   websocketUrl: string
 }
 
@@ -161,9 +163,6 @@ let doclog: Y.Doc
 /** The thoughtspace config that is resolved after init is called. Mainly used to pass objects and callbacks into the worker that it cannot access natively, e.g. localStorage. */
 const config = resolvable<ThoughtspaceConfig>()
 
-/** Track if the doclog has been initialized and connected to the providers. This needs to be delayed until replication starts (after the first pull) because the doclog is huge and will block the worker thread for 10+ seconds. */
-let doclogConnected = false
-
 /** Initialize the thoughtspace with a storage module; localStorage cannot be accessed from within a web worker. */
 export const init = async (options: ThoughtspaceOptions) => {
   const {
@@ -181,6 +180,7 @@ export const init = async (options: ThoughtspaceOptions) => {
 
   const accessToken = await options.accessToken
   const tsid = await options.tsid
+  const tsidShared = await options.tsidShared
   const websocketUrl = await options.websocketUrl
 
   // websocket provider
@@ -188,6 +188,58 @@ export const init = async (options: ThoughtspaceOptions) => {
   const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
 
   doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
+
+  // bind blocks to providers on load
+  doclog.on('subdocs', ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
+    loaded.forEach((subdoc: Y.Doc) => {
+      const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
+      persistence.whenSynced
+        .then(() => {
+          // eslint-disable-next-line no-new
+          new HocuspocusProvider({
+            // disable awareness for performance
+            // doclog doc has awareness enabled to keep the websocket open
+            awareness: null,
+            websocketProvider: websocket,
+            name: subdoc.guid,
+            document: subdoc,
+            token: accessToken,
+          })
+        })
+        .catch(e => {
+          const errorMessage = `Error loading doclog block: ${e.message}`
+          onError?.(errorMessage, e)
+        })
+    })
+  })
+
+  const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+  doclogPersistence.whenSynced
+    .then(() => {
+      const blocks = doclog.getArray<Y.Doc>('blocks')
+      // Do not create a starting block if this is shared from another device.
+      // We need to wait for the existing block(s) to load.
+      if (blocks.length === 0 && !tsidShared) {
+        const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
+
+        // eslint-disable-next-line fp/no-mutating-methods
+        blocks.push([blockNew])
+      }
+
+      // eslint-disable-next-line no-new
+      new HocuspocusProvider({
+        // doclog doc has awareness enabled to keep the websocket open
+        // disable awareness for all other websocket providers
+        websocketProvider: websocket,
+        name: encodeDocLogDocumentName(tsid),
+        document: doclog,
+        token: accessToken,
+      })
+    })
+    .catch(e => {
+      const errorMessage = `Error loading doclog: ${e.message}`
+      onError?.(errorMessage, e)
+    })
 
   const replication = replicationController({
     // begin paused, and only start after initial pull has completed
@@ -257,6 +309,7 @@ export const init = async (options: ThoughtspaceOptions) => {
     getItem,
     setItem,
     tsid,
+    tsidShared,
     updateQueue,
     websocket,
     websocketUrl,
@@ -960,64 +1013,10 @@ export const pauseReplication = async () => {
   replication.pause()
 }
 
-/** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. The first time startReplication is called, it will block the worker thread as the doclog loads. */
+/** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. */
 export const startReplication = async () => {
-  const { accessToken, onError, replication, tsid, websocket } = await config
+  const { replication } = await config
   replication.start()
-
-  if (!doclogConnected) {
-    doclog.on(
-      'subdocs',
-      ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
-        loaded.forEach((subdoc: Y.Doc) => {
-          const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
-          persistence.whenSynced
-            .then(() => {
-              // eslint-disable-next-line no-new
-              new HocuspocusProvider({
-                websocketProvider: websocket,
-                name: subdoc.guid,
-                document: subdoc,
-                token: accessToken,
-              })
-            })
-            .catch(e => {
-              const errorMessage = `Error loading doclog block: ${e.message}`
-              onError?.(errorMessage, e)
-            })
-        })
-      },
-    )
-
-    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-    doclogPersistence.whenSynced
-      .then(() => {
-        const blocks = doclog.getArray<Y.Doc>('blocks')
-        if (blocks.length === 0) {
-          const block = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, createId()) })
-
-          // eslint-disable-next-line fp/no-mutating-methods
-          blocks.push([block])
-        }
-        blocks.get(blocks.length - 1).load()
-
-        // eslint-disable-next-line no-new
-        new HocuspocusProvider({
-          // doclog doc has awareness enabled to keep the websocket open
-          // disable awareness for all other websocket providers
-          websocketProvider: websocket,
-          name: encodeDocLogDocumentName(tsid),
-          document: doclog,
-          token: accessToken,
-        })
-      })
-      .catch(e => {
-        const errorMessage = `Error loading doclog: ${e.message}`
-        onError?.(errorMessage, e)
-      })
-
-    doclogConnected = true
-  }
 }
 
 const db: DataProvider = {

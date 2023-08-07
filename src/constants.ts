@@ -496,3 +496,6 @@ export const FREE_THOUGHTS_THRESHOLD = 1000
 
 /** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
 export const FREE_THOUGHTS_THROTTLE = 1000
+
+/** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
+export const DOCLOG_BLOCK_SIZE = 10

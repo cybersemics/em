@@ -24,10 +24,19 @@ export const encodeDocLogDocumentName = (tsid: string, key?: string) => `${tsid}
 /** Generates a doclog block documentName with a unique key. */
 export const encodeDocLogBlockDocumentName = (tsid: string, key: string) => `${tsid}/doclog/block/${key}`
 
-/** Extracts the tsid from a document name. */
+/** Extracts the parts from a document name. */
 export const parseDocumentName = (
   documentName: string,
-): { tsid: string; type: DocType | undefined; id: ThoughtId | string | undefined } => {
-  const [tsid, type, id] = documentName.split('/')
-  return { tsid, type: docTypeAbbrev[type] || type, id }
+): {
+  // defined for all documents
+  tsid: string
+  // defined for all documents
+  type: DocType | undefined
+  // only defined for Thought and Lexeme documents
+  id: ThoughtId | string | undefined
+  // only defined for doclog subdocs
+  blockId: string | undefined
+} => {
+  const [tsid, type, id, blockId] = documentName.split('/')
+  return { tsid, type: docTypeAbbrev[type] || type, id, blockId }
 }

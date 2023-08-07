@@ -18,7 +18,7 @@ import setCursor from './action-creators/setCursor'
 import updateThoughtsActionCreator from './action-creators/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { accessToken, tsid, websocket, websocketUrl } from './data-providers/yjs'
+import { accessToken, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
 import db, {
   init as initThoughtspace,
   monitor,
@@ -145,9 +145,10 @@ export const initialize = async () => {
     onUpdateThoughts: options => {
       store.dispatch(updateThoughtsActionCreator(options))
     },
-    getItem: storage.getItem,
-    setItem: storage.setItem,
+    getItem: (key: string) => JSON.parse(storage.getItem(key) || '{}'),
+    setItem: (key: string, value: any) => storage.setItem(key, JSON.stringify(value)),
     tsid,
+    tsidShared,
     websocketUrl,
   })
 
