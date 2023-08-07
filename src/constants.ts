@@ -204,7 +204,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   // 'deleteThoughtWithCursor',
   // 'extractThought',
   // 'home',
-  // 'indentOnSpace',
   // 'join',
   // 'moveCursorBackward',
   // 'moveCursorForward',
