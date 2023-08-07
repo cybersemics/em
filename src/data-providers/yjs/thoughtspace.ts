@@ -74,8 +74,6 @@ export interface ThoughtspaceOptions {
   onThoughtChange: (thought: Thought) => void
   onThoughtReplicated: (id: ThoughtId, thought: Thought | undefined) => void
   onUpdateThoughts: (args: UpdateThoughtsOptions) => void
-  // offlineStatusStore.once(status => status === 'offline')
-  // TODO: Index<ReplicationCursor>
   getItem: Storage<Index<ReplicationCursor>>['getItem']
   setItem: Storage<Index<ReplicationCursor>>['setItem']
   tsid: string
@@ -219,9 +217,9 @@ export const init = async (options: ThoughtspaceOptions) => {
   doclogPersistence.whenSynced
     .then(() => {
       const blocks = doclog.getArray<Y.Doc>('blocks')
-
       // The doclog's initial block must be created outside the replicationController, after IDB syncs. This is necessary to avoid creating a new block when one already exists.
-      // Do not create an initial block if this thoughtspace is shared from another device, as it will already have a block.
+      // Do not create a starting block if this is shared from another device.
+      // We need to wait for the existing block(s) to load.
       if (blocks.length === 0 && !tsidShared) {
         const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
 

@@ -27,6 +27,7 @@ interface ReplicationTask {
 type SubdocsEventArgs = { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
+// TODO: Consolidate into constants without breaking worker bundle
 const DOCLOG_BLOCK_SIZE = 100
 
 /** Throttle rate of storing the replication cursor after a thought or lexeme has been successfully replicated. */
@@ -198,18 +199,16 @@ const replicationController = ({
     // It will usually be the last block, unless two devices create a new block at the same time. In that case, the blocks array will converage and both devices will fill up the first unfilled block before moving to the next.
     const activeBlock = blocks.find(block => !isFull(getBlockKey(block)))
 
-    // if there is no unfilled block, return the last block
+    // If there is no unfilled block, return the last block.
+    // Only log() should create a new block, otherwise it can cause an infinite loop.
     return activeBlock || blocks[blocks.length - 1]
   }
 
-  /** Extracts the blockId of the given doclog block from its guid. */
+  /** Extracts the blockId of the given doclog block from its guid. If no block is provided, gets the active block's blockId. */
   const getBlockKey = (block: Y.Doc): string =>
     // !: blockId must be defined since doclog subdocs always have a guid in the format /TSID/doclog/block/BLOCK_ID
     parseDocumentName(block.guid).blockId!
 
-  // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
-  // const thoughtLog = doc.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
-  // const lexemeLog = doc.getArray<[string, DocLogAction]>('lexemeLog')
   // Precondition: The replication cursors must be initialized.
   doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
     // load and observe the active block when there are new subdocs
@@ -246,7 +245,7 @@ const replicationController = ({
     doc.getMap('blockSizes').observe((e: Y.YMapEvent<number>) => {
       // Ignore self
       // The important origin is WebsocketProvider.
-      // We could probably ignore IndexedDBPersistence, but we do not have access to the providers here. However, it does not hurt to reload the blocks in case there is a discrepancy with the replication cursors.  It does not matter . he blockSizes will only be loaded if there is a discrepancy with the replication cursors (which may actually be a helpful safeguard).
+      // We could probably ignore IndexedDBPersistence, but we do not have access to the providers here. The blockSize will only be loaded if there is a discrepancy with the replication cursors (which may actually be a helpful safeguard).
       if (e.transaction.origin === doc.clientID) return
       const blockSizesMap = e.target
       const keysChanged = [...e.keysChanged]
@@ -311,7 +310,7 @@ const replicationController = ({
       const replicated = new Map<ThoughtId, number>()
       deltas.forEach(([id], i) => replicated.set(id, i))
 
-      // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+      // Get closure over thoughtReplicationCursor so that the ReplicationTask index is correct.
       // Otherwise thoughtReplicationCursor may increase before the task completes.
       const startIndex = thoughtReplicationCursor
 
@@ -375,7 +374,7 @@ const replicationController = ({
       const replicated = new Map<string, number>()
       deltas.forEach(([key], i) => replicated.set(key, i))
 
-      // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+      // Get closure over thoughtReplicationCursor so that the ReplicationTask index is correct.
       // Otherwise thoughtReplicationCursor may increase before the task completes.
       const startIndex = lexemeReplicationCursor
 
