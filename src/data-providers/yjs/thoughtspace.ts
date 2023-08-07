@@ -15,6 +15,7 @@ import WebsocketStatus from '../../@types/WebsocketStatus'
 import { WEBSOCKET_CONNECTION_TIME } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
+import createId from '../../util/createId'
 import groupObjectBy from '../../util/groupObjectBy'
 import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
@@ -22,6 +23,7 @@ import thoughtToDb from '../../util/thoughtToDb'
 import throttleConcat from '../../util/throttleConcat'
 import { DataProvider } from '../DataProvider'
 import {
+  encodeDocLogBlockDocumentName,
   encodeDocLogDocumentName,
   encodeLexemeDocumentName,
   encodeThoughtDocumentName,
@@ -150,7 +152,7 @@ const lexemeWebsocketSynced: Map<string, Promise<void>> = new Map()
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
 // They are stored as Y.Arrays to allow for replication deltas instead of repeating full replications, and regular compaction.
 // Deletes must be marked, otherwise there is no way to differentiate it from an update (because there is no way to tell if a websocket has no data for a thought, or just has not yet returned any data.)
-const doclog = new Y.Doc()
+let doclog: Y.Doc
 
 /**********************************************************************
  * Module variables
@@ -184,6 +186,8 @@ export const init = async (options: ThoughtspaceOptions) => {
   // websocket provider
   // TODO: Reuse websocket connection from ./index?
   const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
+
+  doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
 
   const replication = replicationController({
     // begin paused, and only start after initial pull has completed
@@ -906,6 +910,7 @@ export const updateThoughts = async ({
 
   // eslint-disable-next-line fp/no-mutating-methods
   replication.log({ thoughtLogs, lexemeLogs })
+
   const deletePromise = updateQueue.add([
     ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => () => deleteThought(id)),
     ...Object.keys(lexemeDeletes || {}).map(key => () => deleteLexeme(key)),
@@ -961,21 +966,55 @@ export const startReplication = async () => {
   replication.start()
 
   if (!doclogConnected) {
-    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-    doclogPersistence.whenSynced.catch(e => {
-      const errorMessage = `Error loading doclog: ${e.message}`
-      onError?.(errorMessage, e)
-    })
+    doclog.on(
+      'subdocs',
+      ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
+        loaded.forEach((subdoc: Y.Doc) => {
+          const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
+          persistence.whenSynced
+            .then(() => {
+              // eslint-disable-next-line no-new
+              new HocuspocusProvider({
+                websocketProvider: websocket,
+                name: subdoc.guid,
+                document: subdoc,
+                token: accessToken,
+              })
+            })
+            .catch(e => {
+              const errorMessage = `Error loading doclog block: ${e.message}`
+              onError?.(errorMessage, e)
+            })
+        })
+      },
+    )
 
-    // eslint-disable-next-line no-new
-    new HocuspocusProvider({
-      // doclog doc has awareness enabled to keep the websocket open
-      // disable awareness for all other websocket providers
-      websocketProvider: websocket,
-      name: encodeDocLogDocumentName(tsid),
-      document: doclog,
-      token: accessToken,
-    })
+    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+    doclogPersistence.whenSynced
+      .then(() => {
+        const blocks = doclog.getArray<Y.Doc>('blocks')
+        if (blocks.length === 0) {
+          const block = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, createId()) })
+
+          // eslint-disable-next-line fp/no-mutating-methods
+          blocks.push([block])
+        }
+        blocks.get(blocks.length - 1).load()
+
+        // eslint-disable-next-line no-new
+        new HocuspocusProvider({
+          // doclog doc has awareness enabled to keep the websocket open
+          // disable awareness for all other websocket providers
+          websocketProvider: websocket,
+          name: encodeDocLogDocumentName(tsid),
+          document: doclog,
+          token: accessToken,
+        })
+      })
+      .catch(e => {
+        const errorMessage = `Error loading doclog: ${e.message}`
+        onError?.(errorMessage, e)
+      })
 
     doclogConnected = true
   }
