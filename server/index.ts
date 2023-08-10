@@ -379,11 +379,11 @@ export const onLoadDocument = async ({
 
       // persist replication cursor to level db
       storage: {
-        getItem: async (key: string) => {
-          let results: Index<ReplicationCursor> = {}
+        getItem: async (key: string): Promise<Index<ReplicationCursor>> => {
+          let replicationCursor: Index<ReplicationCursor> = {}
           try {
             const replicationCursorDb = loadReplicationCursorDb(tsid)
-            results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
+            replicationCursor = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e: any) {
             // If a value does not exist for the key, return an empty object.
             // Otherwise, throw the error.
@@ -391,7 +391,7 @@ export const onLoadDocument = async ({
               throw e
             }
           }
-          return results
+          return replicationCursor
         },
         setItem: (key: string, value: Index<ReplicationCursor>) => {
           const replicationCursorDb = loadReplicationCursorDb(tsid)
