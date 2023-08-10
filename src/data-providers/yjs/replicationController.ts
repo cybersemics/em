@@ -253,9 +253,8 @@ const replicationController = ({
     const lexemeLog = block.getArray<[string, DocLogAction]>('lexemeLog')
 
     // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
-    // Clocks across clients are not monotonic, so we can't slice by clock.
-    // Decoding updates gives an array of items, but the target (i.e. thoughtLog or lexemeLog) is not accessible.
-    // Therefore, observe the deltas and slice from the replication cursor.
+    // Observe the deltas and slice from the replication cursor. (Why not slice directly from thoughtLog instead of the deltas???)
+    // Also, note that we need to observe self updates as well, since local changes still need to get replicated to the remote. The replication cursors must only be updated via onLowStep to ensure that the changes have been synced with the websocket.
     thoughtLog.observe(async (e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
       // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
       const activeBlock = await getActiveBlock()
@@ -273,33 +272,27 @@ const replicationController = ({
       // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       setThoughtObservationCursor(blockId, thoughtObservationCursor + deltasRaw.length)
 
-      // If the change comes from self, do not trigger next, but update the replication cursor.
-      // Otherwise, trigger next and the replication cursor will be updated on lowStep.
-      if (e.transaction.origin === doc.clientID) {
-        setThoughtReplicationCursor(blockId, thoughtReplicationCursor + deltas.length)
-      } else {
-        // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
-        // e.g. if a Lexeme is created, deleted, and then created again, the replicationController will only replicate the last creation
-        const replicated = new Map<ThoughtId, number>()
-        deltas.forEach(([id], i) => replicated.set(id, i))
+      // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
+      // e.g. if a Lexeme is created, deleted, and then created again, the replicationController will only replicate the last creation
+      const replicated = new Map<ThoughtId, number>()
+      deltas.forEach(([id], i) => replicated.set(id, i))
 
-        // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
-        // Otherwise thoughtReplicationCursor may increase before the task completes.
-        const startIndex = thoughtReplicationCursor
+      // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+      // Otherwise thoughtReplicationCursor may increase before the task completes.
+      const startIndex = thoughtReplicationCursor
 
-        const tasks = deltas.map(([id, action], i) => {
-          // ignore older updates to the same thought
-          if (i !== replicated.get(id)) return null
+      const tasks = deltas.map(([id, action], i) => {
+        // ignore older updates to the same thought
+        if (i !== replicated.get(id)) return null
 
-          // trigger next (e.g. save the thought locally)
-          return async (): Promise<ReplicationResult> => {
-            const result: ReplicationResult = { type: 'thought', id, index: startIndex + i + 1 }
-            await next({ ...result, action })
-            return result
-          }
-        })
-        replicationQueue.add(tasks)
-      }
+        // trigger next (e.g. save the thought locally)
+        return async (): Promise<ReplicationResult> => {
+          const result: ReplicationResult = { type: 'thought', id, index: startIndex + i + 1 }
+          await next({ ...result, action })
+          return result
+        }
+      })
+      replicationQueue.add(tasks)
     })
 
     // See: thoughtLog.observe
@@ -321,33 +314,27 @@ const replicationController = ({
       // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       setLexemeObservationCursor(blockId, lexemeObservationCursor + deltasRaw.length)
 
-      // If the change comes from self, do not trigger next, but update the replication cursor.
-      // Otherwise, trigger next and the replication cursor will be updated on lowStep.
-      if (e.transaction.origin === doc.clientID) {
-        setLexemeReplicationCursor(blockId, lexemeReplicationCursor + deltas.length)
-      } else {
-        // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
-        const replicated = new Map<string, number>()
-        deltas.forEach(([key], i) => replicated.set(key, i))
+      // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+      const replicated = new Map<string, number>()
+      deltas.forEach(([key], i) => replicated.set(key, i))
 
-        // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
-        // Otherwise thoughtReplicationCursor may increase before the task completes.
-        const startIndex = lexemeReplicationCursor
+      // Get closure over thoughtReplicationCursor so that the ReplicationResult index is correct.
+      // Otherwise thoughtReplicationCursor may increase before the task completes.
+      const startIndex = lexemeReplicationCursor
 
-        const tasks = deltas.map(([key, action], i) => {
-          // ignore older updates to the same lexeme
-          if (i !== replicated.get(key)) return null
+      const tasks = deltas.map(([key, action], i) => {
+        // ignore older updates to the same lexeme
+        if (i !== replicated.get(key)) return null
 
-          // trigger next (e.g. save the lexeme locally)
-          return async (): Promise<ReplicationResult> => {
-            const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i + 1 }
-            await next({ ...result, action })
-            return result
-          }
-        })
+        // trigger next (e.g. save the lexeme locally)
+        return async (): Promise<ReplicationResult> => {
+          const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i + 1 }
+          await next({ ...result, action })
+          return result
+        }
+      })
 
-        replicationQueue.add(tasks)
-      }
+      replicationQueue.add(tasks)
     })
   }
 
