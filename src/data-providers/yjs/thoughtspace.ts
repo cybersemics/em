@@ -16,7 +16,7 @@ import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
 import mergeBatch from '../../util/mergeBatch'
-import taskQueue from '../../util/taskQueue'
+import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
 import throttleConcat from '../../util/throttleConcat'
 import { DataProvider } from '../DataProvider'
@@ -79,7 +79,7 @@ export interface ThoughtspaceOptions {
 
 type ThoughtspaceConfig = ThoughtspaceOptions & {
   replication: ReturnType<typeof replicationController>
-  updateQueue: any
+  updateQueue: TaskQueue<void>
   websocket: HocuspocusProviderWebsocket
 }
 

@@ -2,6 +2,18 @@ import Emitter from 'emitter20'
 
 type EventName = 'end' | 'step' | 'lowStep'
 
+/** A dummy class is needed to get the typeof a generic function. */
+// See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
+// Alternatively, an explicit interface can be defined for the return value.
+// eslint-disable-next-line fp/no-class
+class TaskQueueWrapper<T> {
+  wrapped() {
+    return taskQueue<T>()
+  }
+}
+
+export type TaskQueue<T> = ReturnType<TaskQueueWrapper<T>['wrapped']>
+
 /** Returns a new task that retries the given task up to n times if it out. */
 const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (() => Promise<any>) => {
   let retryTimer = 0
