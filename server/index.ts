@@ -138,6 +138,15 @@ const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
   return replicationCursorDb
 }
 
+/** Closes the replicationCursorDb for the given tsid and removes the closed db instance from the ldbReplicationCursors cache. Does nothing if ldbReplicationCursors does not contain a db with the given tsid. */
+const unloadReplicationCursorDb = async (tsid: string): Promise<void> => {
+  const replicationCursorDb = ldbReplicationCursors.get(tsid)
+  if (replicationCursorDb) {
+    await replicationCursorDb.close()
+    ldbReplicationCursors.delete(tsid)
+  }
+}
+
 /** Sync the initial state of the given in-memory doc with the level db. */
 // WARNING: There is currently a bug that causes db.getYDoc to hang or take an inordinate amount of time (~265 sec) on a large initial replication.
 // https://github.com/cybersemics/em/issues/1725
@@ -452,11 +461,7 @@ const server = Server.configure({
       }
 
       // unload replicationCursorDb
-      const replicationCursorDb = ldbReplicationCursors.get(tsid)
-      if (replicationCursorDb) {
-        await replicationCursorDb.close()
-        ldbReplicationCursors.delete(tsid)
-      }
+      unloadReplicationCursorDb(tsid)
     }
   },
 })
