@@ -380,10 +380,10 @@ export const onLoadDocument = async ({
       // persist replication cursor to level db
       storage: {
         getItem: async (key: string): Promise<Index<ReplicationCursor>> => {
-          let replicationCursor: Index<ReplicationCursor> = {}
+          let replicationCursors: Index<ReplicationCursor> = {}
           try {
             const replicationCursorDb = loadReplicationCursorDb(tsid)
-            replicationCursor = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
+            replicationCursors = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
           } catch (e: any) {
             // If a value does not exist for the key, return an empty object.
             // Otherwise, throw the error.
@@ -391,7 +391,9 @@ export const onLoadDocument = async ({
               throw e
             }
           }
-          return replicationCursor
+          // backwards compatibility for when replicationCursorDb stored a single ReplicationCursor instead of a ReplicationCursor for each block
+          // TODO: This can be removed after setItem is called once with the new schema.
+          return replicationCursors.thoughts != null ? {} : replicationCursors
         },
         setItem: (key: string, value: Index<ReplicationCursor>) => {
           const replicationCursorDb = loadReplicationCursorDb(tsid)
