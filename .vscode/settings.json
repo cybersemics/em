@@ -1,0 +1,8 @@
+{
+  "files.exclude": {
+    "**/__image_snapshots__": true
+  },
+  // set defaultFormatter only in workspace settings, not user settings
+  // otherwise it will override prettier.requireConfig in projects that do not use Prettier
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}

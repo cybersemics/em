@@ -10,7 +10,6 @@ local.log
 .firebaserc
 .history
 .idea
-.vscode
 
 /node_modules
 /coverage
