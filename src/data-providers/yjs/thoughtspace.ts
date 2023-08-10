@@ -528,9 +528,9 @@ export const replicateThought = async (
   onDoc?.(doc)
   const thoughtMap = doc.getMap<ThoughtYjs>()
 
-  // if the doc has already been initialized and added to thoughtDocs, return immediately
-  // disable y-indexeddb during tests because of TransactionInactiveError in fake-indexeddb
-  // disable hocuspocus during tests because of infinite loop in sinon runAllAsync
+  // If the doc is cached, return as soon as the appropriate providers are synced.
+  // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
+  // Disable websocket during tests because of infinite loop in sinon runAllAsync.
   if (thoughtDocs.get(id) || process.env.NODE_ENV === 'test') {
     const idbSynced = thoughtIDBSynced.get(id)
     const websocketSynced = thoughtWebsocketSynced.get(id)
@@ -682,9 +682,9 @@ export const replicateLexeme = async (
   const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
 
-  // set up persistence and subscribe to changes
-  // disable during tests because of TransactionInactiveError in fake-indexeddb
-  // disable during tests because of infinite loop in sinon runAllAsync
+  // If the doc is cached, return as soon as the appropriate providers are synced.
+  // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
+  // Disable websocket during tests because of infinite loop in sinon runAllAsync.
   if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
     const idbSynced = lexemeIDBSynced.get(key)
     const websocketSynced = lexemeWebsocketSynced.get(key)
