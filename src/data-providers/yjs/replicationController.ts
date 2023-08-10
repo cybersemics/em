@@ -3,13 +3,11 @@ import { nanoid } from 'nanoid'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
+import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
 import { encodeDocLogBlockDocumentName, parseDocumentName } from './documentNameEncoder'
-
-// the index of the thoughts and lexemes that have been successfully replicated in a given doclog block
-type ReplicationCursor = { thoughts: number; lexemes: number }
 
 interface ReplicationResult {
   type: 'thought' | 'lexeme'

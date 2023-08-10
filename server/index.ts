@@ -8,6 +8,7 @@ import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
 import DocLogAction from '../src/@types/DocLogAction'
 import Index from '../src/@types/IndexType'
+import ReplicationCursor from '../src/@types/ReplicationCursor'
 import Share from '../src/@types/Share'
 import ThoughtId from '../src/@types/ThoughtId'
 import {
@@ -135,7 +136,7 @@ const openDoclogDb = async (tsid: string): Promise<LeveldbPersistence> => {
 }
 
 /** Open the replicationCursor level db for the given tsid and cache the db reference in ldbReplicationCursors. */
-const loadReplicationCursorDb = (tsid: string): level.LevelDB => {
+const loadReplicationCursorDb = (tsid: string): level.LevelDB<string, Index<ReplicationCursor>> => {
   let replicationCursorDb = ldbReplicationCursors.get(tsid)
   if (!replicationCursorDb) {
     replicationCursorDb = level(path.join(replicationCursorDbBasePath, tsid), { valueEncoding: 'json' })
@@ -379,7 +380,7 @@ export const onLoadDocument = async ({
       // persist replication cursor to level db
       storage: {
         getItem: async (key: string) => {
-          let results: Index<{ thoughts: number; lexemes: number }> = {}
+          let results: Index<ReplicationCursor> = {}
           try {
             const replicationCursorDb = loadReplicationCursorDb(tsid)
             results = await replicationCursorDb.get(encodeDocLogDocumentName(tsid, key))
@@ -392,7 +393,7 @@ export const onLoadDocument = async ({
           }
           return results
         },
-        setItem: (key: string, value: Index<{ thoughts: number; lexemes: number }>) => {
+        setItem: (key: string, value: Index<ReplicationCursor>) => {
           const replicationCursorDb = loadReplicationCursorDb(tsid)
           replicationCursorDb.put(encodeDocLogDocumentName(tsid, key), value)
         },

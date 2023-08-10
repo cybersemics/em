@@ -7,6 +7,7 @@ import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
 import PushBatch from '../../@types/PushBatch'
+import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
@@ -74,8 +75,8 @@ export interface ThoughtspaceOptions {
   onUpdateThoughts: (args: UpdateThoughtsOptions) => void
   // offlineStatusStore.once(status => status === 'offline')
   // TODO: Index<ReplicationCursor>
-  getItem: Storage<Index<any>>['getItem']
-  setItem: Storage<Index<any>>['setItem']
+  getItem: Storage<Index<ReplicationCursor>>['getItem']
+  setItem: Storage<Index<ReplicationCursor>>['setItem']
   tsid: string
   tsidShared: string | null
   websocketUrl: string
