@@ -218,8 +218,9 @@ export const init = async (options: ThoughtspaceOptions) => {
   doclogPersistence.whenSynced
     .then(() => {
       const blocks = doclog.getArray<Y.Doc>('blocks')
-      // Do not create a starting block if this is shared from another device.
-      // We need to wait for the existing block(s) to load.
+
+      // The doclog's initial block must be created outside the replicationController, after IDB syncs. This is necessary to avoid creating a new block when one already exists.
+      // Do not create an initial block if this thoughtspace is shared from another device, as it will already have a block.
       if (blocks.length === 0 && !tsidShared) {
         const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
 
@@ -375,7 +376,11 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       }
       // other keys
       else {
-        thoughtMap.set(key, value)
+        // Only set a value if it has changed.
+        // Otherwise YJS adds another update.
+        if (value !== thoughtMap.get(key)) {
+          thoughtMap.set(key, value)
+        }
       }
     })
   }, thoughtDoc.clientID)
@@ -442,7 +447,11 @@ export const updateLexeme = async (
       }
       // other keys
       else {
-        lexemeMap.set(key, value)
+        // Only set a value if it has changed.
+        // Otherwise YJS adds another update.
+        if (value !== lexemeMap.get(key)) {
+          lexemeMap.set(key, value)
+        }
       }
     })
 
