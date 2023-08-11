@@ -212,20 +212,13 @@ const replicationController = ({
     parseDocumentName(block.guid).blockId!
 
   /** Gets the replication cursors and observation cursors for the active doclog block. */
-  const getActiveBlockCursors = async (
-    // this will be faster if you already have the activeBlock
-    activeBlock?: Y.Doc,
+  const getBlockCursors = async (
+    block: Y.Doc,
   ): Promise<{
     replicationCursors: ReplicationCursor
     observationCursors: ReplicationCursor
   }> => {
-    activeBlock = activeBlock || (await getActiveBlock())
-    if (!activeBlock)
-      return {
-        replicationCursors: { thoughts: -1, lexemes: -1 },
-        observationCursors: { thoughts: -1, lexemes: -1 },
-      }
-    const blockId = getBlockKey(activeBlock)
+    const blockId = getBlockKey(block)
     return {
       replicationCursors: replicationCursors[blockId] || { thoughts: -1, lexemes: -1 },
       observationCursors: observationCursors[blockId] || { thoughts: -1, lexemes: -1 },
@@ -270,9 +263,9 @@ const replicationController = ({
     thoughtLog.observe(async (e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
       // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
       const blockId = getBlockKey(block)
-      const activeBlockCursors = await getActiveBlockCursors(block)
-      const { thoughts: thoughtReplicationCursor } = activeBlockCursors.replicationCursors
-      const { thoughts: thoughtObservationCursor } = activeBlockCursors.observationCursors
+      const blockCursors = await getBlockCursors(block)
+      const { thoughts: thoughtReplicationCursor } = blockCursors.replicationCursors
+      const { thoughts: thoughtObservationCursor } = blockCursors.observationCursors
 
       // since the doglogs are append-only, ids are only on .insert
       const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
@@ -309,9 +302,9 @@ const replicationController = ({
     // See: thoughtLog.observe
     lexemeLog.observe(async (e: Y.YArrayEvent<[string, DocLogAction]>) => {
       const blockId = getBlockKey(block)
-      const activeBlockCursors = await getActiveBlockCursors(block)
-      const { lexemes: lexemeReplicationCursor } = activeBlockCursors.replicationCursors
-      const { lexemes: lexemeObservationCursor } = activeBlockCursors.observationCursors
+      const blockCursors = await getBlockCursors(block)
+      const { lexemes: lexemeReplicationCursor } = blockCursors.replicationCursors
+      const { lexemes: lexemeObservationCursor } = blockCursors.observationCursors
 
       // since the doglogs are append-only, ids are only on .insert
       const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
