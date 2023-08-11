@@ -6,14 +6,19 @@ import Index from '../../@types/IndexType'
 import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import ThoughtId from '../../@types/ThoughtId'
+import keyValueBy from '../../util/keyValueBy'
 import taskQueue from '../../util/taskQueue'
+import throttleConcat from '../../util/throttleConcat'
 import { encodeDocLogBlockDocumentName, parseDocumentName } from './documentNameEncoder'
 
-interface ReplicationResult {
+/** Represents replication of a single Thought or Lexeme. Passed to the next callback, and used internally to update the replication cursors. */
+interface ReplicationTask {
   type: 'thought' | 'lexeme'
   id: ThoughtId | string
-  // the delta index that is saved as the replication cursor to enable partial replication
+  /* the delta index that is saved as the replication cursor to enable partial replication */
   index: number
+  /* id of the doclog block where this object was replicated */
+  blockId: string
 }
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
@@ -51,10 +56,10 @@ const replicationController = ({
     completed: number
     index: number
     total: number
-    value: ReplicationResult
+    value: ReplicationTask
   }) => void
   /** Called whenever the doclog changes from a provider. May be called multiple times if the process is interrupted and the replication cursor is not updated. */
-  next: ({ action }: { action: DocLogAction } & ReplicationResult) => Promise<void>
+  next: ({ action }: { action: DocLogAction } & ReplicationTask) => Promise<void>
   /** Local storage mechanism to persist the replication cursors on lowStep. These are persisted outside of Yjs and are not supposed to be replicated across devices. They allow a device to create a delta of updated thoughts and lexemes that need to be replicated when it goes back online (similar to a state vector). Updates are throttled. */
   storage: Storage<Index<ReplicationCursor>>
 }) => {
@@ -75,37 +80,44 @@ const replicationController = ({
   ])
 
   /** Persist the thought replication cursor (throttled). */
-  const storeThoughtReplicationCursor = _.throttle(
-    async (blockId: string, index: number) => {
-      const replicationCursors = (await storage.getItem('replicationCursors')) || {}
+  const storeThoughtReplicationCursor = throttleConcat(
+    async (cursorUpdates: { blockId: string; index: number }[]) => {
+      const replicationCursorUpdates = keyValueBy<{ blockId: string; index: number }, ReplicationCursor>(
+        cursorUpdates,
+        ({ blockId, index }, i, accum) => ({
+          // If there are multiple updates with the same blockId, the last one will win.
+          [blockId]: {
+            thoughts: index,
+            lexemes: accum[blockId]?.lexemes ?? replicationCursors[blockId]?.lexemes ?? -1,
+          },
+        }),
+      )
+
       storage.setItem('replicationCursors', {
         ...replicationCursors,
-        [blockId]: {
-          ...(replicationCursors[blockId] || {
-            thoughts: -1,
-            lexemes: -1,
-          }),
-          thoughts: index,
-        },
+        ...replicationCursorUpdates,
       })
     },
     1000,
     { leading: false },
   )
 
-  /** Persist the persisted lexemeReplicationCursor (throttled). */
-  const storeLexemeReplicationCursor = _.throttle(
-    async (blockId: string, index: number) => {
-      const replicationCursors = (await storage.getItem('replicationCursors')) || {}
+  /** Persist the lexeme replication cursor (throttled). */
+  const storeLexemeReplicationCursor = throttleConcat(
+    async (cursorUpdates: { blockId: string; index: number }[]) => {
+      const replicationCursorUpdates = keyValueBy<{ blockId: string; index: number }, ReplicationCursor>(
+        cursorUpdates,
+        ({ blockId, index }, i, accum) => ({
+          // If there are multiple updates with the same blockId, the last one will win.
+          [blockId]: {
+            thoughts: accum[blockId]?.thoughts ?? replicationCursors[blockId]?.thoughts ?? -1,
+            lexemes: index,
+          },
+        }),
+      )
       storage.setItem('replicationCursors', {
         ...replicationCursors,
-        [blockId]: {
-          ...(replicationCursors[blockId] || {
-            thoughts: -1,
-            lexemes: -1,
-          }),
-          lexemes: index,
-        },
+        ...replicationCursorUpdates,
       })
     },
     1000,
@@ -118,7 +130,7 @@ const replicationController = ({
       thoughts: index,
       lexemes: replicationCursors[blockId]?.lexemes ?? -1,
     }
-    storeThoughtReplicationCursor(blockId, index)
+    storeThoughtReplicationCursor({ blockId, index })
   }
 
   /** Updates the lexemeReplicationCursor immediately. Saves it to storage in the background (throttled). */
@@ -127,7 +139,7 @@ const replicationController = ({
       thoughts: replicationCursors[blockId]?.thoughts ?? -1,
       lexemes: index,
     }
-    storeLexemeReplicationCursor(blockId, index)
+    storeLexemeReplicationCursor({ blockId, index })
   }
 
   /** Updates the thoughtObservationCursor. */
@@ -147,16 +159,14 @@ const replicationController = ({
   }
 
   /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
-  const replicationQueue = taskQueue<ReplicationResult>({
+  const replicationQueue = taskQueue<ReplicationTask>({
     autostart,
     concurrency,
     onLowStep: async ({ index, value, total }) => {
-      const activeBlock = await getActiveBlock()
-      const blockId = getBlockKey(activeBlock)
       if (value.type === 'thought') {
-        setThoughtReplicationCursor(blockId, value.index)
+        setThoughtReplicationCursor(value.blockId, value.index)
       } else {
-        setLexemeReplicationCursor(blockId, value.index)
+        setLexemeReplicationCursor(value.blockId, value.index)
       }
     },
     onStep,
@@ -236,9 +246,11 @@ const replicationController = ({
         activeBlock.load()
         observeBlock(activeBlock)
 
-        // TODO: Load any block that has not been fully replicated, i.e. block size > replicationCursors[blockId]
-        // const blocks = doc.getArray('blocks')
-        // const blockSizes = doc.getMap('blockSizes')
+        // TODO: Load blocks that have not been fully replicated, i.e. block size > replicationCursors[blockId] + 1
+        // doc.getArray('blocks').forEach((block: Y.Doc) => {
+        //   block.load()
+        //   observeBlock(block)
+        // })
       }
     },
   )
@@ -257,9 +269,8 @@ const replicationController = ({
     // Also, note that we need to observe self updates as well, since local changes still need to get replicated to the remote. The replication cursors must only be updated via onLowStep to ensure that the changes have been synced with the websocket.
     thoughtLog.observe(async (e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
       // slice from the replication cursor (excluding thoughts that have already been sliced) in order to only replicate changed thoughts
-      const activeBlock = await getActiveBlock()
-      const blockId = getBlockKey(activeBlock)
-      const activeBlockCursors = await getActiveBlockCursors(activeBlock)
+      const blockId = getBlockKey(block)
+      const activeBlockCursors = await getActiveBlockCursors(block)
       const { thoughts: thoughtReplicationCursor } = activeBlockCursors.replicationCursors
       const { thoughts: thoughtObservationCursor } = activeBlockCursors.observationCursors
 
@@ -286,8 +297,8 @@ const replicationController = ({
         if (i !== replicated.get(id)) return null
 
         // trigger next (e.g. save the thought locally)
-        return async (): Promise<ReplicationResult> => {
-          const result: ReplicationResult = { type: 'thought', id, index: startIndex + i + 1 }
+        return async (): Promise<ReplicationTask> => {
+          const result: ReplicationTask = { type: 'thought', blockId, id, index: startIndex + i + 1 }
           await next({ ...result, action })
           return result
         }
@@ -297,9 +308,8 @@ const replicationController = ({
 
     // See: thoughtLog.observe
     lexemeLog.observe(async (e: Y.YArrayEvent<[string, DocLogAction]>) => {
-      const activeBlock = await getActiveBlock()
-      const blockId = getBlockKey(activeBlock)
-      const activeBlockCursors = await getActiveBlockCursors(activeBlock)
+      const blockId = getBlockKey(block)
+      const activeBlockCursors = await getActiveBlockCursors(block)
       const { lexemes: lexemeReplicationCursor } = activeBlockCursors.replicationCursors
       const { lexemes: lexemeObservationCursor } = activeBlockCursors.observationCursors
 
@@ -327,8 +337,8 @@ const replicationController = ({
         if (i !== replicated.get(key)) return null
 
         // trigger next (e.g. save the lexeme locally)
-        return async (): Promise<ReplicationResult> => {
-          const result: ReplicationResult = { type: 'lexeme', id: key, index: startIndex + i + 1 }
+        return async (): Promise<ReplicationTask> => {
+          const result: ReplicationTask = { type: 'lexeme', blockId, id: key, index: startIndex + i + 1 }
           await next({ ...result, action })
           return result
         }
@@ -354,6 +364,7 @@ const replicationController = ({
     let activeBlock = await getActiveBlock()
 
     // if the block is full, create a new block
+    // TODO: Should we destroy the old block to clean up memory? Or keep it around in case another devices pushes to it?
     if (activeBlock.getArray('thoughtLog').length >= DOCLOG_BLOCK_SIZE) {
       activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
       // eslint-disable-next-line fp/no-mutating-methods
