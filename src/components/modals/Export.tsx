@@ -10,7 +10,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import alert from '../../action-creators/alert'
 import closeModal from '../../action-creators/closeModal'
 import error from '../../action-creators/error'
-import { isTouch } from '../../browser'
+import { isMac, isTouch } from '../../browser'
 import { AlertType, HOME_PATH } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
@@ -259,6 +259,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
 const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const dispatch = useDispatch()
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const id = head(simplePath)
   const title = useSelector((state: State) => (isRoot(simplePath) ? 'home' : headValue(state, simplePath)))
   const titleShort = ellipsize(title)
@@ -305,6 +306,22 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
     setExportContent(removeHome(exported).trimStart())
   }
 
+  /** Show an alert and close the modal after the thoughts are copied to the clipboard. */
+  const onCopyToClipboard = useCallback(() => {
+    // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
+    selection.clear()
+
+    dispatch([
+      closeModal(),
+      alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
+        alertType: AlertType.Clipboard,
+        clearDelay: 3000,
+      }),
+    ])
+
+    clearTimeout(globals.errorTimer)
+  }, [exportThoughtsPhraseFinal])
+
   // Sets export content when pull is complete by useDescendants
   useEffect(() => {
     if (!isPulling) setExportContentFromCursor()
@@ -334,20 +351,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   useEffect(() => {
     const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
-    clipboard.on('success', () => {
-      // Note: clipboard leaves unwanted text selection after copy operation. so removing it to prevent issue with gesture handler
-      selection.clear()
-
-      dispatch([
-        closeModal(),
-        alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`, {
-          alertType: AlertType.Clipboard,
-          clearDelay: 3000,
-        }),
-      ])
-
-      clearTimeout(globals.errorTimer)
-    })
+    clipboard.on('success', onCopyToClipboard)
 
     clipboard.on('error', e => {
       console.error(e)
@@ -361,6 +365,33 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       clipboard.destroy()
     }
   }, [exportThoughtsPhraseFinal])
+
+  /** Copy the exported content on Cmd/Ctrl + C. */
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (
+        e.key === 'c' &&
+        (isMac ? e.metaKey : e.ctrlKey) &&
+        exportContent &&
+        // do not override copy shortcut if user has text selected
+        selection.isCollapsed() !== false &&
+        // textarea selection is not reflected in window.getSelection()
+        textareaRef.current?.selectionStart === textareaRef.current?.selectionEnd
+      ) {
+        e.stopPropagation()
+        navigator.clipboard.writeText(exportContent)
+        onCopyToClipboard()
+      }
+    },
+    [exportContent],
+  )
+
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [onKeyDown])
 
   // const [publishing, setPublishing] = useState(false)
   // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
@@ -519,6 +550,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
           </div>
         )}
         <textarea
+          ref={textareaRef}
           readOnly
           style={{
             backgroundColor: '#111',
