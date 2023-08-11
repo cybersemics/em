@@ -22,7 +22,7 @@ interface ReplicationTask {
 }
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
-const DOCLOG_BLOCK_SIZE = 10
+const DOCLOG_BLOCK_SIZE = 100
 
 /** Delay before filled block is unloaded. This allows straggler updates to be observed if other devices have not switched over to the new block yet. After the delay, it is still possible for new updates be added to the block (by offline devices), but that is handled separately by observing blockSizes and re-loading the overfilled block to replicate when its blockSize changes. */
 // const DOCLOG_BLOCK_UNLOAD_DELAY = 5000
