@@ -3,6 +3,7 @@ import { Server } from '@hocuspocus/server'
 import { EventEmitter } from 'events'
 import fs from 'fs'
 import level from 'level'
+import { isEqual } from 'lodash'
 import path from 'path'
 import { LeveldbPersistence } from 'y-leveldb'
 import * as Y from 'yjs'
@@ -314,7 +315,11 @@ export const onLoadDocument = async ({
 
     // copy server permissions to client
     permissionsServerMap.forEach((permission: Share, token: string) => {
-      permissionsClientMap.set(token, permission)
+      // Only set permissions if they are different from the server.
+      // Otherwise it results in duplicate updates to the Doc.
+      if (!isEqual(permissionsClientMap.get(token), permission)) {
+        permissionsClientMap.set(token, permission)
+      }
     })
 
     // sync client permissions to server
