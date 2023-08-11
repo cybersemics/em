@@ -27,7 +27,7 @@
     "typescript": "^4.9.4"
   },
   "peerDependencies": {
-    "yjs": "^13.5.29"
+    "yjs": "^13.6.7"
   },
   "overrides": {
     "graceful-fs": "^4.2.11"

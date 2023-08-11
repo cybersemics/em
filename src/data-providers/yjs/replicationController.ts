@@ -282,13 +282,13 @@ const replicationController = ({
     // Observe the deltas and slice from the replication cursor. (Why not slice directly from thoughtLog instead of the deltas???)
     // Also, note that we need to observe self updates as well, since local changes still need to get replicated to the remote. The replication cursors must only be updated via onLowStep to ensure that the changes have been synced with the websocket.
     thoughtLog.observe(async (e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
+      // Must go before await statement as e.changes is a dynamic property that must be accessed synchronously.
+      const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
       const blockId = getBlockKey(block)
       const blockCursors = await getBlockCursors(block)
       const { thoughts: thoughtReplicationCursor } = blockCursors.replicationCursors
       const { thoughts: thoughtObservationCursor } = blockCursors.observationCursors
-
-      // since the doglogs are append-only, ids are only on .insert
-      const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
       // slice from the replication cursor in order to only replicate changed thoughts
       const deltas = deltasRaw.slice(thoughtReplicationCursor - thoughtObservationCursor)
@@ -333,13 +333,13 @@ const replicationController = ({
 
     // See: thoughtLog.observe
     lexemeLog.observe(async (e: Y.YArrayEvent<[string, DocLogAction]>) => {
+      // Must go before await statement as e.changes is a dynamic property that must be accessed synchronously.
+      const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
+
       const blockId = getBlockKey(block)
       const blockCursors = await getBlockCursors(block)
       const { lexemes: lexemeReplicationCursor } = blockCursors.replicationCursors
       const { lexemes: lexemeObservationCursor } = blockCursors.observationCursors
-
-      // since the doglogs are append-only, ids are only on .insert
-      const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
       // slice from the replication cursor in order to only replicate changed lexemes
       const deltas = deltasRaw.slice(lexemeReplicationCursor - lexemeObservationCursor)
