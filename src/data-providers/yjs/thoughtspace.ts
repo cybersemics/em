@@ -22,6 +22,7 @@ import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
 import throttleConcat from '../../util/throttleConcat'
+import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
 import {
   encodeDocLogBlockDocumentName,
@@ -143,13 +144,13 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 const thoughtDocs: Map<ThoughtId, Y.Doc> = new Map()
 const thoughtPersistence: Map<ThoughtId, IndexeddbPersistence> = new Map()
 const thoughtWebsocketProvider: Map<ThoughtId, HocuspocusProvider> = new Map()
-const thoughtIDBSynced: Map<ThoughtId, Promise<void>> = new Map()
-const thoughtWebsocketSynced: Map<ThoughtId, Promise<void>> = new Map()
+const thoughtIDBSynced: Map<ThoughtId, Promise<unknown>> = new Map()
+const thoughtWebsocketSynced: Map<ThoughtId, Promise<unknown>> = new Map()
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
-const lexemeIDBSynced: Map<string, Promise<void>> = new Map()
-const lexemeWebsocketSynced: Map<string, Promise<void>> = new Map()
+const lexemeIDBSynced: Map<string, Promise<unknown>> = new Map()
+const lexemeWebsocketSynced: Map<string, Promise<unknown>> = new Map()
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
@@ -589,16 +590,7 @@ export const replicateThought = async (
       })
     : null
 
-  const websocketSynced = websocketProvider
-    ? new Promise<void>(resolve => {
-        /** Resolves when synced fires. */
-        const onSynced = () => {
-          websocketProvider.off('synced', onSynced)
-          resolve()
-        }
-        websocketProvider.on('synced', onSynced)
-      })
-    : null
+  const websocketSynced = websocketProvider ? when(websocketProvider, 'synced') : null
 
   // foreground
   if (!background) {
@@ -741,14 +733,7 @@ export const replicateLexeme = async (
     token: accessToken,
   })
 
-  const websocketSynced = new Promise<void>(resolve => {
-    /** Resolves when synced fires. */
-    const onSynced = () => {
-      websocketProvider.off('synced', onSynced)
-      resolve()
-    }
-    websocketProvider.on('synced', onSynced)
-  })
+  const websocketSynced = when(websocketProvider, 'synced')
 
   // foreground
   if (!background) {

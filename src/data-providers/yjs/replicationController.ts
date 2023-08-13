@@ -9,6 +9,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import keyValueBy from '../../util/keyValueBy'
 import taskQueue from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
+import when from '../../util/when'
 import { encodeDocLogBlockDocumentName, parseDocumentName } from './documentNameEncoder'
 
 /** Represents replication of a single Thought or Lexeme. Passed to the next callback, and used internally to update the replication cursors. */
@@ -20,6 +21,9 @@ interface ReplicationTask {
   /* doclog block where this object was replicated */
   block: Y.Doc
 }
+
+/** Y.Doc subdocs event arguments. */
+type SubdocsEventArgs = { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
 const DOCLOG_BLOCK_SIZE = 100
@@ -191,16 +195,7 @@ const replicationController = ({
   })
 
   /** A promise that resolves when the first doclog subdoc is added and a block is available for logging. The first block is created on doclogPersistence.whenSynced in thoughtspace.init. */
-  const subdocsAdded = new Promise<void>(resolve => {
-    /** Resolves the promise when at least one subdoc is added. */
-    const onSubdocs = ({ added }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
-      if (added.size > 0) {
-        resolve()
-        doc.off('subdocs', onSubdocs)
-      }
-    }
-    doc.on('subdocs', onSubdocs)
-  })
+  const subdocsAdded = when<SubdocsEventArgs>(doc, 'subdocs', ({ added }) => added.size > 0)
 
   /** Gets the active doclog block where new thought and lexeme updates should be logged. This will typically be the last block, except in the case where multiple new blocks were created on different devices at the same time. In that case it will be the first unfilled block. Previous blocks are not loaded into memory. */
   const getActiveBlock = async (): Promise<Y.Doc> => {
@@ -243,31 +238,28 @@ const replicationController = ({
   // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
   // const thoughtLog = doc.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
   // const lexemeLog = doc.getArray<[string, DocLogAction]>('lexemeLog')
-  doc.on(
-    'subdocs',
-    async ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
-      // load and observe the active block when there are new subdocs
-      if (added.size > 0) {
-        const activeBlock = await getActiveBlock()
-        const activeBlockId = getBlockKey(activeBlock)
+  doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
+    // load and observe the active block when there are new subdocs
+    if (added.size > 0) {
+      const activeBlock = await getActiveBlock()
+      const activeBlockId = getBlockKey(activeBlock)
 
-        activeBlock.load()
-        observeBlock(activeBlock)
+      activeBlock.load()
+      observeBlock(activeBlock)
 
-        // load, replicate, and subscribe to unreplicated or unfilled blocks
-        doc.getArray('blocks').forEach((block: Y.Doc) => {
-          const blockId = getBlockKey(block)
-          if (blockId === activeBlockId) return
-          const blockSize = doc.getMap('blockSizes').get(blockId)
-          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
-          if (!thoughtReplicationCursor || thoughtReplicationCursor < blockSize - 1) {
-            block.load()
-            observeBlock(block)
-          }
-        })
-      }
-    },
-  )
+      // load, replicate, and subscribe to unreplicated or unfilled blocks
+      doc.getArray('blocks').forEach((block: Y.Doc) => {
+        const blockId = getBlockKey(block)
+        if (blockId === activeBlockId) return
+        const blockSize = doc.getMap('blockSizes').get(blockId)
+        const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+        if (!thoughtReplicationCursor || thoughtReplicationCursor < blockSize - 1) {
+          block.load()
+          observeBlock(block)
+        }
+      })
+    }
+  })
 
   /** Observes the thoughtLog and lexemeLog of the given block to replicate changes from remote devices. */
   const observeBlock = async (block: Y.Doc) => {
