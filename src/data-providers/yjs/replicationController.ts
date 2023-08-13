@@ -19,7 +19,7 @@ interface ReplicationTask {
   /* the delta index that is saved as the replication cursor to enable partial replication */
   index: number
   /* doclog block where this object was replicated */
-  block: Y.Doc
+  blockId: string
 }
 
 /** Y.Doc subdocs event arguments. */
@@ -27,6 +27,9 @@ type SubdocsEventArgs = { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
 const DOCLOG_BLOCK_SIZE = 100
+
+/** Throttle rate of storing the replication cursor after a thought or lexeme has been successfully replicated. */
+const STORE_REPLICATION_CURSOR_THROTTLE = 1000
 
 /** Delay before filled block is unloaded. This allows straggler updates to be observed if other devices have not switched over to the new block yet. After the delay, it is still possible for new updates be added to the block (by offline devices), but that is handled separately by observing blockSizes and re-loading the overfilled block to replicate when its blockSize changes. */
 // const DOCLOG_BLOCK_UNLOAD_DELAY = 5000
@@ -78,15 +81,16 @@ const replicationController = ({
   let replicationCursors: Index<ReplicationCursor> = {}
   const observationCursors: Index<ReplicationCursor> = {}
 
-  // load thoughtReplicationCursor and lexemeReplicationCursor into memory
-  const replicationCursorsInitialized = Promise.all([
-    Promise.resolve(storage.getItem('replicationCursors')).then(value => {
-      if (value == null) return
-      replicationCursors = value
-    }),
-  ])
+  // track which blocks have set up observe handlers, allowing observeBlock to be idempotent
+  const blocksObserved = new WeakSet<Y.Doc>()
 
-  /** Persist the thought replication cursor (throttled). */
+  // load thoughtReplicationCursor and lexemeReplicationCursor into memory
+  const replicationCursorsInitialized = Promise.resolve(storage.getItem('replicationCursors')).then(value => {
+    if (value == null) return
+    replicationCursors = value
+  })
+
+  /** Persist the thought replication cursor and update block size if full (throttled). */
   const storeThoughtReplicationCursor = throttleConcat(
     async (cursorUpdates: { blockId: string; index: number }[]) => {
       const replicationCursorUpdates = keyValueBy<{ blockId: string; index: number }, ReplicationCursor>(
@@ -105,7 +109,7 @@ const replicationController = ({
         ...replicationCursorUpdates,
       })
     },
-    1000,
+    STORE_REPLICATION_CURSOR_THROTTLE,
     { leading: false },
   )
 
@@ -127,7 +131,7 @@ const replicationController = ({
         ...replicationCursorUpdates,
       })
     },
-    1000,
+    STORE_REPLICATION_CURSOR_THROTTLE,
     { leading: false },
   )
 
@@ -169,23 +173,11 @@ const replicationController = ({
   const replicationQueue = taskQueue<ReplicationTask>({
     autostart,
     concurrency,
-    onLowStep: async ({ value: { block, index, type } }) => {
-      const blockId = getBlockKey(block)
-      const blockSize = block.getArray('thoughtLog').length
-
+    onLowStep: async ({ value: { blockId, index, type } }) => {
       if (type === 'thought') {
         setThoughtReplicationCursor(blockId, index)
       } else {
         setLexemeReplicationCursor(blockId, index)
-      }
-
-      // set the blockSize so that full blocks can be detected and not loaded on startup
-      // only update blockSize after replication to ensure that the block is re-loaded if interrupted by a refresh
-      if (blockSize >= DOCLOG_BLOCK_SIZE) {
-        const blockSizeOld = doc.getMap('blockSizes').get(blockId)
-        if (!blockSizeOld || blockSize > blockSizeOld) {
-          doc.getMap('blockSizes').set(blockId, blockSize)
-        }
       }
     },
     onStep,
@@ -194,54 +186,37 @@ const replicationController = ({
     timeout: 10000,
   })
 
-  /** A promise that resolves when the first doclog subdoc is added and a block is available for logging. The first block is created on doclogPersistence.whenSynced in thoughtspace.init. */
-  const subdocsAdded = when<SubdocsEventArgs>(doc, 'subdocs', ({ added }) => added.size > 0)
+  /** Returns true if a block is full. Detects it from blockSizes if the block is not loaded, and the replication cursors if loaded. Precondition: The replication cursors must be initialized. */
+  const isFull = (blockId: string): boolean =>
+    (doc.getMap('blockSizes').get(blockId) ?? 0) >= DOCLOG_BLOCK_SIZE ||
+    (replicationCursors[blockId]?.thoughts ?? -1) + 1 >= DOCLOG_BLOCK_SIZE ||
+    (observationCursors[blockId]?.thoughts ?? -1) + 1 >= DOCLOG_BLOCK_SIZE
 
-  /** Gets the active doclog block where new thought and lexeme updates should be logged. This will typically be the last block, except in the case where multiple new blocks were created on different devices at the same time. In that case it will be the first unfilled block. Previous blocks are not loaded into memory. */
-  const getActiveBlock = async (): Promise<Y.Doc> => {
-    await replicationCursorsInitialized
-    await subdocsAdded
-
+  /** Gets the active doclog block where new thought and lexeme updates should be logged. This will typically be the last block, except in the case where multiple new blocks were created on different devices at the same time. In that case it will be the first unfilled block. Previous blocks are not loaded into memory. Precondition: The replication cursors must be initialized. */
+  const getActiveBlock = (): Y.Doc => {
     const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
 
     // Find the first unfilled block.
     // It will usually be the last block, unless two devices create a new block at the same time. In that case, the blocks array will converage and both devices will fill up the first unfilled block before moving to the next.
-    const activeBlock = blocks.find(block => {
-      const { blockId } = parseDocumentName(block.guid)
-      return (doc.getMap('blockSizes').get(blockId) || 0) < DOCLOG_BLOCK_SIZE
-    })
+    const activeBlock = blocks.find(block => !isFull(getBlockKey(block)))
 
-    // If there is no unfilled block, return the last block.
-    // Only log() should create a new block, otherwise it can cause an infinite loop.
+    // if there is no unfilled block, return the last block
     return activeBlock || blocks[blocks.length - 1]
   }
 
-  /** Extracts the blockId of the given doclog block from its guid. If no block is provided, gets the active block's blockId. */
+  /** Extracts the blockId of the given doclog block from its guid. */
   const getBlockKey = (block: Y.Doc): string =>
-    // blockId must be defined since doclog subdocs always have a guid in the format /TSID/doclog/block/BLOCK_ID
+    // !: blockId must be defined since doclog subdocs always have a guid in the format /TSID/doclog/block/BLOCK_ID
     parseDocumentName(block.guid).blockId!
-
-  /** Gets the replication cursors and observation cursors for the active doclog block. */
-  const getBlockCursors = async (
-    block: Y.Doc,
-  ): Promise<{
-    replicationCursors: ReplicationCursor
-    observationCursors: ReplicationCursor
-  }> => {
-    const blockId = getBlockKey(block)
-    return {
-      replicationCursors: replicationCursors[blockId] || { thoughts: -1, lexemes: -1 },
-      observationCursors: observationCursors[blockId] || { thoughts: -1, lexemes: -1 },
-    }
-  }
 
   // TODO: Type Y.Arrays once doc is properly typed as Y.Doc
   // const thoughtLog = doc.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
   // const lexemeLog = doc.getArray<[string, DocLogAction]>('lexemeLog')
+  // Precondition: The replication cursors must be initialized.
   doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
     // load and observe the active block when there are new subdocs
     if (added.size > 0) {
-      const activeBlock = await getActiveBlock()
+      const activeBlock = getActiveBlock()
       const activeBlockId = getBlockKey(activeBlock)
 
       activeBlock.load()
@@ -253,34 +228,40 @@ const replicationController = ({
         if (blockId === activeBlockId) return
         const blockSize = doc.getMap('blockSizes').get(blockId)
         const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
-        if (!thoughtReplicationCursor || thoughtReplicationCursor < blockSize - 1) {
+        if (thoughtReplicationCursor + 1 < blockSize) {
           block.load()
           observeBlock(block)
         }
       })
     }
+
+    // When a block is removed, delete it from the observed set.
+    // It should automatically get deleted by the WeakSet, but in case the block persists in a destroyed state, explicitly delete it.
+    removed.forEach(block => {
+      blocksObserved.delete(block)
+    })
   })
 
-  /** Observes the thoughtLog and lexemeLog of the given block to replicate changes from remote devices. */
-  const observeBlock = async (block: Y.Doc) => {
-    // wait until the replication cursors have been initialized to ensure that only the changed slice of deltas is replicated
-    await replicationCursorsInitialized
+  /** Observes the thoughtLog and lexemeLog of the given block to replicate changes from remote devices. Idempotent. */
+  const observeBlock = (block: Y.Doc) => {
+    if (blocksObserved.has(block)) return
+
+    const blockId = getBlockKey(block)
 
     // since storage is async, we need to wait for the replication cursor to be initialized before observing doclog updates
     const thoughtLog = block.getArray<[ThoughtId, DocLogAction]>('thoughtLog')
     const lexemeLog = block.getArray<[string, DocLogAction]>('lexemeLog')
 
     // Partial replication uses the doclog to avoid replicating the same thought or lexeme in the background on load.
-    // Observe the deltas and slice from the replication cursor. (Why not slice directly from thoughtLog instead of the deltas???)
+    // Observe the deltas and slice from the replication cursor. (Why not slice directly from thoughtLog instead of the deltas? Because thoughtLog order may change with updates from other devices.)
     // Also, note that we need to observe self updates as well, since local changes still need to get replicated to the remote. The replication cursors must only be updated via onLowStep to ensure that the changes have been synced with the websocket.
     thoughtLog.observe(async (e: Y.YArrayEvent<[ThoughtId, DocLogAction]>) => {
       // Must go before await statement as e.changes is a dynamic property that must be accessed synchronously.
       const deltasRaw: [ThoughtId, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
-      const blockId = getBlockKey(block)
-      const blockCursors = await getBlockCursors(block)
-      const { thoughts: thoughtReplicationCursor } = blockCursors.replicationCursors
-      const { thoughts: thoughtObservationCursor } = blockCursors.observationCursors
+      await replicationCursorsInitialized
+      const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+      const thoughtObservationCursor = observationCursors[blockId]?.thoughts ?? -1
 
       // slice from the replication cursor in order to only replicate changed thoughts
       const deltas = deltasRaw.slice(thoughtReplicationCursor - thoughtObservationCursor)
@@ -304,14 +285,25 @@ const replicationController = ({
 
         // trigger next (e.g. save the thought locally)
         return async (): Promise<ReplicationTask> => {
-          const taskData: ReplicationTask = { type: 'thought', id, block, index: startIndex + i + 1 }
+          const taskData: ReplicationTask = { type: 'thought', id, blockId, index: startIndex + i + 1 }
           await next({ ...taskData, action })
           return taskData
         }
       })
 
       // replicate changed thoughts
-      replicationQueue.add(tasks)
+      await replicationQueue.add(tasks)
+
+      // Set blockSize on full blocks. This allows devices to check if a block is fully replicated before loading it into memory.
+      // Only set blockSize on full blocks to avoid document growth.
+      // Only update blockSize after replication to ensure that the block is re-loaded if interrupted by a refresh. This would probably also work in observeBlock, but we might as well do it here where it is throttled.
+      if (isFull(blockId)) {
+        const blockSize = observationCursors[blockId].thoughts + 1
+        const blockSizeOld = doc.getMap('blockSizes').get(blockId)
+        if (!blockSizeOld || blockSize > blockSizeOld) {
+          doc.getMap('blockSizes').set(blockId, blockSize)
+        }
+      }
 
       // TODO:
       // unload if block is full and replicated
@@ -328,10 +320,9 @@ const replicationController = ({
       // Must go before await statement as e.changes is a dynamic property that must be accessed synchronously.
       const deltasRaw: [string, DocLogAction][] = e.changes.delta.flatMap(item => item.insert || [])
 
-      const blockId = getBlockKey(block)
-      const blockCursors = await getBlockCursors(block)
-      const { lexemes: lexemeReplicationCursor } = blockCursors.replicationCursors
-      const { lexemes: lexemeObservationCursor } = blockCursors.observationCursors
+      await replicationCursorsInitialized
+      const lexemeReplicationCursor = replicationCursors[blockId]?.lexemes ?? -1
+      const lexemeObservationCursor = observationCursors[blockId]?.lexemes ?? -1
 
       // slice from the replication cursor in order to only replicate changed lexemes
       const deltas = deltasRaw.slice(lexemeReplicationCursor - lexemeObservationCursor)
@@ -354,7 +345,7 @@ const replicationController = ({
 
         // trigger next (i.e. replicate the thought)
         return async (): Promise<ReplicationTask> => {
-          const result: ReplicationTask = { type: 'lexeme', block, id: key, index: startIndex + i + 1 }
+          const result: ReplicationTask = { type: 'lexeme', blockId, id: key, index: startIndex + i + 1 }
           await next({ ...result, action })
           return result
         }
@@ -362,9 +353,15 @@ const replicationController = ({
 
       replicationQueue.add(tasks)
     })
+
+    blocksObserved.add(block)
+
+    // Emit a custom event on the block so that log can detect when it is safe to push.
+    // Otherwise the doclog observe handlers will not be added and the first thought of a new block will not get replicated until there is a refresh.
+    block.emit('em:observed', [blockId])
   }
 
-  /** Append thought or lexeme logs to doclog. */
+  /** Append thought or lexeme logs to the active doclog block. */
   const log = async ({
     thoughtLogs = [],
     lexemeLogs = [],
@@ -377,14 +374,24 @@ const replicationController = ({
 
     if (thoughtLogs.length === 0 && lexemeLogs.length === 0) return
 
-    let activeBlock = await getActiveBlock()
+    await replicationCursorsInitialized
+
+    let activeBlock = getActiveBlock()
 
     // if the block is full, create a new block
-    // TODO: Should we destroy the old block to clean up memory? Or keep it around in case another devices pushes to it?
-    if (activeBlock.getArray('thoughtLog').length >= DOCLOG_BLOCK_SIZE) {
-      activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
+    const blockId = getBlockKey(activeBlock)
+
+    // create a new block is active block is full
+    if (isFull(blockId)) {
+      const blockIdNew = nanoid(13)
+      activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, blockIdNew) })
+      const observed = when<string>(activeBlock, 'em:observed')
       // eslint-disable-next-line fp/no-mutating-methods
       doc.getArray('blocks').push([activeBlock])
+
+      // Wait for the new block subdoc to be added and the observe handlers added before pushing.
+      // Otherwise the first thought of a new block will not get replicated until there is a refresh.
+      await observed
     }
 
     const thoughtLog = activeBlock.getArray<[string, DocLogAction]>('thoughtLog')
