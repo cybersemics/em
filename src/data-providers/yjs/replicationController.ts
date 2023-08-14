@@ -7,6 +7,7 @@ import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import ThoughtId from '../../@types/ThoughtId'
 import keyValueBy from '../../util/keyValueBy'
+import sleep from '../../util/sleep'
 import taskQueue from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
@@ -242,6 +243,44 @@ const replicationController = ({
     })
   })
 
+  // load and replicate full blocks that are overfilled due to an offline device coming back online
+  replicationCursorsInitialized.then(() => {
+    doc.getMap('blockSizes').observe((e: Y.YMapEvent<number>) => {
+      // Ignore self
+      // The important origin is WebsocketProvider.
+      // We could probably ignore IndexedDBPersistence, but we do not have access to the providers here. However, it does not hurt to reload the blocks in case there is a discrepancy with the replication cursors.  It does not matter . he blockSizes will only be loaded if there is a discrepancy with the replication cursors (which may actually be a helpful safeguard).
+      if (e.transaction.origin === doc.clientID) return
+      const blockSizesMap = e.target
+      const keysChanged = [...e.keysChanged]
+
+      // need to wait a tick for some reason, otherwise replicationCursors has not yet been updated
+      setTimeout(() => {
+        keysChanged.forEach(blockId => {
+          const blockSize = blockSizesMap.get(blockId)
+          if (!blockSize) {
+            throw new Error(`Invalid blockSize for block ${blockId}: ${blockSize}`)
+          }
+          const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+          if (thoughtReplicationCursor + 1 < blockSize) {
+            const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
+            const block = blocks.find(block => getBlockKey(block) === blockId)
+            if (!block) {
+              throw new Error(
+                `blockSize changed for block ${blockId}, but no block with that id was found in doc.getArray('blocks').`,
+              )
+            }
+
+            console.info('Reload overfilled block', blockId, { blockSize, thoughtReplicationCursor })
+            block.load()
+            observeBlock(block)
+
+            // TODO: Unload block after it is full replicated
+          }
+        })
+      })
+    })
+  })
+
   /** Observes the thoughtLog and lexemeLog of the given block to replicate changes from remote devices. Idempotent. */
   const observeBlock = (block: Y.Doc) => {
     if (blocksObserved.has(block)) return
@@ -298,10 +337,22 @@ const replicationController = ({
       // Only set blockSize on full blocks to avoid document growth.
       // Only update blockSize after replication to ensure that the block is re-loaded if interrupted by a refresh. This would probably also work in observeBlock, but we might as well do it here where it is throttled.
       if (isFull(blockId)) {
-        const blockSize = observationCursors[blockId].thoughts + 1
-        const blockSizeOld = doc.getMap('blockSizes').get(blockId)
-        if (!blockSizeOld || blockSize > blockSizeOld) {
-          doc.getMap('blockSizes').set(blockId, blockSize)
+        // wait a tick for replication cursors to be updated
+        await sleep(0)
+        const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
+        const blockSize = doc.getMap('blockSizes').get(blockId)
+
+        if (blockSize && thoughtReplicationCursor + 1 < blockSize) {
+          console.error('blockSize should never be less than thoughtReplicationCursor. This is a bug.', {
+            blockSize,
+            thoughtReplicationCursor,
+          })
+        }
+
+        if (!blockSize || thoughtReplicationCursor + 1 > blockSize) {
+          doc.transact(() => {
+            doc.getMap('blockSizes').set(blockId, thoughtReplicationCursor + 1)
+          }, doc.clientID)
         }
       }
 
