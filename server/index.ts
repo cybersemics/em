@@ -1,4 +1,6 @@
 import { Server } from '@hocuspocus/server'
+// eslint-disable-next-line fp/no-events
+import { EventEmitter } from 'events'
 import fs from 'fs'
 import level from 'level'
 import path from 'path'
@@ -19,6 +21,9 @@ import sleep from '../src/util/sleep'
 import taskQueue from '../src/util/taskQueue'
 import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
+
+// bump maxListeners to avoid warnings when many websocket connections are created
+EventEmitter.defaultMaxListeners = 1000000
 
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
