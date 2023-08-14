@@ -32,9 +32,6 @@ const DOCLOG_BLOCK_SIZE = 100
 /** Throttle rate of storing the replication cursor after a thought or lexeme has been successfully replicated. */
 const STORE_REPLICATION_CURSOR_THROTTLE = 1000
 
-/** Delay before filled block is unloaded. This allows straggler updates to be observed if other devices have not switched over to the new block yet. After the delay, it is still possible for new updates be added to the block (by offline devices), but that is handled separately by observing blockSizes and re-loading the overfilled block to replicate when its blockSize changes. */
-// const DOCLOG_BLOCK_UNLOAD_DELAY = 5000
-
 /** A replication controller that ensures that thought and lexeme updates are efficiently and reliably replicated. Does not dictate the replication method itself, but rather maintains a replication queue for throttled concurrency and a replication cursor for resumability. On load, triggers a replicaton for all thoughts and lexemes that have not been processed (via next). When a new update is received (via log), calls next to process the update. Provides start and pause for full control over when replication is running. */
 const replicationController = ({
   autostart = true,
@@ -243,7 +240,8 @@ const replicationController = ({
     })
   })
 
-  // load and replicate full blocks that are overfilled due to an offline device coming back online
+  // Load and replicate full blocks that are overfilled due to an offline device coming back online.
+  // We need to watch blockSizes for this because blocks are normrally not loaded when full.
   replicationCursorsInitialized.then(() => {
     doc.getMap('blockSizes').observe((e: Y.YMapEvent<number>) => {
       // Ignore self
@@ -266,15 +264,14 @@ const replicationController = ({
             const block = blocks.find(block => getBlockKey(block) === blockId)
             if (!block) {
               throw new Error(
-                `blockSize changed for block ${blockId}, but no block with that id was found in doc.getArray('blocks').`,
+                `blockSize changed for block ${blockId}, but no block with that id was found in existing blocks: ${blocks
+                  .map(getBlockKey)
+                  .join(', ')}.`,
               )
             }
 
-            console.info('Reload overfilled block', blockId, { blockSize, thoughtReplicationCursor })
             block.load()
             observeBlock(block)
-
-            // TODO: Unload block after it is full replicated
           }
         })
       })
@@ -354,16 +351,13 @@ const replicationController = ({
             doc.getMap('blockSizes').set(blockId, thoughtReplicationCursor + 1)
           }, doc.clientID)
         }
-      }
 
-      // TODO:
-      // unload if block is full and replicated
-      // console.warn('Initiating unload block', { blockId: getBlockKey(block), blockSize })
-      // setTimeout(() => {
-      //   // the block will automatically be re-added by the provider and trigger the subdocs event, but the subdocs listener will detect that the block is full and not load it
-      //   block.destroy()
-      //   console.warn('Block destroyed', getBlockKey(block))
-      // }, DOCLOG_BLOCK_UNLOAD_DELAY) as unknown as number
+        // Unload full blocks after replication. This is mainly for unloading overfilled blocks, since they are loaded separately and will not get picked up by the "old block" unload logic.
+        // Do not unload the active block. It will be unloaded when the new block is created.
+        if (block !== getActiveBlock()) {
+          block.destroy()
+        }
+      }
     })
 
     // See: thoughtLog.observe
@@ -428,21 +422,29 @@ const replicationController = ({
     await replicationCursorsInitialized
 
     let activeBlock = getActiveBlock()
+    let blockId = getBlockKey(activeBlock)
 
     // if the block is full, create a new block
-    const blockId = getBlockKey(activeBlock)
-
     // create a new block is active block is full
     if (isFull(blockId)) {
-      const blockIdNew = nanoid(13)
-      activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, blockIdNew) })
+      const blockIdOld = blockId
+      const blockOld = activeBlock
+      blockId = nanoid(13)
+      activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, blockId) })
       const observed = when<string>(activeBlock, 'em:observed')
       // eslint-disable-next-line fp/no-mutating-methods
       doc.getArray('blocks').push([activeBlock])
 
-      // Wait for the new block subdoc to be added and the observe handlers added before pushing.
+      // Wait for the new block subdoc and the observe handlers to be added before pushing.
       // Otherwise the first thought of a new block will not get replicated until there is a refresh.
       await observed
+
+      // if the old block is fully replicated, we can destroy it
+      const thoughtReplicationCursorOld = replicationCursors[blockIdOld]?.thoughts ?? -1
+      const blockSizeOld = doc.getMap('blockSizes').get(blockIdOld)
+      if (thoughtReplicationCursorOld + 1 === blockSizeOld) {
+        blockOld.destroy()
+      }
     }
 
     const thoughtLog = activeBlock.getArray<[string, DocLogAction]>('thoughtLog')
