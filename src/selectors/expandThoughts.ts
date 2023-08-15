@@ -145,23 +145,23 @@ function expandThoughtsRecursive(
         return !isAttribute(value) || isExpansionBasePath() || isAncestor()
       })
 
-  // expand if child is an only child and its child is not a url
-  const firstGrandchild = anyChild(state, visibleChildren[0]?.id)
-  const isOnlyChildNoUrl =
-    firstGrandchild &&
+  // expand if child is an only child
+  const grandchild = anyChild(state, visibleChildren[0]?.id)
+  const hasOnlyChild =
     visibleChildren.length === 1 &&
+    grandchild &&
     !isTableColumn1(state, simplePath) &&
-    !isURL(firstGrandchild.value) &&
-    // Do not expand only child when parent's subthoughts are pinned
+    // do not expand if grandchild is a url
+    !isURL(grandchild.value) &&
+    // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
-    !childrenPinned(state, head(parentOf(path)))
+    !childrenPinned(state, head(parentOf(path))) &&
+    // do not expand if thought or parent's subthoughts have =pin/false
+    pinned(state, visibleChildren[0].id) !== false &&
+    childrenPinned(state, thoughtId) !== false
 
   const childrenExpanded =
-    isTable(state, thoughtId) ||
-    (isOnlyChildNoUrl &&
-      childrenPinned(state, thoughtId) !== false &&
-      pinned(state, visibleChildren[0].id) !== false) ||
-    publishPinChildren(state, simplePath)
+    isTable(state, thoughtId) || hasOnlyChild || publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
           if (childrenPinned(state, thoughtId)) return pinned(state, child.id) !== false

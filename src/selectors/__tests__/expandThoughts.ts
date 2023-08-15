@@ -80,7 +80,7 @@ describe('normal view', () => {
     expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
   })
 
-  it('only-child descendants are expanded', () => {
+  it('only child descendants are expanded', () => {
     const text = `
       - a
         - b
@@ -104,7 +104,7 @@ describe('normal view', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2', 'f'])).toBeFalsy()
   })
 
-  it('only-child of =children/=pin subthought is not expanded', () => {
+  it('only child of =children/=pin subthought is not expanded', () => {
     const text = `
       - To Do
         - =children
@@ -363,7 +363,7 @@ describe('pin', () => {
   })
 
   describe('=pin/false', () => {
-    it('only-child descendants are not expanded with =pin/false', () => {
+    it('only child descendants are not expanded with =pin/false', () => {
       const text = `
         - a
           - b
