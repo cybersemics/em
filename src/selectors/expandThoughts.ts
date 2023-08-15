@@ -151,7 +151,10 @@ function expandThoughtsRecursive(
     firstGrandchild &&
     visibleChildren.length === 1 &&
     !isTableColumn1(state, simplePath) &&
-    !isURL(firstGrandchild.value)
+    !isURL(firstGrandchild.value) &&
+    // Do not expand only child when parent's subthoughts are pinned
+    // https://github.com/cybersemics/em/issues/1732
+    !childrenPinned(state, head(parentOf(path)))
 
   const childrenExpanded =
     isTable(state, thoughtId) ||

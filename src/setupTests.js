@@ -3,8 +3,11 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import crypto from 'crypto'
 import { configure } from 'enzyme'
 import 'fake-indexeddb/auto'
+import * as matchers from 'jest-extended'
 import 'jest-localstorage-mock'
 import { noop } from 'lodash'
+
+expect.extend(matchers)
 
 configure({ adapter: new Adapter() })
 

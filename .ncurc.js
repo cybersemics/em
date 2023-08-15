@@ -41,5 +41,9 @@ module.exports = {
     //
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
     'ts-key-enum',
+
+    // jest-extended only supports Jest version 27.2.5 and newer
+    // https://jest-extended.jestcommunity.dev/docs/getting-started/setup
+    'jest-extended',
   ],
 }

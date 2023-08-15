@@ -9,6 +9,7 @@ import expandThoughts from '../../selectors/expandThoughts'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 /** Returns true if a context is expanded. */
@@ -16,6 +17,12 @@ const isContextExpanded = (state: State, context: Context) => {
   const path = contextToPath(state, context)
   if (!path) return false
   return !!expandThoughts(state, state.cursor)[hashPath(path)]
+}
+
+/** Returns a list of expanded contexts. */
+const expandAtCursor = (state: State) => {
+  const expandedPathMap = expandThoughts(state, state.cursor)
+  return Object.values(expandedPathMap).map(path => pathToContext(state, path))
 }
 
 describe('normal view', () => {
@@ -95,6 +102,29 @@ describe('normal view', () => {
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e1'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd', 'e2', 'f'])).toBeFalsy()
+  })
+
+  it('only-child of =children/=pin subthought is not expanded', () => {
+    const text = `
+      - To Do
+        - =children
+          - =pin
+            - true
+        - ::
+          - two
+          - three
+        - ✓
+          - one
+            - 1.1
+            - 1.2
+            - 1.3
+    `
+
+    const steps = [importText({ text }), setCursor(['To Do'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(expandAtCursor(stateNew)).toIncludeSameMembers([[HOME_TOKEN], ['To Do'], ['To Do', '::'], ['To Do', '✓']])
   })
 
   // Related issue: https://github.com/cybersemics/em/issues/1238
