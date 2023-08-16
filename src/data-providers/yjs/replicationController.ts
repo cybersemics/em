@@ -337,16 +337,11 @@ const replicationController = ({
         // wait a tick for replication cursors to be updated
         await sleep(0)
         const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
-        const blockSize = doc.getMap('blockSizes').get(blockId)
+        const blockSize = doc.getMap('blockSizes').get(blockId) || 0
 
-        if (blockSize && thoughtReplicationCursor + 1 < blockSize) {
-          console.error('blockSize should never be less than thoughtReplicationCursor. This is a bug.', {
-            blockSize,
-            thoughtReplicationCursor,
-          })
-        }
-
-        if (!blockSize || thoughtReplicationCursor + 1 > blockSize) {
+        // if thoughtReplicationCursor + 1 is greater than blockSize, it means this device filled up the block
+        // if thoughtReplicationCursor + 1 is less than blockSize, it means the block was overfilled by another client and we are waiting for local replication
+        if (thoughtReplicationCursor + 1 > blockSize) {
           doc.transact(() => {
             doc.getMap('blockSizes').set(blockId, thoughtReplicationCursor + 1)
           }, doc.clientID)
