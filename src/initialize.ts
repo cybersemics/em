@@ -261,6 +261,8 @@ const windowEm = {
   },
   prettyPath,
   store,
+  offlineStatusStore,
+  syncStatusStore,
   // helper functions that will be used by puppeteer tests
   testHelpers,
   thoughtToContext: withState(thoughtToContext),
