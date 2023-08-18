@@ -11196,24 +11196,10 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lib0@^0.2.43:
-  version "0.2.62"
-  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.62.tgz#c4e6860751ba7674a0dca51bb3c23d80985852de"
-  integrity sha512-DY0G8AaQloUvpiss7EpAo/t4R82b9m/AydbQRNAa9Khssn9oGDJnSN8Q1qQ8u82Wog4iaT1O8yM+DfhzGCrrpQ==
-  dependencies:
-    isomorphic.js "^0.2.4"
-
-lib0@^0.2.47:
+lib0@^0.2.47, lib0@^0.2.74:
   version "0.2.82"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.82.tgz#96256f3a970e14621aa32aad057559111e2793f2"
   integrity sha512-sZJeggxq56weXHnBc37dXNnYKGPvdR75zKxGHNc8gLE+ldKCbc4whk0JY2cV17lxuBFtvRd4dIsSh6Cfz7slUw==
-  dependencies:
-    isomorphic.js "^0.2.4"
-
-lib0@^0.2.74:
-  version "0.2.78"
-  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.78.tgz#9aa34733075caafb3edf228da6e609d15ada0088"
-  integrity sha512-SV2nU43/6eaYnGH3l0lg2wg1ziB/TH3sAd2E8quXPGwrqo+aX98SNT2ZKucpUr5B8A52jD7ZMjAl+r87Fa/bLQ==
   dependencies:
     isomorphic.js "^0.2.4"
 
@@ -18596,7 +18582,7 @@ xtend@^4.0.0, xtend@~4.0.1:
 
 "y-indexeddb@https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex":
   version "9.0.11-multiplex.0"
-  resolved "https://github.com/raineorshine/y-indexeddb#5ae2c97055c11d9252b4fec16a2e0ad3170c5e6b"
+  resolved "https://github.com/raineorshine/y-indexeddb#60b960009085b1a988b5064ee35703229231531f"
   dependencies:
     lib0 "^0.2.74"
 
@@ -18735,12 +18721,12 @@ yauzl@^2.10.0:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-yjs@13.5.29:
-  version "13.5.29"
-  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.5.29.tgz#84f1963842b600d6dd18c8a0acc6e1b11b50ed59"
-  integrity sha512-Wtx1jLM+LbUUJsN9NJLYgANh1MEI1QAFyLLTHymEwpKwWtLg9hRvucX7YGQ4GHLT6MIIdWt66B5Wu4dkZriEKw==
+yjs@^13.6.7:
+  version "13.6.7"
+  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.7.tgz#f1176c37f65eb566cf390bd813e2099d598795f4"
+  integrity sha512-mCZTh4kjvUS2DnaktsYN6wLH3WZCJBLqrTdkWh1bIDpA/sB/GNFaLA/dyVJj2Hc7KwONuuoC/vWe9bwBBosZLQ==
   dependencies:
-    lib0 "^0.2.43"
+    lib0 "^0.2.74"
 
 yocto-queue@^0.1.0:
   version "0.1.0"
