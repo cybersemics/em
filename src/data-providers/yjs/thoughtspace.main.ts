@@ -1,8 +1,15 @@
 /** API on the main thread to access the thoughtspace web worker at thoughtspace.worker.ts. */
 import { proxy, wrap } from 'comlink'
+import sleep from '../../util/sleep'
 import { DataProvider } from '../DataProvider'
 import { ThoughtspaceOptions } from './thoughtspace'
 import ThoughtspaceWorker, { api } from './thoughtspace.worker'
+
+// the rate that the monitor function pings the web worker
+const MONITOR_PING_RATE = 1000
+
+// how long before a monitor ping times out
+const MONITOR_PING_TIMEOUT = 1000
 
 /** Convert a Remote type back into a regular promise. */
 const unwrap =
@@ -37,6 +44,14 @@ export const init = (options: ThoughtspaceOptions) =>
       websocketUrl: Promise.resolve(options.websocketUrl),
     }),
   )
+
+/** Ping the web worker on an interval and fire a callback if it is unresponsive. */
+export const monitor = (cb: (error: string | null) => void) => {
+  setInterval(async () => {
+    const success = await Promise.race([workerApi.ping(), sleep(MONITOR_PING_TIMEOUT)])
+    cb(success ? null : 'Thoughtspace web worker timeout')
+  }, MONITOR_PING_RATE)
+}
 
 const db: DataProvider = {
   clear,

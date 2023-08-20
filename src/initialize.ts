@@ -7,7 +7,7 @@ import State from './@types/State'
 import Thought from './@types/Thought'
 import Thunk from './@types/Thunk'
 import './App.css'
-import alert from './action-creators/alert'
+import error from './action-creators/error'
 import importFiles from './action-creators/importFiles'
 import loadFromUrl from './action-creators/loadFromUrl'
 import loadLocalState from './action-creators/loadLocalState'
@@ -21,6 +21,7 @@ import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, tsid, websocket, websocketUrl } from './data-providers/yjs'
 import db, {
   init as initThoughtspace,
+  monitor,
   pauseReplication,
   startReplication,
 } from './data-providers/yjs/thoughtspace.main'
@@ -101,7 +102,7 @@ export const initialize = async () => {
     },
     onError: (message, object) => {
       console.error(message, object)
-      store.dispatch(alert(message))
+      store.dispatch(error({ value: message }))
     },
     onProgress: syncStatusStore.update,
     onThoughtChange: (thought: Thought) => {
@@ -148,6 +149,24 @@ export const initialize = async () => {
     setItem: storage.setItem,
     tsid,
     websocketUrl,
+  })
+
+  // monitor web worker and show an error if unresponsive
+  const workerUnresponsiveErrorMessage = 'Thoughtspace web worker unresponsive'
+  monitor(err => {
+    // error if unresponsive
+    if (err) {
+      store.dispatch(error({ value: workerUnresponsiveErrorMessage }))
+    }
+    // clear error if responsive
+    else {
+      store.dispatch((dispatch, getState) => {
+        const state = getState()
+        if (state.error === workerUnresponsiveErrorMessage) {
+          dispatch(error({ value: null }))
+        }
+      })
+    }
   })
 
   // pause replication during pushing and pulling
