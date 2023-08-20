@@ -14,7 +14,7 @@ import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import ValueOf from '../../@types/ValueOf'
 import WebsocketStatus from '../../@types/WebsocketStatus'
-import { WEBSOCKET_CONNECTION_TIME } from '../../constants'
+import { EM_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_CONNECTION_TIME } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -136,19 +136,21 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
  * Module variables
  **********************************************************************/
 
-// map of all YJS thought Docs loaded into memory
-// keyed by ThoughtId
-// parallel to thoughtIndex and lexemeIndex
-const thoughtDocs: Map<ThoughtId, Y.Doc> = new Map()
-const thoughtPersistence: Map<ThoughtId, IndexeddbPersistence> = new Map()
-const thoughtWebsocketProvider: Map<ThoughtId, HocuspocusProvider> = new Map()
-const thoughtIDBSynced: Map<ThoughtId, Promise<unknown>> = new Map()
-const thoughtWebsocketSynced: Map<ThoughtId, Promise<unknown>> = new Map()
+// Map of all YJS thought Docs loaded into memory.
+// Keyed by docKey (See docKeys below).
+const thoughtDocs: Map<string, Y.Doc> = new Map()
+const thoughtPersistence: Map<string, IndexeddbPersistence> = new Map()
+const thoughtWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
+const thoughtIDBSynced: Map<string, Promise<unknown>> = new Map()
+const thoughtWebsocketSynced: Map<string, Promise<unknown>> = new Map()
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
 const lexemeIDBSynced: Map<string, Promise<unknown>> = new Map()
 const lexemeWebsocketSynced: Map<string, Promise<unknown>> = new Map()
+
+/** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
+const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
 
 // doclog is an append-only log of all thought ids and lexeme keys that are updated.
 // Since Thoughts and Lexemes are stored in separate docs, we need a unified list of all ids to replicate.
@@ -250,10 +252,15 @@ export const init = async (options: ThoughtspaceOptions) => {
       getItem,
       setItem,
     },
-    next: async ({ action, id, type }) => {
+    next: async ({
+      action,
+      /** Update actions use docKey as id. Delete actions will use thoughtId as id. */
+      id,
+      type,
+    }) => {
       if (action === DocLogAction.Update) {
         await (type === 'thought'
-          ? replicateThought(id as ThoughtId, { background: true })
+          ? replicateChildren(id as ThoughtId, { background: true })
           : replicateLexeme(id, { background: true }))
       } else if (action === DocLogAction.Delete) {
         updateThoughtsThrottled({
@@ -324,15 +331,36 @@ export const init = async (options: ThoughtspaceOptions) => {
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
+  let docKey = docKeys.get(id)
+  if (docKey) {
+    // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
+    // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
+    if (docKey !== thought.parentId) {
+      const thoughtDocOld = thoughtDocs.get(docKey)!
+      thoughtDocOld.transact(() => {
+        const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>()
+        yChildren.delete(id)
+        docKey = thought.parentId
+        docKeys.set(id, docKey)
+      }, thoughtDocOld.clientID)
+    }
+  } else {
+    docKey = thought.parentId
+    docKeys.set(id, docKey)
+    Object.values(thought.childrenMap).forEach(childId => {
+      docKeys.set(childId, id)
+    })
+  }
+
   // Get the thought Doc if it has been cached, or initiate a replication.
   // Do not wait for thought to full replicate.
   const thoughtDoc =
-    thoughtDocs.get(id) ||
+    thoughtDocs.get(docKey) ||
     (await new Promise<Y.Doc>(resolve => {
       replicateThought(id, { onDoc: resolve })
     }))
 
-  const idbSynced = thoughtPersistence.get(thought.id)?.whenSynced.catch(e => {
+  const idbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
     if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
@@ -347,7 +375,11 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   })
 
   thoughtDoc.transact(() => {
-    const thoughtMap = thoughtDoc.getMap<ThoughtYjs>()
+    const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+    if (!yChildren.has(id)) {
+      yChildren.set(id, new Y.Map<ThoughtYjs>())
+    }
+    const thoughtMap = yChildren.get(id)!
     Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
       // merge childrenMap Y.Map
       if (key === 'childrenMap') {
@@ -471,12 +503,17 @@ export const updateLexeme = async (
 }
 
 /** Handles the Thought observe event. Ignores events from self. */
-const onThoughtChange = (e: SimpleYMapEvent<ThoughtYjs>) => {
+const onThoughtChange = (id: ThoughtId) => (e: SimpleYMapEvent<ThoughtYjs>) => {
   const thoughtDoc = e.target.doc!
   if (e.transaction.origin === thoughtDoc.clientID) return
 
-  const thought = getThought(thoughtDoc)
+  const thought = getThought(thoughtDoc, id)
   if (!thought) return
+
+  // update docKeys of children
+  Object.values(thought.childrenMap).forEach(childId => {
+    docKeys.set(childId, id)
+  })
 
   config.then(({ onThoughtChange }) => onThoughtChange?.(thought))
 }
@@ -506,7 +543,10 @@ const onLexemeChange = (e: {
   })
 }
 
-/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
+/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating.
+ *
+ * Precondition: docKey of id must be cached.
+ */
 export const replicateThought = async (
   id: ThoughtId,
   {
@@ -529,47 +569,88 @@ export const replicateThought = async (
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
+  const docKey = docKeys.get(id)
+  if (!docKey) {
+    throw new Error(`updateThought: No known parent for thought ${id}`)
+  }
+  const children = await replicateChildren(docKey, { background, onDoc, remote })
+  return children?.find(child => child.id === id)
+}
+
+/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
+export const replicateChildren = async (
+  docKey: string,
+  {
+    background,
+    onDoc,
+    remote = true,
+  }: {
+    /**
+     * Replicate in the background, meaning:
+     * - *Do not update Redux state.
+     * - Do not store thought doc in memory.
+     * - Destroy IndexedDBPersistence after sync.
+     * - Destroy HocuspocusProvider after sync.
+     * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
+     */
+    background?: boolean
+    /** Callback with the doc as soon as it has been instantiated. */
+    onDoc?: (doc: Y.Doc) => void
+    /** Sync with websocket server. Default: true. This is currently set to false during export. */
+    remote?: boolean
+  } = {},
+): Promise<Thought[] | undefined> => {
   const { accessToken, isThoughtLoaded, onError, onThoughtIDBSynced, onThoughtReplicated, tsid, websocket } =
     await config
-  const documentName = encodeThoughtDocumentName(tsid, id)
-  const doc = thoughtDocs.get(id) || new Y.Doc({ guid: documentName })
+  const documentName = encodeThoughtDocumentName(tsid, docKey)
+  const doc = thoughtDocs.get(docKey) || new Y.Doc({ guid: documentName })
   onDoc?.(doc)
-  const thoughtMap = doc.getMap<ThoughtYjs>()
 
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (thoughtDocs.get(id) || process.env.NODE_ENV === 'test') {
-    const idbSynced = thoughtIDBSynced.get(id)
-    const websocketSynced = thoughtWebsocketSynced.get(id)
-    return Promise.all([idbSynced, background && remote ? websocketSynced : null]).then(() => getThought(doc))
+  if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
+    const idbSynced = thoughtIDBSynced.get(docKey)
+    const websocketSynced = thoughtWebsocketSynced.get(docKey)
+    return Promise.all([idbSynced, background && remote ? websocketSynced : null]).then(() => getChildren(doc))
   }
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const idbSynced = persistence.whenSynced
     .then(() => {
-      const thought = getThought(doc)
-      onThoughtIDBSynced?.(thought, { background: !!background })
+      const children = getChildren(doc)
+
+      // update docKeys of children and grandchildren
+      children?.forEach(child => {
+        docKeys.set(child.id, docKey)
+        Object.values(child.childrenMap).forEach(grandchildId => {
+          docKeys.set(grandchildId, child.id)
+        })
+      })
+
+      children?.forEach(child => {
+        onThoughtIDBSynced?.(child, { background: !!background })
+      })
     })
     .catch(e => {
       // AbortError happens if the app is closed during replication.
       // Not sure if the timeout will be preserved, but we can at least try to re-replicate.
       if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
-        freeThought(id)
+        freeThought(docKey)
         setTimeout(() => {
-          replicateThought(id, { background, remote })
+          replicateChildren(docKey, { background, onDoc, remote })
         }, IDB_ERROR_RETRY)
         return
       }
-      onError?.(`Error loading thought ${id}: ${e.message}`, e)
+      onError?.(`Error loading thought ${docKey} from IndexedDB: ${e.message}`, e)
     })
 
-  // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateThought will not re-replicate
+  // if foreground replication (i.e. pull), set thoughtDocs entry so that further calls to replicateChildren will not re-replicate
   if (!background) {
-    thoughtDocs.set(id, doc)
-    thoughtIDBSynced.set(id, idbSynced)
-    thoughtPersistence.set(id, persistence)
+    thoughtDocs.set(docKey, doc)
+    thoughtIDBSynced.set(docKey, idbSynced)
+    thoughtPersistence.set(docKey, persistence)
   }
 
   // always wait for IDB to sync
@@ -589,17 +670,30 @@ export const replicateThought = async (
     : null
 
   const websocketSynced = websocketProvider ? when(websocketProvider, 'synced') : null
+  websocketSynced?.then(() => {
+    const children = getChildren(doc)
+    children?.forEach(child => {
+      onThoughtReplicated?.(child.id, getThought(doc, child.id))
+
+      // update docKeys of children and grandchildren
+      docKeys.set(child.id, docKey)
+      Object.values(child.childrenMap).forEach(grandchildId => {
+        docKeys.set(grandchildId, child.id)
+      })
+    })
+  })
 
   // foreground
   if (!background) {
     if (websocketProvider) {
-      thoughtWebsocketProvider.set(id, websocketProvider)
-      thoughtWebsocketSynced.set(id, websocketSynced!)
+      thoughtWebsocketProvider.set(docKey, websocketProvider)
+      thoughtWebsocketSynced.set(docKey, websocketSynced!)
     }
     // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
     // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
     // This can be observed when a thought appears pending on load and its child is missing.
-    if (!getThought(doc)) {
+    const children = getChildren(doc)
+    if (!children) {
       // abort websocketSynced if the user goes offline
 
       let offlineTimeout = 0
@@ -620,10 +714,14 @@ export const replicateThought = async (
       await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
     }
 
-    // Note: onThoughtChange is not pending-aware.
-    // Subscribe to changes after first sync to ensure that pending is set properly.
-    // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
-    thoughtMap.observe(onThoughtChange)
+    const yChildren = doc.getMap<Y.Map<ThoughtYjs>>()
+    const childrenEntries = [...(yChildren.entries() as IterableIterator<[ThoughtId, Y.Map<ThoughtYjs>]>)]
+    childrenEntries.forEach(([childId, thoughtMap]) => {
+      // Note: onThoughtChange is not pending-aware.
+      // Subscribe to changes after first sync to ensure that pending is set properly.
+      // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
+      thoughtMap.observe(onThoughtChange(childId))
+    })
   }
   // background
   else {
@@ -633,32 +731,37 @@ export const replicateThought = async (
 
     // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
-    const thought = getThought(doc)
-    if (await isThoughtLoaded(thought)) {
-      thoughtDocs.set(id, doc)
-      thoughtIDBSynced.set(id, idbSynced)
-      thoughtPersistence.set(id, persistence)
-      if (websocketProvider) {
-        thoughtWebsocketProvider.set(id, websocketProvider)
-      }
-      onThoughtChange({
-        target: doc.getMap(),
-        transaction: {
-          origin: websocketProvider,
-        },
-      })
-      thoughtMap.observe(onThoughtChange)
-    } else {
-      doc.destroy()
-      websocketProvider?.destroy()
-      return thought
-    }
+    const children = getChildren(doc) || []
+    await Promise.all(
+      children.map(async child => {
+        if (await isThoughtLoaded(child)) {
+          thoughtDocs.set(docKey, doc)
+          thoughtIDBSynced.set(docKey, idbSynced)
+          thoughtPersistence.set(docKey, persistence)
+          if (websocketProvider) {
+            thoughtWebsocketProvider.set(docKey, websocketProvider)
+          }
+          onThoughtChange(child.id)({
+            target: doc.getMap<Y.Map<ThoughtYjs>>().get(child.id)!,
+            transaction: {
+              origin: websocketProvider,
+            },
+          })
+
+          const yChildren = doc.getMap<Y.Map<ThoughtYjs>>()
+          if (!yChildren.has(child.id)) {
+            yChildren.set(child.id, new Y.Map<ThoughtYjs>())
+          }
+          const thoughtMap = yChildren.get(child.id)!
+          thoughtMap.observe(onThoughtChange(child.id))
+        } else {
+          doc.destroy()
+          websocketProvider?.destroy()
+        }
+      }),
+    )
   }
-
-  // repair
-  websocketSynced?.then(() => onThoughtReplicated?.(id, getThought(doc)))
-
-  return getThought(doc)
+  return getChildren(doc)
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
@@ -714,7 +817,7 @@ export const replicateLexeme = async (
     lexemePersistence.set(key, persistence)
   }
 
-  // Start observing before websocketSynced since we don't need to worry about pending (See: replicateThought).
+  // Start observing before websocketSynced immediately. This differs from replicateChildren, where we cannot start observing until we know if a thought is pending or not.
   // This will be unobserved in background replication.
   lexemeMap.observe(onLexemeChange)
 
@@ -769,11 +872,29 @@ export const replicateLexeme = async (
   return getLexeme(doc)
 }
 
+/** Gets all children from a thought Y.Doc. Returns undefined if the doc does not exist. */
+const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
+  if (!thoughtDoc) return undefined
+  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+  const childrenYjs = [...(yChildren.values() as IterableIterator<Y.Map<ThoughtYjs>>)]
+  return childrenYjs.map(thoughtMap => {
+    const thoughtRaw = thoughtMap.toJSON()
+    return {
+      ...thoughtRaw,
+      // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
+      // toJSON is not recursive so we need to toJSON childrenMap as well
+      // It is possible that this was fixed in later versions of yjs after v13.5.41
+      childrenMap: thoughtRaw.childrenMap.toJSON ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
+    } as Thought
+  })
+}
+
 /** Gets a Thought from a thought Y.Doc. */
-const getThought = (thoughtDoc: Y.Doc | undefined): Thought | undefined => {
+const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | undefined => {
   if (!thoughtDoc) return
-  const thoughtMap = thoughtDoc.getMap()
-  if (thoughtMap.size === 0) return
+  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+  const thoughtMap = yChildren.get(id)
+  if (!thoughtMap || thoughtMap.size === 0) return
   const thoughtRaw = thoughtMap.toJSON()
   return {
     ...thoughtRaw,
@@ -804,39 +925,64 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 }
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
-export const freeThought = async (id: ThoughtId): Promise<void> => {
+export const freeThought = async (docKey: string): Promise<void> => {
+  // freeThought and deleteThought are the only places where we use the id as the docKey directly.
+  // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
+
   // await idbSynced to ensure that export is not interrupted
   // do not await websocketSynced as it is not guaranteed to resolve
-  await thoughtIDBSynced.get(id)
+  await thoughtIDBSynced.get(docKey)
 
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
   // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
-  const thoughtMap: Y.Map<ThoughtYjs> | undefined = thoughtDocs.get(id)?.getMap<ThoughtYjs>()
-  const listeners = thoughtMap?._eH.l.slice(0) || []
-  if (listeners.some(l => l === onThoughtChange)) {
-    thoughtMap?.unobserve(onThoughtChange)
-  }
+  // const yChildren = thoughtDocs.get(id)?.getMap<Y.Map<ThoughtYjs>>()
+  // yChildren?.forEach(thoughtMap => {
+  //   const listeners = thoughtMap?._eH.l.slice(0) || []
+  //   if (listeners.some(l => l === onThoughtChange)) {
+  //     thoughtMap?.unobserve(onThoughtChange)
+  //   }
+  // })
 
-  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
-  thoughtDocs.get(id)?.destroy()
-  thoughtWebsocketProvider.get(id)?.destroy()
-  thoughtDocs.delete(id)
-  thoughtPersistence.delete(id)
-  thoughtIDBSynced.delete(id)
-  thoughtWebsocketProvider.delete(id)
+  // remove children from docKeys
+  const thoughtDoc = thoughtDocs.get(docKey)
+  const yChildren = thoughtDoc?.getMap<Y.Map<ThoughtYjs>>()
+  yChildren?.forEach(thoughtMap => {
+    const childId = thoughtMap.get('id') as ThoughtId
+    docKeys.delete(childId)
+  })
+
+  docKeys.delete(docKey as ThoughtId)
+  thoughtDocs.get(docKey)?.destroy()
+  // IndexeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
+  thoughtWebsocketProvider.get(docKey)?.destroy()
+  thoughtDocs.delete(docKey)
+  thoughtPersistence.delete(docKey)
+  thoughtIDBSynced.delete(docKey)
+  thoughtWebsocketProvider.delete(docKey)
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteThought = async (id: ThoughtId): Promise<void> => {
+const deleteThought = async (docKey: string): Promise<void> => {
+  // freeThought and deleteThought are the only places where we use the id as the docKey directly.
+  // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
+
   const { tsid } = await config
-  const persistence = thoughtPersistence.get(id)
+  const persistence = thoughtPersistence.get(docKey)
+
+  // delete thought from parent
+  const docKeyParent = docKeys.get(docKey as ThoughtId)
+  if (docKeyParent) {
+    const docParent = thoughtDocs.get(docKeyParent)
+    const yChildren = docParent?.getMap<Y.Map<ThoughtYjs>>()
+    yChildren?.delete(docKey)
+  }
 
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
-    const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, id))
-    await freeThought(id)
+    const deleted = persistence ? persistence.clearData() : clearDocument(encodeThoughtDocumentName(tsid, docKey))
+    await freeThought(docKey)
     await deleted
   } catch (e: any) {
     // Ignore NotFoundError, which indicates that the object stores have already been deleted.
@@ -943,10 +1089,9 @@ export const updateThoughts = async ({
   // This is done to reduce the growth of the doclog during the common operation of editing a single thought.
   // The only cost is that any clients that go offline will not replicate a delayed contiguous edit when reconnecting.
   const ids = Object.keys(thoughtIndexUpdates || {}) as ThoughtId[]
-  const thoughtLogs: [ThoughtId, DocLogAction][] = ids.map(id => [
-    id,
-    thoughtIndexUpdates[id] ? DocLogAction.Update : DocLogAction.Delete,
-  ])
+  const thoughtLogs: [ThoughtId, DocLogAction][] = ids.map(id =>
+    thoughtIndexUpdates[id] ? [thoughtIndexUpdates[id]!.parentId, DocLogAction.Update] : [id, DocLogAction.Delete],
+  )
 
   const keys = Object.keys(lexemeIndexUpdates || {})
   const lexemeLogs: [string, DocLogAction][] = keys.map(key => [
@@ -954,7 +1099,6 @@ export const updateThoughts = async ({
     lexemeIndexUpdates[key] ? DocLogAction.Update : DocLogAction.Delete,
   ])
 
-  // eslint-disable-next-line fp/no-mutating-methods
   replication.log({ thoughtLogs, lexemeLogs })
 
   const deletePromise = updateQueue.add([
@@ -994,7 +1138,14 @@ export const getLexemeById = (key: string) => replicateLexeme(key)
 export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]> => Promise.all(keys.map(getLexemeById))
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
-export const getThoughtById = (id: ThoughtId) => replicateThought(id)
+export const getThoughtById = async (id: ThoughtId) => {
+  const docKey = docKeys.get(id)
+  if (!docKey) {
+    throw new Error(`getThoughtById: Missing docKey for thought ${id}`)
+  }
+  await replicateThought(id)
+  return getThought(thoughtDocs.get(docKey), id)
+}
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>

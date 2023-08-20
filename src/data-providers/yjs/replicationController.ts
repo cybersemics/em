@@ -305,19 +305,11 @@ const replicationController = ({
       // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       setThoughtObservationCursor(blockId, thoughtObservationCursor + deltasRaw.length)
 
-      // generate a map of ThoughtId with their last updated index so that we can ignore older updates to the same thought
-      // e.g. if a Lexeme is created, deleted, and then created again, the replicationController will only replicate the last creation
-      const replicated = new Map<ThoughtId, number>()
-      deltas.forEach(([id], i) => replicated.set(id, i))
-
       // Get closure over thoughtReplicationCursor so that the ReplicationTask index is correct.
       // Otherwise thoughtReplicationCursor may increase before the task completes.
       const startIndex = thoughtReplicationCursor
 
       const tasks = deltas.map(([id, action], i) => {
-        // ignore older updates to the same thought
-        if (i !== replicated.get(id)) return null
-
         // trigger next (e.g. save the thought locally)
         return async (): Promise<ReplicationTask> => {
           const taskData: ReplicationTask = { type: 'thought', id, blockId, index: startIndex + i + 1 }
@@ -405,6 +397,7 @@ const replicationController = ({
     thoughtLogs = [],
     lexemeLogs = [],
   }: {
+    /** Update actions use docKey as id. Delete actions use thoughtId as id. */
     thoughtLogs?: [ThoughtId, DocLogAction][]
     lexemeLogs?: [string, DocLogAction][]
   } = {}) => {

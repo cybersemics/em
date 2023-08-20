@@ -10,7 +10,7 @@ const docTypeAbbrev: Index<DocType> = {
 }
 
 /** Generates a documentName for a thought. */
-export const encodeThoughtDocumentName = (tsid: string, id: ThoughtId) => `${tsid}/t/${id}`
+export const encodeThoughtDocumentName = (tsid: string, key: string) => `${tsid}/t/${key}`
 
 /** Generates a documentName for a lexeme. */
 export const encodeLexemeDocumentName = (tsid: string, key: string) => `${tsid}/l/${key}`
