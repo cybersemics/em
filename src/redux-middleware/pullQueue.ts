@@ -170,7 +170,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     const state = getState()
 
-    const isSearchSame =
+    const isSearchUnchanged =
       state.searchContexts === lastSearchContexts ||
       equalArrays(Object.keys(state.searchContexts ?? {}), Object.keys(lastSearchContexts ?? {}))
 
@@ -181,7 +181,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       !force &&
       state.contextViews === lastContextViews &&
       equalArrays(Object.keys(expandedPaths), Object.keys(lastExpandedPaths)) &&
-      isSearchSame
+      isSearchUnchanged
     )
       return
 
