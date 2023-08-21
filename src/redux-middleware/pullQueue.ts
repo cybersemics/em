@@ -95,14 +95,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // eslint-disable-next-line fp/no-let
   let pullQueue = initialPullQueue()
 
-  // a list of indices of ThoughtIds that are currently being pulled
-  // used to prevent redundant pulls
-  // each inner object is the extendedPullQueueFiltered of a single pull
-  // the other object allows the inner objects to be removed in O(1) when the pull is complete
-  const pullQueuePulling: Index<Record<ThoughtId, true>> = {}
-
-  // an autoincrement key for pullQueuePulling
-  let extendedPullQueuePullingId = 0
+  // A set of Indexes of ThoughtIds that are currently being pulled used to prevent redundant pulls.
+  // Each inner object is the extendedPullQueueFiltered of a single pull.
+  // The outer object allows the inner objects to be removed in O(1) when the pull is complete.
+  const pulling = new Set<Record<ThoughtId, true>>()
 
   // A cancel ref for thethat can be set to true to terminate recursive replication in getDescendantThoughts.
   // Re-assigned on each new flush, but the pull will retain a reference to the old object to read that it has been cancelled.
@@ -135,21 +131,25 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     const extendedPullQueueFiltered = force
       ? extendedPullQueue
       : keyValueBy(extendedPullQueue, id => {
-          const isPulling = Object.values(pullQueuePulling).some(pullQueueObject => id in pullQueueObject)
-          return isPulling ? null : { [id]: true as const }
+          // use a for loop for short circuiting
+          // eslint-disable-next-line fp/no-loops
+          for (const pullQueueRecord of pulling.values()) {
+            if (id in pullQueueRecord) return null
+          }
+          return { [id]: true as const }
         })
+
     pullQueue = {}
 
     const extendedPullQueueIds = Object.keys(extendedPullQueueFiltered) as ThoughtId[]
 
-    const pullKey = extendedPullQueuePullingId++
-    pullQueuePulling[pullKey] = extendedPullQueueFiltered
+    pulling.add(extendedPullQueueFiltered)
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     await dispatch(pull(extendedPullQueueIds, { cancelRef, force }))
 
     syncStatusStore.update({ isPulling: false })
-    delete pullQueuePulling[pullKey]
+    pulling.delete(extendedPullQueueFiltered)
   }
 
   /**
