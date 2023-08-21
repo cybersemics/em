@@ -16,6 +16,8 @@ import mergeThoughts from '../util/mergeThoughts'
 const BUFFER_DEPTH = 2
 
 export interface PullOptions {
+  /** See: cancelRef param to getDescendantThoughts. */
+  cancelRef?: { canceled: boolean }
   /** Pull descendants regardless of pending status. */
   force?: boolean
   maxDepth?: number
@@ -60,7 +62,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 const pull =
-  (thoughtIds: ThoughtId[], { force, maxDepth, onThoughts }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
+  (thoughtIds: ThoughtId[], { cancelRef, force, maxDepth, onThoughts }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
     const filteredThoughtIds = force
@@ -75,6 +77,7 @@ const pull =
     const thoughtChunks: ThoughtIndices[] = []
 
     const thoughtsIterable = getManyDescendants(db, filteredThoughtIds, getState, {
+      cancelRef,
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 

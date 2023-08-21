@@ -104,9 +104,29 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
   // an autoincrement key for pullQueuePulling
   let extendedPullQueuePullingId = 0
 
+  // A cancel ref for thethat can be set to true to terminate recursive replication in getDescendantThoughts.
+  // Re-assigned on each new flush, but the pull will retain a reference to the old object to read that it has been cancelled.
+  let cancelRef = { canceled: false }
+
+  // Track the previous cursor so that we can avoid canceling the previous pull when the cursor has not changed.
+  // If the cursor is unchanged, then are probably newly expanded descendants that need to be pulled. While getDescendantThoughts will properly set the pending state to allow the redundant pull, it seems better to avoid it and allow all pulls with the same cursor to complete.
+  let prevCursor: Path | null = getState().cursor
+
   /** Flush the pull queue, pulling them from local and remote and merge them into state. Triggers updatePullQueue if there are any pending thoughts. */
   const flushPullQueue = async ({ force }: { force?: boolean } = {}) => {
     syncStatusStore.update({ isPulling: true })
+
+    // Cancel the previous pull for efficiency.
+    // See prevCursor above for why we should only do this when the cursor has changed.
+    const cursor = getState().cursor
+    if (cursor !== prevCursor) {
+      prevCursor = cursor
+
+      // Cancel the ref that is retained by the previous pull.
+      // Assigning a new ref does not affect the previous pull.
+      cancelRef.canceled = true
+      cancelRef = { canceled: false }
+    }
 
     // expand pull queue to include visible descendants and search contexts
     const extendedPullQueue = appendVisiblePaths(getState(), pullQueue, lastExpandedPaths)
@@ -126,7 +146,7 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     pullQueuePulling[pullKey] = extendedPullQueueFiltered
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
-    await dispatch(pull(extendedPullQueueIds, { force }))
+    await dispatch(pull(extendedPullQueueIds, { cancelRef, force }))
 
     syncStatusStore.update({ isPulling: false })
     delete pullQueuePulling[pullKey]

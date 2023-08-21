@@ -85,8 +85,13 @@ async function* getDescendantThoughts(
   thoughtId: ThoughtId,
   getState: () => State,
   {
+    cancelRef,
     maxDepth = MAX_DEPTH,
   }: {
+    /** A cancel ref that can be set to true to stop any additional descendants from being replicated, leaving their parents pending. Already replicating thoughts will complete as normal. */
+    cancelRef?: {
+      canceled: boolean
+    }
     // Set the depth at which thoughts become pending.
     // If set to Infinity, pulls all available thoughts.
     maxDepth?: number
@@ -172,11 +177,12 @@ async function* getDescendantThoughts(
         // do not buffer leaves, visible thoughts, EM and its descendants, or meta attributes (excluding =archive) and their descendants
         // buffer if max thoughts are reached and the thought is not visible
         const isPending =
-          (isMaxDepthReached || isMaxThoughtsReached) &&
+          // The only safe way to cancel a pull is to set the thought to pending, otherwise children can appear missing.
+          // Leaves and em descendants should never be pending, but expanded or pinned thoughts can be marked pending if the pull is cancelled (since all necessary expanded and meta thoughts for the new cursor will be immediately pulled).
           hasChildren &&
-          !isVisible &&
           !isEmDescendant &&
-          !isMetaDescendant(updatedState, thought)
+          (cancelRef?.canceled ||
+            ((isMaxDepthReached || isMaxThoughtsReached) && !isVisible && !isMetaDescendant(updatedState, thought)))
 
         // once the buffer limit has been reached, set thoughts with children as pending
         // do not buffer descendants of EM
