@@ -164,7 +164,7 @@ async function* getDescendantThoughts(
           thoughtIdQueue.add([thought.parentId])
         }
 
-        const isVisible =
+        const isExpandedOrPinned =
           // we need to check directly for =pin, since it is a sibling and thus not part of accumulatedThoughts yet
           // technically =pin/false is a false positive here, and will cause some thoughts not to be buffered that should, but it is rare
           // we need to determine if this thought should be buffered now, and cannot wait for the =pin child to load
@@ -182,7 +182,9 @@ async function* getDescendantThoughts(
           hasChildren &&
           !isEmDescendant &&
           (cancelRef?.canceled ||
-            ((isMaxDepthReached || isMaxThoughtsReached) && !isVisible && !isMetaDescendant(updatedState, thought)))
+            ((isMaxDepthReached || isMaxThoughtsReached) &&
+              !isExpandedOrPinned &&
+              !isMetaDescendant(updatedState, thought)))
 
         // once the buffer limit has been reached, set thoughts with children as pending
         // do not buffer descendants of EM
