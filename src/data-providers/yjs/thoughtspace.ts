@@ -526,6 +526,9 @@ export const replicateThought = async (
   // sync Websocket after IDB to ensure that only the latest updates since the local state vector are synced
   const websocketProvider = remote
     ? new HocuspocusProvider({
+        // disable awareness for performance
+        // doclog doc has awareness enabled to keep the websocket open
+        awareness: null,
         websocketProvider: websocket,
         name: documentName,
         document: doc,
@@ -676,6 +679,9 @@ export const replicateLexeme = async (
   await idbSynced
 
   const websocketProvider = new HocuspocusProvider({
+    // disable awareness for performance
+    // doclog doc has awareness enabled to keep the websocket open
+    awareness: null,
     websocketProvider: websocket,
     name: documentName,
     document: doc,
@@ -977,6 +983,8 @@ export const startReplication = async () => {
 
     // eslint-disable-next-line no-new
     new HocuspocusProvider({
+      // doclog doc has awareness enabled to keep the websocket open
+      // disable awareness for all other websocket providers
       websocketProvider: websocket,
       name: encodeDocLogDocumentName(tsid),
       document: doclog,

@@ -45,6 +45,8 @@ if (process.env.NODE_ENV !== 'test') {
 // websocket provider
 export const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
 export const websocketProviderPermissions = new HocuspocusProvider({
+  // disable awareness for performance
+  // doclog doc has awareness enabled to keep the websocket open
   websocketProvider: websocket,
   name: encodePermissionsDocumentName(tsid),
   document: permissionsClientDoc,
