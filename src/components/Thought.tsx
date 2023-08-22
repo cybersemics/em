@@ -309,10 +309,11 @@ const ThoughtContainer = ({
     }
   }, [])
 
+  // Styles applied to the .thought-annotation and .editable
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
   // See: https://stackoverflow.com/a/46452396/480608
-  const styleHover = useMemo(
+  const styleThought = useMemo(
     (): React.CSSProperties => ({
       ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
     }),
@@ -474,7 +475,7 @@ const ThoughtContainer = ({
             path={path}
             showContextBreadcrumbs={showContextBreadcrumbs}
             simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={styleHover}
+            style={styleThought}
             styleAnnotation={styleAnnotation || undefined}
           />
 
@@ -488,7 +489,7 @@ const ThoughtContainer = ({
             rank={rank}
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
-            style={styleHover}
+            style={styleThought}
             view={view}
           />
 
