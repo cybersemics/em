@@ -359,6 +359,10 @@ const About = () => {
           Strikethrough icon by <a href='https://thenounproject.com/icon/strikethrough-1107500/'>Ary Prasetyo</a> from
           the <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Check icon by <a href='https://thenounproject.com/icon/check-3669824/'>Media Creative</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
     </div>
   )
