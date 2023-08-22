@@ -316,8 +316,10 @@ const ThoughtContainer = ({
   const styleThought = useMemo(
     (): React.CSSProperties => ({
       ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
+      // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
+      textDecoration: style?.textDecoration,
     }),
-    [isChildHovering],
+    [isChildHovering, style?.textDecoration],
   )
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
