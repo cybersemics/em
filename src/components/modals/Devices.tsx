@@ -98,6 +98,21 @@ const ShareList = ({
     ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
   )
 
+  /** Keyboad shortcuts. */
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Enter' && !showDeviceForm) {
+      e.stopPropagation()
+      setShowDeviceForm(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [])
+
   return (
     <>
       <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
