@@ -35,15 +35,7 @@ export const startReplication = unwrap(workerApi.startReplication)
 export const updateThoughts = unwrap(workerApi.updateThoughts)
 
 /** Proxy init since it takes callbacks. */
-export const init = (options: ThoughtspaceOptions) =>
-  workerApi.init(
-    proxy({
-      ...options,
-      accessToken: Promise.resolve(options.accessToken),
-      tsid: Promise.resolve(options.tsid),
-      websocketUrl: Promise.resolve(options.websocketUrl),
-    }),
-  )
+export const init = (options: ThoughtspaceOptions) => workerApi.init(proxy(options))
 
 /** Ping the web worker on an interval and fire a callback if it is unresponsive. */
 export const monitor = (cb: (error: string | null) => void) => {

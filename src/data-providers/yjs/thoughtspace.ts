@@ -163,13 +163,7 @@ const config = resolvable<ThoughtspaceConfig>()
 let doclogConnected = false
 
 /** Initialize the thoughtspace with a storage module; localStorage cannot be accessed from within a web worker. */
-export const init = async (
-  options: Omit<ThoughtspaceOptions, 'accessToken' | 'tsid' | 'websocketUrl'> & {
-    accessToken: Promise<string>
-    tsid: Promise<string>
-    websocketUrl: Promise<string>
-  },
-) => {
+export const init = async (options: ThoughtspaceOptions) => {
   const {
     isLexemeLoaded,
     isThoughtLoaded,
