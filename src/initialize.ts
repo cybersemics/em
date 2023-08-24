@@ -88,7 +88,9 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 /** Initilaize local db and window events. */
 export const initialize = async () => {
   initOfflineStatusStore(websocket)
+
   await initThoughtspace({
+    cursor: decodeThoughtsUrl(store.getState()).path,
     accessToken,
     /** Returns true if the Thought or its parent is in State. */
     isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {

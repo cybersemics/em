@@ -6,6 +6,7 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import Path from '../../@types/Path'
 import PushBatch from '../../@types/PushBatch'
 import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
@@ -14,7 +15,7 @@ import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import ValueOf from '../../@types/ValueOf'
 import WebsocketStatus from '../../@types/WebsocketStatus'
-import { EM_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_CONNECTION_TIME } from '../../constants'
+import { EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_CONNECTION_TIME } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -64,8 +65,11 @@ interface ResolvablePromise<T, E = any> extends Promise<T> {
   reject: (err: E) => void
 }
 
+// TODO: We need a version of this with all Promised values for the web worker.
 export interface ThoughtspaceOptions {
   accessToken: string
+  /** Used to seed docKeys, otherwise replicateThought triggered from initializeCursor will fail. */
+  cursor: Path | null
   isLexemeLoaded: (key: string, lexeme: Lexeme | undefined) => Promise<boolean>
   isThoughtLoaded: (thought: Thought | undefined) => Promise<boolean>
   onThoughtIDBSynced: (thought: Thought | undefined, options: { background: boolean }) => void
@@ -184,6 +188,12 @@ export const init = async (options: ThoughtspaceOptions) => {
   const tsid = await options.tsid
   const tsidShared = await options.tsidShared
   const websocketUrl = await options.websocketUrl
+  const cursor = await options.cursor
+
+  // generate docKeys for cursor, otherwise replicateThought will fail
+  if (cursor) {
+    cursor.forEach((id, i) => docKeys.set(id, cursor[i - 1] ?? HOME_TOKEN))
+  }
 
   // websocket provider
   // TODO: Reuse websocket connection from ./index?
@@ -305,6 +315,7 @@ export const init = async (options: ThoughtspaceOptions) => {
 
   config.resolve({
     accessToken,
+    cursor,
     isLexemeLoaded,
     isThoughtLoaded,
     onError,
