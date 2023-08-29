@@ -10,7 +10,12 @@ function keyValueBy<T, R>(obj: Index<T>, keyValue: KeyValueGenerator<string, T, 
 function keyValueBy<T extends Key, R extends Scalar>(obj: Index<T>, keyValue: R, initialValue?: Index<R>): Index<R>
 
 /** Generates an object from an array or object. Simpler than reduce or _.transform. The KeyValueGenerator passes (key, value) if the input is an object, and (value, i) if it is an array. The return object from each iteration is merged into the accumulated object. Return null to skip an item. */
-function keyValueBy<T, R>(
+function keyValueBy<
+  /** The type of the input object or array values. */
+  T,
+  /** The type of the return object values. */
+  R,
+>(
   input: T[] | Index<T>,
   keyValue: KeyValueGenerator<T, number, R> | KeyValueGenerator<string, T, R> | R,
   accum: Index<R> = {},

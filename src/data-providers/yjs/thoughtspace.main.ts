@@ -34,7 +34,7 @@ export const replicateThought = unwrap(workerApi.replicateThought)
 export const startReplication = unwrap(workerApi.startReplication)
 export const updateThoughts = unwrap(workerApi.updateThoughts)
 
-/** Proxy init since it takes callbacks. */
+/** Proxy init options since it includes callbacks. */
 export const init = (options: ThoughtspaceOptions) => workerApi.init(proxy(options))
 
 /** Ping the web worker on an interval and fire a callback if it is unresponsive. */
