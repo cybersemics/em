@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
+import { tsidShared } from '../data-providers/yjs'
 import { getStateSetting } from '../selectors/getSetting'
 import getUserToolbar from '../selectors/getUserToolbar'
 import keyValueBy from '../util/keyValueBy'
@@ -46,7 +47,8 @@ const selectors: Record<StorageCacheKey, Selector> = {
 // load the initial cache synchronously from local storage
 // decode strings into proper types
 const initialCache: State['storageCache'] = keyValueBy(decoders, (key, decode) => ({
-  [key]: decode(storage.getItem(buildKey(key))),
+  // disable the tutorial if this is a shared thoughtspace
+  [key]: (key === 'tutorialComplete' && tsidShared) || decode(storage.getItem(buildKey(key))),
 }))
 
 // Each cache entry has its own throttled setter.
