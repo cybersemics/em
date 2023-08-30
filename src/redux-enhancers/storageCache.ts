@@ -1,15 +1,23 @@
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
+import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
+import StorageCache from '../@types/StorageCache'
+import ValueOf from '../@types/ValueOf'
 import { tsidShared } from '../data-providers/yjs'
 import { getStateSetting } from '../selectors/getSetting'
 import getUserToolbar from '../selectors/getUserToolbar'
 import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 
-export type StorageCacheKey = keyof NonNullable<State['storageCache']>
-
-type Selector = (state: State) => string | null | undefined
+interface CacheController<T> {
+  /** Decode storageCache values from stored strings. Used to generate the initial cache from localStorage. */
+  decode: (s: string | null) => T
+  /** Parses storage cache keys from state. */
+  parse: (s: string | null) => T
+  /** Selects cached values from state. Selectors should return a string that can be parsed by its respective parser, or undefined if the thought is not loaded. */
+  select: (state: State) => string | null | undefined
+}
 
 // number of milliseconds to throtle storage setters
 const STORAGE_WRITE_THROTTLE = 100
@@ -17,45 +25,41 @@ const STORAGE_WRITE_THROTTLE = 100
 /** Builds the local storage key from a cache selector key. */
 const buildKey = (key: string) => `storageCache/${key}`
 
-// functions to decode storageCache values from strings
-// must return the same defaults as parsers
-const decoders: Record<StorageCacheKey, (s: string | null) => any> = {
-  theme: s => s || 'Dark',
-  tutorialComplete: s => s === 'true',
-  tutorialStep: s => +(s || 1),
-  userToolbar: s => (s ? s.split(',') : undefined),
-}
-
-// functions to parse storage cache keys from state
-// must return the same defaults as decoders
-const parsers: Record<StorageCacheKey, (s: string | null) => any> = {
-  theme: s => s || 'Dark',
-  tutorialComplete: s => s === 'Off',
-  tutorialStep: s => +(s || 1),
-  userToolbar: s => (s ? s.split(',') : undefined),
-}
-
-// define the allowable cache keys and their selectors
-// selectors should return a string that can be parsed by its respective parser, or undefined if the thought is not loaded
-const selectors: Record<StorageCacheKey, Selector> = {
-  theme: state => getStateSetting(state, 'Theme'),
-  tutorialComplete: state => getStateSetting(state, 'Tutorial'),
-  tutorialStep: state => getStateSetting(state, 'Tutorial Step'),
-  userToolbar: state => getUserToolbar(state)?.join(','),
+const cacheControllers: { [key: string]: CacheController<ValueOf<StorageCache>> } = {
+  theme: {
+    decode: s => (s || 'Dark') as 'Dark' | 'Light',
+    parse: s => (s || 'Dark') as 'Dark' | 'Light',
+    select: state => getStateSetting(state, 'Theme'),
+  },
+  tutorialComplete: {
+    decode: s => s === 'true',
+    parse: s => s === 'Off',
+    select: state => getStateSetting(state, 'Tutorial'),
+  },
+  tutorialStep: {
+    decode: s => +(s || 1),
+    parse: s => +(s || 1),
+    select: state => getStateSetting(state, 'Tutorial Step'),
+  },
+  userToolbar: {
+    decode: s => (s ? (s.split(',') as ShortcutId[]) : undefined),
+    parse: s => (s ? (s.split(',') as ShortcutId[]) : undefined),
+    select: state => getUserToolbar(state)?.join(','),
+  },
 }
 
 // load the initial cache synchronously from local storage
 // decode strings into proper types
-const initialCache: State['storageCache'] = keyValueBy(decoders, (key, decode) => ({
+const initialCache: State['storageCache'] = keyValueBy(cacheControllers, (key, controller) => ({
   // disable the tutorial if this is a shared thoughtspace
-  [key]: (key === 'tutorialComplete' && tsidShared) || decode(storage.getItem(buildKey(key))),
+  [key]: (key === 'tutorialComplete' && tsidShared) || controller.decode(storage.getItem(buildKey(key))),
 }))
 
 // Each cache entry has its own throttled setter.
 // This allows the last value of each to be persisted.
-const throttledSetters = keyValueBy(selectors, key => ({
+const throttledSetters = keyValueBy(cacheControllers, key => ({
   [key]: _.throttle(
-    (value: string | number | boolean | null | undefined) => {
+    (value: ValueOf<StorageCache>) => {
       const storageKey = buildKey(key)
       if (value != null) {
         storage.setItem(storageKey, value.toString())
@@ -73,17 +77,17 @@ const storageCacheStoreEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
     createStore((state: State | undefined = initialState, action: A): State => {
-      const stateNew = reducer(state, action)
+      const stateNew: State = reducer(state, action)
 
       // initialize storage cache
       if (!state) return { ...stateNew, storageCache: initialCache }
 
       // generate an object with all changed selector results that can be merged into state.storageCache
-      const cacheUpdates = keyValueBy<any, any>(selectors, (key: StorageCacheKey, select: Selector) => {
-        const value = select(state)
-        if (value == null) return value
-        const valueParsed = parsers[key as StorageCacheKey](value)
-        return valueParsed !== state.storageCache?.[key as StorageCacheKey]
+      const cacheUpdates = keyValueBy(cacheControllers, (key, controller) => {
+        const value = controller.select(state)
+        if (value == null) return null
+        const valueParsed = controller.parse(value)
+        return valueParsed !== state.storageCache?.[key as keyof State['storageCache']]
           ? {
               [key]: valueParsed,
             }

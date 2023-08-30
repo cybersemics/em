@@ -10,6 +10,7 @@ import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
+import ValueOf from '../../@types/ValueOf'
 import WebsocketStatus from '../../@types/WebsocketStatus'
 import { WEBSOCKET_CONNECTION_TIME } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
@@ -42,7 +43,6 @@ type LexemeDb = Omit<Lexeme, 'contexts'> & {
 
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
-type ValueOf<T> = T[keyof T]
 type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'childrenMap'> & { childrenMap: Y.Map<ThoughtId> }>
 type LexemeYjs = ValueOf<Omit<LexemeDb, 'contexts'> & { contexts: Y.Map<true> }>
 

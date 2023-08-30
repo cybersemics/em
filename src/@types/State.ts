@@ -11,6 +11,7 @@ import RecentlyEditedTree from './RecentlyEditedTree'
 import Shortcut from './Shortcut'
 import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
+import StorageCache from './StorageCache'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 
@@ -127,12 +128,7 @@ interface State {
   // Thought values that are needed on startup before thoughts have loaded (e.g. theme, tutorial, etc) are cached to local storage.
   // storageCache is populated initially with the values in local storage and updated as the state changes.
   // See: /redux-enhancers/storageCache.ts
-  storageCache?: {
-    theme?: 'Dark' | 'Light'
-    tutorialComplete?: boolean
-    tutorialStep?: number
-    userToolbar?: ShortcutId[]
-  }
+  storageCache?: StorageCache
   thoughts: ThoughtIndices
   // shortcut of a toolbar button that is being long pressed in the customize modal
   toolbarLongPress?: Shortcut
