@@ -349,7 +349,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     if (docKey !== thought.parentId) {
       const thoughtDocOld = thoughtDocs.get(docKey)!
       thoughtDocOld.transact(() => {
-        const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>()
+        const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>('children')
         yChildren.delete(id)
         docKey = thought.parentId
         docKeys.set(id, docKey)
@@ -386,7 +386,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   })
 
   thoughtDoc.transact(() => {
-    const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+    const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
     if (!yChildren.has(id)) {
       yChildren.set(id, new Y.Map<ThoughtYjs>())
     }
@@ -502,7 +502,7 @@ export const updateLexeme = async (
     // (It is not entirely clear how this occurs, as the delete case does not seem to be triggered.)
     if (!lexemeOld && lexemeReplicated) {
       onLexemeChange({
-        target: lexemeDoc.getMap(),
+        target: lexemeDoc.getMap<LexemeYjs>(),
         transaction: {
           origin: lexemePersistence.get(key),
         },
@@ -725,7 +725,7 @@ export const replicateChildren = async (
       await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
     }
 
-    const yChildren = doc.getMap<Y.Map<ThoughtYjs>>()
+    const yChildren = doc.getMap<Y.Map<ThoughtYjs>>('children')
     const childrenEntries = [...(yChildren.entries() as IterableIterator<[ThoughtId, Y.Map<ThoughtYjs>]>)]
     childrenEntries.forEach(([childId, thoughtMap]) => {
       // Note: onThoughtChange is not pending-aware.
@@ -753,13 +753,13 @@ export const replicateChildren = async (
             thoughtWebsocketProvider.set(docKey, websocketProvider)
           }
           onThoughtChange(child.id)({
-            target: doc.getMap<Y.Map<ThoughtYjs>>().get(child.id)!,
+            target: doc.getMap<Y.Map<ThoughtYjs>>('children').get(child.id)!,
             transaction: {
               origin: websocketProvider,
             },
           })
 
-          const yChildren = doc.getMap<Y.Map<ThoughtYjs>>()
+          const yChildren = doc.getMap<Y.Map<ThoughtYjs>>('children')
           if (!yChildren.has(child.id)) {
             yChildren.set(child.id, new Y.Map<ThoughtYjs>())
           }
@@ -865,7 +865,7 @@ export const replicateLexeme = async (
       lexemePersistence.set(key, persistence)
       lexemeWebsocketProvider.set(key, websocketProvider)
       onLexemeChange({
-        target: doc.getMap(),
+        target: doc.getMap<LexemeYjs>(),
         transaction: {
           origin: websocketProvider,
         },
@@ -886,7 +886,7 @@ export const replicateLexeme = async (
 /** Gets all children from a thought Y.Doc. Returns undefined if the doc does not exist. */
 const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   if (!thoughtDoc) return undefined
-  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
   const childrenYjs = [...(yChildren.values() as IterableIterator<Y.Map<ThoughtYjs>>)]
   return childrenYjs.map(thoughtMap => {
     const thoughtRaw = thoughtMap.toJSON()
@@ -903,7 +903,7 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
 /** Gets a Thought from a thought Y.Doc. */
 const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | undefined => {
   if (!thoughtDoc) return
-  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>()
+  const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
   const thoughtMap = yChildren.get(id)
   if (!thoughtMap || thoughtMap.size === 0) return
   const thoughtRaw = thoughtMap.toJSON()
@@ -919,7 +919,7 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
 /** Gets a Lexeme from a lexeme Y.Doc. */
 const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
   if (!lexemeDoc) return
-  const lexemeMap = lexemeDoc.getMap()
+  const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
   if (lexemeMap.size === 0) return
   const lexemeRaw = lexemeMap.toJSON() as LexemeDb
   const lexeme = Object.entries(lexemeRaw).reduce<Partial<Lexeme>>(
@@ -948,7 +948,7 @@ export const freeThought = async (docKey: string): Promise<void> => {
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
   // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
   // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
-  // const yChildren = thoughtDocs.get(id)?.getMap<Y.Map<ThoughtYjs>>()
+  // const yChildren = thoughtDocs.get(id)?.getMap<Y.Map<ThoughtYjs>>('children')
   // yChildren?.forEach(thoughtMap => {
   //   const listeners = thoughtMap?._eH.l.slice(0) || []
   //   if (listeners.some(l => l === onThoughtChange)) {
@@ -958,7 +958,7 @@ export const freeThought = async (docKey: string): Promise<void> => {
 
   // remove children from docKeys
   const thoughtDoc = thoughtDocs.get(docKey)
-  const yChildren = thoughtDoc?.getMap<Y.Map<ThoughtYjs>>()
+  const yChildren = thoughtDoc?.getMap<Y.Map<ThoughtYjs>>('children')
   yChildren?.forEach(thoughtMap => {
     const childId = thoughtMap.get('id') as ThoughtId
     docKeys.delete(childId)
@@ -986,7 +986,7 @@ const deleteThought = async (docKey: string): Promise<void> => {
   const docKeyParent = docKeys.get(docKey as ThoughtId)
   if (docKeyParent) {
     const docParent = thoughtDocs.get(docKeyParent)
-    const yChildren = docParent?.getMap<Y.Map<ThoughtYjs>>()
+    const yChildren = docParent?.getMap<Y.Map<ThoughtYjs>>('children')
     yChildren?.delete(docKey)
   }
 
