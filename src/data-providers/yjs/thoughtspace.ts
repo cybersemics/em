@@ -567,22 +567,21 @@ export const replicateThought = async (
   }: {
     /**
      * Replicate in the background, meaning:
-     * - *Do not update Redux state.
-     * - Do not store thought doc in memory.
+     * - Only update Redux state if thought is visible.
+     * - Do not store Thought doc in memory.
      * - Destroy IndexedDBPersistence after sync.
      * - Destroy HocuspocusProvider after sync.
-     * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
     /** Callback with the doc as soon as it has been instantiated. */
     onDoc?: (doc: Y.Doc) => void
-    /** Sync with websocket server. Default: true. This is currently set to false during export. */
+    /** Sync with websocket server. Set to false during export. Default: true. */
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
   const docKey = docKeys.get(id)
   if (!docKey) {
-    throw new Error(`updateThought: No known parent for thought ${id}`)
+    throw new Error(`replicateThought: Missing docKey for thought ${id}`)
   }
   const children = await replicateChildren(docKey, { background, onDoc, remote })
   return children?.find(child => child.id === id)
@@ -598,16 +597,15 @@ export const replicateChildren = async (
   }: {
     /**
      * Replicate in the background, meaning:
-     * - *Do not update Redux state.
-     * - Do not store thought doc in memory.
+     * - Only update Redux state if thought is visible.
+     * - Do not store Lexeme doc in memory.
      * - Destroy IndexedDBPersistence after sync.
      * - Destroy HocuspocusProvider after sync.
-     * *Redux state *will* be updated if the thought is already loaded. This ensures that remote changes are rendered.
      */
     background?: boolean
     /** Callback with the doc as soon as it has been instantiated. */
     onDoc?: (doc: Y.Doc) => void
-    /** Sync with websocket server. Default: true. This is currently set to false during export. */
+    /** Sync with websocket server. Set to false during export. Default: true. */
     remote?: boolean
   } = {},
 ): Promise<Thought[] | undefined> => {
@@ -1150,12 +1148,9 @@ export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]>
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
 export const getThoughtById = async (id: ThoughtId) => {
-  const docKey = docKeys.get(id)
-  if (!docKey) {
-    throw new Error(`getThoughtById: Missing docKey for thought ${id}`)
-  }
   await replicateThought(id)
-  return getThought(thoughtDocs.get(docKey), id)
+  const docKey = docKeys.get(id)
+  return getThought(thoughtDocs.get(docKey!), id)
 }
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
