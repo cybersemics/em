@@ -358,8 +358,8 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       thoughtDocOld?.transact(() => {
         const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>('children')
         yChildren.delete(id)
-        const docKeyNew = thought.parentId
-        docKeys.set(id, docKeyNew)
+        docKey = thought.parentId
+        docKeys.set(id, docKey)
       }, thoughtDocOld.clientID)
       thoughtOldIdbSynced = thoughtPersistence.get(docKey)?.whenSynced
 
@@ -652,7 +652,19 @@ export const replicateChildren = async (
   if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
     const idbSynced = thoughtIDBSynced.get(docKey)
     const websocketSynced = thoughtWebsocketSynced.get(docKey)
-    return Promise.all([idbSynced, background && remote ? websocketSynced : null]).then(() => getChildren(doc))
+    await Promise.all([idbSynced, background && remote ? websocketSynced : null])
+    const children = getChildren(doc)
+
+    // TODO: There may be a bug in freeThoughts, because we should not have to recreate the docKeys if the doc is already cached.
+    // Without this, a missing docKey error will occur if a thought is re-loaded after being deallocated.
+    children?.forEach(child => {
+      docKeys.set(child.id, docKey)
+      Object.values(child.childrenMap).forEach(grandchildId => {
+        docKeys.set(grandchildId, child.id)
+      })
+    })
+
+    return children
   }
 
   // set up idb and websocket persistence and subscribe to changes
@@ -1015,7 +1027,6 @@ export const freeThought = async (docKey: string): Promise<void> => {
     const childId = thoughtMap.get('id') as ThoughtId
     docKeys.delete(childId)
   })
-
   docKeys.delete(docKey as ThoughtId)
   thoughtDocs.get(docKey)?.destroy()
   // IndexeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
