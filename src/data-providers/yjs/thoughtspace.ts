@@ -6,6 +6,7 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import LexemeDb from '../../@types/LexemeDb'
 import Path from '../../@types/Path'
 import PushBatch from '../../@types/PushBatch'
 import ReplicationCursor from '../../@types/ReplicationCursor'
@@ -19,6 +20,7 @@ import { EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_CONNECTI
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
+import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import thoughtToDb from '../../util/thoughtToDb'
@@ -41,11 +43,6 @@ const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: stri
  * Types
  **********************************************************************/
 
-/** A Lexeme database type that defines contexts as separate keys. */
-type LexemeDb = Omit<Lexeme, 'contexts'> & {
-  [`cx-{string}`]: boolean
-}
-
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
 type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'childrenMap'> & { childrenMap: Y.Map<ThoughtId> }>
@@ -65,7 +62,6 @@ interface ResolvablePromise<T, E = any> extends Promise<T> {
   reject: (err: E) => void
 }
 
-// TODO: We need a version of this with all Promised values for the web worker.
 export interface ThoughtspaceOptions {
   accessToken: string
   /** Used to seed docKeys, otherwise replicateThought triggered from initializeCursor will fail. */
@@ -343,17 +339,38 @@ export const init = async (options: ThoughtspaceOptions) => {
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   let docKey = docKeys.get(id)
+  let lexemeIdbSynced: Promise<unknown> | undefined
+  let thoughtOldIdbSynced: Promise<unknown> | undefined
   if (docKey) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
     if (docKey !== thought.parentId) {
-      const thoughtDocOld = thoughtDocs.get(docKey)!
-      thoughtDocOld.transact(() => {
+      const lexemeKey = hashThought(thought.value)
+      const lexemeDoc = lexemeDocs.get(lexemeKey)
+      if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
+        // TODO: Why does throwing an error get suppressed?
+        console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
+        return
+      }
+
+      // delete from old parent
+      const thoughtDocOld = thoughtDocs.get(docKey)
+      thoughtDocOld?.transact(() => {
         const yChildren = thoughtDocOld.getMap<Y.Map<ThoughtYjs>>('children')
         yChildren.delete(id)
-        docKey = thought.parentId
-        docKeys.set(id, docKey)
+        const docKeyNew = thought.parentId
+        docKeys.set(id, docKeyNew)
       }, thoughtDocOld.clientID)
+      thoughtOldIdbSynced = thoughtPersistence.get(docKey)?.whenSynced
+
+      // update Lexeme context docKey
+      if (lexemeDoc) {
+        lexemeDoc.transact(() => {
+          const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
+          lexemeMap.set(`cx-${id}`, thought.parentId)
+        }, lexemeDoc.clientID)
+        lexemeIdbSynced = lexemePersistence.get(lexemeKey)?.whenSynced
+      }
     }
   } else {
     docKey = thought.parentId
@@ -371,7 +388,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       replicateThought(id, { onDoc: resolve })
     }))
 
-  const idbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
+  const thoughtIdbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
     if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
@@ -386,6 +403,16 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   })
 
   thoughtDoc.transact(() => {
+    // Set parent docKey directly on the thought Doc.
+    // This is needed to traverse up the ancestor path of tangential contexts.
+    const yThought = thoughtDoc.getMap<ThoughtId | null>('thought')
+    const parentDocKey =
+      thought.parentId === ROOT_PARENT_ID ? null : (docKeys.get(thought.parentId) as ThoughtId | undefined)
+    if (parentDocKey === undefined) {
+      throw new Error(`updateThought: Missing docKey for parent ${thought.parentId} of thought ${id}`)
+    }
+    yThought.set('docKey', parentDocKey)
+
     const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
     if (!yChildren.has(id)) {
       yChildren.set(id, new Y.Map<ThoughtYjs>())
@@ -427,7 +454,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     })
   }, thoughtDoc.clientID)
 
-  await idbSynced
+  await Promise.all([thoughtIdbSynced, thoughtOldIdbSynced, lexemeIdbSynced])
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
@@ -476,7 +503,11 @@ export const updateLexeme = async (
         // add contexts to YJS that have been added to state
         lexemeNew.contexts.forEach(cxid => {
           if (!contextsOld.has(cxid)) {
-            lexemeMap.set(`cx-${cxid}`, true)
+            const docKey = docKeys.get(cxid)
+            if (!docKey) {
+              throw new Error(`updateLexeme: Missing docKey for context ${cxid} in Lexeme ${lexemeNew.lemma}`)
+            }
+            lexemeMap.set(`cx-${cxid}`, docKey)
           }
         })
 
@@ -629,6 +660,19 @@ export const replicateChildren = async (
   const idbSynced = persistence.whenSynced
     .then(() => {
       const children = getChildren(doc)
+
+      const parentDocKey =
+        docKey === ROOT_PARENT_ID
+          ? null
+          : docKey === HOME_TOKEN || docKey === EM_TOKEN
+          ? ROOT_PARENT_ID
+          : doc.getMap<ThoughtId>('thought').get('docKey')
+      if (parentDocKey) {
+        docKeys.set(docKey as ThoughtId, parentDocKey)
+      } else if (parentDocKey === undefined) {
+        console.error(`replicateChildren: Missing parentDocKey for thought ${docKey}`)
+        return
+      }
 
       // update docKeys of children and grandchildren
       children?.forEach(child => {
@@ -886,6 +930,7 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   if (!thoughtDoc) return undefined
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
   const childrenYjs = [...(yChildren.values() as IterableIterator<Y.Map<ThoughtYjs>>)]
+
   return childrenYjs.map(thoughtMap => {
     const thoughtRaw = thoughtMap.toJSON()
     return {
@@ -920,17 +965,26 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
   const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
   if (lexemeMap.size === 0) return
   const lexemeRaw = lexemeMap.toJSON() as LexemeDb
-  const lexeme = Object.entries(lexemeRaw).reduce<Partial<Lexeme>>(
+
+  // convert LexemeDb to Lexeme
+  const lexeme = Object.entries(lexemeRaw).reduce<Lexeme>(
     (acc, [key, value]) => {
       const cxid = key.split('cx-')[1] as ThoughtId | undefined
+
+      // Set docKey from Lexeme context to allow tangential contexts to be loaded.
+      if (cxid) {
+        docKeys.set(cxid, value as string)
+      }
+
       return {
         ...acc,
         [cxid ? 'contexts' : key]: cxid ? [...(acc.contexts || []), cxid] : value,
       }
     },
-    { contexts: [] },
+    { contexts: [] } as unknown as Lexeme,
   )
-  return lexeme as Lexeme
+
+  return lexeme
 }
 
 /** Destroys the thoughtDoc and associated providers without deleting the persisted data. */
