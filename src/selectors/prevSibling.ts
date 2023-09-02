@@ -5,8 +5,8 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import head from '../util/head'
-import parentOf from '../util/parentOf'
 import getContextsSortedAndRanked from './getContextsSortedAndRanked'
+import rootedParentOf from './rootedParentOf'
 
 /** Gets the previous sibling of a thought according to its parent's sort preference. Supports normal view and context view. */
 export const prevSibling = (state: State, path: Path): Thought | null => {
@@ -14,15 +14,22 @@ export const prevSibling = (state: State, path: Path): Thought | null => {
   const thought = getThoughtById(state, id)
   if (!thought) return null
 
-  const parentPath = parentOf(path)
+  const parentPath = rootedParentOf(state, path)
   const showContexts = isContextViewActive(state, parentPath)
 
+  // siblings, including the current thought
   const siblings = showContexts
     ? getContextsSortedAndRanked(state, getThoughtById(state, head(parentPath)).value)
     : getChildrenSorted(state, thought.parentId)
 
   // in context view, we need to match the context's parentId, since all context's ids refer to lexeme instances
   const index = siblings.findIndex(child => (showContexts ? child.parentId : child.id) === id)
+
+  if (index === -1) {
+    const message = `Thought ${thought.value} with id ${id} missing from children of parent ${thought.parentId}`
+    console.error(message, { thought })
+    throw new Error(message)
+  }
 
   const prev = siblings[index - 1]
 

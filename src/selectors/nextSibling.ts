@@ -12,8 +12,15 @@ const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null =
   const thought = getThoughtById(state, id)
   if (!thought) return null
   const siblings = getChildrenSorted(state, thought.parentId)
-  const i = siblings.findIndex(child => child.id === id)
-  return siblings[i + 1] || null
+  const index = siblings.findIndex(child => child.id === id)
+
+  if (index === -1) {
+    const message = `Thought ${thought.value} with id ${id} missing from children of parent ${thought.parentId}`
+    console.error(message, { thought })
+    throw new Error(message)
+  }
+
+  return siblings[index + 1] || null
 }
 
 export default nextSibling
