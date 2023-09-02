@@ -274,10 +274,6 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       replicateThought(id, { onDoc: resolve })
     }))
 
-  // Must add afterTransaction handler BEFORE transact.
-  // Resolves after in-memory transaction is complete, not after synced with providers.
-  const transactionPromise = new Promise<void>(resolve => thoughtDoc.once('afterTransaction', resolve))
-
   const idbSynced = thoughtPersistence.get(thought.id)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
@@ -326,7 +322,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     })
   }, thoughtDoc.clientID)
 
-  await Promise.all([transactionPromise, idbSynced])
+  await idbSynced
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
@@ -351,10 +347,6 @@ export const updateLexeme = async (
 
   // The Lexeme may be deleted if the user creates and deletes a thought very quickly
   if (!lexemeDoc) return
-
-  // Must add afterTransaction handler BEFORE transact.
-  // Resolves after in-memory transaction is complete, not after synced with providers.
-  const transactionPromise = new Promise<void>(resolve => lexemeDoc.once('afterTransaction', resolve))
 
   const idbSynced = lexemePersistence.get(key)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
@@ -409,7 +401,7 @@ export const updateLexeme = async (
     }
   }, lexemeDoc.clientID)
 
-  await Promise.all([transactionPromise, idbSynced])
+  await idbSynced
 }
 
 /** Handles the Thought observe event. Ignores events from self. */
