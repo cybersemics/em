@@ -32,7 +32,7 @@ interface Payload {
   thoughtId: ThoughtId
   /** In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated. */
   orphaned?: boolean
-  /** If both local and remote are false, enter deallocation mode. Marks the parent as pending and preserves Lexeme contexts so that the thought will be automatically restored if it becomes visible again. */
+  /** If both local and remote are false, only deallocate thoughts from State, but do not delete them permanently. The parent is marked as pending so that the thought will be automatically restored if it becomes visible again. */
   local?: boolean
   remote?: boolean
 }
@@ -85,17 +85,17 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
   // }
 
   // The new Lexeme is typically the old Lexeme less the deleted context.
-  // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact, only deleting the Lexeme from memory when all its Contexts have been deallocated.
+  // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
   const lexemeWithoutContext = lexeme ? removeContext(state, lexeme, thoughtId) : null
 
   const lexemeNew = persist
-    ? lexemeWithoutContext && lexemeWithoutContext.contexts.length > 0
+    ? lexemeWithoutContext?.contexts.length
       ? lexemeWithoutContext
       : null
-    : (lexemeWithoutContext?.contexts || []).every(cxid => !getThoughtById(state, cxid))
-    ? null
-    : // lexeme must be defined, otherwise lexemeWithoutContexts would be null and the first branch of the ternary would have been taken
+    : (lexemeWithoutContext?.contexts || []).some(cxid => getThoughtById(state, cxid))
+    ? // ! lexeme must be defined because lexemeWithoutContext exists
       lexeme!
+    : null
 
   // update state so that we do not have to wait for the remote
   if (key) {
@@ -127,12 +127,20 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
       (accum, child) => {
         const hashedKey = hashThought(child.value)
         const lexemeChild = getLexeme(stateNew, child.value)
-        const lexemeChildNew =
-          lexemeChild?.contexts && lexemeChild.contexts.length > 1
-            ? // update child with deleted context removed
-              removeContext(state, lexemeChild, child.id)
-            : // if this was the only context of the child, delete the child
-              null
+
+        // The new Lexeme is typically the old Lexeme less the deleted context.
+        // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
+        const lexemeChildWithoutContext = lexemeChild ? removeContext(state, lexemeChild, child.id) : null
+
+        // if this was the only context of the child, delete the child
+        const lexemeChildNew = persist
+          ? lexemeChild?.contexts.length
+            ? lexemeChildWithoutContext
+            : null
+          : lexemeChildWithoutContext?.contexts.some(cxid => getThoughtById(state, cxid))
+          ? // !: lexemeChild must be defined because lexemeChildWithoutContext exists
+            lexemeChild!
+          : null
 
         // update local lexemeIndex so that we do not have to wait for the remote
         if (lexemeChildNew) {
