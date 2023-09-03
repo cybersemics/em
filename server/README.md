@@ -98,3 +98,5 @@ The server uses its own environment variables for configuration (not to be confu
 - `process.env.DB_DIR` - Level db directory. Default: `./db`
 - `process.env.HOST` - localhost
 - `process.env.PORT` - 3001
+- `process.env.REDIS_HOST` - Redis host name. If none is provided, the Redis extension will be disabled.
+- `process.env.REDIS_PORT` - Redis port.

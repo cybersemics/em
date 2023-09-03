@@ -2,6 +2,7 @@ build
 db
 backup_temp
 .s3cfg
+dump.rdb
 
 # temp directories for scripts/backup.sh
 _backup*

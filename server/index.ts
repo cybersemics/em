@@ -1,3 +1,4 @@
+import { Redis } from '@hocuspocus/extension-redis'
 import { Server } from '@hocuspocus/server'
 // eslint-disable-next-line fp/no-events
 import { EventEmitter } from 'events'
@@ -35,6 +36,9 @@ const THROTTLE_STOREUPDATE = 1000
 
 /** Timeout for bindState before logging a warning. */
 const SLOW_LEVELDB_WARNING_TIMEOUT = 5000
+
+const redisHost = process.env.REDIS_HOST
+const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 
 const port = process.env.PORT ? +process.env.PORT : 3001
 // must match the db directory used in backup.sh and the clear npm script
@@ -419,6 +423,7 @@ const permissionsServerSynced = bindState({ db: ldbPermissions, docName: 'permis
 
 const server = Server.configure({
   port,
+  extensions: [...(redisHost ? [new Redis({ host: redisHost, port: redisPort })] : [])],
   onAuthenticate,
   onListen: async () => {
     // notify pm2 that the app is ready
