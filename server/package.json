@@ -19,7 +19,8 @@
     "@hocuspocus/server": "^2.5.0",
     "level": "^6.0.1",
     "s3-cli": "https://github.com/raineorshine/node-s3-cli",
-    "y-leveldb": "^0.1.2"
+    "y-leveldb": "^0.1.2",
+    "y-mongodb-provider": "^0.1.7"
   },
   "devDependencies": {
     "@types/level": "^6.0.1",
