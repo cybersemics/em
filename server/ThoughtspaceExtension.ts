@@ -14,8 +14,16 @@ import {
   parseDocumentName,
 } from '../src/data-providers/yjs/documentNameEncoder'
 import replicationController from '../src/data-providers/yjs/replicationController'
+import sleep from '../src/util/sleep'
+import throttleConcat from '../src/util/throttleConcat'
 import timestamp from '../src/util/timestamp'
-import bindState from './bindState'
+
+/**********************************************************************
+ * Constants
+ **********************************************************************/
+
+/** Number of milliseconds to throttle db.storeUpdate on Doc update. */
+const THROTTLE_STOREUPDATE = 1000
 
 /**********************************************************************
  * Types
@@ -23,16 +31,15 @@ import bindState from './bindState'
 
 type ConsoleMethod = 'log' | 'info' | 'warn' | 'error'
 
-/** Configuration object for the ThoughtspaceExtension. */
-export interface ThoughtspaceConfiguration {
-  dbThoughtspace: MongodbPersistence
-  dbDoclog: MongodbPersistence
-  permissionsServerDoc: Y.Doc
-}
-
 /** Custom data that is passed from onAuthenticate to onLoadDocument. */
 interface LoadContext {
   token: string
+}
+
+/** A YJS data store that can store updates. */
+export interface YBindablePersistence {
+  getYDoc: (docName: string) => Promise<Y.Doc>
+  storeUpdate: (docName: string, update: Uint8Array) => Promise<unknown>
 }
 
 /**********************************************************************
@@ -63,15 +70,56 @@ const log = (...args: [...any, ...([ConsoleMethod] | [])]) => {
 /** Shows the first n characters of a string and replaces the rest with an ellipsis. */
 const mask = (s: string, n = 4) => `${s.slice(0, n)}...`
 
+/** Syncs a doc with leveldb and subscribes to updates (throttled). Resolves when the initial state is stored. Returns a cleanup function that should be called to ensure throttled updates gets flushed to leveldb. */
+// Note: @hocuspocus/extension-database is not incremental; all data is re-saved every debounced 2 sec, so we do our own throttled storage with throttleConcat.
+// https://tiptap.dev/hocuspocus/server/extensions#database
+const bindState = async ({
+  db,
+  docName,
+  doc,
+}: {
+  db: YBindablePersistence
+  docName: string
+  doc: Y.Doc
+}): Promise<void> => {
+  const docPersisted = await db.getYDoc(docName)
+
+  // store initial state of Doc if non-empty
+  const update = Y.encodeStateAsUpdate(doc)
+  if (update.length > 2) {
+    await db.storeUpdate(docName, update).catch(e => {
+      console.error('initState: storeUpdate', e)
+    })
+  }
+
+  Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
+
+  // throttled update handler accumulates and merges updates
+  const storeUpdateThrottled = throttleConcat(
+    // Note: Is it a problem that mergeUpdates does not perform garbage collection?
+    // https://discuss.yjs.dev/t/throttling-yjs-updates-with-garbage-collection/1423
+    (updates: Uint8Array[]) => {
+      return updates.length > 0
+        ? db.storeUpdate(docName, Y.mergeUpdates(updates)).catch((e: any) => {
+            console.error('bindState: storeUpdate error', e)
+          })
+        : null
+    },
+    THROTTLE_STOREUPDATE,
+  )
+
+  doc.on('update', storeUpdateThrottled)
+}
+
 /**********************************************************************
  * Hooks
  **********************************************************************/
 
 /** Authenticates a document request with the given access token. Handles Docs for Thoughts, Lexemes, and Permissions. Assigns the token as owner if it is a new document. Throws an error if the access token is not authorized. */
 const onAuthenticate =
-  (configuration: ThoughtspaceConfiguration) =>
+  (permissionsServerDocPromise: Promise<Y.Doc>) =>
   async ({ documentName, token }: onAuthenticatePayload): Promise<LoadContext> => {
-    const { permissionsServerDoc } = configuration
+    const permissionsServerDoc = await permissionsServerDocPromise
     const { tsid } = parseDocumentName(documentName)
     // the server-side permissions map
     // stores the permissions for all thoughtspaces as Map<Index<Share>> (indexed by tsid and access token)
@@ -97,7 +145,12 @@ const onAuthenticate =
 
 /** Syncs permissions to permissionsClientDoc on load. The permissionsServerDoc cannot be exposed since it contains permissions for all thoughtspaces. This must be done in onLoadDocument when permissionsClientDoc has been created through the websocket connection. */
 const onLoadDocument =
-  (configuration: ThoughtspaceConfiguration) =>
+  (configuration: {
+    dbThoughtspace: MongodbPersistence
+    dbDoclog: MongodbPersistence
+    /** A promise for the server-side permissinos doc. */
+    permissionsServerDoc: Promise<Y.Doc>
+  }) =>
   async ({
     context,
     document,
@@ -106,7 +159,8 @@ const onLoadDocument =
   }: onLoadDocumentPayload & {
     context: LoadContext
   }) => {
-    const { dbThoughtspace, dbDoclog, permissionsServerDoc } = configuration
+    const permissionsServerDoc = await configuration.permissionsServerDoc
+    const { dbThoughtspace, dbDoclog } = configuration
     const { token } = context
     const { tsid, type } = parseDocumentName(documentName)
     const permissionsDocName = encodePermissionsDocumentName(tsid)
@@ -118,7 +172,6 @@ const onLoadDocument =
     // Copy permissions from the server-side permissions doc to the client-side permission doc.
     // The server-side permissions doc keeps all permissions for all documents in memory.
     // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
-    // update last accessed time on auth
     if (type === 'permissions') {
       // disable accessed in the permissionsServerMap; it does not need a CRDT
       // floor accessed to nearest second to avoid churn
@@ -217,22 +270,39 @@ const onLoadDocument =
 /** A Hocuspocus server extension that persists em thoughtspaces and handles permissions. */
 // eslint-disable-next-line fp/no-class
 class ThoughtspaceExtension implements Extension {
-  onLoadDocument: (data: onLoadDocumentPayload) => Promise<unknown>
   onAuthenticate: (data: onAuthenticatePayload) => Promise<unknown>
+  onLoadDocument: (data: onLoadDocumentPayload) => Promise<unknown>
 
   /** Constructor. */
-  constructor({ connectionString, permissionsServerDoc }: { connectionString: string; permissionsServerDoc?: Y.Doc }) {
-    const configurationMerged = {
-      permissionsServerDoc: permissionsServerDoc ?? new Y.Doc(),
-      dbThoughtspace: new MongodbPersistence(connectionString, {
-        collectionName: 'yjs-thoughtspace',
-      }),
-      dbDoclog: new MongodbPersistence(connectionString, {
-        collectionName: 'yjs-doclogs',
-      }),
-    }
-    this.onLoadDocument = onLoadDocument(configurationMerged)
-    this.onAuthenticate = onAuthenticate(configurationMerged)
+  constructor({ connectionString }: { connectionString: string }) {
+    const dbPermissions = new MongodbPersistence(connectionString, { collectionName: 'yjs-permissions' })
+    const dbThoughtspace = new MongodbPersistence(connectionString, { collectionName: 'yjs-thoughtspace' })
+    const dbDoclog = new MongodbPersistence(connectionString, { collectionName: 'yjs-doclogs' })
+
+    // Load the server-side permissions
+    // Contains a top level map for each thoughtspace Map<Share> mapping token -> permission.
+    // Wait a tick before logging to ensure the "Loading permissions..." message is not lost in the noise of the server startup.
+    const permissionsServerDocPromise = sleep(0).then(async () => {
+      console.info('Loading permissions...')
+      const doc = new Y.Doc()
+      await bindState({
+        db: dbPermissions,
+        docName: 'permissions',
+        doc: doc,
+      })
+      console.info('Permissions loaded')
+      return doc
+    })
+
+    this.onLoadDocument = onLoadDocument({
+      dbThoughtspace,
+      dbDoclog,
+      permissionsServerDoc: permissionsServerDocPromise,
+    })
+
+    // Hook up the onAuthenticate hook now, but do authenticate until server permissions have synced.
+    // Otherwise owners can be overwritten with the auto-assign owner logic.
+    this.onAuthenticate = onAuthenticate(permissionsServerDocPromise)
   }
 }
 
