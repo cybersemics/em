@@ -1,5 +1,5 @@
 import { Extension, onAuthenticatePayload, onLoadDocumentPayload } from '@hocuspocus/server'
-import { isEqual } from 'lodash'
+import { isEqual, throttle } from 'lodash'
 import { MongodbPersistence } from 'y-mongodb-provider'
 import * as Y from 'yjs'
 import DocLogAction from '../src/@types/DocLogAction'
@@ -24,6 +24,9 @@ import timestamp from '../src/util/timestamp'
 
 /** Number of milliseconds to throttle db.storeUpdate on Doc update. */
 const THROTTLE_STOREUPDATE = 1000
+
+/** Frequency of lastAccessed update on permissions doc. */
+const THROTTLE_LAST_ACCESSED = 1000
 
 /**********************************************************************
  * Types
@@ -129,7 +132,7 @@ const onAuthenticate =
     // if the document has no owner, automatically assign the current user as owner
     if (permissionsServerMap.size === 0) {
       log(`assigning owner ${mask(token)} to new thoughtspace ${tsid}`)
-      permissionsServerMap.set(token, { accessed: timestamp(), created: timestamp(), name: 'Owner', role: 'owner' })
+      permissionsServerMap.set(token, { created: timestamp(), name: 'Owner', role: 'owner' })
     }
 
     // authenicate existing owner
@@ -144,14 +147,19 @@ const onAuthenticate =
   }
 
 /** Syncs permissions to permissionsClientDoc on load. The permissionsServerDoc cannot be exposed since it contains permissions for all thoughtspaces. This must be done in onLoadDocument when permissionsClientDoc has been created through the websocket connection. */
-const onLoadDocument =
-  (configuration: {
-    dbThoughtspace: MongodbPersistence
-    dbDoclog: MongodbPersistence
-    /** A promise for the server-side permissinos doc. */
-    permissionsServerDoc: Promise<Y.Doc>
-  }) =>
-  async ({
+const onLoadDocument = (configuration: {
+  dbPermissions: MongodbPersistence
+  dbThoughtspace: MongodbPersistence
+  dbDoclog: MongodbPersistence
+  /** A promise for the server-side permissinos doc. */
+  permissionsServerDoc: Promise<Y.Doc>
+}) => {
+  // create throttled function to update last accessed time
+  const setLastAccessed = throttle(async (tsid: string) => {
+    configuration.dbPermissions.setMeta(tsid, 'lastAccessed', timestamp())
+  }, THROTTLE_LAST_ACCESSED)
+
+  return async ({
     context,
     document,
     documentName,
@@ -169,14 +177,13 @@ const onLoadDocument =
 
     if (!permission || permission.role !== 'owner') return
 
+    setLastAccessed(tsid)
+
+    // Load client-side permissions.
     // Copy permissions from the server-side permissions doc to the client-side permission doc.
     // The server-side permissions doc keeps all permissions for all documents in memory.
-    // The client-side permissions doc uses authentication and can be exposed to the client via websocket.
+    // The client-side permissions doc uses authentication and can be exposed to the client via websocket once authenticated.
     if (type === 'permissions') {
-      // disable accessed in the permissionsServerMap; it does not need a CRDT
-      // floor accessed to nearest second to avoid churn
-      // permissionsServerMap.set(token, { ...permission, accessed: (Math.floor(timestamp() / 1000) * 1000) as Timestamp })
-
       const permissionsClientDoc = instance?.documents.get(permissionsDocName)
       if (!permissionsClientDoc) return
 
@@ -206,8 +213,7 @@ const onLoadDocument =
             // (we can assume serverShare exists since onAuthenticate passed)
             if (!clientShare) return
 
-            // compare name and role
-            // do not compare created and accessed, since the server is assumed to be the source of truth
+            // if name or role have changed, update the permissions server
             if (clientShare?.name !== serverShare?.name || clientShare?.role !== serverShare?.role) {
               permissionsServerMap.set(key, permissionsClientMap.get(key)!)
             }
@@ -262,6 +268,7 @@ const onLoadDocument =
       console.error('Unrecognized doc type', type)
     }
   }
+}
 
 /**********************************************************************
  * Extension
@@ -295,6 +302,7 @@ class ThoughtspaceExtension implements Extension {
     })
 
     this.onLoadDocument = onLoadDocument({
+      dbPermissions,
       dbThoughtspace,
       dbDoclog,
       permissionsServerDoc: permissionsServerDocPromise,
