@@ -1802,19 +1802,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.4.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.4.0.tgz#887b6325b8593fce09dd883c7d143b74ce17e34c"
-  integrity sha512-+hI7f/LaeIM0FE+iANVLfqDneXjhD2AXmIj6WBzpUFO+IGLjrk8F46eQAsmv9l9Ts347G6CbhTMhLFJdEkGcww==
+"@hocuspocus/common@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.5.0.tgz#adfbaa770d1e8eda0a811ad93b427cdf89960e3d"
+  integrity sha512-TpnQAb1Rtff1trwURFWaUEYZwqykaIGo6NNnMr6ZISdDZFWNHMAMUmy7dwJDS9ECnEtcjXhpPxXeLV+MVQXVnw==
   dependencies:
     lib0 "^0.2.47"
 
-"@hocuspocus/provider@^2.2.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.4.0.tgz#9eca161aa881b82cbf6793e76a4c153904672e80"
-  integrity sha512-cEbL94LTd8nTRMSZu/oX4zK3owEwyjQ1n6SgthzfkTqa0XCELCTTyDoCYeialTzJiCfAaJk1Lb2oqnQT73AhGQ==
+"@hocuspocus/provider@^2.5.0":
+  version "2.5.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.5.0.tgz#2c56184082f835c7a0c07c8962a6e5dcafebe847"
+  integrity sha512-Du/q0kcVhaSQiKPBha19f+mnFOl4sFybARRWsGp4JIoDG+Vt3r73ZqjalIJmp9h4mBr2tGtS5zK/oQ/Vrv5/Bw==
   dependencies:
-    "@hocuspocus/common" "^2.4.0"
+    "@hocuspocus/common" "^2.5.0"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
     ws "^7.5.9"
@@ -11236,7 +11236,14 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lib0@^0.2.47, lib0@^0.2.74:
+lib0@^0.2.47:
+  version "0.2.85"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.85.tgz#2ccc3b6e02bd6165a4b8e68f89db5f9e7787dfc5"
+  integrity sha512-vtAhVttLXCu3ps2OIsTz8CdKYKdcMo7ds1MNBIcSXz6vrY8sxASqpTi4vmsAIn7xjWvyT7haKcWW6woP6jebjQ==
+  dependencies:
+    isomorphic.js "^0.2.4"
+
+lib0@^0.2.74:
   version "0.2.82"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.82.tgz#96256f3a970e14621aa32aad057559111e2793f2"
   integrity sha512-sZJeggxq56weXHnBc37dXNnYKGPvdR75zKxGHNc8gLE+ldKCbc4whk0JY2cV17lxuBFtvRd4dIsSh6Cfz7slUw==
