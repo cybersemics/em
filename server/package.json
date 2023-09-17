@@ -14,9 +14,6 @@
   "dependencies": {
     "@hocuspocus/extension-redis": "^2.4.0",
     "@hocuspocus/server": "^2.5.0",
-    "level": "^6.0.1",
-    "s3-cli": "https://github.com/raineorshine/node-s3-cli",
-    "y-leveldb": "^0.1.2",
     "y-mongodb-provider": "^0.1.7"
   },
   "devDependencies": {
