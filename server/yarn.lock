@@ -746,7 +746,7 @@ lazy@~1.0.11:
   resolved "https://registry.yarnpkg.com/lazy/-/lazy-1.0.11.tgz#daa068206282542c088288e975c297c1ae77b690"
   integrity sha512-Y+CjUfLmIpoUCCRl0ub4smrYtGGr5AOa2AKOaWelGHOGz33X/Y/KizefGqbkwfz44+cnq/+9habclf8vOmu2LA==
 
-lib0@^0.2.47, lib0@^0.2.82:
+lib0@^0.2.42, lib0@^0.2.47, lib0@^0.2.74, lib0@^0.2.82:
   version "0.2.85"
   resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.85.tgz#2ccc3b6e02bd6165a4b8e68f89db5f9e7787dfc5"
   integrity sha512-vtAhVttLXCu3ps2OIsTz8CdKYKdcMo7ds1MNBIcSXz6vrY8sxASqpTi4vmsAIn7xjWvyT7haKcWW6woP6jebjQ==
@@ -1368,6 +1368,13 @@ y-mongodb-provider@^0.1.7:
     lib0 "^0.2.82"
     mongoist "^2.7.0"
 
+y-protocols@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/y-protocols/-/y-protocols-1.0.5.tgz#91d574250060b29fcac8f8eb5e276fbad594245e"
+  integrity sha512-Wil92b7cGk712lRHDqS4T90IczF6RkcvCwAD0A2OPg+adKmOe+nOiT/N2hvpQIWS3zfjmtL4CPaH5sIW1Hkm/A==
+  dependencies:
+    lib0 "^0.2.42"
+
 yallist@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"
@@ -1380,3 +1387,10 @@ yamljs@0.3.0:
   dependencies:
     argparse "^1.0.7"
     glob "^7.0.5"
+
+yjs@^13.6.7:
+  version "13.6.7"
+  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.7.tgz#f1176c37f65eb566cf390bd813e2099d598795f4"
+  integrity sha512-mCZTh4kjvUS2DnaktsYN6wLH3WZCJBLqrTdkWh1bIDpA/sB/GNFaLA/dyVJj2Hc7KwONuuoC/vWe9bwBBosZLQ==
+  dependencies:
+    lib0 "^0.2.74"
