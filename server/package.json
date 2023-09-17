@@ -1,18 +1,15 @@
 {
   "name": "em-server",
   "scripts": {
-    "backup": "pm2 restart backup --cron-restart 0",
     "build": "rm -rf build ; npx tsc",
     "kill": "pm2 kill",
-    "start": "npm run postdeploy ; pm2 start pm2.config.js",
+    "start": "pm2 start pm2.config.js",
     "logs": "pm2 logs",
     "monit": "pm2 monit",
-    "predeploy": "scripts/predeploy.sh",
-    "postdeploy": "scripts/safe_postdeploy.sh",
     "postinstall": "patch-package",
     "restart": "pm2 restart pm2.config.js",
     "status": "pm2 status pm2.config.js",
-    "stop": "pm2 delete backup ; pm2 stop pm2.config.js"
+    "stop": "pm2 stop pm2.config.js"
   },
   "dependencies": {
     "@hocuspocus/extension-redis": "^2.4.0",

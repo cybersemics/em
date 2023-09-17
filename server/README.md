@@ -4,18 +4,6 @@ A HocusPocus websocket server that automatically connects to the em front-end, s
 
 1. `npm install`
 2. `npm run build`
-3. Create an `.s3cfg` file in the server directory and add an S3 configuration.
-
-   - This is used by the `backup` pm2 process which zips the database and uploads it to an S3 endpoint daily.
-   - Daily backups are deleted after 90 days and monthly backups on the 1st of the month are retained.
-
-   ```ini
-   # See: https://github.com/raineorshine/node-s3-cli
-   [default]
-   access_key=YOUR_ACCESS_KEY
-   secret_key=YOUR_SECRET_KEY
-   endpoint=nyc3.digitaloceanspaces.com
-   ```
 
 ## Running the server
 
@@ -26,14 +14,11 @@ npm start
 pm2 processes that are started and kept alive on `npm start`:
 
 - `server` - The HocusPocus server for syncing thoughts over a Websocket connection.
-- `backup` - Daily database backup and upload to S3. You can also run the backup script manually with `./scripts/backup.sh`.
 
 npm scripts:
 
 - `logs` - Stream the pm2 logs.
 - `restart` - Restart the pm2 processes.
-- `postdeploy` - Safely restore the leveldb database from the last `predeploy`.
-- `predeploy` - Backup the leveldb database to S3 to be used by `postdeploy`. Overwrites the last `predeploy`.
 - `status` - Show the pm2 status.
 - `stop` - Stop all pm2 processes.
 
@@ -65,6 +50,9 @@ services:
       - key: REACT_APP_WEBSOCKET_PORT
         scope: RUN_AND_BUILD_TIME
         value: '80'
+      - key: MONGODB_CONNECTION_STRING
+        scope: RUN_AND_BUILD_TIME
+        value: '' # ENCRYPTED VALUE
     github:
       branch: dev
       deploy_on_push: true
@@ -80,7 +68,23 @@ services:
     source_dir: /
 ```
 
-**Note: These environment variables must be added to the front-end `.env` file:**
+## MongoDB
+
+Connect to a MongoDB cloud platform:
+
+1. Create a new MongoDB cluster on a cloud platform such as [MongoDB Atlas](https://www.mongodb.com/atlas).
+2. Update the `MONGODB_CONNECTION_STRING` environment variable on the em server.
+3. Restart the em server.
+
+Troubleshooting:
+
+- If you get: `Error during saving transaction MongoServerSelectionError: Client network socket disconnected before secure TLS connection was established`
+  - ...you need to whitelist the em server's IP address in the MongoDB dashboard.
+  - Note: DigitalOcean does [not yet support static IP addresses](https://ideas.digitalocean.com/app-platform/p/app-platform-static-ip) on App Platform.
+
+## Environment Variables
+
+## Local
 
 ```ini
 # .env.production
@@ -88,15 +92,12 @@ REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app/
 REACT_APP_WEBSOCKET_PORT=80
 ```
 
-## Environment Variables
+## Cloud
 
 The server uses its own environment variables for configuration (not to be confused with the `.env` files on the front-end).
 
-- `process.env.AWS_ACCESS_KEY` - AWS access key for server/backup script.
-- `process.env.AWS_ENDPOINT` - AWS endpoint for server/backup script. Default: nyc3.digitaloceanspaces.com
-- `process.env.AWS_SECRET_KEY` - AWS secret key for server/backup script.
-- `process.env.DB_DIR` - Level db directory. Default: `./db`
 - `process.env.HOST` - localhost
 - `process.env.PORT` - 3001
 - `process.env.REDIS_HOST` - Redis host name. If none is provided, the Redis extension will be disabled.
 - `process.env.REDIS_PORT` - Redis port.
+- `process.env.MONGODB_CONNECTION_STRING` - MongoDB [connection string](https://www.mongodb.com/docs/manual/reference/connection-string/). Default: mongodb://localhost:27017

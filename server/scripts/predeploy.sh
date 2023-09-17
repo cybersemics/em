@@ -1,1 +1,0 @@
-scripts/backup.sh --path /backup/predeploy.zip
