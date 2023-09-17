@@ -2,7 +2,7 @@ A HocusPocus websocket server that automatically connects to the em front-end, s
 
 ## Setup
 
-1. `npm install`
+1. `yarn`
 2. `npm run build`
 
 ## Running the server
@@ -40,7 +40,7 @@ region: nyc
 services:
   - build_command: |-
       cd server &&
-      npm install &&
+      yarn &&
       npm run build
     environment_slug: node-js
     envs:
