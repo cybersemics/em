@@ -673,6 +673,7 @@ export const replicateChildren = async (
     .then(() => {
       const children = getChildren(doc)
 
+      // if idb is empty, then we have to wait for websocketSynced before we can get the docKey
       const parentDocKey =
         docKey === ROOT_PARENT_ID
           ? null
@@ -681,9 +682,6 @@ export const replicateChildren = async (
           : doc.getMap<ThoughtId>('thought').get('docKey')
       if (parentDocKey) {
         docKeys.set(docKey as ThoughtId, parentDocKey)
-      } else if (parentDocKey === undefined) {
-        console.error(`replicateChildren: Missing parentDocKey for thought ${docKey}`)
-        return
       }
 
       // update docKeys of children and grandchildren
@@ -737,6 +735,17 @@ export const replicateChildren = async (
   const websocketSynced = websocketProvider ? when(websocketProvider, 'synced') : null
   websocketSynced?.then(() => {
     const children = getChildren(doc)
+
+    const parentDocKey =
+      docKey === ROOT_PARENT_ID
+        ? null
+        : docKey === HOME_TOKEN || docKey === EM_TOKEN
+        ? ROOT_PARENT_ID
+        : doc.getMap<ThoughtId>('thought').get('docKey')
+    if (parentDocKey) {
+      docKeys.set(docKey as ThoughtId, parentDocKey)
+    }
+
     children?.forEach(child => {
       onThoughtReplicated?.(child.id, getThought(doc, child.id))
 
