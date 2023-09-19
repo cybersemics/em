@@ -309,7 +309,15 @@ const replicationController = ({
       // Otherwise thoughtReplicationCursor may increase before the task completes.
       const startIndex = thoughtReplicationCursor
 
+      // Generate a map of Thought ids with their last updated index so that we can ignore older updates to the same thought.
+      // Note that this only removes duplicates within the same block, not across blocks, so replicateChildren still needs to be idempotent.
+      const replicated = new Map<ThoughtId, number>()
+      deltas.forEach(([id], i) => replicated.set(id, i))
+
       const tasks = deltas.map(([id, action], i) => {
+        // ignore older updates the same thought
+        if (i !== replicated.get(id)) return null
+
         // trigger next (e.g. save the thought locally)
         return async (): Promise<ReplicationTask> => {
           const taskData: ReplicationTask = { type: 'thought', id, blockId, index: startIndex + i + 1 }
@@ -362,7 +370,8 @@ const replicationController = ({
       // thoughtReplicationCursor is updated only on lowStep, when the replication completes.
       setLexemeObservationCursor(blockId, lexemeObservationCursor + deltasRaw.length)
 
-      // generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme
+      // Generate a map of Lexeme keys with their last updated index so that we can ignore older updates to the same lexeme.
+      // Note that this only removes duplicates within the same block, not across blocks, so replicateChildren still needs to be idempotent.
       const replicated = new Map<string, number>()
       deltas.forEach(([key], i) => replicated.set(key, i))
 
