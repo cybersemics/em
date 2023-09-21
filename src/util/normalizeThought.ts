@@ -11,15 +11,18 @@ const removeWhitespace = (s: string) => s.replace(/\s/g, '')
 // Use unicode character class escape.
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
 const removePunctuation = (s: string) => {
-  const stripped = s.replace(/(?![-–—/:])[\p{P}$+<>^`|~]/gu, '')
+  const stripped = s.replace(/(?![-–—/:&|!])[\p{P}$+<>^`|~]/gu, '')
+  return stripped.length > 0 ? stripped : s
+}
+
+/** Removes punctuation from the end of words. */
+const removePunctuationEnding = (s: string) => {
+  const stripped = s.replace(/[:;!?](?=\s|$)/g, '')
   return stripped.length > 0 ? stripped : s
 }
 
 /** Removes hyphens and dashes in the middle of a word, unless it is a number range. */
 const removeHyphens = (s: string) => s.replace(/\b[-–—/]\b(?![0-9])/g, '')
-
-/** Removes colons preceding whitespace. */
-const removeColon = (s: string) => s.replace(/:(?=\s|$)/g, '')
 
 /** Strips emoji from text. Preserves emoji on its own. */
 const stripEmojiFromText = (s: string) => {
@@ -50,7 +53,7 @@ const normalizeThought = _.memoize(
     removeWhitespace,
     removePunctuation,
     removeHyphens,
-    removeColon,
+    removePunctuationEnding,
     stripEmojiFromText,
     singularize,
   ]) as (s: string) => string,

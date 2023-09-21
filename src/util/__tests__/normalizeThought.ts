@@ -4,6 +4,25 @@ import normalizeThought from '../normalizeThought'
 const LONG_DASH = `–` // en dash
 const LONGER_DASH = `—` // em dash
 
+describe('algebra', () => {
+  test('addition and subtraction should be distinguished', () => {
+    expect(normalizeThought('3 + 4')).not.toBe(normalizeThought('3 - 4'))
+    expect(normalizeThought('3+4')).not.toBe(normalizeThought('3-4'))
+  })
+})
+
+describe('boolean', () => {
+  test('boolean && expressions should be distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('3 && 4')).not.toBe(normalizeThought('34'))
+  })
+  test('boolean || expressions should be distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('3 || 4')).not.toBe(normalizeThought('34'))
+  })
+  test('boolean negation expressions should be distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('!a')).not.toBe(normalizeThought('a'))
+  })
+})
+
 describe('case', () => {
   test('uppercase should not be distinguished from lowercase', () => {
     expect(normalizeThought('A')).toBe(normalizeThought('a'))
