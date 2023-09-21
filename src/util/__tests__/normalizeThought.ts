@@ -143,6 +143,12 @@ describe('quotes', () => {
   })
 })
 
+describe('diacritics', () => {
+  test('characters with diacritics should match those without diacritics', () => {
+    expect(normalizeThought('Lacoön')).toBe(normalizeThought('Lacoon'))
+  })
+})
+
 describe('whitespace', () => {
   test('whitespace is ignored', () => {
     expect(normalizeThought('\ta\nb c ')).toBe(normalizeThought('abc'))

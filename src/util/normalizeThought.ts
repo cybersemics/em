@@ -3,6 +3,12 @@ import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
 
+/** Remove diacritics (e.g. accents, umlauts, etc). */
+// Borrowed from modern-diacritics package.
+// modern-diacritics does not currently import so it is copied here.
+// See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
+const removeDiacritics = (s: string): string => s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
+
 /** Removes whitespace from a value (removes non-word character). */
 const removeWhitespace = (s: string) => s.replace(/\s/g, '')
 
@@ -53,6 +59,7 @@ const normalizeThought = _.memoize(
     // stripTags must be placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
+    removeDiacritics,
     removeWhitespace,
     removePunctuation,
     removeHyphens,
