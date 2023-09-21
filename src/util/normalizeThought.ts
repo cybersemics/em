@@ -24,6 +24,9 @@ const removePunctuationEnding = (s: string) => {
 /** Removes hyphens and dashes in the middle of a word, unless it is a number range. */
 const removeHyphens = (s: string) => s.replace(/\b[-–—/]\b(?![0-9])/g, '')
 
+/** Change ampersand to 'and'. */
+const transformAmpersand = (s: string) => s.replace(/&/g, 'and')
+
 /** Strips emoji from text. Preserves emoji on its own. */
 const stripEmojiFromText = (s: string) => {
   const stripped = emojiStrip(s)
@@ -54,6 +57,7 @@ const normalizeThought = _.memoize(
     removePunctuation,
     removeHyphens,
     removePunctuationEnding,
+    transformAmpersand,
     stripEmojiFromText,
     singularize,
   ]) as (s: string) => string,

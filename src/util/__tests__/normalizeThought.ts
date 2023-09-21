@@ -11,6 +11,12 @@ describe('algebra', () => {
   })
 })
 
+describe('ampersand', () => {
+  test('ampersand should be match the word "and"', () => {
+    expect(normalizeThought('a & b')).toBe(normalizeThought('a and b'))
+  })
+})
+
 describe('boolean', () => {
   test('boolean && expressions should be distinguished from numbers with the same digits', () => {
     expect(normalizeThought('3 && 4')).not.toBe(normalizeThought('34'))
