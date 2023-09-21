@@ -2854,11 +2854,6 @@
   dependencies:
     clipboard "*"
 
-"@types/emoji-strip@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/@types/emoji-strip/-/emoji-strip-1.0.0.tgz"
-  integrity sha512-u10CwsWUxAEz3T6aZQJinjv+Q47Bc9yiBrfaJAvtbTOnKdg1BdI8kuQjgc0kmBOdzYEpcE+1Jp6BZm2MVLv+pw==
-
 "@types/enzyme@^3.10.8":
   version "3.10.8"
   resolved "https://registry.npmjs.org/@types/enzyme/-/enzyme-3.10.8.tgz"
@@ -6877,10 +6872,10 @@ emittery@^0.7.1:
   resolved "https://registry.npmjs.org/emittery/-/emittery-0.7.2.tgz"
   integrity sha512-A8OG5SR/ij3SsJdWDJdkkSYUjQdCUx6APQXem0SaEePBSRg4eymGYwBkKo1Y6DU+af/Jn2dBQqDBvjnr9Vi8nQ==
 
-emoji-regex@^6.1.3:
-  version "6.5.1"
-  resolved "https://registry.npmjs.org/emoji-regex/-/emoji-regex-6.5.1.tgz"
-  integrity sha512-PAHp6TxrCy7MGMFidro8uikr+zlJJKJ/Q6mm2ExZ7HwkyR9lSVFfE3kt36qcwa24BQL7y0G9axycGjK1A/0uNQ==
+emoji-regex@^10.2.1:
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/emoji-regex/-/emoji-regex-10.2.1.tgz#a41c330d957191efd3d9dfe6e1e8e1e9ab048b3f"
+  integrity sha512-97g6QgOk8zlDRdgq1WxwgTMgEWGVAQvB5Fdpgc1MkNy56la5SKP9GsMXKDOdqwn90/41a8yPwIGk1Y6WVbeMQA==
 
 emoji-regex@^7.0.1:
   version "7.0.3"
@@ -6896,13 +6891,6 @@ emoji-regex@^9.0.0:
   version "9.2.2"
   resolved "https://registry.npmjs.org/emoji-regex/-/emoji-regex-9.2.2.tgz"
   integrity sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==
-
-emoji-strip@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.npmjs.org/emoji-strip/-/emoji-strip-1.0.1.tgz"
-  integrity sha1-z5OQU1BEEhiIQgrk20NtA6bMRZ0=
-  dependencies:
-    emoji-regex "^6.1.3"
 
 emojis-list@^2.0.0:
   version "2.1.0"

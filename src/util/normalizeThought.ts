@@ -1,7 +1,10 @@
-import emojiStrip from 'emoji-strip'
+import emojiRegex from 'emoji-regex'
 import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
+
+// TODO: Should we be using the internal emojiRegex.ts?
+const REGEXP_EMOJI = emojiRegex()
 
 // store all the replacements in a single regex for performance
 const REGEXP_NORMALIZE = new RegExp(
@@ -45,11 +48,11 @@ const normalizeThought = _.memoize(s => {
           /** Change ampersand to 'and'. */
           .replace(/&/g, 'and')
 
-  const lower = stripped.toLowerCase()
+  const strippedLowerCase = stripped.toLowerCase()
 
   // preserve lone 's', even though singularize would return ''
   // preserve lone emoji (Note: single emoji characters can have length > 1)
-  return pluralize.singular(emojiStrip(lower)) || lower
+  return pluralize.singular(strippedLowerCase.replace(REGEXP_EMOJI, '')) || strippedLowerCase
 })
 
 export default normalizeThought
