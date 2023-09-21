@@ -2,20 +2,21 @@ import emojiStrip from 'emoji-strip'
 import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
-import isAttribute from './isAttribute'
 
-/**
- * Removes whitespace from a value (removes non-word character).
- * Preserves metaprogramming attribute character `=`.
- */
-const removeWhitespaceAndPunctuation = (s: string) => {
-  const modifiedString = isAttribute(s) ? s.slice(1) : s
-  const replaced = modifiedString.replace(
-    modifiedString.length > 0 && modifiedString.replace(/\W/g, '').length > 0 ? /\W/g : /s/g,
-    '',
-  )
-  return s !== modifiedString ? '=' + replaced : replaced
+/** Removes whitespace from a value (removes non-word character). */
+const removeWhitespace = (s: string) => s.replace(/\s/g, '')
+
+/** Removes all punctuation (except hyphens, which are selectively removed by removeHyphens. */
+// [-–—] is a character class that matches hyphens and dashes.
+// Use unicode character class escape.
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
+const removePunctuation = (s: string) => {
+  const stripped = s.replace(/(?![-–—])[\p{P}$+<>^`|~]/gu, '')
+  return stripped.length > 0 ? stripped : s
 }
+
+/** Removes hyphens and dashes in the middle of a word, unless it is a number range. */
+const removeHyphens = (s: string) => s.replace(/\b[-–—]\b(?![0-9])/g, '')
 
 /** Strips emoji from text. Preserves emoji on its own. */
 const stripEmojiFromText = (s: string) => {
@@ -43,7 +44,9 @@ const normalizeThought = _.memoize(
     // stripTags must be placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
     stripTags,
     lower,
-    removeWhitespaceAndPunctuation,
+    removeWhitespace,
+    removePunctuation,
+    removeHyphens,
     stripEmojiFromText,
     singularize,
   ]) as (s: string) => string,

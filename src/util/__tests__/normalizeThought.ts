@@ -1,5 +1,9 @@
 import normalizeThought from '../normalizeThought'
 
+// use variable names to make en dash and em dash easier to distinguish in tests
+const LONG_DASH = `–` // en dash
+const LONGER_DASH = `—` // em dash
+
 describe('case', () => {
   test('uppercase should not be distinguished from lowercase', () => {
     expect(normalizeThought('A')).toBe(normalizeThought('a'))
@@ -22,8 +26,35 @@ describe('html', () => {
 })
 
 describe('hyphen', () => {
+  test('lone hyphen shuld be distinguished', () => {
+    expect(normalizeThought('-')).not.toBe(normalizeThought(''))
+    expect(normalizeThought(LONG_DASH)).not.toBe(normalizeThought(''))
+    expect(normalizeThought(LONGER_DASH)).not.toBe(normalizeThought(''))
+  })
   test('hyphenated words are not distinguished from non-hyphenated words', () => {
     expect(normalizeThought('sense-making')).toBe(normalizeThought('sensemaking'))
+    expect(normalizeThought(`sense${LONG_DASH}making`)).toBe(normalizeThought('sensemaking'))
+    expect(normalizeThought(`sense${LONGER_DASH}making`)).toBe(normalizeThought('sensemaking'))
+  })
+  test('negative numbers are distinguished from positive numbers', () => {
+    expect(normalizeThought('-500')).not.toBe(normalizeThought('500'))
+    expect(normalizeThought(`${LONG_DASH}500`)).not.toBe(normalizeThought('500'))
+    expect(normalizeThought(`${LONGER_DASH}500`)).not.toBe(normalizeThought(`500`))
+  })
+  test('ranges are distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('1020')).not.toBe(normalizeThought('10-20'))
+    expect(normalizeThought(`10${LONG_DASH}20`)).not.toBe(normalizeThought('10'))
+    expect(normalizeThought(`10${LONGER_DASH}20`)).not.toBe(normalizeThought(`20`))
+  })
+  test('hyphen at word boundary should be distinguished', () => {
+    expect(normalizeThought('A')).not.toBe(normalizeThought('A-'))
+    expect(normalizeThought(`A${LONG_DASH}`)).not.toBe(normalizeThought('A'))
+    expect(normalizeThought(`A${LONGER_DASH}`)).not.toBe(normalizeThought('A'))
+  })
+  test('hyphen at beginning or end of line should be distinguished', () => {
+    expect(normalizeThought('Points: -500')).not.toBe(normalizeThought('Points: 500'))
+    expect(normalizeThought(`Points: ${LONG_DASH}500`)).not.toBe(normalizeThought('Points: 500'))
+    expect(normalizeThought(`Points: ${LONGER_DASH}500`)).not.toBe(normalizeThought('Points: 500'))
   })
 })
 
@@ -45,8 +76,11 @@ describe('plural', () => {
 })
 
 describe('punctuation', () => {
-  test('punctuation is ignored', () => {
+  test('non-hyphen punctuation is ignored', () => {
     expect(normalizeThought('You? And me!')).toBe(normalizeThought('You and me'))
+  })
+  test('lone punctuation should be distinguished from each other', () => {
+    expect(normalizeThought('?')).not.toBe(normalizeThought('!'))
   })
 })
 
