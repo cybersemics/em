@@ -3,71 +3,53 @@ import _ from 'lodash'
 import * as pluralize from 'pluralize'
 import { REGEXP_TAGS } from '../constants'
 
-/** Remove diacritics (e.g. accents, umlauts, etc). */
-// Borrowed from modern-diacritics package.
-// modern-diacritics does not currently import so it is copied here.
-// See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
-const removeDiacritics = (s: string): string => s.normalize('NFD').replace(/\p{Diacritic}/gu, '')
-
-/** Removes whitespace from a value (removes non-word character). */
-const removeWhitespace = (s: string) => s.replace(/\s/g, '')
-
-/** Removes all punctuation (except hyphens, which are selectively removed by removeHyphens. */
-// [-–—] is a character class that matches hyphens and dashes.
-// Use unicode character class escape.
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
-const removePunctuation = (s: string) => {
-  const stripped = s.replace(/(?![-–—/:&|!#@])[\p{P}$+<>^`|~]/gu, '')
-  return stripped.length > 0 ? stripped : s
-}
-
-/** Removes punctuation from the end of words. */
-const removePunctuationEnding = (s: string) => {
-  const stripped = s.replace(/[:;!?](?=\s|$)/g, '')
-  return stripped.length > 0 ? stripped : s
-}
-
-/** Removes hyphens and dashes in the middle of a word, unless it is a number range. */
-const removeHyphens = (s: string) => s.replace(/\b[-–—/]\b(?![0-9])/g, '')
-
-/** Change ampersand to 'and'. */
-const transformAmpersand = (s: string) => s.replace(/&/g, 'and')
-
-/** Strips emoji from text. Preserves emoji on its own. */
-const stripEmojiFromText = (s: string) => {
-  const stripped = emojiStrip(s)
-  return stripped.length > 0 ? stripped : s
-}
-
-/** Strips all html tags. */
-const stripTags = (s: string) => s.replace(REGEXP_TAGS, '')
-
-/**
- * Making character 's' will just become an empty value ''.
- * Skip it else it will cause "s" character to have same no of context as empty thoughts in the entire tree. */
-const singularize = (s: string) => (s !== 's' ? pluralize.singular(s) : s)
-
-/** Converts a string to lowecase. */
-const lower = (s: string) => s.toLowerCase()
+// store all the replacements in a single regex for performance
+const REGEXP_NORMALIZE = new RegExp(
+  [
+    /** Remove diacritics (e.g. accents, umlauts, etc). */
+    // Borrowed from modern-diacritics package.
+    // modern-diacritics does not currently import so it is copied here.
+    // See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
+    '\\p{Diacritic}',
+    /** Removes whitespace.  */
+    '\\s',
+    /** Removes all punctuation (except hyphens, which are selectively removed by removeHyphens. */
+    // [-–—] is a character class that matches hyphens and dashes.
+    // Use unicode character class escape.
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
+    '(?![-–—/:&|!#@])[\\p{P}$+<>^`|~]',
+    /** Removes hyphens and dashes in the middle of a word, unless it is a number range. */
+    '\\b[-–—/]\\b(?![0-9])',
+    /** Removes punctuation from the end of words. */
+    '[:;!?](?=\\s|$)',
+  ].join('|'),
+  'gu',
+)
 
 /**
  * Converts a thought value into a canonical form that is stored in Lexeme.lemma.
  * Not idempotent (singularize may return a different string after whitespace is removed).
  */
-const normalizeThought = _.memoize(
-  _.flow([
-    // stripTags must be placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
-    stripTags,
-    lower,
-    removeDiacritics,
-    removeWhitespace,
-    removePunctuation,
-    removeHyphens,
-    removePunctuationEnding,
-    transformAmpersand,
-    stripEmojiFromText,
-    singularize,
-  ]) as (s: string) => string,
-)
+const normalizeThought = _.memoize(s => {
+  const stripped =
+    // always distinguish single characters from each other
+    s.length <= 1
+      ? s
+      : s
+          /** Strips all html tags. */
+          // stripTags must be placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
+          .replace(REGEXP_TAGS, '')
+          // needed to remove diacritics
+          .normalize('NFD')
+          .replace(REGEXP_NORMALIZE, '')
+          /** Change ampersand to 'and'. */
+          .replace(/&/g, 'and')
+
+  const lower = stripped.toLowerCase()
+
+  // preserve lone 's', even though singularize would return ''
+  // preserve lone emoji (Note: single emoji characters can have length > 1)
+  return pluralize.singular(emojiStrip(lower)) || lower
+})
 
 export default normalizeThought
