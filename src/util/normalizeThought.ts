@@ -11,7 +11,7 @@ const removeWhitespace = (s: string) => s.replace(/\s/g, '')
 // Use unicode character class escape.
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape
 const removePunctuation = (s: string) => {
-  const stripped = s.replace(/(?![-–—/:&|!])[\p{P}$+<>^`|~]/gu, '')
+  const stripped = s.replace(/(?![-–—/:&|!#@])[\p{P}$+<>^`|~]/gu, '')
   return stripped.length > 0 ? stripped : s
 }
 

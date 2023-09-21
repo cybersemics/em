@@ -38,6 +38,15 @@ describe('emoji', () => {
   })
 })
 
+describe('hashtags and mentions', () => {
+  test('hashtags should be distinguished from text', () => {
+    expect(normalizeThought('#test')).not.toBe(normalizeThought('test'))
+  })
+  test('mentions should be distinguished from text', () => {
+    expect(normalizeThought('@test')).not.toBe(normalizeThought('test'))
+  })
+})
+
 describe('html', () => {
   test('<b>text</b> should match text', () => {
     expect(normalizeThought('hello <b>world</b>')).toBe(normalizeThought('hello world'))
@@ -105,7 +114,7 @@ describe('plural', () => {
 
 describe('punctuation', () => {
   test('non-hyphen punctuation is ignored', () => {
-    expect(normalizeThought('You? #And me!')).toBe(normalizeThought('You and me'))
+    expect(normalizeThought('You? And me!')).toBe(normalizeThought('You and me'))
   })
   test('lone punctuation should be distinguished from each other', () => {
     expect(normalizeThought('?')).not.toBe(normalizeThought('!'))
