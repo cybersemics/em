@@ -64,6 +64,15 @@ describe('metaprogramming', () => {
   })
 })
 
+describe('numbers', () => {
+  test('fractions should be distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('1/2')).not.toBe(normalizeThought('12'))
+  })
+  test('ratios should be distinguished from numbers with the same digits', () => {
+    expect(normalizeThought('1:2')).not.toBe(normalizeThought('12'))
+  })
+})
+
 describe('plural', () => {
   test('plural is the same as singular', () => {
     expect(normalizeThought('dogs')).toBe(normalizeThought('dog'))
@@ -77,10 +86,17 @@ describe('plural', () => {
 
 describe('punctuation', () => {
   test('non-hyphen punctuation is ignored', () => {
-    expect(normalizeThought('You? And me!')).toBe(normalizeThought('You and me'))
+    expect(normalizeThought('You? #And me!')).toBe(normalizeThought('You and me'))
   })
   test('lone punctuation should be distinguished from each other', () => {
     expect(normalizeThought('?')).not.toBe(normalizeThought('!'))
+  })
+  test('ending punctuation should be ignored', () => {
+    expect(normalizeThought('Hello.')).toBe(normalizeThought('Hello'))
+    expect(normalizeThought('Hello?')).toBe(normalizeThought('Hello'))
+    expect(normalizeThought('Hello!')).toBe(normalizeThought('Hello'))
+    expect(normalizeThought('Hello:')).toBe(normalizeThought('Hello'))
+    expect(normalizeThought('Hello;')).toBe(normalizeThought('Hello'))
   })
 })
 
