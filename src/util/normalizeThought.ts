@@ -1,7 +1,6 @@
 import emojiRegex from 'emoji-regex'
 import _ from 'lodash'
 import * as pluralize from 'pluralize'
-import { REGEXP_TAGS } from '../constants'
 
 // TODO: Should we be using the internal emojiRegex.ts?
 const REGEXP_EMOJI = emojiRegex()
@@ -9,13 +8,13 @@ const REGEXP_EMOJI = emojiRegex()
 // store all the replacements in a single regex for performance
 const REGEXP_NORMALIZE = new RegExp(
   [
+    /** Removes HTML tags. Same as REGEXP_TAGS. */
+    '<([^>]+)>',
     /** Remove diacritics (e.g. accents, umlauts, etc). */
     // Borrowed from modern-diacritics package.
     // modern-diacritics does not currently import so it is copied here.
     // See: https://github.com/Mitsunee/modern-diacritics/blob/master/src/removeDiacritics.ts
     '\\p{Diacritic}',
-    /** Removes whitespace.  */
-    '\\s',
     /** Removes all punctuation (except hyphens, which are selectively removed by removeHyphens. */
     // [-–—] is a character class that matches hyphens and dashes.
     // Use unicode character class escape.
@@ -25,6 +24,8 @@ const REGEXP_NORMALIZE = new RegExp(
     '\\b[-–—/]\\b(?![0-9])',
     /** Removes punctuation from the end of words. */
     '[:;!?](?=\\s|$)',
+    /** Removes whitespace.  */
+    '\\s',
   ].join('|'),
   'gu',
 )
@@ -39,9 +40,6 @@ const normalizeThought = _.memoize(s => {
     s.length <= 1
       ? s
       : s
-          /** Strips all html tags. */
-          // stripTags must be placed before stripEmojiWithText because stripEmojiWithText partially removes angle brackets
-          .replace(REGEXP_TAGS, '')
           // needed to remove diacritics
           .normalize('NFD')
           .replace(REGEXP_NORMALIZE, '')
