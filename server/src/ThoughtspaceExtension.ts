@@ -17,6 +17,7 @@ import replicationController from '../../src/data-providers/yjs/replicationContr
 import sleep from '../../src/util/sleep'
 import throttleConcat from '../../src/util/throttleConcat'
 import timestamp from '../../src/util/timestamp'
+import observe from './metrics'
 
 /**********************************************************************
  * Constants
@@ -179,6 +180,8 @@ const onLoadDocument = (configuration: {
 
     setLastAccessed(tsid)
 
+    const t = performance.now()
+
     // Load client-side permissions.
     // Copy permissions from the server-side permissions doc to the client-side permission doc.
     // The server-side permissions doc keeps all permissions for all documents in memory.
@@ -266,6 +269,19 @@ const onLoadDocument = (configuration: {
       })
     } else {
       console.error('Unrecognized doc type', type)
+    }
+
+    // only log load metrics for thought, lexeme, and doclogs
+    // permissions are already loaded and do not block onLoadDocument
+    if (type && type !== 'permissions') {
+      observe({
+        name: 'em.server.onLoadDocument',
+        value: performance.now() - t,
+        tags: {
+          tsid,
+          type,
+        },
+      })
     }
   }
 }

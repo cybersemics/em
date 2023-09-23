@@ -56,6 +56,9 @@ The server uses its own environment variables for configuration (not to be confu
   - Local: `mongodb://localhost:27017` (default)
   - Cloud: `mongodb+srv://USER:PASSWORD@cluster0.2dxe1jb.mongodb.net/em?retryWrites=true&w=majority`
   - Note: The recommended connection strings from MongoDB Atlas do not work. This is probably due to the way that mongoist connects to mongodb within y-mongodb-provider.
+- `process.env.GRAPHITE_URL` - Metrics endpoint.
+- `process.env.GRAPHITE_USERID` - Metrics user id.
+- `process.env.GRAPHITE_APIKEY` - Metrics cloud access policy token.
 
 # Deploying to a hosting platform
 
