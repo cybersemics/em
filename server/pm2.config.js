@@ -9,7 +9,7 @@ module.exports = {
   apps: [
     {
       name: 'server',
-      script: './build/server/index.js',
+      script: './build/server/src/index.js',
       time: true,
       wait_ready: true,
     },

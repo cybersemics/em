@@ -2,21 +2,21 @@ import { Extension, onAuthenticatePayload, onLoadDocumentPayload } from '@hocusp
 import { isEqual, throttle } from 'lodash'
 import { MongodbPersistence } from 'y-mongodb-provider'
 import * as Y from 'yjs'
-import DocLogAction from '../src/@types/DocLogAction'
-import Index from '../src/@types/IndexType'
-import ReplicationCursor from '../src/@types/ReplicationCursor'
-import Share from '../src/@types/Share'
-import ThoughtId from '../src/@types/ThoughtId'
+import DocLogAction from '../../src/@types/DocLogAction'
+import Index from '../../src/@types/IndexType'
+import ReplicationCursor from '../../src/@types/ReplicationCursor'
+import Share from '../../src/@types/Share'
+import ThoughtId from '../../src/@types/ThoughtId'
 import {
   encodeLexemeDocumentName,
   encodePermissionsDocumentName,
   encodeThoughtDocumentName,
   parseDocumentName,
-} from '../src/data-providers/yjs/documentNameEncoder'
-import replicationController from '../src/data-providers/yjs/replicationController'
-import sleep from '../src/util/sleep'
-import throttleConcat from '../src/util/throttleConcat'
-import timestamp from '../src/util/timestamp'
+} from '../../src/data-providers/yjs/documentNameEncoder'
+import replicationController from '../../src/data-providers/yjs/replicationController'
+import sleep from '../../src/util/sleep'
+import throttleConcat from '../../src/util/throttleConcat'
+import timestamp from '../../src/util/timestamp'
 
 /**********************************************************************
  * Constants

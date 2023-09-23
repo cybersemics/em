@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["index.ts", "../src/@types/y-mongodb-provider.d.ts"],
+  "include": ["src/index.ts", "../src/@types/y-mongodb-provider.d.ts"],
   "compilerOptions": {
     "module": "commonjs",
     "noEmit": false,
