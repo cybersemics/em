@@ -304,8 +304,9 @@ class ThoughtspaceExtension implements Extension {
   onAuthenticate: (data: onAuthenticatePayload) => Promise<unknown>
   onLoadDocument: (data: onLoadDocumentPayload) => Promise<unknown>
 
-  /** Constructor. */
   constructor({ connectionString }: { connectionString: string }) {
+    const t = performance.now()
+
     const dbPermissions = new MongodbPersistence(connectionString, { collectionName: 'yjs-permissions' })
     const dbThoughtspace = new MongodbPersistence(connectionString, { collectionName: 'yjs-thoughtspace' })
     const dbDoclog = new MongodbPersistence(connectionString, { collectionName: 'yjs-doclogs' })
@@ -322,6 +323,10 @@ class ThoughtspaceExtension implements Extension {
         doc: doc,
       })
       console.info('Permissions loaded')
+      observe({
+        name: 'em.server.permissions',
+        value: performance.now() - t,
+      })
       return doc
     })
 
