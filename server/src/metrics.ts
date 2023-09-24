@@ -20,6 +20,7 @@ const REPORTING_INTERVAL = 1
 
 const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
+const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
 
 /** Calculate the meaen of a list of values. Returns undefined if the list is empty. */
 const mean = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : undefined)
@@ -31,16 +32,17 @@ const observe = async (
   const observationsNormalized = observations.map(({ name, value, tags }) => {
     // get current unix timestamp, rounded down to the nearest second
     const time = Math.floor(Date.now() / 1000)
-    const tagsArray = Object.entries(tags || {})
+    const tagsArray = Object.entries({ ...tags, env: nodeEnv })
       .filter(([key, value]) => value != null)
       .map(([key, value]) => `${key}=${value}`)
 
     const data = {
       interval: REPORTING_INTERVAL,
       name,
-      // For some reason metrics without any tags do not show up in Graphite.
+      // Note: For some reason metrics without any tags do not show up in Graphite.
       // It seems related to the fact that name is stored as a tag, so perhaps if there are no tags, the name is not stored.
-      tags: tagsArray.length > 0 ? tagsArray : [`name=${name}`],
+      // Since we always have at least one tag (env), this is not a problem here.
+      tags: tagsArray,
       // align timestamp to interval
       time: Math.floor(time / REPORTING_INTERVAL) * REPORTING_INTERVAL,
       value,
