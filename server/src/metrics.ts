@@ -38,7 +38,9 @@ const observe = async (
     const data = {
       interval: REPORTING_INTERVAL,
       name,
-      tags: tagsArray,
+      // For some reason metrics without any tags do not show up in Graphite.
+      // It seems related to the fact that name is stored as a tag, so perhaps if there are no tags, the name is not stored.
+      tags: tagsArray.length > 0 ? tagsArray : [`name=${name}`],
       // align timestamp to interval
       time: Math.floor(time / REPORTING_INTERVAL) * REPORTING_INTERVAL,
       value,
