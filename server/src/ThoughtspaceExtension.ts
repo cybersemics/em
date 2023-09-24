@@ -111,7 +111,7 @@ const bindState = async ({
             .then(() => {
               observe({
                 name: 'em.server.save',
-                value: (performance.now() - t) / 1000,
+                value: performance.now() - t,
                 tags: { tsid, type },
               })
             })
@@ -287,7 +287,7 @@ const onLoadDocument = (configuration: {
     if (type !== 'permissions') {
       observe({
         name: 'em.server.load',
-        value: (performance.now() - t) / 1000,
+        value: performance.now() - t,
         tags: { tsid, type },
       })
     }
