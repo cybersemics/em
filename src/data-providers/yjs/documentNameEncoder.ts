@@ -28,15 +28,17 @@ export const encodeDocLogBlockDocumentName = (tsid: string, key: string) => `${t
 export const parseDocumentName = (
   documentName: string,
 ): {
-  // defined for all documents
+  /** Defined for all documents. Set to 'permissions' for server permissions doc. */
   tsid: string
-  // defined for all documents
+  /** Defined for all documents except subdocs. */
   type: DocType | undefined
-  // only defined for Thought and Lexeme documents
+  /** Only defined for Thought and Lexeme documents. */
   id: ThoughtId | string | undefined
-  // only defined for doclog subdocs
+  /** Only defined for doclog subdocs. */
   blockId: string | undefined
 } => {
   const [tsid, type, id, blockId] = documentName.split('/')
-  return { tsid, type: docTypeAbbrev[type] || type, id, blockId }
+  // the server permissions doc has a simple docName of 'permissions', so we need to set the type manually instead of extracting it from the docName
+  const typeNormalized = tsid === 'permissions' ? 'permissions' : docTypeAbbrev[type] || type || ''
+  return { tsid, type: typeNormalized, id, blockId }
 }
