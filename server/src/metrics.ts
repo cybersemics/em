@@ -15,28 +15,30 @@ if (!enabled) {
   )
 }
 
+// report metrics every second
+const REPORTING_INTERVAL = 1
+
 const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
-
-// report metrics every second
-const reportingInterval = 1
 
 /** Calculate the meaen of a list of values. Returns undefined if the list is empty. */
 const mean = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : undefined)
 
-/** Push a metric to the Graphite API. */
-const observe = (name: string, value: number, tags: Index<string> = {}) => {
+/** Push a metric to the Graphite API. Null or undefined tags are ignored. */
+const observe = (name: string, value: number, tags: Index<string | null | undefined> = {}) => {
   // get current unix timestamp, rounded down to the nearest second
   const time = Math.floor(Date.now() / 1000)
-  const tagsArray = Object.entries(tags).map(([key, value]) => `${key}=${value}`)
+  const tagsArray = Object.entries(tags)
+    .filter(([key, value]) => value != null)
+    .map(([key, value]) => `${key}=${value}`)
 
   const data = [
     {
-      interval: reportingInterval,
+      interval: REPORTING_INTERVAL,
       name,
       tags: tagsArray,
       // align timestamp to interval
-      time: Math.floor(time / reportingInterval) * reportingInterval,
+      time: Math.floor(time / REPORTING_INTERVAL) * REPORTING_INTERVAL,
       value,
     },
   ]
@@ -49,7 +51,7 @@ const observe = (name: string, value: number, tags: Index<string> = {}) => {
 }
 
 const observeThrottled = throttleConcat(
-  (observations: { name: string; value: number; tags?: Index<string> }[]) => {
+  (observations: { name: string; value: number; tags?: Index<string | null | undefined> }[]) => {
     // group by name + tags
     const groups = groupBy(observations, ({ name, value, tags }) => JSON.stringify({ name, tags }))
     Object.values(groups).forEach(groupObservations => {
@@ -57,10 +59,11 @@ const observeThrottled = throttleConcat(
       // group observations all have the same name and tags, since that is how they were grouped
       const values = groupObservations.map(({ value }) => value)
       // !: values is never empty because throttleConcat is called only when args is not empty
-      observe(name, Math.floor(mean(values)!), tags)
+      // truncate to three decimal places
+      observe(name, Math.floor(mean(values)! * 1000) / 1000, tags)
     })
   },
-  reportingInterval * 1000,
+  REPORTING_INTERVAL * 1000,
   { leading: false },
 )
 

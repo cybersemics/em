@@ -87,6 +87,7 @@ const bindState = async ({
   doc: Y.Doc
 }): Promise<void> => {
   const docPersisted = await db.getYDoc(docName)
+  const { tsid, type } = parseDocumentName(docName)
 
   // store initial state of Doc if non-empty
   const update = Y.encodeStateAsUpdate(doc)
@@ -103,10 +104,20 @@ const bindState = async ({
     // Note: Is it a problem that mergeUpdates does not perform garbage collection?
     // https://discuss.yjs.dev/t/throttling-yjs-updates-with-garbage-collection/1423
     (updates: Uint8Array[]) => {
+      const t = performance.now()
       return updates.length > 0
-        ? db.storeUpdate(docName, Y.mergeUpdates(updates)).catch((e: any) => {
-            console.error('bindState: storeUpdate error', e)
-          })
+        ? db
+            .storeUpdate(docName, Y.mergeUpdates(updates))
+            .then(() => {
+              observe({
+                name: 'em.server.save',
+                value: (performance.now() - t) / 1000,
+                tags: { tsid, type },
+              })
+            })
+            .catch((e: any) => {
+              console.error('bindState: storeUpdate error', e)
+            })
         : null
     },
     THROTTLE_STOREUPDATE,
@@ -273,10 +284,10 @@ const onLoadDocument = (configuration: {
 
     // only log load metrics for thought, lexeme, and doclogs
     // permissions are already loaded and do not block onLoadDocument
-    if (type && type !== 'permissions') {
+    if (type !== 'permissions') {
       observe({
-        name: 'em.server.onLoadDocument',
-        value: performance.now() - t,
+        name: 'em.server.load',
+        value: (performance.now() - t) / 1000,
         tags: {
           tsid,
           type,
