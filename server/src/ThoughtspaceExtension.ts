@@ -288,10 +288,7 @@ const onLoadDocument = (configuration: {
       observe({
         name: 'em.server.load',
         value: (performance.now() - t) / 1000,
-        tags: {
-          tsid,
-          type,
-        },
+        tags: { tsid, type },
       })
     }
   }
