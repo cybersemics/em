@@ -2,6 +2,8 @@ import { Redis } from '@hocuspocus/extension-redis'
 import { Server } from '@hocuspocus/server'
 // eslint-disable-next-line fp/no-events
 import { EventEmitter } from 'events'
+import express from 'express'
+import expressWebsockets from 'express-ws'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
 import { observeNodeMetrics } from './metrics'
 
@@ -23,10 +25,17 @@ const server = Server.configure({
     ...(redisHost ? [new Redis({ host: redisHost, port: redisPort })] : []),
     new ThoughtspaceExtension({ connectionString: mongodbConnectionString }),
   ],
-  onListen: async () => {
-    // notify pm2 that the app is ready
-    process.send?.('ready')
-  },
 })
 
-server.listen()
+// express
+const { app } = expressWebsockets(express())
+
+// hocuspocus websocket route
+app.ws('/hocuspocus', (websocket, request) => {
+  server.handleConnection(websocket, request)
+})
+
+app.listen(port, () => {
+  console.info(`App listening at http://localhost:${port}`)
+  process.send?.('ready')
+})
