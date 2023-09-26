@@ -30,9 +30,14 @@ const server = Server.configure({
 // express
 const { app } = expressWebsockets(express())
 
+// prometheus metrics route
+app.get('/', async (req, res) => {
+  res.type('text').send('Server is running')
+})
+
 // hocuspocus websocket route
-app.ws('/hocuspocus', (websocket, request) => {
-  server.handleConnection(websocket, request)
+app.ws('/hocuspocus', (ws, req) => {
+  server.handleConnection(ws, req)
 })
 
 app.listen(port, () => {
