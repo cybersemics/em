@@ -4,20 +4,27 @@ import { Server } from '@hocuspocus/server'
 import { EventEmitter } from 'events'
 import express from 'express'
 import expressWebsockets from 'express-ws'
+import client, { register } from 'prom-client'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
 import { observeNodeMetrics } from './metrics'
 
 // bump maxListeners to avoid warnings when many websocket connections are created
 EventEmitter.defaultMaxListeners = 1000000
 
-// collect default NodeJS metrics and send to Grafana on an interval.
-// https://github.com/siimon/prom-client#default-metrics
-observeNodeMetrics()
-
 const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongodb://localhost:27017'
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
+
+client.collectDefaultMetrics()
+
+// Metrics are usually exposed on the /metrics route with basic auth.
+// We can also opt in to pushing them directly to the Graphite server on an interval.
+// This is useful for exposing metrics from a local development environment.
+if (process.env.METRICS_PUSH) {
+  console.info(`Pushing metrics to ${process.env.GRAPHITE_URL}`)
+  observeNodeMetrics()
+}
 
 const server = Server.configure({
   port,
@@ -30,9 +37,13 @@ const server = Server.configure({
 // express
 const { app } = expressWebsockets(express())
 
-// prometheus metrics route
 app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
+})
+
+// prometheus metrics route
+app.get('/metrics', async (req, res) => {
+  res.contentType(register.contentType).send(await register.metrics())
 })
 
 // hocuspocus websocket route

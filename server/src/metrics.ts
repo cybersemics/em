@@ -1,5 +1,5 @@
 import { groupBy } from 'lodash'
-import client, { register } from 'prom-client'
+import { register } from 'prom-client'
 import Index from '../../src/@types/IndexType'
 import keyValueBy from '../../src/util/keyValueBy'
 import throttleConcat from '../../src/util/throttleConcat'
@@ -99,13 +99,11 @@ const observeMetric = enabled
     () => {}
 
 /**
- * Collect default NodeJS metrics and send to Grafana on an interval.
+ * Push default metrics to Grafana on an interval. The function client.collectDefaultMetrics must already have been called.
  *
  * @see https://github.com/siimon/prom-client#default-metrics
  */
 export const observeNodeMetrics = () => {
-  client.collectDefaultMetrics()
-
   setTimeout(async () => {
     const json = await register.getMetricsAsJSON()
 
