@@ -22,6 +22,9 @@ const MetricType: Index<any> = {
 // report metrics every second
 const REPORTING_INTERVAL = 1
 
+// prefix for NodeJS metrics pushed to Graphite when process.env.METRICS_PUSH is enabled
+const METRICS_PUSH_PREFIX = 'em.server.node.'
+
 const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
 const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
@@ -104,7 +107,7 @@ const observeMetric = enabled
  * @see https://github.com/siimon/prom-client#default-metrics
  */
 export const observeNodeMetrics = () => {
-  setTimeout(async () => {
+  setInterval(async () => {
     const json = await register.getMetricsAsJSON()
 
     // convert prom-client JSON to Graphite format
@@ -114,7 +117,7 @@ export const observeNodeMetrics = () => {
       .filter(({ type }) => !type || type === MetricType.Counter || type === MetricType.Gauge)
       .flatMap(({ aggregator, help, name, type, values }) =>
         values.map(({ value, labels }) => ({
-          name,
+          name: `${METRICS_PUSH_PREFIX}${name}`,
           value: values[0]?.value,
           tags: keyValueBy(labels, (key, value) => ({ [key]: value?.toString() })),
         })),
