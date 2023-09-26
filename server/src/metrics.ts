@@ -1,7 +1,18 @@
 import { groupBy } from 'lodash'
+import client, { register } from 'prom-client'
 import Index from '../../src/@types/IndexType'
+import keyValueBy from '../../src/util/keyValueBy'
 import throttleConcat from '../../src/util/throttleConcat'
 import './env'
+
+// MetricType enum does not seem to be properly exported from prom-client.
+// https://github.com/siimon/prom-client/issues/336
+const MetricType: Index<any> = {
+  Counter: 'counter',
+  Gauge: 'gauge',
+  Histogram: 'histogram',
+  Summary: 'summary',
+}
 
 // import is not working in commonjs build
 // require only works with node-fetch v2
@@ -86,5 +97,33 @@ const observeMetric = enabled
   ? observeThrottled
   : // eslint-disable-next-line @typescript-eslint/no-empty-function
     () => {}
+
+/**
+ * Collect default NodeJS metrics and send to Grafana on an interval.
+ *
+ * @see https://github.com/siimon/prom-client#default-metrics
+ */
+export const observeNodeMetrics = () => {
+  client.collectDefaultMetrics()
+
+  setTimeout(async () => {
+    const json = await register.getMetricsAsJSON()
+
+    // convert prom-client JSON to Graphite format
+    const metrics = json
+      // Only support for Counter and Gauge currently.
+      // TODO: Add support for Histogram, which is how nodejs_gc_duration_seconds is reported.
+      .filter(({ type }) => !type || type === MetricType.Counter || type === MetricType.Gauge)
+      .flatMap(({ aggregator, help, name, type, values }) =>
+        values.map(({ value, labels }) => ({
+          name,
+          value: values[0]?.value,
+          tags: keyValueBy(labels, (key, value) => ({ [key]: value?.toString() })),
+        })),
+      )
+
+    metrics.forEach(observeThrottled)
+  }, REPORTING_INTERVAL * 1000)
+}
 
 export default observeMetric

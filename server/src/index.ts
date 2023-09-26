@@ -3,9 +3,14 @@ import { Server } from '@hocuspocus/server'
 // eslint-disable-next-line fp/no-events
 import { EventEmitter } from 'events'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
+import { observeNodeMetrics } from './metrics'
 
 // bump maxListeners to avoid warnings when many websocket connections are created
 EventEmitter.defaultMaxListeners = 1000000
+
+// collect default NodeJS metrics and send to Grafana on an interval.
+// https://github.com/siimon/prom-client#default-metrics
+observeNodeMetrics()
 
 const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongodb://localhost:27017'
 const redisHost = process.env.REDIS_HOST
