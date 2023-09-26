@@ -314,7 +314,7 @@ class ThoughtspaceExtension implements Extension {
     // Load the server-side permissions
     // Contains a top level map for each thoughtspace Map<Share> mapping token -> permission.
     // Wait a tick before logging to ensure the "Loading permissions..." message is not lost in the noise of the server startup.
-    const permissionsServerDocPromise = sleep(0).then(async () => {
+    const permissionsServerDoc = sleep(0).then(async () => {
       console.info('Loading permissions...')
       const doc = new Y.Doc()
       await bindState({
@@ -330,16 +330,16 @@ class ThoughtspaceExtension implements Extension {
       return doc
     })
 
+    this.onAuthenticate = onAuthenticate(permissionsServerDoc)
     this.onLoadDocument = onLoadDocument({
       dbPermissions,
       dbThoughtspace,
       dbDoclog,
-      permissionsServerDoc: permissionsServerDocPromise,
+      // Pass the permissions doc to onAuthenticate so it can be used to authenticate the connection.
+      // It will also ensure that no connections are authenticated before the server permissions are loaded.
+      // Otherwise owners could be overwritten with the auto-assign owner logic.
+      permissionsServerDoc,
     })
-
-    // Hook up the onAuthenticate hook now, but do authenticate until server permissions have synced.
-    // Otherwise owners can be overwritten with the auto-assign owner logic.
-    this.onAuthenticate = onAuthenticate(permissionsServerDocPromise)
   }
 }
 
