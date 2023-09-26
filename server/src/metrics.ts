@@ -5,6 +5,11 @@ import keyValueBy from '../../src/util/keyValueBy'
 import throttleConcat from '../../src/util/throttleConcat'
 import './env'
 
+// import is not working in commonjs build
+// require only works with node-fetch v2
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const fetch = require('node-fetch')
+
 // MetricType enum does not seem to be properly exported from prom-client.
 // https://github.com/siimon/prom-client/issues/336
 const MetricType: Index<any> = {
@@ -14,24 +19,19 @@ const MetricType: Index<any> = {
   Summary: 'summary',
 }
 
-// import is not working in commonjs build
-// require only works with node-fetch v2
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const fetch = require('node-fetch')
-
-const enabled = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
-if (!enabled) {
-  console.warn(
-    'Metrics are disabled because GRAPHITE_URL, GRAPHITE_USERID, and/or GRAPHITE_APIKEY environment variables are not set.',
-  )
-}
-
 // report metrics every second
 const REPORTING_INTERVAL = 1
 
 const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
 const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
+
+const enabled = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
+if (!enabled) {
+  console.warn(
+    'Hocuspocus server metrics are disabled because GRAPHITE_URL, GRAPHITE_USERID, and/or GRAPHITE_APIKEY environment variables are not set.',
+  )
+}
 
 /** Calculate the meaen of a list of values. Returns undefined if the list is empty. */
 const mean = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : undefined)

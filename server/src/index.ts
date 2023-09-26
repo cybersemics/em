@@ -13,25 +13,26 @@ import { observeNodeMetrics } from './metrics'
 EventEmitter.defaultMaxListeners = 1000000
 
 const METRICS_DISABLED_MESSAGE =
-  'Metrics are disabled because METRICS_USERNAME and/or METRICS_PASSWORD environment variables are not set.'
+  'The /metrics endpoint is disabled because METRICS_USERNAME and METRICS_PASSWORD environment variables are not set.'
 
 const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongodb://localhost:27017'
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
 const hasMetricsCredentials = process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD
-
-if (!hasMetricsCredentials) {
-  console.warn(METRICS_DISABLED_MESSAGE)
-}
+const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
 
 client.collectDefaultMetrics()
+
+if (!hasMetricsCredentials && nodeEnv !== 'development') {
+  console.warn(METRICS_DISABLED_MESSAGE)
+}
 
 // Metrics are usually exposed on the /metrics route with basic auth.
 // We can also opt in to pushing them directly to the Graphite server on an interval.
 // This is useful for exposing metrics from a local development environment.
-if (process.env.METRICS_PUSH) {
-  console.info(`Pushing metrics to ${process.env.GRAPHITE_URL}`)
+if (hasMetricsCredentials && process.env.METRICS_PUSH) {
+  console.info(`Pushing NodeJS metrics to ${process.env.GRAPHITE_URL}`)
   observeNodeMetrics()
 }
 
@@ -52,7 +53,7 @@ const metricsAuthMiddleware = basicAuth({
     ...(hasMetricsCredentials ? { [process.env.METRICS_USERNAME!]: process.env.METRICS_PASSWORD! } : null),
   },
   unauthorizedResponse: (req: any): string =>
-    !req.auth ? 'Basic auth required' : hasMetricsCredentials ? 'Unauthorized' : METRICS_DISABLED_MESSAGE,
+    !hasMetricsCredentials ? METRICS_DISABLED_MESSAGE : !req.auth ? 'Basic auth required' : 'Unauthorized',
 })
 
 // prometheus metrics route
