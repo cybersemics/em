@@ -3,6 +3,7 @@ import { Server } from '@hocuspocus/server'
 // eslint-disable-next-line fp/no-events
 import { EventEmitter } from 'events'
 import express from 'express'
+import basicAuth from 'express-basic-auth'
 import expressWebsockets from 'express-ws'
 import client, { register } from 'prom-client'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
@@ -11,10 +12,18 @@ import { observeNodeMetrics } from './metrics'
 // bump maxListeners to avoid warnings when many websocket connections are created
 EventEmitter.defaultMaxListeners = 1000000
 
+const METRICS_DISABLED_MESSAGE =
+  'Metrics are disabled because METRICS_USERNAME and/or METRICS_PASSWORD environment variables are not set.'
+
 const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongodb://localhost:27017'
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
+const hasMetricsCredentials = process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD
+
+if (!hasMetricsCredentials) {
+  console.warn(METRICS_DISABLED_MESSAGE)
+}
 
 client.collectDefaultMetrics()
 
@@ -37,12 +46,22 @@ const server = Server.configure({
 // express
 const { app } = expressWebsockets(express())
 
+// basic auth middleware to protect the metrics endpoint
+const metricsAuthMiddleware = basicAuth({
+  users: {
+    ...(hasMetricsCredentials ? { [process.env.METRICS_USERNAME!]: process.env.METRICS_PASSWORD! } : null),
+  },
+  unauthorizedResponse: (req: any): string =>
+    !req.auth ? 'Basic auth required' : hasMetricsCredentials ? 'Unauthorized' : METRICS_DISABLED_MESSAGE,
+})
+
+// prometheus metrics route
 app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
 })
 
 // prometheus metrics route
-app.get('/metrics', async (req, res) => {
+app.get('/metrics', metricsAuthMiddleware, async (req, res) => {
   res.contentType(register.contentType).send(await register.metrics())
 })
 

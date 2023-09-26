@@ -59,6 +59,8 @@ The server uses its own environment variables for configuration (not to be confu
 - `process.env.GRAPHITE_URL` - Metrics endpoint.
 - `process.env.GRAPHITE_USERID` - Metrics user id.
 - `process.env.GRAPHITE_APIKEY` - Metrics cloud access policy token.
+- `process.env.METRICS_USERNAME` - Basic auth username for /metrics endpoint.
+- `process.env.METRICS_PASSWORD` - Basic auth password for /metrics endpoint.
 
 # Deploying to a hosting platform
 
