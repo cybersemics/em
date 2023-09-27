@@ -1,4 +1,4 @@
-/** Creates a promise that resolves when the condition is met on the emitter event. */
+/** Creates a promise that resolves when the condition is met on the emitter event. Resolves to an array of event arguments. */
 const when = <T>(
   emitter: {
     on: (eventName: string, f: (...eventArgs: T[]) => void) => void

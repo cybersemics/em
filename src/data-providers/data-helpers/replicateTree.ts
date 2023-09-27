@@ -7,7 +7,10 @@ import { replicateThought } from '../yjs/thoughtspace.main'
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
 const replicateTree = (
   id: ThoughtId,
-  options: {
+  {
+    remote,
+    onThought,
+  }: {
     /** Sync with Websocket. Default: true. */
     remote?: boolean
     onThought?: (thought: Thought, thoughtIndex: Index<Thought>) => void
@@ -17,9 +20,6 @@ const replicateTree = (
   // CancellablePromise use an ad hoc property that cannot cross the worker boundary, so we need to return a cancel function separately from the promise.
   cancel: () => void
 } => {
-  const remote = options.remote
-  const onThought = options.onThought
-
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
   const thoughtIndex: Index<Thought> = {}

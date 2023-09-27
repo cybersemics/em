@@ -629,7 +629,7 @@ export const replicateThought = async (
 }
 
 /** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
-export const replicateChildren = async (
+const replicateChildren = async (
   docKey: string,
   {
     background,
