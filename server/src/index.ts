@@ -19,6 +19,7 @@ const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongod
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
+const hasGraphiteCredentials = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
 const hasMetricsCredentials = process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD
 const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
 
@@ -31,7 +32,7 @@ if (!hasMetricsCredentials && nodeEnv !== 'development') {
 // Metrics are usually exposed on the /metrics route with basic auth.
 // We can also opt in to pushing them directly to the Graphite server on an interval.
 // This is useful for exposing metrics from a local development environment.
-if (hasMetricsCredentials && process.env.METRICS_PUSH) {
+if (hasGraphiteCredentials && process.env.METRICS_PUSH) {
   console.info(`Pushing NodeJS metrics to ${process.env.GRAPHITE_URL}`)
   observeNodeMetrics()
 }

@@ -29,8 +29,8 @@ const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
 const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
 
-const enabled = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
-if (!enabled) {
+const hasGraphiteCredentials = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
+if (!hasGraphiteCredentials) {
   console.warn(
     'Hocuspocus server metrics are disabled because GRAPHITE_URL, GRAPHITE_USERID, and/or GRAPHITE_APIKEY environment variables are not set.',
   )
@@ -96,7 +96,7 @@ const observeThrottled = throttleConcat(
 )
 
 // noop if env vars are not set
-const observeMetric = enabled
+const observeMetric = hasGraphiteCredentials
   ? observeThrottled
   : // eslint-disable-next-line @typescript-eslint/no-empty-function
     () => {}
