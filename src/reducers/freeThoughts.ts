@@ -57,8 +57,8 @@ const freeThoughts = (state: State) => {
     HOME_TOKEN,
     // preserve the last few jump history points
     ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
-    // preserve the last imported thought, as it needs to stay in memory for the next imported thought in case it is a child
-    ...(globals.lastImportedPath || []),
+    // a special back channel for import/export
+    ...globals.preserveSet.keys(),
     // preserve expanded thoughts and their children
     ...Object.values(state.expanded).flatMap(path => {
       const showContexts = isContextViewActive(state, path)

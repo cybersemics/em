@@ -1,6 +1,7 @@
 import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
+import globals from '../../globals'
 import taskQueue from '../../util/taskQueue'
 import { replicateThought } from '../yjs/thoughtspace.main'
 
@@ -32,7 +33,17 @@ const replicateTree = (
     thoughtIndex[id] = thought
     onThought?.(thought, thoughtIndex)
 
-    queue.add(Object.values(thought.childrenMap).map(replicateTask))
+    if (Object.keys(thought.childrenMap).length === 0) return
+
+    // enqueue children
+    const childrenReplicated = queue.add(Object.values(thought.childrenMap).map(replicateTask))
+
+    // Preserve the parent until all children have been replicated.
+    // Otherwise the parent can be deallocated by freeThought and the docKey will be missing when the task is run.
+    globals.preserveSet.add(thought.id)
+    childrenReplicated.then(() => {
+      globals.preserveSet.delete(id)
+    })
   }
 
   queue.add([replicateTask(id)])

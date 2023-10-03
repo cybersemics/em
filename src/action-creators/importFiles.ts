@@ -81,7 +81,9 @@ const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
 
 /** Deletes the ResumeImport file manifest and raw file in IDB. */
 export const deleteResumableFile = async (id: string) => {
-  globals.lastImportedPath = undefined
+  // NOTE: This will clear all preserved thoughts, not just the import cursor.
+  // This is safe at the current time since the only other use of preserveSet is for export.
+  globals.preserveSet.clear()
   await idb.del(resumeImportKey(id))
   const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
   storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, id)))
@@ -342,9 +344,11 @@ const importFilesActionCreator =
                 const stateAfterImport = getState()
                 const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
 
-                // update the lastImportedPath so it can be protected from freeThoughts during import
+                // preserve cursor from being deallocated during import
+                // NOTE: This will clear all preserved thoughts, not just the import cursor.
+                // This is safe at the current time since the only other use of preserveSet is for export.
                 if (cursorNew) {
-                  globals.lastImportedPath = cursorNew
+                  globals.preserveSet = new Set(cursorNew)
                 }
 
                 // set cursor to first imported thought
