@@ -1105,6 +1105,7 @@ export const freeThought = async (docKey: string): Promise<void> => {
   thoughtPersistence.delete(docKey)
   thoughtIDBSynced.delete(docKey)
   thoughtWebsocketProvider.delete(docKey)
+  thoughtWebsocketSynced.delete(docKey)
   thoughtReplicating.background.delete(docKey)
   thoughtReplicating.foreground.delete(docKey)
 }
@@ -1161,6 +1162,7 @@ export const freeLexeme = async (key: string): Promise<void> => {
   lexemePersistence.delete(key)
   lexemeIDBSynced.delete(key)
   lexemeWebsocketProvider.delete(key)
+  lexemeWebsocketSynced.delete(key)
   lexemeReplicating.delete(key)
 }
 
