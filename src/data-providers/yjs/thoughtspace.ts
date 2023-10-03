@@ -676,7 +676,7 @@ const replicateChildren = async (
 
     const children = getChildren(doc)
 
-    // TODO: There may be a bug in freeThoughts, because we should not have to recreate the docKeys if the doc is already cached.
+    // TODO: There may be a bug in freeThought, because we should not have to recreate the docKeys if the doc is already cached.
     // Without this, a missing docKey error will occur if a thought is re-loaded after being deallocated.
     children?.forEach(child => {
       docKeys.set(child.id, docKey)
@@ -789,6 +789,7 @@ const replicateChildren = async (
   // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
   // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
   // This can be observed when a thought appears pending on load and its child is missing.
+  // This will not be activated when remote is false (e.g. export).
   const switchToBackground = !background && !getChildren(doc) && websocketSynced
 
   // foreground
@@ -1093,9 +1094,13 @@ export const freeThought = async (docKey: string): Promise<void> => {
     docKeys.delete(childId)
   })
   docKeys.delete(docKey as ThoughtId)
+
+  // Destroy doc and websocket provider.
+  // IndexedDB provider is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not.
   thoughtDocs.get(docKey)?.destroy()
-  // IndexeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
   thoughtWebsocketProvider.get(docKey)?.destroy()
+
+  // delete from cache
   thoughtDocs.delete(docKey)
   thoughtPersistence.delete(docKey)
   thoughtIDBSynced.delete(docKey)

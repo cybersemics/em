@@ -55,7 +55,7 @@ const freeThoughts = (state: State) => {
     ABSOLUTE_TOKEN,
     EM_TOKEN,
     HOME_TOKEN,
-    // prevent the last few jump history points
+    // preserve the last few jump history points
     ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
     // preserve the last imported thought, as it needs to stay in memory for the next imported thought in case it is a child
     ...(globals.lastImportedPath || []),
