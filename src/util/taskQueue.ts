@@ -81,6 +81,9 @@ const taskQueue = <
   // event emitter
   const emitter = new Emitter()
 
+  // Capture the stack trace of the constructor, which will be more informative than the stack trace of tick.
+  const constructorStackTrace = new Error().stack
+
   if (onEnd) {
     emitter.on('end', onEnd)
   }
@@ -171,6 +174,14 @@ const taskQueue = <
         })
         .catch(err => {
           paused = true
+
+          err.stack = `${
+            err.stack
+          }\n\nThe failed task was added to the following taskQueue instance:\n${constructorStackTrace
+            // trim "Error:" from the beginning of the stack trace
+            ?.split('\n')
+            .slice(1)
+            .join('\n')}`
           reject(err)
         })
 
