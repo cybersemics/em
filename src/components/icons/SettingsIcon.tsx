@@ -1,23 +1,17 @@
 import React, { FC } from 'react'
 import { useSelector } from 'react-redux'
-import Index from '../../@types/IndexType'
+import IconType from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
-interface IconProps {
-  fill?: string
-  size?: number
-  style?: Index<string>
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
-const SettingsIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
+const SettingsIcon: FC<IconType> = ({ fill, size = 20, style }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
       className='icon'
       x='0px'
       y='0px'
-      viewBox='0 0 700 700'
+      viewBox='100 0 600 600'
       width={size}
       height={size}
       fill={fill || colors.fg}
