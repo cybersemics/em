@@ -237,7 +237,7 @@ const testHelpers = {
 
 // add useful functions to window.em for debugging
 const windowEm = {
-  contextToThoughtId,
+  contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {
