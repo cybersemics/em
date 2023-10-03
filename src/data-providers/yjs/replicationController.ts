@@ -319,10 +319,13 @@ const replicationController = ({
         if (i !== replicated.get(id)) return null
 
         // trigger next (e.g. save the thought locally)
-        return async (): Promise<ReplicationTask> => {
-          const taskData: ReplicationTask = { type: 'thought', id, blockId, index: startIndex + i + 1 }
-          await next({ ...taskData, action })
-          return taskData
+        return {
+          description: `replicationController: Thought ${id}`,
+          function: async (): Promise<ReplicationTask> => {
+            const taskData: ReplicationTask = { type: 'thought', id, blockId, index: startIndex + i + 1 }
+            await next({ ...taskData, action })
+            return taskData
+          },
         }
       })
 
@@ -384,10 +387,13 @@ const replicationController = ({
         if (i !== replicated.get(key)) return null
 
         // trigger next (i.e. replicate the thought)
-        return async (): Promise<ReplicationTask> => {
-          const result: ReplicationTask = { type: 'lexeme', blockId, id: key, index: startIndex + i + 1 }
-          await next({ ...result, action })
-          return result
+        return {
+          description: `replicationController: Lexeme ${key}`,
+          function: async (): Promise<ReplicationTask> => {
+            const result: ReplicationTask = { type: 'lexeme', blockId, id: key, index: startIndex + i + 1 }
+            await next({ ...result, action })
+            return result
+          },
         }
       })
 

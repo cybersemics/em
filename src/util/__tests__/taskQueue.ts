@@ -24,6 +24,32 @@ it('add tasks after instantiation', async () => {
   expect(counter).toBe(3)
 })
 
+it('add tasks with descriptions for debugging', async () => {
+  let counter = 0
+  /** Increments the counter. */
+  const inc = () => ++counter
+
+  await new Promise(resolve => {
+    const queue = taskQueue<number>({ onEnd: resolve })
+    queue.add([
+      {
+        function: inc,
+        description: 'task1',
+      },
+      {
+        function: inc,
+        description: 'task2',
+      },
+      {
+        function: inc,
+        description: 'task3',
+      },
+    ])
+  })
+
+  expect(counter).toBe(3)
+})
+
 it('end should resolve to total', async () => {
   let counter = 0
   /** Increments the counter. */
@@ -434,16 +460,19 @@ it('retry exceeds timeout', async () => {
   let attempts = 0
 
   /** Returns a task that returns a value after a given number of milliseconds. */
-  const delayedValueTimeout = (s: string, n: number, forceTimeout?: number) => async () => {
-    if (forceTimeout && attempts < forceTimeout) {
-      attempts++
-      await sleep(999999)
-    }
-    await sleep(n)
-    return s
-  }
+  const delayedValueTimeout = (s: string, n: number, forceTimeout?: number) => ({
+    description: `delayedValueTimeout: ${s}`,
+    function: async () => {
+      if (forceTimeout && attempts < forceTimeout) {
+        attempts++
+        await sleep(999999)
+      }
+      await sleep(n)
+      return s
+    },
+  })
 
-  const queue = await taskQueue<string>({
+  const queue = taskQueue<string>({
     // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => outputStep.push(result),
     // eslint-disable-next-line fp/no-mutating-methods
@@ -455,7 +484,7 @@ it('retry exceeds timeout', async () => {
 
   const errorMessage = await queue.end.catch(e => e.message)
 
-  expect(errorMessage).toBe('Task timed out and retries exceeded.')
+  expect(errorMessage).toBe('Task timed out and retries exceeded. delayedValueTimeout: b')
 
   expect(attempts).toEqual(3)
 

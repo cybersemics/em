@@ -36,7 +36,12 @@ const replicateTree = (
     if (Object.keys(thought.childrenMap).length === 0) return
 
     // enqueue children
-    const childrenReplicated = queue.add(Object.values(thought.childrenMap).map(replicateTask))
+    const childrenReplicated = queue.add(
+      Object.values(thought.childrenMap).map(childId => ({
+        function: replicateTask(childId),
+        description: `replicateTree: ${childId}`,
+      })),
+    )
 
     // Preserve the parent until all children have been replicated.
     // Otherwise the parent can be deallocated by freeThought and the docKey will be missing when the task is run.
@@ -46,7 +51,12 @@ const replicateTree = (
     })
   }
 
-  queue.add([replicateTask(id)])
+  queue.add([
+    {
+      function: replicateTask(id),
+      description: `replicateTree: ${id}`,
+    },
+  ])
 
   // return a promise that can cancel the replication
   const promise = queue.end.then(() => thoughtIndex)

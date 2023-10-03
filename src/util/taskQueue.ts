@@ -1,6 +1,8 @@
 import Emitter from 'emitter20'
 
 type EventName = 'end' | 'step' | 'lowStep'
+type TaskFunction<T> = () => T | Promise<T>
+type Task<T> = TaskFunction<T> | { function: TaskFunction<T>; description: string }
 
 /** A dummy class is needed to get the typeof a generic function. */
 // See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
@@ -15,7 +17,10 @@ class TaskQueueWrapper<T> {
 export type TaskQueue<T> = ReturnType<TaskQueueWrapper<T>['wrapped']>
 
 /** Returns a new task that retries the given task up to n times if it out. */
-const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (() => Promise<any>) => {
+const retriable = <T>(
+  f: TaskFunction<T>,
+  { description, retries, timeout }: { description?: string; retries: number; timeout: number },
+): (() => Promise<any>) => {
   let retryTimer = 0
 
   /** Recursive retry function with decrementing retries. */
@@ -28,12 +33,10 @@ const retriable = <T>(f: () => T | Promise<T>, retries: number, ms: number): (()
       new Promise((resolve, reject) => {
         retryTimer = setTimeout(() => {
           if (retries <= 0) {
-            const errorMessage = 'Task timed out and retries exceeded.'
-            reject(new Error(errorMessage))
-            return
+            return reject(new Error('Task timed out and retries exceeded. ' + (description || '')))
           }
           resolve(retry(retries - 1))
-        }, ms) as unknown as number
+        }, timeout) as unknown as number
       }),
     ])
 
@@ -67,7 +70,7 @@ const taskQueue = <
   /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
   retries?: number
   /** Initial tasks to populate the queue with. */
-  tasks?: ((() => T | Promise<T>) | null | undefined)[]
+  tasks?: (Task<T> | null | undefined)[]
   /** Default timeout before retry. Only has an effect when retries option is set. Defaults to 30 sec. */
   timeout?: number
 } = {}) => {
@@ -83,7 +86,7 @@ const taskQueue = <
   }
 
   // queue of tasks to process in order, without exceeding concurrency
-  const queue: (() => T | Promise<T>)[] = []
+  const queue: Task<T>[] = []
 
   // number of tasks currently running
   let running = 0
@@ -132,7 +135,14 @@ const taskQueue = <
       const index = nextIndex()
       running++
 
-      const retriableTask = retries ? retriable(task, retries, timeout) : task
+      const taskFunction = typeof task === 'function' ? task : task?.function
+      const retriableTask = retries
+        ? retriable(taskFunction, {
+            description: typeof task === 'function' ? undefined : task.description,
+            retries,
+            timeout,
+          })
+        : taskFunction
       Promise.resolve(retriableTask())
         .then((value: T) => {
           completed++
@@ -170,28 +180,35 @@ const taskQueue = <
 
   /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
   const add = (
-    tasks: ((() => T | Promise<T>) | null | undefined)[],
+    tasks: (Task<T> | null | undefined)[],
     {
       onStep: onStepBatch,
     }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
   ) => {
-    const promises = tasks.map(
-      task =>
-        task &&
-        // wrap task in a promise that resolves when the task is complete
-        // this is necessary because we don't have access to the inner promise before the task is run
+    const promises = tasks.map(task => {
+      if (!task) return null
+      const taskFunction = typeof task === 'function' ? task : task?.function
+      return (
+        // Wrap task in a promise that calls onStepBatch and resolves when the task is complete.
+        // This is necessary because we don't have access to the inner promise before the task is run.
         new Promise(resolve => {
-          // eslint-disable-next-line fp/no-mutating-methods
-          queue.push(() =>
-            Promise.resolve(task()).then(value => {
+          /** Makes the task function asynchronous and triggers onStep when it resolves. */
+          const taskResolver = () =>
+            Promise.resolve(taskFunction()).then(value => {
               onStepBatch?.({ completed: completed + 1, total, value })
               resolve(value)
               return value
-            }),
+            })
+          // eslint-disable-next-line fp/no-mutating-methods
+          queue.push(
+            typeof task !== 'function' && task.description
+              ? { description: task.description, function: taskResolver }
+              : taskResolver,
           )
           total++
-        }),
-    )
+        })
+      )
+    })
 
     if (!paused) {
       tick()
