@@ -143,13 +143,15 @@ const thoughtPersistence: Map<string, IndexeddbPersistence> = new Map()
 const thoughtWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
 const thoughtIDBSynced: Map<string, Promise<unknown>> = new Map()
 const thoughtWebsocketSynced: Map<string, Promise<unknown>> = new Map()
-/** Cache a promise of the replicateChildren result for subsequent calls. This is a temporary memoization that is cleared when replication completes. Use the appropriate foreground/background cache, since background replication may never resolve. */
+/** Cache a promise of the replicateChildren result for subsequent calls. This is a temporary memoization that is cleared when replication completes. Use the appropriate local/remote cache, since remote replication may never resolve. */
 const thoughtReplicating: {
-  background: Map<string, Promise<void>>
-  foreground: Map<string, Promise<void>>
+  // IDB
+  local: Map<string, Promise<void>>
+  // websocket
+  remote: Map<string, Promise<void>>
 } = {
-  background: new Map(),
-  foreground: new Map(),
+  local: new Map(),
+  remote: new Map(),
 }
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
@@ -600,7 +602,8 @@ const onLexemeChange = (e: {
   })
 }
 
-/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating.
+/**
+ * Replicates a thought from the persistence layers to state, IDB, and the Websocket server. If already replicating or replicated, resolves as soon as data is available (depends on background/remote params). The Doc can be updated concurrently while replicating.
  *
  * Precondition: docKey of id must be cached.
  */
@@ -614,9 +617,9 @@ export const replicateThought = async (
     /**
      * Replicate in the background, meaning:
      * - Only update Redux state if thought is visible.
-     * - Do not store Thought doc in memory.
-     * - Destroy IndexedDBPersistence after sync.
-     * - Destroy HocuspocusProvider after sync.
+     * - Do not cache Doc or providers in memory.
+     * - Destroy providers after sync.
+     * - If remote is also true, does not resolve until websocket replication is complete (e.g. replicationController).
      */
     background?: boolean
     /** Callback with the doc as soon as it has been instantiated. */
@@ -634,7 +637,11 @@ export const replicateThought = async (
   return child
 }
 
-/** Replicates a thought from the persistence layers to state, IDB, and the Websocket server. Does nothing if the thought is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while replicating. */
+/**
+ * Replicates all thoughts contained within a Thought doc.
+ *
+ * @see replicateThought
+ */
 const replicateChildren = async (
   docKey: string,
   {
@@ -642,17 +649,8 @@ const replicateChildren = async (
     onDoc,
     remote = true,
   }: {
-    /**
-     * Replicate in the background, meaning:
-     * - Only update Redux state if thought is visible.
-     * - Do not store Lexeme doc in memory.
-     * - Destroy IndexedDBPersistence after sync.
-     * - Destroy HocuspocusProvider after sync.
-     */
     background?: boolean
-    /** Callback with the doc as soon as it has been instantiated. */
     onDoc?: (doc: Y.Doc) => void
-    /** Sync with websocket server. Set to false during export. Default: true. */
     remote?: boolean
   } = {},
 ): Promise<Thought[] | undefined> => {
@@ -672,7 +670,7 @@ const replicateChildren = async (
   if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
-    await thoughtReplicating[background ? 'background' : 'foreground'].get(docKey)
+    await thoughtReplicating[background ? 'remote' : 'local'].get(docKey)
 
     const children = getChildren(doc)
 
@@ -688,8 +686,10 @@ const replicateChildren = async (
     return children
   }
 
+  // Create a promise that resolves when the thought is fully replicated, according to the background/remote logic.
+  // This is used to memoize duplicate calls to replicateChildren at, during, and after replication.
   const replicating = resolvable<void>()
-  thoughtReplicating[background ? 'background' : 'foreground'].set(docKey, replicating)
+  thoughtReplicating[background ? 'remote' : 'local'].set(docKey, replicating)
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -790,11 +790,11 @@ const replicateChildren = async (
   // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
   // This can be observed when a thought appears pending on load and its child is missing.
   // This will not be activated when remote is false (e.g. export).
-  const switchToBackground = !background && !getChildren(doc) && websocketSynced
+  const forceRemote = !getChildren(doc) && !background && websocketSynced
 
   // foreground
   if (!background) {
-    if (switchToBackground) {
+    if (forceRemote) {
       // abort websocketSynced if the user goes offline
       let offlineTimeout = 0
       let onStatusChange: ({ status }: { status: WebsocketStatus }) => void
@@ -819,6 +819,7 @@ const replicateChildren = async (
         },
       )
 
+      // set the remote replicating promise
       await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
     }
 
@@ -876,7 +877,7 @@ const replicateChildren = async (
   // Once the replicating promise has resolved, it is safe to remove from the replicating map.
   // We must remove it manually to free memory.
   // This will not break concurrent calls, which retain their own reference.
-  const thoughtReplicatingMap = thoughtReplicating[background || switchToBackground ? 'background' : 'foreground']
+  const thoughtReplicatingMap = thoughtReplicating[background || forceRemote ? 'remote' : 'local']
   if (thoughtReplicatingMap.get(docKey) === replicating) {
     thoughtReplicatingMap.delete(docKey)
   }
@@ -1002,7 +1003,7 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   if (!thoughtDoc) return undefined
 
   // If docKey is not set, then the doc does not exist.
-  // It is important to return undefined here instead of an empty array so that the caller (specifically, replicateChildren) can distinguish between a non-existent thought and a synced thought with no children. It uses that to force foreground replication to wait for websocketSynced on the initial replication.
+  // It is important to return undefined here instead of an empty array so that the caller (specifically, replicateChildren) can distinguish between a non-existent thought and a synced thought with no children. It uses that to force remote replication to wait for websocketSynced on the initial replication.
   const yThought = thoughtDoc.getMap<ThoughtId | null>('thought')
   if (!yThought.has('docKey')) return undefined
 
@@ -1106,8 +1107,8 @@ export const freeThought = async (docKey: string): Promise<void> => {
   thoughtIDBSynced.delete(docKey)
   thoughtWebsocketProvider.delete(docKey)
   thoughtWebsocketSynced.delete(docKey)
-  thoughtReplicating.background.delete(docKey)
-  thoughtReplicating.foreground.delete(docKey)
+  thoughtReplicating.remote.delete(docKey)
+  thoughtReplicating.local.delete(docKey)
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
