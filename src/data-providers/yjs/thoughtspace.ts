@@ -670,7 +670,7 @@ const replicateChildren = async (
   if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
-    await thoughtReplicating[background ? 'remote' : 'local'].get(docKey)
+    await thoughtReplicating[remote ? 'remote' : 'local'].get(docKey)
 
     const children = getChildren(doc)
 
@@ -689,7 +689,7 @@ const replicateChildren = async (
   // Create a promise that resolves when the thought is fully replicated, according to the background/remote logic.
   // This is used to memoize duplicate calls to replicateChildren at, during, and after replication.
   const replicating = resolvable<void>()
-  thoughtReplicating[background ? 'remote' : 'local'].set(docKey, replicating)
+  thoughtReplicating[remote ? 'remote' : 'local'].set(docKey, replicating)
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -877,7 +877,7 @@ const replicateChildren = async (
   // Once the replicating promise has resolved, it is safe to remove from the replicating map.
   // We must remove it manually to free memory.
   // This will not break concurrent calls, which retain their own reference.
-  const thoughtReplicatingMap = thoughtReplicating[background || forceRemote ? 'remote' : 'local']
+  const thoughtReplicatingMap = thoughtReplicating[remote || forceRemote ? 'remote' : 'local']
   if (thoughtReplicatingMap.get(docKey) === replicating) {
     thoughtReplicatingMap.delete(docKey)
   }
