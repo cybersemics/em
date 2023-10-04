@@ -794,11 +794,6 @@ const replicateChildren = async (
   // foreground
   if (!background) {
     if (forceRemote) {
-      // resolve the local replicating promise before we await the remote
-      replicating.resolve()
-      if (thoughtReplicating.remote.get(docKey) === replicating) {
-        thoughtReplicating.remote.delete(docKey)
-      }
       // abort websocketSynced if the user goes offline
       let offlineTimeout = 0
       let onStatusChange: ({ status }: { status: WebsocketStatus }) => void
@@ -815,6 +810,7 @@ const replicateChildren = async (
             }
           }
           websocket.on('status', onStatusChange)
+          onStatusChange({ status: websocket.status })
         }),
         // cancel function
         () => {
@@ -823,7 +819,8 @@ const replicateChildren = async (
         },
       )
 
-      // set the remote replicating promise
+      // Offline promise with timeout.
+      // Do not set thoughtReplicating.remote which is a true background replication that does not timout.
       await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
     }
 
