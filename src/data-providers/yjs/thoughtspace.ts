@@ -787,18 +787,26 @@ const replicateChildren = async (
       // abort websocketSynced if the user goes offline
 
       let offlineTimeout = 0
+      let onStatusChange: ({ status }: { status: WebsocketStatus }) => void
       const offline = cancellable(
-        new Promise((resolve, reject) => {
-          /** Set offlineTimeout when the websocket becomes disconnected. */
-          const onStatusChange = ({ status }: { status: WebsocketStatus }) => {
+        new Promise<void>((resolve, reject) => {
+          /** Set offlineTimeout when the websocket goes offline. */
+          onStatusChange = ({ status }: { status: WebsocketStatus }) => {
             clearTimeout(offlineTimeout)
-            if (status === 'disconnected') {
-              offlineTimeout = setTimeout(resolve, WEBSOCKET_CONNECTION_TIME) as unknown as number
+            if (status !== 'connected') {
+              offlineTimeout = setTimeout(() => {
+                websocket.off('status', onStatusChange)
+                resolve()
+              }, WEBSOCKET_CONNECTION_TIME) as unknown as number
             }
           }
           websocket.on('status', onStatusChange)
         }),
-        () => clearTimeout(offlineTimeout),
+        // cancel function
+        () => {
+          websocket.off('status', onStatusChange)
+          clearTimeout(offlineTimeout)
+        },
       )
 
       await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
