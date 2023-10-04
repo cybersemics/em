@@ -670,8 +670,7 @@ const replicateChildren = async (
   if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
-    await thoughtReplicating[remote ? 'remote' : 'local'].get(docKey)
-
+    await thoughtReplicating[background && remote ? 'remote' : 'local'].get(docKey)
     const children = getChildren(doc)
 
     // TODO: There may be a bug in freeThought, because we should not have to recreate the docKeys if the doc is already cached.
@@ -689,7 +688,7 @@ const replicateChildren = async (
   // Create a promise that resolves when the thought is fully replicated, according to the background/remote logic.
   // This is used to memoize duplicate calls to replicateChildren at, during, and after replication.
   const replicating = resolvable<void>()
-  thoughtReplicating[remote ? 'remote' : 'local'].set(docKey, replicating)
+  thoughtReplicating[background && remote ? 'remote' : 'local'].set(docKey, replicating)
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -795,6 +794,11 @@ const replicateChildren = async (
   // foreground
   if (!background) {
     if (forceRemote) {
+      // resolve the local replicating promise before we await the remote
+      replicating.resolve()
+      if (thoughtReplicating.remote.get(docKey) === replicating) {
+        thoughtReplicating.remote.delete(docKey)
+      }
       // abort websocketSynced if the user goes offline
       let offlineTimeout = 0
       let onStatusChange: ({ status }: { status: WebsocketStatus }) => void
@@ -877,7 +881,7 @@ const replicateChildren = async (
   // Once the replicating promise has resolved, it is safe to remove from the replicating map.
   // We must remove it manually to free memory.
   // This will not break concurrent calls, which retain their own reference.
-  const thoughtReplicatingMap = thoughtReplicating[remote || forceRemote ? 'remote' : 'local']
+  const thoughtReplicatingMap = thoughtReplicating[(background && remote) || forceRemote ? 'remote' : 'local']
   if (thoughtReplicatingMap.get(docKey) === replicating) {
     thoughtReplicatingMap.delete(docKey)
   }
