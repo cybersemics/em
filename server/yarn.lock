@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@hocuspocus/common@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.npmjs.org/@hocuspocus/common/-/common-2.5.0.tgz"
-  integrity sha512-TpnQAb1Rtff1trwURFWaUEYZwqykaIGo6NNnMr6ZISdDZFWNHMAMUmy7dwJDS9ECnEtcjXhpPxXeLV+MVQXVnw==
+"@hocuspocus/common@^2.6.1":
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.6.1.tgz#902ae33825797744d76b35b662eab7c10de49eb8"
+  integrity sha512-s6//HV4D8Oav3uFHZKWcKtKaKPd6j2hidmplFKufgh1dSKeZ6psiNv9SzB3GUYPva7Vw81dWbJ2U8fkOYNqHzg==
   dependencies:
     lib0 "^0.2.47"
 
@@ -22,11 +22,11 @@
     uuid "^9.0.0"
 
 "@hocuspocus/server@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.npmjs.org/@hocuspocus/server/-/server-2.5.0.tgz"
-  integrity sha512-7oopepZIdkU2XxJouVZSdsFTg2VaqwfM1so87VEY+b7DER68BS+rVb8Eimz9WER9ZLLyg5DK+t797rnXJX/1cQ==
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-2.6.1.tgz#392e4c898731ee5385d3f5edda8fbf92c752db54"
+  integrity sha512-Aqk5P1TTQVQXUMxtuQUZ9+SwBxczKTEugAZE+4P9dy81N+32k5GU8QLrLb/6izeh47RG2NXBn0Id0+vzGm7u0w==
   dependencies:
-    "@hocuspocus/common" "^2.5.0"
+    "@hocuspocus/common" "^2.6.1"
     async-lock "^1.3.1"
     kleur "^4.1.4"
     lib0 "^0.2.47"
@@ -344,7 +344,7 @@ async-listener@^0.6.0:
 
 async-lock@^1.3.1:
   version "1.4.0"
-  resolved "https://registry.npmjs.org/async-lock/-/async-lock-1.4.0.tgz"
+  resolved "https://registry.yarnpkg.com/async-lock/-/async-lock-1.4.0.tgz#c8b6630eff68fbbdd8a5b6eb763dac3bfbb8bf02"
   integrity sha512-coglx5yIWuetakm3/1dsX9hxCNox22h7+V80RQOu2XUUMidtArxKoZoOtHUPuR84SycKTXzgGzAUR5hJxujyJQ==
 
 async@^2.6.3, async@~2.6.1:
@@ -1063,7 +1063,7 @@ isarray@~1.0.0:
 
 isomorphic.js@^0.2.4:
   version "0.2.5"
-  resolved "https://registry.npmjs.org/isomorphic.js/-/isomorphic.js-0.2.5.tgz"
+  resolved "https://registry.yarnpkg.com/isomorphic.js/-/isomorphic.js-0.2.5.tgz#13eecf36f2dba53e85d355e11bf9d4208c6f7f88"
   integrity sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw==
 
 js-git@^0.7.8:
@@ -1090,7 +1090,7 @@ jsonfile@^4.0.0:
 
 kleur@^4.1.4:
   version "4.1.5"
-  resolved "https://registry.npmjs.org/kleur/-/kleur-4.1.5.tgz"
+  resolved "https://registry.yarnpkg.com/kleur/-/kleur-4.1.5.tgz#95106101795f7050c6c650f350c683febddb1780"
   integrity sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==
 
 lazy@~1.0.11:
@@ -1098,10 +1098,17 @@ lazy@~1.0.11:
   resolved "https://registry.npmjs.org/lazy/-/lazy-1.0.11.tgz"
   integrity sha512-Y+CjUfLmIpoUCCRl0ub4smrYtGGr5AOa2AKOaWelGHOGz33X/Y/KizefGqbkwfz44+cnq/+9habclf8vOmu2LA==
 
-lib0@^0.2.42, lib0@^0.2.47, lib0@^0.2.74, lib0@^0.2.82:
+lib0@^0.2.42, lib0@^0.2.74, lib0@^0.2.82:
   version "0.2.85"
   resolved "https://registry.npmjs.org/lib0/-/lib0-0.2.85.tgz"
   integrity sha512-vtAhVttLXCu3ps2OIsTz8CdKYKdcMo7ds1MNBIcSXz6vrY8sxASqpTi4vmsAIn7xjWvyT7haKcWW6woP6jebjQ==
+  dependencies:
+    isomorphic.js "^0.2.4"
+
+lib0@^0.2.47:
+  version "0.2.86"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.86.tgz#86ccc3366ca3b6f8b5d8713c03f2a67ed7bc5f3e"
+  integrity sha512-kxigQTM4Q7NwJkEgdqQvU21qiR37twcqqLmh+/SbiGbRLfPlLVbHyY9sWp7PwXh0Xus9ELDSjsUOwcrdt5yZ4w==
   dependencies:
     isomorphic.js "^0.2.4"
 
@@ -1870,7 +1877,7 @@ uuid@^3.2.1:
 
 uuid@^9.0.0:
   version "9.0.1"
-  resolved "https://registry.npmjs.org/uuid/-/uuid-9.0.1.tgz"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.1.tgz#e188d4c8853cc722220392c424cd637f32293f30"
   integrity sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==
 
 vary@~1.1.2:
@@ -1912,9 +1919,9 @@ ws@^7.0.0, ws@^7.4.6:
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
 
 ws@^8.5.0:
-  version "8.14.1"
-  resolved "https://registry.npmjs.org/ws/-/ws-8.14.1.tgz"
-  integrity sha512-4OOseMUq8AzRBI/7SLMUwO+FEDnguetSk7KMb1sHwvF2w2Wv5Hoj0nlifx8vtGsftE/jWHojPy8sMMzYLJ2G/A==
+  version "8.14.2"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.14.2.tgz#6c249a806eb2db7a20d26d51e7709eab7b2e6c7f"
+  integrity sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==
 
 ws@~7.4.0:
   version "7.4.6"

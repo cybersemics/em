@@ -1802,19 +1802,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.5.0.tgz#adfbaa770d1e8eda0a811ad93b427cdf89960e3d"
-  integrity sha512-TpnQAb1Rtff1trwURFWaUEYZwqykaIGo6NNnMr6ZISdDZFWNHMAMUmy7dwJDS9ECnEtcjXhpPxXeLV+MVQXVnw==
+"@hocuspocus/common@^2.6.1":
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.6.1.tgz#902ae33825797744d76b35b662eab7c10de49eb8"
+  integrity sha512-s6//HV4D8Oav3uFHZKWcKtKaKPd6j2hidmplFKufgh1dSKeZ6psiNv9SzB3GUYPva7Vw81dWbJ2U8fkOYNqHzg==
   dependencies:
     lib0 "^0.2.47"
 
 "@hocuspocus/provider@^2.5.0":
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.5.0.tgz#2c56184082f835c7a0c07c8962a6e5dcafebe847"
-  integrity sha512-Du/q0kcVhaSQiKPBha19f+mnFOl4sFybARRWsGp4JIoDG+Vt3r73ZqjalIJmp9h4mBr2tGtS5zK/oQ/Vrv5/Bw==
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.6.1.tgz#95f054bc2ecddb474579b7779a2ffc1b872f4f98"
+  integrity sha512-ue9U8isfCO4nE8ddmZ5AmoLHNrUEldxcDJ8eBxaRFCtc56V1GEk93M4r69Bvu/YvOcsJaURpXrSaN5GyQNJVQw==
   dependencies:
-    "@hocuspocus/common" "^2.5.0"
+    "@hocuspocus/common" "^2.6.1"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
     ws "^7.5.9"
@@ -11225,9 +11225,9 @@ levn@~0.3.0:
     type-check "~0.3.2"
 
 lib0@^0.2.47:
-  version "0.2.85"
-  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.85.tgz#2ccc3b6e02bd6165a4b8e68f89db5f9e7787dfc5"
-  integrity sha512-vtAhVttLXCu3ps2OIsTz8CdKYKdcMo7ds1MNBIcSXz6vrY8sxASqpTi4vmsAIn7xjWvyT7haKcWW6woP6jebjQ==
+  version "0.2.86"
+  resolved "https://registry.yarnpkg.com/lib0/-/lib0-0.2.86.tgz#86ccc3366ca3b6f8b5d8713c03f2a67ed7bc5f3e"
+  integrity sha512-kxigQTM4Q7NwJkEgdqQvU21qiR37twcqqLmh+/SbiGbRLfPlLVbHyY9sWp7PwXh0Xus9ELDSjsUOwcrdt5yZ4w==
   dependencies:
     isomorphic.js "^0.2.4"
 
