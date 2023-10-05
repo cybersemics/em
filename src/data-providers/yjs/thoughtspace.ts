@@ -791,6 +791,10 @@ const replicateChildren = async (
   // This will not be activated when remote is false (e.g. export).
   const forceRemote = !getChildren(doc) && !background && websocketSynced
 
+  // Gets enabled if background mode is switched to local mode because the Lexeme is already loaded.
+  // This is used to determine if the Doc should be destroyed after background replication.
+  let forceLocal = false
+
   // foreground
   if (!background) {
     if (forceRemote) {
@@ -845,6 +849,7 @@ const replicateChildren = async (
       children.map(async child => {
         const loaded = await isThoughtLoaded(child)
         if (loaded) {
+          forceLocal = true
           thoughtDocs.set(docKey, doc)
           thoughtIDBSynced.set(docKey, idbSynced)
           thoughtPersistence.set(docKey, persistence)
@@ -864,15 +869,13 @@ const replicateChildren = async (
           }
           const thoughtMap = yChildren.get(child.id)!
           thoughtMap.observe(onThoughtChange(child.id))
-        } else {
-          doc.destroy()
-          websocketProvider?.destroy()
         }
       }),
     )
   }
 
   // resolve the replicating promise so that concurrent calls to replicateChildren can resolve
+  const children = getChildren(doc)
   replicating.resolve()
 
   // Once the replicating promise has resolved, it is safe to remove from the replicating map.
@@ -883,7 +886,13 @@ const replicateChildren = async (
     thoughtReplicatingMap.delete(docKey)
   }
 
-  return getChildren(doc)
+  // destroy the Doc and providers once fully synced
+  if (background && !forceLocal) {
+    doc.destroy()
+    websocketProvider?.destroy()
+  }
+
+  return children
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
