@@ -1005,6 +1005,13 @@ export const replicateLexeme = async (
   const lexeme = getLexeme(doc)
   replicating.resolve(lexeme)
 
+  // Once the replicating promise has resolved, it is safe to remove from the replicating map.
+  // We must remove it manually to free memory.
+  // This will not break concurrent calls, which retain their own reference.
+  if (lexemeReplicating.get(key) === replicating) {
+    lexemeReplicating.delete(key)
+  }
+
   // destroy the Doc and providers once fully synced
   if (background && !forceLocal) {
     lexemeMap.unobserve(onLexemeChange)
