@@ -966,11 +966,11 @@ export const replicateLexeme = async (
     lexemePersistence.set(key, persistence)
     lexemeWebsocketSynced.set(key, websocketSynced)
     lexemeWebsocketProvider.set(key, websocketProvider)
-  }
 
-  // Start observing before websocketSynced immediately. This differs from replicateChildren, where we cannot start observing until we know if a thought is pending or not.
-  // This will be unobserved in background replication.
-  lexemeMap.observe(onLexemeChange)
+    // Start observing before websocketSynced immediately. This differs from replicateChildren, where we cannot start observing until we know if a thought is pending or not.
+    // This will be unobserved in background replication.
+    lexemeMap.observe(onLexemeChange)
+  }
 
   // always wait for IDB to sync
   await idbSynced
@@ -992,6 +992,7 @@ export const replicateLexeme = async (
       lexemeIDBSynced.set(key, idbSynced)
       lexemePersistence.set(key, persistence)
       lexemeWebsocketProvider.set(key, websocketProvider)
+      lexemeMap.observe(onLexemeChange)
       onLexemeChange({
         target: doc.getMap<LexemeYjs>(),
         transaction: {
@@ -1014,7 +1015,6 @@ export const replicateLexeme = async (
 
   // destroy the Doc and providers once fully synced
   if (background && !forceLocal) {
-    lexemeMap.unobserve(onLexemeChange)
     doc.destroy()
     websocketProvider.destroy()
   }
