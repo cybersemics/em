@@ -966,13 +966,19 @@ export const replicateLexeme = async (
   // always wait for IDB to sync
   await idbSynced
 
+  // Gets enabled if background mode is switched to local mode because the Lexeme is already loaded.
+  // This is used to determine if the Doc should be destroyed after background replication.
+  let forceLocal = false
+
   if (background) {
     // do not resolve background replication until websocket has synced
     await websocketSynced
 
+    forceLocal = await isLexemeLoaded(key, getLexeme(doc))
+
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
-    if (await isLexemeLoaded(key, getLexeme(doc))) {
+    if (forceLocal) {
       lexemeDocs.set(key, doc)
       lexemeIDBSynced.set(key, idbSynced)
       lexemePersistence.set(key, persistence)
@@ -983,18 +989,19 @@ export const replicateLexeme = async (
           origin: websocketProvider,
         },
       })
-    } else {
-      // destroy the providers once fully synced
-      const lexeme = getLexeme(doc)
-      lexemeMap.unobserve(onLexemeChange)
-      doc.destroy()
-      websocketProvider.destroy()
-      return lexeme
     }
   }
 
+  // get the Lexeme before we destroy the Doc
   const lexeme = getLexeme(doc)
   replicating.resolve(lexeme)
+
+  // destroy the Doc and providers once fully synced
+  if (background && !forceLocal) {
+    lexemeMap.unobserve(onLexemeChange)
+    doc.destroy()
+    websocketProvider.destroy()
+  }
 
   return lexeme
 }
