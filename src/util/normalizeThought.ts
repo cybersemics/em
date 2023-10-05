@@ -1,5 +1,5 @@
 import emojiRegex from 'emoji-regex'
-import _ from 'lodash'
+import moize from 'moize'
 import * as pluralize from 'pluralize'
 
 // TODO: Should we be using the internal emojiRegex.ts?
@@ -34,23 +34,26 @@ const REGEXP_NORMALIZE = new RegExp(
  * Converts a thought value into a canonical form that is stored in Lexeme.lemma.
  * Not idempotent (singularize may return a different string after whitespace is removed).
  */
-const normalizeThought = _.memoize(s => {
-  const stripped =
-    // always distinguish single characters from each other
-    s.length <= 1
-      ? s
-      : s
-          // needed to remove diacritics
-          .normalize('NFD')
-          .replace(REGEXP_NORMALIZE, '')
-          /** Change ampersand to 'and'. */
-          .replace(/&/g, 'and')
+const normalizeThought = moize(
+  s => {
+    const stripped =
+      // always distinguish single characters from each other
+      s.length <= 1
+        ? s
+        : s
+            // needed to remove diacritics
+            .normalize('NFD')
+            .replace(REGEXP_NORMALIZE, '')
+            /** Change ampersand to 'and'. */
+            .replace(/&/g, 'and')
 
-  const strippedLowerCase = stripped.toLowerCase()
+    const strippedLowerCase = stripped.toLowerCase()
 
-  // preserve lone 's', even though singularize would return ''
-  // preserve lone emoji (Note: single emoji characters can have length > 1)
-  return pluralize.singular(strippedLowerCase.replace(REGEXP_EMOJI, '')) || strippedLowerCase
-})
+    // preserve lone 's', even though singularize would return ''
+    // preserve lone emoji (Note: single emoji characters can have length > 1)
+    return pluralize.singular(strippedLowerCase.replace(REGEXP_EMOJI, '')) || strippedLowerCase
+  },
+  { maxSize: 1000 },
+)
 
 export default normalizeThought
