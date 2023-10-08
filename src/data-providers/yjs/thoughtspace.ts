@@ -670,7 +670,13 @@ const replicateChildren = async (
   if (thoughtDocs.get(docKey) || process.env.NODE_ENV === 'test') {
     // The Doc exists, but it may not be populated yet if replication has not completed.
     // Wait for the appropriate replication to complete before accessing children.
-    await thoughtReplicating[background && remote ? 'remote' : 'local'].get(docKey)
+    if (background && remote) {
+      await thoughtWebsocketSynced.get(docKey)
+      await thoughtReplicating.remote.get(docKey)
+    } else {
+      await thoughtReplicating.local.get(docKey)
+    }
+
     const children = getChildren(doc)
 
     // TODO: There may be a bug in freeThought, because we should not have to recreate the docKeys if the doc is already cached.
@@ -918,6 +924,9 @@ export const replicateLexeme = async (
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
   if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
+    if (background) {
+      await lexemeWebsocketSynced.get(key)
+    }
     return lexemeReplicating.get(key)
   }
 
