@@ -405,7 +405,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       replicateThought(id, { onDoc: resolve })
     }))
 
-  const thoughtIdbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
+  const thoughtNewIdbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
     if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
@@ -471,7 +471,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     })
   }, thoughtDoc.clientID)
 
-  await Promise.all([thoughtIdbSynced, thoughtOldIdbSynced, lexemeIdbSynced])
+  await Promise.all([thoughtNewIdbSynced, thoughtOldIdbSynced, lexemeIdbSynced])
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
