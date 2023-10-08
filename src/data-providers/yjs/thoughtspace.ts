@@ -791,10 +791,6 @@ const replicateChildren = async (
   // This will not be activated when remote is false (e.g. export).
   const forceRemote = !getChildren(doc) && !background && websocketSynced
 
-  // Gets enabled if background mode is switched to local mode because the Lexeme is already loaded.
-  // This is used to determine if the Doc should be destroyed after background replication.
-  let forceLocal = false
-
   // foreground
   if (!background) {
     if (forceRemote) {
@@ -849,7 +845,6 @@ const replicateChildren = async (
       children.map(async child => {
         const loaded = await isThoughtLoaded(child)
         if (loaded) {
-          forceLocal = true
           thoughtDocs.set(docKey, doc)
           thoughtIDBSynced.set(docKey, idbSynced)
           thoughtPersistence.set(docKey, persistence)
@@ -887,7 +882,7 @@ const replicateChildren = async (
   }
 
   // destroy the Doc and providers once fully synced
-  if (background && !forceLocal) {
+  if (background) {
     doc.destroy()
     websocketProvider?.destroy()
   }
@@ -975,19 +970,15 @@ export const replicateLexeme = async (
   // always wait for IDB to sync
   await idbSynced
 
-  // Gets enabled if background mode is switched to local mode because the Lexeme is already loaded.
-  // This is used to determine if the Doc should be destroyed after background replication.
-  let forceLocal = false
-
   if (background) {
     // do not resolve background replication until websocket has synced
     await websocketSynced
 
-    forceLocal = await isLexemeLoaded(key, getLexeme(doc))
+    const loaded = await isLexemeLoaded(key, getLexeme(doc))
 
     // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
-    if (forceLocal) {
+    if (loaded) {
       lexemeDocs.set(key, doc)
       lexemeIDBSynced.set(key, idbSynced)
       lexemePersistence.set(key, persistence)
@@ -1014,7 +1005,7 @@ export const replicateLexeme = async (
   }
 
   // destroy the Doc and providers once fully synced
-  if (background && !forceLocal) {
+  if (background) {
     doc.destroy()
     websocketProvider.destroy()
   }
