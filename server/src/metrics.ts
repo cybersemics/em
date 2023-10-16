@@ -71,7 +71,7 @@ const observe = async (
       body: JSON.stringify(observationsNormalized),
     })
   } catch (err: any) {
-    console.error(`Error pushing metrics to ${apiUrl}`, err)
+    console.error(`Error pushing metrics to ${apiUrl}`, err.message)
   }
 }
 
