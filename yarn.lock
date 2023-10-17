@@ -1802,22 +1802,22 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.6.1":
-  version "2.6.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.6.1.tgz#902ae33825797744d76b35b662eab7c10de49eb8"
-  integrity sha512-s6//HV4D8Oav3uFHZKWcKtKaKPd6j2hidmplFKufgh1dSKeZ6psiNv9SzB3GUYPva7Vw81dWbJ2U8fkOYNqHzg==
+"@hocuspocus/common@^2.7.0":
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.7.0.tgz#271f6248c060e3be4b11d0b5d094a21b76b71595"
+  integrity sha512-rJmn6uC7JYuq9eLVxb0fKusab2WBUkNyxrJjj9RXOsmcoe2iveVv3semIMAaBXXToSMCBoGjT52qDl1ll21WDQ==
   dependencies:
     lib0 "^0.2.47"
 
-"@hocuspocus/provider@^2.5.0":
-  version "2.6.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.6.1.tgz#95f054bc2ecddb474579b7779a2ffc1b872f4f98"
-  integrity sha512-ue9U8isfCO4nE8ddmZ5AmoLHNrUEldxcDJ8eBxaRFCtc56V1GEk93M4r69Bvu/YvOcsJaURpXrSaN5GyQNJVQw==
+"@hocuspocus/provider@^2.7.0":
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.7.0.tgz#fbf071997c52baafb670e5e9288931c4ba4dc23e"
+  integrity sha512-e7kIWgWCkbEijjFBLUdi524BrJ4xlo6m6ozv/0R1KeIyRrBxxbjRmV5FX4xWJlTGkSVcCO9F+VOUYNJ8K7/z+w==
   dependencies:
-    "@hocuspocus/common" "^2.6.1"
+    "@hocuspocus/common" "^2.7.0"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.47"
-    ws "^7.5.9"
+    ws "^8.14.2"
 
 "@ionic/cli-framework-output@^2.2.5":
   version "2.2.5"
@@ -18551,10 +18551,10 @@ ws@^7, ws@^7.2.3, ws@^7.4.5:
   resolved "https://registry.npmjs.org/ws/-/ws-7.4.6.tgz"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==
 
-ws@^7.5.9:
-  version "7.5.9"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
-  integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+ws@^8.14.2:
+  version "8.14.2"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.14.2.tgz#6c249a806eb2db7a20d26d51e7709eab7b2e6c7f"
+  integrity sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==
 
 xcode@^2.0.0:
   version "2.1.0"
