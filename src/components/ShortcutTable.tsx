@@ -25,6 +25,7 @@ const groups: {
       'moveCursorForward',
       'home',
       'search',
+      'commandPalette',
       'openShortcutPopup',
     ],
   },

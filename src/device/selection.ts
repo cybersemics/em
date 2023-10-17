@@ -1,19 +1,19 @@
 /** Wraps the browser Selection API in a device-agnostic interface. */
 import SplitResult from '../@types/SplitResult'
 
-type SelectionOptionsType = {
+export type SelectionOptionsType = {
   offset?: number
   end?: boolean
 }
 
 /** A node and character offset. */
-interface NodeOffset {
+export interface NodeOffset {
   node: Node | null
   offset: number
 }
 
 /** A saved selection object that can restore the browser selection when passed to selection.restore. */
-interface SavedSelection {
+export interface SavedSelection {
   node: Node
   offset: number
 }

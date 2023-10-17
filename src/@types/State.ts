@@ -107,6 +107,7 @@ interface State {
   searchContexts: Index<Context> | null
   searchLimit?: number
   showColorPicker?: boolean
+  showCommandPalette: boolean
   showHiddenThoughts: boolean
   // The currently shown modal dialog box.
   // Initialized to the welcome modal, unless already completed.

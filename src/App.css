@@ -5,6 +5,7 @@
   --z-index-alert: 1500;
   /* Sidebar : 1300 */
   --z-index-gesture-trace: 50;
+  --z-index-command-palette: 45;
   --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
   --z-index-toolbar-container: 20;
@@ -38,6 +39,9 @@
 
 .z-index-alert {
   z-index: var(--z-index-alert);
+}
+.z-index-command-palette {
+  z-index: var(--z-index-command-palette);
 }
 .z-index-gesture-trace {
   z-index: var(--z-index-gesture-trace);
