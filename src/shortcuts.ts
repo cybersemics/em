@@ -271,8 +271,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
       globals.suppressExpansion = false
     }
 
-    // disable if modal is displayed
-    if (state.showModal) return
+    // disable if modal or command palette is displayed
+    if (state.showModal || state.showCommandPalette) return
 
     const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
