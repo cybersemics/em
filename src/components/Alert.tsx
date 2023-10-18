@@ -188,7 +188,7 @@ const ExtendedGestureHint: FC = () => {
 
           <div
             style={{
-              marginLeft: '-2.4em',
+              marginLeft: showCommandPalette ? '-2.4em' : '-1.2em',
               ...(showCommandPalette ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             }}
           >
@@ -201,7 +201,7 @@ const ExtendedGestureHint: FC = () => {
                 shortcut={shortcut}
               />
             ))}
-            {possibleShortcutsSorted.length === 0 && 'No matching commands'}
+            {possibleShortcutsSorted.length === 0 && <span style={{ marginLeft: '1em' }}>No matching commands</span>}
           </div>
         </div>
       ) : (
