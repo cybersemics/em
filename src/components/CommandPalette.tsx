@@ -14,8 +14,8 @@ const commandPaletteShortcut = shortcutById('commandPalette')
 const CommandPalette: FC<{
   onExecute?: (e: Event, value: string) => void
   onInput?: (value: string) => void
-  onSelectDown?: () => void
-  onSelectUp?: () => void
+  onSelectDown?: (e: Event) => void
+  onSelectUp?: (e: Event) => void
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp }) => {
   const dispatch = useDispatch()
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
@@ -36,13 +36,9 @@ const CommandPalette: FC<{
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        e.stopPropagation()
-        onSelectDown?.()
+        onSelectDown?.(e)
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        e.stopPropagation()
-        onSelectUp?.()
+        onSelectUp?.(e)
       }
     },
     [onExecute, onSelectDown, onSelectUp, showCommandPalette],

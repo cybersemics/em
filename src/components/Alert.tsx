@@ -174,10 +174,14 @@ const ExtendedGestureHint: FC = () => {
                   setKeyboardInProgress(value)
                   setSelectedIndex(0)
                 }}
-                onSelectDown={() => {
+                onSelectDown={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   setSelectedIndex(i => (i === possibleShortcutsSorted.length - 1 ? 0 : i + 1))
                 }}
-                onSelectUp={() => {
+                onSelectUp={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   setSelectedIndex(i => (i === 0 ? possibleShortcutsSorted.length - 1 : i - 1))
                 }}
               />
