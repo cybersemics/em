@@ -47,8 +47,8 @@ const digits = keyValueBy(Array(58 - 48).fill(0), (n, i) => ({
   [48 + i]: i.toString(),
 }))
 
-/** Hash all the properties of a shortcut into a string. */
-const hashShortcut = (shortcut: Shortcut): string => {
+/** Hash all the properties of a shortcut into a string that can be compared with the result of hashKeyDown. */
+export const hashShortcut = (shortcut: Shortcut): string => {
   const keyboard = typeof shortcut.keyboard === 'string' ? { key: shortcut.keyboard } : shortcut.keyboard || ({} as Key)
   return (
     (keyboard.meta ? 'META_' : '') +
@@ -58,8 +58,8 @@ const hashShortcut = (shortcut: Shortcut): string => {
   )
 }
 
-/** Hash all the properties of a keydown event into a string that matches hashShortcut. */
-const hashKeyDown = (e: KeyboardEvent): string =>
+/** Hash all the properties of a keydown event into a string that can be compared with the result of hashShortcut. */
+export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +

@@ -36,7 +36,7 @@ const ShortcutGestureHint = ({
   style?: React.CSSProperties
 }) => {
   const colors = useSelector(themeColors)
-  const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress)
+  const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
   const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
   return (
     <div
@@ -44,7 +44,7 @@ const ShortcutGestureHint = ({
         backgroundColor: selected ? '#212121' : undefined,
         padding: selected ? 10 : undefined,
         marginBottom: 10,
-        marginLeft: selected ? '-0.5em' : undefined,
+        marginLeft: selected ? 'calc(1em - 10px)' : '1em',
         position: 'relative',
         textAlign: 'left',
         ...style,
@@ -80,6 +80,7 @@ const ExtendedGestureHint: FC = () => {
   const fontSize = useSelector((state: State) => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
   const show = alert?.value || showCommandPalette
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
   const gestureInProgress = alert?.value === '*' ? '' : alert?.value || ''
@@ -93,53 +94,30 @@ const ExtendedGestureHint: FC = () => {
         !shortcut.hideFromInstructions &&
         (showCommandPalette
           ? // keyboard
-            shortcut.label.toLowerCase().includes(keyboardInProgress)
+            shortcut.label.toLowerCase().includes(keyboardInProgress.toLowerCase())
           : // gesture
             shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress)),
     )
 
     // sorted shortcuts
-    return _.sortBy(possibleShortcuts, shortcut =>
+    const sorted = _.sortBy(possibleShortcuts, shortcut =>
       [
         // gesture length
         gestureInProgress ? shortcut.gesture?.length : '',
         // label that starts with keyboardInProgress
-        shortcut.label.toLowerCase().startsWith(keyboardInProgress) ? 0 : 1,
+        shortcut.label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
         // label
         shortcut.label,
       ].join('\x00'),
     )
-  }, [gestureInProgress, keyboardInProgress, showCommandPalette])
+    return sorted
+  }, [gestureInProgress, keyboardInProgress, showCommandPalette, selectedIndex])
 
   /** Handler for command palette selection. */
-  const onSelect = useCallback(
+  const onExecute = useCallback(
     (e: Event, value: string) => {
-      // TODO: Why is keyboardInProgress that we have closure over empty and possibleShortcutsSorted unfiltered?
-      const keyboardInProgress = value
-
-      const possibleShortcuts = globalShortcuts.filter(
-        shortcut =>
-          !shortcut.hideFromInstructions &&
-          (showCommandPalette
-            ? // keyboard
-              shortcut.label.toLowerCase().includes(keyboardInProgress)
-            : // gesture
-              shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress)),
-      )
-
-      const shortcutsSorted = _.sortBy(possibleShortcuts, shortcut =>
-        [
-          // gesture length
-          gestureInProgress ? shortcut.gesture?.length : '',
-          // label that starts with _keyboardInProgress
-          shortcut.label.toLowerCase().startsWith(keyboardInProgress) ? 0 : 1,
-          // label
-          shortcut.label,
-        ].join('\x00'),
-      )
-
       setTimeout(() => {
-        shortcutsSorted[0].exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+        possibleShortcutsSorted[selectedIndex].exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
       })
     },
     [possibleShortcutsSorted],
@@ -148,7 +126,7 @@ const ExtendedGestureHint: FC = () => {
   return (
     <div
       style={{
-        ...(possibleShortcutsSorted.length > 0 ? { paddingLeft: '4em', paddingRight: '4em' } : null),
+        ...(show ? { paddingLeft: '4em', paddingRight: '4em' } : null),
         marginBottom: fontSize,
         textAlign: 'left',
       }}
@@ -164,18 +142,42 @@ const ExtendedGestureHint: FC = () => {
               borderBottom: 'solid 1px gray',
             }}
           >
-            {showCommandPalette ? <CommandPalette onInput={setKeyboardInProgress} onSelect={onSelect} /> : 'Gestures'}
+            {showCommandPalette ? (
+              <CommandPalette
+                onExecute={onExecute}
+                onInput={value => {
+                  setKeyboardInProgress(value)
+                  setSelectedIndex(0)
+                }}
+                onSelectDown={() => {
+                  setSelectedIndex(i => (i === possibleShortcutsSorted.length - 1 ? 0 : i + 1))
+                }}
+                onSelectUp={() => {
+                  setSelectedIndex(i => (i === 0 ? possibleShortcutsSorted.length - 1 : i - 1))
+                }}
+              />
+            ) : (
+              'Gestures'
+            )}
           </h2>
 
-          {possibleShortcutsSorted.map((shortcut, i) => (
-            <ShortcutGestureHint
-              keyboardInProgress={keyboardInProgress}
-              gestureInProgress={gestureInProgress}
-              key={shortcut.id}
-              selected={showCommandPalette ? i === 0 : gestureInProgress === shortcut.gesture}
-              shortcut={shortcut}
-            />
-          ))}
+          <div
+            style={{
+              marginLeft: '-2.4em',
+              ...(showCommandPalette ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
+            }}
+          >
+            {possibleShortcutsSorted.map((shortcut, i) => (
+              <ShortcutGestureHint
+                keyboardInProgress={keyboardInProgress}
+                gestureInProgress={gestureInProgress}
+                key={shortcut.id}
+                selected={showCommandPalette ? i === selectedIndex : gestureInProgress === shortcut.gesture}
+                shortcut={shortcut}
+              />
+            ))}
+            {possibleShortcutsSorted.length === 0 && 'No matching commands'}
+          </div>
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>{GESTURE_CANCEL_ALERT_TEXT}</div>

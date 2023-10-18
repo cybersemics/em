@@ -5,33 +5,47 @@ import State from '../@types/State'
 import commandPalette from '../action-creators/commandPalette'
 import error from '../action-creators/error'
 import * as selection from '../device/selection'
+import { hashKeyDown, hashShortcut, shortcutById } from '../shortcuts'
 import fastClick from '../util/fastClick'
+
+const commandPaletteShortcut = shortcutById('commandPalette')
 
 /** An error message that can be dismissed with a close button. */
 const CommandPalette: FC<{
+  onExecute?: (e: Event, value: string) => void
   onInput?: (value: string) => void
-  onSelect?: (e: Event, value: string) => void
-}> = ({ onInput, onSelect }) => {
+  onSelectDown?: () => void
+  onSelectUp?: () => void
+}> = ({ onExecute, onInput, onSelectDown, onSelectUp }) => {
   const dispatch = useDispatch()
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const savedSelectionRef = useRef<selection.SavedSelection | null>(null)
 
-  /** Toggle the command palette off on escape. */
+  /** Handle command palette shortuts. */
   const onKeyDown = useCallback(
     e => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        e.stopPropagation()
+      if (
+        e.key === 'Escape' ||
+        // manually check if the commandPalette shortcut is entered since global shortcuts are disabled while the command palette is open
+        hashKeyDown(e) === hashShortcut(commandPaletteShortcut)
+      ) {
         dispatch(commandPalette())
       } else if (e.key === 'Enter') {
-        e.preventDefault()
-        e.stopPropagation()
-        onSelect?.(e, inputRef.current?.value || '')
+        onExecute?.(e, inputRef.current?.value || '')
         dispatch(commandPalette())
+      } else if (e.key === 'ArrowDown') {
+        onSelectDown?.()
+      } else if (e.key === 'ArrowUp') {
+        onSelectUp?.()
+      } else {
+        return
       }
+
+      e.preventDefault()
+      e.stopPropagation()
     },
-    [onSelect, showCommandPalette],
+    [onExecute, onSelectDown, onSelectUp, showCommandPalette],
   )
 
   /** Restores the cursor and removes event listeners. */
@@ -41,7 +55,7 @@ const CommandPalette: FC<{
   }, [onKeyDown])
 
   // cleanup on unmount
-  useEffect(() => cleanup, [])
+  useEffect(() => cleanup, [cleanup])
 
   // save selection and add event listeners when command palette is showCommandPalette
   // cleanup when command palette is hidden
@@ -53,7 +67,7 @@ const CommandPalette: FC<{
     } else {
       cleanup()
     }
-  }, [showCommandPalette])
+  }, [cleanup, onKeyDown, showCommandPalette])
 
   return (
     <TransitionGroup>
@@ -64,7 +78,9 @@ const CommandPalette: FC<{
               type='text'
               placeholder='Search commands by name...'
               ref={inputRef}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) => onInput?.(e.target.value)}
+              onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onInput?.(e.target.value)
+              }}
               style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
             />
             <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
