@@ -6,7 +6,7 @@ import { getAllChildren } from '../selectors/getChildren'
 
 const shortcut: Shortcut = {
   id: 'exportContext',
-  label: 'Export Context',
+  label: 'Export',
   description: 'Download or copy the current context as plaintext or html',
   svg: ShareIcon,
   canExecute: getState => {
