@@ -126,7 +126,7 @@ const Footer = () => {
           <LinkDivider />
           <ModalLink id='settings'>Settings</ModalLink>
           <LinkDivider />
-          <ModalLink id='manual'>The Manual</ModalLink>
+          <ModalLink id='help'>Help</ModalLink>
         </div>
       </li>
       <br />

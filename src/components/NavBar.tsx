@@ -32,13 +32,13 @@ const CursorBreadcrumbs = () => {
   return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
 }
 
-/** A link that opens The Manual. */
-const ManualButton: React.FC = () => {
+/** A link that opens the Help modal. */
+const HelpButton: React.FC = () => {
   const dispatch = useDispatch()
   return (
     <div
-      {...fastClick(() => dispatch(showModal({ id: 'manual' })))}
-      title='The Manual'
+      {...fastClick(() => dispatch(showModal({ id: 'help' })))}
+      title='Help'
       style={{
         cursor: 'pointer',
         display: 'inline-flex',
@@ -111,7 +111,7 @@ const NavBar = ({ position }: { position: string }) => {
 
                   <div className='nav-right-button-group'>
                     <>
-                      <ManualButton />
+                      <HelpButton />
                       {authenticated && <InvitesButton />}
                       {/* <FeedbackButton /> */}
                       {/* <QuickAddButton /> */}

@@ -23,10 +23,10 @@ const groups: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
+      'commandPalette',
+      'help',
       'home',
       'search',
-      'commandPalette',
-      'openShortcutPopup',
     ],
   },
   {

@@ -23,8 +23,8 @@ enum Section {
   Tutorials = 'Tutorials',
 }
 
-/** An item within the manual menu. */
-const ManualMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; description: string }> = ({
+/** An item within the help menu. */
+const HelpMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; description: string }> = ({
   Icon,
   onTap,
   title,
@@ -46,22 +46,22 @@ const ManualMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; des
   )
 }
 
-/** Menu of manual sections. */
-const ManualMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
+/** Menu of help sections. */
+const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
   <div>
-    <ManualMenuItem
+    <HelpMenuItem
       Icon={TutorialsIcon}
       onTap={() => onSelect(Section.Tutorials)}
       title='Tutorials'
       description='Play the interactive tutorials to learn the basics.'
     />
-    <ManualMenuItem
+    <HelpMenuItem
       Icon={GestureLibraryIcon}
       onTap={() => onSelect(Section.GestureLibrary)}
       title='Gesture Library'
       description='View a list of all available gestures.'
     />
-    <ManualMenuItem
+    <HelpMenuItem
       Icon={MetaIcon}
       onTap={() => onSelect(Section.Metaprogramming)}
       title='Metaprogramming'
@@ -115,7 +115,7 @@ const Tutorials = () => {
   )
 }
 
-/** A manual section to view all gestures, shortcuts, and toolbar buttons. */
+/** A help section to view all gestures, shortcuts, and toolbar buttons. */
 const CommandCenter = () => <ShortcutTable />
 
 /** List the valid values for a metaprogramming attribute. */
@@ -125,7 +125,7 @@ const Options = ({ options }: { options: string[] }) => (
   </div>
 )
 
-/** A manual section that lists all metaprogramming attributes. */
+/** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
   return (
     <div>
@@ -369,20 +369,20 @@ const About = () => {
 }
 
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
-const ModalManual = () => {
+const ModalHelp = () => {
   const [section, setSection] = useState(Section.Menu)
   const fontSize = useSelector((state: State) => state.fontSize)
   const back = useCallback(() => setSection(Section.Menu), [])
   return (
     <ModalComponent
-      id='manual'
-      title='The Manual'
+      id='help'
+      title='Help'
       className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >
       {section === Section.Menu ? (
-        <ManualMenu onSelect={setSection} />
+        <HelpMenu onSelect={setSection} />
       ) : (
         <span className='text-small'>
           &lt;{' '}
@@ -417,4 +417,4 @@ const ModalManual = () => {
   )
 }
 
-export default ModalManual
+export default ModalHelp
