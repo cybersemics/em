@@ -156,7 +156,7 @@ const ExtendedGestureHint: FC = () => {
         textAlign: 'left',
       }}
     >
-      {show && possibleShortcutsSorted.length > 0 ? (
+      {showCommandPalette || (alert?.value && possibleShortcutsSorted.length > 0) ? (
         <div>
           <h2
             style={{
