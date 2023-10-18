@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Alert from '../@types/Alert'
@@ -35,11 +35,20 @@ const ShortcutGestureHint = ({
   shortcut: Shortcut
   style?: React.CSSProperties
 }) => {
+  const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
   const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
   const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
+
+  useEffect(() => {
+    if (selected) {
+      ref.current?.scrollIntoView({ block: 'nearest' })
+    }
+  })
+
   return (
     <div
+      ref={ref}
       style={{
         backgroundColor: selected ? '#212121' : undefined,
         padding: selected ? 10 : undefined,
