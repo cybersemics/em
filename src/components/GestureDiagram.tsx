@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
-import { connect, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import State from '../@types/State'
-import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import createId from '../util/createId'
 
@@ -46,11 +44,6 @@ const oppositeDirection = (dir: Direction) =>
     u: 'd',
     d: 'u',
   })[dir]
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: GestureDiagramProps) => ({
-  color: props.color || (theme(state) !== 'Light' ? 'white' : 'black'),
-})
 
 /** Renders an SVG representation of a gesture.
  *
@@ -164,7 +157,7 @@ const GestureDiagram = ({
         >
           <path
             d='M 0 0 L 10 5 L 0 10 z'
-            fill={highlight != null && highlight >= path.length ? colors.vividHighlight : color}
+            fill={highlight != null && highlight >= path.length ? colors.vividHighlight : color || colors.fg}
             stroke='none'
           />
         </marker>
@@ -179,7 +172,7 @@ const GestureDiagram = ({
             d={`M ${x} ${y} l ${segment.dx} ${segment.dy}`}
             // segments do not change independently, so we can use index as the key
             key={i}
-            stroke={highlight != null && i < highlight ? colors.vividHighlight : color}
+            stroke={highlight != null && i < highlight ? colors.vividHighlight : color || colors.fg}
             strokeWidth={strokeWidth * 1.5}
             strokeLinecap='round'
             strokeLinejoin='round'
@@ -192,4 +185,7 @@ const GestureDiagram = ({
   )
 }
 
-export default connect(mapStateToProps)(GestureDiagram)
+const GestureDiagramMemo = React.memo(GestureDiagram)
+GestureDiagramMemo.displayName = 'GestureDiagram'
+
+export default GestureDiagramMemo
