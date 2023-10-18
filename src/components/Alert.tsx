@@ -6,6 +6,7 @@ import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
+import commandPalette from '../action-creators/commandPalette'
 import { deleteResumableFile } from '../action-creators/importFiles'
 import GestureDiagram from '../components/GestureDiagram'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
@@ -35,10 +36,12 @@ const ShortcutGestureHint = ({
   shortcut: Shortcut
   style?: React.CSSProperties
 }) => {
+  const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
   const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
   const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
+  const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
 
   useEffect(() => {
     if (selected) {
@@ -61,7 +64,8 @@ const ShortcutGestureHint = ({
     >
       {gestureInProgress && (
         <GestureDiagram
-          highlight={gestureInProgress.length}
+          color={disabled ? colors.gray : undefined}
+          highlight={!disabled ? gestureInProgress.length : undefined}
           path={gestureString(shortcut)}
           strokeWidth={4}
           style={{ position: 'absolute', left: selected ? '-1.75em' : '-2.2em', top: selected ? '-0.2em' : '-0.75em' }}
@@ -69,9 +73,13 @@ const ShortcutGestureHint = ({
           height={45}
         />
       )}
-      <div style={{ color: gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg }}>
+      <div
+        style={{
+          color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
+        }}
+      >
         {shortcut.label.slice(0, highlightIndexStart)}
-        <span style={{ color: colors.vividHighlight }}>
+        <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
           {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
         </span>
         {shortcut.label.slice(highlightIndexEnd)}
@@ -111,6 +119,8 @@ const ExtendedGestureHint: FC = () => {
     // sorted shortcuts
     const sorted = _.sortBy(possibleShortcuts, shortcut =>
       [
+        // canExecute
+        !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
         // gesture length
         gestureInProgress ? shortcut.gesture?.length : '',
         // label that starts with keyboardInProgress
@@ -125,8 +135,14 @@ const ExtendedGestureHint: FC = () => {
   /** Handler for command palette selection. */
   const onExecute = useCallback(
     (e: Event, value: string) => {
+      const shortcut = possibleShortcutsSorted[selectedIndex]
       setTimeout(() => {
-        possibleShortcutsSorted[selectedIndex].exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+        if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
+          e.stopPropagation()
+          e.preventDefault()
+          store.dispatch(commandPalette())
+          shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+        }
       })
     },
     [possibleShortcutsSorted],

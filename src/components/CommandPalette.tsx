@@ -30,20 +30,20 @@ const CommandPalette: FC<{
         // manually check if the commandPalette shortcut is entered since global shortcuts are disabled while the command palette is open
         hashKeyDown(e) === hashShortcut(commandPaletteShortcut)
       ) {
+        e.preventDefault()
+        e.stopPropagation()
         dispatch(commandPalette())
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
-        dispatch(commandPalette())
       } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        e.stopPropagation()
         onSelectDown?.()
       } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        e.stopPropagation()
         onSelectUp?.()
-      } else {
-        return
       }
-
-      e.preventDefault()
-      e.stopPropagation()
     },
     [onExecute, onSelectDown, onSelectUp, showCommandPalette],
   )
