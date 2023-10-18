@@ -30,6 +30,9 @@ interface Shortcut {
   // a MultiGesture sequence to activate the shortcut on touch screens
   gesture?: GesturePath | GesturePath[]
 
+  // hide the shortcut CommandPalette
+  hideFromCommandPalette?: boolean
+
   // hide the shortcut from the Help modal
   hideFromInstructions?: boolean
 

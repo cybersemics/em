@@ -108,6 +108,7 @@ const ExtendedGestureHint: FC = () => {
 
     const possibleShortcuts = globalShortcuts.filter(
       shortcut =>
+        !shortcut.hideFromCommandPalette &&
         !shortcut.hideFromInstructions &&
         (showCommandPalette
           ? // keyboard
