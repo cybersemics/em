@@ -54,6 +54,7 @@ const deleteShortcut: Shortcut = {
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldl',
   keyboard: { key: Key.Backspace, shift: true, meta: true },
+  canExecute: getState => !!getState().cursor,
   exec,
   svg: Icon,
 }
