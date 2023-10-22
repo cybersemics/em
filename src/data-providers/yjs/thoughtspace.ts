@@ -838,14 +838,12 @@ const replicateChildren = async (
       thoughtMap.observe(onThoughtChange(childId))
     })
   }
-  // background
-  else {
-    if (remote) {
-      await websocketSynced
-    }
+  // In background remote mode, after the websocket syncs, if the thought or its parent is already loaded, cache the thought Doc and update Redux state.
+  // Otherwise remote changes will not be rendered.
+  // (This does not need to occur in background local mode, i.e. during export.)
+  else if (background && remote) {
+    await websocketSynced
 
-    // After the initial replication, if the thought or its parent is already loaded, update Redux state, even in background mode.
-    // Otherwise remote changes will not be rendered.
     const children = getChildren(doc) || []
     await Promise.all(
       children.map(async child => {
@@ -985,7 +983,7 @@ export const replicateLexeme = async (
 
     const loaded = await isLexemeLoaded(key, getLexeme(doc))
 
-    // After the initial replication, if the lexeme or any of its contexts are already loaded, update Redux state, even in background mode.
+    // After the initial replication, if the lexeme or any of its contexts are already loaded, cache the thought Doc and update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     if (loaded) {
       lexemeDocs.set(key, doc)
