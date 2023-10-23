@@ -93,7 +93,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   }
 
   const lexemeIndexUpdates = {
-    [hashThought(lexemeNew.lemma)]: lexemeNew,
+    [hashThought(value)]: lexemeNew,
   }
 
   return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })

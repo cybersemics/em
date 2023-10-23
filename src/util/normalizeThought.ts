@@ -32,7 +32,7 @@ const REGEXP_NORMALIZE = new RegExp(
 
 /**
  * Converts a thought value into a canonical form that is stored in Lexeme.lemma.
- * Not idempotent (singularize may return a different string after whitespace is removed).
+ * Not idempotent (singularize can return a different string after whitespace is removed; hyphens can be removed after whitespace has been removed).
  */
 const normalizeThought = moize(
   s => {
