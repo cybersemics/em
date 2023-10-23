@@ -91,22 +91,12 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     updatedBy: clientId,
   }
 
-  // if adding as the context of an existing thought
-  let lexemeNew: Lexeme | undefined // eslint-disable-line fp/no-let
-  lexeme.contexts = !lexeme.contexts
-    ? []
-    : // floating thought (no context)
-    path.length > 0
-    ? [...lexeme.contexts, id]
-    : lexeme.contexts
+  lexeme.contexts =
+    // floating thought (no context)
+    path.length > 0 ? [...lexeme.contexts, id] : lexeme.contexts
 
   const lexemeIndexUpdates = {
     [hashThought(lexeme.lemma)]: lexeme,
-    ...(lexemeNew
-      ? {
-          [hashThought(lexemeNew.lemma)]: lexemeNew,
-        }
-      : null),
   }
 
   return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
