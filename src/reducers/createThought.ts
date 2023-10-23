@@ -33,16 +33,17 @@ interface Payload {
  */
 const createThought = (state: State, { path, value, rank, id, idbSynced, children, splitSource }: Payload) => {
   id = id || createId()
+  const lexemeOld = getLexeme(state, value)
 
   // create Lexeme if it does not exist
-  const lexeme: Lexeme = {
-    ...(getLexeme(state, value) || {
+  const lexemeNew: Lexeme = {
+    ...(lexemeOld || {
       lemma: normalizeThought(value),
-      contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: clientId,
     }),
+    contexts: [...(lexemeOld?.contexts || []), ...(path.length > 0 ? [id] : [])],
   }
 
   const parentId = head(path)
@@ -91,12 +92,8 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     updatedBy: clientId,
   }
 
-  lexeme.contexts =
-    // floating thought (no context)
-    path.length > 0 ? [...lexeme.contexts, id] : lexeme.contexts
-
   const lexemeIndexUpdates = {
-    [hashThought(lexeme.lemma)]: lexeme,
+    [hashThought(lexemeNew.lemma)]: lexemeNew,
   }
 
   return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
