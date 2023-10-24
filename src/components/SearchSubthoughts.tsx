@@ -2,10 +2,9 @@ import React, { FC, useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
 import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
+import Thought from '../@types/Thought'
 import error from '../action-creators/error'
 import setSearchLimit from '../action-creators/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
@@ -14,7 +13,6 @@ import store from '../stores/app'
 import escapeRegExp from '../util/escapeRegExp'
 import fastClick from '../util/fastClick'
 import formatNumber from '../util/formatNumber'
-import isArchived from '../util/isArchived'
 import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
 import NewThought from './NewThought'
@@ -24,18 +22,18 @@ interface SearchSubthoughtsProps {
   archived?: boolean
   searchLimit?: number
   remoteSearch: boolean
-  lexemeIndex: Index<Lexeme>
+  thoughtIndex: Index<Thought>
 }
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { lexemeIndex } }: State) => ({
+const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { thoughtIndex } }: State) => ({
   archived,
   search,
   remoteSearch,
   searchLimit,
-  lexemeIndex,
+  thoughtIndex,
 })
 
 /** Subthoughts of search. */
@@ -44,7 +42,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   search,
   archived,
   searchLimit = DEFAULT_SEARCH_LIMIT,
-  lexemeIndex,
+  thoughtIndex,
   dispatch,
 }) => {
   const [isRemoteSearching, setIsRemoteSearching] = useState(false)
@@ -81,9 +79,9 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
 
   /** Compares two values lexicographically, sorting exact matches to the top. */
-  const comparator = (a: string, b: string) => {
-    const aLower = a.toLowerCase()
-    const bLower = b.toLowerCase()
+  const comparator = (a: Thought, b: Thought) => {
+    const aLower = a.value.toLowerCase()
+    const bLower = b.value.toLowerCase()
     const searchLower = search.toLowerCase()
     // 1. exact match
     return bLower === searchLower
@@ -105,20 +103,12 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
 
   const children = search
     ? sort(
-        Object.values(lexemeIndex)
-          .filter(
-            lexeme =>
-              (archived || !isArchived(store.getState(), lexeme)) &&
-              lexeme.lemma !== HOME_TOKEN &&
-              lexeme.lemma !== EM_TOKEN &&
-              searchRegexp.test(lexeme.lemma),
-          )
-          .map<{ id: ThoughtId; value: string; rank: number }>(
-            // TODO: Should lexeme.id be explictly typed as ThoughtId
-            (lexeme, i) => ({ id: lexeme.contexts[0], value: lexeme.lemma, rank: i }),
-            // cannot group cases by return value because conditionals must be checked in order of precedence
-            comparator,
-          ),
+        Object.values(thoughtIndex).filter(
+          thought =>
+            // (archived || !isArchived(store.getState(), lexeme)) &&
+            thought.value !== HOME_TOKEN && thought.value !== EM_TOKEN && searchRegexp.test(thought.value),
+        ),
+        comparator,
       )
     : []
 

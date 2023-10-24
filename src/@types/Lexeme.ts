@@ -5,8 +5,6 @@ import Timestamp from './Timestamp'
 interface Lexeme {
   // db only; not the same as keyof lexemeIndex
   id?: string
-  // normalized value
-  lemma: string
   contexts: ThoughtId[]
   created: Timestamp
   lastUpdated: Timestamp

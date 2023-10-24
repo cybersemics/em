@@ -56,7 +56,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
 
   const lexemeIndex: Index<Lexeme> = {
     [hashThought(HOME_TOKEN)]: {
-      lemma: HOME_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
@@ -64,7 +63,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       updatedBy: clientId,
     },
     [hashThought(ABSOLUTE_TOKEN)]: {
-      lemma: ABSOLUTE_TOKEN,
       contexts: [],
       // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
       created,
@@ -74,7 +72,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
     // this will get populated by importText in loadLocalState
     // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
     [hashThought(EM_TOKEN)]: {
-      lemma: EM_TOKEN,
       contexts: [],
       created,
       lastUpdated: never(),

@@ -26,7 +26,6 @@ import timestamp from '../util/timestamp'
 import createId from './createId'
 import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
-import normalizeThought from './normalizeThought'
 
 export interface ImportJSONOptions {
   lastUpdated?: Timestamp
@@ -74,7 +73,6 @@ const insertThought = (
 
   const lexemeNew: Lexeme = {
     ...lexemeOld,
-    lemma: normalizeThought(value),
     contexts: [...(lexemeOld?.contexts || []), newThoughtId],
     created: lexemeOld?.created ?? createdInherited,
     lastUpdated: lastUpdatedInherited,

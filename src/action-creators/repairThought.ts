@@ -37,7 +37,7 @@ const repairThoughtActionCreator =
             },
           }),
         )
-        console.warn(`Removed context ${id} from Lexeme ${cursorLexeme.lemma} with no corresponding thought.`, {
+        console.warn(`Removed context ${id} from Lexeme with no corresponding thought.`, {
           cursorLexeme,
         })
       }

@@ -17,7 +17,6 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
-import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
@@ -103,7 +102,6 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     created: timestamp(),
     lastUpdated: timestamp(),
     updatedBy: clientId,
-    lemma: normalizeThought(newValue),
   }
 
   // the old thought less the context

@@ -507,7 +507,9 @@ export const updateLexeme = async (
       return
     }
     config.then(({ onError }) => {
-      onError?.(`Error saving lexeme ${lexemeNew.lemma}: ${e.message}`, e)
+      const message = `Error saving lexeme: ${e.message}`
+      console.error(message, lexemeNew)
+      onError?.(message, e)
     })
   })
 
@@ -522,7 +524,9 @@ export const updateLexeme = async (
           if (!contextsOld.has(cxid)) {
             const docKey = docKeys.get(cxid)
             if (!docKey) {
-              throw new Error(`updateLexeme: Missing docKey for context ${cxid} in Lexeme ${lexemeNew.lemma}`)
+              const message = `updateLexeme: Missing docKey for context ${cxid} in Lexeme.`
+              console.error(message, lexemeNew)
+              throw new Error(message)
             }
             lexemeMap.set(`cx-${cxid}`, docKey)
           }

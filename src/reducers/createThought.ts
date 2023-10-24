@@ -14,7 +14,6 @@ import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
-import normalizeThought from '../util/normalizeThought'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -38,7 +37,6 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   // create Lexeme if it does not exist
   const lexemeNew: Lexeme = {
     ...(lexemeOld || {
-      lemma: normalizeThought(value),
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: clientId,
