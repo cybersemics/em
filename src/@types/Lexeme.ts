@@ -6,7 +6,7 @@ interface Lexeme {
   contexts: ThoughtId[]
   created: Timestamp
   lastUpdated: Timestamp
-  updatedBy?: string
+  updatedBy: string
 }
 
 export default Lexeme
