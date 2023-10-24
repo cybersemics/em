@@ -18,7 +18,7 @@ import setCursor from './action-creators/setCursor'
 import updateThoughtsActionCreator from './action-creators/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
-import { accessToken, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
+import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
 import db, {
   init as initThoughtspace,
   monitor,
@@ -204,6 +204,9 @@ export const initialize = async () => {
       store.dispatch(importFiles({ resume: true }))
     }, 500)
   })
+
+  // initialize clientId before dispatching any actions that create new thoughts
+  await clientIdReady
 
   await thoughtsLocalPromise
 

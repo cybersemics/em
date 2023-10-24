@@ -1,5 +1,4 @@
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
-import * as murmurHash3 from 'murmurhash3js'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Share from '../../@types/Share'
@@ -36,8 +35,28 @@ const accessTokenShared = new URLSearchParams(window.location.search).get('auth'
 export const tsid = tsidShared || tsidLocal
 export const accessToken = accessTokenShared || accessTokenLocal
 
-// make the clientId a hash of the access token for now so it can be public but linked back to the access token
-export const clientId = murmurHash3.x64.hash128(accessToken)
+/** A public key that is a secure hash of the access token. Not available until clientIDReady resolves. */
+export let clientId = ''
+
+/** Encodes binary data in base64. */
+async function bufferToBase64(buffer: ArrayBuffer | Uint8Array) {
+  // use a FileReader to generate a base64 data URI:
+  const base64url = await new Promise<string>(resolve => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.readAsDataURL(new Blob([buffer]))
+  })
+  // remove the `data:...;base64,` part from the start
+  return base64url.slice(base64url.indexOf(',') + 1)
+}
+
+/** Resolves when the clientId is available to use synchronously. */
+export const clientIdReady = crypto.subtle
+  .digest('SHA-256', new TextEncoder().encode(accessToken))
+  .then(bufferToBase64)
+  .then(s => {
+    clientId = s
+  })
 
 // disable during tests because of TransactionInactiveError in fake-indexeddb
 if (process.env.NODE_ENV !== 'test') {

@@ -6,6 +6,7 @@ import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 import 'jest-localstorage-mock'
 import { noop } from 'lodash'
+import { TextDecoder, TextEncoder } from 'util'
 
 expect.extend(matchers)
 
@@ -17,8 +18,12 @@ configure({ adapter: new Adapter() })
 Object.defineProperty(global, 'crypto', {
   value: {
     getRandomValues: arr => crypto.randomBytes(arr.length),
+    subtle: crypto.webcrypto.subtle,
   },
 })
+
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
 // add noop functions to prevent implementation error during test
 window.blur = noop

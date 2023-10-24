@@ -13,7 +13,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
 import storage from './storage'
 
-/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. */
+/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and loadLocalState is dispatched. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN

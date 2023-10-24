@@ -6,6 +6,7 @@ interface Lexeme {
   contexts: ThoughtId[]
   created: Timestamp
   lastUpdated: Timestamp
+  /** The public key of the user defined by a hash of their private access token. See: clientId (yjs/index.ts). */
   updatedBy: string
 }
 
