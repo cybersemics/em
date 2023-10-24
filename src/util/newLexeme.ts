@@ -20,9 +20,9 @@ const newLexeme = ({
   value: string
 }): Lexeme => ({
   ...(archived ? { archived } : null),
-  created: timestamp(),
+  created: created || timestamp(),
   contexts: [id],
-  lastUpdated: timestamp(),
+  lastUpdated: lastUpdated || timestamp(),
   updatedBy: clientId,
 })
 
