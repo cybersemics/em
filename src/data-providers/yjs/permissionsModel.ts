@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import Routes from '../../@types/Routes'
 import Share from '../../@types/Share'
 import alert from '../../action-creators/alert'
@@ -5,7 +6,6 @@ import clearActionCreator from '../../action-creators/clear'
 import { accessTokenLocal, permissionsClientDoc } from '../../data-providers/yjs/index'
 import { clear } from '../../data-providers/yjs/thoughtspace.main'
 import store from '../../stores/app'
-import createId from '../../util/createId'
 import storage from '../../util/storage'
 import timestamp from '../../util/timestamp'
 
@@ -14,7 +14,7 @@ const permissionsMap = permissionsClientDoc.getMap<Share>()
 // permissions model that waps permissionsClientDoc
 const permissionsModel: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
-    const accessToken = createId()
+    const accessToken = nanoid()
     permissionsMap.set(accessToken, {
       created: timestamp(),
       name: name || '',

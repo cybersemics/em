@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { nanoid } from 'nanoid'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Index from '../../@types/IndexType'
@@ -6,7 +7,6 @@ import InviteCode from '../../@types/InviteCode'
 import alert from '../../action-creators/alert'
 import { baseUrl } from '../../device/router'
 import themeColors from '../../selectors/themeColors'
-import createId from '../../util/createId'
 import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
 import { ActionButton } from './../ActionButton'
@@ -31,7 +31,7 @@ const getUserInviteCodes = (userId: string): Promise<string[]> => {
 const generateUserInvites = (userId: string) =>
   Promise.all(
     Array.from({ length: 3 }).map<Promise<InviteCode>>(async () => {
-      const inviteId = createId().slice(0, 8)
+      const inviteId = nanoid(8)
 
       const newInviteCode: Omit<InviteCode, 'id'> = {
         createdBy: userId,

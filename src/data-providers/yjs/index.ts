@@ -1,8 +1,8 @@
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
+import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import Share from '../../@types/Share'
-import createId from '../../util/createId'
 import storage from '../../util/storage'
 import { encodePermissionsDocumentName } from './documentNameEncoder'
 
@@ -21,11 +21,11 @@ export const permissionsClientDoc = new Y.Doc()
 
 // Define a secret access token for this device.
 // Used to authenticate a connection to the y-websocket server.
-export const accessTokenLocal = storage.getItem('accessToken', createId)
+export const accessTokenLocal = storage.getItem('accessToken', () => nanoid(21))
 
 // Define a unique tsid (thoughtspace id) that is used as the default yjs doc id.
 // This can be shared with ?share={docId} when connected to a y-websocket server.
-export const tsidLocal = storage.getItem('tsid', createId)
+export const tsidLocal = storage.getItem('tsid', () => nanoid(21))
 
 // access a shared document when the URL contains share=DOCID&
 // otherwise use the tsid stored on the device

@@ -11,6 +11,8 @@ let n = 0
 // 100 IDs/hr @ length 13 for ~89 thousand years -> 1% probability of collision
 // If thoughts are stored globally, we should increase this length.
 // See: https://zelark.github.io/nano-id-cc/
-const createId: () => ThoughtId = globals.debugIds ? () => (n++).toString() as ThoughtId : () => nanoid(13) as ThoughtId
+const createId: (length?: number) => ThoughtId = globals.debugIds
+  ? () => (n++).toString() as ThoughtId
+  : (length = 13) => nanoid(length) as ThoughtId
 
 export default createId

@@ -1,5 +1,6 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
+import { nanoid } from 'nanoid'
 import sanitize from 'sanitize-html'
 import Block from '../@types/Block'
 import Context from '../@types/Context'
@@ -28,7 +29,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
-import createId from '../util/createId'
 import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -210,7 +210,7 @@ const importFilesActionCreator =
     // normalize native files from drag-and-drop and resumed files stored in IDB
     const resumableFiles: ResumableFile[] = files
       ? files.map(file => ({
-          id: createId(),
+          id: nanoid(),
           insertBefore: insertBeforeNew,
           lastModified: file.lastModified,
           thoughtsImported: 0,
