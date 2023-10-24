@@ -157,14 +157,13 @@ const dataProviderTest = (provider: DataProvider) => {
     expect(nothought).toBeUndefined()
 
     const lexeme: Lexeme = {
-      id: hashThought('x'),
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
       updatedBy: clientId,
     }
 
-    await provider.updateLexeme?.(lexeme.id!, lexeme)
+    await provider.updateLexeme?.(hashThought('x'), lexeme)
 
     const remoteThought = await getLexeme(provider, 'x')
     expect(remoteThought).toEqual(lexeme)
@@ -231,7 +230,6 @@ const dataProviderTest = (provider: DataProvider) => {
 
   test('updateLexemeIndex', async () => {
     const lexemeX: Lexeme = {
-      id: hashThought('x'),
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
@@ -239,7 +237,6 @@ const dataProviderTest = (provider: DataProvider) => {
     }
 
     const lexemeY: Lexeme = {
-      id: hashThought('y'),
       contexts: [],
       created: timestamp(),
       lastUpdated: timestamp(),
