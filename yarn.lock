@@ -10762,11 +10762,6 @@ jetifier@^1.6.2:
   resolved "https://registry.npmjs.org/jetifier/-/jetifier-1.6.8.tgz"
   integrity sha512-3Zi16h6L5tXDRQJTb221cnRoVG9/9OvreLdLU2/ZjRv/GILL+2Cemt0IKvkowwkDpvouAU1DQPOJ7qaiHeIdrw==
 
-jex-block-parser@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/jex-block-parser/-/jex-block-parser-1.0.0.tgz"
-  integrity sha512-YwXUZTk0vGrjyRJz9tbX4YdXLkHAySEwIPLQyWZw181stu4kYZPOFK7E9F3++GCBwaLepOWdKxLqAdUbSPmg3g==
-
 joi@^17.3.0:
   version "17.4.0"
   resolved "https://registry.npmjs.org/joi/-/joi-17.4.0.tgz"
@@ -17118,6 +17113,11 @@ test-exclude@^6.0.0:
     "@istanbuljs/schema" "^0.1.2"
     glob "^7.1.4"
     minimatch "^3.0.4"
+
+text-block-parser@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/text-block-parser/-/text-block-parser-1.1.0.tgz#13b0e16575f52878a6b4e15f8c9b1923dbb2955e"
+  integrity sha512-JNni7uEckEoT1+WYc9094Qn19Hmr3eJgR1Wpb+uzmwFC48xxpIFmFu4Ny9z16YntpLoMkJaOMddjrukJ5rAQPA==
 
 text-table@0.2.0, text-table@^0.2.0:
   version "0.2.0"

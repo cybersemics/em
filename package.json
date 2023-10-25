@@ -88,7 +88,7 @@
     "immer": "^9.0.5",
     "indexeddbshim": "^7.1.0",
     "ipfs-http-client": "^43.0.1",
-    "jex-block-parser": "^1.0.0",
+    "text-block-parser": "^1.1.0",
     "lodash": "^4.17.21",
     "moize": "^6.0.3",
     "moti": "0.6.0",

@@ -1,6 +1,6 @@
 import Timestamp from './Timestamp'
 
-// jex-block-parser type
+// text-block-parser type
 // Waiting on PR: https://github.com/reergymerej/block-parser/pull/1
 interface Block {
   scope: string

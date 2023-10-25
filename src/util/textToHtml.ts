@@ -1,4 +1,4 @@
-import { parse } from 'jex-block-parser'
+import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
 import strip from '../util/strip'
 
@@ -36,7 +36,7 @@ const bodyContent = (html: string) => {
  */
 const isCopiedFromApp = (htmlText: string) => REGEXP_CONTAINS_META_TAG.test(htmlText)
 
-/** Converts data output from jex-block-parser into HTML.
+/** Converts data output from text-block-parser into HTML.
  *
  @example
  [ { scope: 'fruits',
@@ -116,8 +116,8 @@ const textToHtml = (text: string) => {
   const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
   const textDecoded = unescape(text)
 
-  // use jex-block-parser to convert indented plaintext into nested HTML lists
-  const textParsed = !isHTML ? blocksToHtml(parse(textDecoded)) : textDecoded
+  // use text-block-parser to convert indented plaintext into nested HTML lists
+  const textParsed = !isHTML ? blocksToHtml(parse(textDecoded, Infinity)) : textDecoded
 
   // true plaintext won't have any <li>'s or <p>'s
   // transform newlines in plaintext into <li>'s
