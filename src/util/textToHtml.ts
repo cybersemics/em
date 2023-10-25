@@ -114,15 +114,15 @@ const parseBodyContent = (html: string) => {
 const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
   const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
-  const decodedInputText = unescape(text)
+  const textDecoded = unescape(text)
 
-  // use jex-block-parser to convert indentent plaintext into nested HTML lists
-  const parsedInputText = !isHTML ? blocksToHtml(parse(decodedInputText)) : decodedInputText
+  // use jex-block-parser to convert indented plaintext into nested HTML lists
+  const textParsed = !isHTML ? blocksToHtml(parse(textDecoded)) : textDecoded
 
   // true plaintext won't have any <li>'s or <p>'s
   // transform newlines in plaintext into <li>'s
   return !isHTML
-    ? parsedInputText
+    ? textParsed
         .split('\n')
         .map(
           line =>
