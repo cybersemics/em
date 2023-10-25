@@ -13,7 +13,7 @@ import parseJsonSafe from '../util/parseJsonSafe'
 import timestamp from '../util/timestamp'
 import storage from './storage'
 
-/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and loadLocalState is dispatched. */
+/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and initThoughts is dispatched. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
@@ -69,7 +69,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       lastUpdated: never(),
       updatedBy: clientId,
     },
-    // this will get populated by importText in loadLocalState
+    // this will get populated by importText in initThoughts
     // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
     [hashThought(EM_TOKEN)]: {
       contexts: [],

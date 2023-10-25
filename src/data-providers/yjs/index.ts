@@ -56,6 +56,7 @@ export const clientIdReady = crypto.subtle
   .then(bufferToBase64)
   .then(s => {
     clientId = s
+    return s
   })
 
 // disable during tests because of TransactionInactiveError in fake-indexeddb

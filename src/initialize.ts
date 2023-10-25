@@ -9,8 +9,8 @@ import Thunk from './@types/Thunk'
 import './App.css'
 import error from './action-creators/error'
 import importFiles from './action-creators/importFiles'
+import initThoughts from './action-creators/initThoughts'
 import loadFromUrl from './action-creators/loadFromUrl'
-import loadLocalState from './action-creators/loadLocalState'
 import preloadSources from './action-creators/preloadSources'
 import pull from './action-creators/pull'
 import repairThoughtActionCreator from './action-creators/repairThought'
@@ -188,11 +188,14 @@ export const initialize = async () => {
   // load local state unless loading a public context or source url
   // await initDB()
 
+  // initialize clientId before dispatching any actions that create new thoughts
+  const clientId = await clientIdReady
+
   const src = urlDataSource()
   const thoughtsLocalPromise =
     owner() === '~'
       ? // authenticated or offline user
-        store.dispatch(src ? loadFromUrl(src) : loadLocalState())
+        Promise.resolve(store.dispatch(src ? loadFromUrl(src) : initThoughts(clientId)))
       : // other user context
         Promise.resolve()
 
@@ -204,9 +207,6 @@ export const initialize = async () => {
       store.dispatch(importFiles({ resume: true }))
     }, 500)
   })
-
-  // initialize clientId before dispatching any actions that create new thoughts
-  await clientIdReady
 
   await thoughtsLocalPromise
 
