@@ -12,16 +12,8 @@ expect.extend(matchers)
 
 configure({ adapter: new Adapter() })
 
-// define global crypto so that yjs can be imported in jest tests
-// https://stackoverflow.com/questions/52612122/how-to-use-jest-to-test-functions-using-crypto-or-window-mscrypto
-// eslint-disable-next-line fp/no-mutating-methods
-Object.defineProperty(global, 'crypto', {
-  value: {
-    getRandomValues: arr => crypto.randomBytes(arr.length),
-    subtle: crypto.webcrypto.subtle,
-  },
-})
-
+// define missing global built-ins for jest
+global.crypto = crypto.webcrypto
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder
 
