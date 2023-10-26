@@ -1,4 +1,5 @@
 import { and } from 'fp-and-or'
+import { unescape as decodeCharacterEntities } from 'lodash'
 import Context from '../@types/Context'
 import MimeType from '../@types/MimeType'
 import State from '../@types/State'
@@ -98,7 +99,10 @@ export const exportContext = (
   const value =
     format === 'text/html'
       ? currentThought
-      : (excludeMarkdownFormatting ? currentThought : formattingTagsToMarkdown(currentThought)).replace(REGEXP_TAGS, '')
+      : (excludeMarkdownFormatting
+          ? currentThought
+          : formattingTagsToMarkdown(decodeCharacterEntities(currentThought))
+        ).replace(REGEXP_TAGS, '')
 
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.

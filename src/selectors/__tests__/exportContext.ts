@@ -1,5 +1,6 @@
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import importText from '../../reducers/importText'
+import newThought from '../../reducers/newThought'
 import editThoughtByContext from '../../test-helpers/editThoughtByContext'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -214,4 +215,20 @@ it('export as plain and markdown text replacing html tags only from thoughts and
   - b
   - />
   - c`)
+})
+
+it('decode character entities when exporting as plain text', () => {
+  const steps = [
+    newThought('a'),
+    setCursorFirstMatch(['a']),
+    // use newThought to insert &amp; because importText decodes character entities
+    newThought({ value: 'one &amp; two', insertNewSubthought: true }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, ['a'], 'text/plain')
+
+  expect(exported).toBe(`- a
+  - one & two`)
 })
