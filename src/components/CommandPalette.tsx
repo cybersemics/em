@@ -12,10 +12,10 @@ const commandPaletteShortcut = shortcutById('commandPalette')
 
 /** An error message that can be dismissed with a close button. */
 const CommandPalette: FC<{
-  onExecute?: (e: Event, value: string) => void
+  onExecute?: (e: KeyboardEvent, value: string) => void
   onInput?: (value: string) => void
-  onSelectDown?: (e: Event) => void
-  onSelectUp?: (e: Event) => void
+  onSelectDown?: (e: KeyboardEvent) => void
+  onSelectUp?: (e: KeyboardEvent) => void
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp }) => {
   const dispatch = useDispatch()
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)

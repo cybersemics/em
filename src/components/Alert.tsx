@@ -26,12 +26,16 @@ interface AlertProps {
 const ShortcutGestureHint = ({
   gestureInProgress,
   keyboardInProgress,
+  onClick,
+  onHover,
   selected,
   shortcut,
   style,
 }: {
   gestureInProgress: string
   keyboardInProgress: string
+  onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
+  onHover: (e: MouseEvent, shortcut: Shortcut) => void
   selected?: boolean
   shortcut: Shortcut
   style?: React.CSSProperties
@@ -50,57 +54,84 @@ const ShortcutGestureHint = ({
     }
   })
 
+  useEffect(() => {
+    /** Hover handler. */
+    const onHoverShortcut = (e: MouseEvent) => onHover(e, shortcut)
+
+    // mouseover and mouseenter cause the command under the cursor to get selected on render, so we use mousemove to ensure that it only gets selected on an actual hover
+    ref.current?.addEventListener('mousemove', onHoverShortcut)
+
+    return () => {
+      ref.current?.removeEventListener('mousemove', onHoverShortcut)
+    }
+  }, [])
+
   return (
     <div
       ref={ref}
+      onClick={e => {
+        if (!disabled) {
+          onClick(e, shortcut)
+        }
+      }}
       style={{
-        backgroundColor: selected ? '#212121' : undefined,
-        padding: selected ? 10 : undefined,
-        marginBottom: 10,
-        marginLeft: selected ? 'calc(1em - 10px)' : '1em',
+        cursor: !disabled ? 'pointer' : undefined,
+        paddingBottom: 10,
+        paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
         position: 'relative',
         textAlign: 'left',
         ...style,
       }}
     >
-      {gestureInProgress && (
-        <GestureDiagram
-          color={disabled ? colors.gray : undefined}
-          highlight={!disabled ? gestureInProgress.length : undefined}
-          path={gestureString(shortcut)}
-          strokeWidth={4}
-          style={{ position: 'absolute', left: selected ? '-1.75em' : '-2.2em', top: selected ? '-0.2em' : '-0.75em' }}
-          width={45}
-          height={45}
-        />
-      )}
-      <span
+      <div
         style={{
-          color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
+          backgroundColor: selected ? '#212121' : undefined,
+          padding: selected ? 10 : undefined,
         }}
       >
-        {shortcut.label.slice(0, highlightIndexStart)}
-        <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
-          {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
-        </span>
-        {shortcut.label.slice(highlightIndexEnd)}
-      </span>
-      {selected && (
+        {gestureInProgress && (
+          <GestureDiagram
+            color={disabled ? colors.gray : undefined}
+            highlight={!disabled ? gestureInProgress.length : undefined}
+            path={gestureString(shortcut)}
+            strokeWidth={4}
+            style={{
+              position: 'absolute',
+              left: selected ? '-1.75em' : '-2.2em',
+              top: selected ? '-0.2em' : '-0.75em',
+            }}
+            width={45}
+            height={45}
+          />
+        )}
         <span
           style={{
-            fontSize: '80%',
-            ...(showCommandPalette
-              ? {
-                  marginLeft: 20,
-                }
-              : {
-                  display: 'block',
-                }),
+            color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
           }}
         >
-          {shortcut.description}
+          {shortcut.label.slice(0, highlightIndexStart)}
+          <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
+            {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
+          </span>
+          {shortcut.label.slice(highlightIndexEnd)}
         </span>
-      )}
+        {selected && (
+          <span
+            style={{
+              fontSize: '80%',
+              ...(showCommandPalette
+                ? {
+                    marginLeft: 20,
+                  }
+                : {
+                    display: 'block',
+                  }),
+            }}
+          >
+            {shortcut.description}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -152,13 +183,13 @@ const ExtendedGestureHint: FC = () => {
 
   /** Handler for command palette selection. */
   const onExecute = useCallback(
-    (e: Event, value: string) => {
+    (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
       setTimeout(() => {
-        if (!selectedShortcut.canExecute || selectedShortcut.canExecute?.(store.getState)) {
+        if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
           e.stopPropagation()
           e.preventDefault()
           store.dispatch(commandPalette())
-          selectedShortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+          shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
         }
       })
     },
@@ -186,7 +217,7 @@ const ExtendedGestureHint: FC = () => {
           >
             {showCommandPalette ? (
               <CommandPalette
-                onExecute={onExecute}
+                onExecute={e => onExecute(e, selectedShortcut)}
                 onInput={value => {
                   setKeyboardInProgress(value)
                   setSelectedShortcut(possibleShortcutsSorted[0])
@@ -224,6 +255,8 @@ const ExtendedGestureHint: FC = () => {
                 keyboardInProgress={keyboardInProgress}
                 gestureInProgress={gestureInProgress}
                 key={shortcut.id}
+                onClick={onExecute}
+                onHover={(e, shortcut) => setSelectedShortcut(shortcut)}
                 selected={showCommandPalette ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
                 shortcut={shortcut}
               />
