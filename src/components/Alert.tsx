@@ -42,6 +42,7 @@ const ShortcutGestureHint = ({
   const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
   const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
   const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
+  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
 
   useEffect(() => {
     if (selected) {
@@ -73,7 +74,7 @@ const ShortcutGestureHint = ({
           height={45}
         />
       )}
-      <div
+      <span
         style={{
           color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
         }}
@@ -83,8 +84,23 @@ const ShortcutGestureHint = ({
           {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
         </span>
         {shortcut.label.slice(highlightIndexEnd)}
-      </div>
-      {selected && <div style={{ fontSize: '80%' }}>{shortcut.description}</div>}
+      </span>
+      {selected && (
+        <span
+          style={{
+            fontSize: '80%',
+            ...(showCommandPalette
+              ? {
+                  marginLeft: 20,
+                }
+              : {
+                  display: 'block',
+                }),
+          }}
+        >
+          {shortcut.description}
+        </span>
+      )}
     </div>
   )
 }
