@@ -113,7 +113,6 @@ const ExtendedGestureHint: FC = () => {
   const fontSize = useSelector((state: State) => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
   const show = alert?.value || showCommandPalette
-  const [selectedIndex, setSelectedIndex] = useState(0)
 
   // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
   const gestureInProgress = alert?.value === '*' ? '' : alert?.value || ''
@@ -147,18 +146,19 @@ const ExtendedGestureHint: FC = () => {
       ].join('\x00'),
     )
     return sorted
-  }, [gestureInProgress, keyboardInProgress, showCommandPalette, selectedIndex])
+  }, [gestureInProgress, keyboardInProgress, showCommandPalette])
+
+  const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
   /** Handler for command palette selection. */
   const onExecute = useCallback(
     (e: Event, value: string) => {
-      const shortcut = possibleShortcutsSorted[selectedIndex]
       setTimeout(() => {
-        if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
+        if (!selectedShortcut.canExecute || selectedShortcut.canExecute?.(store.getState)) {
           e.stopPropagation()
           e.preventDefault()
           store.dispatch(commandPalette())
-          shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+          selectedShortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
         }
       })
     },
@@ -189,17 +189,23 @@ const ExtendedGestureHint: FC = () => {
                 onExecute={onExecute}
                 onInput={value => {
                   setKeyboardInProgress(value)
-                  setSelectedIndex(0)
+                  setSelectedShortcut(possibleShortcutsSorted[0])
                 }}
                 onSelectDown={e => {
                   e.preventDefault()
                   e.stopPropagation()
-                  setSelectedIndex(i => (i === possibleShortcutsSorted.length - 1 ? 0 : i + 1))
+                  setSelectedShortcut(selectedShortcut => {
+                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
+                    return possibleShortcutsSorted[i === possibleShortcutsSorted.length - 1 ? 0 : i + 1]
+                  })
                 }}
                 onSelectUp={e => {
                   e.preventDefault()
                   e.stopPropagation()
-                  setSelectedIndex(i => (i === 0 ? possibleShortcutsSorted.length - 1 : i - 1))
+                  setSelectedShortcut(selectedShortcut => {
+                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
+                    return possibleShortcutsSorted[i === 0 ? possibleShortcutsSorted.length - 1 : i - 1]
+                  })
                 }}
               />
             ) : (
@@ -213,12 +219,12 @@ const ExtendedGestureHint: FC = () => {
               ...(showCommandPalette ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             }}
           >
-            {possibleShortcutsSorted.map((shortcut, i) => (
+            {possibleShortcutsSorted.map(shortcut => (
               <ShortcutGestureHint
                 keyboardInProgress={keyboardInProgress}
                 gestureInProgress={gestureInProgress}
                 key={shortcut.id}
-                selected={showCommandPalette ? i === selectedIndex : gestureInProgress === shortcut.gesture}
+                selected={showCommandPalette ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
                 shortcut={shortcut}
               />
             ))}
