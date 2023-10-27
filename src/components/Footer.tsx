@@ -18,11 +18,11 @@ import fastClick from '../util/fastClick'
 const Status = () => {
   const colors = useSelector(themeColors)
   const replicationPercentage = syncStatusStore.useSelector(({ replicationProgress }) =>
-    replicationProgress !== null ? Math.round(replicationProgress * 100) : null,
+    replicationProgress !== null ? Math.floor(replicationProgress * 100) : null,
   )
   // shows import progress or saving progress
   const savingPercentage = syncStatusStore.useSelector(({ importProgress, savingProgress }) =>
-    Math.round((importProgress < 1 ? importProgress : savingProgress) * 100),
+    Math.floor((importProgress < 1 ? importProgress : savingProgress) * 100),
   )
   const status = offlineStatusStore.useState()
   return (

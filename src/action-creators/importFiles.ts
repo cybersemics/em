@@ -232,7 +232,7 @@ const importFilesActionCreator =
           const updateImportProgress = async () => {
             // update resumeImports with thoughtsImported
             const importProgress = (i + 1) / numThoughts
-            const importProgressString = (Math.round(importProgress * 1000) / 10).toFixed(1)
+            const importProgressString = (Math.floor(importProgress * 1000) / 10).toFixed(1)
             syncStatusStore.update({ importProgress })
             dispatch(
               alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
