@@ -10,7 +10,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const favorite: Shortcut = {
   id: 'favorite',
   label: 'Add to Favorites',
+  labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
+  descriptionInverse: 'Remove the current thought from your Favorites list.',
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   isActive: getState => {
     const state = getState()

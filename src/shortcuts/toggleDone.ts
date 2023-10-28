@@ -9,6 +9,9 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const toggleDone: Shortcut = {
   id: 'toggleDone',
   label: 'Mark as done',
+  labelInverse: 'Unmark as done',
+  description: 'Crosses out a thought to mark it as completed.',
+  descriptionInverse: 'Unmarks a thought as done.',
   keyboard: { alt: true, shift: true, key: 'Enter' },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   isActive: getState => {

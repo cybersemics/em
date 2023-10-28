@@ -9,7 +9,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const bold: Shortcut = {
   id: 'bold',
   label: 'Bold',
-  description: 'Makes a thought bold.',
+  description: 'Bolds the a thought or selected text.',
+  descriptionInverse: 'Removes bold formatting from the current thought.',
   svg: Icon,
   keyboard: { key: 'b', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

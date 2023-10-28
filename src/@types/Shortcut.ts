@@ -19,6 +19,9 @@ interface Shortcut {
   // a description of what the shortcut does that is shown in the Help modal
   description?: string | ((getState: () => State) => string)
 
+  // a description of what the shortcut does whnn it is in an inverse state
+  descriptionInverse?: string | ((getState: () => State) => string)
+
   // executes the shortcut
   exec: (
     dispatch: Dispatch,
@@ -48,8 +51,11 @@ interface Shortcut {
   // a keyboard sequence to activate the shortcut
   keyboard?: Key | string
 
-  // a short label that is shown in the gesture hint
+  // short label
   label: string
+
+  // For toggling shortcuts, a short label that indicates the inverse action from the current state (e.g. "Add to Favorites" and "Remove from Favorites")
+  labelInverse?: string
 
   // specify backup gesture or keyboard that is shown in the Toolbar overlay
   overlay?: {

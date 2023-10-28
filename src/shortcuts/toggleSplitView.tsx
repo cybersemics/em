@@ -16,8 +16,9 @@ const Icon = ({ fill, size = 20, style }: IconType) => (
 
 const toggleSplitViewShortcut: Shortcut = {
   id: 'toggleSplitView',
-  label: 'Toggle Split View',
+  label: 'Split View',
   description: 'Render two independent views for side-by-side editing.',
+  descriptionInverse: 'Revert to a single editing view.',
   svg: Icon,
   exec: (dispatch, getState) => {
     const state = getState()

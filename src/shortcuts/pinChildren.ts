@@ -14,8 +14,10 @@ import head from '../util/head'
 
 const pinChildrenShortcut: Shortcut = {
   id: 'pinChildren',
-  label: 'Pin Open Subthoughts',
-  description: "Pin open the current thought's subthoughts.",
+  label: 'Pin Subthoughts',
+  labelInverse: 'Unpin Subthoughts',
+  description: "Pins open the current thought's subthoughts.",
+  descriptionInverse: "Unpins the current thought's subthoughts so their subthoughts are automatically hidden.",
   keyboard: { key: 'p', meta: true, shift: true },
   svg: PinChildrenIcon,
   canExecute: getState => !!getState().cursor,

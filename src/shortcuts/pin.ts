@@ -9,8 +9,10 @@ import head from '../util/head'
 
 const pinShortcut: Shortcut = {
   id: 'pin',
-  label: 'Pin Open',
-  description: 'Pin open the current thought.',
+  label: 'Pin',
+  labelInverse: 'Unpin',
+  description: 'Pins open a thought so its subthoughts are always visible.',
+  descriptionInverse: 'Unpins a thought so its subthoughts are automatically hidden.',
   keyboard: { key: 'p', meta: true, alt: true },
   svg: PinIcon,
   canExecute: getState => !!getState().cursor,

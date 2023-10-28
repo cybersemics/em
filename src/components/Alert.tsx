@@ -43,7 +43,10 @@ const ShortcutGestureHint = ({
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
-  const highlightIndexStart = shortcut.label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
+  const isActive = shortcut.isActive?.(store.getState)
+  const description = shortcut.descriptionInverse && isActive ? shortcut.descriptionInverse : shortcut.description
+  const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
+  const highlightIndexStart = label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
   const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
   const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
@@ -128,11 +131,11 @@ const ShortcutGestureHint = ({
               fontWeight: selected ? 'bold' : undefined,
             }}
           >
-            {shortcut.label.slice(0, highlightIndexStart)}
+            {label.slice(0, highlightIndexStart)}
             <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
-              {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
+              {label.slice(highlightIndexStart, highlightIndexEnd)}
             </span>
-            {shortcut.label.slice(highlightIndexEnd)}
+            {label.slice(highlightIndexEnd)}
           </div>
         </div>
 
@@ -149,7 +152,7 @@ const ShortcutGestureHint = ({
                 : null),
             }}
           >
-            {shortcut.description}
+            {description}
           </div>
         )}
 
@@ -204,24 +207,28 @@ const ExtendedGestureHint: FC = () => {
         !shortcut.hideFromInstructions &&
         (showCommandPalette
           ? // keyboard
-            shortcut.label.toLowerCase().includes(keyboardInProgress.toLowerCase())
+            (shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label)
+              .toLowerCase()
+              .includes(keyboardInProgress.toLowerCase())
           : // gesture
             shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress)),
     )
 
     // sorted shortcuts
-    const sorted = _.sortBy(possibleShortcuts, shortcut =>
-      [
+    const sorted = _.sortBy(possibleShortcuts, shortcut => {
+      const label =
+        shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
+      return [
         // canExecute
         !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
         // gesture length
         gestureInProgress ? shortcut.gesture?.length : '',
         // label that starts with keyboardInProgress
-        shortcut.label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
+        label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
         // label
-        shortcut.label,
-      ].join('\x00'),
-    )
+        label,
+      ].join('\x00')
+    })
     return sorted
   }, [gestureInProgress, keyboardInProgress, showCommandPalette])
 

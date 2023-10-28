@@ -39,8 +39,9 @@ const decideNextSortPreference = (currentSortPreference: SortPreference): SortPr
 
 const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
-  label: 'Toggle Sort',
-  description: 'Sort the current context alphabetically.',
+  label: 'Sort',
+  description:
+    'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
   keyboard: { key: 's', meta: true, alt: true },
   svg: Icon,
   exec: (dispatch, getState, e, { type }) => {

@@ -43,8 +43,10 @@ const Icon = ({ fill, size = 20, style }: IconType) => (
 
 const toggleHiddenThoughtsShortcut: Shortcut = {
   id: 'toggleHiddenThoughts',
-  label: 'Toggle Hidden Thoughts',
-  description: 'Show or hide hidden thoughts.',
+  label: 'Show Hidden Thoughts',
+  labelInverse: 'Hide Hidden Thoughts',
+  description: 'Show all hidden thoughts.',
+  descriptionInverse: 'Hide hidden thoughts.',
   keyboard: { key: 'h', shift: true, alt: true },
   svg: Icon,
   exec: dispatch => dispatch(toggleHiddenThoughts()),

@@ -9,7 +9,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const italic: Shortcut = {
   id: 'italic',
   label: 'Italic',
-  description: 'Italicizes a thought.',
+  description: 'Italicizes a thought or selected text.',
+  descriptionInverse: 'Removes italic formatting from the current thought.',
   svg: Icon,
   keyboard: { key: 'i', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

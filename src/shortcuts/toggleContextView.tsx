@@ -2,6 +2,7 @@ import React from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import toggleContextView from '../action-creators/toggleContextView'
+import isContextViewActive from '../selectors/isContextViewActive'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -24,11 +25,17 @@ const toggleContextViewShortcut: Shortcut = {
   id: 'toggleContextView',
   label: 'Context View',
   description:
-    'Open the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same shortcut to close the context view.',
+    'Opens the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same shortcut to close the context view.',
+  descriptionInverse:
+    'Closes the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found.',
   gesture: 'ru',
   keyboard: { key: 's', shift: true, alt: true },
   svg: Icon,
   canExecute: getState => !!getState().cursor,
+  isActive: getState => {
+    const state = getState()
+    return !!state.cursor && isContextViewActive(getState(), state.cursor)
+  },
   exec: dispatch => dispatch(toggleContextView()),
 }
 

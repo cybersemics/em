@@ -9,7 +9,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const strikethrough: Shortcut = {
   id: 'strikethrough',
   label: 'Strikethrough',
-  description: 'Crosses out a thought. Done. Finis. Kaput.',
+  description: 'Formats a thought or selected text with strikethrough.',
+  descriptionInverse: 'Removes strikethrough formatting from the current thought or selected text.',
   svg: Icon,
   keyboard: { key: 's', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

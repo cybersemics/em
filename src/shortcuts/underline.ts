@@ -9,7 +9,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const underline: Shortcut = {
   id: 'underline',
   label: 'Underline',
-  description: 'Underlines a thought.',
+  description: 'Underlines a thought or selected text.',
+  descriptionInverse: 'Removes the underline from the current thought.',
   svg: Icon,
   keyboard: { key: 'u', meta: true },
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
