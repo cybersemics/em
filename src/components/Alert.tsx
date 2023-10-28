@@ -196,6 +196,12 @@ const ExtendedGestureHint: FC = () => {
     [possibleShortcutsSorted],
   )
 
+  // Select the first shortcut when the input changes.
+  // For some reason onInput retains an old reference to possibleShortcutsSorted .
+  useEffect(() => {
+    setSelectedShortcut(possibleShortcutsSorted[0])
+  }, [keyboardInProgress])
+
   return (
     <div
       style={{
@@ -218,10 +224,7 @@ const ExtendedGestureHint: FC = () => {
             {showCommandPalette ? (
               <CommandPalette
                 onExecute={e => onExecute(e, selectedShortcut)}
-                onInput={value => {
-                  setKeyboardInProgress(value)
-                  setSelectedShortcut(possibleShortcutsSorted[0])
-                }}
+                onInput={setKeyboardInProgress}
                 onSelectDown={e => {
                   e.preventDefault()
                   e.stopPropagation()
