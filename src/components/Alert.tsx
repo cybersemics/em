@@ -86,7 +86,8 @@ const ShortcutGestureHint = ({
       <div
         style={{
           backgroundColor: selected ? '#212121' : undefined,
-          padding: selected ? 10 : undefined,
+          padding: selected ? '5px 10px' : undefined,
+          margin: selected ? '-5px 0' : undefined,
         }}
       >
         {gestureInProgress && (
@@ -107,6 +108,7 @@ const ShortcutGestureHint = ({
         <span
           style={{
             color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
+            fontWeight: selected ? 'bold' : undefined,
           }}
         >
           {shortcut.label.slice(0, highlightIndexStart)}
@@ -250,6 +252,8 @@ const ExtendedGestureHint: FC = () => {
           <div
             style={{
               marginLeft: showCommandPalette ? '-2.4em' : '-1.2em',
+              // offset the negative marginTop on ShortcutGestureHint
+              paddingTop: 5,
               ...(showCommandPalette ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             }}
           >
