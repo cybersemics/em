@@ -12,7 +12,7 @@ import GestureDiagram from '../components/GestureDiagram'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
-import { gestureString, globalShortcuts } from '../shortcuts'
+import { formatKeyboardShortcut, gestureString, globalShortcuts } from '../shortcuts'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
 import CommandPalette from './CommandPalette'
@@ -86,52 +86,96 @@ const ShortcutGestureHint = ({
       <div
         style={{
           backgroundColor: selected ? '#212121' : undefined,
-          padding: selected ? '5px 10px' : undefined,
-          margin: selected ? '-5px 0' : undefined,
+          padding: selected ? '5px 0.5em' : undefined,
+          ...(showCommandPalette
+            ? {
+                alignItems: 'baseline',
+                display: 'flex',
+                justifyContent: 'stretch',
+                margin: selected ? '-5px 0' : undefined,
+              }
+            : null),
         }}
       >
-        {gestureInProgress && (
-          <GestureDiagram
-            color={disabled ? colors.gray : undefined}
-            highlight={!disabled ? gestureInProgress.length : undefined}
-            path={gestureString(shortcut)}
-            strokeWidth={4}
+        <div>
+          {/* gesture diagram */}
+          {!showCommandPalette && (
+            <GestureDiagram
+              color={disabled ? colors.gray : undefined}
+              highlight={!disabled ? gestureInProgress.length : undefined}
+              path={gestureString(shortcut)}
+              strokeWidth={4}
+              style={{
+                position: 'absolute',
+                marginLeft: selected ? 5 : 15,
+                left: selected ? '-1.75em' : '-2.2em',
+                top: selected ? '-0.2em' : '-0.75em',
+              }}
+              width={45}
+              height={45}
+            />
+          )}
+
+          {/* label */}
+          <div
             style={{
-              position: 'absolute',
-              left: selected ? '-1.75em' : '-2.2em',
-              top: selected ? '-0.2em' : '-0.75em',
+              whiteSpace: 'nowrap',
+              color: disabled
+                ? colors.gray
+                : gestureInProgress === shortcut.gesture
+                ? colors.vividHighlight
+                : colors.fg,
+              fontWeight: selected ? 'bold' : undefined,
             }}
-            width={45}
-            height={45}
-          />
-        )}
-        <span
-          style={{
-            color: disabled ? colors.gray : gestureInProgress === shortcut.gesture ? colors.vividHighlight : colors.fg,
-            fontWeight: selected ? 'bold' : undefined,
-          }}
-        >
-          {shortcut.label.slice(0, highlightIndexStart)}
-          <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
-            {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
-          </span>
-          {shortcut.label.slice(highlightIndexEnd)}
-        </span>
+          >
+            {shortcut.label.slice(0, highlightIndexStart)}
+            <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
+              {shortcut.label.slice(highlightIndexStart, highlightIndexEnd)}
+            </span>
+            {shortcut.label.slice(highlightIndexEnd)}
+          </div>
+        </div>
+
+        {/* description */}
         {selected && (
-          <span
+          <div
             style={{
               fontSize: '80%',
               ...(showCommandPalette
                 ? {
-                    marginLeft: 20,
+                    flexGrow: 1,
+                    marginLeft: '2em',
                   }
-                : {
-                    display: 'block',
-                  }),
+                : null),
             }}
           >
             {shortcut.description}
-          </span>
+          </div>
+        )}
+
+        {/* keyboard shortcut */}
+        {selected && showCommandPalette && (
+          <div
+            style={{
+              fontSize: '80%',
+              position: 'relative',
+              top: -1,
+              ...(showCommandPalette
+                ? {
+                    display: 'inline',
+                  }
+                : null),
+            }}
+          >
+            <span
+              style={{
+                marginLeft: 20,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {shortcut.keyboard && formatKeyboardShortcut(shortcut.keyboard)}
+            </span>
+          </div>
         )}
       </div>
     </div>
