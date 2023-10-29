@@ -98,7 +98,7 @@ const useHeightTracking = () => {
   const removeHeight = useCallback((key: string) => {
     clearTimeout(heightRemovalTimeouts.current.get(key))
     const timeout = setTimeout(() => {
-      if (unmounted) return
+      if (unmounted.current) return
       setHeights(heightsOld => {
         delete heightsOld[key]
         return heightsOld
