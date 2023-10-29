@@ -239,12 +239,10 @@ const ExtendedGestureHint: FC = () => {
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
       e.stopPropagation()
       e.preventDefault()
-      setTimeout(() => {
-        if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
-          store.dispatch(commandPalette())
-          shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
-        }
-      })
+      if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
+        store.dispatch(commandPalette())
+        shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+      }
     },
     [possibleShortcutsSorted],
   )
