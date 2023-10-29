@@ -1,9 +1,10 @@
 import _ from 'lodash'
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Alert from '../@types/Alert'
 import Shortcut from '../@types/Shortcut'
+import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import commandPalette from '../action-creators/commandPalette'
@@ -13,6 +14,7 @@ import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut, gestureString, globalShortcuts } from '../shortcuts'
+import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
 import CommandPalette from './CommandPalette'
@@ -21,6 +23,9 @@ interface AlertProps {
   alert?: Alert | null
   onClose: () => void
 }
+
+/** The maxmimum number of recent commands to store for the command palette. */
+const MAX_RECENT_COMMANDS = 5
 
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const ShortcutGestureHint = ({
@@ -192,7 +197,9 @@ const ExtendedGestureHint: FC = () => {
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
   const fontSize = useSelector((state: State) => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
+  const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const show = alert?.value || showCommandPalette
+  const unmounted = useRef(false)
 
   // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
   const gestureInProgress = alert?.value === '*' ? '' : alert?.value || ''
@@ -223,8 +230,16 @@ const ExtendedGestureHint: FC = () => {
         !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
         // gesture length
         gestureInProgress ? shortcut.gesture?.length : '',
+        // recent commands
+        !keyboardInProgress &&
+          (() => {
+            const i = recentCommands.indexOf(shortcut.id)
+            // if not found, sort to the end
+            // pad with zeros so that the sort is correct
+            return i === -1 ? 'z' : i.toString().padStart(5, '0')
+          })(),
         // label that starts with keyboardInProgress
-        label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
+        keyboardInProgress && label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
         // label
         label,
       ].join('\x00')
@@ -239,10 +254,12 @@ const ExtendedGestureHint: FC = () => {
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
       e.stopPropagation()
       e.preventDefault()
-      if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
-        store.dispatch(commandPalette())
-        shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
-      }
+      if (unmounted.current || (shortcut.canExecute && !shortcut.canExecute(store.getState))) return
+      const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
+      setRecentCommands(commandsNew)
+      store.dispatch(commandPalette())
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+      storageModel.set('recentCommands', commandsNew)
     },
     [possibleShortcutsSorted],
   )
@@ -252,6 +269,13 @@ const ExtendedGestureHint: FC = () => {
   useEffect(() => {
     setSelectedShortcut(possibleShortcutsSorted[0])
   }, [keyboardInProgress])
+
+  useEffect(
+    () => () => {
+      unmounted.current = true
+    },
+    [],
+  )
 
   return (
     <div
