@@ -63,6 +63,9 @@
     "path": "yarn.lock"
   },
   "config-overrides-path": "react-app-rewired.config.js",
+  "jest": {
+    "resetMocks": false
+  },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "@capacitor/android": "^4.6.1",
