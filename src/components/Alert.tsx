@@ -237,10 +237,10 @@ const ExtendedGestureHint: FC = () => {
   /** Handler for command palette selection. */
   const onExecute = useCallback(
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
+      e.stopPropagation()
+      e.preventDefault()
       setTimeout(() => {
         if (!shortcut.canExecute || shortcut.canExecute?.(store.getState)) {
-          e.stopPropagation()
-          e.preventDefault()
           store.dispatch(commandPalette())
           shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
         }
