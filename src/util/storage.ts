@@ -19,43 +19,44 @@ function getItem(key: string, defaultValue?: string | (() => string)) {
   return value
 }
 
-/** Creates a strongly typed local storage model. Guarantees well-typed keys and values of storage items. */
-const model = <
-  K extends string,
-  V extends string | number | boolean,
-  // define a wrapper type for the optional default argument
-  // this allows us to change the return type of get when default is not provided
-  OptionalDefault extends { default: V } | Record<string, never>,
->(
-  schema: Record<
-    K,
-    /** The default value that is returned by get if local storage is empty. */
-    OptionalDefault & {
-      /** Decodes a string stored in local storage back into a properly typed value. Default: identify function. */
-      decode?: (s: string | null) => V | undefined
-      /** Encodes a value as a string to be saved to local storage. Default: toString. */
-      encode?: (value: V) => string
-    }
-  >,
-) => {
-  // undefined if no default arg is given
-  type UndefinedIfDefault = OptionalDefault extends { default: V } ? never : undefined
+/** An interaface that defines how to encode/decode a strongly typed value from storage. */
+interface ModelSpec<T = any> {
+  default?: T
+  /** Decodes a string stored in local storage back into a properly typed value. Default: identify function. */
+  decode?: (s: string | null) => T
+  /** Encodes a value as a string to be saved to local storage. Default: toString. */
+  encode?: (value: T) => string
+}
 
-  /** Gets a value from local storage. */
-  function get<T extends K>(key: T): V | UndefinedIfDefault {
-    const value = getItem(key)
-    const decode = schema[key].decode
-    return (decode ? decode(value) : (value as V | UndefinedIfDefault)) || schema[key].default
+/** Extracts the value type from ModelSpec. */
+type ModelValue<M> = M extends ModelSpec<infer U> ? U : never
+
+/** Creates a strongly typed local storage model. Guarantees well-typed keys and values of storage items. */
+const model = <T extends { [key: string]: ModelSpec }>(schema: T) => {
+  /** Gets a value from local storage. If the model does not define a default value, then this can return undefined. */
+  function get<U extends keyof T & string>(
+    key: U,
+  ): T[U] extends { default: unknown } ? NonNullable<ModelValue<T[U]>> : ModelValue<T[U]> {
+    const raw = getItem(key)
+    if (!raw) return schema[key].default
+    const decode = schema[key].decode || (typeof schema[key].default === 'string' ? x => x : JSON.parse)
+    return decode(raw) ?? schema[key].default
   }
 
   /** Sets a value in local storage. */
-  function set<T extends K>(key: T, value: V) {
-    const encode = schema[key].encode
-    setItem(key, encode ? encode(value) : value.toString())
+  function set<U extends keyof T & string>(
+    key: U,
+    value: ModelValue<T[U]> | ((valueOld: NonNullable<ModelValue<T[U]>>) => NonNullable<ModelValue<T[U]>>),
+  ): void {
+    const valueOld = get(key)
+    const valueNew =
+      typeof value === 'function' ? (value as (valueOld: ModelValue<T[U]>) => ModelValue<T[U]>)(valueOld) : value
+    const encode = schema[key].encode || (typeof valueOld === 'string' ? x => x : JSON.stringify)
+    setItem(key.toString(), encode(valueNew))
   }
 
   /** Removes a value from local storage. */
-  const remove = (key: K) => removeItem(key)
+  const remove = (key: string) => removeItem(key.toString())
 
   return { get, set, remove }
 }
