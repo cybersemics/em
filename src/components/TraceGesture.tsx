@@ -2,20 +2,18 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
-import GesturePath from '../@types/GesturePath'
 import State from '../@types/State'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
-import { Ministore } from '../stores/ministore'
+import gestureStore from '../stores/gesture'
 import viewportStore from '../stores/viewport'
 
 interface TraceGestureProps {
   // Change the node to which pointer event handlers are attached. Defaults to the signature pad canvas.
   // This is necessary for gesture tracing since the signature pad canvas cannot be a descendant of Thoughts, and Thoughts cannot be a descendant of the canvas. Therefore, we cannot rely on event bubbling for both Thoughts and the signature pad canvas to receive pointer events. When an eventNode is given, signature_pad's internal _handlePointerStart and _handlePointerMove are added to eventNode and user-events:none is set on the signature pad canvas.
   eventNodeRef?: React.RefObject<HTMLElement>
-  gestureStore: Ministore<GesturePath>
 }
 
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
@@ -45,7 +43,7 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
 }
 
 /** Draws a gesture as it is being performed onto a canvas. */
-const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
+const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
 
   // A hook that is true when there is a cancelled gesture in progress.

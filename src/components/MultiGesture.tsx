@@ -9,7 +9,7 @@ import { isSafari, isTouch } from '../browser'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
-import ministore from '../stores/ministore'
+import gestureStore from '../stores/gesture'
 import TraceGesture from './TraceGesture'
 
 // expects peer dependencies react-dom and react-native-web
@@ -134,8 +134,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   panResponder: { panHandlers: unknown }
   scrolling = false
   sequence: GesturePath = ''
-  // a ministore that tracks the current sequence
-  sequenceStore = ministore<GesturePath>('')
 
   constructor(props: MultiGestureProps) {
     super(props)
@@ -246,7 +244,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (this.props.shouldCancelGesture?.()) {
           this.props.onCancel?.({ clientStart: this.clientStart!, e })
-          this.sequenceStore.update('')
+          gestureStore.update('')
           this.abandon = true
           return
         }
@@ -306,7 +304,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             else {
               this.sequence += g
               this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-              this.sequenceStore.update(this.sequence)
+              gestureStore.update(this.sequence)
             }
           }
         }
@@ -341,14 +339,14 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.disableScroll = false
     this.scrolling = false
     this.sequence = ''
-    this.sequenceStore.update('')
+    gestureStore.update('')
   }
 
   render() {
     const ref = React.createRef<HTMLDivElement>()
     return (
       <View {...this.panResponder.panHandlers}>
-        <TraceGesture eventNodeRef={ref} gestureStore={this.sequenceStore} />
+        <TraceGesture eventNodeRef={ref} />
         <ScrollZone leftHanded={this.leftHanded} />
         <div ref={ref}>{this.props.children}</div>
       </View>
