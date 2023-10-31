@@ -37,7 +37,7 @@ const AlertWithTransition: FC = ({ children }) => {
         <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <AlertComponent alert={alert} onClose={onClose} key={alert?.value}>
-            {alert?.alertType === AlertType.GestureHintExtended || showCommandPalette ? <CommandPalette /> : children}
+            {alert?.alertType === AlertType.CommandPaletteGesture || showCommandPalette ? <CommandPalette /> : children}
           </AlertComponent>
         </CSSTransition>
       ) : null}
@@ -64,7 +64,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
   return (
     <div
       className='alert z-index-alert'
-      {...(alert && alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps : null)}
+      {...(alert && alert.alertType !== AlertType.CommandPaletteGesture ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
         position: 'fixed',
@@ -80,7 +80,7 @@ const AlertComponent: FC<AlertProps> = ({ alert, onClose, children }) => {
         /* if inline, leave room on the left side so the user can click undo/redo */
         ...(alert?.isInline ? { left: '50%', width: 'auto' } : null),
         ...(!children ? { textAlign: 'center' } : null),
-        ...(alert && alert.alertType !== AlertType.GestureHintExtended ? useSwipeToDismissProps.style : null),
+        ...(alert && alert.alertType !== AlertType.CommandPaletteGesture ? useSwipeToDismissProps.style : null),
       }}
     >
       <div

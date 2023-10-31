@@ -29,7 +29,7 @@ const alert =
       dispatch((dispatch, getState) => {
         const state = getState()
         // Do not clear a different alert than was originally shown.
-        // For example, the extended gesture hint would be incorrectly cleared after a delay.
+        // For example, the command palette would be incorrectly cleared after a delay.
         if (alertType !== state.alert?.alertType) return
 
         dispatch({

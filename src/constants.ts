@@ -148,8 +148,8 @@ export const THOUGHT_ELLIPSIZED_CHARS = 16
 // The text that is alerted when a gesture is made that does not correspond to a valid shortcut.
 export const GESTURE_CANCEL_ALERT_TEXT = '✗ Cancel gesture'
 
-// time before gesture hint appears
-export const GESTURE_HINT_EXTENDED_TIMEOUT = 400
+// delay after gesture hint is activated before command palette appears
+export const COMMAND_PALETTE_TIMEOUT = 400
 
 // number of recently edited thoughts to store
 export const RECENTLY_EDITED_THOUGHTS_LIMIT = 100
@@ -444,7 +444,7 @@ export enum AlertType {
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
   // shown after a longer delay during a MultiGesture
-  GestureHintExtended = 'GestureHintExtended',
+  CommandPaletteGesture = 'CommandPaletteGesture',
   // shown when importing one or more files via drag-and-drop or a large paste
   ImportFile = 'ImportFile',
   // shown the first time the user types space to indent

@@ -13,7 +13,7 @@ import alert from './action-creators/alert'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
-import { AlertType, GESTURE_CANCEL_ALERT_TEXT, GESTURE_HINT_EXTENDED_TIMEOUT, Settings } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, GESTURE_CANCEL_ALERT_TEXT, Settings } from './constants'
 import globals from './globals'
 import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
@@ -119,23 +119,23 @@ const index = (): {
   return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
 }
 
-let gestureHintExtendedTimeout: number | undefined // eslint-disable-line fp/no-let
+let commandPaletteGesture: number | undefined // eslint-disable-line fp/no-let
 
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.
  *
  * There are two alert types for gesture hints:
- * - gestureHint - The basic gesture hint that is shown immediately on swipe.
- * - gestureHintExtended - The extended gesture hint that shows all possible gestures from the current sequence after a delay.
+ * - GestureHint - The basic gesture hint that is shown immediately on swipe.
+ * - CommandPaletteGesture - The command palette  that shows all possible gestures from the current sequence after a delay.
  *
  * There is no automated test coverage since timers are so messed up in the current Jest version. It may be possible to write tests if Jest is upgraded. Manual test cases.
  * - Basic gesture hint.
  * - Preserve gesture hint for valid shortcut.
  * - Only show "Cancel gesture" if gesture hint is already activated.
  * - Dismiss gesture hint after release for invalid shortcut.
- * - Extended gesture hint on hold.
- * - Extended gesture hint from invalid gesture (e.g. ←↓, hold, ←↓←).
- * - Change extended gesture hint to basic gesture hint on gesture end.
+ * - command palette  on hold.
+ * - command palette  from invalid gesture (e.g. ←↓, hold, ←↓←).
+ * - Change command palette  to basic gesture hint on gesture end.
  */
 export const inputHandlers = (store: Store<State, any>) => ({
   /** Handles gesture hints when a valid segment is entered. */
@@ -150,8 +150,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // basic gesture hint (training mode only)
     if (
       !experienceMode &&
-      // only show basic gesture hint if the extended gesture hint is not already being shown
-      state.alert?.alertType !== AlertType.GestureHintExtended &&
+      // only show basic gesture hint if the command palette  is not already being shown
+      state.alert?.alertType !== AlertType.CommandPaletteGesture &&
       // ignore back
       shortcut?.id !== 'cursorBack' &&
       // ignore forward
@@ -170,17 +170,17 @@ export const inputHandlers = (store: Store<State, any>) => ({
       )
     }
 
-    // extended gesture hint
-    // alert after a delay of GESTURE_HINT_EXTENDED_TIMEOUT
-    clearTimeout(gestureHintExtendedTimeout)
-    gestureHintExtendedTimeout = window.setTimeout(
+    // command palette
+    // alert after a delay of COMMAND_PALETTE_TIMEOUT
+    clearTimeout(commandPaletteGesture)
+    commandPaletteGesture = window.setTimeout(
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
           if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
           dispatch(
             alert(sequence as string, {
-              alertType: AlertType.GestureHintExtended,
+              alertType: AlertType.CommandPaletteGesture,
               // no need to show close link since it is dismissed on touchend
               showCloseLink: false,
             }),
@@ -188,7 +188,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      state.alert?.alertType === AlertType.GestureHintExtended ? 0 : GESTURE_HINT_EXTENDED_TIMEOUT,
+      state.alert?.alertType === AlertType.CommandPaletteGesture ? 0 : COMMAND_PALETTE_TIMEOUT,
     )
   },
 
@@ -197,9 +197,9 @@ export const inputHandlers = (store: Store<State, any>) => ({
     const state = store.getState()
 
     // Get the shortcut from the shortcut gesture index.
-    // When the extended gesture hint is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
+    // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
     const shortcut =
-      state.alert?.alertType !== AlertType.GestureHintExtended ||
+      state.alert?.alertType !== AlertType.CommandPaletteGesture ||
       !shortcutGestureIndex[sequence as string]?.hideFromInstructions
         ? shortcutGestureIndex[sequence as string]
         : null
@@ -213,18 +213,18 @@ export const inputHandlers = (store: Store<State, any>) => ({
     }
 
     // clear gesture hint
-    clearTimeout(gestureHintExtendedTimeout)
-    gestureHintExtendedTimeout = undefined // clear the timer to track when it is running for handleGestureSegment
+    clearTimeout(commandPaletteGesture)
+    commandPaletteGesture = undefined // clear the timer to track when it is running for handleGestureSegment
 
     // In experienced mode, close the alert.
-    // In training mode, convert gestureHintExtended to gestureHint on gesture end.
+    // In training mode, convert CommandPaletteGesture back to GestureHint on gesture end.
     // This needs to be delayed until the next tick otherwise there is a re-render which inadvertantly calls the automatic render focus in the Thought component.
     setTimeout(() => {
       store.dispatch((dispatch, getState) => {
         const state = getState()
         const alertType = state.alert?.alertType
         const experienceMode = getUserSetting(Settings.experienceMode)
-        if (alertType === AlertType.GestureHint || alertType === AlertType.GestureHintExtended) {
+        if (alertType === AlertType.GestureHint || alertType === AlertType.CommandPaletteGesture) {
           dispatch(
             alert(
               // clear alert if gesture is cancelled (no shortcut)
@@ -242,11 +242,11 @@ export const inputHandlers = (store: Store<State, any>) => ({
 
   /** Dismiss gesture hint that is shown by alert. */
   handleGestureCancel: () => {
-    clearTimeout(gestureHintExtendedTimeout)
+    clearTimeout(commandPaletteGesture)
     store.dispatch((dispatch, getState) => {
       if (
         getState().alert?.alertType === AlertType.GestureHint ||
-        getState().alert?.alertType === AlertType.GestureHintExtended
+        getState().alert?.alertType === AlertType.CommandPaletteGesture
       ) {
         dispatch(alert(null))
       }

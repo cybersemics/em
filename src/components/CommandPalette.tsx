@@ -261,7 +261,7 @@ const CommandRow: FC<{
   )
 }
 
-/** Render an extended gesture hint with embedded GestureDiagrams. Handled here to avoid creating a HOC or cause AppComponent to re-render too frequently. This could be separated into a HOC or hook if needed. */
+/** Render a command palette with keyboard or gesture autocomplete. */
 const CommandPalette: FC = () => {
   const store = useStore()
   const alert = useSelector((state: State) => state.alert)
@@ -272,7 +272,7 @@ const CommandPalette: FC = () => {
   const show = alert?.value || showCommandPalette
   const unmounted = useRef(false)
 
-  // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
+  // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
   const gestureInProgress = alert?.value === '*' ? '' : alert?.value || ''
 
   // get the shortcuts that can be executed from the current gesture in progress

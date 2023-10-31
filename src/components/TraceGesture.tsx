@@ -49,15 +49,15 @@ const TraceGesture = ({ eventNodeRef, gestureStore }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
 
   // A hook that is true when there is a cancelled gesture in progress.
-  // Handles GestureHint and GestureHintExtended which have different ways of showing a cancelled gesture.
+  // Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture.
   const cancelled = useSelector((state: State) => {
     const alert = state.alert
     if (!alert || !alert.value) return false
     // GestureHint
     else if (alert.alertType === AlertType.GestureHint && alert.value === GESTURE_CANCEL_ALERT_TEXT) return true
-    // GestureHintExtended
-    else if (alert.alertType === AlertType.GestureHintExtended) {
-      // when the extended gesture hint is activated, the alert value is co-opted to store the gesture that is in progress
+    // CommandPaletteGesture
+    else if (alert.alertType === AlertType.CommandPaletteGesture) {
+      // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
       return !globalShortcuts.some(
         shortcut => !shortcut.hideFromInstructions && gestureString(shortcut) === alert.value,
       )
