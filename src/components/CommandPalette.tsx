@@ -111,12 +111,13 @@ const CommandSearch: FC<{
 const CommandRow: FC<{
   gestureInProgress: string
   keyboardInProgress: string
+  last?: boolean
   onClick: (e: React.MouseEvent, shortcut: Shortcut) => void
   onHover: (e: MouseEvent, shortcut: Shortcut) => void
   selected?: boolean
   shortcut: Shortcut
   style?: React.CSSProperties
-}> = ({ gestureInProgress, keyboardInProgress, onClick, onHover, selected, shortcut, style }) => {
+}> = ({ gestureInProgress, keyboardInProgress, last, onClick, onHover, selected, shortcut, style }) => {
   const store = useStore()
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
@@ -156,7 +157,7 @@ const CommandRow: FC<{
       }}
       style={{
         cursor: !disabled ? 'pointer' : undefined,
-        paddingBottom: 10,
+        paddingBottom: last ? '4em' : '0.6em',
         paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
         position: 'relative',
         textAlign: 'left',
@@ -166,12 +167,10 @@ const CommandRow: FC<{
       <div
         style={{
           backgroundColor: selected ? '#212121' : undefined,
-          padding: selected ? '5px 0.5em' : undefined,
+          padding: selected ? '5px 0 5px 0.5em' : undefined,
           ...(showCommandPalette
             ? {
-                alignItems: 'baseline',
                 display: 'flex',
-                justifyContent: 'stretch',
                 margin: selected ? '-5px 0' : undefined,
               }
             : null),
@@ -199,6 +198,7 @@ const CommandRow: FC<{
           {/* label */}
           <div
             style={{
+              minWidth: '4em',
               whiteSpace: 'nowrap',
               color: disabled
                 ? colors.gray
@@ -216,47 +216,63 @@ const CommandRow: FC<{
           </div>
         </div>
 
-        {/* description */}
-        {selected && (
+        <div
+          style={{
+            maxHeight: showCommandPalette ? '1em' : undefined,
+            flexGrow: 1,
+            zIndex: 1,
+          }}
+        >
           <div
             style={{
-              fontSize: '80%',
-              ...(showCommandPalette
-                ? {
-                    flexGrow: 1,
-                    marginLeft: '2em',
-                  }
-                : null),
+              backgroundColor: selected ? '#212121' : undefined,
+              display: 'flex',
+              padding: showCommandPalette ? '3px 0.6em 0.3em 0.2em' : undefined,
+              marginLeft: showCommandPalette ? '2em' : undefined,
             }}
           >
-            {description}
-          </div>
-        )}
+            {/* description */}
+            {selected && (
+              <div
+                style={{
+                  fontSize: '80%',
+                  ...(showCommandPalette
+                    ? {
+                        flexGrow: 1,
+                        marginLeft: '0.5em',
+                      }
+                    : null),
+                }}
+              >
+                {description}
+              </div>
+            )}
 
-        {/* keyboard shortcut */}
-        {selected && showCommandPalette && (
-          <div
-            style={{
-              fontSize: '80%',
-              position: 'relative',
-              top: -1,
-              ...(showCommandPalette
-                ? {
-                    display: 'inline',
-                  }
-                : null),
-            }}
-          >
-            <span
-              style={{
-                marginLeft: 20,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {shortcut.keyboard && formatKeyboardShortcut(shortcut.keyboard)}
-            </span>
+            {/* keyboard shortcut */}
+            {selected && showCommandPalette && (
+              <div
+                style={{
+                  fontSize: '80%',
+                  position: 'relative',
+                  ...(showCommandPalette
+                    ? {
+                        display: 'inline',
+                      }
+                    : null),
+                }}
+              >
+                <span
+                  style={{
+                    marginLeft: 20,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {shortcut.keyboard && formatKeyboardShortcut(shortcut.keyboard)}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -352,7 +368,7 @@ const CommandPalette: FC = () => {
   return (
     <div
       style={{
-        ...(show ? { paddingLeft: '4em', paddingRight: '4em' } : null),
+        ...(show ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
         marginBottom: fontSize,
         textAlign: 'left',
       }}
@@ -407,6 +423,7 @@ const CommandPalette: FC = () => {
                 keyboardInProgress={keyboardInProgress}
                 gestureInProgress={gestureInProgress as string}
                 key={shortcut.id}
+                last={shortcut === possibleShortcutsSorted[possibleShortcutsSorted.length - 1]}
                 onClick={onExecute}
                 onHover={(e, shortcut) => setSelectedShortcut(shortcut)}
                 selected={showCommandPalette ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
