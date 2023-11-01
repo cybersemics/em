@@ -18,6 +18,7 @@ import {
   hashShortcut,
   shortcutById,
 } from '../shortcuts'
+import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
@@ -273,7 +274,7 @@ const CommandPalette: FC = () => {
   const unmounted = useRef(false)
 
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-  const gestureInProgress = alert?.value === '*' ? '' : alert?.value || ''
+  const gestureInProgress = gestureStore.useState()
 
   // get the shortcuts that can be executed from the current gesture in progress
   const possibleShortcutsSorted = useMemo(() => {
@@ -289,7 +290,7 @@ const CommandPalette: FC = () => {
               .toLowerCase()
               .includes(keyboardInProgress.toLowerCase())
           : // gesture
-            shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress)),
+            shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)),
     )
 
     // sorted shortcuts
@@ -404,7 +405,7 @@ const CommandPalette: FC = () => {
             {possibleShortcutsSorted.map(shortcut => (
               <CommandRow
                 keyboardInProgress={keyboardInProgress}
-                gestureInProgress={gestureInProgress}
+                gestureInProgress={gestureInProgress as string}
                 key={shortcut.id}
                 onClick={onExecute}
                 onHover={(e, shortcut) => setSelectedShortcut(shortcut)}

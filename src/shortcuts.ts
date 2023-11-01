@@ -179,7 +179,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
           // do not show "Cancel gesture" if already being shown by basic gesture hint
           if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
           dispatch(
-            alert(sequence as string, {
+            // TODO: Replace the dummy alert with state.commandPalette
+            alert('commandPalette', {
               alertType: AlertType.CommandPaletteGesture,
               // no need to show close link since it is dismissed on touchend
               showCloseLink: false,
