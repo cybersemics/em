@@ -34,7 +34,9 @@ const CommandSearch: FC<{
   onInput?: (value: string) => void
   onSelectDown?: (e: KeyboardEvent) => void
   onSelectUp?: (e: KeyboardEvent) => void
-}> = ({ onExecute, onInput, onSelectDown, onSelectUp }) => {
+  onSelectTop?: (e: KeyboardEvent) => void
+  onSelectBottom?: (e: KeyboardEvent) => void
+}> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -54,9 +56,17 @@ const CommandSearch: FC<{
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
-        onSelectDown?.(e)
+        if (e.metaKey || e.altKey) {
+          onSelectBottom?.(e)
+        } else {
+          onSelectDown?.(e)
+        }
       } else if (e.key === 'ArrowUp') {
-        onSelectUp?.(e)
+        if (e.metaKey || e.altKey) {
+          onSelectTop?.(e)
+        } else {
+          onSelectUp?.(e)
+        }
       }
     },
     [onExecute, onSelectDown, onSelectUp, showCommandPalette],
@@ -388,21 +398,31 @@ const CommandPalette: FC = () => {
               <CommandSearch
                 onExecute={e => onExecute(e, selectedShortcut)}
                 onInput={setKeyboardInProgress}
-                onSelectDown={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setSelectedShortcut(selectedShortcut => {
-                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-                    return possibleShortcutsSorted[i === possibleShortcutsSorted.length - 1 ? 0 : i + 1]
-                  })
-                }}
                 onSelectUp={e => {
                   e.preventDefault()
                   e.stopPropagation()
-                  setSelectedShortcut(selectedShortcut => {
+                  if (selectedShortcut !== possibleShortcutsSorted[0]) {
                     const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-                    return possibleShortcutsSorted[i === 0 ? possibleShortcutsSorted.length - 1 : i - 1]
-                  })
+                    setSelectedShortcut(possibleShortcutsSorted[i - 1])
+                  }
+                }}
+                onSelectDown={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (selectedShortcut !== possibleShortcutsSorted[possibleShortcutsSorted.length - 1]) {
+                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
+                    setSelectedShortcut(possibleShortcutsSorted[i + 1])
+                  }
+                }}
+                onSelectTop={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setSelectedShortcut(possibleShortcutsSorted[0])
+                }}
+                onSelectBottom={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setSelectedShortcut(possibleShortcutsSorted[possibleShortcutsSorted.length - 1])
                 }}
               />
             ) : (
