@@ -114,27 +114,26 @@ const parseBodyContent = (html: string) => {
 const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
   const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
+
+  // if it's an entire HTML page, return the innerHTML of the body tag
+  if (isHTML) return parseBodyContent(text)
+
   const textDecoded = unescape(text)
 
   // use text-block-parser to convert indented plaintext into nested HTML lists
   const textParsed = !isHTML ? blocksToHtml(parse(textDecoded, Infinity)) : textDecoded
 
-  // true plaintext won't have any <li>'s or <p>'s
-  // transform newlines in plaintext into <li>'s
-  return !isHTML
-    ? textParsed
-        .split('\n')
-        .map(
-          line =>
-            `${line
-              .replace(regexpPlaintextBullet, '')
-              .replace(regexpMarkdownBold, '<b>$1</b>')
-              .replace(regexpMarkdownItalics, '<i>$1</i>')
-              .trim()}`,
-        )
-        .join('')
-    : // if it's an entire HTML page, ignore everything outside the body tags
-      parseBodyContent(text)
+  return textParsed
+    .split('\n')
+    .map(
+      line =>
+        `${line
+          .replace(regexpPlaintextBullet, '')
+          .replace(regexpMarkdownBold, '<b>$1</b>')
+          .replace(regexpMarkdownItalics, '<i>$1</i>')
+          .trim()}`,
+    )
+    .join('')
 }
 
 export default textToHtml
