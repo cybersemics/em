@@ -8,9 +8,9 @@ const EM_TOKEN = '__EM__'
 const HOME_TOKEN = '__ROOT__'
 const SEPARATOR_TOKEN = '__SEP__'
 const appendContext = (context, child) => unroot([...context, child])
-const escapeRegExp = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
-const escapeSelector = s => '_' + s.replace(regExpEscapeSelector, s => `_${s.charCodeAt(0)}`)
-const regExpEscapeSelector = new RegExp('[' + escapeRegExp(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
+const escapeRegEx = s => s.replace(/[-[\]{}()*+?.\\^$|#\s]/g, '\\$&')
+const escapeSelector = s => '_' + s.replace(regexEscapeSelector, s => `_${s.charCodeAt(0)}`)
+const regexEscapeSelector = new RegExp('[' + escapeRegEx(' !"#$%&\'()*+,./:;<=>?@[]^`{|}~') + ']', 'g')
 const unroot = context => (context[0] === HOME_TOKEN ? context.slice(1) : context)
 
 /** Encode the thoughts (and optionally rank) as a string. */

@@ -5,7 +5,7 @@ import MimeType from '../@types/MimeType'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { REGEXP_TAGS } from '../constants'
+import { REGEX_TAGS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildrenSorted } from '../selectors/getChildren'
 import thoughtToContext from '../selectors/thoughtToContext'
@@ -102,7 +102,7 @@ export const exportContext = (
       : (excludeMarkdownFormatting
           ? currentThought
           : formattingTagsToMarkdown(decodeCharacterEntities(currentThought))
-        ).replace(REGEXP_TAGS, '')
+        ).replace(REGEX_TAGS, '')
 
   // Handle newlines in thoughts.
   // This should never happen (newlines are converted to separate thoughts on import) but guard against newlines just in case.

@@ -10,7 +10,7 @@ import setSearchLimit from '../action-creators/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
-import escapeRegExp from '../util/escapeRegExp'
+import escapeRegex from '../util/escapeRegex'
 import fastClick from '../util/fastClick'
 import formatNumber from '../util/formatNumber'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -76,7 +76,7 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
 
   if (isRemoteSearching || isLocalSearching) return <div>...searching</div>
 
-  const searchRegexp = new RegExp(escapeRegExp(search), 'gi')
+  const searchRegexp = new RegExp(escapeRegex(search), 'gi')
 
   /** Compares two values lexicographically, sorting exact matches to the top. */
   const comparator = (a: Thought, b: Thought) => {

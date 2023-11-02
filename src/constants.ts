@@ -230,20 +230,20 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
 export const EDIT_THROTTLE = 500
 
 // matches a string with only punctuation
-export const REGEXP_PUNCTUATIONS = /^\W+$/i
+export const REGEX_PUNCTUATIONS = /^\W+$/i
 
-export const REGEXP_URL =
+export const REGEX_URL =
   /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
 
 // matches text with HTML
-export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
+export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 
 // matches HTML tags
 // can be used to replace all HTML in a string
-export const REGEXP_TAGS = /(<([^>]+)>)/gi
+export const REGEX_TAGS = /(<([^>]+)>)/gi
 
 /** Matches an open angled bracket that is not part of a tag. */
-export const REGEXP_LONE_ANGLED_BRACKET = /<(?=[^>]+<)/g
+export const REGEX_LONE_ANGLED_BRACKET = /<(?=[^>]+<)/g
 
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
@@ -265,7 +265,7 @@ export const EMOJI_REGEX = emojiRegex
   Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.
         Explaination: https://stackoverflow.com/a/30887581/10168748
  */
-export const EMOJI_REGEX_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
+export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike']
 

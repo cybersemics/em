@@ -1,7 +1,7 @@
 import emojiStrip from 'emoji-strip'
 import _ from 'lodash'
 import pluralize from 'pluralize'
-import { REGEXP_TAGS } from '../constants'
+import { REGEX_TAGS } from '../constants'
 
 /**
  * Removes whitespace from a value (removes non-word character).
@@ -23,7 +23,7 @@ const stripEmojiFromText = s => {
 }
 
 /** Strips all html tags. */
-const stripTags = s => s.replace(REGEXP_TAGS, '')
+const stripTags = s => s.replace(REGEX_TAGS, '')
 
 /**
  * Making character 's' will just become an empty value ''.

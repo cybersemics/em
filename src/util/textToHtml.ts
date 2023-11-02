@@ -1,31 +1,31 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
-import { REGEXP_LONE_ANGLED_BRACKET } from '../constants'
+import { REGEX_LONE_ANGLED_BRACKET } from '../constants'
 import strip from '../util/strip'
 
-export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
+export const REGEX_CONTAINS_META_TAG = /<meta\s*.*?>/
 
 // a list item tag
-const regexpListItem = /<li(?:\s|>)/gim
+const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
-const regexpLeadingSpacesAndBullet = /^\s*(?:[-—▪◦•]|\*\s)?/
+const REGEX_LEADING_SPACES_AND_BULLET = /^\s*(?:[-—▪◦•]|\*\s)?/
 
 // regex that checks if the value starts with closed html tag
 // Note: This regex cannot check properly for a tag nested within itself. However for general cases it works properly.
-const regexStartsWithClosedTag = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
+const REGEX_STARTS_WITH_CLOSED_TAG = /^<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)<\/\1>/ims
 
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
-const regexpPlaintextBullet = /^\s*(?:[-—▪◦•]|\*\s)/m
+const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
 // Text content enclosed in double asterisks '**' representing markdown bold (non-greedy).
 // Example: **markdown bold**
-const regexpMarkdownBold = /\*\*([^<]+?)\*\*/g
+const REGEX_MARKDOWN_BOLD = /\*\*([^<]+?)\*\*/g
 
 // Text content enclosed in single asterisks '*' representing markdown italics (non-greedy).
 // Example: *markdown italics*
-const regexpMarkdownItalics = /\*([^<]+?)\*/g
+const REGEX_MARKDOWN_ITALICS = /\*([^<]+?)\*/g
 
 /** Retrieves the content within the body tags of the given HTML. Returns the full string if no body tags are found. */
 const bodyContent = (html: string) => {
@@ -36,7 +36,7 @@ const bodyContent = (html: string) => {
 /**
  * Check if clipboard data copied from an app such as (Webstorm, Notes, Notion..).
  */
-const isCopiedFromApp = (htmlText: string) => REGEXP_CONTAINS_META_TAG.test(htmlText)
+const isCopiedFromApp = (htmlText: string) => REGEX_CONTAINS_META_TAG.test(htmlText)
 
 /** Converts data output from text-block-parser into HTML.
  *
@@ -69,7 +69,7 @@ const isCopiedFromApp = (htmlText: string) => REGEXP_CONTAINS_META_TAG.test(html
 const blocksToHtml = (parsedBlocks: Block[]): string =>
   parsedBlocks
     .map(block => {
-      const value = block.scope.replace(regexpPlaintextBullet, '').trim()
+      const value = block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim()
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
       return value || childrenHtml ? `<li>${value}${childrenHtml}</li>` : ''
     })
@@ -83,11 +83,11 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
  *   -<b> B</b>
  */
 const moveLeadingSpacesToBeginning = (line: string) => {
-  if (regexpPlaintextBullet.test(line)) {
+  if (REGEX_PLAINTEXT_BULLET.test(line)) {
     return line
   }
   const trimmedText = strip(line, { preserveFormatting: false, preventTrim: true })
-  const matches = trimmedText.match(regexpLeadingSpacesAndBullet)
+  const matches = trimmedText.match(REGEX_LEADING_SPACES_AND_BULLET)
   return matches ? matches[0] + line.replace(matches[0], '') : line
 }
 
@@ -97,12 +97,12 @@ const moveLeadingSpacesToBeginning = (line: string) => {
 const parseBodyContent = (html: string) => {
   const content = bodyContent(html)
   // If content has <li> and more than 1 multiline whitespace, don't convert content to blocks and then again html.
-  if (regexpListItem.test(content) && (content.match(/\n/gim) || []).length > 1) {
+  if (REGEX_LIST_ITEM.test(content) && (content.match(/\n/gim) || []).length > 1) {
     // A RegExp object with the g flag keeps track of the lastIndex where a match occurred, so on subsequent matches it will start from the last used index, instead of 0. This ensures we reset last used index everytime the test is executed that prevents falsy alternating behavior
-    regexpListItem.lastIndex = 0
+    REGEX_LIST_ITEM.lastIndex = 0
     return content
   }
-  regexpListItem.lastIndex = 0
+  REGEX_LIST_ITEM.lastIndex = 0
 
   const stripped = strip(content, { preserveFormatting: true, stripAttributes: true })
     .split('\n')
@@ -115,7 +115,7 @@ const parseBodyContent = (html: string) => {
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
 const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
-  const isHTML = regexStartsWithClosedTag.test(text.trim()) || isCopiedFromApp(text.trim())
+  const isHTML = REGEX_STARTS_WITH_CLOSED_TAG.test(text.trim()) || isCopiedFromApp(text.trim())
 
   // if it's an entire HTML page, return the innerHTML of the body tag
   if (isHTML) return parseBodyContent(text)
@@ -131,14 +131,14 @@ const textToHtml = (text: string) => {
       .map(
         line =>
           `${line
-            .replace(regexpPlaintextBullet, '')
-            .replace(regexpMarkdownBold, '<b>$1</b>')
-            .replace(regexpMarkdownItalics, '<i>$1</i>')
+            .replace(REGEX_PLAINTEXT_BULLET, '')
+            .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
+            .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
             .trim()}`,
       )
       .join('')
       // lone open angled brackets should not be unescaped
-      .replace(REGEXP_LONE_ANGLED_BRACKET, '&lt;')
+      .replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
   )
 }
 

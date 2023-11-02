@@ -5,7 +5,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEXP_LONE_ANGLED_BRACKET } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEX_LONE_ANGLED_BRACKET } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
@@ -33,7 +33,7 @@ import collapseContext from './collapseContext'
 import newThought from './newThought'
 
 // a list item tag
-const regexpListItem = /<li(?:\s|>)/gim
+const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
 export interface ImportTextPayload {
   caretPosition?: number
@@ -93,7 +93,7 @@ const importText = (
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
   const convertedText = isRoam ? text : textToHtml(text)
-  const numLines = (convertedText.match(regexpListItem) || []).length
+  const numLines = (convertedText.match(REGEX_LIST_ITEM) || []).length
   const thoughtId = head(path)
   const destThought = getThoughtById(state, thoughtId)
   if (!destThought) {
@@ -163,7 +163,7 @@ const importText = (
       }),
     )
       // lone open angled brackets should not be unescaped
-      .replace(REGEXP_LONE_ANGLED_BRACKET, '&lt;')
+      .replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
 
     const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : htmlToJson(sanitizedConvertedText)
 

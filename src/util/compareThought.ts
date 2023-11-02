@@ -2,7 +2,7 @@ import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
 import Thought from '../@types/Thought'
-import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../constants'
+import { EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import isAttribute from './isAttribute'
 import lower from './lower'
 
@@ -10,10 +10,10 @@ const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
 const CURRENT_YEAR = new Date().getFullYear()
 
-const regexPunctuation = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
-const regexShortDateWithDash = /\d{1,2}-\d{1,2}/
-const regexShortDateWithSlash = /\d{1,2}\/\d{1,2}/
-const regexIgnoredPrefixes = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
+const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
+const REGEX_SHORT_DATE_WITH_DASH = /\d{1,2}-\d{1,2}/
+const REGEX_SHORT_DATE_WITH_SLASH = /\d{1,2}\/\d{1,2}/
+const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -35,10 +35,10 @@ const removeDiacritics = (s: string): string => {
 }
 
 /** Remove emojis and trailing/leading spaces from camparator inputs using regex. */
-const removeEmojisAndSpaces = (s: string) => s.replace(EMOJI_REGEX_GLOBAL, '').trim()
+const removeEmojisAndSpaces = (s: string) => s.replace(REGEX_EMOJI_GLOBAL, '').trim()
 
 /** Remove ignored prefixes from comparator inputs. */
-const removeIgnoredPrefixes = (s: string) => s.replace(regexIgnoredPrefixes, '$2')
+const removeIgnoredPrefixes = (s: string) => s.replace(REGEX_IGNORED_PREFIXES, '$2')
 
 /** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
 const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
@@ -47,10 +47,10 @@ const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes,
 const parseDate = (s: string): number =>
   Date.parse(
     // eslint-disable-next-line @typescript-eslint/no-extra-parens
-    regexShortDateWithDash.test(s)
+    REGEX_SHORT_DATE_WITH_DASH.test(s)
       ? `${s}-${CURRENT_YEAR}`
       : // eslint-disable-next-line @typescript-eslint/no-extra-parens
-      regexShortDateWithSlash.test(s)
+      REGEX_SHORT_DATE_WITH_SLASH.test(s)
       ? `${s}/${CURRENT_YEAR}`
       : s,
   )
@@ -109,8 +109,8 @@ export const compareLowercase: ComparatorFunction<string> = (a: string, b: strin
 
 /** A comparator function that sorts strings that start with punctuation above others. */
 export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue => {
-  const aIsPunctuation = typeof a === 'string' && regexPunctuation.test(a)
-  const bIsPunctuation = typeof b === 'string' && regexPunctuation.test(b)
+  const aIsPunctuation = typeof a === 'string' && REGEX_PUNCTUATION.test(a)
+  const bIsPunctuation = typeof b === 'string' && REGEX_PUNCTUATION.test(b)
   return aIsPunctuation && !bIsPunctuation ? -1 : bIsPunctuation && !aIsPunctuation ? 1 : 0
 }
 

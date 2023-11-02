@@ -9,7 +9,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
-import { REGEXP_PUNCTUATIONS, REGEXP_TAGS, Settings } from '../constants'
+import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
@@ -191,7 +191,7 @@ const ThoughtAnnotation = ({
   const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
   const showSuperscript =
     !hideSuperscriptsSetting &&
-    (REGEXP_PUNCTUATIONS.test(value.replace(REGEXP_TAGS, '')) ? null : minContexts === 0 || numContexts > 1)
+    (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? null : minContexts === 0 || numContexts > 1)
 
   const multiline = useMultiline(contentRef, simplePath, isEditing)
 

@@ -12,7 +12,7 @@ import ThoughtId from '../@types/ThoughtId'
 import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import expandContextThought from '../action-creators/expandContextThought'
 import { isTouch } from '../browser'
-import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEXP_TAGS } from '../constants'
+import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
 import useHideBullet from '../hooks/useHideBullet'
@@ -304,7 +304,7 @@ const ThoughtContainer = ({
   const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
     // only hide when typing, not when deleting
     // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
-    if (newValue.replace(REGEXP_TAGS, '').length > oldValue.replace(REGEXP_TAGS, '').length) {
+    if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
       dispatch(distractionFreeTyping(true))
     }
   }, [])

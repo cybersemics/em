@@ -1,4 +1,4 @@
-import { EMOJI_REGEX, EMOJI_REGEX_GLOBAL } from '../../constants'
+import { EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../../constants'
 import { allIOSEmojis } from '../../emojiHelpers'
 
 it('normal emojis', () => {
@@ -17,7 +17,7 @@ it('all ios emojis', () => {
 it('prevent unwanted characters to be detected as emojis.', () => {
   // previous emoji regex used in compareStringsWithEmoji detected string with apostrophe(’) as emoji
   // https://github.com/cybersemics/em/issues/952
-  expect('1234567890*&^’%$#@!-+\\;'.match(EMOJI_REGEX_GLOBAL)).toBeFalsy()
+  expect('1234567890*&^’%$#@!-+\\;'.match(REGEX_EMOJI_GLOBAL)).toBeFalsy()
 })
 
 it('ios/macOS emojis without variant selector', () => {
@@ -80,7 +80,7 @@ it('ZWJ Sequenced emoji should be detected as single emoji', () => {
   const zwjSequencedEmojis = ['👩‍👩‍👧‍👦', '👩🏻‍🦱', '👩🏽‍🏫', '👩🏼‍❤️‍💋‍👩🏽', '👩‍👧‍👦', '👨‍👨‍👦', '🧖🏽‍♀️', '🧝🏽‍♀️', '🙍🏼‍♀️', '🙆🏽‍♂️', '🙇🏽‍♀️', '👨‍👧‍👦']
 
   zwjSequencedEmojis.forEach(emoji => {
-    expect(emoji.match(EMOJI_REGEX_GLOBAL)).toHaveLength(1)
+    expect(emoji.match(REGEX_EMOJI_GLOBAL)).toHaveLength(1)
   })
 
   // All individual emoji should be detected as a single emoji.
@@ -88,7 +88,7 @@ it('ZWJ Sequenced emoji should be detected as single emoji', () => {
   allIOSEmojis
     .filter(emoji => !['👁‍🗨'].includes(emoji))
     .forEach(emoji => {
-      expect(emoji.match(EMOJI_REGEX_GLOBAL)).toHaveLength(1)
+      expect(emoji.match(REGEX_EMOJI_GLOBAL)).toHaveLength(1)
     })
 })
 

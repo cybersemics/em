@@ -3,12 +3,12 @@ import moize from 'moize'
 import * as pluralize from 'pluralize'
 
 // TODO: Should we be using the internal emojiRegex.ts?
-const REGEXP_EMOJI = emojiRegex()
+const REGEX_EMOJI = emojiRegex()
 
 // store all the replacements in a single regex for performance
-const REGEXP_NORMALIZE = new RegExp(
+const REGEX_NORMALIZE = new RegExp(
   [
-    /** Removes HTML tags. Same as REGEXP_TAGS. */
+    /** Removes HTML tags. Same as REGEX_TAGS. */
     '<([^>]+)>',
     /** Remove diacritics (e.g. accents, umlauts, etc). */
     // Borrowed from modern-diacritics package.
@@ -43,7 +43,7 @@ const normalizeThought = moize(
         : s
             // needed to remove diacritics
             .normalize('NFD')
-            .replace(REGEXP_NORMALIZE, '')
+            .replace(REGEX_NORMALIZE, '')
             /** Change ampersand to 'and'. */
             .replace(/&/g, 'and')
 
@@ -51,7 +51,7 @@ const normalizeThought = moize(
 
     // preserve lone 's', even though singularize would return ''
     // preserve lone emoji (Note: single emoji characters can have length > 1)
-    return pluralize.singular(strippedLowerCase.replace(REGEXP_EMOJI, '')) || strippedLowerCase
+    return pluralize.singular(strippedLowerCase.replace(REGEX_EMOJI, '')) || strippedLowerCase
   },
   { maxSize: 1000 },
 )

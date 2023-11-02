@@ -6,14 +6,13 @@ import { ALLOWED_ATTRIBUTES, ALLOWED_FORMATTING_TAGS } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
 
-const regexNbsp = /&nbsp;/gim
-const regexDecimalSpace = /&#32;/gim
-const regexBrTag = /<br.*?>/gim
 type StripOptions = { preserveFormatting?: boolean; preventTrim?: boolean; stripAttributes?: boolean }
 
-const regexSpanTagOnlyContainsWhitespaces = /<span[^>]*>([\s]+)<\/span>/gim
-
-const regexExpForEmptyFormattingTags = /<[^/>][^>]*>\s*<\/[^>]+>/gim
+const REGEX_NBSP = /&nbsp;/gim
+const REGEX_DECIMAL_SPACE = /&#32;/gim
+const REGEX_BR_TAG = /<br.*?>/gim
+const REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES = /<span[^>]*>([\s]+)<\/span>/gim
+const REGEX_EMPTY_FORMATTING_TAGS = /<[^/>][^>]*>\s*<\/[^>]+>/gim
 
 /** Strip HTML tags, close incomplete html tags, convert nbsp to normal spaces, and trim. */
 const strip = (
@@ -22,11 +21,11 @@ const strip = (
 ) => {
   const replacedHtml = html
     .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
-    .replace(regexBrTag, '\n') // Some text editors add <br> instead of \n
-    .replace(regexSpanTagOnlyContainsWhitespaces, '$1') // Replace span tags contain whitespaces
-    .replace(regexNbsp, ' ')
-    .replace(regexDecimalSpace, ' ') // Some text editors use decimal code for space character
-    .replace(regexExpForEmptyFormattingTags, '') // Remove empty formatting tags
+    .replace(REGEX_BR_TAG, '\n') // Some text editors add <br> instead of \n
+    .replace(REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES, '$1') // Replace span tags contain whitespaces
+    .replace(REGEX_NBSP, ' ')
+    .replace(REGEX_DECIMAL_SPACE, ' ') // Some text editors use decimal code for space character
+    .replace(REGEX_EMPTY_FORMATTING_TAGS, '') // Remove empty formatting tags
 
   const sanitizedHtml = unescapeHtml(
     sanitize(replacedHtml, {
