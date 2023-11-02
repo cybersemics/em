@@ -1331,3 +1331,17 @@ it(`import bold thoughts with bold descendants`, () => {
     - h
   - i`)
 })
+
+it('import a parent and child with single asterisks', () => {
+  const text = `
+  - *a
+    - *b
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - *a
+    - *b`)
+})
