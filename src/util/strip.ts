@@ -1,5 +1,5 @@
 import { HimalayaNode, parse } from 'himalaya'
-import { unescape } from 'html-escaper'
+import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import sanitize from 'sanitize-html'
 import { ALLOWED_ATTRIBUTES, ALLOWED_FORMATTING_TAGS } from '../constants'
@@ -28,7 +28,7 @@ const strip = (
     .replace(regexDecimalSpace, ' ') // Some text editors use decimal code for space character
     .replace(regexExpForEmptyFormattingTags, '') // Remove empty formatting tags
 
-  const sanitizedHtml = unescape(
+  const sanitizedHtml = unescapeHtml(
     sanitize(replacedHtml, {
       allowedTags: preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
       allowedAttributes: ALLOWED_ATTRIBUTES,

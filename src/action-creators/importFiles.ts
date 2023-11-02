@@ -1,3 +1,4 @@
+import { unescape as unescapeHtml } from 'html-escaper'
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
@@ -392,7 +393,7 @@ const importFilesActionCreator =
       const html = textToHtml(exported)
 
       // Close incomplete tags, preserve only allowed tags and attributes and decode the html.
-      const htmlSanitized = unescape(
+      const htmlSanitized = unescapeHtml(
         sanitize(html, {
           allowedTags: ALLOWED_TAGS,
           allowedAttributes: ALLOWED_ATTRIBUTES,

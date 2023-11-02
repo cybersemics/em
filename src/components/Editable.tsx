@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { unescape } from 'html-escaper'
+import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -275,7 +275,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       const newValue = e.target
         ? stripEmptyFormattingTags(
             addEmojiSpace(
-              unescape(
+              unescapeHtml(
                 // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
                 // Therefore, when OCR is detected, join the lines together with spaes.
                 // Otherwise the multiline STT handler in onBlur will separate them into separate thoughts.

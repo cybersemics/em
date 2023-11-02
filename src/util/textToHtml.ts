@@ -1,3 +1,4 @@
+import { unescape as unescapeHtml } from 'html-escaper'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
 import strip from '../util/strip'
@@ -107,7 +108,7 @@ const parseBodyContent = (html: string) => {
     .map(moveLeadingSpacesToBeginning)
     .join('\n')
 
-  return blocksToHtml(parse(unescape(stripped)))
+  return blocksToHtml(parse(unescapeHtml(stripped)))
 }
 
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
@@ -118,7 +119,7 @@ const textToHtml = (text: string) => {
   // if it's an entire HTML page, return the innerHTML of the body tag
   if (isHTML) return parseBodyContent(text)
 
-  const textDecoded = unescape(text)
+  const textDecoded = unescapeHtml(text)
 
   // use text-block-parser to convert indented plaintext into nested HTML lists
   const textParsed = !isHTML ? blocksToHtml(parse(textDecoded, Infinity)) : textDecoded

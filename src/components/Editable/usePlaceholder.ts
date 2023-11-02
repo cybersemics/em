@@ -1,3 +1,4 @@
+import { unescape as unescapeHtml } from 'html-escaper'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -22,7 +23,7 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
     if (!isCursorCleared && value) return value
 
     // strip formatting tags for clearThought placeholder
-    const valueStripped = isCursorCleared ? unescape(strip(value, { preserveFormatting: false })) : null
+    const valueStripped = isCursorCleared ? unescapeHtml(strip(value, { preserveFormatting: false })) : null
 
     if (valueStripped) return valueStripped
 
