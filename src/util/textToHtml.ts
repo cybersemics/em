@@ -1,6 +1,7 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
+import { REGEXP_LONE_ANGLED_BRACKET } from '../constants'
 import strip from '../util/strip'
 
 export const REGEXP_CONTAINS_META_TAG = /<meta\s*.*?>/
@@ -124,17 +125,21 @@ const textToHtml = (text: string) => {
   // use text-block-parser to convert indented plaintext into nested HTML lists
   const textParsed = !isHTML ? blocksToHtml(parse(textDecoded, Infinity)) : textDecoded
 
-  return textParsed
-    .split('\n')
-    .map(
-      line =>
-        `${line
-          .replace(regexpPlaintextBullet, '')
-          .replace(regexpMarkdownBold, '<b>$1</b>')
-          .replace(regexpMarkdownItalics, '<i>$1</i>')
-          .trim()}`,
-    )
-    .join('')
+  return (
+    textParsed
+      .split('\n')
+      .map(
+        line =>
+          `${line
+            .replace(regexpPlaintextBullet, '')
+            .replace(regexpMarkdownBold, '<b>$1</b>')
+            .replace(regexpMarkdownItalics, '<i>$1</i>')
+            .trim()}`,
+      )
+      .join('')
+      // lone open angled brackets should not be unescaped
+      .replace(REGEXP_LONE_ANGLED_BRACKET, '&lt;')
+  )
 }
 
 export default textToHtml

@@ -5,7 +5,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEXP_LONE_ANGLED_BRACKET } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
@@ -162,6 +162,8 @@ const importText = (
         disallowedTagsMode: 'recursiveEscape',
       }),
     )
+      // lone open angled brackets should not be unescaped
+      .replace(REGEXP_LONE_ANGLED_BRACKET, '&lt;')
 
     const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : htmlToJson(sanitizedConvertedText)
 

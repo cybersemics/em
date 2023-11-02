@@ -1345,3 +1345,41 @@ it('import a parent and child with single asterisks', () => {
   - *a
     - *b`)
 })
+
+it('encode single closing angled bracket', () => {
+  const text = `
+- a
+  - >b
+    - c
+  - d
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - >b
+      - c
+    - d`)
+})
+
+it('encode single open angled bracket', () => {
+  const text = `
+- a
+  - <b
+    - c
+      - d
+  - e
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - <b
+      - c
+        - d
+    - e`)
+})

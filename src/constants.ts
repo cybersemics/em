@@ -242,6 +242,9 @@ export const REGEXP_HTML = /<\/?[a-z][\s\S]*>/i
 // can be used to replace all HTML in a string
 export const REGEXP_TAGS = /(<([^>]+)>)/gi
 
+/** Matches an open angled bracket that is not part of a tag. */
+export const REGEXP_LONE_ANGLED_BRACKET = /<(?=[^>]+<)/g
+
 export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
