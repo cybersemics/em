@@ -29,41 +29,52 @@ const replicateTree = (
   /** Internal variable used to stop recursion when the cancel function is called. */
   let abort = false
 
-  // replicate the starting thought of the export individually (should already be cached)
-  replicateThought(id, { background: true, remote }).then(startThought => {
-    thoughtIndexAccum[id] = startThought!
-    onThought?.(startThought!, thoughtIndexAccum)
+  /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
+  const replicateDescendantsRecursive = async (id: ThoughtId) => {
+    if (abort) return
+    const children = await replicateChildren(id, { background: true, remote })
+    if (abort) return
 
-    /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
-    const replicateDescendantsTask = (id: ThoughtId) => async () => {
-      if (abort) return
-      const children = (await replicateChildren(id, { background: true, remote })) || []
-      if (abort) return
+    children?.forEach(child => {
+      thoughtIndexAccum[child.id] = child
+      onThought?.(child, thoughtIndexAccum)
 
-      children.forEach(child => {
-        thoughtIndexAccum[child.id] = child
-        onThought?.(child, thoughtIndexAccum)
+      queue.add([
+        {
+          function: () => replicateDescendantsRecursive(child.id),
+          description: `replicateTree: ${child.id}`,
+        },
+      ])
+    })
+  }
 
-        queue.add([
-          {
-            function: replicateDescendantsTask(child.id),
-            description: `replicateTree: ${child.id}`,
-          },
-        ])
-      })
-    }
-
+  /** Replicates the starting thoughts and all descendants by populating the initial replication queue and waiting for all tasks to resolve. */
+  const replicateDescendants = async () => {
     // kick off the descendant replication by enqueueing a task for start thought's children
     queue.add([
+      // replicate the starting thought individually (should already be cached)
       {
-        function: replicateDescendantsTask(id),
+        function: async () => {
+          const startThought = await replicateThought(id, { background: true, remote })!
+          thoughtIndexAccum[id] = startThought!
+          onThought?.(startThought!, thoughtIndexAccum)
+        },
+        description: `replicateTree: ${id} (starting thought)`,
+      },
+      // replicate the starting thought's children
+      {
+        function: () => replicateDescendantsRecursive(id),
         description: `replicateTree: ${id}`,
       },
     ])
-  })
+
+    await queue.end
+
+    return thoughtIndexAccum
+  }
 
   return {
-    promise: queue.end.then(() => thoughtIndexAccum),
+    promise: replicateDescendants(),
     cancel: () => {
       queue.clear()
       abort = true
