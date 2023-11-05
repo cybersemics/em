@@ -31,6 +31,7 @@ export const getThoughtsByIds = unwrap(workerApi.getThoughtsByIds)
 export const pauseReplication = unwrap(workerApi.pauseReplication)
 export const replicateLexeme = unwrap(workerApi.replicateLexeme)
 export const replicateThought = unwrap(workerApi.replicateThought)
+export const replicateChildren = unwrap(workerApi.replicateChildren)
 export const startReplication = unwrap(workerApi.startReplication)
 export const updateThoughts = unwrap(workerApi.updateThoughts)
 

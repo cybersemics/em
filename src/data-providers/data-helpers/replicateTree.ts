@@ -1,9 +1,8 @@
 import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
-import globals from '../../globals'
 import taskQueue from '../../util/taskQueue'
-import { replicateThought } from '../yjs/thoughtspace.main'
+import { replicateChildren, replicateThought } from '../yjs/thoughtspace.main'
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
 const replicateTree = (
@@ -23,45 +22,48 @@ const replicateTree = (
 } => {
   // no significant performance gain above concurrency 4
   const queue = taskQueue<void>({ concurrency: 4 })
-  const thoughtIndex: Index<Thought> = {}
+
+  /** Accumulated index of replicated thoughts. */
+  const thoughtIndexAccum: Index<Thought> = {}
+
+  /** Internal variable used to stop recursion when the cancel function is called. */
   let abort = false
 
-  /** Creates a task to replicate a thought and add it to the thoughtIndex. Queues up children replication. */
-  const replicateTask = (id: ThoughtId) => async () => {
-    const thought = await replicateThought(id, { background: true, remote })
-    if (!thought || abort) return
-    thoughtIndex[id] = thought
-    onThought?.(thought, thoughtIndex)
+  // replicate the starting thought of the export individually (should already be cached)
+  replicateThought(id, { background: true, remote }).then(startThought => {
+    thoughtIndexAccum[id] = startThought!
+    onThought?.(startThought!, thoughtIndexAccum)
 
-    if (Object.keys(thought.childrenMap).length === 0) return
+    /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
+    const replicateDescendantsTask = (id: ThoughtId) => async () => {
+      if (abort) return
+      const children = (await replicateChildren(id, { background: true, remote })) || []
+      if (abort) return
 
-    // enqueue children
-    const childrenReplicated = queue.add(
-      Object.values(thought.childrenMap).map(childId => ({
-        function: replicateTask(childId),
-        description: `replicateTree: ${childId}`,
-      })),
-    )
+      children.forEach(child => {
+        thoughtIndexAccum[child.id] = child
+        onThought?.(child, thoughtIndexAccum)
 
-    // Preserve the parent until all children have been replicated.
-    // Otherwise the parent can be deallocated by freeThought and the docKey will be missing when the task is run.
-    globals.preserveSet.add(thought.id)
-    childrenReplicated.then(() => {
-      globals.preserveSet.delete(id)
-    })
-  }
+        queue.add([
+          {
+            function: replicateDescendantsTask(child.id),
+            description: `replicateTree: ${child.id}`,
+          },
+        ])
+      })
+    }
 
-  queue.add([
-    {
-      function: replicateTask(id),
-      description: `replicateTree: ${id}`,
-    },
-  ])
+    // kick off the descendant replication by enqueueing a task for start thought's children
+    queue.add([
+      {
+        function: replicateDescendantsTask(id),
+        description: `replicateTree: ${id}`,
+      },
+    ])
+  })
 
-  // return a promise that can cancel the replication
-  const promise = queue.end.then(() => thoughtIndex)
   return {
-    promise,
+    promise: queue.end.then(() => thoughtIndexAccum),
     cancel: () => {
       queue.clear()
       abort = true

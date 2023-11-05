@@ -610,6 +610,8 @@ const onLexemeChange = (e: {
  * Replicates a thought from the persistence layers to state, IDB, and the Websocket server. If already replicating or replicated, resolves as soon as data is available (depends on background/remote params). The Doc can be updated concurrently while replicating.
  *
  * Precondition: docKey of id must be cached.
+ *
+ * Warning: It is not recommended to run replicateThought in background mode. The Doc is not cached in background mode, so calling replicateThought on multiple siblings will result in multiple replications of the parent.
  */
 export const replicateThought = async (
   id: ThoughtId,
@@ -646,7 +648,7 @@ export const replicateThought = async (
  *
  * @see replicateThought
  */
-const replicateChildren = async (
+export const replicateChildren = async (
   docKey: string,
   {
     background,
