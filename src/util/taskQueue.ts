@@ -189,14 +189,15 @@ const taskQueue = <
     }
   })
 
-  /** Adds a task to the queue and immediately begins it if under the concurrency limit. Resolves when the given tasks have completed. */
+  /** Adds a one or more tasks to the queue and immediately begins if under the concurrency limit. Resolves when the given tasks have completed. */
   const add = (
-    tasks: (Task<T> | null | undefined)[],
+    tasks: Task<T> | (Task<T> | null | undefined)[],
     {
       onStep: onStepBatch,
     }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
   ) => {
-    const promises = tasks.map(task => {
+    const tasksArray = Array.isArray(tasks) ? tasks : [tasks]
+    const promises = tasksArray.map(task => {
       if (!task) return null
       const taskFunction = typeof task === 'function' ? task : task?.function
       return (

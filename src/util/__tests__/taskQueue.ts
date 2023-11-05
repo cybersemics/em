@@ -11,7 +11,20 @@ it('run tasks', async () => {
   expect(counter).toBe(3)
 })
 
-it('add tasks after instantiation', async () => {
+it('add a single task after instantiation', async () => {
+  let counter = 0
+  /** Increments the counter. */
+  const inc = () => ++counter
+
+  await new Promise(resolve => {
+    const queue = taskQueue<number>({ onEnd: resolve })
+    queue.add(inc)
+  })
+
+  expect(counter).toBe(1)
+})
+
+it('add multiple tasks after instantiation', async () => {
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter

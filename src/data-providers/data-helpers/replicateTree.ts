@@ -39,12 +39,10 @@ const replicateTree = (
       thoughtIndexAccum[child.id] = child
       onThought?.(child, thoughtIndexAccum)
 
-      queue.add([
-        {
-          function: () => replicateDescendantsRecursive(child.id),
-          description: `replicateTree: ${child.id}`,
-        },
-      ])
+      queue.add({
+        function: () => replicateDescendantsRecursive(child.id),
+        description: `replicateTree: ${child.id}`,
+      })
     })
   }
 
