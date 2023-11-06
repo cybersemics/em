@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import sanitize from 'sanitize-html'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
@@ -121,30 +122,32 @@ const textToHtml = (text: string) => {
   // otherwise use text-block-parser to convert indented plaintext into nested HTML lists
   const html = isHtml ? parseBodyContent(text) : blocksToHtml(parse(text, Infinity))
 
-  // replace markdown bold and italics with <b> and <i> line-by-line
-  const htmlConvertedMarkdown = html
-    .split('\n')
-    .map(
-      line =>
-        `${line
-          .replace(REGEX_PLAINTEXT_BULLET, '')
-          .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
-          .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
-          .trim()}`,
-    )
-    .join('')
+  return _.flow(
+    // replace markdown bold and italics with <b> and <i> line-by-line
+    (html: string) =>
+      html
+        .split('\n')
+        .map(
+          line =>
+            `${line
+              .replace(REGEX_PLAINTEXT_BULLET, '')
+              .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
+              .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
+              .trim()}`,
+        )
+        .join(''),
 
-  // lone open angled brackets should not be unescaped
-  const htmlClean = htmlConvertedMarkdown.replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
+    // lone open angled brackets should not be unescaped
+    html => html.replace(REGEX_LONE_ANGLED_BRACKET, '&lt;'),
 
-  // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
-  const htmlSanitized = sanitize(htmlClean, {
-    allowedTags: ALLOWED_TAGS,
-    allowedAttributes: ALLOWED_ATTRIBUTES,
-    disallowedTagsMode: 'recursiveEscape',
-  })
-
-  return htmlSanitized
+    // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
+    html =>
+      sanitize(html, {
+        allowedTags: ALLOWED_TAGS,
+        allowedAttributes: ALLOWED_ATTRIBUTES,
+        disallowedTagsMode: 'recursiveEscape',
+      }),
+  )(html)
 }
 
 export default textToHtml
