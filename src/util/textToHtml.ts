@@ -116,11 +116,9 @@ const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
   const isHtml = REGEX_STARTS_WITH_CLOSED_TAG.test(text.trim()) || isCopiedFromApp(text.trim())
 
-  // if it's an entire HTML page, return the innerHTML of the body tag
-  if (isHtml) return parseBodyContent(text)
-
-  // use text-block-parser to convert indented plaintext into nested HTML lists
-  const html = blocksToHtml(parse(text, Infinity))
+  // if text is HTML page, return the innerHTML of the body tag
+  // otherwise use text-block-parser to convert indented plaintext into nested HTML lists
+  const html = isHtml ? parseBodyContent(text) : blocksToHtml(parse(text, Infinity))
 
   // replace markdown bold and italics with <b> and <i> line-by-line
   const htmlConvertedMarkdown = html
