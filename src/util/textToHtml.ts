@@ -1,6 +1,7 @@
+import sanitize from 'sanitize-html'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
-import { REGEX_LONE_ANGLED_BRACKET } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, REGEX_LONE_ANGLED_BRACKET } from '../constants'
 import strip from '../util/strip'
 
 export const REGEX_CONTAINS_META_TAG = /<meta\s*.*?>/
@@ -136,7 +137,14 @@ const textToHtml = (text: string) => {
   // lone open angled brackets should not be unescaped
   const htmlClean = htmlConvertedMarkdown.replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
 
-  return htmlClean
+  // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
+  const htmlSanitized = sanitize(htmlClean, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: ALLOWED_ATTRIBUTES,
+    disallowedTagsMode: 'recursiveEscape',
+  })
+
+  return htmlSanitized
 }
 
 export default textToHtml

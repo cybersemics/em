@@ -1,10 +1,9 @@
 import _ from 'lodash'
-import sanitize from 'sanitize-html'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, HOME_PATH, REGEX_LONE_ANGLED_BRACKET } from '../constants'
+import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
@@ -153,16 +152,7 @@ const importText = (
         : null,
     ])(state)
   } else {
-    // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
-    const sanitizedConvertedText = sanitize(convertedText, {
-      allowedTags: ALLOWED_TAGS,
-      allowedAttributes: ALLOWED_ATTRIBUTES,
-      disallowedTagsMode: 'recursiveEscape',
-    })
-      // lone open angled brackets should not be unescaped
-      .replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
-
-    const json = isRoam ? roamJsonToBlocks(JSON.parse(sanitizedConvertedText)) : htmlToJson(sanitizedConvertedText)
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : htmlToJson(convertedText)
 
     const destIsLeaf = !anyChild(state, head(simplePath))
 

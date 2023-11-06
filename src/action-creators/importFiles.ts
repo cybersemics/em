@@ -1,7 +1,6 @@
 import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
-import sanitize from 'sanitize-html'
 import Block from '../@types/Block'
 import Context from '../@types/Context'
 import Dispatch from '../@types/Dispatch'
@@ -15,7 +14,7 @@ import deleteThought from '../action-creators/deleteThought'
 import newThought from '../action-creators/newThought'
 import setCursor from '../action-creators/setCursor'
 import updateThoughts from '../action-creators/updateThoughts'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
@@ -389,15 +388,7 @@ const importFilesActionCreator =
         exported = exportContext(stateImported, HOME_TOKEN, 'text/plain')
       }
 
-      const html = textToHtml(exported)
-
-      // Close incomplete tags, preserve only allowed tags and attributes and decode the html.
-      const htmlSanitized = sanitize(html, {
-        allowedTags: ALLOWED_TAGS,
-        allowedAttributes: ALLOWED_ATTRIBUTES,
-        disallowedTagsMode: 'recursiveEscape',
-      })
-      const json = htmlToJson(htmlSanitized)
+      const json = htmlToJson(textToHtml(exported))
       const numThoughts = numBlocks(json)
 
       syncStatusStore.update({ importProgress: 0 / numThoughts })
