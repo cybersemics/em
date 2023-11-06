@@ -1,4 +1,3 @@
-import { unescape as unescapeHtml } from 'html-escaper'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
 import { REGEX_LONE_ANGLED_BRACKET } from '../constants'
@@ -109,37 +108,37 @@ const parseBodyContent = (html: string) => {
     .map(moveLeadingSpacesToBeginning)
     .join('\n')
 
-  return blocksToHtml(parse(unescapeHtml(stripped)))
+  return blocksToHtml(parse(stripped))
 }
 
 /** Parses plaintext, indented text, or HTML and converts it into HTML that himalaya can parse. */
 const textToHtml = (text: string) => {
   // if the input text starts with a closed html tag
-  const isHTML = REGEX_STARTS_WITH_CLOSED_TAG.test(text.trim()) || isCopiedFromApp(text.trim())
+  const isHtml = REGEX_STARTS_WITH_CLOSED_TAG.test(text.trim()) || isCopiedFromApp(text.trim())
 
   // if it's an entire HTML page, return the innerHTML of the body tag
-  if (isHTML) return parseBodyContent(text)
-
-  const textDecoded = unescapeHtml(text)
+  if (isHtml) return parseBodyContent(text)
 
   // use text-block-parser to convert indented plaintext into nested HTML lists
-  const textParsed = !isHTML ? blocksToHtml(parse(textDecoded, Infinity)) : textDecoded
+  const html = blocksToHtml(parse(text, Infinity))
 
-  return (
-    textParsed
-      .split('\n')
-      .map(
-        line =>
-          `${line
-            .replace(REGEX_PLAINTEXT_BULLET, '')
-            .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
-            .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
-            .trim()}`,
-      )
-      .join('')
-      // lone open angled brackets should not be unescaped
-      .replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
-  )
+  // replace markdown bold and italics with <b> and <i> line-by-line
+  const htmlConvertedMarkdown = html
+    .split('\n')
+    .map(
+      line =>
+        `${line
+          .replace(REGEX_PLAINTEXT_BULLET, '')
+          .replace(REGEX_MARKDOWN_BOLD, '<b>$1</b>')
+          .replace(REGEX_MARKDOWN_ITALICS, '<i>$1</i>')
+          .trim()}`,
+    )
+    .join('')
+
+  // lone open angled brackets should not be unescaped
+  const htmlClean = htmlConvertedMarkdown.replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
+
+  return htmlClean
 }
 
 export default textToHtml

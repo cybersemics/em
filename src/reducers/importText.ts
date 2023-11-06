@@ -1,4 +1,3 @@
-import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import sanitize from 'sanitize-html'
 import Path from '../@types/Path'
@@ -155,13 +154,11 @@ const importText = (
     ])(state)
   } else {
     // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
-    const sanitizedConvertedText = unescapeHtml(
-      sanitize(convertedText, {
-        allowedTags: ALLOWED_TAGS,
-        allowedAttributes: ALLOWED_ATTRIBUTES,
-        disallowedTagsMode: 'recursiveEscape',
-      }),
-    )
+    const sanitizedConvertedText = sanitize(convertedText, {
+      allowedTags: ALLOWED_TAGS,
+      allowedAttributes: ALLOWED_ATTRIBUTES,
+      disallowedTagsMode: 'recursiveEscape',
+    })
       // lone open angled brackets should not be unescaped
       .replace(REGEX_LONE_ANGLED_BRACKET, '&lt;')
 
