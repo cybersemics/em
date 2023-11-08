@@ -223,11 +223,28 @@ const CommandRow: FC<{
               fontWeight: selected ? 'bold' : undefined,
             }}
           >
-            {label.slice(0, highlightIndexStart)}
-            <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
-              {label.slice(highlightIndexStart, highlightIndexEnd)}
-            </span>
-            {label.slice(highlightIndexEnd)}
+            {highlightIndexStart !== -1 ? (
+              <span>
+                {label.slice(0, highlightIndexStart)}
+                <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
+                  {label.slice(highlightIndexStart, highlightIndexEnd)}
+                </span>
+                {label.slice(highlightIndexEnd)}
+              </span>
+            ) : (
+              <span>
+                {label.split(' ').map((word, i) => (
+                  <span key={i}>
+                    <span
+                      style={{ color: !disabled && i < keyboardInProgress.length ? colors.vividHighlight : undefined }}
+                    >
+                      {word[0]}
+                    </span>
+                    {word.slice(1) + ' '}
+                  </span>
+                ))}
+              </span>
+            )}
           </div>
         </div>
 
@@ -311,15 +328,24 @@ const CommandPalette: FC = () => {
   const possibleShortcutsSorted = useMemo(() => {
     if (!show) return []
 
-    const possibleShortcuts = visibleShortcuts.filter(shortcut =>
-      showCommandPalette
-        ? // keyboard
-          (shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label)
-            .toLowerCase()
-            .includes(keyboardInProgress.toLowerCase())
-        : // gesture
-          shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string),
-    )
+    const possibleShortcuts = visibleShortcuts.filter(shortcut => {
+      // keyboard
+      if (showCommandPalette) {
+        const label = (
+          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
+        ).toLowerCase()
+        if (label.includes(keyboardInProgress.toLowerCase())) return true
+        const initials = label
+          .split(' ')
+          .map(word => word[0])
+          .join('')
+        return initials.includes(keyboardInProgress.toLowerCase())
+      }
+      // gesture
+      else {
+        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
+      }
+    })
 
     // sorted shortcuts
     const sorted = _.sortBy(possibleShortcuts, shortcut => {
