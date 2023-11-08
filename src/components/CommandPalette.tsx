@@ -29,6 +29,10 @@ const MAX_RECENT_COMMANDS = 5
 
 const commandPaletteShortcut = shortcutById('commandPalette')
 
+const visibleShortcuts = globalShortcuts.filter(
+  shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromInstructions,
+)
+
 /** Search input for the Command Palette. */
 const CommandSearch: FC<{
   onExecute?: (e: KeyboardEvent, value: string) => void
@@ -307,17 +311,14 @@ const CommandPalette: FC = () => {
   const possibleShortcutsSorted = useMemo(() => {
     if (!show) return []
 
-    const possibleShortcuts = globalShortcuts.filter(
-      shortcut =>
-        !shortcut.hideFromCommandPalette &&
-        !shortcut.hideFromInstructions &&
-        (showCommandPalette
-          ? // keyboard
-            (shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label)
-              .toLowerCase()
-              .includes(keyboardInProgress.toLowerCase())
-          : // gesture
-            shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)),
+    const possibleShortcuts = visibleShortcuts.filter(shortcut =>
+      showCommandPalette
+        ? // keyboard
+          (shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label)
+            .toLowerCase()
+            .includes(keyboardInProgress.toLowerCase())
+        : // gesture
+          shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string),
     )
 
     // sorted shortcuts
@@ -337,9 +338,9 @@ const CommandPalette: FC = () => {
             // pad with zeros so that the sort is correct
             return i === -1 ? 'z' : i.toString().padStart(5, '0')
           })(),
-        // label that starts with keyboardInProgress
+        // startsWith
         keyboardInProgress && label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
-        // label
+        // exact match
         label,
       ].join('\x00')
     })
