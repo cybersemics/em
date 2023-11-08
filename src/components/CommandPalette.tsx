@@ -122,6 +122,39 @@ const CommandSearch: FC<{
   )
 }
 
+/** Renders text with matching characters highlighted. */
+const HighlightedText: FC<{ value: string; match: string; disabled?: boolean }> = ({ value, match, disabled }) => {
+  const colors = useSelector(themeColors)
+
+  // move an index forward as matches are found so that chars are only matched once each
+  let index = 0
+
+  return (
+    <span>
+      {value.split('').map((char, i) => {
+        const matchIndex = match.trim().slice(index).toLowerCase().indexOf(char.toLowerCase()) + index
+        const isMatch = matchIndex >= index
+
+        if (isMatch) {
+          index++
+        }
+
+        return (
+          <span key={i}>
+            <span
+              style={{
+                color: !disabled && isMatch ? colors.vividHighlight : undefined,
+              }}
+            >
+              {char}
+            </span>
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
 /** Renders a GestureDiagram and its label as a hint during a MultiGesture. */
 const CommandRow: FC<{
   gestureInProgress: string
@@ -139,8 +172,6 @@ const CommandRow: FC<{
   const isActive = shortcut.isActive?.(store.getState)
   const description = shortcut.descriptionInverse && isActive ? shortcut.descriptionInverse : shortcut.description
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
-  const highlightIndexStart = label.toLowerCase().indexOf(keyboardInProgress.toLowerCase())
-  const highlightIndexEnd = highlightIndexStart + keyboardInProgress.length
   const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
 
@@ -223,28 +254,7 @@ const CommandRow: FC<{
               fontWeight: selected ? 'bold' : undefined,
             }}
           >
-            {highlightIndexStart !== -1 ? (
-              <span>
-                {label.slice(0, highlightIndexStart)}
-                <span style={{ color: !disabled ? colors.vividHighlight : undefined }}>
-                  {label.slice(highlightIndexStart, highlightIndexEnd)}
-                </span>
-                {label.slice(highlightIndexEnd)}
-              </span>
-            ) : (
-              <span>
-                {label.split(' ').map((word, i) => (
-                  <span key={i}>
-                    <span
-                      style={{ color: !disabled && i < keyboardInProgress.length ? colors.vividHighlight : undefined }}
-                    >
-                      {word[0]}
-                    </span>
-                    {word.slice(1) + ' '}
-                  </span>
-                ))}
-              </span>
-            )}
+            <HighlightedText value={label} match={keyboardInProgress} disabled={disabled} />
           </div>
         </div>
 
@@ -334,12 +344,15 @@ const CommandPalette: FC = () => {
         const label = (
           shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
         ).toLowerCase()
-        if (label.includes(keyboardInProgress.toLowerCase())) return true
-        const initials = label
-          .split(' ')
-          .map(word => word[0])
-          .join('')
-        return initials.includes(keyboardInProgress.toLowerCase())
+        return (
+          // include shortcuts with at least one included char in the list
+          // fuzzy matching will prioritize the best shortcuts
+          !keyboardInProgress ||
+          keyboardInProgress
+            .toLowerCase()
+            .split('')
+            .some(char => char !== ' ' && label.includes(char))
+        )
       }
       // gesture
       else {
@@ -349,8 +362,9 @@ const CommandPalette: FC = () => {
 
     // sorted shortcuts
     const sorted = _.sortBy(possibleShortcuts, shortcut => {
-      const label =
+      const label = (
         shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
+      ).toLowerCase()
       return [
         // canExecute
         !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
@@ -361,12 +375,24 @@ const CommandPalette: FC = () => {
           (() => {
             const i = recentCommands.indexOf(shortcut.id)
             // if not found, sort to the end
-            // pad with zeros so that the sort is correct
+            // pad with zeros so that the sort is correct for multiple digits
             return i === -1 ? 'z' : i.toString().padStart(5, '0')
           })(),
         // startsWith
-        keyboardInProgress && label.toLowerCase().startsWith(keyboardInProgress.toLowerCase()) ? 0 : 1,
-        // exact match
+        keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
+        // contains (n chars)
+        // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
+        keyboardInProgress &&
+          (
+            9999 -
+            keyboardInProgress
+              .toLowerCase()
+              .split('')
+              .filter(char => char !== ' ' && label.includes(char)).length
+          )
+            .toString()
+            .padStart(5, '0'),
+        // all else equal, sort by label
         label,
       ].join('\x00')
     })
