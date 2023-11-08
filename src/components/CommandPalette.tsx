@@ -8,6 +8,7 @@ import State from '../@types/State'
 import commandPalette from '../action-creators/commandPalette'
 import error from '../action-creators/error'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import { disableScroll, enableScroll } from '../device/disableScroll'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
 import {
@@ -368,12 +369,14 @@ const CommandPalette: FC = () => {
     setSelectedShortcut(possibleShortcutsSorted[0])
   }, [keyboardInProgress])
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    disableScroll()
+
+    return () => {
+      enableScroll()
       unmounted.current = true
-    },
-    [],
-  )
+    }
+  }, [])
 
   return (
     <div
