@@ -159,15 +159,19 @@ describe('normal view', () => {
   })
 
   it('preserve order of children', () => {
-    const text = `
-      - x
-      - y
-        - a
-        - b
-        - c
-      - z
-    `
-    const steps = [importText({ text }), setCursor(['y']), collapseContext({})]
+    const steps = [
+      newThought('x'),
+      newThought('y'),
+      // create children of y in reverse order
+      newSubthought('c'),
+      newThought({ value: 'b', insertBefore: true }),
+      newThought({ value: 'a', insertBefore: true }),
+      cursorBack,
+      newThought('z'),
+      // collapse y
+      setCursor(['y']),
+      collapseContext({}),
+    ]
 
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
