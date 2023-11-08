@@ -155,10 +155,6 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
       }
 
       setExportedState(exportedState)
-
-      // clear exporting thoughts when replication completes to conserve memory
-      // numDescendantsFinal will be used instead
-      setExportingThoughts([])
       setIsPulling(false)
     })
 
