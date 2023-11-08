@@ -11,7 +11,7 @@ import alert from '../../action-creators/alert'
 import closeModal from '../../action-creators/closeModal'
 import error from '../../action-creators/error'
 import { isMac, isTouch } from '../../browser'
-import { AlertType, HOME_PATH } from '../../constants'
+import { AlertType, HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
@@ -91,7 +91,7 @@ const usePullStatus = () => useContext(PullStatusContext)
 const ExportingThoughtsContext = createContext<Thought[]>([])
 ExportingThoughtsContext.displayName = 'ExportingThoughtsContext'
 
-/** Use number of descendants that will be exported. */
+/** A hook that returns a list of all exported thoughts updated in real-time. Used to calculate numDesendants with different settings without having to re-traverse all descendants. */
 const useExportingThoughts = () => useContext(ExportingThoughtsContext)
 
 const ExportedStateContext = createContext<State | null>(null)
@@ -196,7 +196,7 @@ const ExportThoughtsPhrase = ({
       excludeArchived,
     }),
   )
-  const numDescendants = thoughtsFiltered.length
+  const numDescendants = thoughtsFiltered.length + (thoughtsFiltered[0]?.id === HOME_TOKEN ? -1 : 0)
 
   // updates with latest number of descendants
   const n = numDescendantsFinal ?? numDescendants
@@ -286,6 +286,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       ? exportContent.split('\n').length - 1
       : numDescendantsInState ?? 0
     : null
+
   const exportThoughtsPhraseFinal = useSelector((state: State) =>
     exportPhrase(id, numDescendantsFinal, { value: title }),
   )
