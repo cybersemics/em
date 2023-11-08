@@ -15,7 +15,7 @@ const exportPhrase = (id: ThoughtId, numDescendants: number | null, { value }: O
   return isRoot([id])
     ? numDescendants === 1
       ? '1 thought'
-      : ` all ${numDescendants?.toLocaleString()} thoughts`
+      : ` all${numDescendants ? ' ' + numDescendants.toLocaleString() : ''} thoughts`
     : `"${label}"${
         numDescendants ? ` and ${numDescendants.toLocaleString()} subthought${numDescendants === 1 ? '' : 's'}` : ''
       }`

@@ -154,7 +154,6 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
         },
       }
 
-      // isMounted will be set back to false on unmount, preventing exportContext from unnecessarily being called after the component has unmounted
       setExportedState(exportedState)
 
       // clear exporting thoughts when replication completes to conserve memory
