@@ -228,8 +228,8 @@ const onLoadDocument = (configuration: {
             if (!clientShare) return
 
             // if name or role have changed, update the permissions server
-            if (clientShare?.name !== serverShare?.name || clientShare?.role !== serverShare?.role) {
-              permissionsServerMap.set(key, permissionsClientMap.get(key)!)
+            if (clientShare.name !== serverShare?.name || clientShare.role !== serverShare?.role) {
+              permissionsServerMap.set(key, clientShare)
             }
           }
         })
