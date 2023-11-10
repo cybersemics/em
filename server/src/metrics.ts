@@ -19,11 +19,11 @@ const MetricType: Index<any> = {
   Summary: 'summary',
 }
 
-// report metrics every second
-const REPORTING_INTERVAL = 1
+/** Allowed metrics names. These are queried by the Graphite dashboard. */
+type MetricsName = 'em.server.permissions' | 'em.server.save' | 'em.server.load' | `em.server.node.${string}`
 
-// prefix for NodeJS metrics pushed to Graphite when process.env.METRICS_PUSH is enabled
-const METRICS_PUSH_PREFIX = 'em.server.node.'
+/** The Graphite metrics interval that observations are aligned with. Multiple observations within the same interval will only result in one data point. Missing an interval will result in a gap. */
+const BASE_REPORTING_INTERVAL = 1
 
 const apiUrl = process.env.GRAPHITE_URL
 const bearer = `${process.env.GRAPHITE_USERID}:${process.env.GRAPHITE_APIKEY}`
@@ -41,7 +41,7 @@ const mean = (values: number[]) => (values.length > 0 ? values.reduce((a, b) => 
 
 /** Push metrics to the Graphite API. Null or undefined tags are ignored. */
 const observe = async (
-  observations: { name: string; value: number; tags?: Index<string | null | undefined> }[],
+  observations: { name: MetricsName; value: number; tags?: Index<string | null | undefined> }[],
 ): Promise<void> => {
   const observationsNormalized = observations.map(({ name, value, tags }) => {
     // get current unix timestamp, rounded down to the nearest second
@@ -51,14 +51,14 @@ const observe = async (
       .map(([key, value]) => `${key}=${value}`)
 
     const data = {
-      interval: REPORTING_INTERVAL,
+      interval: BASE_REPORTING_INTERVAL,
       name,
       // Note: For some reason metrics without any tags do not show up in Graphite.
       // It seems related to the fact that name is stored as a tag, so perhaps if there are no tags, the name is not stored.
       // Since we always have at least one tag (env), this is not a problem here.
       tags: tagsArray,
       // align timestamp to interval
-      time: Math.floor(time / REPORTING_INTERVAL) * REPORTING_INTERVAL,
+      time: Math.floor(time / BASE_REPORTING_INTERVAL) * BASE_REPORTING_INTERVAL,
       value,
     }
     return data
@@ -76,7 +76,13 @@ const observe = async (
 }
 
 const observeThrottled = throttleConcat(
-  (observations: { name: string; value: number; tags?: Index<string | null | undefined> }[]) => {
+  (
+    observations: {
+      name: MetricsName
+      value: number
+      tags?: Index<string | null | undefined>
+    }[],
+  ) => {
     // group by name + tags
     const groups = groupBy(observations, ({ name, value, tags }) => JSON.stringify({ name, tags }))
 
@@ -91,7 +97,7 @@ const observeThrottled = throttleConcat(
 
     observe(meanObservations)
   },
-  REPORTING_INTERVAL * 1000,
+  BASE_REPORTING_INTERVAL * 1000,
   { leading: false },
 )
 
@@ -117,14 +123,14 @@ export const observeNodeMetrics = () => {
       .filter(({ type }) => !type || type === MetricType.Counter || type === MetricType.Gauge)
       .flatMap(({ aggregator, help, name, type, values }) =>
         values.map(({ value, labels }) => ({
-          name: `${METRICS_PUSH_PREFIX}${name}`,
+          name: `em.server.node.${name}` as const,
           value: values[0]?.value,
           tags: keyValueBy(labels, (key, value) => ({ [key]: value?.toString() })),
         })),
       )
 
     metrics.forEach(observeThrottled)
-  }, REPORTING_INTERVAL * 1000)
+  }, BASE_REPORTING_INTERVAL * 1000)
 }
 
 export default observeMetric
