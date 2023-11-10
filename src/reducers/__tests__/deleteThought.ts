@@ -3,7 +3,8 @@ import deleteEmptyThought from '../../reducers/deleteEmptyThought'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import getContexts from '../../selectors/getContexts'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import getLexeme from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -11,7 +12,7 @@ import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
-it('delete from root', () => {
+it('delete', () => {
   const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
   const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
   const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
@@ -22,23 +23,26 @@ it('delete from root', () => {
   expect(rootChildrenAfter).toEqual([thoughtA.id])
 
   // lexemeIndex
-  expect(getContexts(stateNew, 'b')).toEqual([])
+  expect(getLexeme(stateNew, 'b')).toBeUndefined()
 })
 
-it('delete descendants of root thought', () => {
+it('delete descendants', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  // cnntextIndex
-  expect(getAllChildrenByContext(stateNew, [HOME_TOKEN])).toEqual([])
-  expect(getAllChildrenByContext(stateNew, ['a'])).toEqual([])
-  expect(getAllChildrenByContext(stateNew, ['b', 'c'])).toEqual([])
+  // thoughtIndex
+  expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
+  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
+  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b'])!)).toBeUndefined()
+  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b', 'c'])!)).toBeUndefined()
+
+  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
 
   // lexemeIndex
-  expect(getContexts(stateNew, 'a')).toEqual([])
-  expect(getContexts(stateNew, 'b')).toEqual([])
-  expect(getContexts(stateNew, 'c')).toEqual([])
+  expect(getLexeme(stateNew, 'a')).toBeUndefined()
+  expect(getLexeme(stateNew, 'b')).toBeUndefined()
+  expect(getLexeme(stateNew, 'c')).toBeUndefined()
 })
 
 it('delete thought with duplicate child', () => {
@@ -46,12 +50,14 @@ it('delete thought with duplicate child', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  // cnntextIndex
-  expect(getAllChildrenByContext(stateNew, [HOME_TOKEN])).toEqual([])
-  expect(getAllChildrenByContext(stateNew, ['a'])).toEqual([])
+  // thoughtIndex
+  expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
+  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
+
+  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
 
   // lexemeIndex
-  expect(getContexts(stateNew, 'a')).toEqual([])
+  expect(getLexeme(stateNew, 'a')).toBeUndefined()
 })
 
 it('update cursor after thought deletion', () => {

@@ -32,7 +32,7 @@ interface Payload {
   thoughtId: ThoughtId
   /** In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated. */
   orphaned?: boolean
-  /** If both local and remote are false, only deallocate thoughts from State, but do not delete them permanently. The parent is marked as pending so that the thought will be automatically restored if it becomes visible again. */
+  /** If both local and remote are false, only deallocate thoughts from State, but do not delete them permanently. This is used by freeThoughts. The parent is marked as pending so that the thought will be automatically restored if it becomes visible again. */
   local?: boolean
   remote?: boolean
 }
@@ -129,12 +129,10 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
         const lexemeChild = getLexeme(stateNew, child.value)
 
         // The new Lexeme is typically the old Lexeme less the deleted context.
-        // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
+        // However, during deallocation we should not remove a single context, which would create an invalid context superscript. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
         const lexemeChildWithoutContext = lexemeChild ? removeContext(state, lexemeChild, child.id) : null
-
-        // if this was the only context of the child, delete the child
         const lexemeChildNew = persist
-          ? lexemeChild?.contexts.length
+          ? lexemeChildWithoutContext?.contexts.length
             ? lexemeChildWithoutContext
             : null
           : lexemeChildWithoutContext?.contexts.some(cxid => getThoughtById(state, cxid))
