@@ -16,7 +16,14 @@ import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import ValueOf from '../../@types/ValueOf'
 import WebsocketStatus from '../../@types/WebsocketStatus'
-import { EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_CONNECTION_TIME } from '../../constants'
+import {
+  ABSOLUTE_TOKEN,
+  EM_TOKEN,
+  HOME_TOKEN,
+  ROOT_CONTEXTS,
+  ROOT_PARENT_ID,
+  WEBSOCKET_CONNECTION_TIME,
+} from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -915,6 +922,10 @@ export const replicateLexeme = async (
     background?: boolean
   } = {},
 ): Promise<Lexeme | undefined> => {
+  // special contexts do not have Lexemes
+  // Redux state will store dummy Lexemes with empty contexts, but there is no reason to try to replicate them
+  if (key === HOME_TOKEN || key === EM_TOKEN || key === ABSOLUTE_TOKEN) return undefined
+
   // Do not await config if it is already cached. Otherwise the initial call to replicateLexeme will not set thoughtDocs synchronously and concurrent calls to replicateLexeme will not be idempotent.
   if (!configCache) {
     await config
