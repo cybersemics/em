@@ -20,7 +20,12 @@ const MetricType: Index<any> = {
 }
 
 /** Allowed metrics names. These are queried by the Graphite dashboard. */
-type MetricsName = 'em.server.permissions' | 'em.server.save' | 'em.server.load' | `em.server.node.${string}`
+type MetricsName =
+  | 'em.server.permissions'
+  | 'em.server.save'
+  | 'em.server.load'
+  | `em.server.hocuspocus.${string}`
+  | `em.server.node.${string}`
 
 /** The Graphite metrics interval that observations are aligned with. Multiple observations within the same interval will only result in one data point. Missing an interval will result in a gap. */
 const BASE_REPORTING_INTERVAL = 1

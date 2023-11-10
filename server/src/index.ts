@@ -7,10 +7,13 @@ import basicAuth from 'express-basic-auth'
 import expressWebsockets from 'express-ws'
 import client, { register } from 'prom-client'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
-import { observeNodeMetrics } from './metrics'
+import observe, { observeNodeMetrics } from './metrics'
 
 // bump maxListeners to avoid warnings when many websocket connections are created
 EventEmitter.defaultMaxListeners = 1000000
+
+/** Frequency of pushing Hocuspocus metrics to Graphite. Observations are concatenated, throttled, and ultimately pushed on the base reporting interval in metrics.ts. */
+const HOCUSPOCUS_METRICS_INTERVAL = 1000
 
 const METRICS_DISABLED_MESSAGE =
   'The /metrics endpoint is disabled because METRICS_USERNAME and METRICS_PASSWORD environment variables are not set.'
@@ -44,6 +47,12 @@ const server = Server.configure({
     new ThoughtspaceExtension({ connectionString: mongodbConnectionString }),
   ],
 })
+
+// Hocuspocus server metrics
+setInterval(() => {
+  observe({ name: 'em.server.hocuspocus.connections', value: server.getConnectionsCount() })
+  observe({ name: 'em.server.hocuspocus.documents', value: server.getDocumentsCount() })
+}, HOCUSPOCUS_METRICS_INTERVAL)
 
 // express
 const { app } = expressWebsockets(express())
