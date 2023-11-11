@@ -429,15 +429,9 @@ const CommandPalette: FC = () => {
   const onHover = useCallback((e, shortcut) => setSelectedShortcut(shortcut), [])
 
   // Select the first shortcut when the input changes.
-  // For some reason onInput retains an old reference to possibleShortcutsSorted.
-  useEffect(
-    () => {
-      setSelectedShortcut(possibleShortcutsSorted[0])
-    },
-    // TODO: Should possibleShortcutsSorted be in the dependency array?
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [keyboardInProgress, setSelectedShortcut],
-  )
+  useEffect(() => {
+    setSelectedShortcut(possibleShortcutsSorted[0])
+  }, [keyboardInProgress, possibleShortcutsSorted, setSelectedShortcut])
 
   useEffect(() => {
     disableScroll()
