@@ -416,9 +416,7 @@ const CommandPalette: FC = () => {
       shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
       storageModel.set('recentCommands', commandsNew)
     },
-    // TODO: Should recentCommands be in the dependency array?
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, possibleShortcutsSorted, store.getState],
+    [dispatch, recentCommands, store.getState],
   )
 
   /** Select shortcuts on hover. */
