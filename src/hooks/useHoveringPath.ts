@@ -10,26 +10,30 @@ const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThought
   const dispatch = useDispatch()
 
   // When DropEmpty is hovered over during drag, update the hoveringPath.
-  useEffect(() => {
-    if (isHovering) {
-      dispatch((dispatch, getState) => {
-        const state = getState()
+  useEffect(
+    () => {
+      if (isHovering) {
+        dispatch((dispatch, getState) => {
+          const state = getState()
 
-        // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
-        if (!state.dragInProgress) return
+          // check dragInProgress to ensure the drag has not been aborted (e.g. by shaking)
+          if (!state.dragInProgress) return
 
-        dispatch(
-          dragInProgress({
-            value: true,
-            draggingThought: state.draggingThought,
-            hoveringPath: path,
-            hoverZone,
-            sourceZone: DragThoughtZone.Thoughts,
-          }),
-        )
-      })
-    }
-  }, [isHovering])
+          dispatch(
+            dragInProgress({
+              value: true,
+              draggingThought: state.draggingThought,
+              hoveringPath: path,
+              hoverZone,
+              sourceZone: DragThoughtZone.Thoughts,
+            }),
+          )
+        })
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isHovering],
+  )
 }
 
 export default useHoveringPath

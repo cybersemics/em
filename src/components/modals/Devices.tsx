@@ -99,19 +99,27 @@ const ShareList = ({
   )
 
   /** Keyboad shortcuts. */
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Enter' && !showDeviceForm) {
-      e.stopPropagation()
-      setShowDeviceForm(true)
-    }
-  }, [])
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !showDeviceForm) {
+        e.stopPropagation()
+        setShowDeviceForm(true)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
-  useEffect(() => {
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [])
+  useEffect(
+    () => {
+      window.addEventListener('keydown', onKeyDown)
+      return () => {
+        window.removeEventListener('keydown', onKeyDown)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return (
     <>
@@ -379,25 +387,30 @@ const ShareDetail = React.memo(
     const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
 
     /** Copy the share link to the clipboard. */
-    const copyShareUrl = useCallback(() => {
-      // flash the share url input without re-rendering the whole component
-      const color = shareUrlInputRef.current?.style.color || ''
-      const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
-      if (shareUrlInputRef.current) {
-        shareUrlInputRef.current.style.color = colors.highlight
-        shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
-      }
-      setTimeout(() => {
+    const copyShareUrl = useCallback(
+      () => {
+        // flash the share url input without re-rendering the whole component
+        const color = shareUrlInputRef.current?.style.color || ''
+        const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
         if (shareUrlInputRef.current) {
-          shareUrlInputRef.current.style.color = color
-          shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+          shareUrlInputRef.current.style.color = colors.highlight
+          shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
         }
-      }, 200)
+        setTimeout(() => {
+          if (shareUrlInputRef.current) {
+            shareUrlInputRef.current.style.color = color
+            shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+          }
+        }, 200)
 
-      navigator.clipboard.writeText(url)
-      dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
-    }, [url])
+        navigator.clipboard.writeText(url)
+        dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [url],
+    )
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const onChangeName = useCallback(
       _.debounce((e: ContentEditableEvent) => {
         permissionsModel.update(accessToken, { ...share, name: e.target.value.trim() })
@@ -406,26 +419,34 @@ const ShareDetail = React.memo(
     )
 
     /** Copy the share url on Cmd/Ctrl + C. */
-    const onKeyDown = useCallback((e: KeyboardEvent) => {
-      if (
-        e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
-        // do not override copy shortcut if user has text selected
-        selection.isCollapsed() !== false &&
-        // input selection is not reflected in window.getSelection()
-        shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd
-      ) {
-        e.stopPropagation()
-        copyShareUrl()
-      }
-    }, [])
+    const onKeyDown = useCallback(
+      (e: KeyboardEvent) => {
+        if (
+          e.key === 'c' &&
+          (isMac ? e.metaKey : e.ctrlKey) &&
+          // do not override copy shortcut if user has text selected
+          selection.isCollapsed() !== false &&
+          // input selection is not reflected in window.getSelection()
+          shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd
+        ) {
+          e.stopPropagation()
+          copyShareUrl()
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    )
 
-    useEffect(() => {
-      window.addEventListener('keydown', onKeyDown)
-      return () => {
-        window.removeEventListener('keydown', onKeyDown)
-      }
-    }, [])
+    useEffect(
+      () => {
+        window.addEventListener('keydown', onKeyDown)
+        return () => {
+          window.removeEventListener('keydown', onKeyDown)
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    )
 
     return (
       <div>

@@ -74,6 +74,7 @@ const CommandSearch: FC<{
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onExecute, onSelectDown, onSelectUp, showCommandPalette],
   )
 
@@ -189,9 +190,10 @@ const CommandRow: FC<{
     ref.current?.addEventListener('mousemove', onHoverShortcut)
 
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       ref.current?.removeEventListener('mousemove', onHoverShortcut)
     }
-  }, [])
+  }, [onHover, shortcut])
 
   return (
     <div
@@ -323,6 +325,7 @@ const CommandRow: FC<{
 /** Render a command palette with keyboard or gesture autocomplete. */
 const CommandPalette: FC = () => {
   const store = useStore()
+  const dispatch = useDispatch()
   const alert = useSelector((state: State) => state.alert)
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
   const fontSize = useSelector((state: State) => state.fontSize)
@@ -335,69 +338,73 @@ const CommandPalette: FC = () => {
   const gestureInProgress = gestureStore.useState()
 
   // get the shortcuts that can be executed from the current gesture in progress
-  const possibleShortcutsSorted = useMemo(() => {
-    if (!show) return []
+  const possibleShortcutsSorted = useMemo(
+    () => {
+      if (!show) return []
 
-    const possibleShortcuts = visibleShortcuts.filter(shortcut => {
-      // keyboard
-      if (showCommandPalette) {
-        const label = (
-          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
-        ).toLowerCase()
-        return (
-          // include shortcuts with at least one included char in the list
-          // fuzzy matching will prioritize the best shortcuts
-          !keyboardInProgress ||
-          keyboardInProgress
-            .toLowerCase()
-            .split('')
-            .some(char => char !== ' ' && label.includes(char))
-        )
-      }
-      // gesture
-      else {
-        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
-      }
-    })
-
-    // sorted shortcuts
-    const sorted = _.sortBy(possibleShortcuts, shortcut => {
-      const label = (
-        shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
-      ).toLowerCase()
-      return [
-        // canExecute
-        !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
-        // gesture length
-        gestureInProgress ? shortcut.gesture?.length : '',
-        // recent commands
-        !keyboardInProgress &&
-          (() => {
-            const i = recentCommands.indexOf(shortcut.id)
-            // if not found, sort to the end
-            // pad with zeros so that the sort is correct for multiple digits
-            return i === -1 ? 'z' : i.toString().padStart(5, '0')
-          })(),
-        // startsWith
-        keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
-        // contains (n chars)
-        // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
-        keyboardInProgress &&
-          (
-            9999 -
+      const possibleShortcuts = visibleShortcuts.filter(shortcut => {
+        // keyboard
+        if (showCommandPalette) {
+          const label = (
+            shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
+          ).toLowerCase()
+          return (
+            // include shortcuts with at least one included char in the list
+            // fuzzy matching will prioritize the best shortcuts
+            !keyboardInProgress ||
             keyboardInProgress
               .toLowerCase()
               .split('')
-              .filter(char => char !== ' ' && label.includes(char)).length
+              .some(char => char !== ' ' && label.includes(char))
           )
-            .toString()
-            .padStart(5, '0'),
-        // all else equal, sort by label
-        label,
-      ].join('\x00')
-    })
-    return sorted
-  }, [gestureInProgress, keyboardInProgress, showCommandPalette])
+        }
+        // gesture
+        else {
+          return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
+        }
+      })
+
+      // sorted shortcuts
+      const sorted = _.sortBy(possibleShortcuts, shortcut => {
+        const label = (
+          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
+        ).toLowerCase()
+        return [
+          // canExecute
+          !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
+          // gesture length
+          gestureInProgress ? shortcut.gesture?.length : '',
+          // recent commands
+          !keyboardInProgress &&
+            (() => {
+              const i = recentCommands.indexOf(shortcut.id)
+              // if not found, sort to the end
+              // pad with zeros so that the sort is correct for multiple digits
+              return i === -1 ? 'z' : i.toString().padStart(5, '0')
+            })(),
+          // startsWith
+          keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
+          // contains (n chars)
+          // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
+          keyboardInProgress &&
+            (
+              9999 -
+              keyboardInProgress
+                .toLowerCase()
+                .split('')
+                .filter(char => char !== ' ' && label.includes(char)).length
+            )
+              .toString()
+              .padStart(5, '0'),
+          // all else equal, sort by label
+          label,
+        ].join('\x00')
+      })
+      return sorted
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gestureInProgress, keyboardInProgress, showCommandPalette],
+  )
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -409,18 +416,28 @@ const CommandPalette: FC = () => {
       if (unmounted.current || (shortcut.canExecute && !shortcut.canExecute(store.getState))) return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       setRecentCommands(commandsNew)
-      store.dispatch(commandPalette())
-      shortcut.exec(store.dispatch, store.getState, e, { type: 'commandPalette' })
+      dispatch(commandPalette())
+      shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
       storageModel.set('recentCommands', commandsNew)
     },
-    [possibleShortcutsSorted],
+    // TODO: Should recentCommands be in the dependency array?
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, possibleShortcutsSorted, store.getState],
   )
 
+  /** Select shortcuts on hover. */
+  const onHover = useCallback((e, shortcut) => setSelectedShortcut(shortcut), [])
+
   // Select the first shortcut when the input changes.
-  // For some reason onInput retains an old reference to possibleShortcutsSorted .
-  useEffect(() => {
-    setSelectedShortcut(possibleShortcutsSorted[0])
-  }, [keyboardInProgress])
+  // For some reason onInput retains an old reference to possibleShortcutsSorted.
+  useEffect(
+    () => {
+      setSelectedShortcut(possibleShortcutsSorted[0])
+    },
+    // TODO: Should possibleShortcutsSorted be in the dependency array?
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [keyboardInProgress, setSelectedShortcut],
+  )
 
   useEffect(() => {
     disableScroll()
@@ -501,7 +518,7 @@ const CommandPalette: FC = () => {
                 key={shortcut.id}
                 last={shortcut === possibleShortcutsSorted[possibleShortcutsSorted.length - 1]}
                 onClick={onExecute}
-                onHover={(e, shortcut) => setSelectedShortcut(shortcut)}
+                onHover={onHover}
                 selected={showCommandPalette ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
                 shortcut={shortcut}
               />

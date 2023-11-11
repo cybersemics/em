@@ -11,17 +11,25 @@ type ExtractYEvent<T> = T extends Y.YMapEvent<infer U> | Y.YArrayEvent<infer U> 
 const useSharedType = <T>(yobj: Y.AbstractType<T>): Index<ExtractYEvent<T>> => {
   const [state, setState] = useState<Index<ExtractYEvent<T>>>(yobj.toJSON())
 
-  const updateState = useCallback(async e => {
-    const stateNew: Index<ExtractYEvent<T>> = yobj.toJSON()
-    setState((stateOld: Index<ExtractYEvent<T>>) => (!shallowEqual(stateNew, stateOld) ? stateNew : stateOld))
-  }, [])
+  const updateState = useCallback(
+    async e => {
+      const stateNew: Index<ExtractYEvent<T>> = yobj.toJSON()
+      setState((stateOld: Index<ExtractYEvent<T>>) => (!shallowEqual(stateNew, stateOld) ? stateNew : stateOld))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
-  useEffect(() => {
-    yobj.observe(updateState)
-    return () => {
-      yobj.unobserve(updateState)
-    }
-  }, [])
+  useEffect(
+    () => {
+      yobj.observe(updateState)
+      return () => {
+        yobj.unobserve(updateState)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return state
 }

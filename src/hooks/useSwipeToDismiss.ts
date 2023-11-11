@@ -53,7 +53,7 @@ const useSwipeToDismiss = (
   useEffect(() => {
     if (!ref.current) return
     setHeight(ref.current.offsetHeight)
-  }, [])
+  }, [ref, setHeight])
 
   const start = useCallback((e: React.TouchEvent) => {
     // do not animate during drag so that element tracks touch exactly
@@ -88,6 +88,7 @@ const useSwipeToDismiss = (
         setDY(0)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dy, height],
   )
 

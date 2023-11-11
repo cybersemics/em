@@ -68,9 +68,13 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
     setLoadingState(false)
   }
 
-  useEffect(() => {
-    if (search) searchThoughts(search)
-  }, [search, remoteSearch])
+  useEffect(
+    () => {
+      if (search) searchThoughts(search)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [search, remoteSearch],
+  )
 
   if (!search) return null
 

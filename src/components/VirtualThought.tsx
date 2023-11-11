@@ -127,13 +127,17 @@ const VirtualThought = ({
   //   childPath,
   // })
 
-  const updateHeight = useCallback(() => {
-    if (!ref.current) return
-    const heightNew = ref.current.clientHeight
-    if (heightNew === height) return
-    setHeight(heightNew)
-    onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
-  }, [])
+  const updateHeight = useCallback(
+    () => {
+      if (!ref.current) return
+      const heightNew = ref.current.clientHeight
+      if (heightNew === height) return
+      setHeight(heightNew)
+      onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
@@ -147,7 +151,7 @@ const VirtualThought = ({
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [isEditing])
+  }, [isEditing, updateHeight])
 
   // re-calculate height after note renders
   // TODO: Is there a way to detect when the note renders without an arbitrary delay?
@@ -155,14 +159,18 @@ const VirtualThought = ({
     if (hasNote) {
       setTimeout(updateHeight, 50)
     }
-  }, [hasNote])
+  }, [hasNote, updateHeight])
 
   // trigger onResize with null to allow subscribes to clean up
-  useEffect(() => {
-    return () => {
-      onResize?.({ height: null, id: thought.id, key: crossContextualKey })
-    }
-  }, [])
+  useEffect(
+    () => {
+      return () => {
+        onResize?.({ height: null, id: thought.id, key: crossContextualKey })
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
@@ -307,6 +315,7 @@ const Subthought = ({
       ...(isEditingChildPath ? getStyle(state, childEnvZoomId()) : null),
       ...style,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isEditingChildPath, style],
   )
 

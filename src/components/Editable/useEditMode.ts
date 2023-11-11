@@ -38,55 +38,56 @@ const useEditMode = ({
   // focus on the ContentEditable element if editing os on desktop
   const editMode = !isTouch || editing
 
-  useEffect(() => {
-    /** Set the selection to the current Editable at the cursor offset. */
-    const setSelectionToCursorOffset = () => {
-      // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
-      // https://github.com/cybersemics/em/issues/1596
-      if (style?.visibility === 'hidden') {
-        selection.clear()
-      } else {
-        selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
+  useEffect(
+    () => {
+      /** Set the selection to the current Editable at the cursor offset. */
+      const setSelectionToCursorOffset = () => {
+        // do not set the selection on hidden thoughts, otherwise it will cause a faulty focus event when switching windows
+        // https://github.com/cybersemics/em/issues/1596
+        if (style?.visibility === 'hidden') {
+          selection.clear()
+        } else {
+          selection.set(contentRef.current, { offset: editingCursorOffset || 0 })
+        }
       }
-    }
 
-    // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
-    const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
+      // if there is no browser selection, do not manually call selection.set as it does not preserve the cursor offset. Instead allow the default focus event.
+      const cursorWithoutSelection = editingCursorOffset !== null || !selection.isActive()
 
-    // allow transient editable to have focus on render
-    const shouldSetSelection =
-      transient ||
-      (isEditing &&
-        editMode &&
-        !noteFocus &&
-        contentRef.current &&
-        cursorWithoutSelection &&
-        !dragHold &&
-        !disabledRef.current)
+      // allow transient editable to have focus on render
+      const shouldSetSelection =
+        transient ||
+        (isEditing &&
+          editMode &&
+          !noteFocus &&
+          contentRef.current &&
+          cursorWithoutSelection &&
+          !dragHold &&
+          !disabledRef.current)
 
-    /* DEBUGGING
+      /* DEBUGGING
       There are many different values that determine if we set the selection.
       Use this to help debug selection issues.
     */
-    // if (isEditing) {
-    //   const value = headValue(store.getState(), path)
-    //   if (shouldSetSelection) {
-    //     console.info('Selection set on', value, editingCursorOffset)
-    //   } else {
-    //     console.info('These values are false, preventing the selection from being set on', value)
-    //     if (!editMode) console.info('  editMode')
-    //     if (!contentRef.current) console.info('  contentRef.current')
-    //     if (noteFocus) console.info('  - !noteFocus')
-    //     if (!(cursorWithoutSelection)) console.info('  cursorWithoutSelection')
-    //     if (dragHold) console.info('  !dragHold')
-    //     if (disabledRef.current) console.info('  !disabledRef.current')
-    //   }
-    // }
+      // if (isEditing) {
+      //   const value = headValue(store.getState(), path)
+      //   if (shouldSetSelection) {
+      //     console.info('Selection set on', value, editingCursorOffset)
+      //   } else {
+      //     console.info('These values are false, preventing the selection from being set on', value)
+      //     if (!editMode) console.info('  editMode')
+      //     if (!contentRef.current) console.info('  contentRef.current')
+      //     if (noteFocus) console.info('  - !noteFocus')
+      //     if (!(cursorWithoutSelection)) console.info('  cursorWithoutSelection')
+      //     if (dragHold) console.info('  !dragHold')
+      //     if (disabledRef.current) console.info('  !disabledRef.current')
+      //   }
+      // }
 
-    if (shouldSetSelection) {
-      preventAutoscroll(contentRef.current)
+      if (shouldSetSelection) {
+        preventAutoscroll(contentRef.current)
 
-      /*
+        /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
         On Mobile Safari, Auto-Capitalization is broken if the selection is set synchronously (#999).
         Only breaks on Enter or Backspace, not gesture.
@@ -94,28 +95,35 @@ const useEditMode = ({
         setTimeout fixes it, however it introduces an infinite loop when a nested empty thought is created.
         Not calling asyncFocus when the selection is already on a thought prevents the infinite loop.
       */
-      if (isTouch && isSafari()) {
-        if (!selection.isThought()) {
-          asyncFocus()
+        if (isTouch && isSafari()) {
+          if (!selection.isThought()) {
+            asyncFocus()
+          }
+          setTimeout(setSelectionToCursorOffset)
+        } else {
+          setSelectionToCursorOffset()
         }
-        setTimeout(setSelectionToCursorOffset)
-      } else {
-        setSelectionToCursorOffset()
       }
-    }
-  }, [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, transient])
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isEditing, editingCursorOffset, hasNoteFocus, dragInProgress, editing, transient],
+  )
 
-  useEffect(() => {
-    // Set editing to false after unmount
-    return () => {
-      dispatch((dispatch, getState) => {
-        const { cursor, editing } = getState()
-        if (editing && equalPath(cursor, path)) {
-          dispatch(editingAction({ value: false }))
-        }
-      })
-    }
-  }, [])
+  useEffect(
+    () => {
+      // Set editing to false after unmount
+      return () => {
+        dispatch((dispatch, getState) => {
+          const { cursor, editing } = getState()
+          if (editing && equalPath(cursor, path)) {
+            dispatch(editingAction({ value: false }))
+          }
+        })
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // Provide an escape hatch to allow the next default selection rather than setting it.
   // This allows the user to set the selection in the middle of a non-cursor thought when in edit mode.

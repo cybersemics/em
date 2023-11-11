@@ -23,7 +23,7 @@ const useWindowOverflow = (ref: React.RefObject<HTMLElement>) => {
     if (left > 0 || right > 0) {
       setOverflow({ left, right })
     }
-  }, [])
+  }, [ref])
 
   return overflow
 }

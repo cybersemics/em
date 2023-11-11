@@ -86,7 +86,7 @@ const Invites = () => {
   useEffect(() => {
     // getAllInvitesOrGenerate(uid)
     getAllInvitesOrGenerate('')
-  }, [])
+  }, [getAllInvitesOrGenerate])
 
   /**
    * Handle when a invite code is seen by user.

@@ -118,7 +118,7 @@ const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>)
           }),
         ])
       }
-    }, [dragShortcut, isHovering, sourceZone])
+    }, [dispatch, dragShortcut, isHovering, sourceZone])
 
     return dropTarget(<div>{children}</div>)
   },

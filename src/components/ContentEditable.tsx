@@ -22,17 +22,31 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
   const editableNonce = useSelector((state: State) => state.editableNonce)
   const editableNonceRef = useRef<number>(editableNonce)
 
-  useEffect(() => {
-    if (contentRef.current) contentRef.current!.innerHTML = html
-  }, [])
+  useEffect(
+    () => {
+      if (contentRef.current) {
+        contentRef.current.innerHTML = html
+      }
+    },
+    // Only set the html once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
-  useEffect(() => {
-    // prevent innerHTML update when editing
-    if (editableNonceRef.current !== editableNonce || (prevHtmlRef.current !== html && allowInnerHTMLChange.current)) {
-      contentRef.current!.innerHTML = html
-      prevHtmlRef.current = html
-    }
-  }, [html, editableNonce])
+  useEffect(
+    () => {
+      // prevent innerHTML update when editing
+      if (
+        editableNonceRef.current !== editableNonce ||
+        (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
+      ) {
+        contentRef.current!.innerHTML = html
+        prevHtmlRef.current = html
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [html, editableNonce],
+  )
 
   useEffect(() => {
     editableNonceRef.current = editableNonce

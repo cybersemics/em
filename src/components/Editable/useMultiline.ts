@@ -24,7 +24,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     // The element is multiline if its height is twice the single line height.
     // (Actually we just check if it is over 1.5x the single line height for a more forgiving condition.)
     setMultiline(height - paddingTop > singleLineHeight * 1.5)
-  }, [fontSize])
+  }, [contentRef, fontSize])
 
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
@@ -38,7 +38,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
       // return the unsubscribe function
       return editingValueStore.subscribe(updateMultiline)
     }
-  }, [fontSize, isEditing, showSplitView, splitPosition])
+  }, [contentRef, fontSize, isEditing, showSplitView, splitPosition, updateMultiline])
 
   return multiline
 }

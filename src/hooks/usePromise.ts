@@ -7,6 +7,7 @@ const usePromise = <T>(promise: Promise<T>, defaultValue?: T) => {
   const unmounted = useRef(false)
 
   // subscribe to the promise only once
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const subscribe = useCallback(
     once(() => {
       promise.then(value => {

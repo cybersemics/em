@@ -223,6 +223,7 @@ const Bullet = ({
       })
       onClick?.(e)
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [dragHold],
   )
 

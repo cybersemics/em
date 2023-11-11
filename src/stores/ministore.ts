@@ -50,12 +50,16 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 
   /** A hook that invokes a callback when the state changes. */
   const useChangeEffect = (cb: (state: T) => void) => {
-    useEffect(() => {
-      emitter.on('change', cb)
-      return () => {
-        emitter.off('change', cb)
-      }
-    }, [])
+    useEffect(
+      () => {
+        emitter.on('change', cb)
+        return () => {
+          emitter.off('change', cb)
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    )
   }
 
   function useSelector<U>(selector: (state: T) => U): U
@@ -65,19 +69,23 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     const [localState, setLocalState] = useState(selector ? selector(state) : state)
     const unmounted = useRef(false)
 
-    useEffect(() => {
-      /** Updates local state on store state change. */
-      const onChange = (stateNew: T) => {
-        if (!unmounted.current) {
-          setLocalState(selector ? selector(state) : state)
+    useEffect(
+      () => {
+        /** Updates local state on store state change. */
+        const onChange = (stateNew: T) => {
+          if (!unmounted.current) {
+            setLocalState(selector ? selector(state) : state)
+          }
         }
-      }
-      const unsubscribe = subscribe(onChange)
-      return () => {
-        unsubscribe()
-        unmounted.current = true
-      }
-    }, [])
+        const unsubscribe = subscribe(onChange)
+        return () => {
+          unsubscribe()
+          unmounted.current = true
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    )
 
     return localState
   }

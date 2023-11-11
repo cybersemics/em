@@ -78,13 +78,17 @@ const StyleInjector = ({
   style: React.CSSProperties
 }) => {
   const ref = useRef<HTMLElement | null>(null)
-  useEffect(() => {
-    if (!ref.current) return
-    const styleContent = ref.current.getAttribute('style') || ''
-    ref.current.remove()
-    const ruleset = `${selector}{${styleContent}}`
-    css(ruleset)
-  }, [])
+  useEffect(
+    () => {
+      if (!ref.current) return
+      const styleContent = ref.current.getAttribute('style') || ''
+      ref.current.remove()
+      const ruleset = `${selector}{${styleContent}}`
+      css(ruleset)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
   return <span ref={ref} style={style} />
 }
 
@@ -122,7 +126,7 @@ const useDisableLongPressToSelect = () => {
     return () => {
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [])
+  }, [onSelectionChange])
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
@@ -189,6 +193,7 @@ const AppComponent: FC<Props> = props => {
 
   const tutorial = useSelector(isTutorial)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(
     _.throttle((n: number) => dispatch(updateSplitPosition(n)), 8),
     [],
@@ -228,17 +233,21 @@ const AppComponent: FC<Props> = props => {
     safari: isSafari(),
   })
 
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
-      // Android only, set statusbar color to black.
-      if (Capacitor.getPlatform() === 'android') {
-        StatusBar.setBackgroundColor({
-          color: colors.bg,
-        })
+  useEffect(
+    () => {
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
+        // Android only, set statusbar color to black.
+        if (Capacitor.getPlatform() === 'android') {
+          StatusBar.setBackgroundColor({
+            color: colors.bg,
+          })
+        }
       }
-    }
-  }, [])
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   const globalStyles = useMemo<[string, React.CSSProperties][]>(
     () => [

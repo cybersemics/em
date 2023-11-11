@@ -301,13 +301,16 @@ const ThoughtContainer = ({
   )
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
-  const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
-    // only hide when typing, not when deleting
-    // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
-    if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
-      dispatch(distractionFreeTyping(true))
-    }
-  }, [])
+  const onEdit = useCallback(
+    ({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
+      // only hide when typing, not when deleting
+      // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
+      if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
+        dispatch(distractionFreeTyping(true))
+      }
+    },
+    [dispatch],
+  )
 
   // Styles applied to the .thought-annotation and .editable
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
@@ -319,7 +322,7 @@ const ThoughtContainer = ({
       // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
       textDecoration: style?.textDecoration,
     }),
-    [isChildHovering, style?.textDecoration],
+    [colors.highlight, isChildHovering, style?.textDecoration],
   )
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {

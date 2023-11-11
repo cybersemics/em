@@ -58,9 +58,13 @@ const DroppableQuickDropIcon = ({
     }
   }
 
-  useEffect(() => {
-    hover(isHovering, zone)
-  }, [isHovering])
+  useEffect(
+    () => {
+      hover(isHovering, zone)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isHovering],
+  )
 
   return dropTarget(
     <div

@@ -25,22 +25,30 @@ const useDragHold = ({
   const dispatch = useDispatch()
 
   /** Highlight bullet and show alert on long press on Thought. */
-  const onLongPressStart = useCallback(() => {
-    if (disabled) return
-    setIsPressed(true)
-    dispatch(dragHold({ value: true, simplePath, sourceZone }))
-  }, [])
+  const onLongPressStart = useCallback(
+    () => {
+      if (disabled) return
+      setIsPressed(true)
+      dispatch(dragHold({ value: true, simplePath, sourceZone }))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
-  const onLongPressEnd = useCallback(() => {
-    if (disabled) return
-    setIsPressed(false)
-    dispatch((dispatch, getState) => {
-      if (getState().dragHold) {
-        dispatch([dragHold({ value: false }), alert(null)])
-      }
-    })
-  }, [])
+  const onLongPressEnd = useCallback(
+    () => {
+      if (disabled) return
+      setIsPressed(false)
+      dispatch((dispatch, getState) => {
+        if (getState().dragHold) {
+          dispatch([dragHold({ value: false }), alert(null)])
+        }
+      })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // react-dnd stops propagation so onLongPressEnd sometimes does't get called
   // so disable dragHold and isPressed as soon as we are dragging
@@ -53,7 +61,7 @@ const useDragHold = ({
         dispatch([dragHold({ value: false }), alert(null)])
       }
     })
-  }, [isDragging])
+  }, [dispatch, isDragging])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
 

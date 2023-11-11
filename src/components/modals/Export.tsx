@@ -116,6 +116,7 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
   // Update exportingThoughts every 100ms to throttle re-renders.
   // This results in a ~10% decrease in pull time on 6k thoughts.
   // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const setExportingThoughtsThrottled = useCallback(
     throttleConcat((queue: Thought[]) => setExportingThoughts(thoughtsOld => [...thoughtsOld, ...queue]), 100),
     [],
@@ -123,46 +124,50 @@ const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) 
 
   // fetch all pending descendants of the cursor once for all components
   // track isMounted so we can cancel the end trigger after unmount
-  useEffect(() => {
-    isMounted.current = true
+  useEffect(
+    () => {
+      isMounted.current = true
 
-    const id = head(simplePath)
+      const id = head(simplePath)
 
-    const { promise, cancel } = replicateTree(id, {
-      // TODO: Warn the user if offline or not fully replicated
-      remote: false,
-      onThought: (thought, thoughtIndex) => {
-        if (!isMounted.current) return
-        setExportingThoughtsThrottled(thought)
-      },
-    })
-
-    promise.then(thoughtIndex => {
-      if (!isMounted.current) return
-
-      setExportingThoughtsThrottled.flush()
-
-      const initial = initialState()
-      const exportedState: State = {
-        ...initial,
-        thoughts: {
-          ...initial.thoughts,
-          thoughtIndex: {
-            ...initial.thoughts.thoughtIndex,
-            ...thoughtIndex,
-          },
+      const { promise, cancel } = replicateTree(id, {
+        // TODO: Warn the user if offline or not fully replicated
+        remote: false,
+        onThought: (thought, thoughtIndex) => {
+          if (!isMounted.current) return
+          setExportingThoughtsThrottled(thought)
         },
+      })
+
+      promise.then(thoughtIndex => {
+        if (!isMounted.current) return
+
+        setExportingThoughtsThrottled.flush()
+
+        const initial = initialState()
+        const exportedState: State = {
+          ...initial,
+          thoughts: {
+            ...initial.thoughts,
+            thoughtIndex: {
+              ...initial.thoughts.thoughtIndex,
+              ...thoughtIndex,
+            },
+          },
+        }
+
+        setExportedState(exportedState)
+        setIsPulling(false)
+      })
+
+      return () => {
+        isMounted.current = false
+        cancel()
       }
-
-      setExportedState(exportedState)
-      setIsPulling(false)
-    })
-
-    return () => {
-      isMounted.current = false
-      cancel()
-    }
-  }, [])
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return (
     <PullStatusContext.Provider value={isPulling}>
@@ -316,51 +321,63 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
     ])
 
     clearTimeout(globals.errorTimer)
-  }, [exportThoughtsPhraseFinal])
+  }, [dispatch, exportThoughtsPhraseFinal])
 
   // Sets export content when pull is complete by useDescendants
-  useEffect(() => {
-    if (!isPulling) setExportContentFromCursor()
-  }, [isPulling])
+  useEffect(
+    () => {
+      if (!isPulling) setExportContentFromCursor()
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isPulling],
+  )
 
-  useEffect(() => {
-    if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
+  useEffect(
+    () => {
+      if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
 
-    // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-    if (selected.type === 'text/html' && exportedState) {
-      setNumDescendantsInState(
-        getDescendantThoughtIds(exportedState, id, {
-          filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-          filterFunction: exportFilter({
-            excludeArchived: !shouldIncludeArchived,
-            excludeMeta: !shouldIncludeMetaAttributes,
-          }),
-        }).length,
-      )
-    }
+      // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
+      if (selected.type === 'text/html' && exportedState) {
+        setNumDescendantsInState(
+          getDescendantThoughtIds(exportedState, id, {
+            filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+            filterFunction: exportFilter({
+              excludeArchived: !shouldIncludeArchived,
+              excludeMeta: !shouldIncludeMetaAttributes,
+            }),
+          }).length,
+        )
+      }
 
-    if (!isPulling) {
-      setExportContentFromCursor()
-    }
-  }, [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting])
+      if (!isPulling) {
+        setExportContentFromCursor()
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting],
+  )
 
-  useEffect(() => {
-    const clipboard = new ClipboardJS('.copy-clipboard-btn')
+  useEffect(
+    () => {
+      const clipboard = new ClipboardJS('.copy-clipboard-btn')
 
-    clipboard.on('success', onCopyToClipboard)
+      clipboard.on('success', onCopyToClipboard)
 
-    clipboard.on('error', e => {
-      console.error(e)
-      dispatch(error({ value: 'Error copying thoughts' }))
+      clipboard.on('error', e => {
+        console.error(e)
+        dispatch(error({ value: 'Error copying thoughts' }))
 
-      clearTimeout(globals.errorTimer)
-      globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: AlertType.Clipboard })), 10000)
-    })
+        clearTimeout(globals.errorTimer)
+        globals.errorTimer = window.setTimeout(() => dispatch(alert(null, { alertType: AlertType.Clipboard })), 10000)
+      })
 
-    return () => {
-      clipboard.destroy()
-    }
-  }, [exportThoughtsPhraseFinal])
+      return () => {
+        clipboard.destroy()
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [exportThoughtsPhraseFinal],
+  )
 
   /** Copy the exported content on Cmd/Ctrl + C. */
   const onKeyDown = useCallback(
@@ -379,6 +396,8 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
         onCopyToClipboard()
       }
     },
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [exportContent],
   )
 
@@ -495,6 +514,8 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
           'Include **double asteriskss** for bold and *single asterisks* for italics. If unchecked, formatting will be lost.',
       },
     ],
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [shouldIncludeArchived, shouldIncludeMetaAttributes, shouldIncludeMarkdownFormatting],
   )
 

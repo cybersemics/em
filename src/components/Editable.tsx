@@ -140,12 +140,16 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
     contentRef.current && contentRef.current.classList[value ? 'add' : 'remove']('invalid-option')
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
-  useEffect(() => {
-    oldValueRef.current = value
-    if (isEditing && selection.isThought() && editingValueStore.getState() !== value) {
-      editingValueStore.update(value)
-    }
-  }, [value])
+  useEffect(
+    () => {
+      oldValueRef.current = value
+      if (isEditing && selection.isThought() && editingValueStore.getState() !== value) {
+        editingValueStore.update(value)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [value],
+  )
 
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
@@ -178,7 +182,9 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         }),
       )
     },
-    [isEditing, path],
+    // When isEditing changes, we need to reset the cursor on the thought.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, isEditing, path],
   )
 
   /**
@@ -252,6 +258,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
 
     // flush edits and remove handler on unmount
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       throttledChangeRef.current.flush()
       shortcutEmitter.off('shortcut', flush)
     }
@@ -361,6 +368,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         thoughtChangeHandler(newValue, { rank, simplePath })
       } else throttledChangeRef.current(newValue, { rank, simplePath })
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [readonly, uneditable /* TODO: options */],
   )
 
@@ -427,6 +435,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         }
       })
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath],
   )
 
@@ -434,21 +443,25 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
    * Sets the cursor on focus.
    * Prevented by mousedown event above for hidden thoughts.
    */
-  const onFocus = useCallback(() => {
-    preventAutoscrollEnd(contentRef.current)
-    if (suppressFocusStore.getState()) return
-    // do not allow blur to setEditingValue when it is followed immediately by a focus
-    blurring = false
+  const onFocus = useCallback(
+    () => {
+      preventAutoscrollEnd(contentRef.current)
+      if (suppressFocusStore.getState()) return
+      // do not allow blur to setEditingValue when it is followed immediately by a focus
+      blurring = false
 
-    if (isTouch && isSafari() && !isIOS) {
-      positionFixed.start()
-    }
+      if (isTouch && isSafari() && !isIOS) {
+        positionFixed.start()
+      }
 
-    const { dragHold, dragInProgress } = store.getState()
-    if (!dragHold && !dragInProgress) {
-      setCursorOnThought({ editing: true })
-    }
-  }, [value, setCursorOnThought])
+      const { dragHold, dragInProgress } = store.getState()
+      if (!dragHold && !dragInProgress) {
+        setCursorOnThought({ editing: true })
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [value, setCursorOnThought],
+  )
 
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
@@ -499,6 +512,7 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
         allowDefaultSelection()
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled, isVisible, path, setCursorOnThought],
   )
 

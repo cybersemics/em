@@ -95,6 +95,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         onTapUp?.(e)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [longPressTapUp, customize, isButtonExecutable, disabled],
   )
 
@@ -115,7 +116,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         e.preventDefault()
       }
     },
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [longPressTapDown, customize, disabled],
   )
 

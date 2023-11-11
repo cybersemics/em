@@ -66,15 +66,18 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, [])
 
   /** Handles toolbar scroll event. */
-  const onScroll = useCallback((e: React.UIEvent<HTMLElement>) => {
-    const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
+  const onScroll = useCallback(
+    (e: React.UIEvent<HTMLElement>) => {
+      const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
 
-    if (scrollDifference >= 5) {
-      setPressingToolbarId(null)
-    }
+      if (scrollDifference >= 5) {
+        setPressingToolbarId(null)
+      }
 
-    updateArrows()
-  }, [])
+      updateArrows()
+    },
+    [updateArrows],
+  )
 
   /**********************************************************************
    * Effects
@@ -87,14 +90,14 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       window.removeEventListener('resize', updateArrows)
     }
-  }, [])
+  }, [updateArrows])
 
   // disable pressing on drag
   useEffect(() => {
     if (isDraggingAny) {
       setPressingToolbarId(null)
     }
-  }, [isDraggingAny])
+  }, [isDraggingAny, setPressingToolbarId])
 
   /**********************************************************************
    * Render

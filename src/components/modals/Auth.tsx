@@ -56,20 +56,23 @@ const ModalAuth = () => {
   const dispatch = useDispatch()
 
   /** Reset password using reset email. */
-  const resetPassword: SubmitAction = useCallback(async (closeModal, email) => {
-    updateIsSubmitting(true)
+  const resetPassword: SubmitAction = useCallback(
+    async (closeModal, email) => {
+      updateIsSubmitting(true)
 
-    throw new Error('Not implemented')
-    try {
-      // await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
-      updateIsSubmitting(false)
-    } catch (e: any) {
-      updateIsSubmitting(false)
-      return updateError(e.message || errorsIndex.default)
-    }
-    dispatch(alert('Please check your email'))
-    closeModal()
-  }, [])
+      throw new Error('Not implemented')
+      try {
+        // await window.firebase.auth().sendPasswordResetEmail(email, { url: FIREBASE_REDIRECT_URL! })
+        updateIsSubmitting(false)
+      } catch (e: any) {
+        updateIsSubmitting(false)
+        return updateError(e.message || errorsIndex.default)
+      }
+      dispatch(alert('Please check your email'))
+      closeModal()
+    },
+    [dispatch],
+  )
 
   /** Login with email and password. */
   const loginWithEmailAndPassword: SubmitAction = useCallback(async (closeModal, email, password) => {

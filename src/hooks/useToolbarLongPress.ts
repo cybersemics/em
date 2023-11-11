@@ -25,35 +25,49 @@ const useToolbarLongPress = ({
   const dispatch = useDispatch()
 
   /** Turn on isPressed and dispatch toolbarLongPress when the long press starts. */
-  const onLongPressStart = useCallback(() => {
-    if (disabled) return
-    setIsPressed(true)
-    dispatch(toolbarLongPress({ shortcut, sourceZone }))
-  }, [])
+  const onLongPressStart = useCallback(
+    () => {
+      if (disabled) return
+      setIsPressed(true)
+      dispatch(toolbarLongPress({ shortcut, sourceZone }))
+    },
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   /** Turn off isPressed and dismiss an alert when long press ends. */
-  const onLongPressEnd = useCallback(() => {
-    if (disabled) return
-    setIsPressed(false)
-    dispatch((dispatch, getState) => {
-      if (getState().dragHold) {
-        dispatch([toolbarLongPress({ shortcut: null }), alert(null)])
-      }
-    })
-  }, [])
+  const onLongPressEnd = useCallback(
+    () => {
+      if (disabled) return
+      setIsPressed(false)
+      dispatch((dispatch, getState) => {
+        if (getState().dragHold) {
+          dispatch([toolbarLongPress({ shortcut: null }), alert(null)])
+        }
+      })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // react-dnd stops propagation so onLongPressEnd sometimes does't get called
   // so disable toolbarLongPress and isPressed as soon as we are dragging
   // or if no longer dragging and toolbarLongPress never got cleared.
   //
-  useEffect(() => {
-    dispatch((dispatch, getState) => {
-      if (isDragging || getState().toolbarLongPress) {
-        setIsPressed(false)
-        dispatch(toolbarLongPress({ shortcut: null }))
-      }
-    })
-  }, [isDragging])
+  useEffect(
+    () => {
+      dispatch((dispatch, getState) => {
+        if (isDragging || getState().toolbarLongPress) {
+          setIsPressed(false)
+          dispatch(toolbarLongPress({ shortcut: null }))
+        }
+      })
+    },
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isDragging],
+  )
 
   const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
 

@@ -99,7 +99,7 @@ const Footer = () => {
     } else {
       firstUpdate.current = false
     }
-  }, [fontSize])
+  }, [dispatch, fontSize])
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer

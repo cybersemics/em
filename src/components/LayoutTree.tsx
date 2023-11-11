@@ -71,26 +71,6 @@ const useHeightTracking = () => {
   // See: removeHeight
   const heightRemovalTimeouts = useRef<Map<string, number>>(new Map())
 
-  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setHeight = useCallback(({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
-    if (height) {
-      // cancel thought removal timeout
-      clearTimeout(heightRemovalTimeouts.current.get(key))
-      heightRemovalTimeouts.current.delete(key)
-
-      setHeights(heightsOld =>
-        height === heightsOld[key]
-          ? heightsOld
-          : {
-              ...heightsOld,
-              [key]: height,
-            },
-      )
-    } else {
-      removeHeight(key)
-    }
-  }, [])
-
   // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
   // Debouncing height removal mitigates the issue.
   // Use throttleConcat to accumulate all keys to be removed during the interval.
@@ -107,6 +87,29 @@ const useHeightTracking = () => {
     heightRemovalTimeouts.current.set(key, timeout)
   }, [])
 
+  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const setHeight = useCallback(
+    ({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
+      if (height) {
+        // cancel thought removal timeout
+        clearTimeout(heightRemovalTimeouts.current.get(key))
+        heightRemovalTimeouts.current.delete(key)
+
+        setHeights(heightsOld =>
+          height === heightsOld[key]
+            ? heightsOld
+            : {
+                ...heightsOld,
+                [key]: height,
+              },
+        )
+      } else {
+        removeHeight(key)
+      }
+    },
+    [removeHeight],
+  )
+
   useEffect(() => {
     return () => {
       unmounted.current = true
@@ -118,7 +121,7 @@ const useHeightTracking = () => {
       heights,
       setHeight,
     }),
-    [heights],
+    [heights, setHeight],
   )
 }
 

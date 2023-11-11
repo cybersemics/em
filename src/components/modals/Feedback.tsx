@@ -54,15 +54,19 @@ const ModalFeedback = () => {
     }
   }
 
-  useEffect(() => {
-    if (submitAttempts > 0) {
-      const disable = feedback.length < FEEDBACK_MIN_LENGTH
-      setIsDisabled(disable)
-      if (!disable) {
-        dispatch(alert(null, { alertType: AlertType.ModalFeedbackMaxChars }))
+  useEffect(
+    () => {
+      if (submitAttempts > 0) {
+        const disable = feedback.length < FEEDBACK_MIN_LENGTH
+        setIsDisabled(disable)
+        if (!disable) {
+          dispatch(alert(null, { alertType: AlertType.ModalFeedbackMaxChars }))
+        }
       }
-    }
-  }, [feedback])
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [feedback],
+  )
 
   return (
     <ModalComponent

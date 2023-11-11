@@ -28,16 +28,20 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
   const [value, setValue] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  useEffect(() => {
-    clearTimeout(timer.current!)
-    if (condition) {
-      timer.current = setTimeout(() => {
-        setValue(true)
-      }, milliseconds)
-    } else {
-      setValue(false)
-    }
-  }, [condition])
+  useEffect(
+    () => {
+      clearTimeout(timer.current!)
+      if (condition) {
+        timer.current = setTimeout(() => {
+          setValue(true)
+        }, milliseconds)
+      } else {
+        setValue(false)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [condition],
+  )
 
   return value
 }
@@ -74,55 +78,64 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
-  const onBeginStroke = useCallback(() => {
-    clearTimeout(fadeTimer.current)
-    if (!signaturePadRef.current) return
-    const signaturePad = signaturePadRef.current.signaturePad
-    signaturePad.clear()
+  const onBeginStroke = useCallback(
+    () => {
+      clearTimeout(fadeTimer.current)
+      if (!signaturePadRef.current) return
+      const signaturePad = signaturePadRef.current.signaturePad
+      signaturePad.clear()
 
-    // add glow
-    signaturePad._ctx.shadowColor = colors.gray
-    signaturePad._ctx.shadowOffsetX = 0
-    signaturePad._ctx.shadowOffsetY = 0
-    signaturePad._ctx.shadowBlur = 15
-  }, [])
+      // add glow
+      signaturePad._ctx.shadowColor = colors.gray
+      signaturePad._ctx.shadowOffsetX = 0
+      signaturePad._ctx.shadowOffsetY = 0
+      signaturePad._ctx.shadowBlur = 15
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
-  useEffect(() => {
-    if (!signaturePadRef.current) return
-    const signaturePad = signaturePadRef.current.signaturePad
+  useEffect(
+    () => {
+      if (!signaturePadRef.current) return
+      const signaturePad = signaturePadRef.current.signaturePad
 
-    // Attach pointer handlers to a provided node rather than the signature pad canvas.
-    // See: eventNodeRef
-    const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
-    const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
-    if (eventNodeRef?.current) {
-      eventNodeRef.current.addEventListener('pointerdown', e => {
-        // Make preventDefault a noop otherwise tap-to-edit is broken.
-        // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
-        e.preventDefault = noop
-        handlePointerStart(e)
-      })
-      eventNodeRef.current.addEventListener('pointermove', e => {
-        e.preventDefault = noop
-        handlePointerMove(e)
-      })
-    }
-
-    signaturePad.addEventListener('beginStroke', onBeginStroke)
-
-    // update canvas dimensions, otherwise the initial height on load is too large for some reason
-    // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
-    signaturePad.canvas.width = signaturePad.canvas.offsetWidth
-    signaturePad.canvas.height = signaturePad.canvas.offsetHeight
-
-    return () => {
+      // Attach pointer handlers to a provided node rather than the signature pad canvas.
+      // See: eventNodeRef
+      const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
+      const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
       if (eventNodeRef?.current) {
-        eventNodeRef.current.removeEventListener('pointerdown', handlePointerStart)
-        eventNodeRef.current.removeEventListener('pointermove', handlePointerMove)
+        eventNodeRef.current.addEventListener('pointerdown', e => {
+          // Make preventDefault a noop otherwise tap-to-edit is broken.
+          // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
+          e.preventDefault = noop
+          handlePointerStart(e)
+        })
+        eventNodeRef.current.addEventListener('pointermove', e => {
+          e.preventDefault = noop
+          handlePointerMove(e)
+        })
       }
-      signaturePad.removeEventListener('beginStroke', onBeginStroke)
-    }
-  }, [])
+
+      signaturePad.addEventListener('beginStroke', onBeginStroke)
+
+      // update canvas dimensions, otherwise the initial height on load is too large for some reason
+      // https://github.com/szimek/signature_pad/issues/118#issuecomment-146207233
+      signaturePad.canvas.width = signaturePad.canvas.offsetWidth
+      signaturePad.canvas.height = signaturePad.canvas.offsetHeight
+
+      return () => {
+        if (eventNodeRef?.current) {
+          eventNodeRef.current.removeEventListener('pointerdown', handlePointerStart)
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          eventNodeRef.current.removeEventListener('pointermove', handlePointerMove)
+        }
+        signaturePad.removeEventListener('beginStroke', onBeginStroke)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   return (
     <div

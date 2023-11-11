@@ -15,27 +15,31 @@ const useDelayedAutofocus = <T = string>(
   const lastAutofocusRef = useRef(autofocus)
   const unmounted = useRef(false)
   const autofocusTimerRef = useRef<number>(0)
-  useEffect(() => {
-    clearTimeout(autofocusTimerRef.current)
-    if (
-      autofocus !== 'show' &&
-      autofocus !== 'dim' &&
-      (lastAutofocusRef.current === 'show' || lastAutofocusRef.current === 'dim')
-    ) {
-      autofocusTimerRef.current = setTimeout(() => {
-        if (unmounted.current) return
+  useEffect(
+    () => {
+      clearTimeout(autofocusTimerRef.current)
+      if (
+        autofocus !== 'show' &&
+        autofocus !== 'dim' &&
+        (lastAutofocusRef.current === 'show' || lastAutofocusRef.current === 'dim')
+      ) {
+        autofocusTimerRef.current = setTimeout(() => {
+          if (unmounted.current) return
+          setAutofocusDelayed(selector(autofocus))
+          lastAutofocusRef.current = autofocus
+        }, 750) as unknown as number
+      } else {
         setAutofocusDelayed(selector(autofocus))
         lastAutofocusRef.current = autofocus
-      }, 750) as unknown as number
-    } else {
-      setAutofocusDelayed(selector(autofocus))
-      lastAutofocusRef.current = autofocus
-    }
+      }
 
-    return () => {
-      unmounted.current = true
-    }
-  }, [autofocus])
+      return () => {
+        unmounted.current = true
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [autofocus],
+  )
 
   return autofocusDelayed
 }

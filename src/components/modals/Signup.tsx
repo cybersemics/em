@@ -46,39 +46,47 @@ const ModalSignup = () => {
   /**
    * Gets the invitation code from url and the validates it.
    */
-  const handleInvitationCode = useCallback(async () => {
-    const invitationCodeId = getQueryParam('code')
+  const handleInvitationCode = useCallback(
+    async () => {
+      const invitationCodeId = getQueryParam('code')
 
-    // TODO: Send user back to another screen if user has no valid code.
-    if (!invitationCodeId) {
-      setValidationError('Invitation code not found')
-      setIsValidatingCode(false)
-      return
-    }
+      // TODO: Send user back to another screen if user has no valid code.
+      if (!invitationCodeId) {
+        setValidationError('Invitation code not found')
+        setIsValidatingCode(false)
+        return
+      }
 
-    throw new Error('Not implemented')
-    // TODO: May be use never throw style error handling
-    try {
-      // const inviteCode = await getInviteById(invitationCodeId)
+      throw new Error('Not implemented')
+      // TODO: May be use never throw style error handling
+      try {
+        // const inviteCode = await getInviteById(invitationCodeId)
 
-      // if (inviteCode.used) {
-      //   setValidationError('Invitation code has already been used.')
-      //   setIsValidatingCode(false)
-      //   return
-      // }
+        // if (inviteCode.used) {
+        //   setValidationError('Invitation code has already been used.')
+        //   setIsValidatingCode(false)
+        //   return
+        // }
 
-      // Set the invite code and is validating to false, only if code is valid.
-      setInviteCode(inviteCode)
-      setIsValidatingCode(false)
-    } catch (err) {
-      setValidationError(err.message)
-      setIsValidatingCode(false)
-    }
-  }, [])
+        // Set the invite code and is validating to false, only if code is valid.
+        setInviteCode(inviteCode)
+        setIsValidatingCode(false)
+      } catch (err) {
+        setValidationError(err.message)
+        setIsValidatingCode(false)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
-  useEffect(() => {
-    handleInvitationCode()
-  }, [])
+  useEffect(
+    () => {
+      handleInvitationCode()
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   /** Sign up with email and password. */
   const submitAction = useCallback(
@@ -112,6 +120,7 @@ const ModalSignup = () => {
         return setSubmitError(null)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [formData],
   )
 

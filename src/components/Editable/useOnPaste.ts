@@ -107,6 +107,7 @@ const useOnPaste = ({
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath, transient],
   )
 

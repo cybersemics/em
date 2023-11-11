@@ -48,25 +48,30 @@ const useLongPress = (
         lock = true
       }, ms) as unknown as number
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [lock],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.
   // TODO: Maybe an unmount handler would be better?
-  const stop = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
-    // This gives other components a chance to short circuit.
-    // We can't stop propagation here without messing up other components like Bullet.
-    setTimeout(() => {
-      clearTimeout(timerIdRef.current)
-      timerIdRef.current = 0
-      lock = false
-      globals.longpressing = false
-      setPressed(false)
-      onLongPressEnd?.()
-    }, 10)
-  }, [])
+  const stop = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      // Delay setPressed(false) to ensure that onLongPressEnd is not called until bubbled events complete.
+      // This gives other components a chance to short circuit.
+      // We can't stop propagation here without messing up other components like Bullet.
+      setTimeout(() => {
+        clearTimeout(timerIdRef.current)
+        timerIdRef.current = 0
+        lock = false
+        globals.longpressing = false
+        setPressed(false)
+        onLongPressEnd?.()
+      }, 10)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   // If the user moves, end the press.
   // If timerIdRef is set to 0, abort to prevent unnecessary calculations.
@@ -86,20 +91,24 @@ const useLongPress = (
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [pressed],
   )
 
   // Android passes React.PointerEvent
   // Web passes React.MouseEvent
-  const onContextMenu = useCallback((e: React.MouseEvent | React.PointerEvent) => {
-    // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
-    if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
-      e.preventDefault()
-      e.stopPropagation()
-      selection.clear()
-      dispatch(editing({ value: false }))
-    }
-  }, [])
+  const onContextMenu = useCallback(
+    (e: React.MouseEvent | React.PointerEvent) => {
+      // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
+      if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
+        e.preventDefault()
+        e.stopPropagation()
+        selection.clear()
+        dispatch(editing({ value: false }))
+      }
+    },
+    [dispatch],
+  )
 
   // unlock on unmount
   // this may have a race condition if start is activated on another component right before this is unmounting, but it seems unlikely
