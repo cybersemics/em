@@ -338,73 +338,69 @@ const CommandPalette: FC = () => {
   const gestureInProgress = gestureStore.useState()
 
   // get the shortcuts that can be executed from the current gesture in progress
-  const possibleShortcutsSorted = useMemo(
-    () => {
-      if (!show) return []
+  const possibleShortcutsSorted = useMemo(() => {
+    if (!show) return []
 
-      const possibleShortcuts = visibleShortcuts.filter(shortcut => {
-        // keyboard
-        if (showCommandPalette) {
-          const label = (
-            shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
-          ).toLowerCase()
-          return (
-            // include shortcuts with at least one included char in the list
-            // fuzzy matching will prioritize the best shortcuts
-            !keyboardInProgress ||
+    const possibleShortcuts = visibleShortcuts.filter(shortcut => {
+      // keyboard
+      if (showCommandPalette) {
+        const label = (
+          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
+        ).toLowerCase()
+        return (
+          // include shortcuts with at least one included char in the list
+          // fuzzy matching will prioritize the best shortcuts
+          !keyboardInProgress ||
+          keyboardInProgress
+            .toLowerCase()
+            .split('')
+            .some(char => char !== ' ' && label.includes(char))
+        )
+      }
+      // gesture
+      else {
+        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
+      }
+    })
+
+    // sorted shortcuts
+    const sorted = _.sortBy(possibleShortcuts, shortcut => {
+      const label = (
+        shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
+      ).toLowerCase()
+      return [
+        // canExecute
+        !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
+        // gesture length
+        gestureInProgress ? shortcut.gesture?.length : '',
+        // recent commands
+        !keyboardInProgress &&
+          (() => {
+            const i = recentCommands.indexOf(shortcut.id)
+            // if not found, sort to the end
+            // pad with zeros so that the sort is correct for multiple digits
+            return i === -1 ? 'z' : i.toString().padStart(5, '0')
+          })(),
+        // startsWith
+        keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
+        // contains (n chars)
+        // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
+        keyboardInProgress &&
+          (
+            9999 -
             keyboardInProgress
               .toLowerCase()
               .split('')
-              .some(char => char !== ' ' && label.includes(char))
+              .filter(char => char !== ' ' && label.includes(char)).length
           )
-        }
-        // gesture
-        else {
-          return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
-        }
-      })
-
-      // sorted shortcuts
-      const sorted = _.sortBy(possibleShortcuts, shortcut => {
-        const label = (
-          shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
-        ).toLowerCase()
-        return [
-          // canExecute
-          !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
-          // gesture length
-          gestureInProgress ? shortcut.gesture?.length : '',
-          // recent commands
-          !keyboardInProgress &&
-            (() => {
-              const i = recentCommands.indexOf(shortcut.id)
-              // if not found, sort to the end
-              // pad with zeros so that the sort is correct for multiple digits
-              return i === -1 ? 'z' : i.toString().padStart(5, '0')
-            })(),
-          // startsWith
-          keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
-          // contains (n chars)
-          // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
-          keyboardInProgress &&
-            (
-              9999 -
-              keyboardInProgress
-                .toLowerCase()
-                .split('')
-                .filter(char => char !== ' ' && label.includes(char)).length
-            )
-              .toString()
-              .padStart(5, '0'),
-          // all else equal, sort by label
-          label,
-        ].join('\x00')
-      })
-      return sorted
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [gestureInProgress, keyboardInProgress, showCommandPalette],
-  )
+            .toString()
+            .padStart(5, '0'),
+        // all else equal, sort by label
+        label,
+      ].join('\x00')
+    })
+    return sorted
+  }, [gestureInProgress, keyboardInProgress, recentCommands, show, showCommandPalette, store.getState])
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
