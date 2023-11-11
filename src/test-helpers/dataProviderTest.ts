@@ -1,10 +1,8 @@
 import all from 'it-all'
 import _ from 'lodash'
 import Context from '../@types/Context'
-import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Thought from '../@types/Thought'
-import ThoughtDb from '../@types/ThoughtDb'
 import ThoughtId from '../@types/ThoughtId'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
 import { DataProvider } from '../data-providers/DataProvider'
@@ -21,7 +19,6 @@ import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 import never from '../util/never'
 import reducerFlow from '../util/reducerFlow'
-import thoughtToDb from '../util/thoughtToDb'
 import timestamp from '../util/timestamp'
 
 declare global {
@@ -54,10 +51,6 @@ const getManyDescendantsByContext = async (
 
   return all(getManyDescendants(provider, thoughtIds, initialState, options))
 }
-
-/** Converts an Index<Thought> to an Index<ThoughtDb>. */
-const toThoughtIndexWithChildren = (thoughtIndex: Index<Thought>): Index<ThoughtDb> =>
-  keyValueBy(thoughtIndex, (id, thought) => ({ [id]: thoughtToDb(thought) }))
 
 expect.extend({
   /** Passes if a Context appears before another Context in the Thoughts array. */
@@ -187,8 +180,7 @@ const dataProviderTest = (provider: DataProvider) => {
       value: 'test',
     }
 
-    const thoughtDb = thoughtToDb(thought)
-    await provider.updateThought?.('test' as ThoughtId, undefined, thoughtDb)
+    await provider.updateThought?.('test' as ThoughtId, undefined, thought)
 
     const dbThought = await getThoughtById(provider, 'test' as ThoughtId)
     expect(dbThought).toEqual(thought)
@@ -218,11 +210,8 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2' as ThoughtId,
     }
 
-    const thoughtXWithChildren = thoughtToDb(thoughtX)
-    const thoughtAWithChildren = thoughtToDb(thoughtA)
-
-    await provider.updateThought?.('testIdX' as ThoughtId, undefined, thoughtXWithChildren)
-    await provider.updateThought?.('testIdA' as ThoughtId, undefined, thoughtAWithChildren)
+    await provider.updateThought?.('testIdX' as ThoughtId, undefined, thoughtX)
+    await provider.updateThought?.('testIdA' as ThoughtId, undefined, thoughtA)
 
     const dbThoughts = await provider.getThoughtsByIds([thoughtX.id, thoughtA.id])
     expect(dbThoughts).toEqual([thoughtX, thoughtA])
@@ -305,7 +294,7 @@ const dataProviderTest = (provider: DataProvider) => {
             - a
               - b
         `)
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
@@ -335,7 +324,7 @@ const dataProviderTest = (provider: DataProvider) => {
             - z
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
@@ -363,7 +352,7 @@ const dataProviderTest = (provider: DataProvider) => {
               - m
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
@@ -404,7 +393,7 @@ const dataProviderTest = (provider: DataProvider) => {
               - m
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
@@ -448,7 +437,7 @@ const dataProviderTest = (provider: DataProvider) => {
       `,
       })(initialState())
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(state.thoughts.thoughtIndex))
+      await provider.updateThoughtIndex?.(state.thoughts.thoughtIndex)
       await provider.updateLexemeIndex?.(state.thoughts.lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!
@@ -484,7 +473,7 @@ const dataProviderTest = (provider: DataProvider) => {
               - w
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await all(getDescendantThoughts(provider, HOME_TOKEN as ThoughtId, initialState))
@@ -515,7 +504,7 @@ const dataProviderTest = (provider: DataProvider) => {
                 - n
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']])
@@ -564,7 +553,7 @@ const dataProviderTest = (provider: DataProvider) => {
                 - n
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
@@ -630,7 +619,7 @@ const dataProviderTest = (provider: DataProvider) => {
 
       const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], [EM_TOKEN]], { maxDepth: 2 })
@@ -695,7 +684,7 @@ const dataProviderTest = (provider: DataProvider) => {
                 - n
       `)
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(thoughtIndex))
+      await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
       const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
@@ -766,7 +755,7 @@ const dataProviderTest = (provider: DataProvider) => {
       `,
       })(initialState())
 
-      await provider.updateThoughtIndex?.(toThoughtIndexWithChildren(state.thoughts.thoughtIndex))
+      await provider.updateThoughtIndex?.(state.thoughts.thoughtIndex)
       await provider.updateLexemeIndex?.(state.thoughts.lexemeIndex)
 
       const thoughtX = (await getContext(provider, ['x']))!

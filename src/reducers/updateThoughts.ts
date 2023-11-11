@@ -227,7 +227,7 @@ const updateThoughts = (
     pendingDeletes,
     recentlyEdited: recentlyEditedNew,
     remote,
-    thoughtIndexUpdates: thoughtIndexUpdates,
+    thoughtIndexUpdates,
     updates,
   }
 

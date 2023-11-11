@@ -1,5 +1,6 @@
 /** Thoughtspace worker accessed from the main thread via thoughtspace.main.ts. */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
+import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
@@ -12,8 +13,8 @@ import PushBatch from '../../@types/PushBatch'
 import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
-import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
+import Timestamp from '../../@types/Timestamp'
 import ValueOf from '../../@types/ValueOf'
 import WebsocketStatus from '../../@types/WebsocketStatus'
 import {
@@ -30,7 +31,6 @@ import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
-import thoughtToDb from '../../util/thoughtToDb'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
@@ -49,6 +49,18 @@ const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: stri
 /**********************************************************************
  * Types
  **********************************************************************/
+
+/** A thought that is persisted to storage. */
+interface ThoughtDb {
+  value: string
+  rank: number
+  parentId: ThoughtId
+  // meta attributes keyed by value, otherwise keyed by ThoughtId
+  childrenMap: Index<ThoughtId>
+  lastUpdated: Timestamp
+  archived?: Timestamp
+  updatedBy: string
+}
 
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
@@ -138,6 +150,10 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
     )
   })
 }, UPDATE_THOUGHTS_THROTTLE)
+
+/** Filter out the properties that should not be saved to thoughts in the database. */
+const thoughtToDb = (thought: Thought): ThoughtDb =>
+  _.pick(thought, ['childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
 
 /**********************************************************************
  * Module variables
@@ -442,9 +458,11 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       yChildren.set(id, new Y.Map<ThoughtYjs>())
     }
     const thoughtMap = yChildren.get(id)!
-    Object.entries(thoughtToDb(thought)).forEach(([key, value]) => {
+    const thoughtDb = thoughtToDb(thought)
+    ;(Object.keys(thoughtDb) as (keyof ThoughtDb)[]).forEach(key => {
       // merge childrenMap Y.Map
       if (key === 'childrenMap') {
+        const value = thoughtDb[key]
         let childrenMap = thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
 
         // create new Y.Map for new thought
@@ -461,7 +479,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
         })
 
         // add children that are not in the yjs thought
-        Object.entries(thought.childrenMap).forEach(([key, childId]) => {
+        Object.entries(thoughtDb.childrenMap).forEach(([key, childId]) => {
           if (!childrenMap.has(key)) {
             childrenMap.set(key, childId)
           }
@@ -469,6 +487,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       }
       // other keys
       else {
+        const value = thoughtDb[key]
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
         if (value !== thoughtMap.get(key)) {
@@ -1047,17 +1066,20 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   if (!yThought.has('docKey')) return undefined
 
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
-  const childrenYjs = [...(yChildren.values() as IterableIterator<Y.Map<ThoughtYjs>>)]
+  const childrenYjs = [...(yChildren.entries() as IterableIterator<Y.Map<[ThoughtId, ThoughtYjs]>>)]
 
-  return childrenYjs.map(thoughtMap => {
-    const thoughtRaw = thoughtMap.toJSON()
-    return {
-      ...thoughtRaw,
+  return childrenYjs.map(([id, thoughtMap]) => {
+    const thoughtRaw = thoughtMap.toJSON() as Omit<ThoughtDb, 'childrenMap'> & {
       // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
       // toJSON is not recursive so we need to toJSON childrenMap as well
       // It is possible that this was fixed in later versions of yjs after v13.5.41
-      childrenMap: thoughtRaw.childrenMap.toJSON ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
-    } as Thought
+      childrenMap: Y.Map<ThoughtId> | Index<ThoughtId>
+    }
+    return {
+      id,
+      ...thoughtRaw,
+      childrenMap: thoughtRaw.childrenMap instanceof Y.Map ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
+    }
   })
 }
 
@@ -1067,14 +1089,17 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
   const thoughtMap = yChildren.get(id)
   if (!thoughtMap || thoughtMap.size === 0) return
-  const thoughtRaw = thoughtMap.toJSON()
-  return {
-    ...thoughtRaw,
+  const thoughtRaw = thoughtMap.toJSON() as Omit<ThoughtDb, 'childrenMap'> & {
     // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
     // toJSON is not recursive so we need to toJSON childrenMap as well
     // It is possible that this was fixed in later versions of yjs after v13.5.41
-    childrenMap: thoughtRaw.childrenMap.toJSON ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
-  } as Thought
+    childrenMap: Y.Map<ThoughtId> | Index<ThoughtId>
+  }
+  return {
+    id,
+    ...thoughtRaw,
+    childrenMap: thoughtRaw.childrenMap instanceof Y.Map ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
+  }
 }
 
 /** Gets a Lexeme from a lexeme Y.Doc. */
@@ -1238,7 +1263,7 @@ export const updateThoughts = async ({
   lexemeIndexUpdatesOld,
   schemaVersion,
 }: {
-  thoughtIndexUpdates: Index<ThoughtDb | null>
+  thoughtIndexUpdates: Index<Thought | null>
   lexemeIndexUpdates: Index<Lexeme | null>
   lexemeIndexUpdatesOld: Index<Lexeme | undefined>
   schemaVersion: number
@@ -1249,7 +1274,7 @@ export const updateThoughts = async ({
   const { update: thoughtUpdates, delete: thoughtDeletes } = groupObjectBy(thoughtIndexUpdates, (id, thought) =>
     thought ? 'update' : 'delete',
   ) as {
-    update?: Index<ThoughtDb>
+    update?: Index<Thought>
     delete?: Index<null>
   }
 
@@ -1327,7 +1352,7 @@ export const getLexemeById = (key: string) => replicateLexeme(key)
 export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]> => Promise.all(keys.map(getLexemeById))
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
-export const getThoughtById = async (id: ThoughtId) => {
+export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   await replicateThought(id)
   const docKey = docKeys.get(id)
   return getThought(thoughtDocs.get(docKey!), id)

@@ -1,7 +1,6 @@
 import Index from '../../@types/IndexType'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
-import ThoughtDb from '../../@types/ThoughtDb'
 import ThoughtId from '../../@types/ThoughtId'
 import ThoughtIndices from '../../@types/ThoughtIndices'
 import { EM_TOKEN, EXPAND_THOUGHT_CHAR, ROOT_PARENT_ID } from '../../constants'
@@ -124,7 +123,7 @@ async function* getDescendantThoughts(
     // get thoughts from the database
     const providerThoughtsRaw = await provider.getThoughtsByIds(ids)
 
-    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as ThoughtDb[]
+    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
     const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
     const pulledThoughtIndex: Index<Thought> = keyValueBy(thoughtIdsValidated, (id, i) => ({
       [id]: providerThoughtsValidated[i],
