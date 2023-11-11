@@ -42,7 +42,6 @@ module.exports = {
           },
         ],
         '@typescript-eslint/no-explicit-any': 0,
-
         '@typescript-eslint/no-non-null-assertion': 0,
         '@typescript-eslint/no-use-before-define': 2,
         '@typescript-eslint/no-unused-vars': 2,
@@ -146,7 +145,7 @@ module.exports = {
 
     // prettier
     'prettier/prettier': 2,
-    'arrow-body-style': 'off',
-    'prefer-arrow-callback': 'off',
+    'arrow-body-style': 0,
+    'prefer-arrow-callback': 0,
   },
 }
