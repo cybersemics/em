@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-mutating-methods */
 const stdin = process.openStdin()
 const spawn = require('child_process').spawn
 

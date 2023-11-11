@@ -175,7 +175,6 @@ it('onStep', async () => {
   }
 
   await taskQueue<string>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => output.push(result),
     tasks: [delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)],
   }).end
@@ -203,9 +202,7 @@ it('onStep per batch', async () => {
       autostart: false,
       onEnd: resolve,
     })
-    // eslint-disable-next-line fp/no-mutating-methods
     queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output1.push(result) })
-    // eslint-disable-next-line fp/no-mutating-methods
     queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output2.push(result) })
     queue.start()
   })
@@ -230,7 +227,6 @@ it('reset completed and total after each batch completes', async () => {
   const inc = () => ++counter
 
   const queue = taskQueue<number>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => output.push(result),
   })
   queue.add([inc, inc])
@@ -257,7 +253,6 @@ it('onLowStep', async () => {
   }
 
   await taskQueue<string>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onLowStep: result => output.push(result),
     tasks: [delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)],
   }).end
@@ -344,7 +339,6 @@ it('completed', async () => {
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
     await sleep(1)
-    // eslint-disable-next-line fp/no-mutating-methods
     completed.push(queue.completed())
   }
 
@@ -359,7 +353,6 @@ it('running', async () => {
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
     await sleep(1)
-    // eslint-disable-next-line fp/no-mutating-methods
     running.push(queue.running())
   }
 
@@ -374,7 +367,6 @@ it('total', async () => {
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
     await sleep(1)
-    // eslint-disable-next-line fp/no-mutating-methods
     total.push(queue.total())
   }
 
@@ -414,9 +406,7 @@ it('retry once', async () => {
   }
 
   await taskQueue<string>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => outputStep.push(result),
-    // eslint-disable-next-line fp/no-mutating-methods
     onLowStep: result => outputLowStep.push(result),
     retries: 2,
     timeout: 50,
@@ -455,9 +445,7 @@ it('retry many', async () => {
   }
 
   await taskQueue<string>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => outputStep.push(result),
-    // eslint-disable-next-line fp/no-mutating-methods
     onLowStep: result => outputLowStep.push(result),
     retries: 999,
     timeout: 1,
@@ -486,9 +474,7 @@ it('retry exceeds timeout', async () => {
   })
 
   const queue = taskQueue<string>({
-    // eslint-disable-next-line fp/no-mutating-methods
     onStep: result => outputStep.push(result),
-    // eslint-disable-next-line fp/no-mutating-methods
     onLowStep: result => outputLowStep.push(result),
     retries: 2,
     timeout: 50,

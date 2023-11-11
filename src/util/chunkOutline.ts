@@ -62,14 +62,12 @@ const chunkOutline = (text: string, { chunkSize = 100 }: { chunkSize?: number } 
 
     // add new chunk
     if (newChunk) {
-      // eslint-disable-next-line fp/no-mutating-methods
       chunks.push(ancestors.map(ancestor => ancestor + '\n').join(''))
     }
 
     // append the line to the current chunk
     chunks[chunks.length - 1] += (newChunk ? '' : '\n') + line
 
-    // eslint-disable-next-line fp/no-mutating-methods
     ancestors.push(line)
   })
 

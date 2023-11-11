@@ -49,7 +49,6 @@ it('edit a thought', () => {
   expect(getContexts(stateNew, 'aa')).toMatchObject([thought!.id])
 
   // sort children for order-insensitive matching
-  // eslint-disable-next-line fp/no-mutating-methods
   const childrenSorted = getAllChildrenAsThoughtsByContext(stateNew, [HOME_TOKEN]).sort(compareThought)
   expect(childrenSorted).toMatchObject([
     {

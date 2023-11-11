@@ -438,7 +438,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   //       const cid = result.path
   //       // TODO: prependRevision is currently broken
   //       // dispatch(prependRevision({ path: cursor, cid }))
-  //       cids.push(cid) // eslint-disable-line fp/no-mutating-methods
+  //       cids.push(cid)
   //       setPublishedCIDs(cids)
   //     } else {
   //       setPublishing(false)

@@ -6,7 +6,6 @@ it('execute promise-returning functions serially', async () => {
 
   /** Generates an asynchronous task that pushes to called, delays, and returns. */
   const makeDelay = (n: number) => {
-    // eslint-disable-next-line fp/no-mutating-methods
     called.push(n)
     return () => sleep(n).then(() => n)
   }

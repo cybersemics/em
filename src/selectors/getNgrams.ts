@@ -24,7 +24,6 @@ const getNgrams = (state: State, text: string, numWords: number) => {
   const pushUnlinkedNgrams = (wordIndex: number) => {
     if (unlinkedStart < wordIndex) {
       const ngram = words.slice(unlinkedStart, wordIndex).join(' ')
-      // eslint-disable-next-line fp/no-mutating-methods
       ngrams.push(
         numWords > 1
           ? // RECURSION
@@ -50,7 +49,6 @@ const getNgrams = (state: State, text: string, numWords: number) => {
         pushUnlinkedNgrams(i)
 
         // ngram with other contexts
-        // eslint-disable-next-line fp/no-mutating-methods
         ngrams.push({
           text: ngram,
           contexts,

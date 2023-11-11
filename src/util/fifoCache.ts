@@ -17,7 +17,6 @@ const lifoCache = <T>(max: number) => {
     }
     // otherwise insert
     else {
-      // eslint-disable-next-line fp/no-mutating-methods
       list.unshift(key)
       map.set(key, list.head!)
     }

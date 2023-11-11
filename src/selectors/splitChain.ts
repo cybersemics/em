@@ -15,7 +15,6 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
     const ancestor = path.slice(0, i + 1) as Path
     const showContexts = isContextViewActive(state, ancestor)
     if (showContexts && i < path.length - 1) {
-      // eslint-disable-next-line fp/no-mutating-methods
       contextChain.push(path.slice(indexSimplePathStart, i + 1) as SimplePath)
       indexSimplePathStart = i + 1
     }
@@ -26,7 +25,6 @@ const splitChain = (state: State, path: Path): SimplePath[] => {
 
   // Add the final SimplePath to the contextChain.
   // If no context views, are active, this will add the
-  // eslint-disable-next-line fp/no-mutating-methods
   contextChain.push(path.slice(indexSimplePathStart, path.length) as SimplePath)
 
   return contextChain

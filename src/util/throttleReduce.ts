@@ -34,7 +34,6 @@ const throttleReduce = <T, U, R>(
 
   /** Pushes the values onto the queue and triggers the throttled callback. */
   const enqueue = (value: T) => {
-    // eslint-disable-next-line fp/no-mutating-methods
     queue.push(value)
     return throttled()
   }

@@ -10,7 +10,6 @@ const childIdsToThoughts = (state: State, childIds: ThoughtId[]): Thought[] => {
   for (let i = 0; i < childIds.length; i++) {
     const thought = getThoughtById(state, childIds[i])
     if (thought) {
-      // eslint-disable-next-line fp/no-mutating-methods
       thoughts.push(thought)
     }
   }

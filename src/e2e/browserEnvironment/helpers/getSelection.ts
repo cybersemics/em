@@ -25,7 +25,6 @@ const getSelection = (browser: BrowserEnvironment) => {
         }),
       )
 
-      // eslint-disable-next-line fp/no-mutating-methods
       Object.defineProperty(focusNodePromise, 'textContent', {
         get: function (): Promise<string | undefined | null> {
           // short-circuit the focusNodePromise since we are accessing a property
@@ -34,7 +33,6 @@ const getSelection = (browser: BrowserEnvironment) => {
         },
       })
 
-      // eslint-disable-next-line fp/no-mutating-methods
       Object.defineProperty(focusNodePromise, 'nodeType', {
         get: function (): Promise<number | undefined> {
           // short-circuit the focusNodePromise since we are accessing a property

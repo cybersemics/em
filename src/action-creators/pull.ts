@@ -83,7 +83,6 @@ const pull =
 
     // parallelizing may result in conficts since there is no conflict resolution mechanism currently
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
-      // eslint-disable-next-line fp/no-mutating-methods
       thoughtChunks.push(thoughtsChunk)
 
       // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk

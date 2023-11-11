@@ -99,6 +99,7 @@ module.exports = {
 
     // fp
     'fp/no-delete': 0,
+    'fp/no-mutating-methods': 0,
 
     // jsdoc
     'jsdoc/check-tag-names': [

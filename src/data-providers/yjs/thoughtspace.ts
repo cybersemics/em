@@ -269,7 +269,6 @@ export const init = async (options: ThoughtspaceOptions) => {
       if (blocks.length === 0 && !tsidShared) {
         const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
 
-        // eslint-disable-next-line fp/no-mutating-methods
         blocks.push([blockNew])
       }
 

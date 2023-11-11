@@ -126,7 +126,6 @@ const taskQueue = <
     /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
     tick = () => {
       if (paused || running >= concurrency) return
-      // eslint-disable-next-line fp/no-mutating-methods
       const task = queue.shift()
       if (!task) {
         if (total === 0) {
@@ -211,7 +210,6 @@ const taskQueue = <
               resolve(value)
               return value
             })
-          // eslint-disable-next-line fp/no-mutating-methods
           queue.push(
             typeof task !== 'function' && task.description
               ? { description: task.description, function: taskResolver }

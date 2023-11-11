@@ -434,7 +434,6 @@ const replicationController = ({
       blockId = nanoid(13)
       activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, blockId) })
       const observed = when<string>(activeBlock, 'em:observed')
-      // eslint-disable-next-line fp/no-mutating-methods
       doc.getArray('blocks').push([activeBlock])
 
       // Wait for the new block subdoc and the observe handlers to be added before pushing.
@@ -453,22 +452,18 @@ const replicationController = ({
     const lexemeLog = activeBlock.getArray<[string, DocLogAction]>('lexemeLog')
 
     if (_.isEqual(thoughtLogs[0], thoughtLog.slice(-1)[0])) {
-      // eslint-disable-next-line fp/no-mutating-methods
       thoughtLogs.shift()
     }
 
     if (_.isEqual(lexemeLogs[0], lexemeLog.slice(-1)[0])) {
-      // eslint-disable-next-line fp/no-mutating-methods
       lexemeLogs.shift()
     }
 
     doc.transact(() => {
       if (thoughtLogs.length > 0) {
-        // eslint-disable-next-line fp/no-mutating-methods
         thoughtLog.push(thoughtLogs)
       }
       if (lexemeLogs.length > 0) {
-        // eslint-disable-next-line fp/no-mutating-methods
         lexemeLog.push(lexemeLogs)
       }
     }, doc.clientID)

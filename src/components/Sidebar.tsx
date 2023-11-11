@@ -25,7 +25,6 @@ const RecentlyEdited = () => {
 
   const store = useStore()
 
-  // eslint-disable-next-line fp/no-mutating-methods
   const recentlyEdited = _.reverse(
     _.sortBy(
       findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),

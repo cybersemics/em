@@ -25,7 +25,6 @@ const flattenTree = <T extends Block, U>(
     // eslint-disable-next-line fp/no-loops
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i]
-      // eslint-disable-next-line fp/no-mutating-methods
       arr.push(
         // Avoid calling the mapping function if we have not yet reached the start index.
         // They will be sliced off at the end anyway.
