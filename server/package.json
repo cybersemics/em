@@ -18,7 +18,7 @@
     "express-ws": "^5.0.2",
     "node-fetch": "2",
     "prom-client": "^14.2.0",
-    "y-mongodb-provider": "^0.1.7",
+    "y-mongodb-provider": "https://github.com/raineorshine/y-mongodb-provider#em",
     "y-protocols": "^1.0.5",
     "yjs": "^13.6.7"
   },
