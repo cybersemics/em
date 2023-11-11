@@ -74,8 +74,7 @@ const CommandSearch: FC<{
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onExecute, onSelectDown, onSelectUp, showCommandPalette],
+    [dispatch, onExecute, onSelectDown, onSelectUp, onSelectTop, onSelectBottom],
   )
 
   /** Restores the cursor and removes event listeners. */
@@ -436,6 +435,52 @@ const CommandPalette: FC = () => {
     }
   }, [])
 
+  /** Select the previous shortcut in the list. */
+  const onSelectUp = useCallback(
+    e => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedShortcut !== possibleShortcutsSorted[0]) {
+        const i = possibleShortcutsSorted.indexOf(selectedShortcut)
+        setSelectedShortcut(possibleShortcutsSorted[i - 1])
+      }
+    },
+    [possibleShortcutsSorted, selectedShortcut],
+  )
+
+  /** Select the next shortcut in the list. */
+  const onSelectDown = useCallback(
+    e => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedShortcut !== possibleShortcutsSorted[possibleShortcutsSorted.length - 1]) {
+        const i = possibleShortcutsSorted.indexOf(selectedShortcut)
+        setSelectedShortcut(possibleShortcutsSorted[i + 1])
+      }
+    },
+    [possibleShortcutsSorted, selectedShortcut],
+  )
+
+  /** Select the first shortcut in the list. */
+  const onSelectTop = useCallback(
+    e => {
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedShortcut(possibleShortcutsSorted[0])
+    },
+    [possibleShortcutsSorted],
+  )
+
+  /* Select the last shortcut in the list. */
+  const onSelectBottom = useCallback(
+    e => {
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedShortcut(possibleShortcutsSorted[possibleShortcutsSorted.length - 1])
+    },
+    [possibleShortcutsSorted],
+  )
+
   return (
     <div
       style={{
@@ -459,32 +504,10 @@ const CommandPalette: FC = () => {
               <CommandSearch
                 onExecute={e => onExecute(e, selectedShortcut)}
                 onInput={setKeyboardInProgress}
-                onSelectUp={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  if (selectedShortcut !== possibleShortcutsSorted[0]) {
-                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-                    setSelectedShortcut(possibleShortcutsSorted[i - 1])
-                  }
-                }}
-                onSelectDown={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  if (selectedShortcut !== possibleShortcutsSorted[possibleShortcutsSorted.length - 1]) {
-                    const i = possibleShortcutsSorted.indexOf(selectedShortcut)
-                    setSelectedShortcut(possibleShortcutsSorted[i + 1])
-                  }
-                }}
-                onSelectTop={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setSelectedShortcut(possibleShortcutsSorted[0])
-                }}
-                onSelectBottom={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setSelectedShortcut(possibleShortcutsSorted[possibleShortcutsSorted.length - 1])
-                }}
+                onSelectUp={onSelectUp}
+                onSelectDown={onSelectDown}
+                onSelectTop={onSelectTop}
+                onSelectBottom={onSelectBottom}
               />
             ) : (
               'Gestures'
