@@ -369,6 +369,10 @@ const CommandPalette: FC = () => {
       const label = (
         shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse : shortcut.label
       ).toLowerCase()
+
+      // always sort exact match to top
+      if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return ''
+
       return [
         // canExecute
         !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
