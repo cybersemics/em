@@ -171,7 +171,9 @@ const CommandRow: FC<{
   const colors = useSelector(themeColors)
   const isActive = shortcut.isActive?.(store.getState)
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
-  const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
+  const disabled =
+    (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) ||
+    (store.getState().showModal && !shortcut.allowExecuteFromModal)
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
 
   // convert the description to a string
@@ -380,7 +382,11 @@ const CommandPalette: FC = () => {
       // always sort exact match to top
       if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
-      else if (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) return `\x99${label}`
+      else if (
+        (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) ||
+        (store.getState().showModal && !shortcut.allowExecuteFromModal)
+      )
+        return `\x99${label}`
       // sort gesture by length and then label
       // no padding of length needed since no gesture exceeds a single digit
       else if (gestureInProgress) return `\x01${label}`
@@ -417,7 +423,7 @@ const CommandPalette: FC = () => {
       )
     })
     return sorted
-  }, [gestureInProgress, keyboardInProgress, recentCommands, show, showCommandPalette, store.getState])
+  }, [gestureInProgress, keyboardInProgress, recentCommands, show, showCommandPalette, store])
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -426,14 +432,19 @@ const CommandPalette: FC = () => {
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
       e.stopPropagation()
       e.preventDefault()
-      if (unmounted.current || (shortcut.canExecute && !shortcut.canExecute(store.getState))) return
+      if (
+        unmounted.current ||
+        (shortcut.canExecute && !shortcut.canExecute(store.getState)) ||
+        (store.getState().showModal && !shortcut.allowExecuteFromModal)
+      )
+        return
       const commandsNew = [shortcut.id, ...recentCommands].slice(0, MAX_RECENT_COMMANDS)
       setRecentCommands(commandsNew)
       dispatch(commandPalette())
       shortcut.exec(dispatch, store.getState, e, { type: 'commandPalette' })
       storageModel.set('recentCommands', commandsNew)
     },
-    [dispatch, recentCommands, store.getState],
+    [dispatch, recentCommands, store],
   )
 
   /** Select shortcuts on hover. */
