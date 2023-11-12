@@ -2,7 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
@@ -89,6 +89,7 @@ const ShareList = ({
 }) => {
   const status = useStatus()
   const dispatch = useDispatch()
+  const store = useStore()
   const colors = useSelector(themeColors)
   const [showDeviceForm, setShowDeviceForm] = useState(false)
 
@@ -101,7 +102,8 @@ const ShareList = ({
   /** Keyboad shortcuts. */
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !showDeviceForm) {
+      // TODO: Handle modal-specific keyboard shortcuts in a more general way so that they can be used in other modals and so this component does not need to know about showCommandPalette
+      if (e.key === 'Enter' && !showDeviceForm && !store.getState().showCommandPalette) {
         e.stopPropagation()
         setShowDeviceForm(true)
       }
