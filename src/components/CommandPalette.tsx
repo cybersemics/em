@@ -343,17 +343,19 @@ const CommandPalette: FC = () => {
     const possibleShortcuts = visibleShortcuts.filter(shortcut => {
       // keyboard
       if (showCommandPalette) {
+        // if no query is entered, all shortcuts are visible
+        if (!keyboardInProgress) return true
+
         const label = (
           shortcut.labelInverse && shortcut.isActive?.(store.getState) ? shortcut.labelInverse! : shortcut.label
         ).toLowerCase()
+        const chars = keyboardInProgress.toLowerCase().split('')
+
         return (
-          // include shortcuts with at least one included char in the list
+          // include shortcuts with at least one included char and no more than three chars non-matching chars
           // fuzzy matching will prioritize the best shortcuts
-          !keyboardInProgress ||
-          keyboardInProgress
-            .toLowerCase()
-            .split('')
-            .some(char => char !== ' ' && label.includes(char))
+          chars.some(char => char !== ' ' && label.includes(char)) &&
+          keyboardInProgress.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
       }
       // gesture
