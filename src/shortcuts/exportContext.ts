@@ -15,6 +15,7 @@ const shortcut: Shortcut = {
     return getAllChildren(state, HOME_TOKEN).length > 0
   },
   exec: dispatch => dispatch(showModal({ id: 'export' })),
+  allowExecuteFromModal: true,
 }
 
 export default shortcut

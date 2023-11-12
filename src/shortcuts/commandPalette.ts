@@ -10,6 +10,7 @@ const commandPaletteShortcut: Shortcut = {
   svg: Icon,
   keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(commandPalette()),
+  allowExecuteFromModal: true,
 }
 
 export default commandPaletteShortcut

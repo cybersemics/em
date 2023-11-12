@@ -9,6 +9,9 @@ import ShortcutType from './ShortcutType'
 import State from './State'
 
 interface Shortcut {
+  /** Allow the shortcut to be executed when a modal is open. */
+  allowExecuteFromModal?: boolean
+
   // a function that returns true if the shortcut can be executed with the current state
   canExecute?: (getState: () => State) => boolean
 

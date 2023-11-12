@@ -272,21 +272,22 @@ export const inputHandlers = (store: Store<State, any>) => ({
       globals.suppressExpansion = false
     }
 
-    // disable if modal or command palette is displayed
-    if (state.showModal || state.showCommandPalette) return
+    // disable if command palette is displayed
+    if (state.showCommandPalette) return
 
     const shortcut = shortcutKeyIndex[hashKeyDown(e)]
 
-    // execute the shortcut if it exists
-    if (shortcut) {
-      shortcutEmitter.trigger('shortcut', shortcut)
+    // disable if modal is shown, except for navigation shortcuts
+    if (!shortcut || (state.showModal && !shortcut.allowExecuteFromModal)) return
 
-      if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
-        e.preventDefault()
+    // execute the shortcut
+    shortcutEmitter.trigger('shortcut', shortcut)
 
-        // execute shortcut
-        shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
-      }
+    if (!shortcut.canExecute || shortcut.canExecute(store.getState)) {
+      e.preventDefault()
+
+      // execute shortcut
+      shortcut.exec(store.dispatch, store.getState, e, { type: 'keyboard' })
     }
   },
 })

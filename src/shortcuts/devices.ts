@@ -8,6 +8,7 @@ const shortcut: Shortcut = {
   description: 'Add or remove devices that can access and edit this thoughtspace.',
   svg: DeviceIcon,
   exec: dispatch => dispatch(showModal({ id: 'devices' })),
+  allowExecuteFromModal: true,
 }
 
 export default shortcut

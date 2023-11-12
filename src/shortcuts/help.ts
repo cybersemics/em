@@ -16,6 +16,7 @@ const openHelpShortcut: Shortcut = {
     dispatch(showModal({ id: 'help' }))
     scrollTo('top')
   },
+  allowExecuteFromModal: true,
 }
 
 export default openHelpShortcut

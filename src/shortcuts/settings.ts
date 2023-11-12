@@ -8,6 +8,7 @@ const shortcut: Shortcut = {
   description: 'Customize your experience of em.',
   svg: SettingsIcon,
   exec: dispatch => dispatch(showModal({ id: 'settings' })),
+  allowExecuteFromModal: true,
 }
 
 export default shortcut
