@@ -374,13 +374,14 @@ const CommandPalette: FC = () => {
       if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
       else if (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) return `\x99${label}`
+      // sort gesture by length and then label
+      // no padding of length needed since no gesture exceeds a single digit
+      else if (gestureInProgress) return `\x01${label}`
 
       return (
         // prepend \x01 to sort after exact match and before inactive shortcuts
         '\x01' +
         [
-          // gesture length
-          gestureInProgress ? shortcut.gesture?.length : '',
           // recent commands
           !keyboardInProgress &&
             (() => {
