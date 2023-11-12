@@ -24,6 +24,10 @@ import storageModel from '../stores/storageModel'
 import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
 
+/**********************************************************************
+ * Constants
+ **********************************************************************/
+
 /** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
 
@@ -33,9 +37,17 @@ const visibleShortcuts = globalShortcuts.filter(
   shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromInstructions,
 )
 
+/**********************************************************************
+ * Helper Functions
+ **********************************************************************/
+
 /** Returns true if the shortcut can be executed. */
 const isExecutable = (state: State, shortcut: Shortcut) =>
   (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+
+/**********************************************************************
+ * Components
+ **********************************************************************/
 
 /** Search input for the Command Palette. */
 const CommandSearch: FC<{
