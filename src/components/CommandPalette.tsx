@@ -33,6 +33,10 @@ const visibleShortcuts = globalShortcuts.filter(
   shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromInstructions,
 )
 
+/** Returns true if the shortcut can be executed. */
+const isExecutable = (state: State, shortcut: Shortcut) =>
+  (!shortcut.canExecute || shortcut.canExecute(() => state)) && (shortcut.allowExecuteFromModal || !state.showModal)
+
 /** Search input for the Command Palette. */
 const CommandSearch: FC<{
   onExecute?: (e: KeyboardEvent, value: string) => void
@@ -171,9 +175,7 @@ const CommandRow: FC<{
   const colors = useSelector(themeColors)
   const isActive = shortcut.isActive?.(store.getState)
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
-  const disabled =
-    (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) ||
-    (store.getState().showModal && !shortcut.allowExecuteFromModal)
+  const disabled = useSelector((state: State) => !isExecutable(state, shortcut))
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
 
   // convert the description to a string
@@ -382,11 +384,7 @@ const CommandPalette: FC = () => {
       // always sort exact match to top
       if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
       // sort inactive shortcuts to the bottom alphabetically
-      else if (
-        (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) ||
-        (store.getState().showModal && !shortcut.allowExecuteFromModal)
-      )
-        return `\x99${label}`
+      else if (!isExecutable(store.getState(), shortcut)) return `\x99${label}`
       // sort gesture by length and then label
       // no padding of length needed since no gesture exceeds a single digit
       else if (gestureInProgress) return `\x01${label}`
