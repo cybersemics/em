@@ -24,7 +24,7 @@ import storageModel from '../stores/storageModel'
 import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
 
-/** The maxmimum number of recent commands to store for the command palette. */
+/** The maximum number of recent commands to store for the command palette. */
 const MAX_RECENT_COMMANDS = 5
 
 const commandPaletteShortcut = shortcutById('commandPalette')
