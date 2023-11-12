@@ -170,10 +170,17 @@ const CommandRow: FC<{
   const ref = React.useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
   const isActive = shortcut.isActive?.(store.getState)
-  const description = shortcut.descriptionInverse && isActive ? shortcut.descriptionInverse : shortcut.description
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = shortcut.canExecute && !shortcut.canExecute?.(store.getState)
   const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
+
+  // convert the description to a string
+  const description = useSelector((state: State) => {
+    const descriptionStringOrFunction = (isActive && shortcut.descriptionInverse) || shortcut.description
+    return descriptionStringOrFunction instanceof Function
+      ? descriptionStringOrFunction(() => state)
+      : descriptionStringOrFunction
+  })
 
   useEffect(() => {
     if (selected) {
