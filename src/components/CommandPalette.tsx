@@ -371,38 +371,42 @@ const CommandPalette: FC = () => {
       ).toLowerCase()
 
       // always sort exact match to top
-      if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return ''
+      if (gestureInProgress === shortcut.gesture || keyboardInProgress.trim().toLowerCase() === label) return '\x00'
+      // sort inactive shortcuts to the bottom alphabetically
+      else if (shortcut.canExecute && !shortcut.canExecute?.(store.getState)) return `\x99${label}`
 
-      return [
-        // canExecute
-        !shortcut.canExecute || shortcut.canExecute?.(store.getState) ? 0 : 1,
-        // gesture length
-        gestureInProgress ? shortcut.gesture?.length : '',
-        // recent commands
-        !keyboardInProgress &&
-          (() => {
-            const i = recentCommands.indexOf(shortcut.id)
-            // if not found, sort to the end
-            // pad with zeros so that the sort is correct for multiple digits
-            return i === -1 ? 'z' : i.toString().padStart(5, '0')
-          })(),
-        // startsWith
-        keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
-        // contains (n chars)
-        // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
-        keyboardInProgress &&
-          (
-            9999 -
-            keyboardInProgress
-              .toLowerCase()
-              .split('')
-              .filter(char => char !== ' ' && label.includes(char)).length
-          )
-            .toString()
-            .padStart(5, '0'),
-        // all else equal, sort by label
-        label,
-      ].join('\x00')
+      return (
+        // prepend \x01 to sort after exact match and before inactive shortcuts
+        '\x01' +
+        [
+          // gesture length
+          gestureInProgress ? shortcut.gesture?.length : '',
+          // recent commands
+          !keyboardInProgress &&
+            (() => {
+              const i = recentCommands.indexOf(shortcut.id)
+              // if not found, sort to the end
+              // pad with zeros so that the sort is correct for multiple digits
+              return i === -1 ? 'z' : i.toString().padStart(5, '0')
+            })(),
+          // startsWith
+          keyboardInProgress && label.startsWith(keyboardInProgress.trim().toLowerCase()) ? 0 : 1,
+          // contains (n chars)
+          // subtract from a large value to reverse order, otherwise shortcuts with fewer matches will be sorted to the top
+          keyboardInProgress &&
+            (
+              9999 -
+              keyboardInProgress
+                .toLowerCase()
+                .split('')
+                .filter(char => char !== ' ' && label.includes(char)).length
+            )
+              .toString()
+              .padStart(5, '0'),
+          // all else equal, sort by label
+          label,
+        ].join('\x00')
+      )
     })
     return sorted
   }, [gestureInProgress, keyboardInProgress, recentCommands, show, showCommandPalette, store.getState])
