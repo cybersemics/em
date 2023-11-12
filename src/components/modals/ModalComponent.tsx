@@ -45,7 +45,9 @@ class ModalComponent extends React.Component<ModalProps> {
      * A handler that closes the modal when the escape key is pressed.
      */
     this.onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !this.props.preventCloseOnEscape) {
+      // TODO: This is a hack to prevent the escape key from closing the modal when the command palette is open.
+      // Better to use a global shortcut.
+      if (e.key === 'Escape' && !this.props.preventCloseOnEscape && !store.getState().showCommandPalette) {
         e.stopPropagation()
         this.close!()
       }
