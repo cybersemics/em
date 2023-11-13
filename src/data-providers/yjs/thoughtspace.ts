@@ -1070,21 +1070,10 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   if (!yThought.has('docKey')) return undefined
 
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
-  const childrenYjs = [...(yChildren.entries() as IterableIterator<Y.Map<[ThoughtId, ThoughtYjs]>>)]
 
-  return childrenYjs.map(([id, thoughtMap]) => {
-    const thoughtRaw = thoughtMap.toJSON() as Omit<ThoughtDb, 'childrenMap'> & {
-      // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
-      // toJSON is not recursive so we need to toJSON childrenMap as well
-      // It is possible that this was fixed in later versions of yjs after v13.5.41
-      childrenMap: Y.Map<ThoughtId> | Index<ThoughtId>
-    }
-    return {
-      id,
-      ...thoughtRaw,
-      childrenMap: thoughtRaw.childrenMap instanceof Y.Map ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
-    }
-  })
+  return [...(yChildren.keys() as IterableIterator<ThoughtId>)]
+    .map(id => getThought(thoughtDoc, id))
+    .filter(Boolean) as Thought[]
 }
 
 /** Gets a Thought from a thought Y.Doc. */
