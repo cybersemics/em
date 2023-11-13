@@ -1,6 +1,5 @@
 /** Thoughtspace worker accessed from the main thread via thoughtspace.main.ts. */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
-import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
@@ -54,7 +53,6 @@ interface ThoughtDb {
   // lastUpdated
   l: Timestamp
   // childrenMap
-  // meta attributes keyed by value, otherwise keyed by ThoughtId
   m: Index<ThoughtId>
   // parentId
   p: ThoughtId
@@ -69,15 +67,24 @@ interface ThoughtDb {
 }
 
 /** A Lexeme database type that defines contexts as separate keys. */
-type LexemeDb = Omit<Lexeme, 'contexts'> & {
+type LexemeDb = {
+  // created
+  c: Timestamp
+  // lastUpdated
+  l: Timestamp
+  // updatedBy
+  u: string
+  // contexts
+  x: Index<true>
+} & {
   // mapped to docKey to allow co-location of children in db
   [key in `cx-${string}`]: string | null
 }
 
 // YMap takes a generic type representing the union of values
 // Individual values must be explicitly type cast, e.g. thoughtMap.get('m') as Y.Map<ThoughtId>
-type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'm'> & { m: Y.Map<ThoughtId> }>
-type LexemeYjs = ValueOf<Omit<LexemeDb, 'contexts'> & { contexts: Y.Map<true> }>
+type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'm'>> | Y.Map<ThoughtId>
+type LexemeYjs = ValueOf<Omit<LexemeDb, 'x'>> | ThoughtId
 
 /** A partial YMapEvent that can be more easily constructed than a complete YMapEvent. */
 interface SimpleYMapEvent<T> {
@@ -148,6 +155,22 @@ const thoughtKeyToDb = {
   updatedBy: 'u',
   value: 'v',
   archived: 'a',
+} as const
+
+/** Maps Lexeme keys to LexemeDb keys. */
+const lexemeKeyToDb = {
+  created: 'c',
+  lastUpdated: 'l',
+  contexts: 'x',
+  updatedBy: 'u',
+} as const
+
+/** Maps LexemeDb keys to Lexeme keys. */
+const lexemeKeyFromDb = {
+  c: 'created',
+  l: 'lastUpdated',
+  x: 'contexts',
+  u: 'updatedBy',
 } as const
 
 /**********************************************************************
@@ -581,8 +604,9 @@ export const updateLexeme = async (
 
   lexemeDoc.transact(() => {
     const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
-    Object.entries(lexemeNew).forEach(([key, value]) => {
+    ;(Object.keys(lexemeNew) as (keyof Lexeme)[]).forEach(key => {
       if (key === 'contexts') {
+        const value = lexemeNew[key]
         const contextsNew = new Set(value)
 
         // add contexts to YJS that have been added to state
@@ -607,10 +631,11 @@ export const updateLexeme = async (
       }
       // other keys
       else {
+        const value = lexemeNew[key]
         // Only set a value if it has changed.
         // Otherwise YJS adds another update.
         if (value !== lexemeMap.get(key)) {
-          lexemeMap.set(key, value)
+          lexemeMap.set(lexemeKeyToDb[key], value)
         }
       }
     })
@@ -1144,25 +1169,33 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
   if (!lexemeDoc) return
   const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
   if (lexemeMap.size === 0) return
-  const lexemeRaw = lexemeMap.toJSON() as LexemeDb
+  const lexemeRaw = lexemeMap.toJSON() as Index<LexemeYjs>
 
   // convert LexemeDb to Lexeme
-  const lexeme = Object.entries(lexemeRaw).reduce<Lexeme>(
-    (acc, [key, value]) => {
+  // Lexeme is bult up one key at a time, so accum is a Partial<Lexeme> while the final value is assumed to be a complete Lexeme
+  const lexeme = (Object.keys(lexemeRaw) as (keyof LexemeDb | `cx-${string}`)[]).reduce<Partial<Lexeme>>(
+    (acc, key) => {
       const cxid = key.split('cx-')[1] as ThoughtId | undefined
 
       // Set docKey from Lexeme context to allow tangential contexts to be loaded.
       if (cxid) {
-        docKeys.set(cxid, value as string)
-      }
-
-      return {
-        ...acc,
-        [cxid ? 'contexts' : key]: cxid ? [...(acc.contexts || []), cxid] : value,
+        const value = lexemeRaw[key as `cx-${string}`] as ThoughtId
+        docKeys.set(cxid, value)
+        return {
+          ...acc,
+          contexts: [...(acc.contexts || []), cxid],
+        }
+      } else {
+        const keyNonContext = key as Exclude<keyof LexemeDb, `cx-${string}`>
+        const value = lexemeRaw[keyNonContext]
+        return {
+          ...acc,
+          [lexemeKeyFromDb[keyNonContext]]: value,
+        }
       }
     },
-    { contexts: [] } as unknown as Lexeme,
-  )
+    { contexts: [] },
+  ) as Lexeme
 
   return lexeme
 }
