@@ -7,7 +7,6 @@ import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
-import LexemeDb from '../../@types/LexemeDb'
 import Path from '../../@types/Path'
 import PushBatch from '../../@types/PushBatch'
 import ReplicationCursor from '../../@types/ReplicationCursor'
@@ -60,6 +59,12 @@ interface ThoughtDb {
   lastUpdated: Timestamp
   archived?: Timestamp
   updatedBy: string
+}
+
+/** A Lexeme database type that defines contexts as separate keys. */
+type LexemeDb = Omit<Lexeme, 'contexts'> & {
+  // mapped to docKey to allow co-location of children in db
+  [key in `cx-${string}`]: string | null
 }
 
 // YMap takes a generic type representing the union of values
