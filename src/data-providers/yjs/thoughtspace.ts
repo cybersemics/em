@@ -51,14 +51,21 @@ const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: stri
 
 /** A thought that is persisted to storage. */
 interface ThoughtDb {
-  value: string
-  rank: number
-  parentId: ThoughtId
+  // lastUpdated
+  l: Timestamp
+  // childrenMap
   // meta attributes keyed by value, otherwise keyed by ThoughtId
-  childrenMap: Index<ThoughtId>
-  lastUpdated: Timestamp
-  archived?: Timestamp
-  updatedBy: string
+  m: Index<ThoughtId>
+  // parentId
+  p: ThoughtId
+  // rank
+  r: number
+  // updatedBy
+  u: string
+  // value
+  v: string
+  // archived
+  a?: Timestamp
 }
 
 /** A Lexeme database type that defines contexts as separate keys. */
@@ -68,8 +75,8 @@ type LexemeDb = Omit<Lexeme, 'contexts'> & {
 }
 
 // YMap takes a generic type representing the union of values
-// Individual values must be explicitly type cast, e.g. thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
-type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'childrenMap'> & { childrenMap: Y.Map<ThoughtId> }>
+// Individual values must be explicitly type cast, e.g. thoughtMap.get('m') as Y.Map<ThoughtId>
+type ThoughtYjs = ValueOf<Omit<ThoughtDb, 'm'> & { m: Y.Map<ThoughtId> }>
 type LexemeYjs = ValueOf<Omit<LexemeDb, 'contexts'> & { contexts: Y.Map<true> }>
 
 /** A partial YMapEvent that can be more easily constructed than a complete YMapEvent. */
@@ -121,6 +128,28 @@ const IDB_ERROR_RETRY = 1000
 /** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
 const UPDATE_THOUGHTS_THROTTLE = 100
 
+/** Maps ThoughtDb keys to Thought keys. */
+// const thoughtKeyFromDb = {
+//   l: 'lastUpdated',
+//   m: 'childrenMap',
+//   p: 'parentId',
+//   r: 'rank',
+//   u: 'updatedBy',
+//   v: 'value',
+//   a: 'archived',
+// } as const
+
+/** Maps Thought keys to ThoughtDb keys. */
+const thoughtKeyToDb = {
+  lastUpdated: 'l',
+  childrenMap: 'm',
+  parentId: 'p',
+  rank: 'r',
+  updatedBy: 'u',
+  value: 'v',
+  archived: 'a',
+} as const
+
 /**********************************************************************
  * Helper Functions
  **********************************************************************/
@@ -156,9 +185,16 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
   })
 }, UPDATE_THOUGHTS_THROTTLE)
 
-/** Filter out the properties that should not be saved to thoughts in the database. */
-const thoughtToDb = (thought: Thought): ThoughtDb =>
-  _.pick(thought, ['childrenMap', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'])
+/** Convert a Thought to a ThoughtDb for efficient storage. */
+const thoughtToDb = (thought: Thought): ThoughtDb => ({
+  l: thought.lastUpdated,
+  m: thought.childrenMap,
+  p: thought.parentId,
+  r: thought.rank,
+  u: thought.updatedBy,
+  v: thought.value,
+  ...(thought.archived ? { a: thought.archived } : null),
+})
 
 /**********************************************************************
  * Module variables
@@ -465,14 +501,14 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     const thoughtDb = thoughtToDb(thought)
     ;(Object.keys(thoughtDb) as (keyof ThoughtDb)[]).forEach(key => {
       // merge childrenMap Y.Map
-      if (key === 'childrenMap') {
+      if (key === thoughtKeyToDb.childrenMap) {
         const value = thoughtDb[key]
         let childrenMap = thoughtMap.get('childrenMap') as Y.Map<ThoughtId>
 
         // create new Y.Map for new thought
         if (!childrenMap) {
           childrenMap = new Y.Map()
-          thoughtMap.set('childrenMap', childrenMap)
+          thoughtMap.set(thoughtKeyToDb.childrenMap, childrenMap)
         }
 
         // delete children from the yjs thought that are no longer in the state thought
@@ -483,7 +519,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
         })
 
         // add children that are not in the yjs thought
-        Object.entries(thoughtDb.childrenMap).forEach(([key, childId]) => {
+        Object.entries(thoughtDb[thoughtKeyToDb.childrenMap]).forEach(([key, childId]) => {
           if (!childrenMap.has(key)) {
             childrenMap.set(key, childId)
           }
@@ -1082,16 +1118,24 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
   const thoughtMap = yChildren.get(id)
   if (!thoughtMap || thoughtMap.size === 0) return
-  const thoughtRaw = thoughtMap.toJSON() as Omit<ThoughtDb, 'childrenMap'> & {
+  const thoughtRaw = thoughtMap.toJSON() as Omit<ThoughtDb, 'm'> & {
     // TODO: Why is childrenMap sometimes a YMap and sometimes a plain object?
     // toJSON is not recursive so we need to toJSON childrenMap as well
     // It is possible that this was fixed in later versions of yjs after v13.5.41
-    childrenMap: Y.Map<ThoughtId> | Index<ThoughtId>
+    [thoughtKeyToDb.childrenMap]: Y.Map<ThoughtId> | Index<ThoughtId>
   }
   return {
     id,
-    ...thoughtRaw,
-    childrenMap: thoughtRaw.childrenMap instanceof Y.Map ? thoughtRaw.childrenMap.toJSON() : thoughtRaw.childrenMap,
+    childrenMap:
+      thoughtRaw[thoughtKeyToDb.childrenMap] instanceof Y.Map
+        ? (thoughtRaw[thoughtKeyToDb.childrenMap] as Y.Map<ThoughtId>).toJSON()
+        : (thoughtRaw[thoughtKeyToDb.childrenMap] as Index<ThoughtId>),
+    lastUpdated: thoughtRaw.l,
+    parentId: thoughtRaw.p,
+    rank: thoughtRaw.r,
+    updatedBy: thoughtRaw.u,
+    value: thoughtRaw.v,
+    ...(thoughtRaw.a ? { archived: thoughtRaw.a } : null),
   }
 }
 
