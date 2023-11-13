@@ -673,12 +673,7 @@ const onThoughtChange = (id: ThoughtId) => (e: SimpleYMapEvent<ThoughtYjs>) => {
 }
 
 /** Handles the Lexeme observe event. Ignores events from self. */
-const onLexemeChange = (e: {
-  target: Y.Map<LexemeYjs>
-  transaction: {
-    origin: any
-  }
-}) => {
+const onLexemeChange = (e: SimpleYMapEvent<LexemeYjs>) => {
   const lexemeDoc = e.target.doc!
   if (e.transaction.origin === lexemeDoc.clientID) return
 
