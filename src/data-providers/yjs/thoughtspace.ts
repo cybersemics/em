@@ -245,8 +245,16 @@ const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
 const lexemeIDBSynced: Map<string, Promise<unknown>> = new Map()
 const lexemeWebsocketSynced: Map<string, Promise<unknown>> = new Map()
-/** Cache a promise of the replicateLexeme result for subsequent calls. This is a temporary memoization that is cleared when replication completes. */
-const lexemeReplicating: Map<string, Promise<Lexeme | undefined>> = new Map()
+/** Cache a promise of the replicateLexeme result for subsequent calls. This is a temporary memoization that is cleared when replication completes. Use the appropriate local/remote cache, since background replication may never resolve. */
+const lexemeReplicating: {
+  // IDB
+  local: Map<string, Promise<Lexeme | undefined>>
+  // websocket
+  remote: Map<string, Promise<Lexeme | undefined>>
+} = {
+  local: new Map(),
+  remote: new Map(),
+}
 
 /** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
 const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
@@ -1020,12 +1028,16 @@ export const replicateLexeme = async (
   if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
     if (background) {
       await lexemeWebsocketSynced.get(key)
+      await lexemeReplicating.remote.get(key)
+    } else {
+      await lexemeReplicating.local.get(key)
     }
-    return lexemeReplicating.get(key)
+
+    return getLexeme(doc)
   }
 
   const replicating = resolvable<Lexeme | undefined>()
-  lexemeReplicating.set(key, replicating)
+  lexemeReplicating[background ? 'remote' : 'local'].set(key, replicating)
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -1053,7 +1065,6 @@ export const replicateLexeme = async (
     document: doc,
     token: accessToken,
   })
-
   const websocketSynced = when(websocketProvider, 'synced')
 
   // Cache docs, promises, and persistence objects at the start of foreground replication.
@@ -1103,8 +1114,9 @@ export const replicateLexeme = async (
   // Once the replicating promise has resolved, it is safe to remove from the replicating map.
   // We must remove it manually to free memory.
   // This will not break concurrent calls, which retain their own reference.
-  if (lexemeReplicating.get(key) === replicating) {
-    lexemeReplicating.delete(key)
+  const lexemeReplicatingMap = lexemeReplicating[background ? 'remote' : 'local']
+  if (lexemeReplicatingMap.get(key) === replicating) {
+    lexemeReplicatingMap.delete(key)
   }
 
   // destroy the Doc and providers once fully synced
@@ -1293,7 +1305,8 @@ export const freeLexeme = async (key: string): Promise<void> => {
   lexemeIDBSynced.delete(key)
   lexemeWebsocketProvider.delete(key)
   lexemeWebsocketSynced.delete(key)
-  lexemeReplicating.delete(key)
+  lexemeReplicating.local.delete(key)
+  lexemeReplicating.remote.delete(key)
 }
 
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
