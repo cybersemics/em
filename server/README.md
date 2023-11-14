@@ -40,8 +40,8 @@ The client-side app needs these envirionment variables set to connect to the web
 
 ```ini
 # .env.production
-REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app/
-REACT_APP_WEBSOCKET_PORT=80
+REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app
+REACT_APP_WEBSOCKET_PORT=
 ```
 
 ### Server
@@ -49,7 +49,7 @@ REACT_APP_WEBSOCKET_PORT=80
 The server uses its own environment variables for configuration (not to be confused with the `.env` files on the front-end). The defaults are generally sufficient for running locally. When deploying to a hosting platform, they should be set within the platform's secure dashboard.
 
 - `process.env.HOST` - Default: `localhost`. DigitalOcean uses `0.0.0.0`.
-- `process.env.PORT` - Default: `3001`. DigitalOcean uses `80`.
+- `process.env.PORT` - Default: `3001`. Should be kept empty for DigitalOcean.
 - `process.env.REDIS_HOST` - Redis host name. If none is provided, the Redis extension will be disabled.
 - `process.env.REDIS_PORT` - Redis port.
 - `process.env.MONGODB_CONNECTION_STRING` - MongoDB [connection string](https://www.mongodb.com/docs/manual/reference/connection-string/).
@@ -124,7 +124,7 @@ Troubleshooting:
 
 - If you get: `Error during saving transaction MongoServerSelectionError: Client network socket disconnected before secure TLS connection was established`
   - Whitelist the em server's IP address in the MongoDB hosting platform dashboard.
-  - Note: DigitalOcean does [not yet support static IP addresses](https://ideas.digitalocean.com/app-platform/p/app-platform-static-ip) on App Platform.
+  - Note: DigitalOcean does [not yet support static IP addresses](https://ideas.digitalocean.com/app-platform/p/app-platform-static-ip) on App Platform. You can get the current IP address by running `curl ifconfig.me` from the console, but it will change every deploy.
 - If you get `MongoError: bad auth : Authentication failed`
   - Make sure the user has been added with the correct permissions to the MongoDB hosting platform, and that your connection string is correct. See [Environment Variables](#environment-variables) for details.
 - You may find it useful to browse the database using [MongoDB Compass](https://www.mongodb.com/products/tools/compass).

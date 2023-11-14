@@ -7,13 +7,10 @@ import storage from '../../util/storage'
 import { encodePermissionsDocumentName } from './documentNameEncoder'
 
 const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
-const port = process.env.REACT_APP_WEBSOCKET_PORT || 3001
+const port = process.env.REACT_APP_WEBSOCKET_PORT || (host === 'localhost' ? 3001 : '')
 const protocol = host === 'localhost' ? 'ws' : 'wss'
 
-// public host must end with '/' or the websocket connection will not open
-export const websocketUrl = `${protocol}://${host}${
-  host === 'localhost' || host.endsWith('/') ? '' : '/'
-}:${port}/hocuspocus`
+export const websocketUrl = `${protocol}://${host}${port ? ':' + port : ''}/hocuspocus`
 
 // stores the permissions for the entire thoughtspace as Index<Share> (indexed by access token)
 // only accessible by owner
