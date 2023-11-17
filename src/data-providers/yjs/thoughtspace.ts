@@ -234,19 +234,11 @@ const thoughtIDBSynced: Map<string, Promise<unknown>> = new Map()
 const thoughtWebsocketSynced: Map<string, Promise<unknown>> = new Map()
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
+// Lexemes retained until freeLexeme is called. These are lexemes that are replicated in the foreground and kept in Redux State.
+const lexemeRetained: Set<string> = new Set()
 const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
 const lexemeIDBSynced: Map<string, Promise<unknown>> = new Map()
 const lexemeWebsocketSynced: Map<string, Promise<unknown>> = new Map()
-/** Cache a promise of the replicateLexeme result for subsequent calls. This is a temporary memoization that is cleared when replication completes. Use the appropriate local/remote cache, since background replication may never resolve. */
-const lexemeReplicating: {
-  // IDB
-  local: Map<string, Promise<Lexeme | undefined>>
-  // websocket
-  remote: Map<string, Promise<Lexeme | undefined>>
-} = {
-  local: new Map(),
-  remote: new Map(),
-}
 
 /** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
 const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
@@ -402,7 +394,7 @@ export const init = async (options: ThoughtspaceOptions) => {
     // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
     // this may vary based on # of cores and network conditions
     concurrency: 16,
-    onStep: ({ completed, total }) => {
+    onStep: ({ completed, index, total, value }) => {
       onProgress({ savingProgress: completed / total })
     },
     onEnd: () => {
@@ -1013,22 +1005,26 @@ export const replicateLexeme = async (
   const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
   const lexemeMap = doc.getMap<LexemeYjs>()
 
+  // Foreground replication retains the lexeme in the cache even when replication completes.
+  // The lexeme will only be removed after freeLexeme is called.
+  if (!background) {
+    lexemeRetained.add(key)
+  }
+
   // If the doc is cached, return as soon as the appropriate providers are synced.
   // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
   // Disable websocket during tests because of infinite loop in sinon runAllAsync.
   if (lexemeDocs.get(key) || process.env.NODE_ENV === 'test') {
     if (background) {
       await lexemeWebsocketSynced.get(key)
-      await lexemeReplicating.remote.get(key)
     } else {
-      await lexemeReplicating.local.get(key)
+      await lexemeIDBSynced.get(key)
     }
 
     return getLexeme(doc)
   }
 
   const replicating = resolvable<Lexeme | undefined>()
-  lexemeReplicating[background ? 'remote' : 'local'].set(key, replicating)
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -1058,15 +1054,15 @@ export const replicateLexeme = async (
   })
   const websocketSynced = when(websocketProvider, 'synced')
 
-  // Cache docs, promises, and persistence objects at the start of foreground replication.
+  // Cache docs, promises, and providers
   // Must be done synchronously, before waiting for idbSynced or websocketSynced, so that the cached objects are available immediately for concurrent calls to replicateChildren.
-  if (!background) {
-    lexemeDocs.set(key, doc)
-    lexemeIDBSynced.set(key, idbSynced)
-    lexemePersistence.set(key, persistence)
-    lexemeWebsocketSynced.set(key, websocketSynced)
-    lexemeWebsocketProvider.set(key, websocketProvider)
+  lexemeDocs.set(key, doc)
+  lexemeIDBSynced.set(key, idbSynced)
+  lexemePersistence.set(key, persistence)
+  lexemeWebsocketSynced.set(key, websocketSynced)
+  lexemeWebsocketProvider.set(key, websocketProvider)
 
+  if (!background) {
     // Start observing before websocketSynced immediately. This differs from replicateChildren, where we cannot start observing until we know if a thought is pending or not.
     // This will be unobserved in background replication.
     lexemeMap.observe(onLexemeChange)
@@ -1084,10 +1080,7 @@ export const replicateLexeme = async (
     // After the initial replication, if the lexeme or any of its contexts are already loaded, cache the thought Doc and update Redux state, even in background mode.
     // Otherwise remote changes will not be rendered.
     if (loaded) {
-      lexemeDocs.set(key, doc)
-      lexemeIDBSynced.set(key, idbSynced)
-      lexemePersistence.set(key, persistence)
-      lexemeWebsocketProvider.set(key, websocketProvider)
+      lexemeRetained.add(key)
       lexemeMap.observe(onLexemeChange)
       onLexemeChange({
         target: doc.getMap<LexemeYjs>(),
@@ -1102,19 +1095,8 @@ export const replicateLexeme = async (
   const lexeme = getLexeme(doc)
   replicating.resolve(lexeme)
 
-  // Once the replicating promise has resolved, it is safe to remove from the replicating map.
-  // We must remove it manually to free memory.
-  // This will not break concurrent calls, which retain their own reference.
-  const lexemeReplicatingMap = lexemeReplicating[background ? 'remote' : 'local']
-  if (lexemeReplicatingMap.get(key) === replicating) {
-    lexemeReplicatingMap.delete(key)
-  }
-
-  // destroy the Doc and providers once fully synced
-  if (background) {
-    doc.destroy()
-    websocketProvider.destroy()
-  }
+  // If the lexeme is not retained by foreground replication, deallocate it.
+  tryDeallocateLexeme(key)
 
   return lexeme
 }
@@ -1284,9 +1266,21 @@ const deleteThought = async (docKey: string): Promise<void> => {
   }
 }
 
-/** Destroys the lexemeDoc and associated providers without deleting the persisted data. */
+/** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
 export const freeLexeme = async (key: string): Promise<void> => {
+  lexemeRetained.delete(key)
   await lexemeIDBSynced.get(key)
+
+  // TODO: See freeThought for problems with awaiting websocketSynced.
+  // await lexemeWebsocketSynced.get(key)
+
+  // if the lexeme is retained again, it means it has been replicated in the foreground, and tryDeallocateLexeme will be a noop.
+  await tryDeallocateLexeme(key)
+}
+
+/** Deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). If the lexeme is retained, noop. Call freeLexeme to both safely unretain the lexeme and trigger deallocation when replication completes. */
+const tryDeallocateLexeme = async (key: string): Promise<void> => {
+  if (lexemeRetained.has(key)) return
 
   // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
   // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
@@ -1306,8 +1300,6 @@ export const freeLexeme = async (key: string): Promise<void> => {
   lexemeIDBSynced.delete(key)
   lexemeWebsocketProvider.delete(key)
   lexemeWebsocketSynced.delete(key)
-  lexemeReplicating.local.delete(key)
-  lexemeReplicating.remote.delete(key)
 }
 
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
