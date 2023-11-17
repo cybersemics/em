@@ -23,6 +23,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
+import noteValue from '../util/noteValue'
 import once from '../util/once'
 import DropBefore from './DropBefore'
 import DropEmpty from './DropEmpty'
@@ -88,15 +89,11 @@ const VirtualThought = ({
   const [height, setHeight] = useState<number | null>(estimatedHeight)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
+  const note = useSelector((state: State) => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
-  // Set to true when note has loaded.
-  // childrenMap['=note'] exists sooner, but the height is not updated until the note is loaded.
-  // There is a further delay before the note is rendered.
-  const hasNote = useSelector((state: State) => !!findDescendant(state, thought.id, '=note'))
 
   /***************************
    * VirtualThought properties
-
    ***************************/
 
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
@@ -142,26 +139,21 @@ const VirtualThought = ({
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
-  useEffect(updateHeight)
 
   // Recalculate height on edit
   useEffect(() => {
-    updateHeight()
+    // TODO: WHy is setTimeout needed here?
+    // See: https://github.com/cybersemics/em/issues/1737
+    // See: https://github.com/cybersemics/em/issues/1738
+    setTimeout(updateHeight, 10)
+
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [isEditing, updateHeight])
+  }, [isEditing, note, updateHeight])
 
-  // re-calculate height after note renders
-  // TODO: Is there a way to detect when the note renders without an arbitrary delay?
-  useEffect(() => {
-    if (hasNote) {
-      setTimeout(updateHeight, 50)
-    }
-  }, [hasNote, updateHeight])
-
-  // trigger onResize with null to allow subscribes to clean up
+  // trigger onResize with null on final unmount to allow subscribers to clean up
   useEffect(
     () => {
       return () => {

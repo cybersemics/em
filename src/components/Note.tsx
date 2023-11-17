@@ -3,7 +3,6 @@ import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
@@ -14,13 +13,11 @@ import toggleNote from '../action-creators/toggleNote'
 import { isTouch } from '../browser'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
-import findDescendant from '../selectors/findDescendant'
-import { firstVisibleChild } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
+import noteValue from '../util/noteValue'
 import strip from '../util/strip'
 
 /** Sets the cursor on the note's thought as it is being edited. */
@@ -36,15 +33,6 @@ const setCursorOnLiveThought = ({ path }: { path: Path }) => {
       noteFocus: true,
     }),
   )
-}
-
-/** Gets the value of a thought's note. Returns null if the thought does not have a note. */
-const noteValue = (state: State, id: ThoughtId) => {
-  const noteId = findDescendant(state, id, '=note')
-  if (!noteId) return null
-  const noteThought = getThoughtById(state, noteId)
-  if (noteThought.pending) return null
-  return firstVisibleChild(state, noteId!)?.value ?? null
 }
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
