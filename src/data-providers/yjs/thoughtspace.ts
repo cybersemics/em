@@ -771,10 +771,6 @@ export const replicateChildren = async (
     return children
   }
 
-  // Create a promise that resolves when the thought is fully replicated, according to the background/remote logic.
-  // This is used to memoize duplicate calls to replicateChildren at, during, and after replication.
-  const replicating = resolvable<void>()
-
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
   const idbSynced = persistence.whenSynced
@@ -922,9 +918,7 @@ export const replicateChildren = async (
     )
   }
 
-  // resolve the replicating promise so that concurrent calls to replicateChildren can resolve
   const children = getChildren(doc)
-  replicating.resolve()
 
   // If the thought is not retained by foreground replication, deallocate it.
   tryDeallocateThought(docKey)
@@ -978,8 +972,6 @@ export const replicateLexeme = async (
 
     return getLexeme(doc)
   }
-
-  const replicating = resolvable<Lexeme | undefined>()
 
   // set up idb and websocket persistence and subscribe to changes
   const persistence = new IndexeddbPersistence(documentName, doc)
@@ -1048,7 +1040,6 @@ export const replicateLexeme = async (
 
   // get the Lexeme before we destroy the Doc
   const lexeme = getLexeme(doc)
-  replicating.resolve(lexeme)
 
   // If the lexeme is not retained by foreground replication, deallocate it.
   tryDeallocateLexeme(key)
