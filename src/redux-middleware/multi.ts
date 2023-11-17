@@ -1,5 +1,6 @@
 import { Dispatch, Middleware } from 'redux'
 import State from '../@types/State'
+import nonNull from '../util/nonNull'
 
 type MultiMiddleware = Middleware<any, State, Dispatch>
 
@@ -8,6 +9,6 @@ const multi: MultiMiddleware =
   ({ dispatch }) =>
   next =>
   action =>
-    Array.isArray(action) ? action.filter(Boolean).map(dispatch) : next(action)
+    Array.isArray(action) ? action.filter(nonNull).map(dispatch) : next(action)
 
 export default multi

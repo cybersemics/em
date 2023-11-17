@@ -19,6 +19,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
+import nonNull from '../util/nonNull'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 
@@ -147,7 +148,7 @@ const dataIntegrityCheck =
       const children = Object.values(thought.childrenMap || {})
         .map(id => getThoughtById(state, id))
         // the child may not exist in the thoughtIndex yet if it is pending
-        .filter(Boolean)
+        .filter(nonNull)
       children.forEach(child => {
         if (child.parentId !== thought.id) {
           console.error('child', child)
@@ -233,7 +234,7 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
-    const rootThought = thoughtIndexUpdates[HOME_TOKEN] || (thoughtIndex[HOME_TOKEN] as Thought | null)
+    const rootThought: Thought | null = thoughtIndexUpdates[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
     const thoughtsLoaded =
       rootThought &&
       !rootThought.pending &&

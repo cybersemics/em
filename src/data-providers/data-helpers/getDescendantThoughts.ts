@@ -13,6 +13,7 @@ import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
+import nonNull from '../../util/nonNull'
 import { DataProvider } from '../DataProvider'
 import { clientId } from '../yjs'
 
@@ -123,7 +124,7 @@ async function* getDescendantThoughts(
     // get thoughts from the database
     const providerThoughtsRaw = await provider.getThoughtsByIds(ids)
 
-    const providerThoughtsValidated = providerThoughtsRaw.filter(Boolean) as Thought[]
+    const providerThoughtsValidated = providerThoughtsRaw.filter(nonNull)
     const thoughtIdsValidated = ids.filter((value, i) => providerThoughtsRaw[i])
     const pulledThoughtIndex: Index<Thought> = keyValueBy(thoughtIdsValidated, (id, i) => ({
       [id]: providerThoughtsValidated[i],
@@ -205,7 +206,7 @@ async function* getDescendantThoughts(
           return thought
         }
       })
-      .filter(Boolean) as Thought[]
+      .filter(nonNull)
 
     // Note: Since Parent.children is now array of ids instead of Child we need to inclued the non pending leaves as well.
     const thoughtIndex = keyValueBy(thoughtIdsValidated, (id, i) => ({ [id]: thoughts[i] }))

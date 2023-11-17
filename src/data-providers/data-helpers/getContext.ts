@@ -53,7 +53,7 @@ const contextToThoughts = async (provider: DataProvider, pathUnranked: string[])
       if (!allThoughts) throw Error('Thought not found')
 
       // Lexeme now stores the actual thought id. To get parent we need to access it using parentId
-      const thoughts = (allThoughts as Thought[]).filter(thought => thought?.parentId === prevParentId)
+      const thoughts = allThoughts.filter((thought): thought is Thought => thought?.parentId === prevParentId)
 
       const finalThought = thoughts[0]
 

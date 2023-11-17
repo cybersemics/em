@@ -19,6 +19,7 @@ import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
+import nonNull from '../../util/nonNull'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
@@ -1064,9 +1065,7 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
 
   const yChildren = thoughtDoc.getMap<Y.Map<ThoughtYjs>>('children')
 
-  return [...(yChildren.keys() as IterableIterator<ThoughtId>)]
-    .map(id => getThought(thoughtDoc, id))
-    .filter(Boolean) as Thought[]
+  return [...(yChildren.keys() as IterableIterator<ThoughtId>)].map(id => getThought(thoughtDoc, id)).filter(nonNull)
 }
 
 /** Gets a Thought from a thought Y.Doc. */

@@ -11,7 +11,7 @@ const getUserToolbar = (state: State): ShortcutId[] | null => {
   const shortcutIds = (userToolbarThoughtId ? getChildrenRanked(state, userToolbarThoughtId) : [])
     .map(subthought => subthought.value)
     // filter out invalid shortcutIds
-    .filter(shortcutIdString => !!shortcutById(shortcutIdString as ShortcutId)) as ShortcutId[]
+    .filter((shortcutIdString): shortcutIdString is ShortcutId => !!shortcutById(shortcutIdString as ShortcutId))
   return shortcutIds.length > 0 ? shortcutIds : null
 }
 

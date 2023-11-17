@@ -7,7 +7,7 @@ import removeHome from '../../util/removeHome'
 import importJSON from '../importJSON'
 import initialState from '../initialState'
 import keyValueBy from '../keyValueBy'
-import roamJsonToBlocks, { RoamBlock, RoamPage } from '../roamJsonToBlocks'
+import roamJsonToBlocks, { RoamPage } from '../roamJsonToBlocks'
 
 jest.mock('../timestamp', () => () => '2020-11-02T01:11:58.869Z')
 
@@ -209,7 +209,7 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
 })
 
 test('it should save create-time as created and edit-time as lastUpdated', () => {
-  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat() as RoamBlock[]
+  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
 
   const blocks = roamJsonToBlocks(testData)
 

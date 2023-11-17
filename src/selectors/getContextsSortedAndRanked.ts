@@ -6,6 +6,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 import isVisibleContext from '../util/isVisibleContext'
 import never from '../util/never'
+import nonNull from '../util/nonNull'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
@@ -47,7 +48,7 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
     const breadcrumbs = rootedParentOf(state, parentOf(path))
     const parent = getThoughtById(state, thought.parentId)
     const breadcrumbThoughts = childIdsToThoughts(state, breadcrumbs)
-    if (!breadcrumbThoughts.every(Boolean)) return MISSING_TOKEN
+    if (!breadcrumbThoughts.every(nonNull)) return MISSING_TOKEN
     const encodedBreadcrumbs = breadcrumbThoughts
       .map(thought => (thought ? thought.value : MISSING_TOKEN))
       .join('\x00SEP2')
@@ -57,9 +58,9 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   }
 
   // sort by hashed ancestor values
-  const contextsSorted = _.sortBy(contexts, lexicalHash)
+  const contextsSorted: Thought[] = _.sortBy(contexts, lexicalHash)
     // generate dynamic ranks in sort order
-    .map((thought, i) => ({ ...thought, rank: i }) as Thought)
+    .map((thought, i) => ({ ...thought, rank: i }))
 
   return contextsSorted
 }

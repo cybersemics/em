@@ -1,4 +1,5 @@
 import DoublyLinkedList from 'yallist'
+import nonNull from './nonNull'
 
 /** A very simple LIFO cache that maintains a unique list of keys, removing keys on add that have exceeded max size. */
 const lifoCache = <T>(max: number) => {
@@ -34,7 +35,7 @@ const lifoCache = <T>(max: number) => {
   /** Adds multiple keys to the cache and returns a list of deleted keys. Calls add in order. */
   const addMany = (keys: T[]): T[] => {
     const deleted = keys.map(add)
-    return deleted.filter(x => x) as T[]
+    return deleted.filter(nonNull)
   }
 
   return {

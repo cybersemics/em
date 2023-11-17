@@ -33,6 +33,7 @@ import store from '../stores/app'
 import fastClick from '../util/fastClick'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import nonNull from '../util/nonNull'
 import splice from '../util/splice'
 import Checkbox from './Checkbox'
 import ThoughtLink from './ThoughtLink'
@@ -305,7 +306,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
         const path = thoughtToPath(state, thought.parentId)
         return path
       })
-      .filter(x => x) as SimplePath[]
+      .filter(nonNull)
   }, _.isEqual)
 
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))

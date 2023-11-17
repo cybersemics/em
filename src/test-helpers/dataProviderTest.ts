@@ -18,6 +18,7 @@ import initialState from '../util/initialState'
 import keyValueBy from '../util/keyValueBy'
 import mergeThoughts from '../util/mergeThoughts'
 import never from '../util/never'
+import nonNull from '../util/nonNull'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 
@@ -46,7 +47,7 @@ const getManyDescendantsByContext = async (
   options?: { maxDepth?: number },
 ) => {
   const thoughtIds = (await Promise.all(contextArray.map(context => getContext(provider, context))))
-    .filter(Boolean)
+    .filter(nonNull)
     .map(thought => thought!.id)
 
   return all(getManyDescendants(provider, thoughtIds, initialState, options))
@@ -248,7 +249,7 @@ const dataProviderTest = (provider: DataProvider) => {
   })
 
   test('updateThoughtIndex', async () => {
-    const thoughtX = {
+    const thoughtX: Thought = {
       id: 'idX' as ThoughtId,
       childrenMap: {
         child1: 'child1' as ThoughtId,
@@ -261,9 +262,9 @@ const dataProviderTest = (provider: DataProvider) => {
       rank: 0,
       lastUpdated: timestamp(),
       updatedBy: clientId,
-    } as Thought
+    }
 
-    const thoughtY = {
+    const thoughtY: Thought = {
       id: 'idY' as ThoughtId,
       childrenMap: {
         child4: 'child4' as ThoughtId,
@@ -276,7 +277,7 @@ const dataProviderTest = (provider: DataProvider) => {
       parentId: 'parent2' as ThoughtId,
       lastUpdated: timestamp(),
       updatedBy: clientId,
-    } as Thought
+    }
 
     await provider.updateThoughtIndex?.({
       idX: thoughtX,
