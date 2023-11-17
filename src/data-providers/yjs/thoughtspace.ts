@@ -223,6 +223,7 @@ const thoughtRetained: Set<string> = new Set()
 const thoughtWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
 const thoughtIDBSynced: Map<string, Promise<unknown>> = new Map()
 const thoughtWebsocketSynced: Map<string, Promise<unknown>> = new Map()
+
 const lexemeDocs: Map<string, Y.Doc> = new Map()
 const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
 // Lexemes retained until freeLexeme is called. These are lexemes that are replicated in the foreground and kept in Redux State.
@@ -425,8 +426,8 @@ export const init = async (options: ThoughtspaceOptions) => {
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   let docKey = docKeys.get(id)
-  let lexemeIdbSynced: Promise<unknown> | undefined
-  let thoughtOldIdbSynced: Promise<unknown> | undefined
+  let lexemeOldIDBSynced: Promise<unknown> | undefined
+  let thoughtOldIDBSynced: Promise<unknown> | undefined
   if (docKey) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
@@ -447,7 +448,9 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
         docKey = thought.parentId
         docKeys.set(id, docKey)
       }, thoughtDocOld.clientID)
-      thoughtOldIdbSynced = thoughtPersistence.get(docKey)?.whenSynced
+
+      // subscribe to thoughtPersistence directly since thoughtIDBSynced can await websocketSynced on new devices
+      thoughtOldIDBSynced = thoughtPersistence.get(docKey)?.whenSynced
 
       // update Lexeme context docKey
       if (lexemeDoc) {
@@ -455,7 +458,8 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
           const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
           lexemeMap.set(`cx-${id}`, thought.parentId)
         }, lexemeDoc.clientID)
-        lexemeIdbSynced = lexemePersistence.get(lexemeKey)?.whenSynced
+        // subscribe to lexemePersistence directly since lexemeIDBSynced can await websocketSynced on new devices
+        lexemeOldIDBSynced = lexemePersistence.get(lexemeKey)?.whenSynced
       }
     }
   } else {
@@ -474,6 +478,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       replicateThought(id, { onDoc: resolve })
     }))
 
+  // subscribe to thoughtPersistence directly since thoughtIDBSynced can await websocketSynced on new devices
   const thoughtNewIdbSynced = thoughtPersistence.get(docKey)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
@@ -543,7 +548,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     })
   }, thoughtDoc.clientID)
 
-  await Promise.all([thoughtNewIdbSynced, thoughtOldIdbSynced, lexemeIdbSynced])
+  await Promise.all([thoughtNewIdbSynced, thoughtOldIDBSynced, lexemeOldIDBSynced])
 }
 
 /** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
@@ -569,6 +574,7 @@ export const updateLexeme = async (
   // The Lexeme may be deleted if the user creates and deletes a thought very quickly
   if (!lexemeDoc) return
 
+  // subscribe to lexemePersistence directly since lexemeIDBSynced can await websocketSynced on new devices
   const idbSynced = lexemePersistence.get(key)?.whenSynced.catch(e => {
     // AbortError happens if the app is closed during replication.
     // Not sure if the timeout will be preserved, but at least we can retry.
