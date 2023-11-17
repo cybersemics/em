@@ -889,6 +889,8 @@ export const replicateChildren = async (
       thoughtMap.observe(onThoughtChange(childId))
     })
   }
+
+  // Foregrounding
   // In background remote mode, after the websocket syncs, if the thought or its parent is already loaded, cache the thought Doc and update Redux state.
   // Otherwise remote changes will not be rendered.
   // (This does not need to occur in background local mode, i.e. during export.)
@@ -900,6 +902,7 @@ export const replicateChildren = async (
       children.map(async child => {
         const loaded = await isThoughtLoaded(child)
         if (loaded) {
+          thoughtRetained.add(docKey)
           thoughtDocs.set(docKey, doc)
           thoughtIDBSynced.set(docKey, idbSynced)
           thoughtPersistence.set(docKey, persistence)
