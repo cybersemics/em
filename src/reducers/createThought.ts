@@ -60,6 +60,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   const thoughtNew: Thought = {
     // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
     childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
+    created: timestamp(),
     id,
     lastUpdated: timestamp(),
     parentId: parentId,

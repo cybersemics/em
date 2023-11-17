@@ -43,6 +43,8 @@ const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: stri
 interface ThoughtDb {
   // archived
   a?: Timestamp
+  // created
+  c: Timestamp
   // lastUpdated
   l: Timestamp
   // childrenMap
@@ -201,6 +203,7 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 
 /** Convert a Thought to a ThoughtDb for efficient storage. */
 const thoughtToDb = (thought: Thought): ThoughtDb => ({
+  c: thought.created,
   l: thought.lastUpdated,
   m: thought.childrenMap,
   p: thought.parentId,
@@ -1083,6 +1086,7 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
       thoughtRaw[thoughtKeyToDb.childrenMap] instanceof Y.Map
         ? (thoughtRaw[thoughtKeyToDb.childrenMap] as Y.Map<ThoughtId>).toJSON()
         : (thoughtRaw[thoughtKeyToDb.childrenMap] as Index<ThoughtId>),
+    created: thoughtRaw.c,
     id,
     lastUpdated: thoughtRaw.l,
     parentId: thoughtRaw.p,

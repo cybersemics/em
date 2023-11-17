@@ -7,6 +7,7 @@ interface Thought {
   archived?: Timestamp
   // meta attributes keyed by value, otherwise keyed by ThoughtId
   childrenMap: Index<ThoughtId>
+  created: Timestamp
   // persisted properties (See: ThoughtDb)
   id: ThoughtId
   lastUpdated: Timestamp

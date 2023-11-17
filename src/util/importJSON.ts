@@ -88,6 +88,7 @@ const insertThought = (
 
   const newThought: Thought = {
     childrenMap: {},
+    created: createdInherited,
     id: newThoughtId,
     lastUpdated: lastUpdatedInherited,
     parentId: thoughtOld.id,

@@ -24,6 +24,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
+      created: created,
       // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
@@ -35,6 +36,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
+      created: created,
       // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
@@ -46,6 +48,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
+      created: created,
       // start pending to trigger pull
       pending: true,
       lastUpdated: never(),
