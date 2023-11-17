@@ -124,17 +124,13 @@ const VirtualThought = ({
   //   childPath,
   // })
 
-  const updateHeight = useCallback(
-    () => {
-      if (!ref.current) return
-      const heightNew = ref.current.clientHeight
-      if (heightNew === height) return
-      setHeight(heightNew)
-      onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const updateHeight = useCallback(() => {
+    if (!ref.current) return
+    const heightNew = ref.current.clientHeight
+    if (heightNew === height) return
+    setHeight(heightNew)
+    onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
+  }, [crossContextualKey, height, onResize, thought.id])
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
