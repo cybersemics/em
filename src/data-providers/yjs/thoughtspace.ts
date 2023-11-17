@@ -14,17 +14,8 @@ import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
 import ValueOf from '../../@types/ValueOf'
-import WebsocketStatus from '../../@types/WebsocketStatus'
-import {
-  ABSOLUTE_TOKEN,
-  EM_TOKEN,
-  HOME_TOKEN,
-  ROOT_CONTEXTS,
-  ROOT_PARENT_ID,
-  WEBSOCKET_CONNECTION_TIME,
-} from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
-import cancellable from '../../util/cancellable'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
@@ -886,44 +877,8 @@ export const replicateChildren = async (
   // always wait for IDB to sync
   await idbSynced
 
-  // During foreground replication, if there is no value in IndexedDB, wait for the websocket to sync before resolving.
-  // Otherwise, db.getThoughtById will return undefined to getDescendantThoughts and the pull will end prematurely.
-  // This can be observed when a thought appears pending on load and its child is missing.
-  // This will not be activated when remote is false (e.g. export).
-  const forceRemote = !getChildren(doc) && !background && websocketSynced
-
   // foreground
   if (!background) {
-    if (forceRemote) {
-      // abort websocketSynced if the user goes offline
-      let offlineTimeout = 0
-      let onStatusChange: ({ status }: { status: WebsocketStatus }) => void
-      const offline = cancellable(
-        new Promise<void>((resolve, reject) => {
-          /** Set offlineTimeout when the websocket goes offline. */
-          onStatusChange = ({ status }: { status: WebsocketStatus }) => {
-            clearTimeout(offlineTimeout)
-            if (status !== 'connected') {
-              offlineTimeout = setTimeout(() => {
-                websocket.off('status', onStatusChange)
-                resolve()
-              }, WEBSOCKET_CONNECTION_TIME) as unknown as number
-            }
-          }
-          websocket.on('status', onStatusChange)
-          onStatusChange({ status: websocket.status })
-        }),
-        // cancel function
-        () => {
-          websocket.off('status', onStatusChange)
-          clearTimeout(offlineTimeout)
-        },
-      )
-
-      // Offline promise with timeout
-      await Promise.race([websocketSynced, offline]).finally(() => offline.cancel())
-    }
-
     // Subscribe to changes after first sync to ensure that pending is set properly.
     // If thought is updated as non-pending first (i.e. before pull), then mergeUpdates will not set pending by design.
     const yChildren = doc.getMap<Y.Map<ThoughtYjs>>('children')
