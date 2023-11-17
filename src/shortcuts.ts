@@ -19,7 +19,7 @@ import getUserSetting from './selectors/getUserSetting'
 import * as shortcutObject from './shortcuts/index'
 import keyValueBy from './util/keyValueBy'
 
-export const globalShortcuts = Object.values(shortcutObject) as Shortcut[]
+export const globalShortcuts: Shortcut[] = Object.values(shortcutObject)
 
 export const shortcutEmitter = new Emitter()
 

@@ -39,7 +39,7 @@ const newSubthoughtShortcut: Shortcut = {
 }
 
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
-export const newSubthoughtAliases = {
+export const newSubthoughtAliases: Shortcut = {
   id: 'newSubthoughtAliases',
   label: 'New Subthought',
   hideFromInstructions: true,
