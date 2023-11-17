@@ -903,12 +903,6 @@ export const replicateChildren = async (
         const loaded = await isThoughtLoaded(child)
         if (loaded) {
           thoughtRetained.add(docKey)
-          thoughtDocs.set(docKey, doc)
-          thoughtIDBSynced.set(docKey, idbSynced)
-          thoughtPersistence.set(docKey, persistence)
-          if (websocketProvider) {
-            thoughtWebsocketProvider.set(docKey, websocketProvider)
-          }
           onThoughtChange(child.id)({
             target: doc.getMap<Y.Map<ThoughtYjs>>('children').get(child.id)!,
             transaction: {
