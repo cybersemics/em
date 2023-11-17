@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@hocuspocus/common@^2.7.1":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.7.1.tgz#96ef32ecd07f86ec182f9bad929f890943e2bd9c"
-  integrity sha512-mnwBn7b2g23rUmYA1+X+FrIwU9aODmRMWe7ypQdjL/MgzlZWrwqFFr0b9u4AhBrwqRTg+L8KCp8SDkpkt2OTtQ==
+"@hocuspocus/common@^2.8.0":
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.8.0.tgz#5ba8fa3eae296abe2b901b21720b1ad425d14d12"
+  integrity sha512-n+iNX3l0jgXMYJkw75Pl7LTAaNjFJ23ERop8GloTTDo8sXPvTDlppcpFUFdB5aZS+8bJPBKLQnm9OYZ6WZq/4w==
   dependencies:
     lib0 "^0.2.47"
 
@@ -22,11 +22,11 @@
     uuid "^9.0.0"
 
 "@hocuspocus/server@^2.5.0":
-  version "2.7.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-2.7.1.tgz#1e612b79beb9377d88a149fd9a546b81521256e9"
-  integrity sha512-o+LvPZhw9heNkOhkQAa1HdhL2ONwxgpozupekXoPC1Gb5kA+8rZKuGJvPTSI74a6gfhfXvRs7ROvTIVAmQI49g==
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-2.8.0.tgz#7e6b14bade59a25514e5f24daf2fa2c3e066f5ad"
+  integrity sha512-KdlrwSyEIjw3Ut6qr+/+VdRQ+pihL4+StJrrYivtWDmjFoeNGxp41Nnd2S18OaqMEOu7SXovcq5YSoyCaCTYcQ==
   dependencies:
-    "@hocuspocus/common" "^2.7.1"
+    "@hocuspocus/common" "^2.8.0"
     async-lock "^1.3.1"
     kleur "^4.1.4"
     lib0 "^0.2.47"
