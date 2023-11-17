@@ -41,6 +41,8 @@ const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: stri
 
 /** A thought that is persisted to storage. */
 interface ThoughtDb {
+  // archived
+  a?: Timestamp
   // lastUpdated
   l: Timestamp
   // childrenMap
@@ -53,8 +55,6 @@ interface ThoughtDb {
   u: string
   // value
   v: string
-  // archived
-  a?: Timestamp
 }
 
 /** A Lexeme database type that defines contexts as separate keys. */
@@ -1079,11 +1079,11 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
     [thoughtKeyToDb.childrenMap]: Y.Map<ThoughtId> | Index<ThoughtId>
   }
   return {
-    id,
     childrenMap:
       thoughtRaw[thoughtKeyToDb.childrenMap] instanceof Y.Map
         ? (thoughtRaw[thoughtKeyToDb.childrenMap] as Y.Map<ThoughtId>).toJSON()
         : (thoughtRaw[thoughtKeyToDb.childrenMap] as Index<ThoughtId>),
+    id,
     lastUpdated: thoughtRaw.l,
     parentId: thoughtRaw.p,
     rank: thoughtRaw.r,

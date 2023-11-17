@@ -48,10 +48,10 @@ const insertThought = (
   {
     block,
     id,
-    value,
-    rank,
     lastUpdated,
+    rank,
     updatedBy = clientId,
+    value,
   }: {
     block: Block
     id: ThoughtId
@@ -87,13 +87,13 @@ const insertThought = (
   }
 
   const newThought: Thought = {
-    id: newThoughtId,
-    value,
     childrenMap: {},
-    parentId: thoughtOld.id,
+    id: newThoughtId,
     lastUpdated: lastUpdatedInherited,
-    updatedBy,
+    parentId: thoughtOld.id,
     rank,
+    updatedBy,
+    value,
   }
 
   return {
