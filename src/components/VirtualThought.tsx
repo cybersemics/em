@@ -134,7 +134,7 @@ const VirtualThought = ({
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
-  useSelectorEffect((state: State) => state.cursor?.length, updateHeight, shallowEqual)
+  useSelectorEffect((state: State) => state.cursor, updateHeight, shallowEqual)
 
   // Recalculate height on edit
   useEffect(() => {
