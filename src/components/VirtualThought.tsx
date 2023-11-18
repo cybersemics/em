@@ -149,15 +149,15 @@ const VirtualThought = ({
     }
   }, [isEditing, note, updateHeight])
 
-  // trigger onResize with null on final unmount to allow subscribers to clean up
+  // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
     () => {
       return () => {
         onResize?.({ height: null, id: thought.id, key: crossContextualKey })
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
+    [crossContextualKey, onResize, thought.id],
   )
 
   // Short circuit if thought has already been removed.
