@@ -21,6 +21,7 @@ import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import CommandPalette from './CommandPalette'
 import ContentFallback from './ContentFallback'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
@@ -286,6 +287,7 @@ const AppComponent: FC<Props> = props => {
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
       <Alert />
+      <CommandPalette />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}
       {isDocumentEditable() && !tutorial && !showModal && (

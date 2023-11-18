@@ -7,7 +7,8 @@ import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import commandPalette from '../action-creators/commandPalette'
 import error from '../action-creators/error'
-import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import { isTouch } from '../browser'
+import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
@@ -23,6 +24,7 @@ import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
 import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
+import Popup from './Popup'
 
 /**********************************************************************
  * Constants
@@ -576,11 +578,43 @@ const CommandPalette: FC = () => {
             {possibleShortcutsSorted.length === 0 && <span style={{ marginLeft: '1em' }}>No matching commands</span>}
           </div>
         </div>
-      ) : (
+      ) : isTouch ? (
         <div style={{ textAlign: 'center' }}>{GESTURE_CANCEL_ALERT_TEXT}</div>
-      )}
+      ) : null}
     </div>
   )
 }
 
-export default CommandPalette
+/** An alert component that fades in and out. */
+const CommandPaletteWithTransition: FC = () => {
+  const [isDismissed, setDismiss] = useState(false)
+  const dispatch = useDispatch()
+
+  /** Dismiss the alert on close. */
+  const onClose = useCallback(() => {
+    setDismiss(true)
+    dispatch(commandPalette())
+  }, [dispatch])
+
+  const showCommandPalette = useSelector(
+    (state: State) => state.showCommandPalette || state.alert?.alertType === AlertType.CommandPaletteGesture,
+  )
+
+  // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
+  return (
+    <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
+      {showCommandPalette ? (
+        <CSSTransition key={0} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
+          <Popup
+            // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
+            {...(!isTouch ? { onClose } : null)}
+          >
+            <CommandPalette />
+          </Popup>
+        </CSSTransition>
+      ) : null}
+    </TransitionGroup>
+  )
+}
+
+export default CommandPaletteWithTransition
