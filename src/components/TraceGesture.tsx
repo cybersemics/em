@@ -58,7 +58,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     // GestureHint
     else if (alert.alertType === AlertType.GestureHint && alert.value === GESTURE_CANCEL_ALERT_TEXT) return true
     // CommandPaletteGesture
-    else if (alert.alertType === AlertType.CommandPaletteGesture) {
+    else if (state.showCommandPalette) {
       // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
       return !globalShortcuts.some(
         shortcut => !shortcut.hideFromInstructions && gestureString(shortcut) === alert.value,

@@ -232,7 +232,7 @@ const initEvents = (store: Store<State, any>) => {
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
       const alertType = store.getState().alert?.alertType
-      if (alertType === AlertType.GestureHint || alertType === AlertType.CommandPaletteGesture) {
+      if (alertType === AlertType.GestureHint || store.getState().showCommandPalette) {
         store.dispatch(alert(null))
       }
       // we could also persist unsaved data here

@@ -10,6 +10,7 @@ import Shortcut from './@types/Shortcut'
 import ShortcutId from './@types/ShortcutId'
 import State from './@types/State'
 import alert from './action-creators/alert'
+import commandPalette from './action-creators/commandPalette'
 import showLatestShortcuts from './action-creators/showLatestShortcuts'
 import suppressExpansion from './action-creators/suppressExpansion'
 import { isMac } from './browser'
@@ -150,8 +151,8 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // basic gesture hint (training mode only)
     if (
       !experienceMode &&
-      // only show basic gesture hint if the command palette  is not already being shown
-      state.alert?.alertType !== AlertType.CommandPaletteGesture &&
+      // only show basic gesture hint if the command palette is not already being shown
+      !state.showCommandPalette &&
       // ignore back
       shortcut?.id !== 'cursorBack' &&
       // ignore forward
@@ -177,19 +178,13 @@ export const inputHandlers = (store: Store<State, any>) => ({
       () => {
         store.dispatch((dispatch, getState) => {
           // do not show "Cancel gesture" if already being shown by basic gesture hint
-          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT) return
-          dispatch(
-            // TODO: Replace the dummy alert with state.commandPalette
-            alert('commandPalette', {
-              alertType: AlertType.CommandPaletteGesture,
-              // no need to show close link since it is dismissed on touchend
-              showCloseLink: false,
-            }),
-          )
+          const state = getState()
+          if (getState().alert?.value === GESTURE_CANCEL_ALERT_TEXT || state.showCommandPalette) return
+          dispatch(commandPalette())
         })
       },
       // if the hint is already being shown, do not wait to change the value
-      state.alert?.alertType === AlertType.CommandPaletteGesture ? 0 : COMMAND_PALETTE_TIMEOUT,
+      COMMAND_PALETTE_TIMEOUT,
     )
   },
 
@@ -200,8 +195,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the shortcut from the shortcut gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
     const shortcut =
-      state.alert?.alertType !== AlertType.CommandPaletteGesture ||
-      !shortcutGestureIndex[sequence as string]?.hideFromInstructions
+      !state.showCommandPalette || !shortcutGestureIndex[sequence as string]?.hideFromInstructions
         ? shortcutGestureIndex[sequence as string]
         : null
 
@@ -225,17 +219,21 @@ export const inputHandlers = (store: Store<State, any>) => ({
         const state = getState()
         const alertType = state.alert?.alertType
         const experienceMode = getUserSetting(Settings.experienceMode)
-        if (alertType === AlertType.GestureHint || alertType === AlertType.CommandPaletteGesture) {
-          dispatch(
-            alert(
-              // clear alert if gesture is cancelled (no shortcut)
-              // clear alert if back/forward
-              !experienceMode && shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack'
-                ? shortcut.label
-                : null,
-              { alertType: AlertType.GestureHint, clearDelay: 5000 },
-            ),
-          )
+        if (alertType === AlertType.GestureHint || state.showCommandPalette) {
+          if (state.showCommandPalette) {
+            dispatch(commandPalette())
+          } else {
+            dispatch(
+              alert(
+                // clear alert if gesture is cancelled (no shortcut)
+                // clear alert if back/forward
+                !experienceMode && shortcut && shortcut?.id !== 'cursorForward' && shortcut?.id !== 'cursorBack'
+                  ? shortcut.label
+                  : null,
+                { alertType: AlertType.GestureHint, clearDelay: 5000 },
+              ),
+            )
+          }
         }
       })
     })
@@ -245,10 +243,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
   handleGestureCancel: () => {
     clearTimeout(commandPaletteGesture)
     store.dispatch((dispatch, getState) => {
-      if (
-        getState().alert?.alertType === AlertType.GestureHint ||
-        getState().alert?.alertType === AlertType.CommandPaletteGesture
-      ) {
+      if (getState().alert?.alertType === AlertType.GestureHint || getState().showCommandPalette) {
         dispatch(alert(null))
       }
     })

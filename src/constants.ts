@@ -446,8 +446,6 @@ export enum AlertType {
   ExportDropHint = 'ExportDropHint',
   // shown during a MultiGesture
   GestureHint = 'GestureHint',
-  // shown after a longer delay during a MultiGesture
-  CommandPaletteGesture = 'CommandPaletteGesture',
   // shown when importing one or more files via drag-and-drop or a large paste
   ImportFile = 'ImportFile',
   // shown the first time the user types space to indent

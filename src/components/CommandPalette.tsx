@@ -8,7 +8,7 @@ import State from '../@types/State'
 import commandPalette from '../action-creators/commandPalette'
 import error from '../action-creators/error'
 import { isTouch } from '../browser'
-import { AlertType, GESTURE_CANCEL_ALERT_TEXT } from '../constants'
+import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
 import * as selection from '../device/selection'
 import themeColors from '../selectors/themeColors'
@@ -61,7 +61,7 @@ const CommandSearch: FC<{
   onSelectBottom?: (e: KeyboardEvent) => void
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
-  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
+  const showCommandPalette = !isTouch
   const inputRef = useRef<HTMLInputElement | null>(null)
   const savedSelectionRef = useRef<selection.SavedSelection | null>(null)
 
@@ -190,7 +190,7 @@ const CommandRow: FC<{
   const isActive = shortcut.isActive?.(store.getState)
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector((state: State) => !isExecutable(state, shortcut))
-  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
+  const showCommandPalette = !isTouch
 
   // convert the description to a string
   const description = useSelector((state: State) => {
@@ -350,16 +350,15 @@ const CommandRow: FC<{
 const CommandPalette: FC = () => {
   const store = useStore()
   const dispatch = useDispatch()
-  const alert = useSelector((state: State) => state.alert)
-  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
+  const gestureInProgress = gestureStore.useState()
+  const showCommandPalette = !isTouch
   const fontSize = useSelector((state: State) => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
-  const show = alert?.value || showCommandPalette
   const unmounted = useRef(false)
 
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-  const gestureInProgress = gestureStore.useState()
+  const show = gestureInProgress || showCommandPalette
 
   // get the shortcuts that can be executed from the current gesture in progress
   const possibleShortcutsSorted = useMemo(() => {
@@ -530,7 +529,7 @@ const CommandPalette: FC = () => {
         textAlign: 'left',
       }}
     >
-      {showCommandPalette || (alert?.value && possibleShortcutsSorted.length > 0) ? (
+      {showCommandPalette || (gestureInProgress && possibleShortcutsSorted.length > 0) ? (
         <div>
           <h2
             style={{
@@ -596,9 +595,7 @@ const CommandPaletteWithTransition: FC = () => {
     dispatch(commandPalette())
   }, [dispatch])
 
-  const showCommandPalette = useSelector(
-    (state: State) => state.showCommandPalette || state.alert?.alertType === AlertType.CommandPaletteGesture,
-  )
+  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
