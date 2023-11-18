@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -138,7 +138,7 @@ const VirtualThought = ({
   useSelectorEffect((state: State) => state.cursor, updateHeight, shallowEqual)
 
   // Recalculate height
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateHeight()
 
     if (isEditing) {
