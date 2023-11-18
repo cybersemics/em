@@ -15,7 +15,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
 
-    const height = contentRef.current.clientHeight
+    const height = contentRef.current.getBoundingClientRect().height
     // 1.72 must match line-height as defined in .thought-container
     const singleLineHeight = fontSize * 1.72
     // .editable.multiline gets 5px of padding-top to offset the collapsed line-height

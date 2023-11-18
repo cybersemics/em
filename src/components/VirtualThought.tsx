@@ -127,7 +127,7 @@ const VirtualThought = ({
 
   const updateHeight = useCallback(() => {
     if (!ref.current) return
-    const heightNew = ref.current.clientHeight
+    const heightNew = ref.current.getBoundingClientRect().height
     if (heightNew === height) return
     setHeight(heightNew)
     onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
