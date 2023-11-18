@@ -100,6 +100,7 @@ const VirtualThought = ({
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
   const autofocus = useSelector(calculateAutofocus(path))
+  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
     selector: (autofocusAfterAnimation: Autofocus) =>
@@ -136,7 +137,7 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect((state: State) => state.cursor, updateHeight, shallowEqual)
 
-  // Recalculate height on edit
+  // Recalculate height
   useEffect(() => {
     // TODO: WHy is setTimeout needed here?
     // See: https://github.com/cybersemics/em/issues/1737
@@ -147,7 +148,7 @@ const VirtualThought = ({
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [isEditing, note, updateHeight])
+  }, [height, isEditing, isVisible, leaf, note, updateHeight])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
@@ -163,8 +164,6 @@ const VirtualThought = ({
   // Short circuit if thought has already been removed.
   // This can occur in a re-render even when thought is defined in the parent component.
   if (!thought) return null
-
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
 
   return (
     <div
