@@ -141,14 +141,13 @@ const VirtualThought = ({
   useEffect(() => {
     // TODO: WHy is setTimeout needed here?
     // See: https://github.com/cybersemics/em/issues/1737
-    // See: https://github.com/cybersemics/em/issues/1738
-    setTimeout(updateHeight, 10)
+    setTimeout(updateHeight)
 
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [height, isEditing, isVisible, leaf, note, updateHeight])
+  }, [height, isEditing, isVisible, leaf, note, style, updateHeight])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
