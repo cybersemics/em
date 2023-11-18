@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useLayoutEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -32,7 +32,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   useSelectorEffect((state: State) => state.cursor, updateMultiline, shallowEqual)
 
   // Recalculate multiline on mount, when the font size changes, edit, and split view resize.
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateMultiline()
     if (isEditing) {
       // return the unsubscribe function
