@@ -19,8 +19,7 @@ const useSelectorEffect = <T>(
         }
         prev.current = current
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [callback, equalityFn, select],
   )
 }
 
