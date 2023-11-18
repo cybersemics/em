@@ -15,8 +15,7 @@ const useSelectorEffect = <T>(
       store.subscribe(() => {
         const current = select(store.getState())
         if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-          // Wait till the next tick, otherwise the callback will be called before components are re-rendered.
-          setTimeout(callback)
+          callback()
         }
         prev.current = current
       }),
