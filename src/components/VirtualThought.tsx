@@ -139,9 +139,7 @@ const VirtualThought = ({
 
   // Recalculate height
   useEffect(() => {
-    // TODO: WHy is setTimeout needed here?
-    // See: https://github.com/cybersemics/em/issues/1737
-    setTimeout(updateHeight)
+    updateHeight()
 
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
