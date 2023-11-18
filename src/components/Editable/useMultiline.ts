@@ -39,7 +39,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
       // return the unsubscribe function
       return editingValueStore.subscribe(updateMultiline)
     }
-  }, [contentRef, fontSize, isEditing, showSplitView, splitPosition, updateMultiline])
+  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, updateMultiline])
 
   return multiline
 }
