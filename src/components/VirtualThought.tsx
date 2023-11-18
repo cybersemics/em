@@ -145,7 +145,7 @@ const VirtualThought = ({
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [height, isEditing, isVisible, leaf, note, style, updateHeight])
+  }, [isEditing, isVisible, leaf, note, style, updateHeight])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
