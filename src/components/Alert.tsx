@@ -22,7 +22,7 @@ const AlertWithTransition: FC = ({ children }) => {
   return (
     <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
       {alert ? (
-        <CSSTransition key={0} timeout={800} classNames='fade' onEntering={() => setDismiss(false)}>
+        <CSSTransition key={0} timeout={800} classNames='fade-slow-out' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
           <Popup {...alert} onClose={onClose} key={alert?.value}>
             {children}
