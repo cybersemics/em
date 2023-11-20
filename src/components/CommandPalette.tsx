@@ -62,7 +62,6 @@ const CommandSearch: FC<{
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const savedSelectionRef = useRef<selection.SavedSelection | null>(null)
 
   /** Handle command palette shortuts. */
   const onKeyDown = useCallback(
@@ -75,6 +74,9 @@ const CommandSearch: FC<{
         e.preventDefault()
         e.stopPropagation()
         dispatch(commandPalette())
+
+        // remove keydown listener now since unmount is not triggered until the animation ends
+        window.removeEventListener('keydown', onKeyDown)
       } else if (e.key === 'Enter') {
         onExecute?.(e, inputRef.current?.value || '')
       } else if (e.key === 'ArrowDown') {
@@ -94,21 +96,21 @@ const CommandSearch: FC<{
     [dispatch, onExecute, onSelectDown, onSelectUp, onSelectTop, onSelectBottom],
   )
 
-  /** Restores the cursor and removes event listeners. */
-  const cleanup = useCallback(() => {
-    selection.restore(savedSelectionRef.current || null)
-    window.removeEventListener('keydown', onKeyDown)
-  }, [onKeyDown])
-
-  // cleanup on unmount
-  useEffect(() => cleanup, [cleanup])
+  useEffect(() => {
+    const sel = selection.save()
+    inputRef.current?.focus()
+    return () => {
+      selection.restore(sel)
+    }
+  }, [])
 
   // save selection and add event listeners on desktop
   // cleanup when command palette is hidden
   useEffect(() => {
-    savedSelectionRef.current = selection.save()
-    inputRef.current?.focus()
     window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
   }, [onKeyDown])
 
   return (
