@@ -56,7 +56,7 @@ const model = <T extends { [key: string]: ModelSpec }>(schema: T) => {
   }
 
   /** Removes a value from local storage. */
-  const remove = (key: string) => removeItem(key.toString())
+  const remove = (key: keyof T) => removeItem(key.toString())
 
   return { get, set, remove }
 }
