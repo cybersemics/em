@@ -435,7 +435,7 @@ const CommandPalette: FC = () => {
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
-  /** Handler for command palette selection. */
+  /** Execute a shortcut. */
   const onExecute = useCallback(
     (e: React.MouseEvent<Element, MouseEvent> | KeyboardEvent, shortcut: Shortcut) => {
       e.stopPropagation()
@@ -454,6 +454,9 @@ const CommandPalette: FC = () => {
     },
     [dispatch, recentCommands, store],
   )
+
+  /** Execute the selected shortcut. */
+  const onExecuteSelected = useCallback(e => onExecute(e, selectedShortcut), [onExecute, selectedShortcut])
 
   /** Select shortcuts on hover. */
   const onHover = useCallback((e, shortcut) => setSelectedShortcut(shortcut), [])
@@ -539,7 +542,7 @@ const CommandPalette: FC = () => {
           >
             {!isTouch ? (
               <CommandSearch
-                onExecute={e => onExecute(e, selectedShortcut)}
+                onExecute={onExecuteSelected}
                 onInput={setKeyboardInProgress}
                 onSelectUp={onSelectUp}
                 onSelectDown={onSelectDown}
