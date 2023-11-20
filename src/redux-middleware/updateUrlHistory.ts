@@ -7,11 +7,11 @@ import { HOME_PATH, HOME_TOKEN } from '../constants'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
+import storageModel from '../stores/storageModel'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
-import storage from '../util/storage'
 
 interface Options {
   // if true, replaces the last history state; otherwise pushes history state
@@ -45,9 +45,9 @@ const pathToUrl = (state: State, path: Path) => {
 // TODO: Restore cursor after thoughts replicate
 const saveCursor = (state: State, path: Path) => {
   if (state.cursor) {
-    storage.setItem('cursor', JSON.stringify(path))
+    storageModel.set('cursor', JSON.stringify(path))
   } else {
-    storage.removeItem('cursor')
+    storageModel.remove('cursor')
   }
 }
 
