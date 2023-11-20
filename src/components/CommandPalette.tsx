@@ -61,7 +61,6 @@ const CommandSearch: FC<{
   onSelectBottom?: (e: KeyboardEvent) => void
 }> = ({ onExecute, onInput, onSelectDown, onSelectUp, onSelectTop, onSelectBottom }) => {
   const dispatch = useDispatch()
-  const showCommandPalette = !isTouch
   const inputRef = useRef<HTMLInputElement | null>(null)
   const savedSelectionRef = useRef<selection.SavedSelection | null>(null)
 
@@ -104,21 +103,21 @@ const CommandSearch: FC<{
   // cleanup on unmount
   useEffect(() => cleanup, [cleanup])
 
-  // save selection and add event listeners when command palette is showCommandPalette
+  // save selection and add event listeners on desktop
   // cleanup when command palette is hidden
   useEffect(() => {
-    if (showCommandPalette) {
+    if (!isTouch) {
       savedSelectionRef.current = selection.save()
       inputRef.current?.focus()
       window.addEventListener('keydown', onKeyDown)
     } else {
       cleanup()
     }
-  }, [cleanup, onKeyDown, showCommandPalette])
+  }, [cleanup, onKeyDown])
 
   return (
     <TransitionGroup>
-      {showCommandPalette ? (
+      {!isTouch ? (
         <CSSTransition key={0} timeout={200} classNames='fade'>
           <div>
             <input
@@ -190,7 +189,6 @@ const CommandRow: FC<{
   const isActive = shortcut.isActive?.(store.getState)
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
   const disabled = useSelector((state: State) => !isExecutable(state, shortcut))
-  const showCommandPalette = !isTouch
 
   // convert the description to a string
   const description = useSelector((state: State) => {
@@ -240,7 +238,7 @@ const CommandRow: FC<{
         style={{
           backgroundColor: selected ? '#212121' : undefined,
           padding: selected ? '5px 0 5px 0.5em' : undefined,
-          ...(showCommandPalette
+          ...(!isTouch
             ? {
                 display: 'flex',
                 margin: selected ? '-5px 0' : undefined,
@@ -250,7 +248,7 @@ const CommandRow: FC<{
       >
         <div>
           {/* gesture diagram */}
-          {!showCommandPalette && (
+          {isTouch && (
             <GestureDiagram
               color={disabled ? colors.gray : undefined}
               highlight={!disabled ? gestureInProgress.length : undefined}
@@ -286,7 +284,7 @@ const CommandRow: FC<{
 
         <div
           style={{
-            maxHeight: showCommandPalette ? '1em' : undefined,
+            maxHeight: !isTouch ? '1em' : undefined,
             flexGrow: 1,
             zIndex: 1,
           }}
@@ -295,8 +293,8 @@ const CommandRow: FC<{
             style={{
               backgroundColor: selected ? '#212121' : undefined,
               display: 'flex',
-              padding: showCommandPalette ? '3px 0.6em 0.3em 0.2em' : undefined,
-              marginLeft: showCommandPalette ? '2em' : undefined,
+              padding: !isTouch ? '3px 0.6em 0.3em 0.2em' : undefined,
+              marginLeft: !isTouch ? '2em' : undefined,
             }}
           >
             {/* description */}
@@ -304,7 +302,7 @@ const CommandRow: FC<{
               <div
                 style={{
                   fontSize: '80%',
-                  ...(showCommandPalette
+                  ...(!isTouch
                     ? {
                         flexGrow: 1,
                         marginLeft: '0.5em',
@@ -317,12 +315,12 @@ const CommandRow: FC<{
             )}
 
             {/* keyboard shortcut */}
-            {selected && showCommandPalette && (
+            {selected && !isTouch && (
               <div
                 style={{
                   fontSize: '80%',
                   position: 'relative',
-                  ...(showCommandPalette
+                  ...(!isTouch
                     ? {
                         display: 'inline',
                       }
@@ -351,22 +349,25 @@ const CommandPalette: FC = () => {
   const store = useStore()
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useState()
-  const showCommandPalette = !isTouch
   const fontSize = useSelector((state: State) => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const unmounted = useRef(false)
 
   // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-  const show = gestureInProgress || showCommandPalette
+  const show = gestureInProgress || !isTouch
 
   // get the shortcuts that can be executed from the current gesture in progress
   const possibleShortcutsSorted = useMemo(() => {
     if (!show) return []
 
     const possibleShortcuts = visibleShortcuts.filter(shortcut => {
+      // gesture
+      if (isTouch) {
+        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
+      }
       // keyboard
-      if (showCommandPalette) {
+      else {
         // if no query is entered, all shortcuts are visible
         if (!keyboardInProgress) return true
 
@@ -381,10 +382,6 @@ const CommandPalette: FC = () => {
           chars.some(char => char !== ' ' && label.includes(char)) &&
           keyboardInProgress.split('').filter(char => char !== ' ' && !label.includes(char)).length <= 3
         )
-      }
-      // gesture
-      else {
-        return shortcut.gesture && gestureString(shortcut).startsWith(gestureInProgress as string)
       }
     })
 
@@ -434,7 +431,7 @@ const CommandPalette: FC = () => {
       )
     })
     return sorted
-  }, [gestureInProgress, keyboardInProgress, recentCommands, show, showCommandPalette, store])
+  }, [gestureInProgress, keyboardInProgress, recentCommands, show, store])
 
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut>(possibleShortcutsSorted[0])
 
@@ -529,7 +526,7 @@ const CommandPalette: FC = () => {
         textAlign: 'left',
       }}
     >
-      {showCommandPalette || (gestureInProgress && possibleShortcutsSorted.length > 0) ? (
+      {!isTouch || (gestureInProgress && possibleShortcutsSorted.length > 0) ? (
         <div>
           <h2
             style={{
@@ -540,7 +537,7 @@ const CommandPalette: FC = () => {
               borderBottom: 'solid 1px gray',
             }}
           >
-            {showCommandPalette ? (
+            {!isTouch ? (
               <CommandSearch
                 onExecute={e => onExecute(e, selectedShortcut)}
                 onInput={setKeyboardInProgress}
@@ -556,10 +553,10 @@ const CommandPalette: FC = () => {
 
           <div
             style={{
-              marginLeft: showCommandPalette ? '-2.4em' : '-1.2em',
+              marginLeft: !isTouch ? '-2.4em' : '-1.2em',
               // offset the negative marginTop on CommandRow
               paddingTop: 5,
-              ...(showCommandPalette ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
+              ...(!isTouch ? { maxHeight: 'calc(100vh - 8em)', overflow: 'auto' } : null),
             }}
           >
             {possibleShortcutsSorted.map(shortcut => (
@@ -570,7 +567,7 @@ const CommandPalette: FC = () => {
                 last={shortcut === possibleShortcutsSorted[possibleShortcutsSorted.length - 1]}
                 onClick={onExecute}
                 onHover={onHover}
-                selected={showCommandPalette ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
+                selected={!isTouch ? shortcut === selectedShortcut : gestureInProgress === shortcut.gesture}
                 shortcut={shortcut}
               />
             ))}
