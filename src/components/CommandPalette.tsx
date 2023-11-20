@@ -593,6 +593,7 @@ const CommandPaletteWithTransition: FC = () => {
       {showCommandPalette ? (
         <CSSTransition key={0} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
           <Popup
+            // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}
           >
