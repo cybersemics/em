@@ -2,7 +2,7 @@
    Keep these in one place to make it easier to determine interactions and prevent conflicts.
    Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
 :root {
-  --z-index-alert: 1500;
+  --z-index-popup: 1500;
   /* Sidebar : 1300 */
   --z-index-gesture-trace: 50;
   --z-index-command-palette: 45;
@@ -37,8 +37,8 @@
   --safe-area-bottom: env(safe-area-inset-bottom);
 }
 
-.z-index-alert {
-  z-index: var(--z-index-alert);
+.z-index-popup {
+  z-index: var(--z-index-popup);
 }
 .z-index-command-palette {
   z-index: var(--z-index-command-palette);
@@ -853,11 +853,11 @@ body.dark {
   background-color: #c23;
   color: white;
   text-align: center;
-  z-index: var(--z-index-alert);
+  z-index: var(--z-index-popup);
   word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
 }
 
-.native .alert {
+.native .popup {
   top: var(--safe-area-top) !important;
 }
 
@@ -867,7 +867,7 @@ body.dark {
   float: left;
   position: fixed;
   top: 5;
-  z-index: var(--z-index-alert);
+  z-index: var(--z-index-popup);
 }
 
 .status span {

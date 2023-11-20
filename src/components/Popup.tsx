@@ -32,7 +32,7 @@ const Popup: FC<{
 
   return (
     <div
-      className='alert z-index-alert'
+      className='popup z-index-popup'
       {...(isTouch ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
