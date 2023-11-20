@@ -24,6 +24,9 @@ interface Options {
 /** Time delay (ms) to throttle the updateUrlHistory middleware so it is not executed on every action. */
 const THROTTLE_MIDDLEWARE = 100
 
+/** Only write the cursor every 100 ms. */
+const SAVE_CURSOR_THROTTLE = 100
+
 // The last path that is passed to updateUrlHistory that is different from the current path. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
 
@@ -43,13 +46,19 @@ const pathToUrl = (state: State, path: Path) => {
 
 /** Persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState). Ensure the location does not change through refreshes in standalone PWA mode. */
 // TODO: Restore cursor after thoughts replicate
-const saveCursor = (state: State, path: Path) => {
-  if (state.cursor) {
-    storageModel.set('cursor', JSON.stringify(path))
-  } else {
-    storageModel.remove('cursor')
-  }
-}
+const saveCursor = _.throttle(
+  (state: State, path: Path) => {
+    if (state.cursor) {
+      storageModel.set('cursor', JSON.stringify(path))
+    } else {
+      storageModel.remove('cursor')
+    }
+  },
+  SAVE_CURSOR_THROTTLE,
+  {
+    leading: false,
+  },
+)
 
 /**
  * Sets the url to the given Path. Encodes and persists the cursor to local storage.
