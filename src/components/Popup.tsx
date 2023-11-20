@@ -16,8 +16,9 @@ const Popup: FC<{
   isInline?: boolean
   /** If defined, will show a small x in the upper right corner. */
   onClose?: () => void
+  textAlign?: 'center' | 'left' | 'right'
   value?: string | null
-}> = ({ children, importFileId, isInline, onClose, value }) => {
+}> = ({ children, importFileId, isInline, onClose, textAlign = 'center' }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector((state: State) => state.fontSize)
@@ -45,17 +46,13 @@ const Popup: FC<{
         overflowY: 'auto',
         maxHeight: '100%',
         maxWidth: '100%',
+        textAlign,
         /* if inline, leave room on the left side so the user can click undo/redo */
         ...(isInline ? { left: '50%', width: 'auto' } : null),
-        ...(!children ? { textAlign: 'center' } : null),
         ...(isTouch ? useSwipeToDismissProps.style : null),
       }}
     >
-      <div
-        className='alert-text'
-        style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}
-        dangerouslySetInnerHTML={!children ? { __html: value || '' } : undefined}
-      >
+      <div className='alert-text' style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}>
         {children}
       </div>
       {importFileId && (
