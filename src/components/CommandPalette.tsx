@@ -106,36 +106,26 @@ const CommandSearch: FC<{
   // save selection and add event listeners on desktop
   // cleanup when command palette is hidden
   useEffect(() => {
-    if (!isTouch) {
-      savedSelectionRef.current = selection.save()
-      inputRef.current?.focus()
-      window.addEventListener('keydown', onKeyDown)
-    } else {
-      cleanup()
-    }
-  }, [cleanup, onKeyDown])
+    savedSelectionRef.current = selection.save()
+    inputRef.current?.focus()
+    window.addEventListener('keydown', onKeyDown)
+  }, [onKeyDown])
 
   return (
-    <TransitionGroup>
-      {!isTouch ? (
-        <CSSTransition key={0} timeout={200} classNames='fade'>
-          <div>
-            <input
-              type='text'
-              placeholder='Search commands by name...'
-              ref={inputRef}
-              onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-                onInput?.(e.target.value)
-              }}
-              style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
-            />
-            <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
-              ✕
-            </a>
-          </div>
-        </CSSTransition>
-      ) : null}
-    </TransitionGroup>
+    <div>
+      <input
+        type='text'
+        placeholder='Search commands by name...'
+        ref={inputRef}
+        onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onInput?.(e.target.value)
+        }}
+        style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
+      />
+      <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
+        ✕
+      </a>
+    </div>
   )
 }
 
