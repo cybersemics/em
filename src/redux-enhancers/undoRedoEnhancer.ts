@@ -98,7 +98,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   search: false,
   searchContexts: false,
   searchLimit: true,
-  selectionChange: false,
   setCursor: true,
   setDescendant: true,
   setFirstSubthought: true,
