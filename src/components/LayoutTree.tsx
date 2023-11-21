@@ -350,7 +350,10 @@ const LayoutTree = () => {
           // TODO: Fix cliff across context view boundary
           const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
 
-          const height = heights[key] ?? singleLineHeight
+          // The single line height needs to be increased for thoughts that have a cliff below them.
+          // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
+          const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPaddingStyle.paddingBottom : 0)
+          const height = heights[key] ?? singleLineHeightWithCliff
           const thoughtY = y
 
           y += height
@@ -394,7 +397,7 @@ const LayoutTree = () => {
                 prevChildId={prevChild?.id}
                 showContexts={showContexts}
                 simplePath={simplePath}
-                singleLineHeight={singleLineHeight}
+                singleLineHeight={singleLineHeightWithCliff}
                 // Add a bit of space after a cliff to give nested lists some breathing room.
                 // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                 style={cliff < 0 ? cliffPaddingStyle : undefined}
