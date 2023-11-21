@@ -142,14 +142,15 @@ const VirtualThought = ({
   useSelectorEffect(selectCursor, updateHeight, shallowEqual)
 
   // Recalculate height
-  useLayoutEffect(() => {
-    updateHeight()
+  useLayoutEffect(updateHeight, [isVisible, leaf, note, simplePath, style, updateHeight])
 
+  // Recalculate height
+  useEffect(() => {
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
       return editingValueStore.subscribe(updateHeight)
     }
-  }, [isEditing, isVisible, leaf, note, simplePath, style, updateHeight])
+  }, [isEditing, updateHeight])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
