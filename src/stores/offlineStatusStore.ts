@@ -1,7 +1,7 @@
 import { HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
-import { WEBSOCKET_CONNECTION_TIME } from '../constants'
+import { WEBSOCKET_TIMEOUT } from '../constants'
 import ministore from './ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
@@ -17,7 +17,7 @@ const startConnecting = () => {
   offlineTimer = setTimeout(() => {
     offlineTimer = null
     offlineStatusStore.update('offline')
-  }, WEBSOCKET_CONNECTION_TIME)
+  }, WEBSOCKET_TIMEOUT)
 }
 
 /** Clears the timer, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */

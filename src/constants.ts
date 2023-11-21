@@ -479,7 +479,7 @@ export enum Settings {
 export const MAX_JUMPS = 100
 
 // max time attempting to connect before moving to offline mode (milliseconds)
-export const WEBSOCKET_CONNECTION_TIME = 3000
+export const WEBSOCKET_TIMEOUT = 3000
 
 // See: cachedSettingsIds in pushQueue
 export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']

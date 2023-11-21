@@ -1,5 +1,5 @@
 import { Browser, Device, Page } from 'puppeteer'
-import { WEBSOCKET_CONNECTION_TIME } from '../../../constants'
+import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 
@@ -45,7 +45,7 @@ const setup = async ({
 
   // wait for YJS to give up connecting to WebsocketProvider
   // add 500ms for hamburger-menu animation to complete
-  await sleep(WEBSOCKET_CONNECTION_TIME + 500)
+  await sleep(WEBSOCKET_TIMEOUT + 500)
 
   return page
 }

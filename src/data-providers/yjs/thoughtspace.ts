@@ -14,14 +14,7 @@ import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
 import ValueOf from '../../@types/ValueOf'
-import {
-  ABSOLUTE_TOKEN,
-  EM_TOKEN,
-  HOME_TOKEN,
-  ROOT_CONTEXTS,
-  ROOT_PARENT_ID,
-  WEBSOCKET_CONNECTION_TIME,
-} from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WEBSOCKET_TIMEOUT } from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
@@ -800,7 +793,7 @@ export const replicateChildren = async (
       // If it's a new device, we need to await websocketSynced otherwise replicated thoughts will not be rendered.
       // Return empty children if offline or websocketSync times out.
       if (!children && websocketProvider?.status !== 'disconnected') {
-        return Promise.race([websocketSynced, sleep(WEBSOCKET_CONNECTION_TIME)])
+        return Promise.race([websocketSynced, sleep(WEBSOCKET_TIMEOUT)])
       }
     })
     .then(() => {
