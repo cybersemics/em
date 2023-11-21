@@ -14,12 +14,20 @@ import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import Timestamp from '../../@types/Timestamp'
 import ValueOf from '../../@types/ValueOf'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID } from '../../constants'
+import {
+  ABSOLUTE_TOKEN,
+  EM_TOKEN,
+  HOME_TOKEN,
+  ROOT_CONTEXTS,
+  ROOT_PARENT_ID,
+  WEBSOCKET_CONNECTION_TIME,
+} from '../../constants'
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import mergeBatch from '../../util/mergeBatch'
 import nonNull from '../../util/nonNull'
+import sleep from '../../util/sleep'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
@@ -786,8 +794,13 @@ export const replicateChildren = async (
   const idbSynced = persistence.whenSynced
     .then(() => {
       const children = getChildren(doc)
-      if (!children) {
-        return websocketSynced
+
+      // Forced Background
+      // If idb is empty, then this is either a new thoughtspace or a new device.
+      // If it's a new device, we need to await websocketSynced otherwise replicated thoughts will not be rendered.
+      // Return empty children if offline or websocketSync times out.
+      if (!children && websocketProvider?.status !== 'disconnected') {
+        return Promise.race([websocketSynced, sleep(WEBSOCKET_CONNECTION_TIME)])
       }
     })
     .then(() => {
