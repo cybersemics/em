@@ -41,6 +41,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
+import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import ellipsize from '../util/ellipsize'
@@ -81,6 +82,9 @@ interface EditableProps {
 // otherwise it can trigger unnecessary re-renders
 // intended to be global, not local state
 let blurring = false
+
+// this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
+let cursorOffsetInitialized = false
 
 /**
  * An editable thought with throttled editing.
@@ -170,14 +174,25 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
       // do not set cursor if it is unchanged and we are not entering edit mode
       if ((!editing || editingMode) && equalPath(cursor, path)) return
 
+      // set offset to null to allow the browser to set the position of the selection
+      let offset = null
+
+      // if running for the first time, restore the offset if the path matches the restored cursor
+      if (!cursorOffsetInitialized) {
+        const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
+        if (path && restored.offset && equalPath(restored.path, path)) {
+          offset = restored.offset || null
+        }
+      }
+
+      // Prevent the cursor offset from being restored after the initial setCursorOnThought.
+      cursorOffsetInitialized = true
+
       dispatch(
         setCursor({
           cursorHistoryClear: true,
           editing,
-          // set offset to null to prevent selection.set on next render
-          // to use the existing offset after a user clicks or touches the screent
-          // when cursor is changed through another method, such as cursorDown, offset will be reset
-          offset: null,
+          offset,
           path,
         }),
       )

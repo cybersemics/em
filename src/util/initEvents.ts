@@ -17,6 +17,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
+import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import { updateHeight, updateScrollTop } from '../stores/viewport'
 import isRoot from '../util/isRoot'
@@ -37,6 +38,9 @@ const WINDOW_AUTOSCROLL_DOWN_SIZE = 100
 // the top speed of the autoscroll expressed pixels per % of autoscroll zone
 const TOOLBAR_AUTOSCROLL_SPEED = 1.25
 const WINDOW_AUTOSCROLL_SPEED = 2
+
+/** How often to save the selection offset to storage when it changes. */
+const SELECTION_CHANGE_THROTTLE = 200
 
 // Store a timeout to determine if the device stays in the passive state.
 // See: onStateChange
@@ -151,6 +155,18 @@ const initEvents = (store: Store<State, any>) => {
       scrollCursorIntoView(),
     ])
   }
+
+  /** Save selection offset to storage. */
+  const selectionChange = _.throttle(
+    () => {
+      storageModel.set('cursor', value => ({
+        path: value?.path || store.getState().cursor,
+        offset: selection.offsetThought(),
+      }))
+    },
+    SELECTION_CHANGE_THROTTLE,
+    { leading: false },
+  )
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(() => store.dispatch(distractionFreeTyping(false)), 100, { leading: true })
@@ -295,6 +311,7 @@ const initEvents = (store: Store<State, any>) => {
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
+  document.addEventListener('selectionchange', selectionChange)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -317,6 +334,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
+    document.removeEventListener('selectionchange', selectionChange)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)

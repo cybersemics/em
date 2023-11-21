@@ -4,6 +4,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
+import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -49,7 +50,7 @@ const pathToUrl = (state: State, path: Path) => {
 const saveCursor = _.throttle(
   (state: State, path: Path) => {
     if (state.cursor) {
-      storageModel.set('cursor', JSON.stringify(path))
+      storageModel.set('cursor', { path, offset: selection.offsetThought() })
     } else {
       storageModel.remove('cursor')
     }

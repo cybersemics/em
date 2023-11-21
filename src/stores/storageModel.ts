@@ -4,8 +4,9 @@ import storage from '../util/storage'
 
 const storageModel = storage.model({
   cursor: {
+    default: { path: null, offset: null },
     decode: (s: string | null) => (s ? JSON.parse(s) : null),
-    encode: (value: Path | null) => JSON.stringify(value),
+    encode: (value: { path: Path | null; offset: number | null }) => JSON.stringify(value),
   },
   fontSize: {
     default: 18,

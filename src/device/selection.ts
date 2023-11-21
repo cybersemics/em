@@ -125,7 +125,37 @@ export const isOnLastLine = (): boolean => {
 export const isText = (): boolean => window.getSelection()?.focusNode?.nodeType === Node.TEXT_NODE
 
 /** Returns the character offset of the active selection. */
+// TODO: The browser selection offset has different semantics when the selection is on a text node vs an element node. Unfortunately this function has been used indiscriminately for both cases. We should clean this up and only use the function on text nodes.
 export const offset = (): number | null => window.getSelection()?.focusOffset ?? null
+
+/** Returns the character offset within a thought, taking into account siblings and intervening ancestor elements.
+ *
+ * @example <div>Hello <b>wo|rld</b></div> // returns offset 8
+ */
+export const offsetThought = (): number | null => {
+  const selection = window.getSelection()
+  if (!selection?.focusNode) return null
+
+  let total =
+    selection.focusNode.nodeType === Node.ELEMENT_NODE
+      ? selection.focusOffset
+        ? selection.focusNode.textContent?.length || 0
+        : 0
+      : selection.focusOffset
+  let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
+
+  // eslint-disable-next-line fp/no-loops
+  while (curNode && !(curNode as HTMLElement)?.classList?.contains('editable')) {
+    if (curNode?.previousSibling) {
+      total += curNode.previousSibling.textContent?.length || 0
+      curNode = curNode.previousSibling
+    } else {
+      curNode = curNode?.parentElement || null
+    }
+  }
+
+  return total
+}
 
 /** Returns the character offset at the end of the selection. Returns null if there is no selection. */
 export const offsetEnd = (): number | null => {
