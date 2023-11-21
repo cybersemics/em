@@ -30,6 +30,9 @@ import DropEmpty from './DropEmpty'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
+/** Selects the cursor. */
+const selectCursor = (state: State) => state.cursor
+
 /** Finds the the first env entry with =focus/Zoom. O(children). */
 const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env?: LazyEnv }): ThoughtId | null => {
   if (!env) return null
@@ -136,7 +139,6 @@ const VirtualThought = ({
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
-  const selectCursor = useCallback((state: State) => state.cursor, [])
   useSelectorEffect(selectCursor, updateHeight, shallowEqual)
 
   // Recalculate height
