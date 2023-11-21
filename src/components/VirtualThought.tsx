@@ -58,6 +58,7 @@ const VirtualThought = ({
   onResize,
   showContexts,
   simplePath,
+  singleLineHeight,
   style,
   crossContextualKey,
   zoomCursor,
@@ -81,15 +82,14 @@ const VirtualThought = ({
   }) => void
   showContexts?: boolean
   simplePath: SimplePath
+  singleLineHeight: number
   style?: React.CSSProperties
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean
 }) => {
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const estimatedHeight = fontSize * 2 - 2
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
-  const [height, setHeight] = useState<number | null>(estimatedHeight)
+  const [height, setHeight] = useState<number | null>(singleLineHeight)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
   const note = useSelector((state: State) => noteValue(state, thought.id))

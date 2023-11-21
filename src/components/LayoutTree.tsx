@@ -250,6 +250,26 @@ const LayoutTree = () => {
       : 0,
   )
 
+  // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+  // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
+  const estimatedHeight = fontSize * 2 - 2
+
+  // singleLineHeight is the measured height of a single line thought.
+  // If no heights have been measured yet, use the estimated height.
+  // Cache the last measured value in a ref in case heights no longer contains any single line thoughts.
+  // Then do not update it again.
+  const singleLineHeightPrev = useRef<number | null>(null)
+  const singleLineHeight = useMemo(() => {
+    const singleLineHeightMeasured = Object.values(heights).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different heights.
+      height => Math.abs(height - estimatedHeight) < height / 2,
+    )
+    if (singleLineHeightMeasured) {
+      singleLineHeightPrev.current = singleLineHeightMeasured
+    }
+    return singleLineHeightPrev.current || estimatedHeight
+  }, [estimatedHeight, heights])
+
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector((state: State) => {
     // only set during drag-and-drop to avoid re-renders
@@ -271,16 +291,13 @@ const LayoutTree = () => {
   const viewport = viewportStore.useState()
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + overshoot
-  // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-  // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
-  const estimatedHeight = fontSize * 2 - 2
 
   // Sum all the heights to get the total height.
   // Use estimated single-line height for the thoughts that do not have heights yet.
   // Not sure why we need +1, but without it the totalHeight changes from list virtualization.
   const totalHeight =
     Object.values(heights).reduce((a, b) => a + b, 0) +
-    (virtualThoughts.length - Object.values(heights).length) * estimatedHeight
+    (virtualThoughts.length - Object.values(heights).length) * singleLineHeight
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
@@ -333,7 +350,7 @@ const LayoutTree = () => {
           // TODO: Fix cliff across context view boundary
           const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
 
-          const height = heights[key] ?? estimatedHeight
+          const height = heights[key] ?? singleLineHeight
           const thoughtY = y
 
           y += height
@@ -377,6 +394,7 @@ const LayoutTree = () => {
                 prevChildId={prevChild?.id}
                 showContexts={showContexts}
                 simplePath={simplePath}
+                singleLineHeight={singleLineHeight}
                 // Add a bit of space after a cliff to give nested lists some breathing room.
                 // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                 style={cliff < 0 ? cliffPaddingStyle : undefined}
