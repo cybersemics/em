@@ -98,8 +98,8 @@ async function* getDescendantThoughts(
   } = {},
 ): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
-  const thoughtIdQueue = queue([thoughtId]) // eslint-disable-line fp/no-let
-  const depth = counter() // eslint-disable-line fp/no-let
+  const thoughtIdQueue = queue([thoughtId])
+  const depth = counter()
 
   // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
   const accumulatedThoughts = { ...getState().thoughts }

@@ -34,7 +34,7 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   if (!state.cursor && !payload.path) return state
 
   const cursor = state.cursor
-  const path = (payload.path || cursor)! // eslint-disable-line fp/no-let
+  const path = (payload.path || cursor)!
   const parentPath = rootedParentOf(state, path)
 
   // same as in newThought

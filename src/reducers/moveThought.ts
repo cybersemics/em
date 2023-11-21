@@ -35,7 +35,7 @@ export interface MoveThoughtPayload {
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  const recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  const recentlyEdited = state.recentlyEdited
   // try {
   //   recentlyEdited = treeMove(state, state.recentlyEdited, oldPath, newPath)
   // } catch (e) {
