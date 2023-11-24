@@ -94,7 +94,7 @@ export const isOnFirstLine = (): boolean => {
   return Math.abs(rangeY - baseNodeY - paddingTop - fontSize / 3) < 10
 }
 
-/** Returns true if the selection is on the last line of its content. Returns true if there is no selection or if the text is a single line. */
+/** Returns true if the selection is on the last line of a thought. Returns true if there is no selection or if the text is a single line. */
 export const isOnLastLine = (): boolean => {
   const selection = window.getSelection()
   if (!selection) return true
@@ -111,11 +111,13 @@ export const isOnLastLine = (): boolean => {
   const baseNodeParentEl = baseNode?.parentElement as HTMLElement
   if (!baseNodeParentEl) return true
 
-  const { y: baseNodeY, height: baseNodeHeight } = baseNodeParentEl.getClientRects()[0]
-  const [paddingTop, , paddingBottom] = getElementPaddings(baseNodeParentEl)
+  // baseNodeParentEl is the thought for plain text, but formatted text requires traversing up
+  const thought = ((baseNodeParentEl as HTMLElement).closest?.('.editable') as HTMLElement) || baseNodeParentEl
+  const { y: baseNodeY, height: baseNodeHeight } = thought.getClientRects()[0]
+  const [paddingTop, , paddingBottom] = getElementPaddings(thought)
 
   // assume font size is in px
-  const fontSize = parseInt(window.getComputedStyle(baseNodeParentEl, null).fontSize)
+  const fontSize = parseInt(window.getComputedStyle(thought, null).fontSize)
   const isMultiline = Math.abs(rangeY - baseNodeY - paddingTop - fontSize) > 2
   if (!isMultiline) return true
 
