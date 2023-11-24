@@ -18,9 +18,11 @@ export interface SavedSelection {
   offset: number
 }
 
-/** Gets the padding of an element as an array of numbers. */
-const getElementPaddings = (element: HTMLElement): number[] =>
-  window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
+/** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
+const getElementPaddings = (element: HTMLElement): [number, number, number, number] => {
+  const paddings = window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
+  return [0, 1, 2, 3].map(i => paddings[i] ?? paddings[i - 2] ?? 0) as [number, number, number, number]
+}
 
 /** Clears the selection. */
 export const clear = (): void => {
