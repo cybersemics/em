@@ -1103,6 +1103,7 @@ const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | und
 }
 
 /** Gets a Lexeme from a lexeme Y.Doc. */
+// SIDE EFFECT: Sets docKeys for contexts.
 const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
   if (!lexemeDoc) return
   const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
@@ -1171,7 +1172,8 @@ const tryDeallocateThought = async (docKey: string): Promise<void> => {
   //   }
   // })
 
-  // remove children docKeys
+  // Remove children docKeys.
+  // They may have already been deleted by deleteThought, but we need to also delete them here to handle thought deallocation independent from delete.
   // TODO: Why is not safe to remove the thought docKey here? Doing that causes replication on a new device to throw "Missing docKey for thought".
   const thoughtDoc = thoughtDocs.get(docKey)
   const yChildren = thoughtDoc?.getMap<Y.Map<ThoughtYjs>>('children')
@@ -1208,6 +1210,13 @@ const deleteThought = async (docKey: string): Promise<void> => {
     const yChildren = docParent?.getMap<Y.Map<ThoughtYjs>>('children')
     yChildren?.delete(docKey)
   }
+
+  // delete children docKeys here since freeThought will no longer have access to the deleted children
+  docKeys.delete(docKey as ThoughtId)
+  const children = getChildren(thoughtDocs.get(docKey))
+  children?.forEach(child => {
+    docKeys.delete(child.id)
+  })
 
   try {
     // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
