@@ -78,22 +78,18 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
-  const onBeginStroke = useCallback(
-    () => {
-      clearTimeout(fadeTimer.current)
-      if (!signaturePadRef.current) return
-      const signaturePad = signaturePadRef.current.signaturePad
-      signaturePad.clear()
+  const onBeginStroke = useCallback(() => {
+    clearTimeout(fadeTimer.current)
+    if (!signaturePadRef.current) return
+    const signaturePad = signaturePadRef.current.signaturePad
+    signaturePad.clear()
 
-      // add glow
-      signaturePad._ctx.shadowColor = colors.gray
-      signaturePad._ctx.shadowOffsetX = 0
-      signaturePad._ctx.shadowOffsetY = 0
-      signaturePad._ctx.shadowBlur = 15
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+    // add glow
+    signaturePad._ctx.shadowColor = colors.gray
+    signaturePad._ctx.shadowOffsetX = 0
+    signaturePad._ctx.shadowOffsetY = 0
+    signaturePad._ctx.shadowBlur = 15
+  }, [colors])
 
   useEffect(
     () => {
@@ -134,7 +130,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [onBeginStroke],
   )
 
   return (
