@@ -235,17 +235,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           }
 
           if (g !== this.sequence[this.sequence.length - 1]) {
-            // abandon gestures that start with d or u when scroll is not disabled
-            // this can occur when dragging down at the top of the screen on mobile
-            if (this.sequence.length === 0 && !this.disableScroll && (g === 'd' || g === 'u')) {
-              this.abandon = true
-            }
-            // otherwise append the gesture to the sequence and call the onGesture handler
-            else {
-              this.sequence += g
-              this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
-              gestureStore.update(this.sequence)
-            }
+            // append the gesture to the sequence and call the onGesture handler
+            this.sequence += g
+            this.props.onGesture?.({ gesture: g, sequence: this.sequence, clientStart: this.clientStart!, e })
+            gestureStore.update(this.sequence)
           }
         }
       },
