@@ -30,8 +30,6 @@ interface GestureState {
 
 // See: defaultProps for defaults
 interface MultiGestureProps {
-  // if true, does not draw the gesture as the user is making it
-  disableTrace?: boolean
   // moves the scroll zone to the left side of the screen and the gesture zone to the right
   leftHanded?: boolean
   // fired when a new gesture is added to the sequence
@@ -121,7 +119,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
   clientStart: Point | null = null
   currentStart: Point | null = null
-  disableTrace = false
   leftHanded = false
   minDistanceSquared = 0
   scrollYStart: number | null = null
@@ -284,7 +281,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   static defaultProps: MultiGestureProps = {
-    disableTrace: false,
     leftHanded: false,
     minDistance: 10,
     onStart: noop,
