@@ -235,9 +235,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.() ?? true,
       onMoveShouldSetPanResponderCapture: () => !this.props.shouldCancelGesture?.() ?? true,
 
-      // does not report moveX and moveY
-      // onPanResponderGrant: (e, gestureState) => {},
-
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (this.abandon) {
           return
