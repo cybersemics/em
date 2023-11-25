@@ -233,7 +233,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
       onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.() ?? true,
-      onMoveShouldSetPanResponderCapture: () => !this.props.shouldCancelGesture?.() ?? true,
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (this.abandon) {
