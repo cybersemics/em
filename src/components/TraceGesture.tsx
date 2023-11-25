@@ -90,23 +90,23 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   useEffect(() => {
     if (!signaturePadRef.current) return
     const signaturePad = signaturePadRef.current.signaturePad
+    const eventNode = eventNodeRef?.current
 
     // Attach pointer handlers to a provided node rather than the signature pad canvas.
     // See: eventNodeRef
     const handlePointerStart = signaturePad._handlePointerStart.bind(signaturePad)
     const handlePointerMove = signaturePad._handlePointerMove.bind(signaturePad)
-    if (eventNodeRef?.current) {
-      eventNodeRef.current.addEventListener('pointerdown', e => {
-        // Make preventDefault a noop otherwise tap-to-edit is broken.
-        // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
-        e.preventDefault = noop
-        handlePointerStart(e)
-      })
-      eventNodeRef.current.addEventListener('pointermove', e => {
-        e.preventDefault = noop
-        handlePointerMove(e)
-      })
-    }
+
+    eventNode?.addEventListener('pointerdown', e => {
+      // Make preventDefault a noop otherwise tap-to-edit is broken.
+      // e.cancelable is readonly and monkeypatching preventDefault is easier than copying e.
+      e.preventDefault = noop
+      handlePointerStart(e)
+    })
+    eventNode?.addEventListener('pointermove', e => {
+      e.preventDefault = noop
+      handlePointerMove(e)
+    })
 
     signaturePad.addEventListener('beginStroke', onBeginStroke)
 
@@ -116,11 +116,8 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
     return () => {
-      if (eventNodeRef?.current) {
-        eventNodeRef.current.removeEventListener('pointerdown', handlePointerStart)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        eventNodeRef.current.removeEventListener('pointermove', handlePointerMove)
-      }
+      eventNode?.removeEventListener('pointerdown', handlePointerStart)
+      eventNode?.removeEventListener('pointermove', handlePointerMove)
       signaturePad.removeEventListener('beginStroke', onBeginStroke)
     }
   }, [eventNodeRef, onBeginStroke])
