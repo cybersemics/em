@@ -183,10 +183,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       this.reset()
     })
 
-    window.addEventListener('scroll', () => {
-      this.scrolling = true
-    })
-
     this.panResponder = PanResponder.create({
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
@@ -208,7 +204,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // initialize this.currentStart on the the first trigger of the move event
         // TODO: Why doesn't onPanResponderStart work?
         if (!this.currentStart) {
-          this.scrolling = false
           // ensure that disableScroll is false when starting in case it wasn't reset properly
           // may be related to https://github.com/cybersemics/em/issues/1189
           this.disableScroll = false
@@ -220,16 +215,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
           }
-          return
-        }
-
-        // abandon gestures when scrolling beyond vertical threshold
-        // because scrolling cannot be disabled after it has begin
-        // effectively only allows sequences to start with left or right
-        if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
-          this.sequence = ''
-          this.props.onCancel?.({ clientStart: this.clientStart, e })
-          this.abandon = true
           return
         }
 
@@ -252,7 +237,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           if (g !== this.sequence[this.sequence.length - 1]) {
             // abandon gestures that start with d or u when scroll is not disabled
             // this can occur when dragging down at the top of the screen on mobile
-            // since scrollY is already 0,  this.scrolling will not be set to true to abandon the gesture
             if (this.sequence.length === 0 && !this.disableScroll && (g === 'd' || g === 'u')) {
               this.abandon = true
             }
@@ -293,7 +277,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.currentStart = null
     this.scrollYStart = null
     this.disableScroll = false
-    this.scrolling = false
     this.sequence = ''
     gestureStore.update('')
   }
