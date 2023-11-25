@@ -58,8 +58,6 @@ interface MultiGestureProps {
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   shouldCancelGesture?: () => boolean
-  // the distance to allow scrolling before abandoning the gesture
-  scrollThreshold?: number
 }
 
 const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
@@ -289,7 +287,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     disableTrace: false,
     leftHanded: false,
     minDistance: 10,
-    scrollThreshold: 15,
     onStart: noop,
     onGesture: noop,
     onEnd: noop,
