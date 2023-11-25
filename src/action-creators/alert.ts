@@ -50,7 +50,8 @@ const alert =
       clearAlertTimeoutId = setTimeout(clearOriginalAlert, clearDelay)
     }
 
-    if (alert && alert.value === value) return
+    // do not show the same alert twice
+    if (value === (alert?.value || null)) return
 
     dispatch({
       type: 'alert',
