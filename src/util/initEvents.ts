@@ -5,6 +5,7 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
+import commandPalette from '../action-creators/commandPalette'
 import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
@@ -247,9 +248,12 @@ const initEvents = (store: Store<State, any>) => {
 
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
-      const alertType = store.getState().alert?.alertType
-      if (alertType === AlertType.GestureHint || store.getState().showCommandPalette) {
+      const state = store.getState()
+      if (state.alert?.alertType === AlertType.GestureHint) {
         store.dispatch(alert(null))
+      }
+      if (state.showCommandPalette) {
+        store.dispatch(commandPalette())
       }
       // we could also persist unsaved data here
     }
