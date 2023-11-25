@@ -219,7 +219,7 @@ const CommandRow: FC<{
       }}
       style={{
         cursor: !disabled ? 'pointer' : undefined,
-        paddingBottom: last ? '4em' : '0.6em',
+        paddingBottom: last ? (isTouch ? 0 : '4em') : '0.6em',
         paddingLeft: selected ? 'calc(1em - 10px)' : '1em',
         position: 'relative',
         textAlign: 'left',
@@ -517,7 +517,7 @@ const CommandPalette: FC = () => {
     <div
       style={{
         ...(show ? { paddingLeft: '4em', paddingRight: '1.8em' } : null),
-        marginBottom: fontSize,
+        marginBottom: isTouch ? 0 : fontSize,
         textAlign: 'left',
       }}
     >
