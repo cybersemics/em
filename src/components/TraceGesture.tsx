@@ -28,20 +28,16 @@ const useConditionDelay = (condition: boolean, milliseconds: number) => {
   const [value, setValue] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>()
 
-  useEffect(
-    () => {
-      clearTimeout(timer.current!)
-      if (condition) {
-        timer.current = setTimeout(() => {
-          setValue(true)
-        }, milliseconds)
-      } else {
-        setValue(false)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [condition],
-  )
+  useEffect(() => {
+    clearTimeout(timer.current!)
+    if (condition) {
+      timer.current = setTimeout(() => {
+        setValue(true)
+      }, milliseconds)
+    } else {
+      setValue(false)
+    }
+  }, [condition, milliseconds])
 
   return value
 }
