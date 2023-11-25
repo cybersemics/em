@@ -51,7 +51,8 @@ const alert =
     }
 
     // do not show the same alert twice
-    if (value === (alert?.value || null)) return
+    // do not clear an alert with a non-matching alertType
+    if (value === (alert?.value || null) || (!value && alert && alertType && alertType !== alert.alertType)) return
 
     dispatch({
       type: 'alert',
