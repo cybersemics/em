@@ -1053,6 +1053,17 @@ export const replicateLexeme = async (
 
   // get the Lexeme before we destroy the Doc
   const lexeme = getLexeme(doc)
+  const lexemeRaw = lexemeMap.toJSON() as Index<LexemeYjs>
+
+  // set docKey from Lexeme context to allow tangential contexts to be loaded
+  ;(Object.keys(lexemeRaw) as (keyof LexemeDb | `cx-${string}`)[]).forEach(key => {
+    const cxid = key.split('cx-')[1] as ThoughtId | undefined
+
+    if (cxid) {
+      const docKey = lexemeRaw[key as `cx-${string}`] as ThoughtId
+      docKeys.set(cxid, docKey)
+    }
+  })
 
   // If the lexeme is not retained by foreground replication, deallocate it.
   tryDeallocateLexeme(key)
@@ -1118,8 +1129,6 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 
       // Set docKey from Lexeme context to allow tangential contexts to be loaded.
       if (cxid) {
-        const value = lexemeRaw[key as `cx-${string}`] as ThoughtId
-        docKeys.set(cxid, value)
         return {
           ...acc,
           contexts: [...(acc.contexts || []), cxid],
