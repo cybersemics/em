@@ -4,6 +4,7 @@ import { GestureResponderEvent } from 'react-native'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
 import { Settings, noop } from '../constants'
@@ -131,7 +132,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
-  panResponder: { panHandlers: unknown }
+  panResponder: { panHandlers: Index<unknown> }
   scrolling = false
   sequence: GesturePath = ''
 
