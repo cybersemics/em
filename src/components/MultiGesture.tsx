@@ -6,7 +6,6 @@ import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
-import { isSafari, isTouch } from '../browser'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -53,7 +52,7 @@ interface MultiGestureProps {
   // includes false starts
   onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
   // fired when a gesture has been cancelled
-  onCancel?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
+  onCancel?: (args: { clientStart: Point; e: GestureResponderEvent | TouchEvent }) => void
   // When a swipe is less than this number of pixels, then it won't count as a gesture.
   // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
   // related: https://github.com/cybersemics/em/issues/1268
@@ -65,9 +64,6 @@ interface MultiGestureProps {
 
 const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
 const TOOLBAR_HEIGHT = 50
-
-/** The height of the disabled swipe zone on the bottom edge of the newer iPhones. In informal testing, the initial y value when swiping the bottom edge to switch apps never exceeded 43px. Add 5px to be safe. */
-const BOTTOM_SWIPE_ZONE = 48
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
@@ -147,14 +143,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     this.reset()
 
-    /** Disable the bottom edge of the screen if the device is an iPhone without a physical home button (and thus uses swipe from bottom edge to go home). This is used to disable gestures at the bottom edge to avoid false positives while switching apps. */
-    // https://stackoverflow.com/a/63947940/480608
-    const disableBottomEdge =
-      isTouch &&
-      isSafari() &&
-      // uses :root { --safe-area-bottom: env(safe-area-inset-bottom); } defined in App.css
-      parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-bottom')) > 0
-
     // disable scroll by preventing default touchmove
     // allow enabling/disabling scroll with this.disableScroll
     // Note: This breaks window.scrollTo on Mobile Safari when using asyncFocus and scrollY is 0.
@@ -176,12 +164,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         const y = e.touches[0].clientY
         this.clientStart = { x, y }
 
-        // disable gestures in the scroll zone on the right side of the screen, and the bottom edge
+        // disable gestures in the scroll zone on the right side of the screen
         // disable scroll in the gesture zone on the left side of the screen
         const isInGestureZone =
-          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) &&
-          y > TOOLBAR_HEIGHT &&
-          (!disableBottomEdge || window.innerHeight - y > BOTTOM_SWIPE_ZONE)
+          (this.leftHanded ? x > SCROLL_ZONE_WIDTH : x < window.innerWidth - SCROLL_ZONE_WIDTH) && y > TOOLBAR_HEIGHT
         if (isInGestureZone && !props.shouldCancelGesture?.()) {
           this.disableScroll = true
         } else {
@@ -190,37 +176,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       }
     })
 
-    // Listen to touchend directly to catch unterminated gestures.
-    // In order to make the gesture system more forgiving, we allow a tiny bit of scroll without abandoning the gesture.
-    // Unfortunately, there are some cases (#1242) where onPanResponderRelease is never called. Neither is onPanResponderReject or onPanResponderEnd.
-    // onPanResponderTerminate is called consistently, but it is also called for any scroll event. I am not aware of a way to differentiate when onPanResponderTerminate is called from a scroll event vs a final termination where release it never called.
-    // So instead of eliminating the scroll lenience, we listen to touchend manually and ensure onEnd is always called.
-    // Fixes https://github.com/cybersemics/em/issues/1242
-    document.body.addEventListener('touchend', e => {
-      // wait for the next event loop to ensure that the gesture wasn't already abandoned or ended
-      setTimeout(() => {
-        // call onEnd if there is a gesture that has not been reset
-        if (!this.abandon && this.sequence) {
-          const clientEnd =
-            e?.touches.length > 0
-              ? {
-                  x: e.touches[0].clientX,
-                  y: e.touches[0].clientY,
-                }
-              : null
-          this.props.onEnd?.({
-            sequence: this.sequence,
-            clientStart: this.clientStart!,
-            clientEnd,
-            e: e as unknown as GestureResponderEvent,
-          })
-        }
-
-        this.reset()
-      })
-    })
-
-    document.addEventListener('visibilitychange', () => {
+    // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
+    window.addEventListener('touchcancel', e => {
+      this.props.onCancel?.({ clientStart: this.clientStart!, e })
+      gestureStore.update('')
       this.reset()
     })
 
@@ -232,7 +191,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // Prevent gesture when any text is selected.
       // See https://github.com/cybersemics/em/issues/676.
       // NOTE: though it works simulating mobile on desktop, selectionchange is too late to prevent actual gesture on mobile, so we can't detect only when the text selection is being dragged
-      onMoveShouldSetPanResponder: () => !this.props.shouldCancelGesture?.(),
+      onMoveShouldSetPanResponder: (e: GestureResponderEvent) => !this.props.shouldCancelGesture?.(),
 
       onPanResponderMove: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (this.abandon) {
@@ -307,7 +266,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
       },
 
-      // In rare cases release won't be called. See touchend above.
+      // not called on touchcancel
       onPanResponderRelease: (e: GestureResponderEvent, gestureState: GestureState) => {
         if (!this.abandon) {
           const clientEnd = {
