@@ -234,6 +234,7 @@ const updateThoughts = (
 
   /** Returns false if the root thought is loaded and not pending. */
   const isStillLoading = () => {
+    if (isLoading != null) return isLoading
     const rootThought: Thought | null = thoughtIndexUpdates[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
     const thoughtsLoaded =
       rootThought &&
@@ -243,7 +244,7 @@ const updateThoughts = (
       // If the root has no children and is no longer pending, we can disable isLoading immediately.
       (Object.keys(rootThought.childrenMap).length === 0 ||
         Object.values(rootThought.childrenMap).find(childId => thoughtIndex[childId]))
-    return isLoading ?? !thoughtsLoaded
+    return !thoughtsLoaded
   }
 
   return reducerFlow([
