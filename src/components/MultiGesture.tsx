@@ -52,7 +52,7 @@ interface MultiGestureProps {
   // includes false starts
   onStart?: (args: { clientStart: Point; e: GestureResponderEvent }) => void
   // fired when a gesture has been cancelled
-  onCancel?: (args: { clientStart: Point; e: GestureResponderEvent | TouchEvent }) => void
+  onCancel?: (args: { clientStart: Point | null; e: GestureResponderEvent | TouchEvent }) => void
   // When a swipe is less than this number of pixels, then it won't count as a gesture.
   // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
   // related: https://github.com/cybersemics/em/issues/1268
@@ -178,7 +178,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
-      this.props.onCancel?.({ clientStart: this.clientStart!, e })
+      this.props.onCancel?.({ clientStart: this.clientStart, e })
       gestureStore.update('')
       this.reset()
     })
@@ -199,7 +199,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
 
         if (this.props.shouldCancelGesture?.()) {
-          this.props.onCancel?.({ clientStart: this.clientStart!, e })
+          this.props.onCancel?.({ clientStart: this.clientStart, e })
           gestureStore.update('')
           this.abandon = true
           return
@@ -228,7 +228,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         // effectively only allows sequences to start with left or right
         if (this.scrolling && Math.abs(this.scrollYStart! - window.scrollY) > this.props.scrollThreshold!) {
           this.sequence = ''
-          this.props.onCancel?.({ clientStart: this.clientStart!, e })
+          this.props.onCancel?.({ clientStart: this.clientStart, e })
           this.abandon = true
           return
         }
