@@ -328,7 +328,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   }
 
   // update leftHanded when props change
-  // TODO: Why is the component no re-rendered automatically when a prop changes?
+  // TODO: Why is the component not re-rendered automatically when a prop changes?
   UNSAFE_componentWillReceiveProps(nextProps: MultiGestureProps) {
     this.leftHanded = !!nextProps.leftHanded
   }
