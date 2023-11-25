@@ -48,13 +48,15 @@ async function bufferToBase64(buffer: ArrayBuffer | Uint8Array) {
 }
 
 /** Resolves when the clientId is available to use synchronously. */
-export const clientIdReady = crypto.subtle
-  .digest('SHA-256', new TextEncoder().encode(accessToken))
-  .then(bufferToBase64)
-  .then(s => {
-    clientId = s
-    return s
-  })
+export const clientIdReady = (
+  crypto.subtle
+    ? crypto.subtle.digest('SHA-256', new TextEncoder().encode(accessToken)).then(bufferToBase64)
+    : // fall back to nanoid if crypto.subtle is not available
+      Promise.resolve(nanoid())
+).then(s => {
+  clientId = s
+  return s
+})
 
 // disable during tests because of TransactionInactiveError in fake-indexeddb
 if (process.env.NODE_ENV !== 'test') {
