@@ -38,6 +38,7 @@ import * as modals from './modals'
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
 
+const SPLIT_ANIMATION_DURATION = 400
 const SPLIT_RESIZE_THROTTLE = 8
 
 const Content = React.lazy(() => import('./Content'))
@@ -221,7 +222,7 @@ const AppComponent: FC<Props> = props => {
       updateIsSplitting(true)
       splitAnimationTimer = setTimeout(() => {
         updateIsSplitting(false)
-      }, 400) as unknown as number
+      }, SPLIT_ANIMATION_DURATION) as unknown as number
     }
 
     return () => {
