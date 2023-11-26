@@ -39,17 +39,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
-  const { fontSize, distractionFreeTyping } = useSelector((state: State) => {
-    const { fontSize, distractionFreeTyping, showHiddenThoughts } = state
-    return {
-      fontSize,
-      // we cannot know if any one the shortcut's active status has changed, so we re-render every time the thoughts or cursor has changed
-      distractionFreeTyping,
-      // re-render only
-      showHiddenThoughts,
-    }
-  }, shallowEqual)
+  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
+  const fontSize = useSelector((state: State) => state.fontSize)
   const arrowWidth = fontSize / 3
+
+  // re-render only (why?)
+  useSelector((state: State) => state.showHiddenThoughts)
 
   /**********************************************************************
    * Methods
