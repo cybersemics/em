@@ -240,7 +240,7 @@ const virtualTree = (
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { heights, setHeight } = useHeightTracking()
-  const virtualThoughts = useSelector(virtualTree)
+  const virtualThoughts = useSelector(virtualTree, _.isEqual)
   const fontSize = useSelector((state: State) => state.fontSize)
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const indent = useSelector((state: State) =>
