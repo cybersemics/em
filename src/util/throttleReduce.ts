@@ -21,7 +21,6 @@ const throttleReduce = <T, U, R>(
   const throttled = throttle(
     (): R | undefined => {
       accum = initialValue
-      if (queue.length === 0) return
       queue.forEach(value => {
         accum = reducer(value, accum)
       })
