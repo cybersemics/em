@@ -189,7 +189,6 @@ const AppComponent: FC<Props> = props => {
 
   const dispatch = useDispatch()
   const lastSplitViewRef = useRef(false)
-  const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
   const colors = useSelector(themeColors)
 
@@ -214,8 +213,6 @@ const AppComponent: FC<Props> = props => {
   }, [dark])
 
   useEffect(() => {
-    updateSplitView(showSplitView)
-
     let splitAnimationTimer: number
     if (showSplitView !== lastSplitViewRef.current) {
       lastSplitViewRef.current = !!showSplitView
@@ -321,9 +318,9 @@ const AppComponent: FC<Props> = props => {
             ) : (
               <SplitPane
                 className={isSplitting ? 'animating' : undefined}
-                defaultSize={!splitView ? '100%' : splitPosition || '50%'}
+                defaultSize={!showSplitView ? '100%' : splitPosition || '50%'}
                 onChange={onSplitResize}
-                size={!splitView ? '100%' : splitPosition || '50%'}
+                size={!showSplitView ? '100%' : splitPosition || '50%'}
                 split='vertical'
                 style={{ position: 'relative', fontSize }}
               >
