@@ -32,8 +32,8 @@ interface ToolbarProps {
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const toolbarRef = useRef<HTMLDivElement>(null)
-  const [leftArrowElementClassName = 'hidden', setLeftArrowElementClassName] = useState<string | undefined>()
-  const [rightArrowElementClassName = 'hidden', setRightArrowElementClassName] = useState<string | undefined>()
+  const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
+  const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
   const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   // track scrollLeft after each touchend
