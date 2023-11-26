@@ -899,7 +899,6 @@ export const replicateChildren = async (
       thoughtMap.observe(onThoughtChange(childId))
     })
   }
-
   // Foregrounding
   // In background remote mode, after the websocket syncs, if the thought or its parent is already loaded, cache the thought Doc and update Redux state.
   // Otherwise remote changes will not be rendered.
@@ -1022,17 +1021,16 @@ export const replicateLexeme = async (
   lexemeWebsocketSynced.set(key, websocketSynced)
   lexemeWebsocketProvider.set(key, websocketProvider)
 
-  if (!background) {
-    // Start observing before websocketSynced immediately. This differs from replicateChildren, where we cannot start observing until we know if a thought is pending or not.
-    // This will be unobserved in background replication.
-    lexemeMap.observe(onLexemeChange)
-  }
-
   // always wait for IDB to sync
   await idbSynced
 
-  if (background) {
-    // do not resolve background replication until websocket has synced
+  // foreground
+  if (!background) {
+    // subscribe to changes after idbSynced since foreground replicated lexemes are already updated through pull
+    lexemeMap.observe(onLexemeChange)
+  }
+  // background
+  else {
     await websocketSynced
 
     const loaded = await isLexemeLoaded(key, getLexeme(doc))
