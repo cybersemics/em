@@ -21,7 +21,6 @@ export interface PullOptions {
   /** Pull descendants regardless of pending status. */
   force?: boolean
   maxDepth?: number
-  onThoughts?: (thoughts: ThoughtIndices) => void
 }
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
@@ -62,7 +61,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 const pull =
-  (thoughtIds: ThoughtId[], { cancelRef, force, maxDepth, onThoughts }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
+  (thoughtIds: ThoughtId[], { cancelRef, force, maxDepth }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
     const filteredThoughtIds = force
@@ -95,8 +94,6 @@ const pull =
           remote: false,
         }),
       )
-
-      onThoughts?.(thoughtsChunk)
     })
 
     // get remote thoughts
