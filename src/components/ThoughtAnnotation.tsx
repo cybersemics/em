@@ -173,7 +173,7 @@ const ThoughtAnnotationContainer = ({
     setCalculateContexts(true)
   }, [])
 
-  return (
+  return showSuperscript || url ? (
     <ThoughtAnnotation
       {...{
         simplePath,
@@ -187,7 +187,7 @@ const ThoughtAnnotationContainer = ({
         value,
       }}
     />
-  )
+  ) : null
 }
 
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
