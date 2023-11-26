@@ -156,7 +156,7 @@ const AppComponent: FC = () => {
   const dark = useSelector((state: State) => theme(state) !== 'Light')
   const dragInProgress = useSelector((state: State) => state.dragInProgress)
   const enableLatestShortcutsDiagram = useSelector((state: State) => state.enableLatestShortcutsDiagram)
-  const isLoading = useSelector((state: State) => state.isLoading)
+  const showTutorial = useSelector((state: State) => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector((state: State) => state.fontSize)
   const showSplitView = useSelector((state: State) => state.showSplitView)
   const showModal = useSelector((state: State) => state.showModal)
@@ -270,7 +270,7 @@ const AppComponent: FC = () => {
         ) : (
           // navigation, content, and footer
           <>
-            {tutorial && !isLoading ? <Tutorial /> : null}
+            {showTutorial ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
               <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>
