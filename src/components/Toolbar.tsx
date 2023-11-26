@@ -31,14 +31,14 @@ interface ToolbarProps {
 
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
-  const toolbarRef = useRef<HTMLDivElement>(null)
-  const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
-  const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
-  const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
-  const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
+  const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
+  const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
+  const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
   const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
   const fontSize = useSelector((state: State) => state.fontSize)
   const arrowWidth = fontSize / 3
