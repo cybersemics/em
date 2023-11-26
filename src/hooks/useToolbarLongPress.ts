@@ -25,49 +25,35 @@ const useToolbarLongPress = ({
   const dispatch = useDispatch()
 
   /** Turn on isPressed and dispatch toolbarLongPress when the long press starts. */
-  const onLongPressStart = useCallback(
-    () => {
-      if (disabled) return
-      setIsPressed(true)
-      dispatch(toolbarLongPress({ shortcut, sourceZone }))
-    },
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const onLongPressStart = useCallback(() => {
+    if (disabled) return
+    setIsPressed(true)
+    dispatch(toolbarLongPress({ shortcut, sourceZone }))
+  }, [disabled, dispatch, shortcut, sourceZone])
 
   /** Turn off isPressed and dismiss an alert when long press ends. */
-  const onLongPressEnd = useCallback(
-    () => {
-      if (disabled) return
-      setIsPressed(false)
-      dispatch((dispatch, getState) => {
-        if (getState().dragHold) {
-          dispatch([toolbarLongPress({ shortcut: null }), alert(null)])
-        }
-      })
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const onLongPressEnd = useCallback(() => {
+    if (disabled) return
+    setIsPressed(false)
+    dispatch((dispatch, getState) => {
+      if (getState().dragHold) {
+        dispatch([toolbarLongPress({ shortcut: null }), alert(null)])
+      }
+    })
+  }, [disabled, dispatch])
 
   // react-dnd stops propagation so onLongPressEnd sometimes does't get called
   // so disable toolbarLongPress and isPressed as soon as we are dragging
   // or if no longer dragging and toolbarLongPress never got cleared.
   //
-  useEffect(
-    () => {
-      dispatch((dispatch, getState) => {
-        if (isDragging || getState().toolbarLongPress) {
-          setIsPressed(false)
-          dispatch(toolbarLongPress({ shortcut: null }))
-        }
-      })
-    },
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isDragging],
-  )
+  useEffect(() => {
+    dispatch((dispatch, getState) => {
+      if (isDragging || getState().toolbarLongPress) {
+        setIsPressed(false)
+        dispatch(toolbarLongPress({ shortcut: null }))
+      }
+    })
+  }, [dispatch, isDragging])
 
   const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
 
