@@ -114,6 +114,14 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     setPressingToolbarId(null)
   }, [])
 
+  const onTapUp = useCallback(
+    id => {
+      setPressingToolbarId(null)
+      onSelect?.(shortcutById(id))
+    },
+    [onSelect],
+  )
+
   return (
     <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
       <div
@@ -158,13 +166,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   isPressing={pressingToolbarId === id}
                   key={id}
                   lastScrollLeft={lastScrollLeft}
-                  onTapDown={e => {
-                    setPressingToolbarId(id)
-                  }}
-                  onTapUp={() => {
-                    setPressingToolbarId(null)
-                    onSelect?.(shortcutById(id))
-                  }}
+                  onTapDown={setPressingToolbarId}
+                  onTapUp={onTapUp}
                   onTapCancel={onTapCancel}
                   selected={selected === id}
                   shortcutId={id}
