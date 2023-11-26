@@ -1,4 +1,4 @@
-import { ThrottleSettings, throttle } from 'lodash'
+import _ from 'lodash'
 
 export type ThrottledFunction<T, R> = ((value: T) => R | undefined) & {
   flush: () => R | undefined
@@ -13,7 +13,18 @@ const throttleReduce = <T, U, R>(
   reducer: (current: T, accum: U) => U,
   initialValue: U,
   ms: number,
-  throttleSettings?: ThrottleSettings,
+  {
+    leading = true,
+    trailing = true,
+    throttle = _.throttle,
+  }: {
+    /** Default: true. */
+    leading?: boolean
+    /** Default: true. */
+    trailing?: boolean
+    /** Custom throttle function (e.g. rafThrottle). Default: _.throttle. */
+    throttle?: typeof _.throttle
+  } = {},
 ): ThrottledFunction<T, R> => {
   let accum: U = initialValue
   const queue: T[] = []
@@ -28,7 +39,10 @@ const throttleReduce = <T, U, R>(
       return f(accum)
     },
     ms,
-    throttleSettings,
+    {
+      leading,
+      trailing,
+    },
   )
 
   /** Pushes the values onto the queue and triggers the throttled callback. */

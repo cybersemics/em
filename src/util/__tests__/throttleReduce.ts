@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import sleep from '../sleep'
 import throttleReduce from '../throttleReduce'
 
@@ -222,4 +223,26 @@ it('return function result from last from flush', async () => {
   // return undefined when there is nothing to flush
   expect(g.size()).toEqual(0)
   expect(g.flush()).toEqual(undefined)
+})
+
+it('custom throttle function', async () => {
+  let calls = 0
+  let output: number[] = []
+
+  /** Increment calls and append output values. */
+  const f = (values: number[]) => {
+    calls++
+    output = [...output, ...values]
+  }
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10, { throttle: _.throttle })
+
+  // eslint-disable-next-line fp/no-loops
+  for (let i = 0; i < 10; i++) {
+    g(i)
+  }
+
+  await sleep(20)
+
+  expect(calls).toBe(2)
+  expect(output).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 })
