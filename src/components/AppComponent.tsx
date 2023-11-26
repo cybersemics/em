@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
@@ -21,7 +21,7 @@ import store from '../stores/app'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
 import CommandPalette from './CommandPalette'
-import ContentFallback from './ContentFallback'
+import Content from './Content'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
@@ -39,8 +39,6 @@ const DISABLE_SPLIT_PANE = true
 
 const SPLIT_ANIMATION_DURATION = 400
 const SPLIT_RESIZE_THROTTLE = 8
-
-const Content = React.lazy(() => import('./Content'))
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
@@ -274,9 +272,7 @@ const AppComponent: FC = () => {
             {DISABLE_SPLIT_PANE ? (
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
               <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>
-                <Suspense fallback={<ContentFallback />}>
-                  <Content />
-                </Suspense>
+                <Content />
               </div>
             ) : (
               <SplitPane
@@ -287,13 +283,9 @@ const AppComponent: FC = () => {
                 split='vertical'
                 style={{ position: 'relative', fontSize }}
               >
-                <Suspense fallback={<ContentFallback />}>
-                  <Content />
-                </Suspense>
+                <Content />
                 {showSplitView ? (
-                  <Suspense fallback={<ContentFallback />}>
-                    <Content />
-                  </Suspense>
+                  <Content />
                 ) : (
                   // children required by SplitPane
                   <></>
