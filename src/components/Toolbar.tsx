@@ -40,9 +40,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
   const { fontSize, distractionFreeTyping } = useSelector((state: State) => {
-    const { fontSize, isLoading, distractionFreeTyping, showHiddenThoughts } = state
+    const { fontSize, distractionFreeTyping, showHiddenThoughts } = state
     return {
-      isLoading,
       fontSize,
       // we cannot know if any one the shortcut's active status has changed, so we re-render every time the thoughts or cursor has changed
       distractionFreeTyping,
