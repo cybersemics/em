@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Shortcut from '../@types/Shortcut'
@@ -57,10 +57,15 @@ const useToolbarLongPress = ({
 
   const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
 
-  return {
-    isPressed,
-    props,
-  }
+  const result = useMemo(
+    () => ({
+      isPressed,
+      props,
+    }),
+    [isPressed, props],
+  )
+
+  return result
 }
 
 export default useToolbarLongPress
