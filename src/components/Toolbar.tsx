@@ -110,6 +110,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)
 
+  const onTapCancel = useCallback(() => {
+    setPressingToolbarId(null)
+  }, [])
+
   return (
     <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
       <div
@@ -161,9 +165,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                     setPressingToolbarId(null)
                     onSelect?.(shortcutById(id))
                   }}
-                  onTapCancel={() => {
-                    setPressingToolbarId(null)
-                  }}
+                  onTapCancel={onTapCancel}
                   selected={selected === id}
                   shortcutId={id}
                 />
