@@ -45,7 +45,7 @@ const Content = React.lazy(() => import('./Content'))
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
 
-interface StateProps {
+interface AppComponentProps {
   dark?: boolean
   dragInProgress?: boolean
   isLoading?: boolean
@@ -134,7 +134,7 @@ const useDisableLongPressToSelect = () => {
 }
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State): StateProps => {
+const mapStateToProps = (state: State): AppComponentProps => {
   const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
   const dark = theme(state) !== 'Light'
   return {
@@ -176,7 +176,7 @@ const MultiGestureIfTouch: FC = ({ children }) => {
 /**
  * The main app component.
  */
-const AppComponent: FC<StateProps> = props => {
+const AppComponent: FC<AppComponentProps> = props => {
   const {
     dark,
     dragInProgress,
