@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { FC, useEffect, useState } from 'react'
+import React, { FC, useCallback, useEffect, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
@@ -128,8 +128,10 @@ const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>)
 const ModalCustomizeToolbar: FC = () => {
   const [selectedShortcut, setSelectedShortcut] = useState<Shortcut | null>(null)
   /** Toggles a shortcut selected. */
-  const toggleSelectedShortcut = (shortcut: Shortcut) =>
-    setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut))
+  const toggleSelectedShortcut = useCallback(
+    (shortcut: Shortcut) => setSelectedShortcut(oldShortcut => (oldShortcut === shortcut ? null : shortcut)),
+    [],
+  )
 
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
