@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -123,6 +123,19 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   /** Handles the tapCancel. */
   const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
 
+  const style = useMemo(
+    () => ({
+      position: 'relative' as const,
+      cursor: isButtonExecutable ? 'pointer' : 'default',
+      fill: longPress.isPressed || isDragging ? undefined : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
+      width: fontSize + 4,
+      height: fontSize + 4,
+      opacity: dropToRemove ? 0 : 1,
+      transition: 'opacity 200ms ease-out',
+    }),
+    [colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
+  )
+
   return dropTarget(
     dragSource(
       <div
@@ -198,19 +211,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
             />
           )
         }
-        <SVG
-          size={fontSize}
-          style={{
-            position: 'relative',
-            cursor: isButtonExecutable ? 'pointer' : 'default',
-            fill:
-              longPress.isPressed || isDragging ? undefined : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
-            width: fontSize + 4,
-            height: fontSize + 4,
-            opacity: dropToRemove ? 0 : 1,
-            transition: 'opacity 200ms ease-out',
-          }}
-        />
+        <SVG size={fontSize} style={style} />
       </div>,
     ),
   )
