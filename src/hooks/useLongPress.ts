@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import editing from '../action-creators/editing'
 import { isTouch } from '../browser'
@@ -122,17 +122,22 @@ const useLongPress = (
     }
   }, [])
 
-  return {
-    // disable Android context menu
-    // does not work to prevent iOS long press to select behavior
-    onContextMenu,
-    onMouseDown: start,
-    onMouseUp: stop,
-    onTouchStart: start,
-    onTouchEnd: stop,
-    onTouchMove: move,
-    onTouchCancel: stop,
-  }
+  const props = useMemo(
+    () => ({
+      // disable Android context menu
+      // does not work to prevent iOS long press to select behavior
+      onContextMenu,
+      onMouseDown: start,
+      onMouseUp: stop,
+      onTouchStart: start,
+      onTouchEnd: stop,
+      onTouchMove: move,
+      onTouchCancel: stop,
+    }),
+    [move, onContextMenu, start, stop],
+  )
+
+  return props
 }
 
 export default useLongPress
