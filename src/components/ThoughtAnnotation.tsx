@@ -1,8 +1,7 @@
 import classNames from 'classnames'
 import moize from 'moize'
-import React, { useEffect, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
-import Connected from '../@types/Connected'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -93,35 +92,24 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
 })
 UrlIconLink.displayName = 'UrlIconLink'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: ThoughtAnnotationProps) => {
-  const { cursor, invalidState } = state
-
-  const isEditing = equalPath(cursor, props.path)
-
-  return {
-    invalidState: isEditing ? invalidState : false,
-    isEditing,
-  }
-}
-
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = ({
   path,
   simplePath,
-  isEditing,
   minContexts = 2,
-  dispatch,
   invalidState,
   style,
   // only applied to the .subthought container
   styleAnnotation,
-}: Connected<ThoughtAnnotationProps>) => {
+}: ThoughtAnnotationProps) => {
   const contentRef = React.useRef<HTMLInputElement>(null)
   const value: string | undefined = useSelector((state: State) => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
+
+  const isEditing = useSelector((state: State) => equalPath(state.cursor, path))
+  const invalidStateIfEditing = useMemo(() => isEditing && invalidState, [isEditing, invalidState])
 
   const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
     isEditing ? editingValue : null,
@@ -166,7 +154,7 @@ const ThoughtAnnotation = ({
 
         // only show real time update if being edited while having meta validation error
         // do not increase numContexts when in an invalid state since the thought has not been updated in state
-        const isRealTimeContextUpdate = isEditing && invalidState && liveValueIfEditing !== null
+        const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
 
         const contexts = getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value)
         return value === ''
@@ -177,7 +165,7 @@ const ThoughtAnnotation = ({
         maxSize: 1000,
         profileName: 'numContexts',
         transformArgs: ([state]) => {
-          const isRealTimeContextUpdate = isEditing && invalidState && liveValueIfEditing !== null
+          const isRealTimeContextUpdate = isEditing && invalidStateIfEditing && liveValueIfEditing !== null
           return [resolveArray(getContexts(state, isRealTimeContextUpdate ? liveValueIfEditing! : value))]
         },
       },
@@ -232,4 +220,4 @@ const ThoughtAnnotation = ({
   )
 }
 
-export default connect(mapStateToProps)(ThoughtAnnotation)
+export default ThoughtAnnotation
