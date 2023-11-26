@@ -38,6 +38,8 @@ import * as modals from './modals'
 // This can be removed once Split Pane is working.
 const DISABLE_SPLIT_PANE = true
 
+const SPLIT_RESIZE_THROTTLE = 8
+
 const Content = React.lazy(() => import('./Content'))
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
@@ -196,7 +198,7 @@ const AppComponent: FC<Props> = props => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(
-    _.throttle((n: number) => dispatch(updateSplitPosition(n)), 8),
+    _.throttle((n: number) => dispatch(updateSplitPosition(n)), SPLIT_RESIZE_THROTTLE),
     [],
   )
 
