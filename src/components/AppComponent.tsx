@@ -3,10 +3,9 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
 import React, { FC, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { connect, useDispatch, useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
-import Modal from '../@types/Modal'
 import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
@@ -44,18 +43,6 @@ const SPLIT_RESIZE_THROTTLE = 8
 const Content = React.lazy(() => import('./Content'))
 
 const { handleGestureCancel, handleGestureEnd, handleGestureSegment } = inputHandlers(store)
-
-interface AppComponentProps {
-  dark?: boolean
-  dragInProgress?: boolean
-  isLoading?: boolean
-  showModal?: Modal | null
-  showSplitView?: boolean
-  splitPosition?: number
-  fontSize: number
-  enableLatestShortcutsDiagram: boolean
-  isUserLoading?: boolean
-}
 
 /** A gutter that toggles the sidebar. Positioned above the NavBar so that it doesn't block NavBar or Footer clicks. */
 // const SidebarGutter = () => {
@@ -133,22 +120,6 @@ const useDisableLongPressToSelect = () => {
   }, [onSelectionChange])
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State): AppComponentProps => {
-  const { dragInProgress, isLoading, showModal, splitPosition, showSplitView, enableLatestShortcutsDiagram } = state
-  const dark = theme(state) !== 'Light'
-  return {
-    dark,
-    dragInProgress,
-    isLoading,
-    showModal,
-    splitPosition,
-    showSplitView,
-    fontSize: state.fontSize,
-    enableLatestShortcutsDiagram,
-  }
-}
-
 /** Cancel gesture if there is an active text selection or active drag. */
 const shouldCancelGesture = () =>
   (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
@@ -176,24 +147,21 @@ const MultiGestureIfTouch: FC = ({ children }) => {
 /**
  * The main app component.
  */
-const AppComponent: FC<AppComponentProps> = props => {
-  const {
-    dark,
-    dragInProgress,
-    enableLatestShortcutsDiagram,
-    isLoading,
-    showModal,
-    showSplitView,
-    splitPosition,
-    fontSize,
-  } = props
-
+const AppComponent: FC = () => {
   const dispatch = useDispatch()
   const lastSplitViewRef = useRef(false)
   const [isSplitting, setIsSplitting] = useState(false)
-  const colors = useSelector(themeColors)
 
+  const colors = useSelector(themeColors)
+  const dark = useSelector((state: State) => theme(state) !== 'Light')
+  const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  const enableLatestShortcutsDiagram = useSelector((state: State) => state.enableLatestShortcutsDiagram)
+  const isLoading = useSelector((state: State) => state.isLoading)
+  const fontSize = useSelector((state: State) => state.fontSize)
+  const showSplitView = useSelector((state: State) => state.showSplitView)
+  const showModal = useSelector((state: State) => state.showModal)
   const tutorial = useSelector(isTutorial)
+  const splitPosition = useSelector((state: State) => state.splitPosition)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(
@@ -347,4 +315,7 @@ const AppComponent: FC<AppComponentProps> = props => {
   )
 }
 
-export default connect(mapStateToProps)(AppComponent)
+const AppComponentMemo = React.memo(AppComponent)
+AppComponentMemo.displayName = 'AppComponent'
+
+export default AppComponentMemo
