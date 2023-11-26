@@ -49,7 +49,13 @@ const useLongPress = (
       }, ms) as unknown as number
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lock],
+    [
+      // TODO: Find a better way than adding an extraneous dependency
+      lock,
+      ms,
+      onLongPressStart,
+      onTouchStart,
+    ],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
@@ -69,8 +75,7 @@ const useLongPress = (
         onLongPressEnd?.()
       }, 10)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [onLongPressEnd],
   )
 
   // If the user moves, end the press.
@@ -91,8 +96,7 @@ const useLongPress = (
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pressed],
+    [onLongPressEnd, pressed],
   )
 
   // Android passes React.PointerEvent
