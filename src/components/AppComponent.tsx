@@ -188,6 +188,7 @@ const AppComponent: FC<Props> = props => {
   } = props
 
   const dispatch = useDispatch()
+  const lastSplitViewRef = useRef(false)
   const [splitView, updateSplitView] = useState(showSplitView)
   const [isSplitting, updateIsSplitting] = useState(false)
   const colors = useSelector(themeColors)
@@ -214,10 +215,15 @@ const AppComponent: FC<Props> = props => {
 
   useEffect(() => {
     updateSplitView(showSplitView)
-    updateIsSplitting(true)
-    const splitAnimationTimer = setTimeout(() => {
-      updateIsSplitting(false)
-    }, 400)
+
+    let splitAnimationTimer: number
+    if (showSplitView !== lastSplitViewRef.current) {
+      lastSplitViewRef.current = !!showSplitView
+      updateIsSplitting(true)
+      splitAnimationTimer = setTimeout(() => {
+        updateIsSplitting(false)
+      }, 400) as unknown as number
+    }
 
     return () => {
       clearTimeout(splitAnimationTimer)
