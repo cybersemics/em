@@ -213,7 +213,17 @@ const AppComponent: FC<Props> = props => {
     if (globals.simulateDrop) {
       document.body.classList.add('debug-simulate-drop')
     }
-  }, [dark])
+
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
+      // Android only, set statusbar color to black.
+      if (Capacitor.getPlatform() === 'android') {
+        StatusBar.setBackgroundColor({
+          color: colors.bg,
+        })
+      }
+    }
+  }, [colors, dark])
 
   useEffect(() => {
     let splitAnimationTimer: number
@@ -239,22 +249,6 @@ const AppComponent: FC<Props> = props => {
     chrome: /Chrome/.test(navigator.userAgent),
     safari: isSafari(),
   })
-
-  useEffect(
-    () => {
-      if (Capacitor.isNativePlatform()) {
-        StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })
-        // Android only, set statusbar color to black.
-        if (Capacitor.getPlatform() === 'android') {
-          StatusBar.setBackgroundColor({
-            color: colors.bg,
-          })
-        }
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
 
   const globalStyles = useMemo<[string, React.CSSProperties][]>(
     () => [
