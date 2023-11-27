@@ -153,6 +153,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       { passive: false },
     )
 
+    // enable/disable scrolling based on where the user clicks
+    // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
@@ -169,6 +171,12 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.abandon = true
         }
       }
+    })
+
+    // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
+    // This occurs, for eample, on tap.
+    window.addEventListener('touchend', e => {
+      this.reset()
     })
 
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
