@@ -182,7 +182,6 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // touchcancel is fired when the user switches apps by swiping from the bottom of the screen
     window.addEventListener('touchcancel', e => {
       this.props.onCancel?.({ clientStart: this.clientStart, e })
-      gestureStore.update('')
       this.reset()
     })
 
