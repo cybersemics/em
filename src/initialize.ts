@@ -2,6 +2,7 @@ import _ from 'lodash'
 import moize from 'moize'
 import Context from './@types/Context'
 import Lexeme from './@types/Lexeme'
+import PushBatch from './@types/PushBatch'
 import State from './@types/State'
 import Thought from './@types/Thought'
 import Thunk from './@types/Thunk'
@@ -40,9 +41,14 @@ import prettyPath from './test-helpers/prettyPath'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
+import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
 import storage from './util/storage'
+import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
+
+/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
+const UPDATE_THOUGHTS_THROTTLE = 100
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -64,6 +70,20 @@ const initializeCursor = async () => {
     )
   }
 }
+
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+
+  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+  setTimeout(() => {
+    store.dispatch(updateThoughtsActionCreator({ ...merged, local: false, remote: false, repairCursor: true }))
+  })
+}, UPDATE_THOUGHTS_THROTTLE)
 
 /** Initilaize local db and window events. */
 export const initialize = async () => {
@@ -92,23 +112,22 @@ export const initialize = async () => {
         // if parent is pending, the thought must be marked pending.
         // Note: Do not clear pending from the parent, because other children may not be loaded.
         // The next pull should handle that automatically.
+        // TODO: Do we need to use fresh State when updateThoughtsThrottled resolves?
         const state = getState()
         const thoughtInState = getThoughtById(state, thought.id)
         const parentInState = getThoughtById(state, thought.parentId)
         const pending = thoughtInState?.pending || parentInState?.pending
 
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: {
-              [thought.id]: {
-                ...thought,
-                ...(pending ? { pending } : null),
-              },
+        updateThoughtsThrottled({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thought,
+              ...(pending ? { pending } : null),
             },
-            lexemeIndexUpdates: {},
-            repairCursor: true,
-          }),
-        )
+          },
+          lexemeIndexUpdates: {},
+          lexemeIndexUpdatesOld: {},
+        })
       })
     },
     onThoughtIDBSynced: (thought, { background }) => {

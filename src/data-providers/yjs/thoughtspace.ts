@@ -7,6 +7,7 @@ import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
 import Path from '../../@types/Path'
+import PushBatch from '../../@types/PushBatch'
 import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
@@ -17,9 +18,11 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID, WE
 import { UpdateThoughtsOptions } from '../../reducers/updateThoughts'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
+import mergeBatch from '../../util/mergeBatch'
 import nonNull from '../../util/nonNull'
 import sleep from '../../util/sleep'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
+import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
 import {
@@ -124,6 +127,9 @@ type ThoughtspaceConfig = ThoughtspaceOptions & {
 /** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
 const IDB_ERROR_RETRY = 1000
 
+/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
+const UPDATE_THOUGHTS_THROTTLE = 100
+
 /** Maps ThoughtDb keys to Thought keys. */
 // const thoughtKeyFromDb = {
 //   l: 'lastUpdated',
@@ -179,6 +185,23 @@ const resolvable = <T, E = any>() => {
   p.reject = _reject!
   return promise as ResolvablePromise<T, E>
 }
+
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+
+  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+  setTimeout(() => {
+    config.then(
+      ({ onUpdateThoughts: updateThoughts }) =>
+        updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+    )
+  })
+}, UPDATE_THOUGHTS_THROTTLE)
 
 /** Convert a Thought to a ThoughtDb for efficient storage. */
 const thoughtToDb = (thought: Thought): ThoughtDb => ({
@@ -336,14 +359,14 @@ export const init = async (options: ThoughtspaceOptions) => {
           ? replicateChildren(id as ThoughtId, { background: true })
           : replicateLexeme(id, { background: true }))
       } else if (action === DocLogAction.Delete) {
-        onUpdateThoughts({
+        updateThoughtsThrottled({
           thoughtIndexUpdates: {},
           lexemeIndexUpdates: {},
           // override thought/lexemeIndexUpdates based on type
           [`${type}IndexUpdates`]: {
             [id]: null,
           },
-          repairCursor: true,
+          lexemeIndexUpdatesOld: {},
         })
 
         if (type === 'thought') {
@@ -654,14 +677,12 @@ const onLexemeChange = (e: SimpleYMapEvent<LexemeYjs>) => {
   // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
   const { id: key } = parseDocumentName(lexemeDoc.guid) as { id: string }
 
-  config.then(({ onUpdateThoughts }) => {
-    onUpdateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates: {
-        [key]: lexeme,
-      },
-      repairCursor: true,
-    })
+  updateThoughtsThrottled({
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {
+      [key]: lexeme,
+    },
+    lexemeIndexUpdatesOld: {},
   })
 }
 
