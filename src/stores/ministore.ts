@@ -49,14 +49,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
   }
 
   /** A hook that invokes a callback when the state changes. */
-  const useChangeEffect = (cb: (state: T) => void) => {
-    useEffect(() => {
-      emitter.on('change', cb)
-      return () => {
-        emitter.off('change', cb)
-      }
-    }, [cb])
-  }
+  const useChangeEffect = (cb: (state: T) => void) => useEffect(() => subscribe(cb), [cb])
 
   function useSelector<U>(selector: (state: T) => U): U
   function useSelector(): T
@@ -67,13 +60,11 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 
     useEffect(
       () => {
-        /** Updates local state on store state change. */
-        const onChange = (stateNew: T) => {
+        const unsubscribe = subscribe((stateNew: T) => {
           if (!unmounted.current) {
             setLocalState(selector ? selector(state) : state)
           }
-        }
-        const unsubscribe = subscribe(onChange)
+        })
         return () => unsubscribe()
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
