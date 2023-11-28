@@ -1,12 +1,12 @@
 import _ from 'lodash'
-import ministore from './ministore'
+import reactMinistore from './react-ministore'
 
 // take a guess at the height of the virtual keyboard until we can measure it directly
 let virtualKeyboardHeightPortrait = window.innerHeight / 2.275
 let virtualKeyboardHeightLandscape = window.innerWidth / 1.75
 
 /** A store that tracks the top and bottom of the viewport. */
-const viewportStore = ministore({
+const viewportStore = reactMinistore({
   scrollTop: document.documentElement.scrollTop,
   innerHeight: window.innerHeight,
   virtualKeyboardHeight:

@@ -1,7 +1,7 @@
 import GesturePath from '../@types/GesturePath'
-import ministore from './ministore'
+import reactMinistore from './react-ministore'
 
 // a ministore that tracks the current gesture sequence
-const gestureStore = ministore<GesturePath>('')
+const gestureStore = reactMinistore<GesturePath>('')
 
 export default gestureStore

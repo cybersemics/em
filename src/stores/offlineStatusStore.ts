@@ -2,10 +2,10 @@ import { HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import OfflineStatus from '../@types/OfflineStatus'
 import WebsocketStatus from '../@types/WebsocketStatus'
 import { WEBSOCKET_TIMEOUT } from '../constants'
-import ministore from './ministore'
+import reactMinistore from './react-ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
-export const offlineStatusStore = ministore<OfflineStatus>('preconnecting')
+export const offlineStatusStore = reactMinistore<OfflineStatus>('preconnecting')
 
 /** Enter a connecting state and then switch to offline after a delay. */
 const startConnecting = () => {
