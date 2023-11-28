@@ -1,5 +1,4 @@
 import Emitter from 'emitter20'
-import { useEffect, useRef, useState } from 'react'
 import { act } from 'react-dom/test-utils'
 import cancellable, { CancellablePromise } from '../util/cancellable'
 
@@ -14,12 +13,6 @@ export interface Ministore<T> {
   subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
-  /** A hook that invokes a callback with side effects when the state changes. */
-  useEffect: (f: (state: T) => void) => void
-  /** A hook that subscribes to a slice of the state. */
-  useSelector: <U>(selector: (state: T) => U) => U
-  /** A hook that subscribes to the entire state. */
-  useState: () => T
 }
 
 /** Creates a mini store that tracks state and can update consumers. */
@@ -46,35 +39,6 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     setTimeout(() => {
       emitter.trigger('change', updates)
     })
-  }
-
-  /** A hook that invokes a callback when the state changes. */
-  const useChangeEffect = (cb: (state: T) => void) => useEffect(() => subscribe(cb), [cb])
-
-  function useSelector<U>(selector: (state: T) => U): U
-  function useSelector(): T
-  /** A hook that subscribes to a slice of the state. If no selector is given, subscribes to the whole state. */
-  function useSelector<U>(selector?: (state: T) => U): T | U {
-    const [localState, setLocalState] = useState(selector ? selector(state) : state)
-    const unmounted = useRef(false)
-
-    useEffect(() => {
-      const unsubscribe = subscribe((stateNew: T) => {
-        if (!unmounted.current) {
-          setLocalState(selector ? selector(state) : state)
-        }
-      })
-      return () => unsubscribe()
-    }, [selector])
-
-    useEffect(
-      () => () => {
-        unmounted.current = true
-      },
-      [],
-    )
-
-    return localState
   }
 
   /**
@@ -151,9 +115,6 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     subscribe,
     subscribeSelector,
     update,
-    useEffect: useChangeEffect,
-    useSelector,
-    useState: useSelector as () => T,
   }
 }
 
