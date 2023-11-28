@@ -58,18 +58,14 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     const [localState, setLocalState] = useState(selector ? selector(state) : state)
     const unmounted = useRef(false)
 
-    useEffect(
-      () => {
-        const unsubscribe = subscribe((stateNew: T) => {
-          if (!unmounted.current) {
-            setLocalState(selector ? selector(state) : state)
-          }
-        })
-        return () => unsubscribe()
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [],
-    )
+    useEffect(() => {
+      const unsubscribe = subscribe((stateNew: T) => {
+        if (!unmounted.current) {
+          setLocalState(selector ? selector(state) : state)
+        }
+      })
+      return () => unsubscribe()
+    }, [selector])
 
     useEffect(
       () => () => {
