@@ -74,12 +74,16 @@ const ministore = <T>(initialState: T): Ministore<T> => {
           }
         }
         const unsubscribe = subscribe(onChange)
-        return () => {
-          unsubscribe()
-          unmounted.current = true
-        }
+        return () => unsubscribe()
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    )
+
+    useEffect(
+      () => () => {
+        unmounted.current = true
+      },
       [],
     )
 
