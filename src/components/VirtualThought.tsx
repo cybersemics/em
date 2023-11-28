@@ -141,10 +141,10 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(selectCursor, updateHeight, shallowEqual)
 
-  // Recalculate height
+  // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are hella slow.)
   useEffect(updateHeight, [isVisible, leaf, note, simplePath, style, updateHeight])
 
-  // Recalculate height
+  // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
