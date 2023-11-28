@@ -49,14 +49,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
   }
 
   /** A hook that invokes a callback when the state changes. */
-  const useChangeEffect = (cb: (state: T) => void) => {
-    useEffect(() => {
-      emitter.on('change', cb)
-      return () => {
-        emitter.off('change', cb)
-      }
-    }, [cb])
-  }
+  const useChangeEffect = (cb: (state: T) => void) => useEffect(() => subscribe(cb), [cb])
 
   function useSelector<U>(selector: (state: T) => U): U
   function useSelector(): T
