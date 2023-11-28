@@ -50,16 +50,12 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 
   /** A hook that invokes a callback when the state changes. */
   const useChangeEffect = (cb: (state: T) => void) => {
-    useEffect(
-      () => {
-        emitter.on('change', cb)
-        return () => {
-          emitter.off('change', cb)
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [],
-    )
+    useEffect(() => {
+      emitter.on('change', cb)
+      return () => {
+        emitter.off('change', cb)
+      }
+    }, [cb])
   }
 
   function useSelector<U>(selector: (state: T) => U): U
