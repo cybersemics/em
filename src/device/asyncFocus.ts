@@ -8,7 +8,7 @@ import { noop } from '../constants'
  *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
-export const AsyncFocus = (): (() => void) => {
+export const AsyncFocus: () => () => void = () => {
   if (!isTouch || !isSafari()) return noop
 
   // create invisible dummy input to receive the focus
