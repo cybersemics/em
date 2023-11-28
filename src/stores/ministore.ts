@@ -73,7 +73,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
       () =>
         subscribe((stateNew: T) => {
           if (unmounted.current) return
-          setLocalState(selector ? selector(state) : state)
+          setLocalState(selector ? selector(stateNew) : stateNew)
         }),
       [selector],
     )
