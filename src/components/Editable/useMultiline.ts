@@ -30,7 +30,7 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
   const selectCursor = useCallback((state: State) => state.cursor, [])
-  useSelectorEffect(selectCursor, updateMultiline, shallowEqual)
+  useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
 
   // Recalculate multiline on mount, when the font size changes, edit, and split view resize.
   useLayoutEffect(() => {

@@ -4,8 +4,8 @@ import store from '../stores/app'
 
 /** Invokes a callback when a slice of the state changes without re-rendering the component. Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render. */
 const useSelectorEffect = <T>(
+  effect: () => void,
   select: (state: State) => T,
-  callback: () => void,
   equalityFn?: (a: T, b: T) => boolean,
 ) => {
   const prev = useRef<T>(select(store.getState()))
@@ -15,11 +15,11 @@ const useSelectorEffect = <T>(
       store.subscribe(() => {
         const current = select(store.getState())
         if (equalityFn ? !equalityFn(current, prev.current) : current !== prev.current) {
-          callback()
+          effect()
         }
         prev.current = current
       }),
-    [callback, equalityFn, select],
+    [effect, equalityFn, select],
   )
 }
 
