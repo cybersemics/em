@@ -73,9 +73,10 @@ const newThought =
       splitResult.right.length > 0 &&
       splitResult.left.length < (editingValueStore.getState() ?? '').length
 
-    if ((!split || !uneditable) && isTouch && isSafari()) {
+    if (!preventSetCursor && isTouch && (!split || !uneditable) && isSafari()) {
       asyncFocus()
     }
+
     if (split) {
       dispatch(
         uneditable && path && thought

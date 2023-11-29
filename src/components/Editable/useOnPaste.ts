@@ -91,6 +91,9 @@ const useOnPaste = ({
             }),
           )
         } else {
+          // importFiles passes preventSetCursor: true to newThought so the selection will stay disabled
+          selection.clear()
+
           dispatch(
             importFiles({
               path,
