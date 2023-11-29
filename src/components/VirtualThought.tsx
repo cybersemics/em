@@ -133,6 +133,11 @@ const VirtualThought = ({
     if (!ref.current || shimHiddenThought) return
     const heightNew = ref.current.getBoundingClientRect().height
     if (heightNew === height) return
+
+    // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
+    const editable = ref.current.querySelector('.editable')
+    if (editable?.hasAttribute('data-prevent-autoscroll')) return
+
     setHeight(heightNew)
     onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
   }, [crossContextualKey, height, onResize, shimHiddenThought, thought.id])

@@ -33,6 +33,7 @@ const preventAutoscroll = (
   transformOld = el.style.transform
   paddingBottomOld = el.style.paddingBottom
   paddingTopOld = el.style.paddingTop
+  el.setAttribute('data-prevent-autoscroll', 'true')
 
   // below center
   if (yCenter < 0) {
@@ -66,6 +67,7 @@ export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   el.style.transform = transformOld
   el.style.paddingBottom = paddingBottomOld
   el.style.paddingTop = paddingTopOld
+  el.removeAttribute('data-prevent-autoscroll')
 }
 
 export default preventAutoscroll
