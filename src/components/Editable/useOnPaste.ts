@@ -12,9 +12,6 @@ import isHTML from '../../util/isHTML'
 import strip from '../../util/strip'
 import timestamp from '../../util/timestamp'
 
-// The number of characters of an import at which the import becomes resumable. Resumable imports (via importFiles) imports thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. Non-resumable imports (via importText), in contrast, are atomic and faster for a smaller numbers of thoughts, though they have no progress bar.
-const RESUMABLE_IMPORT_MIN_CHARS = 1000
-
 /** Returns an onPaste handler that parses and inserts the pasted text or thoughts at the cursor. Handles plaintext and HTML, inline and nested paste. */
 const useOnPaste = ({
   contentRef,
@@ -68,8 +65,12 @@ const useOnPaste = ({
 
         const text = isHTML(plainText) ? plainText : htmlText || plainText
 
-        // if the imported text is less than 1,000 characters, use a non-resumable importText and avoid the overhead of importFiles
-        if (text.length < RESUMABLE_IMPORT_MIN_CHARS) {
+        // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
+        const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)
+
+        // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
+        // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
+        if (!multiline) {
           dispatch(
             importText({
               // use caret position to correctly track the last navigated point for caret
