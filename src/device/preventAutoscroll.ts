@@ -6,6 +6,8 @@ let transformOld = ''
 let paddingBottomOld = ''
 let paddingTopOld = ''
 
+let timeoutId: number | undefined
+
 /** Prevent the browser from autoscrolling to this editable element. If the element would be hidden by the virtual keyboard, scrolls just enough to make it visible. */
 const preventAutoscroll = (
   el: HTMLElement | null | undefined,
@@ -49,7 +51,7 @@ const preventAutoscroll = (
   }
 
   // 10ms should be plenty of time for Editable.onFocus to fire after preventAutoscroll is first called, and thus call preventAutoscrollEnd, but if for some reason that does not happen we should go ahead and call it to clean up. This will result in a noticeable blink, but it is better than the thought getting stuck.
-  setTimeout(() => preventAutoscrollEnd(el), 10)
+  timeoutId = setTimeout(() => preventAutoscrollEnd(el), 10) as unknown as number
 
   // return cleanup function
   return () => preventAutoscrollEnd(el)
@@ -57,7 +59,10 @@ const preventAutoscroll = (
 
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
+  clearTimeout(timeoutId)
+
   if (!el) return
+
   el.style.transform = transformOld
   el.style.paddingBottom = paddingBottomOld
   el.style.paddingTop = paddingTopOld
