@@ -26,6 +26,7 @@ const useLongPress = (
   const clientCoords = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
+  const unmounted = useRef(false)
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
   // track that long press has started on mouseDown or touchStart
@@ -44,8 +45,10 @@ const useLongPress = (
       timerIdRef.current = setTimeout(() => {
         globals.longpressing = true
         onLongPressStart?.()
-        setPressed(true)
         lock = true
+        if (!unmounted.current) {
+          setPressed(true)
+        }
       }, ms) as unknown as number
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,8 +74,10 @@ const useLongPress = (
         timerIdRef.current = 0
         lock = false
         globals.longpressing = false
-        setPressed(false)
         onLongPressEnd?.()
+        if (!unmounted.current) {
+          setPressed(false)
+        }
       }, 10)
     },
     [onLongPressEnd],
@@ -118,6 +123,7 @@ const useLongPress = (
   // this may have a race condition if start is activated on another component right before this is unmounting, but it seems unlikely
   useEffect(() => {
     return () => {
+      unmounted.current = true
       lock = false
     }
   }, [])
