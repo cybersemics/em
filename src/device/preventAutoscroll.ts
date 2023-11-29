@@ -1,8 +1,10 @@
 import { isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 
-// store the old transform property so it can be restored after preventAutoscroll
+// store the existinp css properties so they can be restored after preventAutoscroll
 let transformOld = ''
+let paddingBottomOld = ''
+let paddingTopOld = ''
 
 /** Prevent the browser from autoscrolling to this editable element. If the element would be hidden by the virtual keyboard, scrolls just enough to make it visible. */
 const preventAutoscroll = (
@@ -24,10 +26,29 @@ const preventAutoscroll = (
 
   // get the distance of the thought below the keyboard which we can offset to keep the thought in view.
   const yBelowKeyboard = Math.max(0, y + height + bottomMargin - viewportHeight)
+  const yCenter = yOffsetCenter + yBelowKeyboard
 
   transformOld = el.style.transform
-  el.style.transform = `translate(-9999px, ${yOffsetCenter + yBelowKeyboard}px)`
+  paddingBottomOld = el.style.paddingBottom
+  paddingTopOld = el.style.paddingTop
 
+  // below center
+  if (yCenter < 0) {
+    // paddingTop keeps the actual text in the same place, despite the element being translated up to prevent autoscroll.
+    // Otherwise we are stuck with two bad options:
+    // - Only use transform (previous implementation): The browser selection becomes invisible on iOS 17. getSelection still returns the correct node and offset, so it is programmatically undetectable.
+    // - Add a setTimeout to the preventAutoscrollEnd that is called in Editable.onFocus: The browser selection is visible, but the timeout introduces enough delay that the thought is re-rendered before its style is restored. This causes the thought to blink out of existence for a split second.
+    el.style.transform = `translate(0, ${yCenter * 2}px)`
+    el.style.paddingTop = `${-yCenter * 2}px`
+  }
+  // above center
+  else {
+    // When the bottom edge of element is below the bottom edge of the screen, autoscroll is disabled completely.
+    // TODO: Allow autoscroll if thought is above the top edge of the screen (can that happen?)
+    el.style.paddingBottom = `${viewportHeight}px`
+  }
+
+  // 10ms should be plenty of time for Editable.onFocus to fire after preventAutoscroll is first called, and thus call preventAutoscrollEnd, but if for some reason that does not happen we should go ahead and call it to clean up. This will result in a noticeable blink, but it is better than the thought getting stuck.
   setTimeout(() => preventAutoscrollEnd(el), 10)
 
   // return cleanup function
@@ -38,6 +59,8 @@ const preventAutoscroll = (
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   if (!el) return
   el.style.transform = transformOld
+  el.style.paddingBottom = paddingBottomOld
+  el.style.paddingTop = paddingTopOld
 }
 
 export default preventAutoscroll
