@@ -934,6 +934,37 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px 'Helvetica Neue'}
   })
 })
 
+it('should paste text with an improperly nested meta tag', () => {
+  const text = `
+  - a
+    - b
+      - c
+        - d
+      - <li><meta><span>x</li>
+        - e
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c
+        - d
+        - x
+      - e`)
+
+  // TODO: Might be better as:
+  // expect(exported).toBe(`- ${HOME_TOKEN}
+  // - a
+  //   - b
+  //     - c
+  //       - d
+  //     - x
+  //       - e`)
+})
+
 it('should strip tags whose font weight is less than or equal to 400', () => {
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
   const actual = importExport(paste)

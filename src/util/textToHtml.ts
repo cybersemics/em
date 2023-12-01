@@ -5,7 +5,7 @@ import Block from '../@types/Block'
 import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, REGEX_LONE_ANGLED_BRACKET } from '../constants'
 import strip from '../util/strip'
 
-export const REGEX_CONTAINS_META_TAG = /<meta\s*.*?>/
+const REGEX_CONTAINS_META_TAG = /^<(!doctype|meta)\s*.*?>/i
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
