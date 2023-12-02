@@ -220,6 +220,30 @@ it('onStep per batch', async () => {
   ])
 })
 
+it('restart step completed and total each end', async () => {
+  const output: { completed: number; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increments the counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>()
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+
+  expect(output).toEqual([
+    { completed: 1, total: 3, value: 1 },
+    { completed: 2, total: 3, value: 2 },
+    { completed: 3, total: 3, value: 3 },
+    { completed: 1, total: 3, value: 4 },
+    { completed: 2, total: 3, value: 5 },
+    { completed: 3, total: 3, value: 6 },
+  ])
+})
+
 it('reset completed and total after each batch completes', async () => {
   const output: { completed: number; total: number; index: number; value: number }[] = []
   let counter = 0
@@ -240,6 +264,38 @@ it('reset completed and total after each batch completes', async () => {
     { completed: 1, total: 3, index: 2, value: 3 },
     { completed: 2, total: 3, index: 3, value: 4 },
     { completed: 3, total: 3, index: 4, value: 5 },
+  ])
+})
+
+it('reset expected and total after end', async () => {
+  const output: { completed: number; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increments the counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>()
+  queue.expected(6)
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+
+  expect(output).toEqual([
+    // batch 1
+    { completed: 1, total: 6, value: 1 },
+    { completed: 2, total: 6, value: 2 },
+    { completed: 3, total: 6, value: 3 },
+    // batch 2
+    { completed: 4, total: 6, value: 4 },
+    { completed: 5, total: 6, value: 5 },
+    { completed: 6, total: 6, value: 6 },
+    // total is reset after end
+    { completed: 1, total: 3, value: 7 },
+    { completed: 2, total: 3, value: 8 },
+    { completed: 3, total: 3, value: 9 },
   ])
 })
 

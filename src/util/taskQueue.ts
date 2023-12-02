@@ -97,6 +97,10 @@ const taskQueue = <
   // number of tasks that have completed
   let completed = 0
 
+  // number of tasks that are expected to complete (optional)
+  // end will not be triggered until this number is reached
+  let expected: number | null = null
+
   // total number of tasks
   // may change dynamically if add is called multiple times
   let total = 0
@@ -128,8 +132,9 @@ const taskQueue = <
       if (paused || running >= concurrency) return
       const task = queue.shift()
       if (!task) {
-        if (total === 0) {
+        if (total === 0 && !expected) {
           emitter.trigger('end', 0)
+          expected = null
         }
         return
       }
@@ -162,9 +167,11 @@ const taskQueue = <
           }
 
           if (queue.length === 0 && running === 0) {
+            if (expected && completed < expected) return
             emitter.trigger('end', total)
             resolve(total)
             completed = 0
+            expected = null
             total = 0
             return
           }
@@ -215,7 +222,9 @@ const taskQueue = <
               ? { description: task.description, function: taskResolver }
               : taskResolver,
           )
-          total++
+          if (!expected) {
+            total++
+          }
         })
       )
     })
@@ -250,6 +259,12 @@ const taskQueue = <
 
     /** Convenience promise for the first end event. Do not use with multiple batches (where onEnd would be called multiple times). */
     end: endPromise,
+
+    /** Returns the number of expected tasks. The end event will not be triggered until this many tasks complete. Useful for maintaining stable % progress over multiple batches. */
+    expected: (n: number) => {
+      expected = n
+      total = n
+    },
 
     // TODO: Type args
     off: (eventName: EventName, f: (...args: any) => void) => {
