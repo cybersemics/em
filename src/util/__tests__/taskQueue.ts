@@ -100,7 +100,7 @@ it(`once('end', ...) promise`, async () => {
   expect(counter).toBe(3)
 })
 
-it('onEnd with no tasks', async () => {
+it('trigger end when adding an empty task list', async () => {
   const total = await new Promise(resolve => {
     const queue = taskQueue<number>({ onEnd: resolve })
     queue.add([])
