@@ -287,7 +287,14 @@ const taskQueue = <
 
     /** Returns a promise that resolves the next time the event is triggered. */
     once: (eventName: 'end'): Promise<Parameters<NonNullable<typeof onEnd>>> =>
-      new Promise(resolve => emitter.on(eventName, resolve)),
+      new Promise(resolve => {
+        /** Resolve the promise and remove the emitter handler. */
+        const resolveAndUnsubscribe = (...args: Parameters<NonNullable<typeof onEnd>>) => {
+          resolve(args)
+          emitter.off(eventName, resolveAndUnsubscribe)
+        }
+        emitter.on(eventName, resolveAndUnsubscribe)
+      }),
 
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
     pause: () => {

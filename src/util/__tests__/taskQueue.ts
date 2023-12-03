@@ -80,7 +80,7 @@ it(`on('end', ...) syntax`, async () => {
 
   await new Promise<number>(resolve => {
     const queue = taskQueue<number>()
-    queue.on('end', resolve)
+    queue.on('end', resolve as (n: number) => void)
     queue.add([inc, inc, inc])
   })
 
@@ -95,8 +95,9 @@ it(`once('end', ...) promise`, async () => {
   const queue = taskQueue<number>()
   const p = queue.once('end')
   queue.add([inc, inc, inc])
-  await p
+  const total = await p
 
+  expect(total).toEqual([3])
   expect(counter).toBe(3)
 })
 
