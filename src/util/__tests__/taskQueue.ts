@@ -78,7 +78,7 @@ it(`on('end', ...) syntax`, async () => {
   /** Increments the counter. */
   const inc = () => ++counter
 
-  await new Promise(resolve => {
+  await new Promise<number>(resolve => {
     const queue = taskQueue<number>()
     queue.on('end', resolve)
     queue.add([inc, inc, inc])

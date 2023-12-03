@@ -1,6 +1,5 @@
 import Emitter from 'emitter20'
 
-type EventName = 'end' | 'step' | 'lowStep'
 type TaskFunction<T> = () => T | Promise<T>
 type Task<T> = TaskFunction<T> | { function: TaskFunction<T>; description: string }
 
@@ -274,18 +273,21 @@ const taskQueue = <
       expected = n
     },
 
-    // TODO: Type args
-    off: (eventName: EventName, f: (...args: any) => void) => {
+    /** Unsubscribe from the end event. */
+    off: (eventName: 'end', f: typeof onEnd) => {
+      if (!f) return
       emitter.off(eventName, f)
     },
 
-    // TODO: Type args
-    on: (eventName: EventName, f: (...args: any) => void) => {
+    /** Subscribe to the end event. */
+    on: (eventName: 'end', f: typeof onEnd) => {
+      if (!f) return
       emitter.on(eventName, f)
     },
 
-    // TODO: Type args
-    once: (eventName: EventName): Promise<any> => new Promise(resolve => emitter.on(eventName, resolve)),
+    /** Returns a promise that resolves the next time the event is triggered. */
+    once: (eventName: 'end'): Promise<Parameters<NonNullable<typeof onEnd>>> =>
+      new Promise(resolve => emitter.on(eventName, resolve)),
 
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
     pause: () => {
