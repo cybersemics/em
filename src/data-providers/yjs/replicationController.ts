@@ -220,7 +220,8 @@ const replicationController = ({
       observeBlock(activeBlock)
 
       // load, replicate, and subscribe to unreplicated or unfilled blocks
-      doc.getArray('blocks').forEach((block: Y.Doc) => {
+      // eslint-disable-next-line fp/no-loops
+      for (const block of added) {
         const blockId = getBlockKey(block)
         if (blockId === activeBlockId) return
         const blockSize = doc.getMap('blockSizes').get(blockId)
@@ -229,7 +230,7 @@ const replicationController = ({
           block.load()
           observeBlock(block)
         }
-      })
+      }
     }
 
     // When a block is removed, delete it from the observed set.
