@@ -62,9 +62,9 @@ const taskQueue = <
   // number of concurrent tasks allowed
   concurrency?: number
   /** An event that is fired once for each completed task, in order. The callback for individual completed tasks will be delayed until contiguous tasks have completed. */
-  onLowStep?: (args: { completed: number; total: number; index: number; value: T }) => void
+  onLowStep?: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
   /** An event tha is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order. */
-  onStep?: (args: { completed: number; total: number; index: number; value: T }) => void
+  onStep?: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
   /** An event that is called when all tasks have completed. */
   onEnd?: (total: number) => void
   /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
@@ -102,7 +102,7 @@ const taskQueue = <
   let expected: number | null = null
 
   // total number of tasks
-  // may change dynamically if add is called multiple times
+  // may change dynamically if add is called multiple times and expected is not set
   let total = 0
 
   // stops the task runner from running new tasks that are added
@@ -155,14 +155,14 @@ const taskQueue = <
           completed++
           running--
 
-          onStep?.({ completed, total, index, value })
+          onStep?.({ completed, expected, total, index, value })
 
           completedByIndex.set(index, { index, value })
           // eslint-disable-next-line fp/no-loops
           while (completedByIndex.has(indexCompleted)) {
             const task = completedByIndex.get(indexCompleted)!
             completedByIndex.delete(indexCompleted)
-            onLowStep?.({ ...task, completed, total })
+            onLowStep?.({ ...task, completed, expected, total })
             indexCompleted++
           }
 
@@ -200,7 +200,18 @@ const taskQueue = <
     tasks: Task<T> | (Task<T> | null | undefined)[],
     {
       onStep: onStepBatch,
-    }: { onStep?: ({ completed, total }: { completed: number; total: number; value: T }) => void } = {},
+    }: {
+      onStep?: ({
+        completed,
+        expected,
+        total,
+      }: {
+        completed: number
+        expected: number | null
+        total: number
+        value: T
+      }) => void
+    } = {},
   ) => {
     const tasksArray = Array.isArray(tasks) ? tasks : [tasks]
     const promises = tasksArray.map(task => {
@@ -213,7 +224,7 @@ const taskQueue = <
           /** Makes the task function asynchronous and triggers onStep when it resolves. */
           const taskResolver = () =>
             Promise.resolve(taskFunction()).then(value => {
-              onStepBatch?.({ completed: completed + 1, total, value })
+              onStepBatch?.({ completed: completed + 1, expected, total, value })
               resolve(value)
               return value
             })
@@ -222,9 +233,7 @@ const taskQueue = <
               ? { description: task.description, function: taskResolver }
               : taskResolver,
           )
-          if (!expected) {
-            total++
-          }
+          total++
         })
       )
     })
@@ -260,10 +269,9 @@ const taskQueue = <
     /** Convenience promise for the first end event. Do not use with multiple batches (where onEnd would be called multiple times). */
     end: endPromise,
 
-    /** Returns the number of expected tasks. The end event will not be triggered until this many tasks complete. Useful for maintaining stable % progress over multiple batches. */
-    expected: (n: number) => {
+    /** Sets the number of expected tasks. The end event will not be triggered until this many tasks complete. Useful for maintaining stable % progress over multiple batches. */
+    expected: (n: number | null) => {
       expected = n
-      total = n
     },
 
     // TODO: Type args
@@ -294,7 +302,7 @@ const taskQueue = <
     },
 
     /** Returns the total number of tasks in the queue. This can increase over time if add is called multiple times. */
-    total: () => total,
+    total: () => expected || total,
   }
 }
 

@@ -166,7 +166,7 @@ it('autostart:false should be ignored after start is called', async () => {
 })
 
 it('onStep', async () => {
-  const output: { completed: number; total: number; index: number; value: string }[] = []
+  const output: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
 
   /** Returns a task that returns a value after a given number of milliseconds. */
   const delayedValue = (s: string, n: number) => async () => {
@@ -180,15 +180,15 @@ it('onStep', async () => {
   }).end
 
   expect(output).toEqual([
-    { completed: 1, total: 3, index: 2, value: 'c' },
-    { completed: 2, total: 3, index: 0, value: 'a' },
-    { completed: 3, total: 3, index: 1, value: 'b' },
+    { completed: 1, expected: null, total: 3, index: 2, value: 'c' },
+    { completed: 2, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
   ])
 })
 
 it('onStep per batch', async () => {
-  const output1: { completed: number; total: number; value: number }[] = []
-  const output2: { completed: number; total: number; value: number }[] = []
+  const output1: { completed: number; expected: number | null; total: number; value: number }[] = []
+  const output2: { completed: number; expected: number | null; total: number; value: number }[] = []
 
   let counter = 0
   /** Increments the counter after a delay. */
@@ -208,20 +208,20 @@ it('onStep per batch', async () => {
   })
 
   expect(output1).toEqual([
-    { completed: 1, total: 6, value: 1 },
-    { completed: 2, total: 6, value: 2 },
-    { completed: 3, total: 6, value: 3 },
+    { completed: 1, expected: null, total: 6, value: 1 },
+    { completed: 2, expected: null, total: 6, value: 2 },
+    { completed: 3, expected: null, total: 6, value: 3 },
   ])
 
   expect(output2).toEqual([
-    { completed: 4, total: 6, value: 4 },
-    { completed: 5, total: 6, value: 5 },
-    { completed: 6, total: 6, value: 6 },
+    { completed: 4, expected: null, total: 6, value: 4 },
+    { completed: 5, expected: null, total: 6, value: 5 },
+    { completed: 6, expected: null, total: 6, value: 6 },
   ])
 })
 
 it('restart step completed and total each end', async () => {
-  const output: { completed: number; total: number; value: number }[] = []
+  const output: { completed: number; expected: number | null; total: number; value: number }[] = []
 
   let counter = 0
   /** Increments the counter after a delay. */
@@ -235,17 +235,17 @@ it('restart step completed and total each end', async () => {
   await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
 
   expect(output).toEqual([
-    { completed: 1, total: 3, value: 1 },
-    { completed: 2, total: 3, value: 2 },
-    { completed: 3, total: 3, value: 3 },
-    { completed: 1, total: 3, value: 4 },
-    { completed: 2, total: 3, value: 5 },
-    { completed: 3, total: 3, value: 6 },
+    { completed: 1, expected: null, total: 3, value: 1 },
+    { completed: 2, expected: null, total: 3, value: 2 },
+    { completed: 3, expected: null, total: 3, value: 3 },
+    { completed: 1, expected: null, total: 3, value: 4 },
+    { completed: 2, expected: null, total: 3, value: 5 },
+    { completed: 3, expected: null, total: 3, value: 6 },
   ])
 })
 
 it('reset completed and total after each batch completes', async () => {
-  const output: { completed: number; total: number; index: number; value: number }[] = []
+  const output: { completed: number; expected: number | null; total: number; index: number; value: number }[] = []
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter
@@ -259,16 +259,16 @@ it('reset completed and total after each batch completes', async () => {
   await sleep(10)
 
   expect(output).toEqual([
-    { completed: 1, total: 2, index: 0, value: 1 },
-    { completed: 2, total: 2, index: 1, value: 2 },
-    { completed: 1, total: 3, index: 2, value: 3 },
-    { completed: 2, total: 3, index: 3, value: 4 },
-    { completed: 3, total: 3, index: 4, value: 5 },
+    { completed: 1, expected: null, total: 2, index: 0, value: 1 },
+    { completed: 2, expected: null, total: 2, index: 1, value: 2 },
+    { completed: 1, expected: null, total: 3, index: 2, value: 3 },
+    { completed: 2, expected: null, total: 3, index: 3, value: 4 },
+    { completed: 3, expected: null, total: 3, index: 4, value: 5 },
   ])
 })
 
 it('reset expected and total after end', async () => {
-  const output: { completed: number; total: number; value: number }[] = []
+  const output: { completed: number; expected: number | null; total: number; value: number }[] = []
 
   let counter = 0
   /** Increments the counter after a delay. */
@@ -285,22 +285,22 @@ it('reset expected and total after end', async () => {
 
   expect(output).toEqual([
     // batch 1
-    { completed: 1, total: 6, value: 1 },
-    { completed: 2, total: 6, value: 2 },
-    { completed: 3, total: 6, value: 3 },
+    { completed: 1, expected: 6, total: 3, value: 1 },
+    { completed: 2, expected: 6, total: 3, value: 2 },
+    { completed: 3, expected: 6, total: 3, value: 3 },
     // batch 2
-    { completed: 4, total: 6, value: 4 },
-    { completed: 5, total: 6, value: 5 },
-    { completed: 6, total: 6, value: 6 },
+    { completed: 4, expected: 6, total: 6, value: 4 },
+    { completed: 5, expected: 6, total: 6, value: 5 },
+    { completed: 6, expected: 6, total: 6, value: 6 },
     // total is reset after end
-    { completed: 1, total: 3, value: 7 },
-    { completed: 2, total: 3, value: 8 },
-    { completed: 3, total: 3, value: 9 },
+    { completed: 1, expected: null, total: 3, value: 7 },
+    { completed: 2, expected: null, total: 3, value: 8 },
+    { completed: 3, expected: null, total: 3, value: 9 },
   ])
 })
 
 it('onLowStep', async () => {
-  const output: { completed: number; total: number; index: number; value: string }[] = []
+  const output: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
 
   /** Returns a task that returns a value after a given number of milliseconds. */
   const delayedValue = (s: string, n: number) => async () => {
@@ -314,9 +314,9 @@ it('onLowStep', async () => {
   }).end
 
   expect(output).toEqual([
-    { completed: 2, total: 3, index: 0, value: 'a' },
-    { completed: 3, total: 3, index: 1, value: 'b' },
-    { completed: 3, total: 3, index: 2, value: 'c' },
+    { completed: 2, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
+    { completed: 3, expected: null, total: 3, index: 2, value: 'c' },
   ])
 })
 
@@ -447,8 +447,9 @@ it('clear', async () => {
 })
 
 it('retry once', async () => {
-  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
-  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] =
+    []
   let attempts = 0
 
   /** Returns a task that returns a value after a given number of milliseconds. */
@@ -472,21 +473,22 @@ it('retry once', async () => {
   expect(attempts).toEqual(1)
 
   expect(outputStep).toEqual([
-    { completed: 1, total: 3, index: 0, value: 'a' },
-    { completed: 2, total: 3, index: 2, value: 'c' },
-    { completed: 3, total: 3, index: 1, value: 'b' },
+    { completed: 1, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 2, expected: null, total: 3, index: 2, value: 'c' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
   ])
 
   expect(outputLowStep).toEqual([
-    { completed: 1, total: 3, index: 0, value: 'a' },
-    { completed: 3, total: 3, index: 1, value: 'b' },
-    { completed: 3, total: 3, index: 2, value: 'c' },
+    { completed: 1, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
+    { completed: 3, expected: null, total: 3, index: 2, value: 'c' },
   ])
 })
 
 it('retry many', async () => {
-  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
-  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] =
+    []
   let attempts = 0
 
   /** Returns a task that returns a value after a given number of milliseconds. */
@@ -512,8 +514,9 @@ it('retry many', async () => {
 })
 
 it('retry exceeds timeout', async () => {
-  const outputStep: { completed: number; total: number; index: number; value: string }[] = []
-  const outputLowStep: { completed: number; total: number; index: number; value: string }[] = []
+  const outputStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
+  const outputLowStep: { completed: number; expected: number | null; total: number; index: number; value: string }[] =
+    []
   let attempts = 0
 
   /** Returns a task that returns a value after a given number of milliseconds. */
@@ -544,9 +547,9 @@ it('retry exceeds timeout', async () => {
   expect(attempts).toEqual(3)
 
   expect(outputStep).toEqual([
-    { completed: 1, total: 3, index: 0, value: 'a' },
-    { completed: 2, total: 3, index: 2, value: 'c' },
+    { completed: 1, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 2, expected: null, total: 3, index: 2, value: 'c' },
   ])
 
-  expect(outputLowStep).toEqual([{ completed: 1, total: 3, index: 0, value: 'a' }])
+  expect(outputLowStep).toEqual([{ completed: 1, expected: null, total: 3, index: 0, value: 'a' }])
 })
