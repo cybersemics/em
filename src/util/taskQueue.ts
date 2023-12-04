@@ -56,6 +56,7 @@ const taskQueue = <
 >({
   autostart = true,
   concurrency = 8,
+  expected: _expected,
   onLowStep,
   onStep,
   onEnd,
@@ -67,6 +68,8 @@ const taskQueue = <
   autostart?: boolean
   // number of concurrent tasks allowed
   concurrency?: number
+  /** Initialize the number of expected tasks. If undefined, total will be determined dynamically as tasks are added. */
+  expected?: number
   /** An event that is fired once for each completed task, in order. The callback for individual completed tasks will be delayed until contiguous tasks have completed. */
   onLowStep?: EventListeners<T>['lowStep']
   /** An event tha is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order. */
@@ -101,7 +104,7 @@ const taskQueue = <
 
   // number of tasks that are expected to complete (optional)
   // end will not be triggered until this number is reached
-  let expected: number | null = null
+  let expected = _expected || null
 
   // total number of tasks
   // may change dynamically if add is called multiple times and expected is not set

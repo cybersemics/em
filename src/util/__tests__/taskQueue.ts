@@ -312,6 +312,59 @@ it('reset completed and total after each batch completes', async () => {
   ])
 })
 
+it('expected: constructor option', async () => {
+  const output: { completed: number; expected: number | null; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increments the counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>({ expected: 6 })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+
+  expect(output).toEqual([
+    // batch 1
+    { completed: 1, expected: 6, total: 3, value: 1 },
+    { completed: 2, expected: 6, total: 3, value: 2 },
+    { completed: 3, expected: 6, total: 3, value: 3 },
+    // batch 2
+    { completed: 4, expected: 6, total: 6, value: 4 },
+    { completed: 5, expected: 6, total: 6, value: 5 },
+    { completed: 6, expected: 6, total: 6, value: 6 },
+  ])
+})
+
+it('expected: instance method', async () => {
+  const output: { completed: number; expected: number | null; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increments the counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>()
+  queue.expected(6)
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+
+  expect(output).toEqual([
+    // batch 1
+    { completed: 1, expected: 6, total: 3, value: 1 },
+    { completed: 2, expected: 6, total: 3, value: 2 },
+    { completed: 3, expected: 6, total: 3, value: 3 },
+    // batch 2
+    { completed: 4, expected: 6, total: 6, value: 4 },
+    { completed: 5, expected: 6, total: 6, value: 5 },
+    { completed: 6, expected: 6, total: 6, value: 6 },
+  ])
+})
+
 it('reset expected and total after end', async () => {
   const output: { completed: number; expected: number | null; total: number; value: number }[] = []
 
