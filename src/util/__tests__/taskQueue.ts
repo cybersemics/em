@@ -300,6 +300,32 @@ it('reset expected and total after end', async () => {
   ])
 })
 
+it('trigger end if there are no running tasks when expected is set to null', async () => {
+  const output: { completed: number; expected: number | null; total: number; value: number }[] = []
+
+  let counter = 0
+  /** Increments the counter after a delay. */
+  const incDelayed = async () => {
+    await sleep(1)
+    return ++counter
+  }
+
+  const queue = taskQueue<number>()
+  queue.expected(10)
+  await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
+  queue.expected(null)
+
+  expect(output).toEqual([
+    { completed: 1, expected: 10, total: 3, value: 1 },
+    { completed: 2, expected: 10, total: 3, value: 2 },
+    { completed: 3, expected: 10, total: 3, value: 3 },
+  ])
+
+  const endTotal = await queue.end
+
+  expect(endTotal).toBe(3)
+})
+
 it('onLowStep', async () => {
   const output: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
 

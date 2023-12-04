@@ -131,9 +131,10 @@ const taskQueue = <
       if (paused || running >= concurrency) return
       const task = queue.shift()
       if (!task) {
-        if (total === 0 && !expected) {
-          emitter.trigger('end', 0)
+        if (total === completed && !expected) {
+          emitter.trigger('end', total)
           expected = null
+          resolve(total)
         }
         return
       }
@@ -271,6 +272,7 @@ const taskQueue = <
     /** Sets the number of expected tasks. The end event will not be triggered until this many tasks complete. Useful for maintaining stable % progress over multiple batches. */
     expected: (n: number | null) => {
       expected = n
+      tick()
     },
 
     /** Unsubscribe from the end event. */
