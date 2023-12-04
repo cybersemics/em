@@ -58,11 +58,13 @@ const replicationController = ({
   /** Event that fires after a thought or lexeme has been successfully replicated (See: next). */
   onStep?: ({
     completed,
+    expected,
     index,
     total,
     value,
   }: {
     completed: number
+    expected: number | null
     index: number
     total: number
     value: ReplicationTask

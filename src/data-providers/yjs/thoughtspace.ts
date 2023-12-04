@@ -378,10 +378,11 @@ export const init = async (options: ThoughtspaceOptions) => {
         throw new Error('Unknown DocLogAction: ' + action)
       }
     },
-    onStep: ({ completed, index, total, value }) => {
-      onProgress({ replicationProgress: completed / total })
+    onStep: ({ completed, expected, index, total, value }) => {
+      const estimatedTotal = expected || total
+      onProgress({ replicationProgress: completed / estimatedTotal })
     },
-    onEnd: () => {
+    onEnd: total => {
       onProgress({ replicationProgress: 1 })
     },
   })
@@ -391,8 +392,9 @@ export const init = async (options: ThoughtspaceOptions) => {
     // concurrency above 16 make the % go in bursts as batches of tasks are processed and awaited all at once
     // this may vary based on # of cores and network conditions
     concurrency: 16,
-    onStep: ({ completed, index, total, value }) => {
-      onProgress({ savingProgress: completed / total })
+    onStep: ({ completed, expected, index, total, value }) => {
+      const estimatedTotal = expected || total
+      onProgress({ savingProgress: completed / estimatedTotal })
     },
     onEnd: () => {
       onProgress({ savingProgress: 1 })
