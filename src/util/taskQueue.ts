@@ -83,10 +83,6 @@ const taskQueue = <
   // Capture the stack trace of the constructor, which will be more informative than the stack trace of tick.
   const constructorStackTrace = new Error().stack
 
-  if (onEnd) {
-    emitter.on('end', onEnd)
-  }
-
   // queue of tasks to process in order, without exceeding concurrency
   const queue: Task<T>[] = []
 
@@ -126,6 +122,14 @@ const taskQueue = <
   // wrap tick in a promise that resolves onEnd
   let tick: () => void = null as any
   const endPromise = new Promise((resolve, reject) => {
+    emitter.on('end', endTotal => {
+      onEnd?.(endTotal)
+      resolve(endTotal)
+      expected = null
+      completed = 0
+      total = 0
+    })
+
     /** Processes the next tasks in the queue, up to the concurrency limit. When the task completes, repeats. If the queue is empty or the concurrency limit has been reached, do nothing. */
     tick = () => {
       if (paused || running >= concurrency) return
@@ -133,8 +137,6 @@ const taskQueue = <
       if (!task) {
         if (total === completed && !expected) {
           emitter.trigger('end', total)
-          expected = null
-          resolve(total)
         }
         return
       }
@@ -169,10 +171,6 @@ const taskQueue = <
           if (queue.length === 0 && running === 0) {
             if (expected && completed < expected) return
             emitter.trigger('end', total)
-            resolve(total)
-            completed = 0
-            expected = null
-            total = 0
             return
           }
 
