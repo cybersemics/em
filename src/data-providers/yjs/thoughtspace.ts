@@ -341,8 +341,8 @@ export const init = async (options: ThoughtspaceOptions) => {
     })
 
   const replication = replicationController({
-    // begin paused, and only start after initial pull has completed
-    autostart: false,
+    // begin paused and only start after initial pull has completed
+    paused: true,
     doc: doclog,
     storage: {
       getItem,

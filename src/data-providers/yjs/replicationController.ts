@@ -35,17 +35,17 @@ const STORE_REPLICATION_CURSOR_THROTTLE = 1000
 
 /** A replication controller that ensures that thought and lexeme updates are efficiently and reliably replicated. Does not dictate the replication method itself, but rather maintains a replication queue for throttled concurrency and a replication cursor for resumability. On load, triggers a replicaton for all thoughts and lexemes that have not been processed (via next). When a new update is received (via log), calls next to process the update. Provides start and pause for full control over when replication is running. */
 const replicationController = ({
-  autostart = true,
   concurrency = 8,
   // replicationController will wait for first subdoc before observing doclog
   doc,
   onEnd,
   onStep,
   next,
+  paused,
   storage,
 }: {
-  /** If true, start replicating as soon as an update is logged. If false, wait for start to be called. Default: true. */
-  autostart?: boolean
+  /** If false, start replicating as soon as an update is logged. If true, wait for start to be called. Default: false. */
+  paused?: boolean
   /** Number of thoughts/lexemes to replicate in parallel. Default: 8. */
   concurrency?: number
   /** The doclog Y.Doc that contains thoughtLog and lexemeLog Y.Arrays. */
@@ -176,7 +176,7 @@ const replicationController = ({
 
   /** A task queue for background replication of thoughts and lexemes. Use .add() to queue a thought or lexeme for replication. Paused during push/pull. Initially paused and starts after the first pull. */
   const replicationQueue = taskQueue<ReplicationTask>({
-    autostart,
+    paused,
     concurrency,
     onLowStep: async ({ value: { blockId, index, type } }) => {
       if (type === 'thought') {

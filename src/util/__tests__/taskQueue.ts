@@ -82,7 +82,7 @@ it(`on('step', ...) syntax`, async () => {
     return s
   }
 
-  const queue = taskQueue<string>({ autostart: false })
+  const queue = taskQueue<string>({ paused: true })
   queue.on('step', result => output.push(result))
   queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
   queue.start()
@@ -104,7 +104,7 @@ it(`on('lowStep', ...) syntax`, async () => {
     return s
   }
 
-  const queue = taskQueue<string>({ autostart: false })
+  const queue = taskQueue<string>({ paused: true })
   queue.on('lowStep', result => output.push(result))
   queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
   queue.start()
@@ -164,14 +164,14 @@ it('async tasks', async () => {
   expect(counter).toBe(3)
 })
 
-it('autostart:false should not start running tasks until start is called', async () => {
+it('paused: true should not start running tasks until start is called', async () => {
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter
 
   await new Promise(resolve => {
     const queue = taskQueue<number>({
-      autostart: false,
+      paused: true,
       onEnd: resolve,
     })
     queue.add([inc, inc, inc])
@@ -182,24 +182,24 @@ it('autostart:false should not start running tasks until start is called', async
   expect(counter).toBe(6)
 })
 
-it('autostart:false should not start initial tasks', async () => {
+it('paused: true should not start initial tasks', async () => {
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter
 
-  const queue = taskQueue<number>({ autostart: false, tasks: [inc, inc, inc] })
+  const queue = taskQueue<number>({ paused: true, tasks: [inc, inc, inc] })
   expect(counter).toBe(0)
 
   queue.start()
   expect(counter).toBe(3)
 })
 
-it('autostart:false should be ignored after start is called', async () => {
+it('paused: true should be ignored after start is called', async () => {
   let counter = 0
   /** Increments the counter. */
   const inc = () => ++counter
 
-  const queue = taskQueue<number>({ autostart: false })
+  const queue = taskQueue<number>({ paused: true })
   queue.add([inc, inc, inc])
   queue.start()
   queue.add([inc, inc, inc])
@@ -238,7 +238,7 @@ it('onStep per batch', async () => {
 
   await new Promise(resolve => {
     const queue = taskQueue<number>({
-      autostart: false,
+      paused: true,
       onEnd: resolve,
     })
     queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output1.push(result) })
@@ -535,7 +535,7 @@ it('clear', async () => {
   /** Increments the counter. */
   const inc = () => ++counter
 
-  const queue = taskQueue<number>({ autostart: false, tasks: [inc, inc, inc] })
+  const queue = taskQueue<number>({ paused: true, tasks: [inc, inc, inc] })
   queue.add([inc, inc, inc])
   queue.clear()
   queue.start()

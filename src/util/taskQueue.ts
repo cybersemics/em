@@ -54,18 +54,16 @@ const taskQueue = <
   // task return type (that gets passed to onStep and onLowStep)
   T = any,
 >({
-  autostart = true,
   concurrency = 8,
   expected: _expected,
   onLowStep,
   onStep,
   onEnd,
+  paused: _paused,
   retries,
   tasks,
   timeout = 30000,
 }: {
-  /** Starts running tasks as soon as they are added. Set to false to start paused. */
-  autostart?: boolean
   // number of concurrent tasks allowed
   concurrency?: number
   /** Initialize the number of expected tasks. If undefined, total will be determined dynamically as tasks are added. */
@@ -76,6 +74,8 @@ const taskQueue = <
   onStep?: EventListeners<T>['step']
   /** An event that is called when all tasks have completed. */
   onEnd?: EventListeners<T>['end']
+  /** Starts the queue paused and only begins running tasks when .start() is called. */
+  paused?: boolean
   /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
   retries?: number
   /** Initial tasks to populate the queue with. */
@@ -112,7 +112,7 @@ const taskQueue = <
 
   // stops the task runner from running new tasks that are added
   // running tests complete as usual
-  let paused = !autostart
+  let paused = _paused
 
   // the lowest index of task that has started
   let indexStarted = 0
