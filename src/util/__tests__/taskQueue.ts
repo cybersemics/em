@@ -157,10 +157,7 @@ it('trigger end when adding an empty task list', async () => {
 it('async tasks', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   await taskQueue<number>({ tasks: [incDelayed, incDelayed, incDelayed] }).end
 
@@ -237,10 +234,7 @@ it('onStep per batch', async () => {
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   await new Promise(resolve => {
     const queue = taskQueue<number>({
@@ -270,10 +264,7 @@ it('restart step completed and total each end', async () => {
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   const queue = taskQueue<number>()
   await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
@@ -317,10 +308,7 @@ it('expected: constructor option', async () => {
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   const queue = taskQueue<number>({ expected: 6 })
   await queue.add([incDelayed, incDelayed, incDelayed], { onStep: result => output.push(result) })
@@ -343,10 +331,7 @@ it('expected: instance method', async () => {
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   const queue = taskQueue<number>()
   queue.expected(6)
@@ -370,10 +355,7 @@ it('reset expected and total after end', async () => {
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   const queue = taskQueue<number>()
   queue.expected(6)
@@ -402,10 +384,7 @@ it('trigger end if there are no running tasks when expected is set to null', asy
 
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(0)
-    return ++counter
-  }
+  const incDelayed = () => sleep(0).then(() => ++counter)
 
   const queue = taskQueue<number>()
   queue.expected(10)
@@ -447,10 +426,7 @@ it('onLowStep', async () => {
 it('pause', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(20)
-    return ++counter
-  }
+  const incDelayed = () => sleep(20).then(() => ++counter)
 
   /** Wrap taskQueue for typing. */
   const makeTaskQueue = () => taskQueue<number>()
@@ -499,10 +475,7 @@ it('falsey tasks should be ignored and not count towards total', async () => {
 it('add should return a promise that resolves when all the added tasks have completed', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
-  const incDelayed = async () => {
-    await sleep(20)
-    return ++counter
-  }
+  const incDelayed = () => sleep(20).then(() => ++counter)
 
   const queue = taskQueue<number>()
 
