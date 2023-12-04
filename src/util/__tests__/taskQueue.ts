@@ -73,6 +73,50 @@ it('end should resolve to total', async () => {
   expect(total).toBe(3)
 })
 
+it(`on('step', ...) syntax`, async () => {
+  const output: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValue = (s: string, n: number) => async () => {
+    await sleep(n)
+    return s
+  }
+
+  const queue = taskQueue<string>({ autostart: false })
+  queue.on('step', result => output.push(result))
+  queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
+  queue.start()
+  await queue.end
+
+  expect(output).toEqual([
+    { completed: 1, expected: null, total: 3, index: 2, value: 'c' },
+    { completed: 2, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
+  ])
+})
+
+it(`on('lowStep', ...) syntax`, async () => {
+  const output: { completed: number; expected: number | null; total: number; index: number; value: string }[] = []
+
+  /** Returns a task that returns a value after a given number of milliseconds. */
+  const delayedValue = (s: string, n: number) => async () => {
+    await sleep(n)
+    return s
+  }
+
+  const queue = taskQueue<string>({ autostart: false })
+  queue.on('lowStep', result => output.push(result))
+  queue.add([delayedValue('a', 20), delayedValue('b', 30), delayedValue('c', 10)])
+  queue.start()
+  await queue.end
+
+  expect(output).toEqual([
+    { completed: 2, expected: null, total: 3, index: 0, value: 'a' },
+    { completed: 3, expected: null, total: 3, index: 1, value: 'b' },
+    { completed: 3, expected: null, total: 3, index: 2, value: 'c' },
+  ])
+})
+
 it(`on('end', ...) syntax`, async () => {
   let counter = 0
   /** Increments the counter. */
@@ -97,7 +141,7 @@ it(`once('end', ...) promise`, async () => {
   queue.add([inc, inc, inc])
   const total = await p
 
-  expect(total).toEqual([3])
+  expect(total).toEqual(3)
   expect(counter).toBe(3)
 })
 

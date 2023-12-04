@@ -3,6 +3,13 @@ import Emitter from 'emitter20'
 type TaskFunction<T> = () => T | Promise<T>
 type Task<T> = TaskFunction<T> | { function: TaskFunction<T>; description: string }
 
+// map event names to event listener types so that we can properly type .on and .off
+interface EventListeners<T> {
+  step: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
+  lowStep: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
+  end: (total: number) => void
+}
+
 /** A dummy class is needed to get the typeof a generic function. */
 // See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
 // Alternatively, an explicit interface can be defined for the return value.
@@ -61,11 +68,11 @@ const taskQueue = <
   // number of concurrent tasks allowed
   concurrency?: number
   /** An event that is fired once for each completed task, in order. The callback for individual completed tasks will be delayed until contiguous tasks have completed. */
-  onLowStep?: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
+  onLowStep?: EventListeners<T>['lowStep']
   /** An event tha is fired when a task completes. Since asynchronous tasks may complete out of order, onStep may fire out of order. */
-  onStep?: (args: { completed: number; expected: number | null; total: number; index: number; value: T }) => void
+  onStep?: EventListeners<T>['step']
   /** An event that is called when all tasks have completed. */
-  onEnd?: (total: number) => void
+  onEnd?: EventListeners<T>['end']
   /** Number of times to retry a task after it times out (not including the initial call). This is recommended when using onLowStep, which can halt the whole queue if one task hangs. NOTE: Only use retries if the task is idempotent, as it is possible for a hung task to complete after the retry is initiated. */
   retries?: number
   /** Initial tasks to populate the queue with. */
@@ -122,6 +129,14 @@ const taskQueue = <
   // wrap tick in a promise that resolves onEnd
   let tick: () => void = null as any
   const endPromise = new Promise((resolve, reject) => {
+    emitter.on('lowStep', ({ completed, expected, total, index, value }) => {
+      onLowStep?.({ completed, expected, total, index, value })
+    })
+
+    emitter.on('step', ({ completed, expected, total, index, value }) => {
+      onStep?.({ completed, expected, total, index, value })
+    })
+
     emitter.on('end', endTotal => {
       onEnd?.(endTotal)
       resolve(endTotal)
@@ -157,14 +172,14 @@ const taskQueue = <
           completed++
           running--
 
-          onStep?.({ completed, expected, total, index, value })
+          emitter.trigger('step', { completed, expected, total, index, value })
 
           completedByIndex.set(index, { index, value })
           // eslint-disable-next-line fp/no-loops
           while (completedByIndex.has(indexCompleted)) {
             const task = completedByIndex.get(indexCompleted)!
             completedByIndex.delete(indexCompleted)
-            onLowStep?.({ ...task, completed, expected, total })
+            emitter.trigger('lowStep', { ...task, completed, expected, total })
             indexCompleted++
           }
 
@@ -274,26 +289,26 @@ const taskQueue = <
     },
 
     /** Unsubscribe from the end event. */
-    off: (eventName: 'end', f: typeof onEnd) => {
+    off: <K extends keyof EventListeners<T>>(eventName: K, f: EventListeners<T>[K]) => {
       if (!f) return
       emitter.off(eventName, f)
     },
 
     /** Subscribe to the end event. */
-    on: (eventName: 'end', f: typeof onEnd) => {
+    on: <K extends keyof EventListeners<T>>(eventName: K, f: EventListeners<T>[K]) => {
       if (!f) return
       emitter.on(eventName, f)
     },
 
     /** Returns a promise that resolves the next time the event is triggered. */
-    once: (eventName: 'end'): Promise<Parameters<NonNullable<typeof onEnd>>> =>
+    once: <K extends keyof EventListeners<K>>(eventName: K): Promise<Parameters<EventListeners<T>[K]>[0]> =>
       new Promise(resolve => {
         /** Resolve the promise and remove the emitter handler. */
-        const resolveAndUnsubscribe = (...args: Parameters<NonNullable<typeof onEnd>>) => {
-          resolve(args)
-          emitter.off(eventName, resolveAndUnsubscribe)
+        const resolveAndUnsubscribe = (arg: Parameters<EventListeners<T>[K]>[0]) => {
+          resolve(arg)
+          emitter.off(eventName, resolveAndUnsubscribe as any)
         }
-        emitter.on(eventName, resolveAndUnsubscribe)
+        emitter.on(eventName, resolveAndUnsubscribe as any)
       }),
 
     /** Stops additional tasks from running until start is called. Does not pause tasks that have already started. */
