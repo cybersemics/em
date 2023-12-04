@@ -158,7 +158,7 @@ it('async tasks', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -238,7 +238,7 @@ it('onStep per batch', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -271,7 +271,7 @@ it('restart step completed and total each end', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -318,7 +318,7 @@ it('expected: constructor option', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -344,7 +344,7 @@ it('expected: instance method', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -371,7 +371,7 @@ it('reset expected and total after end', async () => {
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -403,7 +403,7 @@ it('trigger end if there are no running tasks when expected is set to null', asy
   let counter = 0
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     return ++counter
   }
 
@@ -518,7 +518,7 @@ it('completed', async () => {
   const completed: number[] = []
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     completed.push(queue.completed())
   }
 
@@ -532,7 +532,7 @@ it('running', async () => {
   const running: number[] = []
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     running.push(queue.running())
   }
 
@@ -546,7 +546,7 @@ it('total', async () => {
   const total: number[] = []
   /** Increments the counter after a delay. */
   const incDelayed = async () => {
-    await sleep(1)
+    await sleep(0)
     total.push(queue.total())
   }
 
