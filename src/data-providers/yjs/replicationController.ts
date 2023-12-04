@@ -91,6 +91,10 @@ const replicationController = ({
     replicationCursors = value
   })
 
+  /** The number of unfilled blocks after subdocs change. This is used to determine when all blocks have been loaded and thus it is safe to switch from estimated total to actual total. */
+  // This needs to be tracked in a separate variable due to a timing gap between the subdocs event (when the value is valid) and observeBlock (when the value must be checked). Otherwise the live value is already altered by the time observeBlock is called and we will end up switching to the actual total one block too soon.
+  let unfilled = 0
+
   /** Persist the thought replication cursor and update block size if full (throttled). */
   const storeThoughtReplicationCursor = throttleConcat(
     async (cursorUpdates: { blockId: string; index: number }[]) => {
@@ -213,6 +217,17 @@ const replicationController = ({
 
   // Precondition: The replication cursors must be initialized.
   doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
+    // when the first blocks are added, estimate the expected number of replications based on the number of blocks
+    if (unfilled === 0) {
+      // TODO: Subtract blocks that have already been replicated blocks
+      replicationQueue.expected(added.size * DOCLOG_BLOCK_SIZE)
+    }
+
+    if (loaded.size > 0) {
+      const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
+      unfilled = blocks.filter(block => !isFull(getBlockKey(block))).length
+    }
+
     // load and observe the active block when there are new subdocs
     if (added.size > 0) {
       const activeBlock = getActiveBlock()
@@ -334,6 +349,12 @@ const replicationController = ({
 
       // replicate changed thoughts
       await replicationQueue.add(tasks)
+
+      // switch from expected total to actual total when all blocks are loaded
+      // also switch when there are no tasks, which occurs on page load if all blocks are replicated
+      if (tasks.length === 0 || unfilled === 1) {
+        replicationQueue.expected(null)
+      }
 
       // Set blockSize on full blocks. This allows devices to check if a block is fully replicated before loading it into memory.
       // Only set blockSize on full blocks to avoid document growth.
