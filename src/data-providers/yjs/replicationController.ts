@@ -217,19 +217,14 @@ const replicationController = ({
 
   // Precondition: The replication cursors must be initialized.
   doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
-    // when the first blocks are added, estimate the expected number of replications based on the number of blocks
-    if (unfilled === 0) {
-      // TODO: Subtract blocks that have already been replicated blocks
-      replicationQueue.expected(added.size * DOCLOG_BLOCK_SIZE)
-    }
-
-    if (loaded.size > 0) {
-      const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
-      unfilled = blocks.filter(block => !isFull(getBlockKey(block))).length
-    }
-
     // load and observe the active block when there are new subdocs
     if (added.size > 0) {
+      // when the first blocks are added, estimate the expected number of replications based on the number of blocks
+      if (unfilled === 0) {
+        // TODO: Subtract blocks that have already been replicated
+        replicationQueue.expected(added.size * DOCLOG_BLOCK_SIZE)
+      }
+
       const activeBlock = getActiveBlock()
       const activeBlockId = getBlockKey(activeBlock)
 
@@ -255,6 +250,11 @@ const replicationController = ({
     removed.forEach(block => {
       blocksObserved.delete(block)
     })
+
+    if (loaded.size > 0) {
+      const blocks: Y.Doc[] = doc.getArray('blocks').toArray()
+      unfilled = blocks.filter(block => !isFull(getBlockKey(block))).length
+    }
   })
 
   // Load and replicate full blocks that are overfilled due to an offline device coming back online.
