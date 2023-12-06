@@ -95,6 +95,9 @@ const replicationController = ({
   // This needs to be tracked in a separate variable due to a timing gap between the subdocs event (when the value is valid) and observeBlock (when the value must be checked). Otherwise the live value is already altered by the time observeBlock is called and we will end up switching to the actual total one block too soon.
   let unfilled = 0
 
+  /** Toggled when the first blocks are added. Used to set the estimated replication total once on initialization. */
+  let blocksInitialized = false
+
   /** Persist the thought replication cursor and update block size if full (throttled). */
   const storeThoughtReplicationCursor = throttleConcat(
     async (cursorUpdates: { blockId: string; index: number }[]) => {
@@ -219,10 +222,15 @@ const replicationController = ({
   doc.on('subdocs', async ({ added, removed, loaded }: SubdocsEventArgs) => {
     // load and observe the active block when there are new subdocs
     if (added.size > 0) {
-      // when the first blocks are added, estimate the expected number of replications based on the number of blocks
-      if (unfilled === 0) {
-        // TODO: Subtract blocks that have already been replicated
-        replicationQueue.expected(added.size * DOCLOG_BLOCK_SIZE)
+      // When the first blocks are added, estimate the expected number of replications based on the number of blocks.
+      // Since unreplicated blocks are only loaded one at a time, we need to provide an estimate to ensure a stable progress %.
+      if (!blocksInitialized) {
+        // add 1 since blocks can be overfilled
+        const estimated = (doc.subdocs.size - Object.values(replicationCursors).length) * (DOCLOG_BLOCK_SIZE + 1)
+        if (estimated) {
+          replicationQueue.expected(estimated)
+        }
+        blocksInitialized = true
       }
 
       const activeBlock = getActiveBlock()
