@@ -356,13 +356,15 @@ const replicationController = ({
       })
 
       // replicate changed thoughts
-      await replicationQueue.add(tasks)
+      const added = replicationQueue.add(tasks)
 
       // switch from expected total to actual total when all blocks are loaded
       // also switch when there are no tasks, which occurs on page load if all blocks are replicated
       if (tasks.length === 0 || unfilled === 1) {
         replicationQueue.expected(null)
       }
+
+      await added
 
       // Set blockSize on full blocks. This allows devices to check if a block is fully replicated before loading it into memory.
       // Only set blockSize on full blocks to avoid document growth.
