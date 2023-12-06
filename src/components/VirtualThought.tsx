@@ -12,7 +12,7 @@ import useSelectorEffect from '../hooks/useSelectorEffect'
 import attribute from '../selectors/attribute'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
-import { findAnyChild } from '../selectors/getChildren'
+import { findAnyChild, hasChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -92,6 +92,7 @@ const VirtualThought = ({
   const [height, setHeight] = useState<number | null>(singleLineHeight)
   const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
+  const cursorLeaf = useSelector((state: State) => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const note = useSelector((state: State) => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
 
@@ -146,8 +147,9 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateHeight, selectCursor, shallowEqual)
 
-  // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are hella slow.)
-  useEffect(updateHeight, [isVisible, leaf, note, simplePath, style, updateHeight])
+  // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
+  // Autofocus changes when the cursor moves between a leaf and non-leaf which can cause a thought to wrap to the next line.
+  useEffect(updateHeight, [cursorLeaf, isVisible, leaf, note, simplePath, style, updateHeight])
 
   // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
