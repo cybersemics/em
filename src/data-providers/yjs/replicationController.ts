@@ -235,7 +235,7 @@ const replicationController = ({
       // eslint-disable-next-line fp/no-loops
       for (const block of added) {
         const blockId = getBlockKey(block)
-        if (blockId === activeBlockId) return
+        if (blockId === activeBlockId) continue
         const blockSize = doc.getMap('blockSizes').get(blockId)
         const thoughtReplicationCursor = replicationCursors[blockId]?.thoughts ?? -1
         if (thoughtReplicationCursor + 1 < blockSize) {
