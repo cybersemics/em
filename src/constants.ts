@@ -262,8 +262,8 @@ export const BETA_HASH = '8e767ca4e40aff7e22b14e5bf51743d8'
 
 export const EMOJI_REGEX = emojiRegex
 /*
-  Note: Use string.match instead of regex.test when using regex with global modifier. Regex with global modifier  keeps state of it's previous match causing unwanted results.
-        Explaination: https://stackoverflow.com/a/30887581/10168748
+  Note: Use string.match instead of regex.test when using a regex with the global modifier. Regex with global modifier keeps the state of its previous match causing unwanted results.
+  See: https://stackoverflow.com/a/30887581/10168748
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
