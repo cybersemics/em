@@ -2,7 +2,7 @@ import _ from 'lodash'
 import sanitize from 'sanitize-html'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS, REGEX_LONE_ANGLED_BRACKET } from '../constants'
+import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS } from '../constants'
 import strip from '../util/strip'
 
 const REGEX_CONTAINS_META_TAG = /^<(!doctype|meta)\s*.*?>/i
@@ -70,7 +70,11 @@ const isCopiedFromApp = (htmlText: string) => REGEX_CONTAINS_META_TAG.test(htmlT
 const blocksToHtml = (parsedBlocks: Block[]): string =>
   parsedBlocks
     .map(block => {
-      const value = block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim()
+      const value = sanitize(block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim(), {
+        allowedTags: ALLOWED_TAGS,
+        allowedAttributes: ALLOWED_ATTRIBUTES,
+        disallowedTagsMode: 'recursiveEscape',
+      })
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
       return value || childrenHtml ? `<li>${value}${childrenHtml}</li>` : ''
     })
@@ -136,17 +140,6 @@ const textToHtml = (text: string) => {
               .trim()}`,
         )
         .join(''),
-
-    // lone open angled brackets should not be unescaped
-    html => html.replace(REGEX_LONE_ANGLED_BRACKET, '&lt;'),
-
-    // Closed incomplete tags, preserve only allowed tags and attributes and decode the html.
-    html =>
-      sanitize(html, {
-        allowedTags: ALLOWED_TAGS,
-        allowedAttributes: ALLOWED_ATTRIBUTES,
-        disallowedTagsMode: 'recursiveEscape',
-      }),
   )(html)
 }
 

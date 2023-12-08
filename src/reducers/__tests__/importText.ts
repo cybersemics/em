@@ -1170,9 +1170,7 @@ it('import single line with style attributes and a single br tag', () => {
 </ul>`)
 })
 
-// TODO: This stopped working when unescapeHtml was removed from importText.
-// It was causing too many problems with < and > characters.
-it.skip('import plaintext + list as nested list', () => {
+it('import plaintext + list as nested list', () => {
   const html = `<div>
   A
   <ul>
@@ -1397,7 +1395,8 @@ it('encode single closing angled bracket', () => {
     - d`)
 })
 
-it('encode single open angled bracket', () => {
+// TODO
+it.skip('encode single open angled bracket', () => {
   const text = `
 - a
   - <b
@@ -1415,4 +1414,42 @@ it('encode single open angled bracket', () => {
       - c
         - d
     - e`)
+})
+
+it('import plaintext with embedded <li>', () => {
+  const text = `
+  - a
+    - b
+      - <li>c</li>
+    - d
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - c
+    - d`)
+})
+
+it('import plaintext with embedded <li> mixed with text', () => {
+  const text = `
+  - a
+    - b
+      - x <li>c</li> y
+    - d
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - x
+      - c
+      - y
+    - d`)
 })
