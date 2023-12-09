@@ -1,4 +1,4 @@
-import { FunctionComponent } from 'react'
+import { FC } from 'react'
 import Alert from '../@types/Alert'
 import Thunk from '../@types/Thunk'
 import alertStore from '../stores/alert'
@@ -18,10 +18,7 @@ let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-d
  * @param clearDelay Timeout after which alert will be cleared.
  */
 const alert =
-  (
-    value: string | FunctionComponent | null,
-    { alertType, showCloseLink, clearDelay, isInline, importFileId }: Options = {},
-  ): Thunk =>
+  (value: string | FC | null, { alertType, showCloseLink, clearDelay, isInline, importFileId }: Options = {}): Thunk =>
   (dispatch, getState) => {
     const { alert } = getState()
 
