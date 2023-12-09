@@ -16,15 +16,16 @@ const reactMinistore = <T>(initialState: T) => {
     const [localState, setLocalState] = useState(selector ? selector(state) : state)
     const unmounted = useRef(false)
 
-    useEffect(() => {
-      const unsubscribe = store.subscribe((stateNew: T) => {
-        if (!unmounted.current) {
-          const state = store.getState()
-          setLocalState(selector ? selector(state) : state)
-        }
-      })
-      return () => unsubscribe()
-    }, [selector])
+    useEffect(
+      () =>
+        store.subscribe((stateNew: T) => {
+          if (!unmounted.current) {
+            const state = store.getState()
+            setLocalState(selector ? selector(state) : state)
+          }
+        }),
+      [selector],
+    )
 
     useEffect(
       () => () => {
