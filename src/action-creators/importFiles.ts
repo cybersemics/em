@@ -25,7 +25,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import alertStore from '../stores/alert'
 import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
@@ -43,7 +42,7 @@ import series from '../util/series'
 import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
-import alert from './alert'
+import alertWithMinistore from './alertWithMinistore'
 import pull from './pull'
 
 /** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
@@ -234,9 +233,8 @@ const importFilesActionCreator =
             const importProgress = (i + 1) / numThoughts
             const importProgressString = (Math.floor(importProgress * 1000) / 10).toFixed(1)
             syncStatusStore.update({ importProgress })
-            alertStore.update(`Importing ${fileProgressString}... ${importProgressString}%`)
             dispatch(
-              alert('...', {
+              alertWithMinistore(`Importing ${fileProgressString}... ${importProgressString}%`, {
                 alertType: AlertType.ImportFile,
                 clearDelay: i === numThoughts - 1 ? 5000 : undefined,
                 importFileId: file.id,
@@ -365,9 +363,8 @@ const importFilesActionCreator =
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
       // read file
-      alertStore.update(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`)
       dispatch(
-        alert('...', {
+        alertWithMinistore(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, {
           alertType: AlertType.ImportFile,
           importFileId: file.id,
         }),
@@ -376,16 +373,14 @@ const importFilesActionCreator =
 
       // if importing a new file, initialize resumeImports in IDB as soon as possible
       if (!resume) {
-        alertStore.update(`Storing ${fileProgressString}`)
-        dispatch(alert('...', { alertType: AlertType.ImportFile }))
+        dispatch(alertWithMinistore(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
         manager.init(text)
       }
 
       // convert ThoughtIndices to plain text
       let exported = text
       if (text.startsWith('{')) {
-        alertStore.update(`Parsing ${fileProgressString}`)
-        dispatch(alert('...', { alertType: AlertType.ImportFile }))
+        dispatch(alertWithMinistore(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
         const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
         const stateImported = initialState()
         stateImported.thoughts.thoughtIndex = thoughtIndex
@@ -397,9 +392,8 @@ const importFilesActionCreator =
       const numThoughts = numBlocks(json)
 
       syncStatusStore.update({ importProgress: 0 / numThoughts })
-      alertStore.update(`Importing ${fileProgressString}...`)
       dispatch(
-        alert('...', {
+        alertWithMinistore(`Importing ${fileProgressString}...`, {
           alertType: AlertType.ImportFile,
           importFileId: file.id,
         }),
@@ -422,8 +416,7 @@ const importFilesActionCreator =
     // this could be parallelized as long as they have different import destinations
     await series(fileTasks)
 
-    alertStore.update(null)
-    dispatch(alert(null, { alertType: AlertType.ImportFile }))
+    dispatch(alertWithMinistore(null, { alertType: AlertType.ImportFile }))
   }
 
 export default importFilesActionCreator
