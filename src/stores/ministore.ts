@@ -7,9 +7,9 @@ export interface Ministore<T> {
   getState: () => T
   /** Subscribes to changes. Returns an unsubscribe function. */
   subscribe: (f: (state: T) => void) => () => void
-  /** Subscribes to one update. Returns an unsubscribe function. */
+  /** Subscribes to one update. */
   once: (predicate?: (state: T) => boolean) => CancellablePromise<T>
-  /** Subscribes to changes to a slice of the state. */
+  /** Subscribes to changes to a slice of the state. Returns an unsubscribe function. */
   subscribeSelector: <S>(selector: (state: T) => S, f: (slice: S) => void, equals?: (a: S, b: S) => boolean) => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
