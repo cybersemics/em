@@ -1,6 +1,7 @@
 import { FunctionComponent } from 'react'
 import Alert from '../@types/Alert'
 import Thunk from '../@types/Thunk'
+import alertStore from '../stores/alert'
 
 type Options = Omit<Alert, 'value'> & {
   clearDelay?: number
@@ -24,13 +25,18 @@ const alert =
   (dispatch, getState) => {
     const { alert } = getState()
 
-    /** Clears the original alert, or NOOP if the alert has changed. */
+    /** Clears the original alert, or noop if the alert has changed. */
     const clearOriginalAlert = () => {
       dispatch((dispatch, getState) => {
         const state = getState()
         // Do not clear a different alert than was originally shown.
         // For example, the command palette would be incorrectly cleared after a delay.
         if (alertType !== state.alert?.alertType) return
+
+        // clear alert store value
+        if (!value) {
+          alertStore.update(null)
+        }
 
         dispatch({
           type: 'alert',
@@ -53,6 +59,11 @@ const alert =
     // do not show the same alert twice
     // do not clear an alert with a non-matching alertType
     if (value === (alert?.value || null) || (!value && alert && alertType && alertType !== alert.alertType)) return
+
+    // clear alert store value
+    if (!value) {
+      alertStore.update(null)
+    }
 
     dispatch({
       type: 'alert',

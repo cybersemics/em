@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
+import alertStore from '../stores/alert'
 import Popup from './Popup'
 
 /** An alert component that fades in and out. */
@@ -10,6 +11,8 @@ const Alert: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
   const alert = useSelector((state: State) => state.alert)
+  const alertStoreValue = alertStore.useState()
+  const value = alertStoreValue ?? alert?.value
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -24,8 +27,8 @@ const Alert: FC = () => {
       {alert ? (
         <CSSTransition key={0} timeout={800} classNames='fade-slow-out' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}
-          <Popup {...alert} onClose={onClose} key={alert?.value}>
-            {alert?.value}
+          <Popup {...alert} onClose={onClose} key={value}>
+            {value}
           </Popup>
         </CSSTransition>
       ) : null}

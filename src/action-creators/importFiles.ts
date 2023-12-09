@@ -25,6 +25,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
+import alertStore from '../stores/alert'
 import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
@@ -233,8 +234,9 @@ const importFilesActionCreator =
             const importProgress = (i + 1) / numThoughts
             const importProgressString = (Math.floor(importProgress * 1000) / 10).toFixed(1)
             syncStatusStore.update({ importProgress })
+            alertStore.update(`Importing ${fileProgressString}... ${importProgressString}%`)
             dispatch(
-              alert(`Importing ${fileProgressString}... ${importProgressString}%`, {
+              alert('...', {
                 alertType: AlertType.ImportFile,
                 clearDelay: i === numThoughts - 1 ? 5000 : undefined,
                 importFileId: file.id,
@@ -363,8 +365,9 @@ const importFilesActionCreator =
       const fileProgressString = file.name + (resumableFiles.length > 1 ? ` (${i + 1}/${resumableFiles.length})` : '')
 
       // read file
+      alertStore.update(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`)
       dispatch(
-        alert(`${resume ? 'Resume import of' : 'Reading'} ${fileProgressString}`, {
+        alert('...', {
           alertType: AlertType.ImportFile,
           importFileId: file.id,
         }),
@@ -373,14 +376,16 @@ const importFilesActionCreator =
 
       // if importing a new file, initialize resumeImports in IDB as soon as possible
       if (!resume) {
-        dispatch(alert(`Storing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
+        alertStore.update(`Storing ${fileProgressString}`)
+        dispatch(alert('...', { alertType: AlertType.ImportFile }))
         manager.init(text)
       }
 
       // convert ThoughtIndices to plain text
       let exported = text
       if (text.startsWith('{')) {
-        dispatch(alert(`Parsing ${fileProgressString}`, { alertType: AlertType.ImportFile }))
+        alertStore.update(`Parsing ${fileProgressString}`)
+        dispatch(alert('...', { alertType: AlertType.ImportFile }))
         const { thoughtIndex, lexemeIndex } = JSON.parse(text) as ThoughtIndices
         const stateImported = initialState()
         stateImported.thoughts.thoughtIndex = thoughtIndex
@@ -392,8 +397,9 @@ const importFilesActionCreator =
       const numThoughts = numBlocks(json)
 
       syncStatusStore.update({ importProgress: 0 / numThoughts })
+      alertStore.update(`Importing ${fileProgressString}...`)
       dispatch(
-        alert(`Importing ${fileProgressString}...`, {
+        alert('...', {
           alertType: AlertType.ImportFile,
           importFileId: file.id,
         }),
@@ -416,6 +422,7 @@ const importFilesActionCreator =
     // this could be parallelized as long as they have different import destinations
     await series(fileTasks)
 
+    alertStore.update(null)
     dispatch(alert(null, { alertType: AlertType.ImportFile }))
   }
 
