@@ -81,7 +81,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
    *
    * @returns Unsubscribe function.
    */
-  const once = (predicate: (state: T) => boolean = () => true): CancellablePromise<T> => {
+  const once = (predicate?: (state: T) => boolean): CancellablePromise<T> => {
     let onChange: any
 
     /** Unsubscribes from the emitter. */
@@ -92,7 +92,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
        * Do this here rather than in every test. */
       // TODO: Move this to a stubbing function.
       onChange = (stateNew: T) => {
-        if (!predicate(stateNew)) return
+        if (predicate && !predicate(stateNew)) return
         const done =
           process.env.NODE_ENV === 'test'
             ? async (state: T) => {
