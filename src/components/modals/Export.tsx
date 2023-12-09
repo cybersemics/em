@@ -216,7 +216,7 @@ const ExportThoughtsPhrase = ({
 const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
+  const dark = useSelector(state => theme(state) !== 'Light')
   const colors = useSelector(themeColors)
 
   const closeDropdown = useCallback(() => {
@@ -261,7 +261,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const id = head(simplePath)
-  const title = useSelector((state: State) => (isRoot(simplePath) ? 'home' : headValue(state, simplePath)))
+  const title = useSelector(state => (isRoot(simplePath) ? 'home' : headValue(state, simplePath)))
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
@@ -272,7 +272,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
+  const dark = useSelector(state => theme(state) !== 'Light')
   const colors = useSelector(themeColors)
   const exportWord = isTouch ? 'Share' : 'Download'
 
@@ -288,9 +288,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       : numDescendantsInState ?? 0
     : null
 
-  const exportThoughtsPhraseFinal = useSelector((state: State) =>
-    exportPhrase(id, numDescendantsFinal, { value: title }),
-  )
+  const exportThoughtsPhraseFinal = useSelector(state => exportPhrase(id, numDescendantsFinal, { value: title }))
 
   /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
   const setExportContentFromCursor = () => {
@@ -709,7 +707,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
  * Export component wrapped with pull provider.
  */
 const ModalExportWrapper = () => {
-  const simplePath = useSelector((state: State) => (state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH))
+  const simplePath = useSelector(state => (state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH))
 
   return (
     <PullProvider simplePath={simplePath}>

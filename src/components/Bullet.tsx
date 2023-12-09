@@ -3,7 +3,6 @@ import React, { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import setCursor from '../action-creators/setCursor'
@@ -155,29 +154,29 @@ const Bullet = ({
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
-  const dragHold = useSelector((state: State) => state.dragHold)
-  const showContexts = useSelector((state: State) => isContextViewActive(state, path))
+  const dragHold = useSelector(state => state.dragHold)
+  const showContexts = useSelector(state => isContextViewActive(state, path))
   // if being edited and meta validation error has occured
-  const invalid = useSelector((state: State) => !!isEditing && state.invalidState)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const isHighlighted = useSelector((state: State) => {
+  const invalid = useSelector(state => !!isEditing && state.invalidState)
+  const fontSize = useSelector(state => state.fontSize)
+  const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging
   })
-  const pending = useSelector((state: State) => {
+  const pending = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
     // (Another approach would be to pre-load the context children as soon as the context view is activated.)
     return isContextPending || (!isContextViewActive(state, parentOf(path)) && isPending(state, thought))
   })
-  const missing = useSelector((state: State) => {
+  const missing = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     return !thought || !getLexeme(state, thought.value)
   })
   const colors = useSelector(themeColors)
 
   // fill =bullet/=style override
-  const fill = useSelector((state: State) => {
+  const fill = useSelector(state => {
     const bulletId = findDescendant(state, head(simplePath), '=bullet')
     const styles = getStyle(state, bulletId)
     return styles?.color

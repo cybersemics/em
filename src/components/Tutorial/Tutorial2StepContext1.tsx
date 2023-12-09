@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -24,7 +23,7 @@ const Tutorial2StepContext1 = ({
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const value = useSelector((state: State) => state.cursor && headValue(state, state.cursor))
+  const value = useSelector(state => state.cursor && headValue(state, state.cursor))
 
   return (
     <>

@@ -32,8 +32,8 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
   const [numContexts, setNumContexts] = useState(0)
   const ref = useRef<HTMLElement>(null)
 
-  const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
-  const simplePathLive = useSelector((state: State) => {
+  const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
+  const simplePathLive = useSelector(state => {
     const cursorContext = state.cursor ? pathToContext(state, state.cursor) : [HOME_TOKEN]
     const editing =
       state.cursor &&
@@ -42,7 +42,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
     return editing ? (parentOf(simplePath).concat(head(state.cursor!)) as SimplePath) : simplePath
   }, shallowEqual)
 
-  const show = useSelector((state: State) => {
+  const show = useSelector(state => {
     const value = getThoughtById(state, head(simplePathLive))?.value || ''
     const emptyThought = value.length === 0
     return !emptyThought && superscript && numContexts! > (showSingle ? 0 : 1)

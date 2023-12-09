@@ -2,7 +2,6 @@ import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
@@ -28,7 +27,7 @@ const useStyleContainer = ({
   thoughtId: ThoughtId
   path: Path
 }) => {
-  const styleContainer = useSelector((state: State) => {
+  const styleContainer = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
 
     /** Returns thought-container style from env and self. */

@@ -1,7 +1,6 @@
 import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -28,9 +27,9 @@ const ThoughtLink = ({
   thoughtsLimit,
   staticBreadcrumbs,
 }: ThoughtLinkProps) => {
-  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
-  const parentPath = useSelector((state: State) => rootedParentOf(state, path), shallowEqual)
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
+  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
+  const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
+  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
 
   return (
     <div>

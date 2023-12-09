@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import State from '../../@types/State'
 import editingAction from '../../action-creators/editing'
 import { isSafari, isTouch } from '../../browser'
 import asyncFocus from '../../device/asyncFocus'
@@ -26,13 +25,13 @@ const useEditMode = ({
   transient: boolean | undefined
 }) => {
   // must re-render when noteFocus changes in order to set the selection
-  const hasNoteFocus = useSelector((state: State) => state.noteFocus && equalPath(state.cursor, path))
-  const editing = useSelector((state: State) => state.editing)
+  const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
+  const editing = useSelector(state => state.editing)
   const dispatch = useDispatch()
-  const noteFocus = useSelector((state: State) => state.noteFocus)
-  const editingCursorOffset = useSelector((state: State) => isEditing && state.cursorOffset)
-  const dragHold = useSelector((state: State) => state.dragHold)
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
+  const noteFocus = useSelector(state => state.noteFocus)
+  const editingCursorOffset = useSelector(state => isEditing && state.cursorOffset)
+  const dragHold = useSelector(state => state.dragHold)
+  const dragInProgress = useSelector(state => state.dragInProgress)
   const disabledRef = useRef(false)
 
   // focus on the ContentEditable element if editing os on desktop

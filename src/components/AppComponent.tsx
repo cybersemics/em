@@ -6,7 +6,6 @@ import React, { FC, useCallback, useEffect, useLayoutEffect, useMemo, useRef, us
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
-import State from '../@types/State'
 import updateSplitPosition from '../action-creators/updateSplitPosition'
 import { isAndroid, isSafari, isTouch } from '../browser'
 import { Settings } from '../constants'
@@ -151,15 +150,15 @@ const AppComponent: FC = () => {
   const [isSplitting, setIsSplitting] = useState(false)
 
   const colors = useSelector(themeColors)
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
-  const enableLatestShortcutsDiagram = useSelector((state: State) => state.enableLatestShortcutsDiagram)
-  const showTutorial = useSelector((state: State) => isTutorial(state) && !state.isLoading)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const showSplitView = useSelector((state: State) => state.showSplitView)
-  const showModal = useSelector((state: State) => state.showModal)
+  const dark = useSelector(state => theme(state) !== 'Light')
+  const dragInProgress = useSelector(state => state.dragInProgress)
+  const enableLatestShortcutsDiagram = useSelector(state => state.enableLatestShortcutsDiagram)
+  const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
+  const fontSize = useSelector(state => state.fontSize)
+  const showSplitView = useSelector(state => state.showSplitView)
+  const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
-  const splitPosition = useSelector((state: State) => state.splitPosition)
+  const splitPosition = useSelector(state => state.splitPosition)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onSplitResize = useCallback(

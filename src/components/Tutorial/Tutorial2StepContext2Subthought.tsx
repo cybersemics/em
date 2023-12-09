@@ -52,19 +52,17 @@ const Tutorial2StepContext2Subthought = ({
   rootChildren: Thought[]
 }) => {
   const value = TUTORIAL_CONTEXT[tutorialChoice] || ''
-  const caseSensitiveValue = useSelector((state: State) =>
-    getContexts(state, value).length > 0 ? value : value.toLowerCase(),
-  )
-  const numContexts = useSelector((state: State) => getContexts(state, caseSensitiveValue).length)
-  const contextParentThoughts = useSelector((state: State) => {
+  const caseSensitiveValue = useSelector(state => (getContexts(state, value).length > 0 ? value : value.toLowerCase()))
+  const numContexts = useSelector(state => getContexts(state, caseSensitiveValue).length)
+  const contextParentThoughts = useSelector(state => {
     const contexts = getContexts(state, caseSensitiveValue)
     return contexts.map(thoughtId => parentOfThought(state, thoughtId))
   })
-  const isContext2SubthoughtCreated = useSelector((state: State) =>
+  const isContext2SubthoughtCreated = useSelector(state =>
     context2SubthoughtCreated(state, { rootChildren, tutorialChoice }),
   )
 
-  const hasChosen = useSelector((state: State) => {
+  const hasChosen = useSelector(state => {
     const tutorialChoiceParentId = contextToThoughtId(state, [TUTORIAL_CONTEXT2_PARENT[tutorialChoice]])
     return !!getChildrenRanked(state, tutorialChoiceParentId).find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),

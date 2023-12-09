@@ -20,7 +20,7 @@ import pathToContext from '../../util/pathToContext'
 /** Tutorial: Auto Expand. */
 const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
   const state = store.getState()
-  const tutorialStep = useSelector((state: State) => +getSetting(state, 'Tutorial Step')!)
+  const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
   const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
   const isCursorLeaf = cursorChildren.length === 0

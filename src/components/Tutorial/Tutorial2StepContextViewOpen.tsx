@@ -1,6 +1,5 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
@@ -14,12 +13,12 @@ const Tutorial2StepContextViewOpen = ({
   contextViews: any
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
 }) => {
-  const caseSensitiveValue = useSelector((state: State) =>
+  const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )
-  const cursorLost = useSelector((state: State) => {
+  const cursorLost = useSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
     return (
       !cursorThoughts ||
@@ -31,7 +30,7 @@ const Tutorial2StepContextViewOpen = ({
       )
     )
   })
-  const contextViewClosed = useSelector((state: State) => {
+  const contextViewClosed = useSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
     return !contextViews[
       contextToThoughtId(state, [

@@ -1,14 +1,13 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import { isMac, isTouch } from '../../browser'
 import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThought = () => {
-  const headCursorValue = useSelector((state: State) => state.cursor && headValue(state, state.cursor))
-  const deleteBlank = useSelector((state: State) => state.cursor && headCursorValue === '')
-  const noCursor = useSelector((state: State) => !state.cursor)
+  const headCursorValue = useSelector(state => state.cursor && headValue(state, state.cursor))
+  const deleteBlank = useSelector(state => state.cursor && headCursorValue === '')
+  const noCursor = useSelector(state => !state.cursor)
   return (
     <>
       <p>

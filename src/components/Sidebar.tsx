@@ -2,7 +2,6 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.
 import _ from 'lodash'
 import React, { useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
-import State from '../@types/State'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
@@ -20,8 +19,8 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 /** Displays recently edited thoughts with a header. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const RecentlyEdited = () => {
-  const recentlyEditedTree = useSelector((state: State) => state.recentlyEdited)
-  const showHiddenThoughts = useSelector((state: State) => state.showHiddenThoughts)
+  const recentlyEditedTree = useSelector(state => state.recentlyEdited)
+  const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
 
   const store = useStore()
 
@@ -48,7 +47,7 @@ const RecentlyEdited = () => {
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
-  const showSidebar = useSelector((state: State) => state.showSidebar)
+  const showSidebar = useSelector(state => state.showSidebar)
   const dispatch = useDispatch()
 
   /** Toggle the sidebar. */

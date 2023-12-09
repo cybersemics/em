@@ -108,7 +108,7 @@ const Tutorial = ({
         : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
   )
 
-  const cursorHeadValue = useSelector((state: State) => state.cursor && headValue(state, state.cursor))
+  const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
   return (
     <div className='tutorial'>
       <div className='tutorial-inner'>

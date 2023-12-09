@@ -6,7 +6,6 @@ import { CSSTransition } from 'react-transition-group'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
-import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import closeModal from '../../action-creators/closeModal'
 import deleteThought from '../../action-creators/deleteThought'
@@ -69,7 +68,7 @@ const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>)
   DropTarget('toolbar-button', { drop }, dropCollect)(component))(
   ({ dropTarget, isHovering, children, sourceZone }) => {
     const dispatch = useDispatch()
-    const dragShortcut = useSelector((state: State) => state.dragShortcut)
+    const dragShortcut = useSelector(state => state.dragShortcut)
 
     useEffect(() => {
       // clear toolbar drag-and-drop alert when dragShortcut disappears

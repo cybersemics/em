@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
-import State from '../@types/State'
 import { AlertType, GESTURE_CANCEL_ALERT_TEXT, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -18,7 +17,7 @@ interface TraceGestureProps {
 
 /** Renders the TraceGesture component as long as it is not disabled in the settings. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
-  const showModal = useSelector((state: State) => state.showModal)
+  const showModal = useSelector(state => state.showModal)
   const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
   return <>{!disableGestureTracing && !showModal && <TraceGesture {...props} />}</>
 }
@@ -48,7 +47,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   // A hook that is true when there is a cancelled gesture in progress.
   // Handles GestureHint and CommandPaletteGesture which have different ways of showing a cancelled gesture.
-  const cancelled = useSelector((state: State) => {
+  const cancelled = useSelector(state => {
     const alert = state.alert
     if (!alert || !alert.value) return false
     // GestureHint

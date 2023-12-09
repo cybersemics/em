@@ -5,7 +5,6 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import { HOME_TOKEN } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -43,9 +42,9 @@ const BreadCrumb: FC<{
   showDivider?: boolean
   staticText?: boolean
 }> = React.memo(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText }) => {
-  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
-  const showContexts = useSelector((state: State) => isContextViewActive(state, parentOf(path)))
+  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+  const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
   const delimiterStyle: React.CSSProperties = {
     fontSize: '0.8em',
     lineHeight: '16px',
@@ -91,7 +90,7 @@ const ContextBreadcrumbs = ({
   thoughtsLimit,
 }: ContextBreadcrumbProps) => {
   const [disabled, setDisabled] = React.useState(false)
-  const simplePath = useSelector((state: State) => simplifyPath(state, path), shallowEqual)
+  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */

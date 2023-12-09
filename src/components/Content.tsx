@@ -3,7 +3,6 @@ import React, { FC, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
 import closeModal from '../action-creators/closeModal'
 import expandContextThought from '../action-creators/expandContextThought'
@@ -40,14 +39,14 @@ const Content: FC = () => {
   const contentRef = useRef<HTMLDivElement>(null)
   const [isPressed, setIsPressed] = useState<boolean>(false)
   const tutorial = useSelector(isTutorial)
-  const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
-  const search = useSelector((state: State) => state.search)
-  const rootThoughtsLength = useSelector((state: State) => {
+  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  const search = useSelector(state => state.search)
+  const rootThoughtsLength = useSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
     const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
     return children.length
   })
-  const isAbsoluteContext = useSelector((state: State) => isAbsolute(state.rootContext))
+  const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {

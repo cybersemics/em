@@ -50,7 +50,7 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
 
 /** An options menu with three little bars that looks like a hamburger. */
 const HamburgerMenu = () => {
-  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
+  const distractionFreeTyping = useSelector(state => state.distractionFreeTyping)
   const dispatch = useDispatch()
   const fontSize = useSelector<State, number>((state: State) => state.fontSize)
 

@@ -90,12 +90,12 @@ const VirtualThought = ({
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
-  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
-  const isEditing = useSelector((state: State) => equalPath(state.cursor, simplePath))
-  const cursorLeaf = useSelector((state: State) => !!state.cursor && !hasChildren(state, head(state.cursor)))
-  const cursorDepth = useSelector((state: State) => (state.cursor ? state.cursor.length : 0))
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const note = useSelector((state: State) => noteValue(state, thought.id))
+  const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
+  const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
+  const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
+  const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
+  const fontSize = useSelector(state => state.fontSize)
+  const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
 
   /***************************
@@ -272,7 +272,7 @@ const Subthought = ({
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
-  const thought = useSelector((state: State) => getThoughtById(state, head(simplePath)), shallowEqual)
+  const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const noOtherContexts = useSelector(
     (state: State) => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
@@ -292,7 +292,7 @@ const Subthought = ({
         findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,
   )
-  const hideBullet = useSelector((state: State) => {
+  const hideBullet = useSelector(state => {
     const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =

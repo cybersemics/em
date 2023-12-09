@@ -5,7 +5,6 @@ import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
-import State from '../@types/State'
 import dragShortcut from '../action-creators/dragShortcut'
 import { isTouch } from '../browser'
 import { noop } from '../constants'
@@ -49,7 +48,7 @@ const endDrag = () => {
 /** Renders all of a shortcut's details as a table row. */
 const ShortcutRow: FC<DraggableShortcutRowProps> = ({ customize, dragSource, isDragging, shortcut }) => {
   const colors = useSelector(themeColors)
-  const description = useSelector((state: State) => {
+  const description = useSelector(state => {
     if (!shortcut) return ''
     return typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description
   })

@@ -2,7 +2,6 @@ import { unescape as decodeCharacterEntities } from 'lodash'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import search from '../action-creators/search'
 import searchContexts from '../action-creators/searchContexts'
 import setCursor from '../action-creators/setCursor'
@@ -27,7 +26,7 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useSelector((state: State) => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
+  const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
 
   // TODO: Fix tabIndex for accessibility

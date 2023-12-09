@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
@@ -20,7 +19,7 @@ const Tutorial2StepContext1Parent = ({
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const hasQuotes = useSelector((state: State) => state.cursor && headValue(state, state.cursor).startsWith('"'))
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
 
   return (
     <>

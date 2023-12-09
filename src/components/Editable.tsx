@@ -5,7 +5,6 @@ import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } fro
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import TutorialChoice from '../@types/TutorialChoice'
 import cursorCleared from '../action-creators/cursorCleared'
 import editThought from '../action-creators/editThought'
@@ -101,10 +100,10 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
   const options = childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
-  const rank = useSelector((state: State) => getThoughtById(state, head(simplePath))?.rank || 0)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const isCursorCleared = useSelector((state: State) => !!isEditing && state.cursorCleared)
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
+  const fontSize = useSelector(state => state.fontSize)
+  const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const placeholder = usePlaceholder({ isEditing, simplePath })

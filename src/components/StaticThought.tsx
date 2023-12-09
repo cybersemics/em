@@ -30,10 +30,10 @@ const StaticThought = ({
   simplePath,
   style,
 }: ThoughtProps) => {
-  const showContexts = useSelector((state: State) => isContextViewActive(state, rootedParentOf(state, path)))
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
+  const fontSize = useSelector(state => state.fontSize)
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath)).value)
+  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load

@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import GesturePath from '../@types/GesturePath'
-import State from '../@types/State'
 import { isTouch } from '../browser'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
 import getSetting from '../selectors/getSetting'
@@ -33,10 +32,10 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
     - https://github.com/cybersemics/em/issues/1344
     - https://github.com/cybersemics/em/pull/1345
   */
-  const isLoading = useSelector((state: State) => state.isLoading)
+  const isLoading = useSelector(state => state.isLoading)
   const status = offlineStatusStore.useState()
 
-  const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 0))
+  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
 
   const colors = useSelector(themeColors)
 

@@ -15,7 +15,6 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
@@ -298,7 +297,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const [showOptions, setShowOptions] = useState(false)
   const colors = useSelector(themeColors)
 
-  const simplePaths = useSelector((state: State) => {
+  const simplePaths = useSelector(state => {
     return (getLexeme(state, '=favorite')?.contexts || [])
       .map(id => {
         const thought = getThoughtById(state, id)

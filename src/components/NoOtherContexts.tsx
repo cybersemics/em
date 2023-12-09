@@ -15,7 +15,7 @@ const NoOtherContexts = ({
   allowSingleContext?: boolean
   simplePath: SimplePath
 }) => {
-  // const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
+  // const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
 
   return (
     <div

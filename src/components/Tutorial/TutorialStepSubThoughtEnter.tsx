@@ -1,6 +1,5 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import ellipsize from '../../util/ellipsize'
 import headValue from '../../util/headValue'
@@ -8,12 +7,12 @@ import parentOf from '../../util/parentOf'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSubThoughtEnter = () => {
-  const nonRoot = useSelector((state: State) => state.cursor && state.cursor.length > 1)
-  const cursorValue = useSelector((state: State) => (state.cursor ? headValue(state, state.cursor) : null))
-  const cursorParentValue = useSelector((state: State) =>
+  const nonRoot = useSelector(state => state.cursor && state.cursor.length > 1)
+  const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : null))
+  const cursorParentValue = useSelector(state =>
     state.cursor && nonRoot ? headValue(state, parentOf(state.cursor)) : null,
   )
-  const isEmpty = useSelector((state: State) => state.cursor && cursorValue!.length === 0)
+  const isEmpty = useSelector(state => state.cursor && cursorValue!.length === 0)
 
   return (
     <>

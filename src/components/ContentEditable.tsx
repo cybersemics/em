@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import State from '../@types/State'
 
 interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
   style?: React.CSSProperties
@@ -19,7 +18,7 @@ const ContentEditable = React.memo(({ style, html, disabled, innerRef, ...props 
   const contentRef = innerRef || newContentRef
   const prevHtmlRef = useRef<string>(html)
   const allowInnerHTMLChange = useRef<boolean>(true)
-  const editableNonce = useSelector((state: State) => state.editableNonce)
+  const editableNonce = useSelector(state => state.editableNonce)
   const editableNonceRef = useRef<number>(editableNonce)
 
   useEffect(

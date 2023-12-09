@@ -29,7 +29,7 @@ const Tutorial2StepContext1SubThought = ({
     (state: State) =>
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
-  const tryItYourself = useSelector((state: State) => {
+  const tryItYourself = useSelector(state => {
     const tutorialChoiceId = contextToThoughtId(state, [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
     return (
       tutorialChoiceId &&

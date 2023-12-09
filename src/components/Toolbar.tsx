@@ -14,7 +14,6 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
-import State from '../@types/State'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
@@ -38,13 +37,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
   const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
-  const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
-  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const distractionFreeTyping = useSelector(state => state.distractionFreeTyping)
+  const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
 
   // re-render only (why?)
-  useSelector((state: State) => state.showHiddenThoughts)
+  useSelector(state => state.showHiddenThoughts)
 
   /**********************************************************************
    * Methods
@@ -99,7 +98,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
-  const shortcutIds = useSelector((state: State) => {
+  const shortcutIds = useSelector(state => {
     const userShortcutIds = getUserToolbar(state)
     return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)

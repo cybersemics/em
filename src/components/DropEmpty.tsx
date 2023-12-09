@@ -58,7 +58,7 @@ const DropEmptyInnerContainer = ({
   const isExpanded = useSelector(
     (state: State) => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
   )
-  const draggingThought = useSelector((state: State) => state.draggingThought, shallowEqual)
+  const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 
   // Do not render DropEmpty on expanded thoughts or on the dragging thought.
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
@@ -85,7 +85,7 @@ const DropEmpty = ({
   path,
   simplePath,
 }: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value || '')
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 

@@ -7,7 +7,6 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
-import State from '../../@types/State'
 import alert from '../../action-creators/alert'
 import { isMac } from '../../browser'
 import { accessToken as accessTokenCurrent, permissionsClientDoc, tsid } from '../../data-providers/yjs'
@@ -333,7 +332,7 @@ const AddDeviceForm = ({
 const EditableName = React.memo(
   ({ onChange, value }: { onChange: (e: ContentEditableEvent) => void; value: string }) => {
     const colors = useSelector(themeColors)
-    const fontSize = useSelector((state: State) => state.fontSize)
+    const fontSize = useSelector(state => state.fontSize)
     const ref = useRef<HTMLDivElement>(null)
     return (
       <div style={{ position: 'relative' }}>
@@ -381,7 +380,7 @@ const ShareDetail = React.memo(
   }) => {
     const shareUrlInputRef = useRef<HTMLInputElement>(null)
     const dispatch = useDispatch()
-    const fontSize = useSelector((state: State) => state.fontSize)
+    const fontSize = useSelector(state => state.fontSize)
     const colors = useSelector(themeColors)
     // limits sharing and tells the user that they should create a new device share
     const isCurrent = accessToken === accessTokenCurrent

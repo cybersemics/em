@@ -19,7 +19,7 @@ const Tutorial2StepContext2 = ({
   tutorialChoice: keyof typeof TUTORIAL_CONTEXT
   rootChildren: Thought[]
 }) => {
-  const readyToType = useSelector((state: State) => {
+  const readyToType = useSelector(state => {
     if (!state.cursor) return false
     const cursorThought = childIdsToThoughts(state, state.cursor)
     return cursorThought.length === 2 && cursorThought[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]

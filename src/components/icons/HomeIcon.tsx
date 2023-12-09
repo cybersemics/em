@@ -1,12 +1,11 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import IconType from '../../@types/Icon'
-import State from '../../@types/State'
 import themeColors from '../../selectors/themeColors'
 
 /** A home icon. */
 const HomeIcon = ({ className, fill, size, style }: IconType) => {
-  const sizeCalculated = useSelector((state: State) => size || state.fontSize)
+  const sizeCalculated = useSelector(state => size || state.fontSize)
   const colors = useSelector(themeColors)
   return (
     <span role='img' aria-label='home' className='logo-wrapper'>

@@ -21,7 +21,7 @@ const tutorialChoiceMap = {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Parent = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
-  const hasQuotes = useSelector((state: State) => state.cursor && headValue(state, state.cursor).startsWith('"'))
+  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
   const readyToSelect = useSelector(
     (state: State) =>
       !state.cursor ||

@@ -10,7 +10,7 @@ import headValue from '../../util/headValue'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
-  const caseSensitiveValue = useSelector((state: State) =>
+  const caseSensitiveValue = useSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
@@ -19,7 +19,7 @@ const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: ke
     (state: State) => !state.cursor || headValue(state, state.cursor) !== caseSensitiveValue,
   )
 
-  const isHint = useSelector((state: State) => {
+  const isHint = useSelector(state => {
     const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
     return tutorialStep !== Math.floor(tutorialStep)
   })

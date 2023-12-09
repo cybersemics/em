@@ -108,12 +108,12 @@ const ThoughtAnnotationContainer = React.memo(
     // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
     const [calculateContexts, setCalculateContexts] = useState(false)
 
-    const value: string | undefined = useSelector((state: State) => {
+    const value: string | undefined = useSelector(state => {
       const thought = getThoughtById(state, head(path))
       return thought?.value || ''
     })
 
-    const isEditing = useSelector((state: State) => equalPath(state.cursor, path))
+    const isEditing = useSelector(state => equalPath(state.cursor, path))
     const invalidStateIfEditing = useMemo(() => isEditing && invalidState, [isEditing, invalidState])
 
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
@@ -125,7 +125,7 @@ const ThoughtAnnotationContainer = React.memo(
 
     const hideSuperscriptsSetting = useSelector(getUserSetting(Settings.hideSuperscripts))
 
-    const isExpanded = useSelector((state: State) => !!state.expanded[hashPath(simplePath)])
+    const isExpanded = useSelector(state => !!state.expanded[hashPath(simplePath)])
 
     const numContexts = useSelector(
       moize(
@@ -156,7 +156,7 @@ const ThoughtAnnotationContainer = React.memo(
       !hideSuperscriptsSetting &&
       (REGEX_PUNCTUATIONS.test(value.replace(REGEX_TAGS, '')) ? false : minContexts === 0 || numContexts > 1)
 
-    const url = useSelector((state: State) => {
+    const url = useSelector(state => {
       const childrenUrls = filterAllChildren(state, head(simplePath), child => isURL(child.value))
       const urlValue = isURL(value)
         ? value
@@ -216,7 +216,7 @@ const ThoughtAnnotation = React.memo(
   }) => {
     const contentRef = React.useRef<HTMLInputElement>(null)
 
-    const fontSize = useSelector((state: State) => state.fontSize)
+    const fontSize = useSelector(state => state.fontSize)
 
     /**
      * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -227,7 +227,7 @@ const ThoughtAnnotation = React.memo(
      * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
      */
 
-    const textMarkup = useSelector((state: State) => getTextMarkup(state, !!isEditing, value, head(simplePath)))
+    const textMarkup = useSelector(state => getTextMarkup(state, !!isEditing, value, head(simplePath)))
 
     const multiline = useMultiline(contentRef, simplePath, isEditing)
 

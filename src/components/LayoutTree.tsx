@@ -241,9 +241,9 @@ const virtualTree = (
 const LayoutTree = () => {
   const { heights, setHeight } = useHeightTracking()
   const virtualThoughts = useSelector(virtualTree, _.isEqual)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const dragInProgress = useSelector((state: State) => state.dragInProgress)
-  const indent = useSelector((state: State) =>
+  const fontSize = useSelector(state => state.fontSize)
+  const dragInProgress = useSelector(state => state.dragInProgress)
+  const indent = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
@@ -271,7 +271,7 @@ const LayoutTree = () => {
   }, [estimatedHeight, heights])
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
-  const autofocusDepth = useSelector((state: State) => {
+  const autofocusDepth = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
@@ -279,7 +279,7 @@ const LayoutTree = () => {
   })
 
   // first uncle of the cursor used for DropBefore
-  const cursorUncleId = useSelector((state: State) => {
+  const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))

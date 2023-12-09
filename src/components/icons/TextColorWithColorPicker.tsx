@@ -2,13 +2,12 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import IconType from '../../@types/Icon'
-import State from '../../@types/State'
 import ColorPicker from '../ColorPicker'
 import TextColorIcon from './TextColor'
 
 /** Text Color Icon Component with popup ColorPicker. */
 const Icon = ({ size = 20, style }: IconType) => {
-  const showColorPicker = useSelector((state: State) => state.showColorPicker)
+  const showColorPicker = useSelector(state => state.showColorPicker)
   return (
     <div>
       <TextColorIcon size={size} style={style} />

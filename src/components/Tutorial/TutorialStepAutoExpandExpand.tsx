@@ -18,10 +18,10 @@ const thoughtsNoCursorWithChild = (state: State, rootChildren: Thought[]): Thoug
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = ({ rootChildren = [] }: { rootChildren: Thought[] }) => {
-  const uncle = useSelector((state: State) => thoughtsNoCursorWithChild(state, rootChildren)[0])
+  const uncle = useSelector(state => thoughtsNoCursorWithChild(state, rootChildren)[0])
 
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = useSelector((state: State) => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
+  const childWithNoCursorParent = useSelector(state => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
 
   const hiddenChild = (childWithNoCursorParent && ellipsize(childWithNoCursorParent?.value)) || ''
 

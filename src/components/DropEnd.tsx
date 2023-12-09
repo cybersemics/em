@@ -4,7 +4,6 @@ import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import { isTouch } from '../browser'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
@@ -47,13 +46,13 @@ const DropEnd = ({
   }
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
-  const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
+  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
-  const showDropHover = useSelector((state: State) => {
+  const showDropHover = useSelector(state => {
     if (globals.simulateDrag) return true
 
     // if hovering, and the parent is not sorted, show the drop-hover

@@ -1,7 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import GesturePath from '../../@types/GesturePath'
-import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import { shortcutById } from '../../shortcuts'
 import headValue from '../../util/headValue'
@@ -11,7 +10,7 @@ const newThoughtShortcut = shortcutById('newThought')!
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = () => {
-  const ready = useSelector((state: State) => {
+  const ready = useSelector(state => {
     if (!state.cursor) return true
     const headCursorValue = headValue(state, state.cursor)
     return headCursorValue?.length > 0

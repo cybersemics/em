@@ -1,7 +1,6 @@
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -27,7 +26,7 @@ const useZoom = ({
     1. Force actualDistance to 2 to hide thoughts.
     2. Set zoomCursor and zoomParent CSS classes to handle siblings.
   */
-  const zoomCursor = useSelector((state: State) => {
+  const zoomCursor = useSelector(state => {
     const parentChildrenAttributeId =
       state.cursor && findDescendant(state, head(rootedParentOf(state, state.cursor)), '=children')
 
@@ -39,7 +38,7 @@ const useZoom = ({
     )
   })
 
-  const zoomParent = useSelector((state: State) => {
+  const zoomParent = useSelector(state => {
     const grandparentChildrenAttributeId =
       state.cursor && findDescendant(state, head(rootedParentOf(state, parentOf(state.cursor))), '=children')
 
@@ -51,7 +50,7 @@ const useZoom = ({
     )
   })
 
-  const zoom = useSelector((state: State) => {
+  const zoom = useSelector(state => {
     const isEditingAncestor = isEditingPath && !isEditing
 
     /** Returns true if editing a grandchild of the cursor whose parent is zoomed. */

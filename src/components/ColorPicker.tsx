@@ -40,7 +40,7 @@ const ColorSwatch: FC<{
 }> = ({ backgroundColor, color, cursorStyle, label, shape, size }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   const selected =
     (color && cursorStyle?.color === color) || (backgroundColor && cursorStyle?.backgroundColor === backgroundColor)
   size = size || fontSize * 1.2

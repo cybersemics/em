@@ -1,6 +1,5 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import State from '../../@types/State'
 import showModal from '../../action-creators/showModal'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'
 import { Settings } from '../../constants'
@@ -22,7 +21,7 @@ const Setting: FC<{
   title: string
 }> = ({ children, dependee, dependsOn, invert, settingsKey, title }) => {
   const value = useSelector(getUserSetting(settingsKey))
-  const disabled = useSelector((state: State) => dependsOn && getUserSetting(state, dependsOn))
+  const disabled = useSelector(state => dependsOn && getUserSetting(state, dependsOn))
   const dispatch = useDispatch()
   return (
     <Checkbox

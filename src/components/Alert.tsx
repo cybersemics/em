@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import alertStore from '../stores/alert'
 import Popup from './Popup'
@@ -10,7 +9,7 @@ import Popup from './Popup'
 const Alert: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
-  const alert = useSelector((state: State) => state.alert)
+  const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
   const value = alertStoreValue ?? alert?.value
 

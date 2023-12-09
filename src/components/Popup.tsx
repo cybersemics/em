@@ -1,6 +1,5 @@
 import React, { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import State from '../@types/State'
 import alertActionCreator from '../action-creators/alert'
 import { deleteResumableFile } from '../action-creators/importFiles'
 import { isTouch } from '../browser'
@@ -21,7 +20,7 @@ const Popup: FC<{
 }> = ({ children, importFileId, isInline, onClose, textAlign = 'center' }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   const useSwipeToDismissProps = useSwipeToDismiss({
     ...(isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar

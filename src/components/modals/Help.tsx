@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
-import State from '../../@types/State'
 import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
 import setTutorialStep from '../../action-creators/tutorialStep'
@@ -30,7 +29,7 @@ const HelpMenuItem: FC<{ Icon: FC<Icon>; onTap: () => void; title: string; descr
   title,
   description,
 }) => {
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   return (
     <div {...fastClick(onTap)} style={{ display: 'flex', marginBottom: '1em' }}>
       <div style={{ marginRight: '0.5em', paddingTop: '0.5em' }}>
@@ -73,7 +72,7 @@ const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
 /** Tutorials section. */
 const Tutorials = () => {
   const dispatch = useDispatch()
-  const tutorialStep = useSelector((state: State) => +(getSetting(state, 'Tutorial Step') || 1))
+  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   return (
     <section className='popup-section' id='tutorials'>
       <h2 className='modal-subtitle'>Tutorials</h2>
@@ -371,7 +370,7 @@ const About = () => {
 /** A modal that offers links to the tutorial, a list of shortcuts, and other helpful things. */
 const ModalHelp = () => {
   const [section, setSection] = useState(Section.Menu)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   const back = useCallback(() => setSection(Section.Menu), [])
   return (
     <ModalComponent

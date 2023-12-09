@@ -242,10 +242,10 @@ const ThoughtContainer = ({
     shallowEqual,
   )
   const styleContainer = useThoughtStyleContainer({ children, env, styleContainerProp, thoughtId, path })
-  const value = useSelector((state: State) => getThoughtById(state, thoughtId)?.value)
+  const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
 
   // must use isContextViewActive to read from live state rather than showContexts which is a static propr from the Subthoughts component. showContext is not updated when the context view is toggled, since the Thought should not be re-rendered.
-  const isTable = useSelector((state: State) => view === 'Table' && !isContextViewActive(state, path))
+  const isTable = useSelector(state => view === 'Table' && !isContextViewActive(state, path))
 
   const dragHoldResult = useDragHold({
     isDragging,
@@ -253,14 +253,14 @@ const ThoughtContainer = ({
     sourceZone: DragThoughtZone.Thoughts,
   })
 
-  const homeContext = useSelector((state: State) => {
+  const homeContext = useSelector(state => {
     const pathParent = rootedParentOf(state, path)
     const showContexts = isContextViewActive(state, path)
     return showContexts && isRoot(pathParent)
   })
 
   // true if the thought has an invalid option
-  const invalidOption = useSelector((state: State) => {
+  const invalidOption = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return false
 

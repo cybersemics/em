@@ -1,7 +1,6 @@
 import { unescape as unescapeHtml } from 'html-escaper'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import State from '../../@types/State'
 import { Settings } from '../../constants'
 import attributeEquals from '../../selectors/attributeEquals'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -15,7 +14,7 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 
 /** Generates the placeholder text for the thought. Automatically changes from 'Add a thought' to 'This is an empty thought' after a short delay. Handles the special case where the cursor is in a clear state due to the clearThought shortcut. */
 const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefined; simplePath: SimplePath }) =>
-  useSelector((state: State) => {
+  useSelector(state => {
     const isCursorCleared = isEditing && state.cursorCleared
     const parentId = head(rootedParentOf(state, simplePath))
     const lastUpdated = getThoughtById(state, head(simplePath)).lastUpdated

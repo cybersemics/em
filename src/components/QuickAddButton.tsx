@@ -1,7 +1,6 @@
 import classNames from 'classnames'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import State from '../@types/State'
 import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'
 import fastClick from '../util/fastClick'
 import isAbsolute from '../util/isAbsolute'
@@ -11,7 +10,7 @@ import AddIcon from './AddIcon'
  * Quick Add Button.
  */
 const QuickAddButton: React.FC = () => {
-  const rootContext = useSelector((state: State) => state.rootContext)
+  const rootContext = useSelector(state => state.rootContext)
   const dispatch = useDispatch()
 
   return (

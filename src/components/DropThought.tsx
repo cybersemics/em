@@ -2,7 +2,6 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
@@ -24,11 +23,11 @@ const DropThought = ({
   prevChildId?: ThoughtId
   simplePath: SimplePath
 }) => {
-  const value = useSelector((state: State) => getThoughtById(state, head(simplePath))?.value)
+  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
   const dropHoverColor = useDropHoverColor(simplePath.length)
 
   // true if a thought is being dragged over this drop hover
-  const showDropHover = useSelector((state: State) => {
+  const showDropHover = useSelector(state => {
     // if alphabetical sort is disabled just check if current thought is hovering
     const parentId = getThoughtById(state, head(simplePath))?.parentId
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'

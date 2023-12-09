@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -29,9 +28,7 @@ const DropBefore = ({
   simplePath: SimplePath
 }) => {
   const dropHoverColor = useDropHoverColor(depth || 0)
-  const value = useSelector((state: State) =>
-    globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
-  )
+  const value = useSelector(state => (globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : ''))
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   if (!dropTarget) return null

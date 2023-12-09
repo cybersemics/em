@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
-import State from '../@types/State'
 import { isTouch } from '../browser'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
@@ -54,10 +53,10 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const isDraggingAny = useSelector((state: State) => !!state.dragShortcut)
-  const dragShortcutZone = useSelector((state: State) => state.dragShortcutZone)
-  const isButtonActive = useSelector((state: State) => (customize ? selected : !isActive || isActive(() => state)))
-  const isButtonExecutable = useSelector((state: State) => customize || !canExecute || canExecute(() => state))
+  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  const dragShortcutZone = useSelector(state => state.dragShortcutZone)
+  const isButtonActive = useSelector(state => (customize ? selected : !isActive || isActive(() => state)))
+  const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,

@@ -3,7 +3,6 @@ import React, { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import GesturePath from '../@types/GesturePath'
-import State from '../@types/State'
 import GestureDiagram from './GestureDiagram'
 
 interface LatestShortcutsDiagramProps {
@@ -14,7 +13,7 @@ interface LatestShortcutsDiagramProps {
  * Shows latest activated shortcuts diagram.
  */
 const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'middle' }) => {
-  const latestShortcuts = useSelector((state: State) => state.latestShortcuts)
+  const latestShortcuts = useSelector(state => state.latestShortcuts)
 
   const latestShortcutsRef = useRef(latestShortcuts)
 

@@ -180,10 +180,10 @@ const CommandRow: FC<{
   const colors = useSelector(themeColors)
   const isActive = shortcut.isActive?.(store.getState)
   const label = shortcut.labelInverse && isActive ? shortcut.labelInverse! : shortcut.label
-  const disabled = useSelector((state: State) => !isExecutable(state, shortcut))
+  const disabled = useSelector(state => !isExecutable(state, shortcut))
 
   // convert the description to a string
-  const description = useSelector((state: State) => {
+  const description = useSelector(state => {
     const descriptionStringOrFunction = (isActive && shortcut.descriptionInverse) || shortcut.description
     return descriptionStringOrFunction instanceof Function
       ? descriptionStringOrFunction(() => state)
@@ -341,7 +341,7 @@ const CommandPalette: FC = () => {
   const store = useStore()
   const dispatch = useDispatch()
   const gestureInProgress = gestureStore.useState()
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   const [keyboardInProgress, setKeyboardInProgress] = useState('')
   const [recentCommands, setRecentCommands] = useState<ShortcutId[]>(storageModel.get('recentCommands'))
   const unmounted = useRef(false)
@@ -587,7 +587,7 @@ const CommandPaletteWithTransition: FC = () => {
     dispatch(commandPalette())
   }, [dispatch])
 
-  const showCommandPalette = useSelector((state: State) => state.showCommandPalette)
+  const showCommandPalette = useSelector(state => state.showCommandPalette)
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (

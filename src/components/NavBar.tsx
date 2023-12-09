@@ -59,18 +59,16 @@ const HelpButton: React.FC = () => {
 const NavBar = ({ position }: { position: string }) => {
   const isTutorialOn = useSelector(isTutorial)
   const colors = useSelector(themeColors)
-  const authenticated = useSelector((state: State) => state.authenticated)
-  const editing = useSelector((state: State) => state.editing)
-  const distractionFreeTyping = useSelector((state: State) => state.distractionFreeTyping)
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const authenticated = useSelector(state => state.authenticated)
+  const editing = useSelector(state => state.editing)
+  const distractionFreeTyping = useSelector(state => state.distractionFreeTyping)
+  const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
 
   const showHomeLink = useSelector(
     (state: State) => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2),
   )
-  const backgroundColor = useSelector((state: State) =>
-    state.cursor && state.cursor.length > 0 ? colors.bg : undefined,
-  )
+  const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
 
   return (
     <div

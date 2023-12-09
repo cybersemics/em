@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
@@ -26,7 +25,7 @@ const useThoughtStyle = ({
   styleProp: React.CSSProperties | undefined
   thoughtId: ThoughtId
 }) => {
-  const style = useSelector((state: State) => {
+  const style = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return undefined
 

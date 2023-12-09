@@ -8,9 +8,9 @@ import editingValueStore from '../../stores/editingValue'
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const showSplitView = useSelector((state: State) => state.showSplitView)
-  const splitPosition = useSelector((state: State) => state.splitPosition)
+  const fontSize = useSelector(state => state.fontSize)
+  const showSplitView = useSelector(state => state.showSplitView)
+  const splitPosition = useSelector(state => state.splitPosition)
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return

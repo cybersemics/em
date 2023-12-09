@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import cursorDown from '../action-creators/cursorDown'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import editing from '../action-creators/editing'
@@ -40,8 +39,8 @@ const Note = React.memo(({ path }: { path: Path }) => {
   const thoughtId = head(path)
   const dispatch = useDispatch()
   const noteRef: { current: HTMLElement | null } = useRef(null)
-  const fontSize = useSelector((state: State) => state.fontSize)
-  const hasFocus = useSelector((state: State) => state.noteFocus && equalPathHead(state.cursor, path))
+  const fontSize = useSelector(state => state.fontSize)
+  const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
   const [justPasted, setJustPasted] = useState(false)
 
   // set the caret on the note if editing this thought and noteFocus is true
@@ -53,7 +52,7 @@ const Note = React.memo(({ path }: { path: Path }) => {
   }, [hasFocus])
 
   /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-  const note = useSelector((state: State) => noteValue(state, thoughtId))
+  const note = useSelector(state => noteValue(state, thoughtId))
 
   if (note === null) return null
 

@@ -33,8 +33,8 @@ const DroppableQuickDropIcon = ({
   Icon: FC<IconType>
   onHoverMessage: string | ((state: State, zone: DragThoughtZone) => string)
 } & ReturnType<typeof dropCollect>) => {
-  const dark = useSelector((state: State) => theme(state) !== 'Light')
-  const fontSize = useSelector((state: State) => state.fontSize)
+  const dark = useSelector(state => theme(state) !== 'Light')
+  const fontSize = useSelector(state => state.fontSize)
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {
