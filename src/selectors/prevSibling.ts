@@ -26,8 +26,8 @@ export const prevSibling = (state: State, path: Path): Thought | null => {
   const index = siblings.findIndex(child => (showContexts ? child.parentId : child.id) === id)
 
   if (index === -1) {
-    const message = `Thought ${thought.value} with id ${id} missing from children of parent ${thought.parentId}`
-    console.error(message, { thought })
+    const message = `Thought ${thought.value} with Path ${path} missing from children of parent ${thought.parentId}`
+    console.error(message, { thought, siblings, parent: getThoughtById(state, thought.parentId) })
     throw new Error(message)
   }
 
