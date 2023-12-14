@@ -9,7 +9,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import expandContextThought from '../action-creators/expandContextThought'
 import { isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
@@ -28,6 +27,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
+import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
 import fastClick from '../util/fastClick'
@@ -301,16 +301,13 @@ const ThoughtContainer = ({
   )
 
   // when the thought is edited on desktop, hide the top controls and breadcrumbs for distraction-free typing
-  const onEdit = useCallback(
-    ({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
-      // only hide when typing, not when deleting
-      // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
-      if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
-        dispatch(distractionFreeTyping(true))
-      }
-    },
-    [dispatch],
-  )
+  const onEdit = useCallback(({ newValue, oldValue }: { newValue: string; oldValue: string }) => {
+    // only hide when typing, not when deleting
+    // strip HTML tags, otherwise Formatting shortcuts will trigger distractionFreeTyping
+    if (newValue.replace(REGEX_TAGS, '').length > oldValue.replace(REGEX_TAGS, '').length) {
+      distractionFreeTypingStore.updateThrottled(true)
+    }
+  }, [])
 
   // Styles applied to the .thought-annotation and .editable
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.

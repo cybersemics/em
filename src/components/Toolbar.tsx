@@ -17,6 +17,7 @@ import ShortcutId from '../@types/ShortcutId'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
+import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
@@ -38,7 +39,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
-  const distractionFreeTyping = useSelector(state => state.distractionFreeTyping)
+  const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
 

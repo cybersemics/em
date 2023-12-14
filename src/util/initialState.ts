@@ -102,7 +102,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     cursorInitialized: false,
     cursorOffset: 0,
     dragInProgress: false,
-    distractionFreeTyping: false,
     editableNonce: 0,
     editing: null,
     enableLatestShortcutsDiagram: false,

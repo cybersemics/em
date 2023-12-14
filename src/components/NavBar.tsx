@@ -9,6 +9,7 @@ import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
+import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
@@ -61,7 +62,7 @@ const NavBar = ({ position }: { position: string }) => {
   const colors = useSelector(themeColors)
   const authenticated = useSelector(state => state.authenticated)
   const editing = useSelector(state => state.editing)
-  const distractionFreeTyping = useSelector(state => state.distractionFreeTyping)
+  const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
 

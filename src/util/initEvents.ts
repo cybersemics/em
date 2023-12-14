@@ -6,7 +6,6 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import alert from '../action-creators/alert'
 import commandPalette from '../action-creators/commandPalette'
-import distractionFreeTyping from '../action-creators/distractionFreeTyping'
 import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
@@ -18,6 +17,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
+import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
 import { updateHeight, updateScrollTop } from '../stores/viewport'
@@ -170,7 +170,7 @@ const initEvents = (store: Store<State, any>) => {
   )
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() => store.dispatch(distractionFreeTyping(false)), 100, { leading: true })
+  const onMouseMove = _.debounce(() => distractionFreeTypingStore.update(false), 100, { leading: true })
 
   /** Handles auto scroll on drag near the edge of the screen on mobile. */
   // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.

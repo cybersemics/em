@@ -62,7 +62,6 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   deleteEmptyThought: true,
   deleteThought: true,
   deleteThoughtWithCursor: true,
-  distractionFreeTyping: false,
   dragHold: false,
   dragInProgress: false,
   dragShortcut: false,
