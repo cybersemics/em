@@ -22,8 +22,12 @@ const mongodbConnectionString = process.env.MONGODB_CONNECTION_STRING ?? 'mongod
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT ? +process.env.REDIS_PORT : undefined
 const port = process.env.PORT ? +process.env.PORT : 3001
-const hasGraphiteCredentials = process.env.GRAPHITE_URL && process.env.GRAPHITE_USERID && process.env.GRAPHITE_APIKEY
-const hasMetricsCredentials = process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD
+const hasGraphiteCredentials = !!(
+  process.env.GRAPHITE_URL &&
+  process.env.GRAPHITE_USERID &&
+  process.env.GRAPHITE_APIKEY
+)
+const hasMetricsCredentials = !!(process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD)
 const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
 
 client.collectDefaultMetrics()
