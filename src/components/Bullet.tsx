@@ -9,12 +9,11 @@ import setCursor from '../action-creators/setCursor'
 import setDescendant from '../action-creators/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import findDescendant from '../selectors/findDescendant'
-import { getChildren } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
-import isPending from '../selectors/isPending'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -73,14 +72,14 @@ const BulletLeaf = ({
 const BulletParent = ({
   currentScale,
   fill,
-  missing,
+  childrenMissing,
   pending,
   showContexts,
 }: {
   currentScale?: number
   fill?: string
   isHighlighted?: boolean
-  missing?: boolean
+  childrenMissing?: boolean
   pending?: boolean
   showContexts?: boolean
 } = {}) => {
@@ -100,7 +99,7 @@ const BulletParent = ({
 
   return (
     <path
-      className={classNames({ 'glyph-fg': true, triangle: true, gray: missing, graypulse: pending })}
+      className={classNames({ 'glyph-fg': true, triangle: true, gray: childrenMissing, graypulse: pending })}
       style={{
         transformOrigin: calculateTransformOrigin(),
       }}
@@ -163,16 +162,31 @@ const Bullet = ({
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging
   })
+
+  /** Returns true if the thought is pending. */
   const pending = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
     // (Another approach would be to pre-load the context children as soon as the context view is activated.)
-    return isContextPending || (!isContextViewActive(state, parentOf(path)) && isPending(state, thought))
+    const showContextsParent = isContextViewActive(state, parentOf(path))
+    return isContextPending || (!showContextsParent && thought?.pending)
   })
+
+  /** Returns true if the thought or its Lexeme is missing. */
   const missing = useSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     return !thought || !getLexeme(state, thought.value)
   })
+
+  // Returns true if any of the thought's children are missing. Only shown when showHiddenThoughts is true until an autorepair solution is found.
+  const childrenMissing = useSelector(state => {
+    if (!state.showHiddenThoughts) return false
+    const thought = getThoughtById(state, thoughtId)
+    if (!thought) return false
+    const children = getAllChildrenAsThoughts(state, thought.id)
+    return children.length < Object.keys(thought.childrenMap).length
+  })
+
   const colors = useSelector(themeColors)
 
   // fill =bullet/=style override
@@ -292,7 +306,7 @@ const Bullet = ({
               currentScale={svgElement.current?.currentScale || 1}
               fill={fill}
               isHighlighted={isHighlighted}
-              missing={missing}
+              childrenMissing={childrenMissing}
               pending={pending}
               showContexts={showContexts}
             />
