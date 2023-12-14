@@ -10,7 +10,7 @@ import dragInProgress from '../action-creators/dragInProgress'
 import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import { isSafari, isTouch } from '../browser'
-import { AlertText, AlertType } from '../constants'
+import { AlertText, AlertType, THROTTLE_DISTRACTION_FREE_TYPING } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -170,7 +170,9 @@ const initEvents = (store: Store<State, any>) => {
   )
 
   /** MouseMove event listener. */
-  const onMouseMove = _.debounce(() => distractionFreeTypingStore.update(false), 100, { leading: true })
+  const onMouseMove = _.debounce(() => distractionFreeTypingStore.update(false), THROTTLE_DISTRACTION_FREE_TYPING, {
+    leading: true,
+  })
 
   /** Handles auto scroll on drag near the edge of the screen on mobile. */
   // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
