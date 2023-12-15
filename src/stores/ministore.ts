@@ -34,11 +34,7 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 
     state = updates && typeof updates === 'object' ? { ...state, ...updates } : updates
 
-    // Since store updates can trigger re-renders through hooks, wait till the next tick to ensure that reducers have finished.
-    // Otherwise it causes a React error due to calling store.getState() while the reducer is executing.
-    setTimeout(() => {
-      emitter.trigger('change', updates)
-    })
+    emitter.trigger('change', updates)
   }
 
   /**
@@ -53,7 +49,9 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     const onChange =
       process.env.NODE_ENV === 'test'
         ? async (state: T) => {
-            await act(() => Promise.resolve(f(state)))
+            setTimeout(async () => {
+              await act(() => Promise.resolve(f(state)))
+            })
           }
         : f
     emitter.on('change', onChange)
