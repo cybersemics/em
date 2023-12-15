@@ -37,7 +37,7 @@ declare module 'react' {
 const whereContext = (state: State, context: Context) => (node: ComponentWithSimplePath) =>
   equalArrays(pathToContext(state, node.props().simplePath), context)
 
-let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown>
 
 beforeEach(async () => {
   wrapper = await createTestApp()

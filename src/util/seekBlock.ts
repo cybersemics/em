@@ -19,7 +19,6 @@ const seekBlock = <T extends Block>(json: T[], index: number): { path: T[]; chil
     let descendants = 0
 
     // loop through children
-    // eslint-disable-next-line fp/no-loops
     for (let i = 0; i < json.length; i++) {
       // RECURSE
       const result = seekJsonRecursive(json[i].children as T[], index - descendants - 1, {

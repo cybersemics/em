@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-class */
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 /**

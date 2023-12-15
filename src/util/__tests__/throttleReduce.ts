@@ -15,8 +15,6 @@ it('synchronous: once on the leading edge and once on the trailing edge', async 
     output = [...output, ...values]
   }
   const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10)
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }
@@ -193,8 +191,6 @@ it('flush', async () => {
     output = [...output, ...values]
   }
   const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10)
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }
@@ -210,8 +206,6 @@ it('return function result from last from flush', async () => {
   /** Squares each item in an array. */
   const f = (values: number[]) => values.map(x => x * x)
   const g = throttleReduce<number, number[], number[]>(f, append, [] as number[], 10)
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }
@@ -235,8 +229,6 @@ it('custom throttle function', async () => {
     output = [...output, ...values]
   }
   const g = throttleReduce<number, number[], void>(f, append, [] as number[], 10, { throttle: _.throttle })
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }

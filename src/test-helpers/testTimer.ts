@@ -7,7 +7,6 @@ import FakeTimer, { InstalledClock } from '@sinonjs/fake-timers'
  * See: https://github.com/facebook/jest/issues/10221.
  */
 const testTimer = () => {
-  // eslint-disable-next-line fp/no-let
   let clock: InstalledClock | null = null
 
   /**

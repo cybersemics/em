@@ -25,7 +25,6 @@ export interface PullOptions {
 
 /** Iterate through an async iterable and invoke a callback on each yield. */
 async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) {
-  // eslint-disable-next-line fp/no-loops
   for await (const item of it) {
     callback(item)
   }

@@ -6,7 +6,7 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import NoThoughts from '../NoThoughts'
 
-let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown>
 
 beforeEach(async () => {
   wrapper = await createTestApp()

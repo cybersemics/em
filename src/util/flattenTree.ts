@@ -22,7 +22,6 @@ const flattenTree = <T extends Block, U>(
   ): (U | null)[] => {
     const arr: (U | null)[] = []
     count++
-    // eslint-disable-next-line fp/no-loops
     for (let i = 0; i < blocks.length; i++) {
       const block = blocks[i]
       arr.push(

@@ -118,8 +118,8 @@ const autoscroll = (() => {
 
 /** Add window event handlers. */
 const initEvents = (store: Store<State, any>) => {
-  let lastState: number // eslint-disable-line fp/no-let
-  let lastPath: Path | null // eslint-disable-line fp/no-let
+  let lastState: number
+  let lastPath: Path | null
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {

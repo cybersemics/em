@@ -2,7 +2,7 @@ import Thunk from '../@types/Thunk'
 import setCursor from '../action-creators/setCursor'
 import globals from '../globals'
 
-let timer: ReturnType<typeof setTimeout> // eslint-disable-line fp/no-let
+let timer: ReturnType<typeof setTimeout>
 
 /** Supress context expansion for a short duration (default: 100ms). This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. The state can be accessed with globals.suppressExpansion. If value is false, disables suppressExpansion immediately, cancels, the timer, and dispatches setCursor to re-trigger expandThoughts. */
 // duration of 66.666ms (4 frames) is low enough to be unnoticeable and high enough to cover the default key repeat rate on most machines (30ms)

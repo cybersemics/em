@@ -15,10 +15,10 @@ const getNgrams = (state: State, text: string, numWords: number) => {
 
   // keep track of the starting index of the most recent unlinked (no other contexts) ngram
   // this allows the largest unlinked ngram to be
-  let unlinkedStart = 0 // eslint-disable-line fp/no-let
+  let unlinkedStart = 0
 
   // keep track of the character index which will be passed in the result object for each ngram
-  let charIndex = 0 // eslint-disable-line fp/no-let
+  let charIndex = 0
 
   /** Recursively decoposes the current unlinked ngram. */
   const pushUnlinkedNgrams = (wordIndex: number) => {
@@ -38,7 +38,6 @@ const getNgrams = (state: State, text: string, numWords: number) => {
   }
 
   // loop through each ngram of the given phrase size (numWords)
-  // eslint-disable-next-line fp/no-loops, fp/no-let
   for (let i = 0; i < words.length - numWords; i++) {
     const ngram = words.slice(i, i + numWords).join(' ')
     if (ngram.length > 0) {

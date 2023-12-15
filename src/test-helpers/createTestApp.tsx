@@ -28,8 +28,6 @@ export const App = React.forwardRef(() => (
     </ErrorBoundaryContainer>
   </Provider>
 ))
-
-// eslint-disable-next-line fp/no-let
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 const fakeTimer = testTimer()
@@ -39,7 +37,7 @@ const fakeTimer = testTimer()
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   // store wrapper using closure since act cannot return
-  let wrapper: ReactWrapper | null = null // eslint-disable-line fp/no-let
+  let wrapper: ReactWrapper | null = null
 
   fakeTimer.useFakeTimer()
 

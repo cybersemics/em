@@ -1,4 +1,4 @@
-/* eslint-disable fp/no-let, prefer-const */
+/* eslint-disable prefer-const */
 import ThoughtId from './@types/ThoughtId'
 
 /** THE BAD PLACE where mutable globals are defined. */

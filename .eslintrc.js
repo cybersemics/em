@@ -82,7 +82,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['export-default-identifier', 'fp', 'jsdoc', 'react', 'react-native', 'prettier'],
+  plugins: ['export-default-identifier', 'jsdoc', 'react', 'react-native', 'prettier'],
   settings: {
     react: {
       version: 'detect',
@@ -96,10 +96,6 @@ module.exports = {
         types: ['Identifier', 'CallExpression', 'FunctionDeclaration'],
       },
     ],
-
-    // fp
-    'fp/no-delete': 0,
-    'fp/no-mutating-methods': 0,
 
     // jsdoc
     'jsdoc/check-tag-names': [

@@ -283,7 +283,6 @@ const redoReducer = (state: State, redoPatches: Patch[]) => {
 const undoRedoReducerEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
-    // eslint-disable-next-line fp/no-let
     let lastActionType: string
 
     /**

@@ -12,8 +12,6 @@ it('synchronous: once on the leading edge and once on the trailing edge', async 
     output = [...output, ...values]
   }
   const g = throttleConcat(f, 10)
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }
@@ -34,8 +32,6 @@ it('custom throttle function', async () => {
     output = [...output, ...values]
   }
   const g = throttleConcat(f, 10, { throttle: _.throttle })
-
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < 10; i++) {
     g(i)
   }

@@ -37,7 +37,6 @@ const findDeletableThought = (state: State, preserveSet: Set<ThoughtId>): Though
 
   // start searching at the start index and wrap around the end of the array of thoughts
   let deletableThought: Thought | null = null
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < allThoughts.length; i++) {
     const thought = allThoughts[i % allThoughts.length]
     if (isDeletable(thought)) {
@@ -79,7 +78,6 @@ const freeThoughts = (state: State) => {
   let stateNew = state
 
   // free thoughts until MAX_THOUGHTS is reached (minus MAX_THOUGHTS_MARGIN to provide some slack)
-  // eslint-disable-next-line fp/no-loops
   while (Object.values(stateNew.thoughts.thoughtIndex).length > FREE_THOUGHTS_THRESHOLD - FREE_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
     const deletableThought = findDeletableThought(stateNew, preserveSet)

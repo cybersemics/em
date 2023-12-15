@@ -7,7 +7,7 @@ import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
 import Editable from '../Editable'
 
-let wrapper: ReactWrapper<unknown, unknown> // eslint-disable-line fp/no-let
+let wrapper: ReactWrapper<unknown, unknown>
 
 beforeEach(async () => {
   wrapper = await createTestApp()

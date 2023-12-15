@@ -84,7 +84,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
   }
 
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // let recentlyEdited = state.recentlyEdited
   // try {
   //   recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
   // } catch (e) {

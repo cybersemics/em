@@ -1,6 +1,5 @@
 declare module 'y-mongodb-provider' {
   /** MongodbPersistence class. */
-  // eslint-disable-next-line fp/no-class
   class MongodbPersistence implements YBindablePersistence {
     constructor(
       connectionString: string,

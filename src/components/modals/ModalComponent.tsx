@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-class, fp/no-this */
 import classNames from 'classnames'
 import React from 'react'
 import ModalType from '../../@types/Modal'

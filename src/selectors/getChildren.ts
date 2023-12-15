@@ -108,8 +108,6 @@ const resortEmptyInPlace = (sorted: Thought[]): Thought[] => {
   let sortedFinal = sorted
   const numEmpties = sorted.filter(child => !child.value).length
   let i = 0
-
-  // eslint-disable-next-line fp/no-loops
   while (emptyIndex !== -1 && i++ < numEmpties) {
     // ignore empty thoughts that have an explicit sortOrder
     // sortOrder is set when editing a thought to the empty thought in order to preserve their sort order

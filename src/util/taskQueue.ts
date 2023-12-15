@@ -13,7 +13,6 @@ interface EventListeners<T> {
 /** A dummy class is needed to get the typeof a generic function. */
 // See: https://stackoverflow.com/questions/50321419/typescript-returntype-of-generic-function/64919133#64919133
 // Alternatively, an explicit interface can be defined for the return value.
-// eslint-disable-next-line fp/no-class
 class TaskQueueWrapper<T> {
   wrapped() {
     return taskQueue<T>()
@@ -178,7 +177,6 @@ const taskQueue = <
           emitter.trigger('step', { completed, expected, total, index, value })
 
           completedByIndex.set(index, { index, value })
-          // eslint-disable-next-line fp/no-loops
           while (completedByIndex.has(indexCompleted)) {
             const task = completedByIndex.get(indexCompleted)!
             completedByIndex.delete(indexCompleted)

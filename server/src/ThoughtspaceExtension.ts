@@ -299,7 +299,6 @@ const onLoadDocument = (configuration: {
  **********************************************************************/
 
 /** A Hocuspocus server extension that persists em thoughtspaces and handles permissions. */
-// eslint-disable-next-line fp/no-class
 class ThoughtspaceExtension implements Extension {
   onAuthenticate: (data: onAuthenticatePayload) => Promise<unknown>
   onLoadDocument: (data: onLoadDocumentPayload) => Promise<unknown>

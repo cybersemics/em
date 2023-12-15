@@ -120,7 +120,7 @@ const index = (): {
   return { shortcutKeyIndex, shortcutIdIndex, shortcutGestureIndex }
 }
 
-let commandPaletteGesture: number | undefined // eslint-disable-line fp/no-let
+let commandPaletteGesture: number | undefined
 
 /**
  * Keyboard and gesture handlers factory function that binds the store to event handlers.

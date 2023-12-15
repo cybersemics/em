@@ -26,8 +26,6 @@ export const App = React.forwardRef(() => (
     </ErrorBoundaryContainer>
   </Provider>
 ))
-
-// eslint-disable-next-line fp/no-let
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 
 /** Set up testing and mock document and window functions. */

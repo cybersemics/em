@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-class, fp/no-this */
 import React from 'react'
 import { GestureResponderEvent } from 'react-native'
 import { useSelector } from 'react-redux'

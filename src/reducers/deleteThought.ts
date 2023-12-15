@@ -76,7 +76,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // TODO: Re-enable Recently Edited
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  // let recentlyEdited = state.recentlyEdited // eslint-disable-line fp/no-let
+  // let recentlyEdited = state.recentlyEdited
   // try {
   //   recentlyEdited = treeDelete(state, state.recentlyEdited, path)
   // } catch (e) {

@@ -2,7 +2,7 @@
  * User entered "~" characters are double encoded.
  */
 const componentToThought = (component: string): string => {
-  let value = '' // eslint-disable-line fp/no-let
+  let value = ''
   try {
     value = window.decodeURIComponent(window.decodeURIComponent(component.replace(/~|%25$/, '')))
   } catch (e) {

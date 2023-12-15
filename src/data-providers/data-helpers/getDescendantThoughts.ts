@@ -103,8 +103,6 @@ async function* getDescendantThoughts(
 
   // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
   const accumulatedThoughts = { ...getState().thoughts }
-
-  // eslint-disable-next-line fp/no-loops
   while (thoughtIdQueue.size() > 0) {
     // thoughts may be missing, such as __ROOT__ on first load, or deleted ids
     // filter out the missing thought ids and proceed as usual

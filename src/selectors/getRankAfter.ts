@@ -26,7 +26,7 @@ const getRankAfter = (state: State, simplePath: SimplePath) => {
     return (children[children.length - 1].rank || 0) + 1
   }
 
-  let i = children.findIndex(child => child.value === value && child.rank === rank) // eslint-disable-line fp/no-let
+  let i = children.findIndex(child => child.value === value && child.rank === rank)
 
   // quick hack for context view when rank has been supplied as 0
   if (i === -1) {

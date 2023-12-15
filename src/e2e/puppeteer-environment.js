@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-class */
 /* eslint-disable no-useless-constructor */
 /* eslint-disable no-console */
 

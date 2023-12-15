@@ -449,7 +449,6 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   //     title: titleChild ? titleChild.value : undefined,
   //   })
 
-  //   // eslint-disable-next-line fp/no-loops
   //   for await (const result of ipfs.add(exported)) {
   //     if (result && result.path) {
   //       const cid = result.path

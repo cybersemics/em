@@ -1,4 +1,4 @@
-let t1 = Date.now() // eslint-disable-line fp/no-let
+let t1 = Date.now()
 
 // enable logging for debugging
 const enableLogging = false

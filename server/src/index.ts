@@ -1,6 +1,5 @@
 import { Redis } from '@hocuspocus/extension-redis'
 import { Server } from '@hocuspocus/server'
-// eslint-disable-next-line fp/no-events
 import { EventEmitter } from 'events'
 import express from 'express'
 import basicAuth from 'express-basic-auth'

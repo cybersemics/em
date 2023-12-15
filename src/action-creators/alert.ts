@@ -7,7 +7,7 @@ type Options = Omit<Alert, 'value'> & {
   clearDelay?: number
 }
 
-let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null // eslint-disable-line fp/no-let
+let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 /**
  * Dispatches an alert action.

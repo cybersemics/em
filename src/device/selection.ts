@@ -147,8 +147,6 @@ export const offsetThought = (): number | null => {
         : 0
       : selection.focusOffset
   let curNode: Node | null = selection.focusNode.nodeType === Node.TEXT_NODE ? selection.focusNode : selection.focusNode
-
-  // eslint-disable-next-line fp/no-loops
   while (curNode && !(curNode as HTMLElement)?.classList?.contains('editable')) {
     if (curNode?.previousSibling) {
       total += curNode.previousSibling.textContent?.length || 0

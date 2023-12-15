@@ -20,8 +20,8 @@ const onRef = (el: HTMLDivElement) => {
   if (!contentEl) return
 
   const logoEls = el.querySelectorAll('.logo') as NodeListOf<SVGGraphicsElement & HTMLElement & { width: number }>
-  let fontSize = 100 // eslint-disable-line fp/no-let
-  let width = logoEls[0] && logoEls[0].width // eslint-disable-line fp/no-let
+  let fontSize = 100
+  let width = logoEls[0] && logoEls[0].width
 
   /** Returns true if the text overflows past the window height. */
   const overflow = () => {
@@ -36,9 +36,7 @@ const onRef = (el: HTMLDivElement) => {
   const shrinkWidth = (el: HTMLElement) => (el.style.width = (width -= LOGO_SCALE_PX_PER_PERCENTAGE) + 'px') // eslint-disable-line no-return-assign
 
   if (fontSize) {
-    // eslint-disable-next-line fp/no-loops
     while (overflow() && fontSize >= MIN_FONT_SIZE) {
-      // eslint-disable-line fp/no-loops, no-unmodified-loop-condition
       shrinkFontSize(contentEl)
       logoEls.forEach(shrinkWidth)
     }

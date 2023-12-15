@@ -2,7 +2,6 @@
 const detectTabSize = (text: string): number | undefined => {
   const indentBase = getIndent(text, { tabSize: 1 })
   const lines = text.split('\n')
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < lines.length; i++) {
     const indent = getIndent(lines[i], { tabSize: 1 })
     if (indent > indentBase) {
@@ -14,7 +13,6 @@ const detectTabSize = (text: string): number | undefined => {
 /** Gets the number of indentations of a line. */
 const getIndent = (line: string, { tabSize = 2 }: { tabSize?: number } = {}): number => {
   let indent = 0
-  // eslint-disable-next-line fp/no-loops
   for (let i = 0; i < line.length && line[i] === ' '; i += tabSize) {
     indent++
   }

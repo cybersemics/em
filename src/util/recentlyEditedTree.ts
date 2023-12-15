@@ -141,7 +141,7 @@ const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
       // if oldPath is already available we just need to update its descendants
       if (equalArrays(commonPath, oldContext)) {
         // this flag is needed to know if ancestor replaces very old descentdant in the tree
-        let descendantReplaced = false // eslint-disable-line fp/no-let
+        let descendantReplaced = false
         /*
           Recently Edited List
 
@@ -172,7 +172,7 @@ const nodeChange = (state: State, tree: Tree, oldPath: Path, newPath: Path) => {
         // called once again to remove merge inconsitencty that might occur while replacing descendants by ancestor
         else if (head(oldContext) !== head(newContext)) _.unset(tree, oldContext)
       } else {
-        let isMerged = false // eslint-disable-line fp/no-let
+        let isMerged = false
         leafNodes.forEach(descendant => {
           const descendantContext = contextEncode(pathToContext(state, descendant.path))
           if (descendantContext[0] === hashThought(EM_TOKEN)) return // preventing nodes at level 0 from merged to this (temporary fix)

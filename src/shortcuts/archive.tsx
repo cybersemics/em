@@ -16,7 +16,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
-let undoArchiveTimer: number // eslint-disable-line fp/no-let
+let undoArchiveTimer: number
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Shortcut['exec'] = (dispatch, getState, e) => {

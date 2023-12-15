@@ -1,7 +1,7 @@
 /** Simple debounce with default leading false. Lodash's debounce breaks jest fake timers in Jest < 26. */
 export const debounce = (fn, wait, { leading } = {}) => {
-  let timer = null // eslint-disable-line fp/no-let
-  let pendingArgs = null // eslint-disable-line fp/no-let
+  let timer = null
+  let pendingArgs = null
 
   const cancel = jest.fn(() => {
     if (timer) {

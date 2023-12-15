@@ -88,7 +88,6 @@ const pullFavorites = (): Thunk => async (dispatch, getState) => {
   let ids = lexeme?.contexts || []
 
   // pull all ancestors so that breadcrumbs can be displayed
-  // eslint-disable-next-line fp/no-loops
   while (ids.length > 0) {
     await dispatch(pull(ids, { force: true, maxDepth: 0 }))
 
@@ -108,16 +107,15 @@ const pullFavorites = (): Thunk => async (dispatch, getState) => {
  */
 const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   // use isLoaded to ignore throttling on first load
-  let isLoaded = false // eslint-disable-line fp/no-let
+  let isLoaded = false
 
   // track changed state to short circuit flushPullQueue when no visible thoughts have changed
-  let lastContextViews: State['contextViews'] = {} // eslint-disable-line fp/no-let
-  let lastExpandedPaths: Index<Path> = {} // eslint-disable-line fp/no-let
-  let lastSearchContexts: State['searchContexts'] = {} // eslint-disable-line fp/no-let
+  let lastContextViews: State['contextViews'] = {}
+  let lastExpandedPaths: Index<Path> = {}
+  let lastSearchContexts: State['searchContexts'] = {}
 
   // enqueue thoughts be pulled from the data source
   // initialize with em and root contexts
-  // eslint-disable-next-line fp/no-let
   let pullQueue = initialPullQueue()
 
   // A set of Indexes of ThoughtIds that are currently being pulled used to prevent redundant pulls.
@@ -157,7 +155,6 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
       ? extendedPullQueue
       : keyValueBy(extendedPullQueue, id => {
           // use a for loop for short circuiting
-          // eslint-disable-next-line fp/no-loops
           for (const pullQueueRecord of pulling.values()) {
             if (id in pullQueueRecord) return null
           }

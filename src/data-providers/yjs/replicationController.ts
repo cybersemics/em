@@ -240,7 +240,6 @@ const replicationController = ({
       observeBlock(activeBlock)
 
       // load, replicate, and subscribe to unreplicated or unfilled blocks
-      // eslint-disable-next-line fp/no-loops
       for (const block of added) {
         const blockId = getBlockKey(block)
         if (blockId === activeBlockId) continue

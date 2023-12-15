@@ -1,4 +1,3 @@
-/* eslint-disable fp/no-loops */
 import { ElementHandle, Page } from 'puppeteer'
 
 /**
