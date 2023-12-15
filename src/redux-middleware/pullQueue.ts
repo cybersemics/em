@@ -4,14 +4,18 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import pull from '../action-creators/pull'
-import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'
+import db from '../data-providers/yjs/thoughtspace.main'
+import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
+import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 
@@ -20,6 +24,9 @@ const updatePullQueueDelay = 10
 
 /** Limit frequency of fetching pull queue contexts. Ignored on first flush. */
 const flushPullQueueDelay = 100
+
+/** Tracks if any pulls have executed yet. Used to pull favorites only on the first pull. */
+let pulled = false
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Record<ThoughtId, true> => ({
@@ -73,6 +80,24 @@ const appendVisiblePaths = (
     },
     pullQueue,
   )
+}
+
+/** An action-creator that pulls the =favorite Lexeme and all contexts. */
+const pullFavorites = (): Thunk => async (dispatch, getState) => {
+  const lexeme = await db.getLexemeById(hashThought('=favorite'))
+  let ids = lexeme?.contexts || []
+
+  // pull all ancestors so that breadcrumbs can be displayed
+  // eslint-disable-next-line fp/no-loops
+  while (ids.length > 0) {
+    await dispatch(pull(ids, { force: true, maxDepth: 0 }))
+
+    // enqueue parents
+    const thoughts = childIdsToThoughts(getState(), ids)
+    ids = thoughts
+      .map(thought => thought.parentId)
+      .filter(id => ![ROOT_PARENT_ID, HOME_TOKEN, ABSOLUTE_TOKEN, EM_TOKEN].includes(id))
+  }
 }
 
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
@@ -147,9 +172,15 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // if there are any visible pending descendants from the pull, we need to add them to the pullQueue and immediately flush
     await dispatch(pull(extendedPullQueueIds, { cancelRef, force }))
-
     syncStatusStore.update({ isPulling: false })
     pulling.delete(extendedPullQueueFiltered)
+
+    // pull favorites in the background on the first pull
+    // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
+    if (!pulled) {
+      dispatch(pullFavorites())
+      pulled = true
+    }
   }
 
   /**
