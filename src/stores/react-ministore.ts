@@ -19,10 +19,9 @@ const reactMinistore = <T>(initialState: T) => {
     useEffect(
       () =>
         store.subscribe((stateNew: T) => {
-          if (!unmounted.current) {
-            const state = store.getState()
-            setLocalState(selector ? selector(state) : state)
-          }
+          if (unmounted.current) return
+          const state = store.getState()
+          setLocalState(selector ? selector(state) : state)
         }),
       [selector],
     )
