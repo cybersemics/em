@@ -197,6 +197,9 @@ const ThoughtAnnotation = React.memo(
     const contentRef = React.useRef<HTMLInputElement>(null)
 
     const fontSize = useSelector(state => state.fontSize)
+    const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
+      isEditing ? editingValue ?? value : null,
+    )
 
     /**
      * Adding dependency on lexemeIndex as the fetch for thought is async await.
@@ -210,14 +213,7 @@ const ThoughtAnnotation = React.memo(
     const textMarkup = useSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
       const labelChild = anyChild(state, labelId || undefined)
-      const editingValue = editingValueStore.getState()
-      return isEditing
-        ? editingValue && value !== editingValue
-          ? editingValue
-          : value
-        : labelChild
-        ? labelChild.value
-        : ellipsizeUrl(value)
+      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : ellipsizeUrl(value)
     })
 
     const multiline = useMultiline(contentRef, simplePath, isEditing)
