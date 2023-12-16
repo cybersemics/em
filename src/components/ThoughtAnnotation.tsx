@@ -6,7 +6,6 @@ import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import ThoughtId from '../@types/ThoughtId'
 import setCursor from '../action-creators/setCursor'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import { isInternalLink } from '../device/router'
@@ -43,20 +42,6 @@ interface ThoughtAnnotationProps {
   simplePath: SimplePath
   style?: React.CSSProperties
   styleAnnotation?: React.CSSProperties
-}
-
-/** Gets the innerHTML of the live thought text. */
-const getTextMarkup = (state: State, isEditing: boolean, value: string, id: ThoughtId): string => {
-  const labelId = findDescendant(state, id, '=label')
-  const labelChild = anyChild(state, labelId || undefined)
-  const editingValue = editingValueStore.getState()
-  return isEditing
-    ? editingValue && value !== editingValue
-      ? editingValue
-      : value
-    : labelChild
-    ? labelChild.value
-    : ellipsizeUrl(value)
 }
 
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
@@ -227,7 +212,18 @@ const ThoughtAnnotation = React.memo(
      * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
      */
 
-    const textMarkup = useSelector(state => getTextMarkup(state, !!isEditing, value, head(simplePath)))
+    const textMarkup = useSelector(state => {
+      const labelId = findDescendant(state, head(simplePath), '=label')
+      const labelChild = anyChild(state, labelId || undefined)
+      const editingValue = editingValueStore.getState()
+      return isEditing
+        ? editingValue && value !== editingValue
+          ? editingValue
+          : value
+        : labelChild
+        ? labelChild.value
+        : ellipsizeUrl(value)
+    })
 
     const multiline = useMultiline(contentRef, simplePath, isEditing)
 
