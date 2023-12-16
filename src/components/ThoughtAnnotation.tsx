@@ -30,19 +30,6 @@ import useMultiline from './Editable/useMultiline'
 import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
-interface ThoughtAnnotationProps {
-  env?: LazyEnv
-  focusOffset?: number
-  invalidState?: boolean
-  isEditing?: boolean
-  minContexts?: number
-  path: Path
-  showContextBreadcrumbs?: boolean
-  simplePath: SimplePath
-  style?: React.CSSProperties
-  styleAnnotation?: React.CSSProperties
-}
-
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
 const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
@@ -86,7 +73,18 @@ const ThoughtAnnotationContainer = React.memo(
     style,
     // only applied to the .subthought container
     styleAnnotation,
-  }: ThoughtAnnotationProps) => {
+  }: {
+    env?: LazyEnv
+    focusOffset?: number
+    invalidState?: boolean
+    isEditing?: boolean
+    minContexts?: number
+    path: Path
+    showContextBreadcrumbs?: boolean
+    simplePath: SimplePath
+    style?: React.CSSProperties
+    styleAnnotation?: React.CSSProperties
+  }) => {
     // delay calculation of contexts for performance
     // recalculate after the component has mounted
     // filtering on isNotArchive is very slow: O(totalNumberOfContexts * depth)
