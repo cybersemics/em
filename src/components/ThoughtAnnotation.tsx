@@ -164,7 +164,6 @@ const ThoughtAnnotationContainer = React.memo(
         {...{
           simplePath,
           isEditing,
-          minContexts,
           numContexts,
           showSuperscript,
           style,
