@@ -77,7 +77,6 @@ const ThoughtAnnotationContainer = React.memo(
     env?: LazyEnv
     focusOffset?: number
     invalidState?: boolean
-    isEditing?: boolean
     minContexts?: number
     path: Path
     showContextBreadcrumbs?: boolean
