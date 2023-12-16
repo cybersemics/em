@@ -13,6 +13,7 @@ import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
+import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -71,7 +72,10 @@ const freeThoughts = (state: State) => {
           : []),
       ]
     }),
+    // preserve EM context
     ...getDescendantThoughtIds(state, EM_TOKEN),
+    // preserve favorites contexts and their ancestors
+    ...(getLexeme(state, '=favorite')?.contexts || []).flatMap(cxid => thoughtToPath(state, cxid)),
   ])
 
   // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
