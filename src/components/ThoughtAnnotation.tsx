@@ -31,7 +31,6 @@ import StaticSuperscript from './StaticSuperscript'
 import UrlIcon from './icons/UrlIcon'
 
 interface ThoughtAnnotationProps {
-  editingValue?: string | null
   env?: LazyEnv
   focusOffset?: number
   invalidState?: boolean
