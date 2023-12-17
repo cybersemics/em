@@ -1,6 +1,4 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
+#!/bin/bash
 SHORT_SHA=$(git rev-parse HEAD)
 LINT_LOG="$TMPDIR"/lint."$SHORT_SHA".log
 
@@ -37,9 +35,7 @@ if [ -z "$branch" ]; then
   exit 0
 fi
 
-# Lint asynchrously, not blocking the terminal and piping all output to a file.
-# IFF lint fails trigger a pop-up (on supported platforms) with at least the
-# first error shown.
-# We pipe output so that the terminal (tmux, vim, emacs etc.) isn't borked by
-# stray output.
-npm run lint:src | strip &> "$LINT_LOG" || notify "Lint Error" &
+# Lint in the background, not blocking the terminal and piping all output to a file.
+# If the lint fails, trigger a notification (on supported platforms) with at least the first error shown.
+# We pipe output so that the terminal (tmux, vim, emacs etc.) isn't borked by stray output.
+npm run lint:src | strip &>"$LINT_LOG" || notify "Lint Error" &
