@@ -55,13 +55,14 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   // prev and next must be calculated before dispatching deleteThought
   const prev = once(() =>
     showContexts
-      ? // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/a was deleted, do not try to set the cursor on a/m~/b, since a/m no longer exists.
+      ? // In context view, do not set cursor on next/prev context if cyclic context was deleted, i.e. If a/m~/b was deleted, do not try to set the cursor on a/m~/a, since a/m no longer exists.
         // If there is only one context left in the context view after deletion, do not set the cursor on the next/prev context, but instead allow it to fall back to the parent since the context view will be collapsed.
         !shouldCloseContextView()
         ? prevContext(state, path)
         : null
       : prevSibling(state, simplePath),
   )
+
   const next = once(() =>
     showContexts
       ? !shouldCloseContextView()
