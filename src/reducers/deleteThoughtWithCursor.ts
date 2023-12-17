@@ -60,7 +60,8 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         !shouldCloseContextView()
         ? prevContext(state, path)
         : null
-      : prevSibling(state, simplePath),
+      : // If context view is not enabled, get the prev thought in normal view. We need to explicitly override showContexts, otherwise prevSibling will infer that the context view is enabled and will incorrectly return the previous context.
+        prevSibling(state, simplePath, { showContexts: false }),
   )
 
   const next = once(() =>
