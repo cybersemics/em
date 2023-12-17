@@ -4,6 +4,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { getChildrenSorted } from '../selectors/getChildren'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import getThoughtById from './getThoughtById'
 
@@ -11,8 +12,11 @@ import getThoughtById from './getThoughtById'
 const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null => {
   const id = typeof idOrPath === 'string' ? idOrPath : head(idOrPath)
   if (isRoot([id])) return null
+
+  // return null if the thought does not exist or is hidden
   const thought = getThoughtById(state, id)
-  if (!thought) return null
+  if (!thought || (!state.showHiddenThoughts && isAttribute(thought.value))) return null
+
   const siblings = getChildrenSorted(state, thought.parentId)
   const index = siblings.findIndex(child => child.id === id)
 

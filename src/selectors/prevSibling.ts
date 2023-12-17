@@ -5,6 +5,7 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import getContextsSortedAndRanked from './getContextsSortedAndRanked'
 import rootedParentOf from './rootedParentOf'
 
@@ -20,8 +21,10 @@ export const prevSibling = (
   } = {},
 ): Thought | null => {
   const id = head(path)
+
+  // return null if the thought does not exist or is hidden
   const thought = getThoughtById(state, id)
-  if (!thought) return null
+  if (!thought || (!state.showHiddenThoughts && isAttribute(thought.value))) return null
 
   const parentPath = rootedParentOf(state, path)
   const showContexts = showContextsForced ?? isContextViewActive(state, parentPath)
