@@ -1,15 +1,12 @@
 import SwipeableDrawer, { SwipeableDrawerProps } from '@bit/mui-org.material-ui.swipeable-drawer'
 import _ from 'lodash'
 import React, { useRef, useState } from 'react'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
-import hashPath from '../util/hashPath'
-import { findTreeDescendants } from '../util/recentlyEditedTree'
 import Favorites from './Favorites'
-import ThoughtLink from './ThoughtLink'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
@@ -17,31 +14,30 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 >
 
 /** Displays recently edited thoughts with a header. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const RecentlyEdited = () => {
-  const recentlyEditedTree = useSelector(state => state.recentlyEdited)
-  const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
+// const RecentlyEdited = () => {
+//   const recentlyEditedTree = useSelector(state => state.recentlyEdited)
+//   const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
 
-  const store = useStore()
+//   const store = useStore()
 
-  const recentlyEdited = _.reverse(
-    _.sortBy(
-      findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),
-      'lastUpdated',
-    ),
-  )
+//   const recentlyEdited = _.reverse(
+//     _.sortBy(
+//       findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),
+//       'lastUpdated',
+//     ),
+//   )
 
-  return (
-    <div className='sidebar'>
-      <div className='header'>Recently Edited Thoughts</div>
-      <div style={{ padding: '0 2em' }}>
-        {recentlyEdited.map((recentlyEditedThought, i) => (
-          <ThoughtLink key={hashPath(recentlyEditedThought.path)} path={recentlyEditedThought.path} />
-        ))}
-      </div>
-    </div>
-  )
-}
+//   return (
+//     <div className='sidebar'>
+//       <div className='header'>Recently Edited Thoughts</div>
+//       <div style={{ padding: '0 2em' }}>
+//         {recentlyEdited.map((recentlyEditedThought, i) => (
+//           <ThoughtLink key={hashPath(recentlyEditedThought.path)} path={recentlyEditedThought.path} />
+//         ))}
+//       </div>
+//     </div>
+//   )
+// }
 
 /** The Recently Edited sidebar component. */
 const Sidebar = () => {

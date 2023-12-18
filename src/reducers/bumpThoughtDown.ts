@@ -13,13 +13,10 @@ import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
-import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
-import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 
 /** Clears a thought's text, moving it to its first child. */
@@ -32,7 +29,6 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   const { value } = headThought
 
   // const rank = headRank(simplePath)
-  const context = pathToContext(state, simplePath)
   const children = getAllChildren(state, head(simplePath))
 
   // if there are no children
