@@ -3,6 +3,7 @@ import alert from '../action-creators/alert'
 import toggleSort from '../action-creators/toggleSort'
 import Icon from '../components/icons/Sort'
 import { HOME_PATH } from '../constants'
+import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -37,6 +38,22 @@ const toggleSortShortcut: Shortcut = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
 
     return getSortPreference(state, head(path)).type === 'Alphabetical'
+  },
+  // Show an error if the ranks do not match the sort condition.
+  // This is only needed for migrating to permasort, and can be removed after the migration is complete.
+  error: getState => {
+    const state = getState()
+    const simplePath = state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH
+    const id = head(simplePath)
+    const sortPreference = getSortPreference(state, id)
+    if (sortPreference.type === 'None') return null
+
+    const childrenSorted = getAllChildrenSorted(state, id)
+    const childrenRanked = getChildrenRanked(state, id)
+    return childrenSorted.length === childrenRanked.length &&
+      !childrenRanked.every((childRanked, i) => childRanked.id === childrenSorted[i].id)
+      ? 'Ranks do not match sort condition'
+      : null
   },
 }
 
