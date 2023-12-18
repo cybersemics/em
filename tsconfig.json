@@ -1,23 +1,23 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js"],
   "compilerOptions": {
-    "strict": true,
-    "lib": ["dom", "es2019"],
-    "jsx": "react-jsx",
-    "target": "es5",
     "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "lib": ["dom", "es2019"],
     "module": "esnext",
     "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "noEmit": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
     "noUnusedLocals": true,
-    "downlevelIteration": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es5"
   }
 }
