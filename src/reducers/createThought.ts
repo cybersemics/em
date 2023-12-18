@@ -47,6 +47,11 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   const parentId = head(path)
   const parent = getThoughtById(state, parentId)
 
+  if (!parent) {
+    console.error({ path, value, rank, id, idbSynced, children, splitSource })
+    throw new Error(`createThought: Parent thought with id ${parentId} not found`)
+  }
+
   const thoughtIndexUpdates: Index<Thought> = {}
 
   const newValue = value

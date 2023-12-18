@@ -12,7 +12,7 @@ import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
-import { childrenFilterPredicate, getAllChildrenSorted, hasChildren } from '../selectors/getChildren'
+import { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
@@ -172,7 +172,7 @@ const virtualTree = (
     ? getContextsSortedAndRanked(state, thought.value)
     : // context children should render the children of a specific Lexeme instance to avoid repeating the Lexeme.
       // See: contextId (above)
-      getAllChildrenSorted(state, contextId || thoughtId)
+      getChildrenRanked(state, contextId || thoughtId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   // short circuit if the context view only has one context and the NoOtherContexts component will be displayed

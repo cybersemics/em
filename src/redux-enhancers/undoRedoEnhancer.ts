@@ -119,6 +119,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   toggleNote: true,
   toggleShortcutsDiagram: false,
   toggleSidebar: false,
+  toggleSort: true,
   toggleSplitView: false,
   toggleThought: true,
   toggleUserSetting: false,

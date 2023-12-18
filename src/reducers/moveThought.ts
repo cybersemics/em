@@ -9,8 +9,7 @@ import mergeThoughts from '../reducers/mergeThoughts'
 import rerank from '../reducers/rerank'
 import updateThoughts from '../reducers/updateThoughts'
 import expandThoughts from '../selectors/expandThoughts'
-import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
-import getSortPreference from '../selectors/getSortPreference'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -22,6 +21,7 @@ import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
+import sort from './sort'
 
 export interface MoveThoughtPayload {
   oldPath: Path
@@ -141,23 +141,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
       })
     },
     // re-sort destination context
-    state => {
-      const sortPreference = getSortPreference(state, destinationThoughtId)
-      if (sortPreference?.type === 'None') return state
-
-      const children = getAllChildrenSorted(state, destinationThoughtId)
-      return updateThoughts(state, {
-        thoughtIndexUpdates: keyValueBy(children, (child, i) => ({
-          [child.id]: {
-            ...child,
-            rank: i,
-          },
-        })),
-        lexemeIndexUpdates: {},
-        recentlyEdited,
-        preventExpandThoughts: true,
-      })
-    },
+    sort(destinationThought.id),
     // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state
