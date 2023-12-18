@@ -7,7 +7,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { REGEX_TAGS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
-import { getAllChildrenSorted } from '../selectors/getChildren'
+import { getChildrenRanked } from '../selectors/getChildren'
 import thoughtToContext from '../selectors/thoughtToContext'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -59,7 +59,7 @@ export const exportContext = (
   const childrenPostfix = format === 'text/html' ? `\n${tab2}</ul>\n` : ''
   const thoughtId =
     typeof contextOrThoughtId === 'string' ? contextOrThoughtId : contextToThoughtId(state, contextOrThoughtId)
-  const children = thoughtId ? getAllChildrenSorted(state, thoughtId) : []
+  const children = thoughtId ? getChildrenRanked(state, thoughtId) : []
   const context = Array.isArray(contextOrThoughtId) ? contextOrThoughtId : thoughtToContext(state, thoughtId!)
   const isNoteAndMetaExcluded = excludeMeta && head(context) === '=note'
 

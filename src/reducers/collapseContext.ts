@@ -4,7 +4,7 @@ import State from '../@types/State'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
-import { getAllChildrenSorted, getChildren, isVisible } from '../selectors/getChildren'
+import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -37,7 +37,7 @@ const collapseContext = (state: State, { at }: Options) => {
   }
 
   const simplePath = simplifyPath(state, path)
-  const children = getAllChildrenSorted(state, head(simplePath))
+  const children = getChildrenRanked(state, head(simplePath))
 
   if (children.length === 0) return state
 

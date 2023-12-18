@@ -183,6 +183,34 @@ describe('normal view', () => {
   - c
   - z`)
   })
+
+  it('preserve sort order of children in sorted context', () => {
+    const text = `
+      - =sort
+        - Alphabetical
+      - f
+      - a
+      - x
+        - e
+        - b
+        - d
+      - c
+    `
+    const steps = [importText({ text }), setCursor(['x']), collapseContext({})]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f`)
+  })
 })
 
 describe('context view', () => {

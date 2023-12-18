@@ -9,7 +9,8 @@ import mergeThoughts from '../reducers/mergeThoughts'
 import rerank from '../reducers/rerank'
 import updateThoughts from '../reducers/updateThoughts'
 import expandThoughts from '../selectors/expandThoughts'
-import { getChildrenRanked } from '../selectors/getChildren'
+import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
+import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -134,6 +135,24 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
       return updateThoughts(state, {
         thoughtIndexUpdates,
+        lexemeIndexUpdates: {},
+        recentlyEdited,
+        preventExpandThoughts: true,
+      })
+    },
+    // re-sort destination context
+    state => {
+      const sortPreference = getSortPreference(state, destinationThoughtId)
+      if (sortPreference?.type === 'None') return state
+
+      const children = getAllChildrenSorted(state, destinationThoughtId)
+      return updateThoughts(state, {
+        thoughtIndexUpdates: keyValueBy(children, (child, i) => ({
+          [child.id]: {
+            ...child,
+            rank: i,
+          },
+        })),
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,

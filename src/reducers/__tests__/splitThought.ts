@@ -134,9 +134,9 @@ it('move children to the new sibling even when the context is sorted and the new
       - Alphabetical
         - Asc
     - Baton
-    - New Orleans
     - Rouge
       - A
       - B
-      - C`)
+      - C
+    - New Orleans`)
 })

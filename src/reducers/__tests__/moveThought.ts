@@ -682,3 +682,35 @@ it('re-expand after moving across contexts', () => {
   const thoughtB = contextToThought(stateNew, ['b'])!
   expect(stateNew.expanded[thoughtB.id]).toBeTruthy()
 })
+
+it('maintain sort order after move', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - b
+    - d
+      - c
+  `
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['d', 'c']),
+    moveThoughtAtFirstMatch({
+      from: ['d', 'c'],
+      to: ['c'],
+      newRank: 999,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
+  - b
+  - c
+  - d`)
+})

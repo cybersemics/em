@@ -2,7 +2,7 @@ import importText from '../../reducers/importText'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
-import { getAllChildrenSorted } from '../../selectors/getChildren'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import initialState from '../../util/initialState'
 import isAttribute from '../../util/isAttribute'
 import reducerFlow from '../../util/reducerFlow'
@@ -14,7 +14,7 @@ it('get rank above all children', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   const id = contextToThoughtId(stateNew, ['a'])
-  const children = getAllChildrenSorted(stateNew, id!)
+  const children = getChildrenRanked(stateNew, id!)
 
   expect(getPrevRank(stateNew, id!)).toBeLessThan(children[0].rank)
 })
@@ -28,7 +28,7 @@ it('get rank less than visible children but greater than hidden children', () =>
   `
   const stateNew = importText({ text })(initialState())
   const id = contextToThoughtId(stateNew, ['a'])
-  const children = getAllChildrenSorted(stateNew, id!)
+  const children = getChildrenRanked(stateNew, id!)
   const firstVisibleIndex = children.findIndex(child => !isAttribute(child.value))
   const firstVisible = children[firstVisibleIndex]
   const lastHidden = children[firstVisibleIndex - 1]
@@ -42,7 +42,7 @@ it('get rank greater than all hidden children', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
   const id = contextToThoughtId(stateNew, ['a'])
-  const children = getAllChildrenSorted(stateNew, id!)
+  const children = getChildrenRanked(stateNew, id!)
 
   expect(getPrevRank(stateNew, id!)).toBeGreaterThan(children[children.length - 1].rank)
 })
@@ -52,7 +52,7 @@ it('get rank less than all children hidden with aboveMeta: true', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
   const id = contextToThoughtId(stateNew, ['a'])
-  const children = getAllChildrenSorted(stateNew, id!)
+  const children = getChildrenRanked(stateNew, id!)
 
   expect(getPrevRank(stateNew, id!, { aboveMeta: true })).toBeLessThan(children[0].rank)
 })

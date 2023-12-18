@@ -65,9 +65,9 @@ describe('normal view', () => {
       - A
         - =sort
           - Alphabetical
-        - D
         - B
         - C
+        - D
         - E`,
       }),
       setCursor(['A', 'E']),
@@ -83,9 +83,9 @@ describe('normal view', () => {
       - Alphabetical
     - B
     - C
+    - D
     - ${'' /* prevent trim_trailing_whitespace */}
-      - E
-    - D`)
+      - E`)
   })
 })
 
