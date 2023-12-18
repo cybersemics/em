@@ -56,6 +56,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
   const isButtonActive = useSelector(state => (customize ? selected : !isActive || isActive(() => state)))
+  const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
@@ -126,13 +127,19 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     () => ({
       position: 'relative' as const,
       cursor: isButtonExecutable ? 'pointer' : 'default',
-      fill: longPress.isPressed || isDragging ? undefined : isButtonExecutable && isButtonActive ? colors.fg : 'gray',
+      fill: buttonError
+        ? colors.red
+        : longPress.isPressed || isDragging
+        ? undefined
+        : isButtonExecutable && isButtonActive
+        ? colors.fg
+        : 'gray',
       width: fontSize + 4,
       height: fontSize + 4,
       opacity: dropToRemove ? 0 : 1,
       transition: 'opacity 200ms ease-out',
     }),
-    [colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
+    [buttonError, colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
   )
 
   return dropTarget(
@@ -141,6 +148,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
         {...longPress.props}
         aria-label={shortcut.label}
         key={shortcutId}
+        title={`${shortcut.label}${buttonError ? '\nError: ' + buttonError : ''}`}
         style={{
           // animate maxWidth to avoid having to know the exact width of the toolbar icon
           // maxWidth just needs to exceed the width

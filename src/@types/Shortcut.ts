@@ -25,6 +25,9 @@ interface Shortcut {
   // a description of what the shortcut does whnn it is in an inverse state
   descriptionInverse?: string | ((getState: () => State) => string)
 
+  // a function that returns an error message if the shortcut should indicate an error
+  error?: (getState: () => State) => string | null
+
   // executes the shortcut
   exec: (
     dispatch: Dispatch,
