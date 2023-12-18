@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import IconType from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'

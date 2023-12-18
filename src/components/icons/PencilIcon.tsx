@@ -1,4 +1,3 @@
-import React from 'react'
 import { connect, useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'

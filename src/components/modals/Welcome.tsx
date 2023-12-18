@@ -1,5 +1,4 @@
 /* eslint-disable no-unmodified-loop-condition */
-import React from 'react'
 import { useDispatch } from 'react-redux'
 import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'

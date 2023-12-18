@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
+import { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'

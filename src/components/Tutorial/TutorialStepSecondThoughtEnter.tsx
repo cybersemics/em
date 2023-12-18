@@ -1,4 +1,3 @@
-import React from 'react'
 import { useSelector } from 'react-redux'
 import GesturePath from '../../@types/GesturePath'
 import { isTouch } from '../../browser'

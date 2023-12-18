@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { DragSource, DragSourceConnector, DragSourceMonitor } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'

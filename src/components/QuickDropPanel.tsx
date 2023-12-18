@@ -1,5 +1,4 @@
 import { Capacitor } from '@capacitor/core'
-import React from 'react'
 import { useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
 import { isTouch } from '../browser'

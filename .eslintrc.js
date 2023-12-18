@@ -127,6 +127,7 @@ module.exports = {
     // react
     'react/jsx-curly-spacing': 2,
     'react/jsx-equals-spacing': 2,
+    'react/react-in-jsx-scope': 0,
     'react/jsx-tag-spacing': [
       2,
       {

@@ -1,4 +1,3 @@
-import React from 'react'
 import GesturePath from '../@types/GesturePath'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'

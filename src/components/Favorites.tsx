@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import {
   DragSource,
   DragSourceConnector,

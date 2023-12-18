@@ -1,4 +1,3 @@
-import React from 'react'
 import StaticSuperscript from '../StaticSuperscript'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

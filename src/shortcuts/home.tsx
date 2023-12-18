@@ -1,4 +1,4 @@
-import React, { Dispatch } from 'react'
+import { Dispatch } from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'

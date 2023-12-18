@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react'
+import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
 import closeModal from '../../action-creators/closeModal'

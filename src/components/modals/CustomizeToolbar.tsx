@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'

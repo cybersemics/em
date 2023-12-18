@@ -1,4 +1,3 @@
-import React from 'react'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import State from '../@types/State'
 import alert from '../action-creators/alert'

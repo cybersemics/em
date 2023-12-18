@@ -1,4 +1,3 @@
-import React from 'react'
 import { useDispatch } from 'react-redux'
 import tutorialPrev from '../../action-creators/tutorialPrev'
 import { TUTORIAL_STEP_START } from '../../constants'

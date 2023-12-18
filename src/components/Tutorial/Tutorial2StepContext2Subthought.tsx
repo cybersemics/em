@@ -1,4 +1,3 @@
-import React from 'react'
 import { useSelector } from 'react-redux'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'

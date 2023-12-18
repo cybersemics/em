@@ -1,4 +1,3 @@
-import React from 'react'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import State from '../@types/State'

@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import showModal from '../../action-creators/showModal'
 import toggleUserSetting from '../../action-creators/toggleUserSetting'

@@ -1,4 +1,3 @@
-import React from 'react'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import toggleHiddenThoughts from '../action-creators/toggleHiddenThoughts'

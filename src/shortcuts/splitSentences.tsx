@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { Dispatch } from 'react'
+import { Dispatch } from 'react'
 import { Action } from 'redux'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'

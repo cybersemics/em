@@ -1,4 +1,3 @@
-import React from 'react'
 import Gravatar from 'react-gravatar'
 import ThoughtId from '../@types/ThoughtId'
 import attribute from '../selectors/attribute'

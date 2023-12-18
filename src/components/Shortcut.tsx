@@ -1,4 +1,3 @@
-import React from 'react'
 import ShortcutInterface from '../@types/Shortcut'
 import { isTouch } from '../browser'
 import { formatKeyboardShortcut } from '../shortcuts'

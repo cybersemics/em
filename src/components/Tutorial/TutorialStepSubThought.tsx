@@ -1,4 +1,3 @@
-import React from 'react'
 import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import headValue from '../../util/headValue'

@@ -1,5 +1,3 @@
-import React from 'react'
-
 /** Url icon. */
 const UrlIcon = () => (
   <svg

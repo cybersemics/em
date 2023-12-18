@@ -1,4 +1,3 @@
-import React from 'react'
 import { connect, useDispatch } from 'react-redux'
 import State from '../../@types/State'
 import tutorialNext from '../../action-creators/tutorialNext'

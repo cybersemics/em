@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { FC, useEffect, useRef } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import GesturePath from '../@types/GesturePath'

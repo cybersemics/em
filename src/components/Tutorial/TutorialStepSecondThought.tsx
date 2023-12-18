@@ -1,4 +1,3 @@
-import React from 'react'
 import { isTouch } from '../../browser'
 import TutorialHint from './TutorialHint'
 

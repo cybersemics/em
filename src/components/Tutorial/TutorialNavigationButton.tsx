@@ -1,5 +1,4 @@
 import classNames from 'classnames'
-import React from 'react'
 import Index from '../../@types/IndexType'
 import fastClick from '../../util/fastClick'
 

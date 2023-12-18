@@ -1,4 +1,3 @@
-import React from 'react'
 import { isTouch } from '../../browser'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

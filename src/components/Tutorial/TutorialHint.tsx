@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import getSetting from '../../selectors/getSetting'

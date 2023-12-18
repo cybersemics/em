@@ -1,4 +1,3 @@
-import React from 'react'
 import Icon from '../../@types/Icon'
 
 /** Strikethrough icon. */

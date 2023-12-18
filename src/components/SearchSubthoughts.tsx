@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import Connected from '../@types/Connected'
 import Index from '../@types/IndexType'

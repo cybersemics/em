@@ -1,4 +1,3 @@
-import React from 'react'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'

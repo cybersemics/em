@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios'
-import React, { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import alert from '../../action-creators/alert'
 import { AlertType } from '../../constants'

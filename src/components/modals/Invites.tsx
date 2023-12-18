@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'

@@ -1,4 +1,3 @@
-import React from 'react'
 import Icon from '../@types/Icon'
 
 /** A left-facing svg triangle. */

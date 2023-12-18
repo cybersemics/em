@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react'
+import { FC, useEffect } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import DragThoughtItem from '../@types/DragThoughtItem'

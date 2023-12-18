@@ -1,4 +1,3 @@
-import React from 'react'
 import IconType from '../../@types/Icon'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

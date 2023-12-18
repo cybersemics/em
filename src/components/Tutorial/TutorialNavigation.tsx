@@ -1,5 +1,4 @@
 import classNames from 'classnames'
-import React from 'react'
 import { useDispatch } from 'react-redux'
 import tutorial from '../../action-creators/tutorial'
 import tutorialChoice from '../../action-creators/tutorialChoice'

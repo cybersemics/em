@@ -1,5 +1,3 @@
-import React from 'react'
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepChoose = () => (
   <p>

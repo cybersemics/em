@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react'
+import { FC, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useSelector } from 'react-redux'
 import themeColors from '../selectors/themeColors'

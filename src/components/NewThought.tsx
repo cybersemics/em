@@ -3,7 +3,6 @@
  * @param type {button|bullet} Default: bullet.
  */
 import classNames from 'classnames'
-import React from 'react'
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux'
 import Path from '../@types/Path'

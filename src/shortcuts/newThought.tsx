@@ -1,4 +1,3 @@
-import React from 'react'
 import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
