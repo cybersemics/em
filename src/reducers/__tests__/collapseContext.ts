@@ -188,13 +188,13 @@ describe('normal view', () => {
     const text = `
       - =sort
         - Alphabetical
-      - f
       - a
+      - c
+      - f
       - x
         - e
         - b
         - d
-      - c
     `
     const steps = [importText({ text }), setCursor(['x']), collapseContext({})]
 

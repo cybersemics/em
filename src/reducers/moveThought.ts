@@ -10,6 +10,8 @@ import rerank from '../reducers/rerank'
 import updateThoughts from '../reducers/updateThoughts'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -21,7 +23,6 @@ import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
-import sort from './sort'
 
 export interface MoveThoughtPayload {
   oldPath: Path
@@ -29,6 +30,7 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
 }
 
@@ -65,6 +67,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
+  const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
 
   /**
    * Find first normalized duplicate thought.
@@ -126,7 +129,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank: newRank,
+          rank: isSorted ? getSortedRank(state, destinationThoughtId, sourceThought.value) : newRank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -140,8 +143,6 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         preventExpandThoughts: true,
       })
     },
-    // re-sort destination context
-    sort(destinationThought.id),
     // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state

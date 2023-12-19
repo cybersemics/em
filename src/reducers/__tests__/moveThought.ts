@@ -781,3 +781,29 @@ it('move thought to the end of a sorted context', () => {
   // newRank should be ignored when moving into a sorted context
   expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
 })
+
+it('do not re-rank siblings', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+      - b
+  `
+
+  const steps = [importText({ text }), setCursorFirstMatch(['c', 'b'])]
+  const state = reducerFlow(steps)(initialState())
+  const thoughtA1 = contextToThought(state, ['a'])!
+  const thoughtC1 = contextToThought(state, ['c'])!
+
+  const stateNew = moveThoughtAtFirstMatch({
+    from: ['c', 'b'],
+    to: ['b'],
+    newRank: 999,
+  })(state)
+  const thoughtA2 = contextToThought(stateNew, ['a'])!
+  const thoughtC2 = contextToThought(stateNew, ['c'])!
+
+  expect(thoughtA2).toHaveProperty('rank', thoughtA1!.rank)
+  expect(thoughtC2).toHaveProperty('rank', thoughtC1!.rank)
+})
