@@ -33,6 +33,7 @@ import getRankBefore from '../selectors/getRankBefore'
 import getRootPath from '../selectors/getRootPath'
 import getSetting from '../selectors/getSetting'
 import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -140,6 +141,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
       value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
       ? getRankAfter(state, getLastSortedChildPath()!)
+      : value !== '' && getSortPreference(state, thoughtId).type === 'Alphabetical'
+      ? getSortedRank(state, thoughtId, value)
       : getNextRank(state, thoughtId)
     : getRankAfter(state, simplePath)
 

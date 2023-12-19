@@ -99,6 +99,72 @@ describe('normal view', () => {
 
     expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['b'])!])
   })
+
+  it('new subthought at beginning of sorted context', () => {
+    const text = `
+    - a
+      - =sort
+        - Alphabetical
+      - b
+      - d
+  `
+    const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: '=pin' })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =pin
+    - =sort
+      - Alphabetical
+    - b
+    - d`)
+  })
+
+  it('new subthought in the middle of a sorted context', () => {
+    const text = `
+    - a
+      - =sort
+        - Alphabetical
+      - b
+      - d
+  `
+    const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: 'c' })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+    - d`)
+  })
+
+  it('new subthought at the end of a sorted context', () => {
+    const text = `
+    - a
+      - =sort
+        - Alphabetical
+      - b
+      - d
+  `
+    const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: 'e' })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - d
+    - e`)
+  })
 })
 
 describe('context view', () => {
