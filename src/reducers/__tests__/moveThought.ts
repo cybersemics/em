@@ -683,22 +683,54 @@ it('re-expand after moving across contexts', () => {
   expect(stateNew.expanded[thoughtB.id]).toBeTruthy()
 })
 
-it('maintain sort order after move', () => {
+it('move thought to the beginning of a sorted context', () => {
   const text = `
     - =sort
       - Alphabetical
     - a
-    - b
-    - d
-      - c
+    - c
+      - =pin
   `
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['d', 'c']),
+    setCursorFirstMatch(['c', '=pin']),
     moveThoughtAtFirstMatch({
-      from: ['d', 'c'],
-      to: ['c'],
+      from: ['c', '=pin'],
+      to: ['=pin'],
+      newRank: 999,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =pin
+  - =sort
+    - Alphabetical
+  - a
+  - c`)
+
+  // newRank should be ignored when moving into a sorted context
+  expect(contextToThought(stateNew, ['=pin'])?.rank).not.toEqual(999)
+})
+
+it('move thought to the middle of a sorted context', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+      - b
+  `
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['c', 'b']),
+    moveThoughtAtFirstMatch({
+      from: ['c', 'b'],
+      to: ['b'],
       newRank: 999,
     }),
   ]
@@ -711,6 +743,41 @@ it('maintain sort order after move', () => {
     - Alphabetical
   - a
   - b
+  - c`)
+
+  // newRank should be ignored when moving into a sorted context
+  expect(contextToThought(stateNew, ['b'])?.rank).not.toEqual(999)
+})
+
+it('move thought to the end of a sorted context', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+      - d
+  `
+
+  const steps = [
+    importText({ text }),
+    setCursorFirstMatch(['c', 'd']),
+    moveThoughtAtFirstMatch({
+      from: ['c', 'd'],
+      to: ['d'],
+      newRank: 999,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
   - c
   - d`)
+
+  // newRank should be ignored when moving into a sorted context
+  expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
 })
