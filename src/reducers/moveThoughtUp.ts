@@ -15,6 +15,8 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
+import reducerFlow from '../util/reducerFlow'
+import deleteAttribute from './deleteAttribute'
 
 /** Swaps the thought with its previous siblings. */
 const moveThoughtUp = (state: State) => {
@@ -38,11 +40,7 @@ const moveThoughtUp = (state: State) => {
   const isSorted = getSortPreference(state, parentId).type !== 'None'
 
   // metaprogramming functions that prevent moving
-  if (isSorted && !prevUnclePath) {
-    return alert(state, {
-      value: `Cannot move subthoughts of "${ellipsize(headValue(state, parentOf(cursor)))}" while sort is enabled.`,
-    })
-  } else if (findDescendant(state, thoughtId, '=readonly')) {
+  if (findDescendant(state, thoughtId, '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, cursor))}" is read-only and cannot be moved.`,
     })
@@ -63,22 +61,38 @@ const moveThoughtUp = (state: State) => {
   // get selection offset before moveThought is dispatched
   const offset = selection.offset()
 
-  const rankNew =
-    prevThought && !isSorted
-      ? // previous thought (unsorted)
-        getRankBefore(state, simplifyPath(state, pathParent).concat(prevThought.id) as SimplePath)
-      : // first thought in previous uncle
-        getNextRank(state, head(prevUnclePath!))
+  const rankNew = prevThought
+    ? // previous thought (unsorted)
+      getRankBefore(state, simplifyPath(state, pathParent).concat(prevThought.id) as SimplePath)
+    : // first thought in previous uncle
+      getNextRank(state, head(prevUnclePath!))
 
-  const newPathParent = prevThought && !isSorted ? pathParent : prevUnclePath!
+  const newPathParent = prevThought ? pathParent : prevUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  return moveThought(state, {
-    oldPath: cursor,
-    newPath,
-    ...(offset != null ? { offset } : null),
-    newRank: rankNew,
-  })
+  return reducerFlow([
+    // remove sorting if moving within the same context
+    isSorted && prevThought
+      ? reducerFlow([
+          alert({
+            value: 'Switched to manual sort because thought was moved',
+          }),
+          deleteAttribute({
+            path: pathParent,
+            value: '=sort',
+          }),
+        ])
+      : null,
+
+    // move
+    state =>
+      moveThought(state, {
+        oldPath: cursor,
+        newPath,
+        ...(offset != null ? { offset } : null),
+        newRank: rankNew,
+      }),
+  ])(state)
 }
 
 export default moveThoughtUp

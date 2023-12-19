@@ -1,17 +1,15 @@
-import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import setCursor from '../setCursor'
-import toggleAttribute from '../toggleAttribute'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -58,16 +56,19 @@ it('move to prev uncle', () => {
   - b`)
 })
 
-it('move to prev uncle in sorted list', () => {
+it('remove sorting when moving within a context', () => {
   const steps = [
-    newThought('a'),
-    newSubthought('a1'),
-    newThoughtAtFirstMatch({
-      value: 'b',
-      at: ['a'],
+    importText({
+      text: `
+        - a
+          - =sort
+            - Alphabetical
+          - a1
+          - a2
+          - a3`,
     }),
-    (state: State) => toggleAttribute(state, { path: contextToPath(state, ['b']), values: ['=sort', 'Alphabetical'] }),
-    newSubthought('b1'),
+
+    setCursorFirstMatch(['a', 'a3']),
     moveThoughtUp,
   ]
 
@@ -77,18 +78,24 @@ it('move to prev uncle in sorted list', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
-    - b1
-  - b
-    - =sort
-      - Alphabetical`)
+    - a3
+    - a2`)
 })
 
-it('prevent move in sorted list when there is no previous uncle', () => {
+it('preserve sorting when moving the first thought in a context to the previous uncle', () => {
   const steps = [
-    newThought('a'),
-    (state: State) => toggleAttribute(state, { path: contextToPath(state, ['a']), values: ['=sort', 'Alphabetical'] }),
-    newSubthought('a1'),
-    newThought('a2'),
+    importText({
+      text: `
+        - x
+          - =sort
+            - Alphabetical
+          - c
+        - y
+          - b
+          - d`,
+    }),
+
+    setCursorFirstMatch(['y', 'b']),
     moveThoughtUp,
   ]
 
@@ -96,11 +103,13 @@ it('prevent move in sorted list when there is no previous uncle', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
+  - x
     - =sort
       - Alphabetical
-    - a1
-    - a2`)
+    - b
+    - c
+  - y
+    - d`)
 })
 
 it('move descendants', () => {
