@@ -26,12 +26,12 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - d
-          - b
-          - c
-          - e
-      `,
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
         }),
         setCursor(['a']),
       ])
@@ -47,14 +47,15 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - =sort
-            - Alphabetical
-              - Asc
-          - d
-          - b
-          - c
-          - e`,
+            - a
+              - =sort
+                - Alphabetical
+                  - Asc
+              - b
+              - c
+              - d
+              - e
+          `,
         }),
         setCursor(['a']),
       ])
@@ -71,14 +72,14 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - =sort
-            - Alphabetical
-              - Desc
-          - d
-          - b
-          - c
-          - e`,
+            - a
+              - =sort
+                - Alphabetical
+                  - Desc
+              - b
+              - c
+              - d
+              - e`,
         }),
         setCursor(['a']),
       ])
@@ -94,12 +95,12 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - b
-          - 1
-          - 2
-        - a
-          - 3
-          - 4`,
+            - b
+              - 1
+              - 2
+            - a
+              - 3
+              - 4`,
         }),
 
         setCursor(null),
@@ -116,10 +117,10 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - =sort
-          - Alphabetical
-        -a
-        -b`,
+            - =sort
+              - Alphabetical
+            -a
+            -b`,
         }),
 
         setCursor(null),
@@ -139,14 +140,15 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - =sort
-            - Alphabetical
-              - Asc
-          - d
-          - b
-          - c
-          - e`,
+            - a
+              - =sort
+                - Alphabetical
+                  - Asc
+              - b
+              - c
+              - d
+              - e
+          `,
         }),
 
         toggleAttribute({
@@ -167,11 +169,12 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - d
-          - b
-          - c
-          - e`,
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
         }),
 
         toggleAttribute({
@@ -192,12 +195,12 @@ describe('store', () => {
       store.dispatch([
         importText({
           text: `
-        - a
-          - d
-          - b
-          - c
-          - e
-    `,
+            - a
+              - d
+              - b
+              - c
+              - e
+          `,
         }),
 
         toggleAttribute({
@@ -436,14 +439,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['a']),
@@ -464,14 +467,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['c']),
@@ -492,14 +495,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['f']),
@@ -520,14 +523,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['a']),
@@ -548,14 +551,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['c']),
@@ -576,14 +579,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['f']),
@@ -604,14 +607,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['a']),
@@ -638,14 +641,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['a']),
@@ -668,14 +671,14 @@ describe.skip('DOM', () => {
       store.dispatch([
         importText({
           text: `
-              - =sort
-                - Alphabetical
-              - d
-              - f
-              - a
-              - c
-              - e
-              - b
+            - =sort
+              - Alphabetical
+            - a
+            - b
+            - c
+            - d
+            - e
+            - f
           `,
         }),
         setCursor(['c']),
@@ -700,11 +703,11 @@ describe.skip('DOM', () => {
             - a
               - =sort
                 - Alphabetical
-              - d
-              - f
-              - c
               - b
+              - c
+              - d
               - e
+              - f
           `,
         }),
         setCursor(['a']),
@@ -728,11 +731,11 @@ describe.skip('DOM', () => {
             - a
               - =sort
                 - Alphabetical
-              - d
-              - f
-              - c
               - b
+              - c
+              - d
               - e
+              - f
           `,
         }),
         setCursor(['a']),
@@ -756,9 +759,9 @@ describe.skip('DOM', () => {
             - test
               - =sort
                 - Alphabetical
-              - c
-              - b
               - a
+              - b
+              - c
           `,
         }),
         setCursor(['test', 'a']),
