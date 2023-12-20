@@ -7,8 +7,10 @@ import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import setFirstSubthought from '../../action-creators/setFirstSubthought'
 import toggleAttribute from '../../action-creators/toggleAttribute'
+import toggleSortActionCreator from '../../action-creators/toggleSort'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
@@ -130,6 +132,55 @@ describe('store', () => {
 
       expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Alphabetical')
       expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
+    })
+
+    it('restore sort order removed thoughts', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+      ])
+
+      const state = store.getState()
+      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
+
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
+  - a
+  - b`)
+    })
+
+    it('restore sort order added removed thoughts', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+      ])
+
+      executeShortcut(toggleSortShortcut, { store })
+      executeShortcut(toggleSortShortcut, { store })
+      executeShortcut(toggleSortShortcut, { store })
+
+      const state = store.getState()
+      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
+
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
+  - a
+  - b`)
     })
   })
 

@@ -114,6 +114,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     jumpHistory: [],
     jumpIndex: 0,
     latestShortcuts: [],
+    manualSortMap: {},
     modals: {},
     noteFocus: false,
     recentlyEdited: {},

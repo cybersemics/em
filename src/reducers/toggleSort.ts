@@ -3,16 +3,20 @@ import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import findDescendant from '../selectors/findDescendant'
+import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getSortPreference from '../selectors/getSortPreference'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import alert from './alert'
 import deleteAttribute from './deleteAttribute'
+import rerank from './rerank'
 import sort from './sort'
 import toggleAttribute from './toggleAttribute'
+import updateThoughts from './updateThoughts'
 
 /* Available sort preferences */
 const sortPreferences = ['None', 'Alphabetical']
@@ -65,12 +69,47 @@ const toggleSort = (
     globalSortPreference.type === nextSortPreference.type &&
     globalSortPreference.direction === nextSortPreference.direction
       ? // Toggle off
-        deleteAttribute({
-          path: simplePath,
-          value: '=sort',
-        })
+        reducerFlow([
+          deleteAttribute({
+            path: simplePath,
+            value: '=sort',
+          }),
+          // restore manual ranks
+          // See: State.manualSortMap
+          state => {
+            const manualRanks = state.manualSortMap[id]
+            if (!manualRanks) return state
+
+            // get all children with manual ranks that still exist
+            const childrenWithManualRanks = getAllChildrenAsThoughts(state, id).filter(child => manualRanks[child.id])
+            return updateThoughts(state, {
+              thoughtIndexUpdates: keyValueBy(childrenWithManualRanks, child => ({
+                [child.id]: {
+                  ...child,
+                  rank: manualRanks[child.id],
+                },
+              })),
+              lexemeIndexUpdates: {},
+              preventExpandThoughts: true,
+            })
+          },
+          // rerank in case there are any duplicate ranks
+          rerank(simplePath),
+        ])
       : // Toggle on/change
         reducerFlow([
+          // When sorting the context for the first time, store the manual sort order so it can be restored when cycling off.
+          // See: State.manualSortMap
+          currentSortPreference.type === 'None'
+            ? state => ({
+                ...state,
+                manualSortMap: {
+                  ...state.manualSortMap,
+                  [id]: keyValueBy(getAllChildrenAsThoughts(state, id), child => ({ [child.id]: child.rank })),
+                },
+              })
+            : null,
+
           // If next sort preference type does not equal to current sort then set =sort attribute.
           nextSortPreference.type !== currentSortPreference.type ||
           nextSortPreference.type === globalSortPreference.type
@@ -112,9 +151,8 @@ const toggleSort = (
                 })
               }
             : null,
+          sort(id),
         ]),
-
-    sort(id),
   ])(state)
 }
 
