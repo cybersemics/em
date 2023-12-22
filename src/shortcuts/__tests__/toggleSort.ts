@@ -13,8 +13,10 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import attributeByContext from '../../test-helpers/attributeByContext'
+import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { createTestStore } from '../../test-helpers/createTestStore'
+import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -176,6 +178,61 @@ describe('store', () => {
       executeShortcut(toggleSortShortcut, { store })
       executeShortcut(toggleSortShortcut, { store })
       executeShortcut(toggleSortShortcut, { store })
+
+      const state = store.getState()
+      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
+
+      expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
+  - a
+  - b`)
+    })
+
+    it('restore sort order after new thoughts are added', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        newThought({ value: 'e', preventSetCursor: true }),
+        newThought({ value: 'd', preventSetCursor: true }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+      ])
+
+      const state = store.getState()
+      const a = contextToThought(state, ['a'])!
+      const b = contextToThought(state, ['b'])!
+      const c = contextToThought(state, ['c'])!
+
+      // check that c, a, and b are in the original order
+      expect(c.rank).toBeLessThan(a.rank)
+      expect(a.rank).toBeLessThan(b.rank)
+    })
+
+    it('restore sort order after some thoughts are removed', () => {
+      const store = createTestStore()
+
+      store.dispatch([
+        importText({
+          text: `
+            - d
+            - e
+            - c
+            - a
+            - b`,
+        }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        deleteThoughtAtFirstMatchActionCreator(['d']),
+        deleteThoughtAtFirstMatchActionCreator(['e']),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        toggleSortActionCreator({ simplePath: HOME_PATH }),
+      ])
 
       const state = store.getState()
       expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
