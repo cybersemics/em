@@ -10,7 +10,7 @@ import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import getLexeme from '../../selectors/getLexeme'
 import contextToThought from '../../test-helpers/contextToThought'
-import editThoughtByContext from '../../test-helpers/editThoughtByContext'
+import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
@@ -332,7 +332,7 @@ it('replace empty cursor', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `b` to empty thought since importText skips empty thoughts
-    editThoughtByContext({
+    editThought({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],
@@ -366,7 +366,7 @@ it('replace empty cursor without affecting siblings', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `c` to empty thought since importText skips empty thoughts
-    editThoughtByContext({
+    editThought({
       newValue: '',
       oldValue: 'c',
       at: ['a', 'c'],
@@ -520,7 +520,7 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    editThoughtByContext({
+    editThought({
       newValue: '',
       oldValue: 'b',
       at: ['a', 'b'],

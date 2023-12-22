@@ -1,7 +1,7 @@
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import importText from '../../reducers/importText'
 import newThought from '../../reducers/newThought'
-import editThoughtByContext from '../../test-helpers/editThoughtByContext'
+import editThought from '../../test-helpers/editThoughtByContext'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -144,7 +144,7 @@ it('export multi-line thoughts as separate thoughts', () => {
 
   const steps = [
     importText({ text }),
-    editThoughtByContext({
+    editThought({
       oldValue: 'Hello',
       newValue: 'Hello\nworld',
       at: ['a', 'b', 'Hello'],
