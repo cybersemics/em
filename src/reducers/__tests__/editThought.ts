@@ -205,9 +205,7 @@ it('move cursor to existing meta programming thought if any', () => {
       - lightblue`
 
   const steps = [
-    importText({
-      text,
-    }),
+    importText({ text }),
     setCursor(['a']),
     newSubthought({ value: '' }),
     editThoughtByContext({
@@ -356,9 +354,7 @@ it('data integrity test', () => {
       - d`
 
   const steps = [
-    importText({
-      text,
-    }),
+    importText({ text }),
     setCursor(['a']),
     editThoughtByContext({
       at: ['a'],
@@ -384,9 +380,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
       - m`
 
   const steps = [
-    importText({
-      text,
-    }),
+    importText({ text }),
     setCursor(['']),
     editThoughtByContext({
       at: [''],
