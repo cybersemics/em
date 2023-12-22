@@ -8,6 +8,7 @@ import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
 import toggleContextView from '../../reducers/toggleContextView'
 import exportContext from '../../selectors/exportContext'
+import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -196,9 +197,13 @@ describe('normal view', () => {
         - b
         - d
     `
-    const steps = [importText({ text }), setCursor(['x']), collapseContext({})]
+    const state1 = importText({ text })(initialState())
+    const a1 = contextToThought(state1, ['a'])!
+    const c1 = contextToThought(state1, ['c'])!
+    const f1 = contextToThought(state1, ['f'])!
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const steps = [setCursor(['x']), collapseContext({})]
+    const stateNew = reducerFlow(steps)(state1)
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -210,6 +215,22 @@ describe('normal view', () => {
   - d
   - e
   - f`)
+
+    const a2 = contextToThought(stateNew, ['a'])!
+    const b2 = contextToThought(stateNew, ['b'])!
+    const c2 = contextToThought(stateNew, ['c'])!
+    const d2 = contextToThought(stateNew, ['d'])!
+    const e2 = contextToThought(stateNew, ['e'])!
+    const f2 = contextToThought(stateNew, ['f'])!
+
+    // sibling ranks are unchanged
+    expect(a2.rank).toEqual(a1.rank)
+    expect(c2.rank).toEqual(c1.rank)
+    expect(f2.rank).toEqual(f1.rank)
+
+    // no duplicate ranks
+    const ranks = new Set([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank])
+    expect(ranks.size).toEqual(6)
   })
 })
 
