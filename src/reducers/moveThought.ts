@@ -23,6 +23,8 @@ import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
+import alert from './alert'
+import deleteAttribute from './deleteAttribute'
 
 export interface MoveThoughtPayload {
   oldPath: Path
@@ -67,7 +69,6 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
-  const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
 
   /**
    * Find first normalized duplicate thought.
@@ -88,6 +89,19 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const archived = isArchived ? timestamp() : destinationThought.archived
 
   return reducerFlow([
+    // disable sort when moving within the same context
+    sameContext && newRank !== sourceThought.rank && getSortPreference(state, destinationThoughtId).type !== 'None'
+      ? reducerFlow([
+          alert({
+            value: 'Switched to manual sort because thought was moved',
+          }),
+          deleteAttribute({
+            path: destinationThoughtPath,
+            value: '=sort',
+          }),
+        ])
+      : null,
+
     state => {
       // Note: In case of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
       if (duplicateThought && !isPendingMerge) {
@@ -129,7 +143,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank: isSorted ? getSortedRank(state, destinationThoughtId, sourceThought.value) : newRank,
+          rank:
+            // get updated sort preference since the context may have been unsorted
+            getSortPreference(state, destinationThoughtId).type !== 'None'
+              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
+              : newRank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,

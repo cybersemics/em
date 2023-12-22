@@ -13,7 +13,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-/** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. */
+/** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
 const DropThought = ({
   isHovering,
   prevChildId,
@@ -28,10 +28,14 @@ const DropThought = ({
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
-    // if alphabetical sort is disabled just check if current thought is hovering
+    // Typically we show the drop hover if the thought is being directly hovered over.
+    // However, when moving into a different context that is sorted, we need to show the drop hover on the sorted drop destination if the thought is hovered over any of the thoughts in the sorted context.
     const parentId = getThoughtById(state, head(simplePath))?.parentId
+    const sameContext =
+      state.draggingThought &&
+      equalPath(rootedParentOf(state, state.draggingThought), rootedParentOf(state, simplePath))
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
-    if (!isParentSorted) return globals.simulateDrag || isHovering
+    if (!isParentSorted && !sameContext) return globals.simulateDrag || isHovering
     else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought

@@ -782,7 +782,7 @@ it('move thought to the end of a sorted context', () => {
   expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
 })
 
-it('do not re-rank siblings', () => {
+it('do not re-rank siblings in sorted context', () => {
   const text = `
     - =sort
       - Alphabetical
@@ -806,4 +806,31 @@ it('do not re-rank siblings', () => {
 
   expect(thoughtA2).toHaveProperty('rank', thoughtA1!.rank)
   expect(thoughtC2).toHaveProperty('rank', thoughtC1!.rank)
+})
+
+it('disable sort on move within context', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - b
+    - c
+  `
+
+  const steps = [
+    importText({ text }),
+    moveThoughtAtFirstMatch({
+      from: ['a'],
+      to: ['a'],
+      newRank: 999,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - b
+  - c
+  - a`)
 })
