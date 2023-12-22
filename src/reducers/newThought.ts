@@ -132,6 +132,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // if shift key is pressed, insert the child before the current thought
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
+    : value !== '' && getSortPreference(state, thoughtId).type === 'Alphabetical'
+    ? getSortedRank(state, thoughtId, value)
     : insertBefore
     ? insertNewSubthought || !simplePath || isRoot(simplePath)
       ? getPrevRank(state, thoughtId, { aboveMeta })
@@ -141,8 +143,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
       value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
       ? getRankAfter(state, getLastSortedChildPath()!)
-      : value !== '' && getSortPreference(state, thoughtId).type === 'Alphabetical'
-      ? getSortedRank(state, thoughtId, value)
       : getNextRank(state, thoughtId)
     : getRankAfter(state, simplePath)
 

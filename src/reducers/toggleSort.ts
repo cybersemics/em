@@ -81,7 +81,7 @@ const toggleSort = (
             if (!manualRanks) return state
 
             // get all children with manual ranks that still exist
-            const childrenWithManualRanks = getAllChildrenAsThoughts(state, id).filter(child => manualRanks[child.id])
+            const childrenWithManualRanks = getAllChildrenAsThoughts(state, id).filter(child => child.id in manualRanks)
             return updateThoughts(state, {
               thoughtIndexUpdates: keyValueBy(childrenWithManualRanks, child => ({
                 [child.id]: {

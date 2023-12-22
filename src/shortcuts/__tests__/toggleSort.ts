@@ -134,7 +134,7 @@ describe('store', () => {
       expect(attributeByContext(store.getState(), ['=sort'], 'Alphabetical')).toBe('Desc')
     })
 
-    it('restore sort order removed thoughts', () => {
+    it('sort new thoughts after toggling sort', () => {
       const store = createTestStore()
 
       store.dispatch([
@@ -145,20 +145,23 @@ describe('store', () => {
             - b`,
         }),
         toggleSortActionCreator({ simplePath: HOME_PATH }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
-        toggleSortActionCreator({ simplePath: HOME_PATH }),
+        newThought({ value: 'e', preventSetCursor: true }),
+        newThought({ value: 'd', preventSetCursor: true }),
       ])
 
       const state = store.getState()
-      expect(attributeByContext(state, [HOME_TOKEN], '=sort')).toBe(null)
-
       expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
-  - c
+  - =sort
+    - Alphabetical
+      - Asc
   - a
-  - b`)
+  - b
+  - c
+  - d
+  - e`)
     })
 
-    it('restore sort order added removed thoughts', () => {
+    it('restore sort order', () => {
       const store = createTestStore()
 
       store.dispatch([
