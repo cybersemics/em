@@ -402,6 +402,51 @@ it('data integrity test after editing a parent with multiple descendants with sa
   expect(missingParentIds).toHaveLength(0)
 })
 
+it('rank should change when editing a thought in a sorted context', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - b
+    - d`
+
+  const state1 = importText({ text })(initialState())
+
+  const a1 = contextToThought(state1, ['a'])!
+  const b1 = contextToThought(state1, ['b'])!
+  const d1 = contextToThought(state1, ['d'])!
+
+  const steps = [
+    setCursorFirstMatch(['']),
+    editThoughtByContext({
+      at: ['a'],
+      oldValue: 'a',
+      newValue: 'c',
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(state1)
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - b
+  - c
+  - d`)
+
+  const b2 = contextToThought(stateNew, ['b'])!
+  const c2 = contextToThought(stateNew, ['c'])!
+  const d2 = contextToThought(stateNew, ['d'])!
+
+  // rank of edited thought should change
+  expect(c2.rank).not.toEqual(a1.rank)
+
+  // rank of siblings should not
+  expect(b2.rank).toEqual(b1.rank)
+  expect(d2.rank).toEqual(d1.rank)
+})
+
 describe('changing thought with duplicate descendent', () => {
   it('adding', () => {
     const steps = [

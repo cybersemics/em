@@ -9,6 +9,8 @@ import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import addContext from '../util/addContext'
@@ -129,6 +131,10 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
 
   const thoughtNew: Thought = {
     ...editedThought,
+    rank:
+      getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
+        ? getSortedRank(state, editedThought.parentId, newValue)
+        : editedThought.rank,
     value: newValue,
     // store the last non-empty value to preserve the sort order of thoughts edited to empty
     // reset to undefined when newValue is non-empty
