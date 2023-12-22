@@ -1,20 +1,12 @@
-import State from '../../@types/State'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 import splitThought from '../splitThought'
-
-/** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */
-const setCursorFirstMatch = (state: State, pathUnranked: string[]): State =>
-  setCursor(state, {
-    path: contextToPath(state, pathUnranked),
-  })
 
 it('split thought', () => {
   const steps = [
@@ -116,7 +108,7 @@ it('move children to the new sibling even when the context is sorted and the new
         - New Orleans
       `,
     }),
-    (state: State) => setCursorFirstMatch(state, ['Louisiana', 'Baton Rouge']),
+    setCursor(['Louisiana', 'Baton Rouge']),
     splitThought({
       splitResult: {
         left: 'Baton ',

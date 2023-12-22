@@ -2,14 +2,13 @@ import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
-import setCursor from '../setCursor'
 
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtUp]
@@ -68,7 +67,7 @@ it('remove sorting when moving within a context', () => {
           - a3`,
     }),
 
-    setCursorFirstMatch(['a', 'a3']),
+    setCursor(['a', 'a3']),
     moveThoughtUp,
   ]
 
@@ -95,7 +94,7 @@ it('preserve sorting when moving the first thought in a context to the previous 
           - d`,
     }),
 
-    setCursorFirstMatch(['y', 'b']),
+    setCursor(['y', 'b']),
     moveThoughtUp,
   ]
 
@@ -123,7 +122,7 @@ it('move descendants', () => {
     }),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursorFirstMatch(['b']),
+    setCursor(['b']),
     moveThoughtUp,
   ]
 
@@ -140,7 +139,7 @@ it('move descendants', () => {
 })
 
 it('trying to move last thought of root should do nothing', () => {
-  const steps = [newThought('a'), newThought('b'), setCursorFirstMatch(['a']), moveThoughtUp]
+  const steps = [newThought('a'), newThought('b'), setCursor(['a']), moveThoughtUp]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -164,7 +163,7 @@ it('trying to move first thought of context with no prev uncle should do nothing
 })
 
 it('do nothing when there is no cursor', () => {
-  const steps = [newThought('a'), newThought('b'), setCursor({ path: null }), moveThoughtUp]
+  const steps = [newThought('a'), newThought('b'), setCursor(null), moveThoughtUp]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')

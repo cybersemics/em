@@ -2,7 +2,7 @@ import { HOME_TOKEN } from '../../constants'
 import newThought from '../../reducers/newThought'
 import splitSentences from '../../reducers/splitSentences'
 import exportContext from '../../selectors/exportContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -100,7 +100,7 @@ describe('simple split', () => {
       newThought('a'),
       newThought('One. Two. Three.'),
       newThought('b'),
-      setCursorFirstMatch(['One. Two. Three.']),
+      setCursor(['One. Two. Three.']),
       splitSentences(),
     ]
 

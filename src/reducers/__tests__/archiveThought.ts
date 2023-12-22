@@ -3,12 +3,11 @@ import archiveThought from '../../reducers/archiveThought'
 import cursorUp from '../../reducers/cursorUp'
 import newSubthought from '../../reducers/newSubthought'
 import newThought from '../../reducers/newThought'
-import setCursor from '../../reducers/setCursor'
 import toggleContextView from '../../reducers/toggleContextView'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 // TODO: Why does util have to be imported before selectors and reducers?
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -37,7 +36,7 @@ it('deduplicate archived thoughts with the same value', () => {
 })
 
 it('do nothing if there is no cursor', () => {
-  const steps = [newThought('a'), setCursor({ path: null }), archiveThought({})]
+  const steps = [newThought('a'), setCursor(null), archiveThought({})]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -70,13 +69,7 @@ it('permanently delete empty thought', () => {
 })
 
 it('permanently delete thought from archive', () => {
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    archiveThought({}),
-    setCursorFirstMatch(['=archive', 'b']),
-    archiveThought({}),
-  ]
+  const steps = [newThought('a'), newThought('b'), archiveThought({}), setCursor(['=archive', 'b']), archiveThought({})]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -87,13 +80,7 @@ it('permanently delete thought from archive', () => {
 })
 
 it('permanently delete archive', () => {
-  const steps = [
-    newThought('a'),
-    newThought('b'),
-    archiveThought({}),
-    setCursorFirstMatch(['=archive']),
-    archiveThought({}),
-  ]
+  const steps = [newThought('a'), newThought('b'), archiveThought({}), setCursor(['=archive']), archiveThought({})]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -109,9 +96,9 @@ it('permanently delete archive with descendants', () => {
   const steps = [
     newThought('a'),
     newSubthought('b'),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     archiveThought({}),
-    setCursorFirstMatch(['=archive']),
+    setCursor(['=archive']),
     archiveThought({}),
   ]
 
@@ -173,7 +160,7 @@ it('cursor should be removed if the last thought is deleted', () => {
 })
 
 it('empty thought should be archived if it has descendants', () => {
-  const steps = [newThought('a'), newThought(''), newSubthought('b'), setCursorFirstMatch(['']), archiveThought({})]
+  const steps = [newThought('a'), newThought(''), newSubthought('b'), setCursor(['']), archiveThought({})]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -196,9 +183,9 @@ describe.skip('context view', () => {
       cursorUp,
       newThought({ value: 'b' }),
       newThought({ value: 'm', insertNewSubthought: true }),
-      setCursorFirstMatch(['a', 'm']),
+      setCursor(['a', 'm']),
       toggleContextView,
-      setCursorFirstMatch(['a', 'm', 'b']),
+      setCursor(['a', 'm', 'b']),
       archiveThought({}),
     ]
 
@@ -219,11 +206,11 @@ describe.skip('context view', () => {
       newThought({ value: 'a' }),
       newThought({ value: 'm', insertNewSubthought: true }),
       newThought({ value: 'x', insertNewSubthought: true }),
-      setCursorFirstMatch(['a']),
+      setCursor(['a']),
       newThought({ value: 'b' }),
       newThought({ value: 'm', insertNewSubthought: true }),
       toggleContextView,
-      setCursorFirstMatch(['b', 'm', 'a']),
+      setCursor(['b', 'm', 'a']),
       archiveThought({}),
     ]
 
@@ -249,9 +236,9 @@ describe.skip('context view', () => {
       cursorUp,
       newThought({ value: 'b' }),
       newThought({ value: 'm', insertNewSubthought: true }),
-      setCursorFirstMatch(['a', 'm']),
+      setCursor(['a', 'm']),
       toggleContextView,
-      setCursorFirstMatch(['a', 'm', 'b']),
+      setCursor(['a', 'm', 'b']),
       archiveThought({}),
     ]
 
@@ -270,11 +257,11 @@ describe.skip('context view', () => {
       newThought({ value: 'a' }),
       newThought({ value: 'm', insertNewSubthought: true }),
       newThought({ value: 'x', insertNewSubthought: true }),
-      setCursorFirstMatch(['a']),
+      setCursor(['a']),
       newThought({ value: 'b' }),
       newThought({ value: 'm', insertNewSubthought: true }),
       toggleContextView,
-      setCursorFirstMatch(['b', 'm', 'a']),
+      setCursor(['b', 'm', 'a']),
       archiveThought({}),
     ]
 

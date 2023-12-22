@@ -5,7 +5,7 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 /**
  * Set range selection.
@@ -35,7 +35,7 @@ describe.skip('Extract thought', () => {
     store.dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator([thoughtValue]),
+      setCursor([thoughtValue]),
     ])
 
     store.dispatch([extractThought()])
@@ -52,7 +52,7 @@ describe.skip('Extract thought', () => {
     store.dispatch([
       newThought({ value: thoughtValue }),
       newThought({ value: 'sub-thought', insertNewSubthought: true }),
-      setCursorFirstMatchActionCreator([thoughtValue]),
+      setCursor([thoughtValue]),
     ])
 
     const thought = await findThoughtByText(thoughtValue)
@@ -76,7 +76,7 @@ describe.skip('Extract thought', () => {
 
   it('the cursor does not get updated on child creation', async () => {
     const thoughtValue = 'this is a test thought'
-    store.dispatch([newThought({ value: thoughtValue }), setCursorFirstMatchActionCreator([thoughtValue])])
+    store.dispatch([newThought({ value: thoughtValue }), setCursor([thoughtValue])])
 
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()

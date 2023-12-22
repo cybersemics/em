@@ -4,7 +4,7 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 it('redo thought change', () => {
   const store = createTestStore()
@@ -54,7 +54,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'indent' },
     { type: 'cursorUp' },
     editThoughtByContextActionCreator(['a'], 'arizona'),
-    setCursorFirstMatchActionCreator(['arizona', 'b']),
+    setCursor(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },

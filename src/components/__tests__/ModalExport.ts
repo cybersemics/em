@@ -1,10 +1,9 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
-import setCursor from '../../action-creators/setCursor'
 import showModal from '../../action-creators/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 
 beforeEach(createTestApp)
@@ -37,7 +36,7 @@ it('Export the cursor and all descendants', async () => {
             - c
       `,
     }),
-    setCursorFirstMatchActionCreator(['a', 'b']),
+    setCursor(['a', 'b']),
     showModal({ id: 'export' }),
   ])
 
@@ -61,7 +60,7 @@ it.skip('Export buffered thoughts', async () => {
         - x
       `,
     }),
-    setCursor({ path: null }),
+    setCursor(null),
   ])
 
   await fakeTimer.runAllAsync()

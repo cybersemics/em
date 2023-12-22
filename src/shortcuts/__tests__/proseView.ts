@@ -2,7 +2,7 @@ import importText from '../../action-creators/importText'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import proseViewShortcut from '../proseView'
 
 it('toggle on prose view of parent of cursor (inital state without =view attribute)', () => {
@@ -17,7 +17,7 @@ it('toggle on prose view of parent of cursor (inital state without =view attribu
             - c
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })
@@ -40,7 +40,7 @@ it('toggle on prose view of parent of cursor (inital state with =view attribute 
             - c
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })
@@ -63,7 +63,7 @@ it('toggle off prose view of parent of cursor', () => {
             - c
     `,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   executeShortcut(proseViewShortcut, { store })

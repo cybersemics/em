@@ -3,7 +3,6 @@ import Thought from '../../@types/Thought'
 import clear from '../../action-creators/clear'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
-import setCursor from '../../action-creators/setCursor'
 import { HOME_TOKEN } from '../../constants'
 import { DataProvider } from '../../data-providers/DataProvider'
 import getContext from '../../data-providers/data-helpers/getContext'
@@ -17,7 +16,7 @@ import { editThoughtByContextActionCreator } from '../../test-helpers/editThough
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import runDispatch from '../../test-helpers/runDispatch'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import sleep from '../../util/sleep'
 
@@ -84,7 +83,7 @@ it('do not repopulate deleted thought', async () => {
     // Need to setCursor to trigger the pullQueue
     // Must set cursor manually since deleteThought does not.
     // (The cursor is normally set after deleting via the deleteThoughtWithCursor reducer).
-    setCursor({ path: null }),
+    setCursor(null),
   ])
 
   const root = contextToThought(store.getState(), [HOME_TOKEN])
@@ -149,7 +148,7 @@ it.skip('delete thought with buffered descendants', async () => {
                 - e
     `,
     }),
-    setCursorFirstMatchActionCreator(['x']),
+    setCursor(['x']),
   ])
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])
@@ -194,7 +193,7 @@ it.skip('move thought with buffered descendants', async () => {
                 - e
     `,
     }),
-    setCursorFirstMatchActionCreator(['x']),
+    setCursor(['x']),
   ])
 
   const thoughtX = contextToThought(store.getState(), ['x'])!
@@ -257,7 +256,7 @@ it.skip('edit thought with buffered descendants', async () => {
                 - e
     `,
     }),
-    setCursorFirstMatchActionCreator(['x']),
+    setCursor(['x']),
   ])
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'a' }])

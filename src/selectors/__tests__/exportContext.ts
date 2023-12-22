@@ -2,7 +2,7 @@ import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import importText from '../../reducers/importText'
 import newThought from '../../reducers/newThought'
 import editThought from '../../test-helpers/editThoughtByContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import exportContext from '../exportContext'
@@ -17,7 +17,7 @@ it('meta and archived thoughts are included', () => {
       - b
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -41,7 +41,7 @@ it('meta is included but archived thoughts are excluded', () => {
       - b
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -63,7 +63,7 @@ it('meta is excluded', () => {
       - b
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -86,7 +86,7 @@ it('meta is excluded but archived is included', () => {
       - b
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -102,7 +102,7 @@ it('exported as plain text with no formatting', () => {
       - Hello <b>world</b>
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -118,7 +118,7 @@ it('exported as html', () => {
       - Hello <b>world</b>
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['a'])]
+  const steps = [importText({ text }), setCursor(['a'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
@@ -156,7 +156,7 @@ it('export multi-line thoughts as separate thoughts', () => {
 it('export as markdown', () => {
   const text = `Hello <b>wor<i>ld</i></b>`
 
-  const steps = [importText({ text }), setCursorFirstMatch([text])]
+  const steps = [importText({ text }), setCursor([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [text], 'text/plain')
@@ -170,7 +170,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
       - =readonly
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch([text])]
+  const steps = [importText({ text }), setCursor([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/plain')
@@ -188,7 +188,7 @@ it('export as plain and markdown text replacing html tags only from thoughts and
     - c
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch([text])]
+  const steps = [importText({ text }), setCursor([text])]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exportedPlain = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -213,7 +213,7 @@ it('export as plain and markdown text replacing html tags only from thoughts and
 it('decode character entities when exporting as plain text', () => {
   const steps = [
     newThought('a'),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     // use newThought to insert &amp; because importText decodes character entities
     newThought({ value: 'one &amp; two', insertNewSubthought: true }),
   ]

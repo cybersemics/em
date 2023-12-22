@@ -2,7 +2,7 @@ import importText from '../../action-creators/importText'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -47,7 +47,7 @@ it.skip('headings should set font weight', async () => {
   expect(thought5).toHaveStyle({ fontWeight: 600 })
 
   // child should not be bold
-  store.dispatch(setCursorFirstMatchActionCreator(['My Heading 1', '=heading1']))
+  store.dispatch(setCursor(['My Heading 1', '=heading1']))
   const thought1Child = await findThoughtByText('=heading1')
   expect(thought1Child).not.toHaveStyle({ fontWeight: 700 })
 })

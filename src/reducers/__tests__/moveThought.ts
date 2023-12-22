@@ -16,7 +16,7 @@ import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -230,7 +230,7 @@ it('moving unrelated thought should not update cursor', () => {
     newThought('b'),
     newSubthought('b1'),
     newSubthought('b1.1'),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['b'],
@@ -634,7 +634,7 @@ it('update cursor if duplicate thought with cursor is deleted', () => {
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['b']),
+    setCursor(['b']),
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['a', 'b'],
@@ -662,7 +662,7 @@ it('re-expand after moving across contexts', () => {
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['a', 'b']),
+    setCursor(['a', 'b']),
     moveThoughtAtFirstMatch({
       from: ['a', 'b'],
       to: ['b'],
@@ -694,7 +694,7 @@ it('move thought to the beginning of a sorted context', () => {
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['c', '=pin']),
+    setCursor(['c', '=pin']),
     moveThoughtAtFirstMatch({
       from: ['c', '=pin'],
       to: ['=pin'],
@@ -727,7 +727,7 @@ it('move thought to the middle of a sorted context', () => {
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['c', 'b']),
+    setCursor(['c', 'b']),
     moveThoughtAtFirstMatch({
       from: ['c', 'b'],
       to: ['b'],
@@ -760,7 +760,7 @@ it('move thought to the end of a sorted context', () => {
 
   const steps = [
     importText({ text }),
-    setCursorFirstMatch(['c', 'd']),
+    setCursor(['c', 'd']),
     moveThoughtAtFirstMatch({
       from: ['c', 'd'],
       to: ['d'],
@@ -791,7 +791,7 @@ it('do not re-rank siblings', () => {
       - b
   `
 
-  const steps = [importText({ text }), setCursorFirstMatch(['c', 'b'])]
+  const steps = [importText({ text }), setCursor(['c', 'b'])]
   const state = reducerFlow(steps)(initialState())
   const thoughtA1 = contextToThought(state, ['a'])!
   const thoughtC1 = contextToThought(state, ['c'])!

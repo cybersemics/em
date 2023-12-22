@@ -6,7 +6,7 @@ import exportContext from '../../selectors/exportContext'
 import appStore from '../../stores/app'
 import { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 
 const timer = testTimer()
@@ -45,7 +45,7 @@ it('merge up to pending destination descendant', async () => {
 
   await timer.runAllAsync()
 
-  appStore.dispatch([setCursorFirstMatchActionCreator(['a'])])
+  appStore.dispatch([setCursor(['a'])])
 
   // wait for pullBeforeMove middleware to execute
   await timer.runAllAsync()

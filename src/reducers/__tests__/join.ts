@@ -2,7 +2,7 @@ import { HOME_TOKEN } from '../../constants'
 import join from '../../reducers/join'
 import exportContext from '../../selectors/exportContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
@@ -15,7 +15,7 @@ it('joins two simple thoughts', () => {
       - n
     - b
   `
-  const steps = [importText({ text }), setCursorFirstMatch(['a', 'm']), join()]
+  const steps = [importText({ text }), setCursor(['a', 'm']), join()]
 
   const newState = reducerFlow(steps)(initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
@@ -42,7 +42,7 @@ it('joins two thoughts and merges their children', () => {
         - f
     - b
   `
-  const steps = [importText({ text }), setCursorFirstMatch(['a', 'o']), join()]
+  const steps = [importText({ text }), setCursor(['a', 'o']), join()]
 
   const newState = reducerFlow(steps)(initialState())
 
@@ -73,7 +73,7 @@ it('generates unique & non-conflicting ranks', () => {
         - d
     - b
   `
-  const steps = [importText({ text }), setCursorFirstMatch(['a', 'n']), join()]
+  const steps = [importText({ text }), setCursor(['a', 'n']), join()]
 
   const newState = reducerFlow(steps)(initialState())
 

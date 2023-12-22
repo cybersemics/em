@@ -4,7 +4,7 @@ import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import executeShortcut from '../../test-helpers/executeShortcut'
-import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import Editable from '../Editable'
 
 let wrapper: ReactWrapper<unknown, unknown>
@@ -23,7 +23,7 @@ it('reset content editable inner html on thought bump', async () => {
         - a
           - b`,
     }),
-    setCursorFirstMatchActionCreator(['a']),
+    setCursor(['a']),
   ])
 
   // update DOM
