@@ -12,7 +12,7 @@ import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
-import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import runDispatch from '../../test-helpers/runDispatch'
@@ -270,7 +270,7 @@ it.skip('edit thought with buffered descendants', async () => {
   await refreshTestApp()
 
   // edit thought with buffered descendants
-  await runDispatch(editThoughtByContextActionCreator(['a'], 'k'))
+  await runDispatch(editThought(['a'], 'k'))
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()

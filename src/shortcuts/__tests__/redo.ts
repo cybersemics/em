@@ -3,7 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
-import { editThoughtByContextActionCreator } from '../../test-helpers/editThoughtByContext'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 it('redo thought change', () => {
@@ -16,7 +16,7 @@ it('redo thought change', () => {
         - b`,
     }),
     { type: 'cursorUp' },
-    editThoughtByContextActionCreator(['a'], 'aa'),
+    editThought(['a'], 'aa'),
     { type: 'undoAction' },
   ])
 
@@ -53,13 +53,13 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    editThoughtByContextActionCreator(['a'], 'arizona'),
+    editThought(['a'], 'arizona'),
     setCursor(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
 
-    editThoughtByContextActionCreator(['arizona', 'b'], 'boston'),
+    editThought(['arizona', 'b'], 'boston'),
     { type: 'cursorDown' },
     { type: 'undoAction' },
     { type: 'undoAction' },
@@ -93,9 +93,9 @@ it('redo contiguous changes', () => {
         - A
         - B`,
     }),
-    editThoughtByContextActionCreator(['A'], 'Atlantic'),
-    editThoughtByContextActionCreator(['Atlantic'], 'Atlantic '),
-    editThoughtByContextActionCreator(['Atlantic '], 'Atlantic City'),
+    editThought(['A'], 'Atlantic'),
+    editThought(['Atlantic'], 'Atlantic '),
+    editThought(['Atlantic '], 'Atlantic City'),
     { type: 'undoAction' },
   ])
 
