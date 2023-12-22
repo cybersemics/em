@@ -6,7 +6,6 @@ import moveThought from '../reducers/moveThought'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankAfter from '../selectors/getRankAfter'
-import getSortPreference from '../selectors/getSortPreference'
 import nextSibling from '../selectors/nextSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -14,8 +13,6 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
-import reducerFlow from '../util/reducerFlow'
-import deleteAttribute from './deleteAttribute'
 
 /** Swaps the thought with its next siblings. */
 const moveThoughtDown = (state: State) => {
@@ -28,14 +25,11 @@ const moveThoughtDown = (state: State) => {
   const parentId = head(pathParent)
   const nextThought = nextSibling(state, cursor)
 
-  // if the cursor is the last child or the context is sorted, move the thought to the beginning of its next uncle
+  // if the cursor is the last child, move the thought to the beginning of its next uncle
   const nextUncleThought = pathParent.length > 0 ? nextSibling(state, pathParent) : null
   const nextUnclePath = nextUncleThought ? appendToPath(parentOf(pathParent), nextUncleThought.id) : null
 
   if (!nextThought && !nextUnclePath) return state
-
-  // get sorted state
-  const isSorted = getSortPreference(state, parentId).type !== 'None'
 
   if (findDescendant(state, thoughtId, '=readonly')) {
     return alert(state, {
@@ -59,7 +53,7 @@ const moveThoughtDown = (state: State) => {
   const offset = selection.offset()
 
   const rankNew = nextThought
-    ? // next thought (unsorted)
+    ? // next thought
       getRankAfter(state, simplifyPath(state, pathParent).concat(nextThought.id) as SimplePath)
     : // first thought in next uncle
       getPrevRank(state, head(nextUnclePath!))
@@ -67,29 +61,12 @@ const moveThoughtDown = (state: State) => {
   const newPathParent = nextThought ? pathParent : nextUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  return reducerFlow([
-    // remove sorting if moving within the same context
-    isSorted && nextThought
-      ? reducerFlow([
-          alert({
-            value: 'Switched to manual sort because thought was moved',
-          }),
-          deleteAttribute({
-            path: pathParent,
-            value: '=sort',
-          }),
-        ])
-      : null,
-
-    // move
-    state =>
-      moveThought(state, {
-        oldPath: cursor,
-        newPath,
-        ...(offset != null ? { offset } : null),
-        newRank: rankNew,
-      }),
-  ])(state)
+  return moveThought(state, {
+    oldPath: cursor,
+    newPath,
+    ...(offset != null ? { offset } : null),
+    newRank: rankNew,
+  })
 }
 
 export default moveThoughtDown
