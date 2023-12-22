@@ -142,14 +142,7 @@ it('export multi-line thoughts as separate thoughts', () => {
         - Hello
   `
 
-  const steps = [
-    importText({ text }),
-    editThought({
-      oldValue: 'Hello',
-      newValue: 'Hello\nworld',
-      at: ['a', 'b', 'Hello'],
-    }),
-  ]
+  const steps = [importText({ text }), editThought(['a', 'b', 'Hello'], 'Hello\nworld')]
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 

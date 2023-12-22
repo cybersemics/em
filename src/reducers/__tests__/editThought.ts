@@ -21,16 +21,7 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
 it('edit a thought', () => {
-  const steps = [
-    newThought({ value: 'a' }),
-    newThought({ value: 'b' }),
-    setCursor(['a']),
-    editThought({
-      newValue: 'aa',
-      oldValue: 'a',
-      at: ['a'],
-    }),
-  ]
+  const steps = [newThought({ value: 'a' }), newThought({ value: 'b' }), setCursor(['a']), editThought(['a'], 'aa')]
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -77,11 +68,7 @@ it('edit a descendant', () => {
       value: 'b',
       at: ['a'],
     }),
-    editThought({
-      newValue: 'aa1',
-      oldValue: 'a1',
-      at: ['a', 'a1'],
-    }),
+    editThought(['a', 'a1'], 'aa1'),
   ]
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -108,11 +95,7 @@ it('edit a thought with descendants', () => {
     newThought({ value: 'a' }),
     newThought({ value: 'a1', insertNewSubthought: true }),
     newThought({ value: 'a2' }),
-    editThought({
-      newValue: 'aa',
-      oldValue: 'a',
-      at: ['a'],
-    }),
+    editThought(['a'], 'aa'),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -161,11 +144,7 @@ it('edit a thought existing in mutliple contexts', () => {
       at: ['a'],
     }),
     newThought({ value: 'ab', insertNewSubthought: true }),
-    editThought({
-      newValue: 'abc',
-      oldValue: 'ab',
-      at: ['a', 'ab'],
-    }),
+    editThought(['a', 'ab'], 'abc'),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -204,16 +183,7 @@ it('move cursor to existing meta programming thought if any', () => {
     - color
       - lightblue`
 
-  const steps = [
-    importText({ text }),
-    setCursor(['a']),
-    newSubthought({ value: '' }),
-    editThought({
-      newValue: '=style',
-      oldValue: '',
-      at: ['a', ''],
-    }),
-  ]
+  const steps = [importText({ text }), setCursor(['a']), newSubthought({ value: '' }), editThought(['a', ''], '=style')]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -242,11 +212,7 @@ it('edit a thought that exists in another context', () => {
       at: ['a'],
     }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThought({
-      newValue: 'ab',
-      oldValue: 'a',
-      at: ['b', 'a'],
-    }),
+    editThought(['b', 'a'], 'ab'),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -284,11 +250,7 @@ it('edit a child with the same value as its parent', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'a', insertNewSubthought: true }),
-    editThought({
-      newValue: 'ab',
-      oldValue: 'a',
-      at: ['a', 'a'],
-    }),
+    editThought(['a', 'a'], 'ab'),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -325,16 +287,8 @@ it('do not duplicate children when new and old context are same', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b', insertNewSubthought: true }),
-    editThought({
-      newValue: 'as',
-      oldValue: 'a',
-      at: ['a'],
-    }),
-    editThought({
-      newValue: 'a',
-      oldValue: 'as',
-      at: ['as'],
-    }),
+    editThought(['a'], 'as'),
+    editThought(['as'], 'a'),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -353,15 +307,7 @@ it('data integrity test', () => {
         - d
       - d`
 
-  const steps = [
-    importText({ text }),
-    setCursor(['a']),
-    editThought({
-      at: ['a'],
-      oldValue: 'a',
-      newValue: 'azkaban',
-    }),
-  ]
+  const steps = [importText({ text }), setCursor(['a']), editThought(['a'], 'azkaban')]
 
   const stateNew = reducerFlow(steps)(initialState())
   const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
@@ -379,15 +325,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
     - b
       - m`
 
-  const steps = [
-    importText({ text }),
-    setCursor(['']),
-    editThought({
-      at: [''],
-      oldValue: '',
-      newValue: 'x',
-    }),
-  ]
+  const steps = [importText({ text }), setCursor(['']), editThought([''], 'x')]
 
   const stateNew = reducerFlow(steps)(initialState())
   const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
@@ -410,14 +348,7 @@ it('rank should change when editing a thought in a sorted context', () => {
   const b1 = contextToThought(state1, ['b'])!
   const d1 = contextToThought(state1, ['d'])!
 
-  const steps = [
-    setCursor(['']),
-    editThought({
-      at: ['a'],
-      oldValue: 'a',
-      newValue: 'c',
-    }),
-  ]
+  const steps = [setCursor(['']), editThought(['a'], 'c')]
 
   const stateNew = reducerFlow(steps)(state1)
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -451,11 +382,7 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - ac`,
       }),
-      editThought({
-        newValue: 'ac',
-        oldValue: 'a',
-        at: ['a'],
-      }),
+      editThought(['a'], 'ac'),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -481,11 +408,7 @@ describe('changing thought with duplicate descendent', () => {
         - b
           - a`,
       }),
-      editThought({
-        newValue: 'ac',
-        oldValue: 'a',
-        at: ['a'],
-      }),
+      editThought(['a'], 'ac'),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

@@ -332,11 +332,7 @@ it('replace empty cursor', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `b` to empty thought since importText skips empty thoughts
-    editThought({
-      newValue: '',
-      oldValue: 'b',
-      at: ['a', 'b'],
-    }),
+    editThought(['a', 'b'], ''),
     importTextAtFirstMatch({
       at: ['a', ''],
       text: paste,
@@ -366,11 +362,7 @@ it('replace empty cursor without affecting siblings', () => {
   const stateNew = reducerFlow([
     importText({ text }),
     // manually change `c` to empty thought since importText skips empty thoughts
-    editThought({
-      newValue: '',
-      oldValue: 'c',
-      at: ['a', 'c'],
-    }),
+    editThought(['a', 'c'], ''),
     importTextAtFirstMatch({
       at: ['a', ''],
       text: paste,
@@ -520,11 +512,7 @@ it('single-line nested html tags', () => {
     importText({ text }),
 
     // manually change `b` to empty thought to not see 'b' end of the new value.
-    editThought({
-      newValue: '',
-      oldValue: 'b',
-      at: ['a', 'b'],
-    }),
+    editThought(['a', 'b'], ''),
     importTextAtFirstMatch({
       at: ['a', ''],
       text: paste,

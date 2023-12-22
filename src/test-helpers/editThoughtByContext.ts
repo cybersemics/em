@@ -1,9 +1,10 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import editThoughtThunk from '../action-creators/editThought'
-import editThought, { editThoughtPayload } from '../reducers/editThought'
+import editThoughtActionCreator from '../action-creators/editThought'
+import editThought from '../reducers/editThought'
 import contextToPath from '../selectors/contextToPath'
+import head from '../util/head'
 
 /**
  * Edit thought at the given Context.
@@ -11,34 +12,27 @@ import contextToPath from '../selectors/contextToPath'
  * @param at: Unranked path to the thought.
  *
  */
-const editThoughtByContext = _.curryRight(
-  (state: State, payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] }) => {
-    const path = contextToPath(state, payload.at)
-    if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
-
-    return editThought(state, {
-      ...payload,
-      path,
-    })
-  },
-)
+const editThoughtByContext = _.curryRight((state: State, context: string[], newValue: string) => {
+  const path = contextToPath(state, context)
+  if (!path) throw new Error(`Thought not found at context: ${context}`)
+  return editThought(state, { path, oldValue: head(context), newValue })
+})
 
 /**
  * Edit thought at the given unranked path first matched.
  *
  * @param at: Unranked path to the thought.
  */
-export const editThoughtByContextActionCreator = (
-  payload: Omit<editThoughtPayload, 'context' | 'path'> & { at: string[] },
-): Thunk => {
+export const editThoughtByContextActionCreator = (context: string[], newValue: string): Thunk => {
   return (dispatch, getState) => {
-    const path = contextToPath(getState(), payload.at)
-    if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
+    const path = contextToPath(getState(), context)
+    if (!path) throw new Error(`Thought not found at context: ${context}`)
 
     dispatch(
-      editThoughtThunk({
-        ...payload,
+      editThoughtActionCreator({
         path,
+        newValue,
+        oldValue: head(context),
       }),
     )
   }
