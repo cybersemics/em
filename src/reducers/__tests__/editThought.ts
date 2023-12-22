@@ -15,7 +15,7 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { compareThought } from '../../util/compareThought'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -24,7 +24,7 @@ it('edit a thought', () => {
   const steps = [
     newThought({ value: 'a' }),
     newThought({ value: 'b' }),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     editThoughtByContext({
       newValue: 'aa',
       oldValue: 'a',
@@ -208,7 +208,7 @@ it('move cursor to existing meta programming thought if any', () => {
     importText({
       text,
     }),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     newSubthought({ value: '' }),
     editThoughtByContext({
       newValue: '=style',
@@ -359,7 +359,7 @@ it('data integrity test', () => {
     importText({
       text,
     }),
-    setCursorFirstMatch(['a']),
+    setCursor(['a']),
     editThoughtByContext({
       at: ['a'],
       oldValue: 'a',
@@ -387,7 +387,7 @@ it('data integrity test after editing a parent with multiple descendants with sa
     importText({
       text,
     }),
-    setCursorFirstMatch(['']),
+    setCursor(['']),
     editThoughtByContext({
       at: [''],
       oldValue: '',
@@ -417,7 +417,7 @@ it('rank should change when editing a thought in a sorted context', () => {
   const d1 = contextToThought(state1, ['d'])!
 
   const steps = [
-    setCursorFirstMatch(['']),
+    setCursor(['']),
     editThoughtByContext({
       at: ['a'],
       oldValue: 'a',
