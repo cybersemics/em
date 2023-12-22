@@ -16,11 +16,7 @@ it('redo thought change', () => {
         - b`,
     }),
     { type: 'cursorUp' },
-    editThoughtByContextActionCreator({
-      newValue: 'aa',
-      oldValue: 'a',
-      at: ['a'],
-    }),
+    editThoughtByContextActionCreator(['a'], 'aa'),
     { type: 'undoAction' },
   ])
 
@@ -57,21 +53,13 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
-    editThoughtByContextActionCreator({
-      newValue: 'arizona',
-      oldValue: 'a',
-      at: ['a'],
-    }),
+    editThoughtByContextActionCreator(['a'], 'arizona'),
     setCursorFirstMatchActionCreator(['arizona', 'b']),
     { type: 'cursorBack' },
     { type: 'cursorUp' },
     { type: 'cursorDown' },
 
-    editThoughtByContextActionCreator({
-      newValue: 'boston',
-      oldValue: 'b',
-      at: ['arizona', 'b'],
-    }),
+    editThoughtByContextActionCreator(['arizona', 'b'], 'boston'),
     { type: 'cursorDown' },
     { type: 'undoAction' },
     { type: 'undoAction' },
@@ -105,21 +93,9 @@ it('redo contiguous changes', () => {
         - A
         - B`,
     }),
-    editThoughtByContextActionCreator({
-      newValue: 'Atlantic',
-      oldValue: 'A',
-      at: ['A'],
-    }),
-    editThoughtByContextActionCreator({
-      newValue: 'Atlantic ',
-      oldValue: 'Atlantic',
-      at: ['Atlantic'],
-    }),
-    editThoughtByContextActionCreator({
-      newValue: 'Atlantic City',
-      oldValue: 'Atlantic ',
-      at: ['Atlantic '],
-    }),
+    editThoughtByContextActionCreator(['A'], 'Atlantic'),
+    editThoughtByContextActionCreator(['Atlantic'], 'Atlantic '),
+    editThoughtByContextActionCreator(['Atlantic '], 'Atlantic City'),
     { type: 'undoAction' },
   ])
 

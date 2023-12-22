@@ -271,13 +271,7 @@ it.skip('edit thought with buffered descendants', async () => {
   await refreshTestApp()
 
   // edit thought with buffered descendants
-  await runDispatch(
-    editThoughtByContextActionCreator({
-      at: ['a'],
-      oldValue: 'a',
-      newValue: 'k',
-    }),
-  )
+  await runDispatch(editThoughtByContextActionCreator(['a'], 'k'))
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()

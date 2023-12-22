@@ -60,11 +60,7 @@ describe('undo', () => {
         - b`,
       }),
       setCursor(['a']),
-      editThought({
-        newValue: 'aa',
-        oldValue: 'a',
-        at: ['a'],
-      }),
+      editThought(['a'], 'aa'),
       { type: 'undoAction' },
     ])
 
@@ -163,12 +159,12 @@ describe('undo', () => {
     store.dispatch([
       newThought({}),
       setCursor(['']),
-      editThought({ newValue: 'a', oldValue: '', at: [''] }),
+      editThought([''], 'a'),
       newThought({}),
       setCursor(['']),
-      editThought({ newValue: 'b', oldValue: '', at: [''] }),
+      editThought([''], 'b'),
       setCursor(['a']),
-      editThought({ newValue: 'aa', oldValue: 'a', at: ['a'] }),
+      editThought(['a'], 'aa'),
       { type: 'undoAction' },
     ])
 
@@ -257,11 +253,7 @@ describe('redo', () => {
         - b`,
       }),
       setCursor(['a']),
-      editThought({
-        newValue: 'aa',
-        oldValue: 'a',
-        at: ['a'],
-      }),
+      editThought(['a'], 'aa'),
       { type: 'undoAction' },
       { type: 'redoAction' },
     ])
@@ -314,11 +306,7 @@ describe('redo', () => {
         - B`,
         preventSetCursor: true,
       }),
-      editThought({
-        newValue: 'Atlantic',
-        oldValue: 'A',
-        at: ['A'],
-      }),
+      editThought(['A'], 'Atlantic'),
       { type: 'newThought', value: 'New Jersey' },
       { type: 'undoAction' },
       { type: 'undoAction' },
@@ -351,12 +339,7 @@ describe('grouping', () => {
       }),
       setCursor(['b']),
       { type: 'indent' },
-      editThought({
-        newValue: 'b1',
-        oldValue: 'b',
-        rankInContext: 0,
-        at: ['a', 'b'],
-      }),
+      editThought(['a', 'b'], 'b1', { rankInContext: 0 }),
       { type: 'cursorBack' },
       { type: 'moveThoughtDown' },
       { type: 'cursorDown' },
@@ -403,12 +386,7 @@ describe('grouping', () => {
       }),
       { type: 'newThought', value: 'c' },
       { type: 'newThought', value: 'd' },
-      editThought({
-        oldValue: 'd',
-        newValue: 'd1',
-        rankInContext: 3,
-        at: ['d'],
-      }),
+      editThought(['d'], 'd1', { rankInContext: 3 }),
       // undo thought change and preceding newThought action
       { type: 'undoAction' },
     ])
@@ -432,16 +410,8 @@ describe('grouping', () => {
         - A
         - B`,
       }),
-      editThought({
-        newValue: 'Atlantic',
-        oldValue: 'A',
-        at: ['A'],
-      }),
-      editThought({
-        newValue: 'Atlantic City',
-        oldValue: 'Atlantic',
-        at: ['Atlantic'],
-      }),
+      editThought(['A'], 'Atlantic'),
+      editThought(['Atlantic'], 'Atlantic City'),
       { type: 'undoAction' },
     ])
 
@@ -466,12 +436,7 @@ describe('grouping', () => {
           - d`,
       }),
       setCursor(null),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bd',
-        rankInContext: 0,
-        at: ['a', 'b'],
-      }),
+      editThought(['a', 'b'], 'bd', { rankInContext: 0 }),
       // dispensible set cursor (which only updates datanonce)
       setCursor(null),
       // undo setCursor and thoughtChange in a sinle action

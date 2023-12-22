@@ -26,17 +26,9 @@ describe('jump back', () => {
       `,
       }),
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       setCursor(['d', 'e', 'f']),
-      editThought({
-        oldValue: 'f',
-        newValue: 'ff',
-        at: ['d', 'e', 'f'],
-      }),
+      editThought(['d', 'e', 'f'], 'ff'),
       jump(-1),
     ])
 
@@ -65,35 +57,19 @@ describe('jump back', () => {
       // edit y (first edit point)
       setCursor(['x']),
       setCursor(['x', 'y']),
-      editThought({
-        oldValue: 'y',
-        newValue: 'yy',
-        at: ['x', 'y'],
-      }),
+      editThought(['x', 'y'], 'yy'),
       // edit c (second edit point)
       setCursor(['a']),
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // edit b (overrides the second edit point)
       setCursor(['a', 'b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['a', 'b'],
-      }),
+      editThought(['a', 'b'], 'bb'),
       // edit h (third edit point)
       setCursor(['a']),
       setCursor(['f']),
       setCursor(['f', 'g', 'h']),
-      editThought({
-        oldValue: 'h',
-        newValue: 'hh',
-        at: ['f', 'g', 'h'],
-      }),
+      editThought(['f', 'g', 'h'], 'hh'),
       jump(-1),
     ])
 
@@ -128,35 +104,19 @@ describe('jump back', () => {
       // edit y (first edit point)
       setCursor(['x']),
       setCursor(['x', 'y']),
-      editThought({
-        oldValue: 'y',
-        newValue: 'yy',
-        at: ['x', 'y'],
-      }),
+      editThought(['x', 'y'], 'yy'),
       // edit c (second edit point)
       setCursor(['a']),
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // edit b (overrides the second edit point)
       setCursor(['a', 'b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['a', 'b'],
-      }),
+      editThought(['a', 'b'], 'bb'),
       // edit h (third edit point)
       setCursor(['a']),
       setCursor(['f']),
       setCursor(['f', 'g', 'h']),
-      editThought({
-        oldValue: 'h',
-        newValue: 'hh',
-        at: ['f', 'g', 'h'],
-      }),
+      editThought(['f', 'g', 'h'], 'hh'),
       jump(-1),
     ])
 
@@ -191,42 +151,22 @@ describe('jump back', () => {
       // edit y (first edit point)
       setCursor(['x']),
       setCursor(['x', 'y']),
-      editThought({
-        oldValue: 'y',
-        newValue: 'yy',
-        at: ['x', 'y'],
-      }),
+      editThought(['x', 'y'], 'yy'),
       // edit c (second edit point)
       setCursor(['a']),
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // edit d (overrides the second edit point)
       setCursor(['a', 'b', 'd']),
-      editThought({
-        oldValue: 'd',
-        newValue: 'dd',
-        at: ['a', 'b', 'd'],
-      }),
+      editThought(['a', 'b', 'd'], 'dd'),
       // edit e (overrides the second edit point)
       setCursor(['a', 'b', 'e']),
-      editThought({
-        oldValue: 'e',
-        newValue: 'ee',
-        at: ['a', 'b', 'e'],
-      }),
+      editThought(['a', 'b', 'e'], 'ee'),
       // edit h (third edit point)
       setCursor(['a']),
       setCursor(['f']),
       setCursor(['f', 'g', 'h']),
-      editThought({
-        oldValue: 'h',
-        newValue: 'hh',
-        at: ['f', 'g', 'h'],
-      }),
+      editThought(['f', 'g', 'h'], 'hh'),
       jump(-1),
     ])
 
@@ -255,11 +195,7 @@ describe('jump back', () => {
       }),
       setCursor(['a']),
       setCursor(['a', 'b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['a', 'b'],
-      }),
+      editThought(['a', 'b'], 'bb'),
       setCursor(['c']),
       setCursor(['c', 'e']),
       indent(),
@@ -282,18 +218,10 @@ describe('jump back', () => {
       }),
       setCursor(['a']),
       newSubthought(),
-      editThought({
-        oldValue: '',
-        newValue: 'b',
-        at: ['a', ''],
-      }),
+      editThought(['a', ''], 'b'),
       setCursor(['c']),
       newSubthought(),
-      editThought({
-        oldValue: '',
-        newValue: 'd',
-        at: ['c', ''],
-      }),
+      editThought(['c', ''], 'd'),
       jump(-1),
     ])
 
@@ -317,11 +245,7 @@ describe('jump back', () => {
       }),
       // edit a/b/c
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // delete d/e/f
       setCursor(['d', 'e', 'f']),
       (dispatch, getState) => {
@@ -367,11 +291,7 @@ describe('jump back', () => {
       },
       // edit a/b/c
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       jump(-1),
     ])
 
@@ -390,11 +310,7 @@ describe('jump back', () => {
       `,
       }),
       setCursor(['a']),
-      editThought({
-        oldValue: 'a',
-        newValue: 'aa',
-        at: ['a'],
-      }),
+      editThought(['a'], 'aa'),
       setCursor(null),
       jump(-1),
     ])
@@ -419,17 +335,9 @@ describe('jump forward', () => {
       `,
       }),
       setCursor(['b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['b'],
-      }),
+      editThought(['b'], 'bb'),
       setCursor(['d']),
-      editThought({
-        oldValue: 'd',
-        newValue: 'dd',
-        at: ['d'],
-      }),
+      editThought(['d'], 'dd'),
       jump(-1),
       jump(1),
     ])
@@ -455,20 +363,12 @@ describe('jump forward', () => {
       // edit a/b/c
       setCursor(['a']),
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // edit d/e/f
       setCursor(['a']),
       setCursor(['d']),
       setCursor(['d', 'e', 'f']),
-      editThought({
-        oldValue: 'f',
-        newValue: 'ff',
-        at: ['d', 'e', 'f'],
-      }),
+      editThought(['d', 'e', 'f'], 'ff'),
       // jump back to a/b/cc
       jump(-1),
       // jump forward to d/e/ff
@@ -486,17 +386,9 @@ describe('jump forward', () => {
 
     store.dispatch([
       newThought({ value: '' }),
-      editThought({
-        oldValue: '',
-        newValue: 'a',
-        at: [''],
-      }),
+      editThought([''], 'a'),
       newThought({ value: '' }),
-      editThought({
-        oldValue: '',
-        newValue: 'b',
-        at: [''],
-      }),
+      editThought([''], 'b'),
       indent(),
       jump(-1),
       jump(1),
@@ -520,17 +412,9 @@ describe('jump forward', () => {
       `,
       }),
       setCursor(['b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['b'],
-      }),
+      editThought(['b'], 'bb'),
       setCursor(['d']),
-      editThought({
-        oldValue: 'd',
-        newValue: 'dd',
-        at: ['d'],
-      }),
+      editThought(['d'], 'dd'),
       jump(1),
     ])
 
@@ -552,17 +436,9 @@ describe('jump forward', () => {
       `,
       }),
       setCursor(['b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['b'],
-      }),
+      editThought(['b'], 'bb'),
       setCursor(['d']),
-      editThought({
-        oldValue: 'd',
-        newValue: 'dd',
-        at: ['d'],
-      }),
+      editThought(['d'], 'dd'),
       jump(-1),
       jump(1),
       jump(1),
@@ -587,17 +463,9 @@ describe('jump forward', () => {
       `,
       }),
       setCursor(['b']),
-      editThought({
-        oldValue: 'b',
-        newValue: 'bb',
-        at: ['b'],
-      }),
+      editThought(['b'], 'bb'),
       setCursor(['d']),
-      editThought({
-        oldValue: 'd',
-        newValue: 'dd',
-        at: ['d'],
-      }),
+      editThought(['d'], 'dd'),
       jump(-1),
       jump(-1),
       jump(-1),
@@ -626,11 +494,7 @@ describe('jump forward', () => {
       }),
       // edit a/b/c
       setCursor(['a', 'b', 'c']),
-      editThought({
-        oldValue: 'c',
-        newValue: 'cc',
-        at: ['a', 'b', 'c'],
-      }),
+      editThought(['a', 'b', 'c'], 'cc'),
       // delete d/e/f
       setCursor(['d', 'e', 'f']),
       (dispatch, getState) => {

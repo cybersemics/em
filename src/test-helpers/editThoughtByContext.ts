@@ -23,7 +23,11 @@ const editThoughtByContext = _.curryRight((state: State, context: string[], newV
  *
  * @param at: Unranked path to the thought.
  */
-export const editThoughtByContextActionCreator = (context: string[], newValue: string): Thunk => {
+export const editThoughtByContextActionCreator = (
+  context: string[],
+  newValue: string,
+  { rankInContext }: { rankInContext?: number } = {},
+): Thunk => {
   return (dispatch, getState) => {
     const path = contextToPath(getState(), context)
     if (!path) throw new Error(`Thought not found at context: ${context}`)
@@ -33,6 +37,7 @@ export const editThoughtByContextActionCreator = (context: string[], newValue: s
         path,
         newValue,
         oldValue: head(context),
+        rankInContext,
       }),
     )
   }
