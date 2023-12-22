@@ -348,7 +348,7 @@ it('rank should change when editing a thought in a sorted context', () => {
   const b1 = contextToThought(state1, ['b'])!
   const d1 = contextToThought(state1, ['d'])!
 
-  const steps = [setCursor(['']), editThought(['a'], 'c')]
+  const steps = [setCursor(['a']), editThought(['a'], 'c')]
 
   const stateNew = reducerFlow(steps)(state1)
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -370,6 +370,41 @@ it('rank should change when editing a thought in a sorted context', () => {
   // rank of siblings should not
   expect(b2.rank).toEqual(b1.rank)
   expect(d2.rank).toEqual(d1.rank)
+})
+
+it('rank should not change when editing a thought to empty', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - b
+    - c`
+
+  const state1 = importText({ text })(initialState())
+
+  const a1 = contextToThought(state1, ['a'])!
+  const b1 = contextToThought(state1, ['b'])!
+  const c1 = contextToThought(state1, ['c'])!
+
+  const steps = [setCursor(['b']), editThought(['b'], '')]
+
+  const stateNew = reducerFlow(steps)(state1)
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
+  - 
+  - c`)
+
+  const a2 = contextToThought(stateNew, ['a'])!
+  const empty2 = contextToThought(stateNew, [''])!
+  const c2 = contextToThought(stateNew, ['c'])!
+
+  expect(a2.rank).toEqual(a1.rank)
+  expect(empty2.rank).toEqual(b1.rank)
+  expect(c2.rank).toEqual(c1.rank)
 })
 
 describe('changing thought with duplicate descendent', () => {

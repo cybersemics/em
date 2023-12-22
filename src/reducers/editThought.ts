@@ -132,7 +132,7 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
   const thoughtNew: Thought = {
     ...editedThought,
     rank:
-      getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
+      newValue !== '' && getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
         ? getSortedRank(state, editedThought.parentId, newValue)
         : editedThought.rank,
     value: newValue,
