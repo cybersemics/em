@@ -37,7 +37,8 @@ const cursorChangedEnhancer: StoreEnhancer<any> =
         })
         throw new Error(errorMessage)
       }
-      const value = thought?.value || null
+
+      const value = thought?.value ?? null
 
       // clears the cursor selection if on divider or cursor is null.
       const cursorCleared = // selection may still exist after jump to null
