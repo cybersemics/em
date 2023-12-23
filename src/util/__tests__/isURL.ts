@@ -67,7 +67,7 @@ const invalidUrls = [
   'a.b.c',
 ]
 
-describe('should be valid', () => {
+describe('valid urls', () => {
   valueUrls.forEach(url => {
     it(url, () => {
       expect(isURL(url)).toBe(true)
@@ -75,7 +75,7 @@ describe('should be valid', () => {
   })
 })
 
-describe('should be invalid', () => {
+describe('invalid urls', () => {
   invalidUrls.forEach(url => {
     it(url, () => {
       expect(isURL(url)).toBe(false)
