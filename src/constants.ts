@@ -232,9 +232,6 @@ export const EDIT_THROTTLE = 500
 // matches a string with only punctuation
 export const REGEX_PUNCTUATIONS = /^\W+$/i
 
-export const REGEX_URL =
-  /^(?:http(s)?:\/\/)?(www\.)?[a-zA-Z@:%_\\+~#=]+[-\w@:%_\\+~#=.]*[\w@:%_\\+~#=]+[.:][\w()]{2,6}((\/[\w-()@:%_\\+~#?&=.]*)*)$/i
-
 // matches text with HTML
 export const REGEX_HTML = /<\/?[a-z][\s\S]*>/i
 
