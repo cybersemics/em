@@ -186,8 +186,8 @@ const VirtualThought = ({
       }}
     >
       {
-        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target for after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we insert DropHiddenUncle when e would not be rendered.
+        /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DrepBefore when e would not be rendered.
              - a
               - b
                 - c [cursor]
