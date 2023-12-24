@@ -27,7 +27,7 @@ const useDelayedAutofocus = <T = string>(
           if (unmounted.current) return
           setAutofocusDelayed(selector(autofocus))
           lastAutofocusRef.current = autofocus
-        }, 750) as unknown as number
+        }, delay) as unknown as number
       } else {
         setAutofocusDelayed(selector(autofocus))
         lastAutofocusRef.current = autofocus
