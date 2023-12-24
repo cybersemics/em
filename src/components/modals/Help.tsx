@@ -362,6 +362,10 @@ const About = () => {
           Check icon by <a href='https://thenounproject.com/icon/check-3669824/'>Media Creative</a> from the{' '}
           <a href='https://thenounproject.com'>Noun Project</a>
         </div>
+        <div>
+          Email icon by <a href='https://thenounproject.com/icon/email-1560074/'>il Capitano</a> from the{' '}
+          <a href='https://thenounproject.com'>Noun Project</a>
+        </div>
       </div>
     </div>
   )

@@ -21,6 +21,7 @@ import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isEmail from '../util/isEmail'
 import isURL from '../util/isURL'
 import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
@@ -28,6 +29,7 @@ import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import useMultiline from './Editable/useMultiline'
 import StaticSuperscript from './StaticSuperscript'
+import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
 
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
@@ -43,6 +45,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       rel='noopener noreferrer'
       target='_blank'
       className='external-link'
+      style={{ textDecoration: 'none' }}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -63,7 +66,22 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
 })
 UrlIconLink.displayName = 'UrlIconLink'
 
-/** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
+/** Renders an email icon and adds mailto: to email addresses. */
+const EmailIconLink = React.memo(({ email }: { email: string }) => (
+  <a
+    href={`mailto:${email}`}
+    target='_blank'
+    rel='noopener noreferrer'
+    className='external-link'
+    style={{ textDecoration: 'none' }}
+  >
+    {' '}
+    <EmailIcon />
+  </a>
+))
+EmailIconLink.displayName = 'EmailIconLink'
+
+/** Container for ThoughtAnnotation. */
 const ThoughtAnnotationContainer = React.memo(
   ({
     path,
@@ -148,6 +166,8 @@ const ThoughtAnnotationContainer = React.memo(
       return urlValue
     })
 
+    const email = isEmail(value) ? value : undefined
+
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)
 
@@ -155,7 +175,7 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url ? (
+    return showSuperscript || url || email ? (
       <ThoughtAnnotation
         {...{
           simplePath,
@@ -164,6 +184,7 @@ const ThoughtAnnotationContainer = React.memo(
           showSuperscript,
           style,
           styleAnnotation,
+          email,
           url,
           value,
         }}
@@ -175,6 +196,7 @@ const ThoughtAnnotationContainer = React.memo(
 /** A non-interactive annotation overlay that contains intrathought links (superscripts and underlining). */
 const ThoughtAnnotation = React.memo(
   ({
+    email,
     isEditing,
     numContexts,
     showSuperscript,
@@ -185,6 +207,7 @@ const ThoughtAnnotation = React.memo(
     url,
     value,
   }: {
+    email?: string
     isEditing?: boolean
     numContexts: number
     showSuperscript?: boolean
@@ -246,6 +269,7 @@ const ThoughtAnnotation = React.memo(
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
           }
+          {email && <EmailIconLink email={email} />}
           {
             // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
             showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
