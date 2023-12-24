@@ -63,8 +63,8 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 
 /** Dynamically update and remove heights for different keys. */
 const useHeightTracking = () => {
-  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation.
-  const [heights, setHeights] = useState<Index<number>>({})
+  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
+  const [heights, setHeights] = useState<Index<{ height: number; isVisible: boolean }>>({})
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -89,18 +89,21 @@ const useHeightTracking = () => {
 
   /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
   const setHeight = useCallback(
-    ({ height, key }: { height: number | null; id: ThoughtId; key: string }) => {
-      if (height) {
+    ({ height, isVisible, key }: { height: number | null; id: ThoughtId; isVisible: boolean; key: string }) => {
+      if (height !== null) {
         // cancel thought removal timeout
         clearTimeout(heightRemovalTimeouts.current.get(key))
         heightRemovalTimeouts.current.delete(key)
 
         setHeights(heightsOld =>
-          height === heightsOld[key]
+          height === heightsOld[key]?.height && isVisible === heightsOld[key]?.isVisible
             ? heightsOld
             : {
                 ...heightsOld,
-                [key]: height,
+                [key]: {
+                  height,
+                  isVisible,
+                },
               },
         )
       } else {
@@ -262,8 +265,8 @@ const LayoutTree = () => {
   const singleLineHeight = useMemo(() => {
     const singleLineHeightMeasured = Object.values(heights).find(
       // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different heights.
-      height => Math.abs(height - estimatedHeight) < height / 2,
-    )
+      ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
+    )?.height
     if (singleLineHeightMeasured) {
       singleLineHeightPrev.current = singleLineHeightMeasured
     }
@@ -296,7 +299,7 @@ const LayoutTree = () => {
   // Use estimated single-line height for the thoughts that do not have heights yet.
   // Not sure why we need +1, but without it the totalHeight changes from list virtualization.
   const totalHeight =
-    Object.values(heights).reduce((a, b) => a + b, 0) +
+    Object.values(heights).reduce((accum, { height, isVisible }) => accum + (isVisible ? height : 0), 0) +
     (virtualThoughts.length - Object.values(heights).length) * singleLineHeight
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
@@ -353,7 +356,7 @@ const LayoutTree = () => {
           // The single line height needs to be increased for thoughts that have a cliff below them.
           // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
           const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPaddingStyle.paddingBottom : 0)
-          const height = heights[key] ?? singleLineHeightWithCliff
+          const height = heights[key]?.height ?? singleLineHeightWithCliff
           const thoughtY = y
 
           y += height

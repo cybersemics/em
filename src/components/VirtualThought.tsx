@@ -77,6 +77,8 @@ const VirtualThought = ({
     /** The real, measured height of the thought after a render. Set to null on unmount. */
     height: number | null
     id: ThoughtId
+    /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
+    isVisible: boolean
     /** A key that uniquely identifies the thought across context views. */
     key: string
   }) => void
@@ -109,8 +111,7 @@ const VirtualThought = ({
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: 750,
-    selector: (autofocusAfterAnimation: Autofocus) =>
-      autofocus === 'hide' && autofocusAfterAnimation === 'hide' && !!height,
+    selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
   })
 
   // console.info('<VirtualThought>', prettyPath(childPath))
@@ -132,18 +133,25 @@ const VirtualThought = ({
   // })
 
   const updateHeight = useCallback(() => {
-    // do not attempt to measure the height of hidden thoughts
-    if (!ref.current || shimHiddenThought) return
+    // Get the updated autofocus, otherwise isVisible will be stale.
+    // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
+    const autofocusNew = calculateAutofocus(store.getState(), path)
+    const isVisibleNew = autofocusNew === 'show' || autofocusNew === 'dim'
+    if (!ref.current) return
     const heightNew = ref.current.getBoundingClientRect().height
-    if (heightNew === height) return
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
     const editable = ref.current.querySelector('.editable')
     if (editable?.hasAttribute('data-prevent-autoscroll')) return
 
     setHeight(heightNew)
-    onResize?.({ height: heightNew, id: thought.id, key: crossContextualKey })
-  }, [crossContextualKey, height, onResize, shimHiddenThought, thought.id])
+    onResize?.({
+      height: heightNew,
+      id: thought.id,
+      isVisible: isVisibleNew,
+      key: crossContextualKey,
+    })
+  }, [crossContextualKey, onResize, path, thought.id])
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
@@ -165,7 +173,7 @@ const VirtualThought = ({
   useEffect(
     () => {
       return () => {
-        onResize?.({ height: null, id: thought.id, key: crossContextualKey })
+        onResize?.({ height: null, id: thought.id, isVisible: true, key: crossContextualKey })
       }
     },
     // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
@@ -182,7 +190,7 @@ const VirtualThought = ({
       style={{
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
         // Must include DropEmpty, or it will shift when the cursor moves.
-        height: shimHiddenThought ? height! : undefined,
+        height: shimHiddenThought && height != null ? height : undefined,
       }}
     >
       {
