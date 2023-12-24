@@ -32,6 +32,11 @@ import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
 
+const urlLinkStyle = {
+  marginLeft: 3,
+  textDecoration: 'none',
+}
+
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
 const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
@@ -44,8 +49,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
-      className='external-link'
-      style={{ textDecoration: 'none' }}
+      style={urlLinkStyle}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -68,13 +72,7 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a
-    href={`mailto:${email}`}
-    target='_blank'
-    rel='noopener noreferrer'
-    className='external-link'
-    style={{ textDecoration: 'none' }}
-  >
+  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' style={urlLinkStyle}>
     {' '}
     <EmailIcon />
   </a>

@@ -23,7 +23,7 @@
   --z-index-tutorial: 3;
   /* above footer and breadcrumbs */
   --z-index-scroll-zone: 2;
-  /* set z-index on .thought-annotation links such as .external-link so they are above .editable and thus clickable */
+  /* set z-index on .thought-annotation links so they are above .editable and thus clickable */
   --z-index-thought-annotation-link: 2;
   --z-index-resizer: 2;
   /* place above .thought-container to preserve click area of bullet
@@ -2456,10 +2456,6 @@ code,
 .search-container > .thought {
   flex: 1;
   display: flex;
-}
-
-.external-link {
-  margin-left: 3px;
 }
 
 .function > .thought-container > .thought > .editable {
