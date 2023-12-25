@@ -35,7 +35,7 @@ const DropThought = ({
       state.draggingThought &&
       equalPath(rootedParentOf(state, state.draggingThought), rootedParentOf(state, simplePath))
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
-    if (!isParentSorted && !sameContext) return globals.simulateDrag || isHovering
+    if (!isParentSorted || sameContext) return globals.simulateDrag || isHovering
     else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought
