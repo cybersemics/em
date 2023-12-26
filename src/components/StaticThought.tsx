@@ -1,6 +1,9 @@
 import _ from 'lodash'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import LazyEnv from '../@types/LazyEnv'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -10,16 +13,48 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
 import Superscript from './Superscript'
-import { ThoughtProps } from './Thought'
+import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
+
+export interface ThoughtProps {
+  allowSingleContext?: boolean
+  debugIndex?: number
+  editing?: boolean | null
+  env?: LazyEnv
+  // When context view is activated, some contexts may be pending
+  // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
+  // getContexts will return ids that do not exist in the thoughtIndex
+  // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
+  isContextPending?: boolean
+  isEditing?: boolean
+  isPublishChild?: boolean
+  // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
+  // currently this does not control visibility, but merely tracks it
+  isVisible?: boolean
+  leaf?: boolean
+  onEdit?: (args: { newValue: string; oldValue: string }) => void
+  path: Path
+  rank: number
+  showContextBreadcrumbs?: boolean
+  showContexts?: boolean
+  simplePath: SimplePath
+  style?: React.CSSProperties
+  styleAnnotation?: React.CSSProperties
+  styleContainer?: React.CSSProperties
+  styleThought?: React.CSSProperties
+  view?: string | null
+}
 
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
+  allowSingleContext,
   editing,
   // See: ThoughtProps['isContextPending']
+  env,
   isContextPending,
   isEditing,
   isVisible,
@@ -29,6 +64,8 @@ const StaticThought = ({
   showContextBreadcrumbs,
   simplePath,
   style,
+  styleThought,
+  styleAnnotation,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -64,29 +101,40 @@ const StaticThought = ({
   // })
 
   return (
-    <div aria-label='thought' className='thought'>
-      {homeContext ? (
-        // left, top are eyeballed for different font sizes
-        <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
-      ) : isDivider(value) ? (
-        <Divider path={simplePathLive} />
-      ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
-        <div style={{ paddingTop: '2.8em' }}></div>
-      ) : (
-        <Editable
-          path={path}
-          disabled={!isDocumentEditable()}
-          isEditing={isEditing}
-          isVisible={isVisible}
-          rank={rank}
-          style={style}
-          simplePath={simplePathLive}
-          onEdit={onEdit}
-        />
-      )}
+    <>
+      <ThoughtAnnotation
+        env={env}
+        minContexts={allowSingleContext ? 0 : 2}
+        path={path}
+        showContextBreadcrumbs={showContextBreadcrumbs}
+        simplePath={showContexts ? parentOf(simplePath) : simplePath}
+        style={styleThought}
+        styleAnnotation={styleAnnotation || undefined}
+      />
+      <div aria-label='thought' className='thought'>
+        {homeContext ? (
+          // left, top are eyeballed for different font sizes
+          <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
+        ) : isDivider(value) ? (
+          <Divider path={simplePathLive} />
+        ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
+          <div style={{ paddingTop: '2.8em' }}></div>
+        ) : (
+          <Editable
+            path={path}
+            disabled={!isDocumentEditable()}
+            isEditing={isEditing}
+            isVisible={isVisible}
+            rank={rank}
+            style={style}
+            simplePath={simplePathLive}
+            onEdit={onEdit}
+          />
+        )}
 
-      <Superscript simplePath={simplePathLive} superscript={false} />
-    </div>
+        <Superscript simplePath={simplePathLive} superscript={false} />
+      </div>
+    </>
   )
 }
 

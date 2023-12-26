@@ -48,7 +48,6 @@ import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './D
 import DropThought from './DropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
-import ThoughtAnnotation from './ThoughtAnnotation'
 
 /**********************************************************************
  * Redux
@@ -85,31 +84,6 @@ export interface ThoughtContainerProps {
   prevChildId?: ThoughtId
   publish?: boolean
   rank: number
-  showContexts?: boolean
-  simplePath: SimplePath
-  style?: React.CSSProperties
-  styleContainer?: React.CSSProperties
-  view?: string | null
-}
-
-export interface ThoughtProps {
-  debugIndex?: number
-  editing?: boolean | null
-  // When context view is activated, some contexts may be pending
-  // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
-  // getContexts will return ids that do not exist in the thoughtIndex
-  // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
-  isContextPending?: boolean
-  isEditing?: boolean
-  isPublishChild?: boolean
-  // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
-  // currently this does not control visibility, but merely tracks it
-  isVisible?: boolean
-  leaf?: boolean
-  onEdit?: (args: { newValue: string; oldValue: string }) => void
-  path: Path
-  rank: number
-  showContextBreadcrumbs?: boolean
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
@@ -471,17 +445,9 @@ const ThoughtContainer = ({
 
           <DropThought isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-          <ThoughtAnnotation
-            env={env}
-            minContexts={allowSingleContext ? 0 : 2}
-            path={path}
-            showContextBreadcrumbs={showContextBreadcrumbs}
-            simplePath={showContexts ? parentOf(simplePath) : simplePath}
-            style={styleThought}
-            styleAnnotation={styleAnnotation || undefined}
-          />
-
           <StaticThought
+            allowSingleContext={allowSingleContext}
+            env={env}
             isContextPending={isContextPending}
             isEditing={isEditing}
             isPublishChild={isPublishChild}
@@ -492,6 +458,8 @@ const ThoughtContainer = ({
             showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
             simplePath={simplePath}
             style={styleThought}
+            styleAnnotation={styleAnnotation || undefined}
+            styleThought={styleThought}
             view={view}
           />
 
