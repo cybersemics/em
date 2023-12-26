@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -38,6 +38,7 @@ export interface ThoughtProps {
   isVisible?: boolean
   leaf?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
+  updateHeight?: () => void
   path: Path
   rank: number
   showContextBreadcrumbs?: boolean
@@ -67,6 +68,7 @@ const StaticThought = ({
   style,
   styleThought,
   styleAnnotation,
+  updateHeight,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -75,6 +77,10 @@ const StaticThought = ({
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
+
+  useEffect(() => {
+    updateHeight?.()
+  }, [multiline, updateHeight])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load

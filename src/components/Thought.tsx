@@ -88,6 +88,7 @@ export interface ThoughtContainerProps {
   simplePath: SimplePath
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
+  updateHeight?: () => void
   view?: string | null
 }
 
@@ -190,6 +191,7 @@ const ThoughtContainer = ({
   simplePath,
   style: styleProp,
   styleContainer: styleContainerProp,
+  updateHeight,
   view,
 }: ConnectedDraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
@@ -460,6 +462,7 @@ const ThoughtContainer = ({
             style={styleThought}
             styleAnnotation={styleAnnotation || undefined}
             styleThought={styleThought}
+            updateHeight={updateHeight}
             view={view}
           />
 

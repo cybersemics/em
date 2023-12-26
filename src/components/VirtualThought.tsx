@@ -30,6 +30,17 @@ import DropEmpty from './DropEmpty'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
+/** A resize handler that should be called whenever a thought's height has changed. */
+export type OnResize = (args: {
+  /** The real, measured height of the thought after a render. Set to null on unmount. */
+  height: number | null
+  id: ThoughtId
+  /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
+  isVisible: boolean
+  /** A key that uniquely identifies the thought across context views. */
+  key: string
+}) => void
+
 /** Selects the cursor. */
 const selectCursor = (state: State) => state.cursor
 
@@ -53,9 +64,9 @@ const VirtualThought = ({
   indexDescendant,
   isMultiColumnTable,
   leaf,
+  onResize,
   path,
   prevChildId,
-  onResize,
   showContexts,
   simplePath,
   singleLineHeight,
@@ -73,15 +84,7 @@ const VirtualThought = ({
   leaf: boolean
   path: Path
   prevChildId?: ThoughtId
-  onResize?: (args: {
-    /** The real, measured height of the thought after a render. Set to null on unmount. */
-    height: number | null
-    id: ThoughtId
-    /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
-    isVisible: boolean
-    /** A key that uniquely identifies the thought across context views. */
-    key: string
-  }) => void
+  onResize?: OnResize
   showContexts?: boolean
   simplePath: SimplePath
   singleLineHeight: number
@@ -216,6 +219,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
+          updateHeight={updateHeight}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
@@ -256,6 +260,7 @@ const Subthought = ({
   indexDescendant,
   isMultiColumnTable,
   leaf,
+  updateHeight,
   path,
   prevChildId,
   showContexts,
@@ -271,6 +276,7 @@ const Subthought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
+  updateHeight?: () => void
   path: Path
   prevChildId?: ThoughtId
   showContexts?: boolean
@@ -364,6 +370,7 @@ const Subthought = ({
           isHeader={false}
           isMultiColumnTable={isMultiColumnTable}
           isVisible={isVisible}
+          updateHeight={updateHeight}
           path={path}
           prevChildId={prevChildId}
           rank={thought.rank}
