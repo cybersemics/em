@@ -22,6 +22,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
+import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
@@ -32,6 +33,8 @@ import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
 type TreeThought = {
+  /** If true, the thought is rendered below the cursor (with a higher y value). This is used to crop hidden thoughts. */
+  belowCursor: boolean
   // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
   contextChain?: SimplePath[]
   depth: number
@@ -134,6 +137,8 @@ const virtualTree = (
   {
     // Base path to start the traversal. Defaults to HOME_PATH.
     basePath,
+    /** Used to set belowCursor in recursive calls. Once true, all remaining thoughts will have belowCursor: true. See: TreeThought.belowCursor. */
+    belowCursor,
     // The id of a specific context within the context view.
     // This allows the contexts to render the children of their Lexeme instance rather than their own children.
     // i.e. a/~m/b should render b/m's children rather than rendering b's children. Notice that the Path a/~m/b contains a different m than b/m, so we need to pass the id of b/m to the next level to render the correct children.
@@ -150,6 +155,7 @@ const virtualTree = (
     styleFromGrandparent,
   }: {
     basePath?: Path
+    belowCursor?: boolean
     contextId?: ThoughtId
     contextChain?: SimplePath[]
     depth: number
@@ -200,8 +206,33 @@ const virtualTree = (
     const envNew =
       env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
+    // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
+    // See: TreeThought.belowCursor
+    if (!belowCursor && equalPath(childPath, state.cursor)) {
+      belowCursor = true
+    }
+
+    const node = {
+      belowCursor: !!belowCursor,
+      contextChain: contextChainNew,
+      depth,
+      env: envNew || undefined,
+      indexChild: i,
+      indexDescendant: virtualIndexNew,
+      // must filteredChild.id to work for both normal view and context view
+      leaf: !hasChildren(state, filteredChild.id),
+      path: childPath,
+      prevChild: filteredChildren[i - 1],
+      showContexts: contextViewActive,
+      simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
+      style,
+      thought: child,
+    }
+
+    // RECURSION
     const descendants = virtualTree(state, {
       basePath: childPath,
+      belowCursor,
       contextId: contextViewActive ? filteredChild.id : undefined,
       contextChain: contextChainNew,
       depth: depth + 1,
@@ -216,25 +247,12 @@ const virtualTree = (
       styleFromGrandparent: getStyle(state, grandchildrenAttributeId),
     })
 
-    return [
-      ...accum,
-      {
-        contextChain: contextChainNew,
-        depth,
-        env: envNew || undefined,
-        indexChild: i,
-        indexDescendant: virtualIndexNew,
-        // must filteredChild.id to work for both normal view and context view
-        leaf: !hasChildren(state, filteredChild.id),
-        path: childPath,
-        prevChild: filteredChildren[i - 1],
-        showContexts: contextViewActive,
-        simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
-        style,
-        thought: child,
-      },
-      ...descendants,
-    ]
+    // In order to mark every thought after the cursor as belowCursor, we need to update belowCursor before the next sibling is processed. Otherwise, the recursive belowCursor will not be propagated up the call stack and will still be undefined on the next uncle.
+    if (!belowCursor && descendants[descendants.length - 1]?.belowCursor) {
+      belowCursor = true
+    }
+
+    return [...accum, node, ...descendants]
   }, [])
 
   return thoughts
@@ -295,12 +313,15 @@ const LayoutTree = () => {
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + overshoot
 
-  // Sum all the heights to get the total height.
+  // Sum all the heights to get the total height of the containing div.
   // Use estimated single-line height for the thoughts that do not have heights yet.
-  // Not sure why we need +1, but without it the totalHeight changes from list virtualization.
-  const totalHeight =
-    Object.values(heights).reduce((accum, { height, isVisible }) => accum + (isVisible ? height : 0), 0) +
-    (virtualThoughts.length - Object.values(heights).length) * singleLineHeight
+  // Exclude hidden thoughts below the cursor to reduce empty scroll space.
+  const totalHeight = virtualThoughts.reduce((accum, node) => {
+    const key = crossContextualKey(node.contextChain, node.thought.id)
+    const heightNext =
+      key in heights ? (heights[key].isVisible || !node.belowCursor ? heights[key].height : 0) : singleLineHeight
+    return accum + heightNext
+  }, 0)
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
