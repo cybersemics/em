@@ -73,7 +73,7 @@ const NavBar = ({ position }: { position: string }) => {
 
   return (
     <div
-      className='z-index-stack'
+      className='z-index-navbar'
       style={
         !isTouch || !editing
           ? {
@@ -85,7 +85,7 @@ const NavBar = ({ position }: { position: string }) => {
       }
     >
       {/* {isTouch && <SidebarGutter />} */}
-      <Scale amount={scale!} origin='bottom left'>
+      <Scale amount={scale} origin='bottom left'>
         <div
           aria-label='nav'
           className={classNames({

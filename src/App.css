@@ -3,7 +3,6 @@
    Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
 :root {
   --z-index-popup: 1500;
-  /* Sidebar : 1300 */
   --z-index-gesture-trace: 50;
   --z-index-command-palette: 45;
   --z-index-modal: 40;
@@ -12,6 +11,8 @@
   --z-index-toolbar-overlay: 15;
   --z-index-toolbar-arrow: 15;
   --z-index-toolbar: 10;
+  /* above Sidebar */
+  --z-index-navbar: 10;
   --z-index-latest-shortcuts: 10;
   /* above .children */
   --z-index-tutorial-trace-gesture: 5;
@@ -32,6 +33,7 @@
   /* define a single var to place any element in a stacking context */
   --z-index-stack: 1;
   --z-index-hide: -1;
+  /* Sidebar is set inline to z-index: 1 */
 
   --safe-area-top: env(safe-area-inset-top);
   --safe-area-bottom: env(safe-area-inset-bottom);
@@ -48,6 +50,9 @@
 }
 .z-index-hamburger-menu {
   z-index: var(--z-index-hamburger-menu);
+}
+.z-index-navbar {
+  z-index: var(--z-index-navbar);
 }
 .z-index-subthoughts-drop-end {
   z-index: var(--z-index-subthoughts-drop-end);

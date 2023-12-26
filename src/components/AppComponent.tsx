@@ -261,11 +261,11 @@ const AppComponent: FC = () => {
       )}
       {!showModal && !tutorial && <Toolbar />}
       <QuickDropPanel />
+
       <MultiGestureIfTouch>
         {showModal ? (
           <div style={{ fontSize }}>{Modal && <Modal />}</div>
         ) : (
-          // navigation, content, and footer
           <>
             {showTutorial ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
@@ -291,17 +291,19 @@ const AppComponent: FC = () => {
                 )}
               </SplitPane>
             )}
-
-            <NavBar position='bottom' />
           </>
         )}
+      </MultiGestureIfTouch>
 
-        {!showModal && isDocumentEditable() && (
+      {!showModal && isDocumentEditable() && (
+        <>
+          {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
+          <NavBar position='bottom' />
           <div style={{ fontSize }}>
             <Footer />
           </div>
-        )}
-      </MultiGestureIfTouch>
+        </>
+      )}
     </div>
   )
 }
