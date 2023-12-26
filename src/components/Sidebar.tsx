@@ -72,7 +72,7 @@ const Sidebar = () => {
       {/* <RecentlyEdited /> */}
       <div
         // We need to disable favorites drag-and-drop when the Sidebar is being slid close.
-        // Unfortunately, MUI SwipeableDrawer does provide an API for its animation or swipe state, or final open/close.
+        // Unfortunately, MUI SwipeableDrawer does not provide an API for its animation or swipe state, or final open/close.
         // Therefore we check translateX from the .MuiDrawer-paper element and disable drag-and-drop
         // See: https://bit.cloud/mui-org/material-ui/swipeable-drawer
         //      https://mui.com/material-ui/api/swipeable-drawer/
