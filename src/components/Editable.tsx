@@ -54,7 +54,6 @@ import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
-import useMultiline from './Editable/useMultiline'
 import useOnPaste from './Editable/useOnPaste'
 import usePlaceholder from './Editable/usePlaceholder'
 
@@ -62,10 +61,12 @@ import usePlaceholder from './Editable/usePlaceholder'
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
 
 interface EditableProps {
+  editableRef?: React.RefObject<HTMLInputElement>
   path: Path
   disabled?: boolean
   isEditing?: boolean
   isVisible?: boolean
+  multiline?: boolean
   rank?: number
   style?: React.CSSProperties
   simplePath: SimplePath
@@ -89,7 +90,18 @@ let cursorOffsetInitialized = false
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
-const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, style, transient }: EditableProps) => {
+const Editable = ({
+  disabled,
+  editableRef,
+  isEditing,
+  isVisible,
+  multiline,
+  onEdit,
+  path,
+  simplePath,
+  style,
+  transient,
+}: EditableProps) => {
   const state = store.getState()
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -107,6 +119,8 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const placeholder = usePlaceholder({ isEditing, simplePath })
+  const nullRef = useRef<HTMLInputElement>(null)
+  const contentRef = editableRef || nullRef
 
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
@@ -130,13 +144,9 @@ const Editable = ({ disabled, isEditing, isVisible, onEdit, path, simplePath, st
   const labelId = findDescendant(state, parentId, '=label')
   const childrenLabel = anyChild(state, labelId)
 
-  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
-  const contentRef = React.useRef<HTMLInputElement>(null)
   if (contentRef.current) {
     contentRef.current.style.opacity = '1.0'
   }
-
-  const multiline = useMultiline(contentRef, simplePath, isEditing)
 
   /** Toggle invalid-option class using contentRef. */
   const setContentInvalidState = (value: boolean) =>

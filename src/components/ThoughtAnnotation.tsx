@@ -27,7 +27,6 @@ import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
-import useMultiline from './Editable/useMultiline'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -85,6 +84,7 @@ const ThoughtAnnotationContainer = React.memo(
     path,
     simplePath,
     minContexts = 2,
+    multiline,
     invalidState,
     style,
     // only applied to the .subthought container
@@ -94,6 +94,7 @@ const ThoughtAnnotationContainer = React.memo(
     focusOffset?: number
     invalidState?: boolean
     minContexts?: number
+    multiline?: boolean
     path: Path
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
@@ -178,6 +179,7 @@ const ThoughtAnnotationContainer = React.memo(
         {...{
           simplePath,
           isEditing,
+          multiline,
           numContexts,
           showSuperscript,
           style,
@@ -196,6 +198,7 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
+    multiline,
     numContexts,
     showSuperscript,
     simplePath,
@@ -207,6 +210,7 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing?: boolean
+    multiline?: boolean
     numContexts: number
     showSuperscript?: boolean
     simplePath: SimplePath
@@ -215,8 +219,6 @@ const ThoughtAnnotation = React.memo(
     url?: string | null
     value: string
   }) => {
-    const contentRef = React.useRef<HTMLInputElement>(null)
-
     const fontSize = useSelector(state => state.fontSize)
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
       isEditing ? editingValue ?? value : null,
@@ -237,12 +239,9 @@ const ThoughtAnnotation = React.memo(
       return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : ellipsizeUrl(value)
     })
 
-    const multiline = useMultiline(contentRef, simplePath, isEditing)
-
     return (
       <div
         className='thought-annotation'
-        ref={contentRef}
         style={{
           // must match marginLeft of StaticThought
           marginLeft: fontSize - 13,

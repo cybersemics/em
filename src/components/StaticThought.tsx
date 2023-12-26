@@ -16,6 +16,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
+import useMultiline from './Editable/useMultiline'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -71,6 +72,9 @@ const StaticThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
+  // store ContentEditable ref to update DOM without re-rendering the Editable during editing
+  const editableRef = React.useRef<HTMLInputElement>(null)
+  const multiline = useMultiline(editableRef, simplePath, isEditing)
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
@@ -105,6 +109,7 @@ const StaticThought = ({
       <ThoughtAnnotation
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
+        multiline={multiline}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={showContexts ? parentOf(simplePath) : simplePath}
@@ -121,6 +126,8 @@ const StaticThought = ({
           <div style={{ paddingTop: '2.8em' }}></div>
         ) : (
           <Editable
+            editableRef={editableRef}
+            multiline={multiline}
             path={path}
             disabled={!isDocumentEditable()}
             isEditing={isEditing}
