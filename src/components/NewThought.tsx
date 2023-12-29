@@ -1,11 +1,6 @@
-/** A link that creates a new thought.
- *
- * @param type {button|bullet} Default: bullet.
- */
 import classNames from 'classnames'
 import { useCallback } from 'react'
-import { connect, useDispatch } from 'react-redux'
-import Path from '../@types/Path'
+import { useDispatch, useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import createThought from '../action-creators/createThought'
@@ -24,30 +19,23 @@ import head from '../util/head'
 import unroot from '../util/unroot'
 
 interface NewThoughtProps {
-  show?: boolean
   path: SimplePath
-  cursor?: Path | null
   showContexts?: boolean
   label?: string
   value?: string
   type?: string
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: NewThoughtProps) => {
-  const { cursor } = state
-  const children = getChildrenRanked(state, head(props.path))
-  return {
-    cursor,
-    show: !children.length || children[children.length - 1].value !== '',
-  }
-}
-
 /** An input element for a new thought that mimics a normal thought. */
-const NewThought = ({ show, path, cursor, showContexts, label, value = '', type = 'bullet' }: NewThoughtProps) => {
+const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: NewThoughtProps) => {
   const depth = unroot(path).length
+  const cursor = useSelector(state => state.cursor)
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
   const dispatch = useDispatch()
+  const show = useSelector((state: State) => {
+    const children = getChildrenRanked(state, head(path))
+    return !children.length || children[children.length - 1].value !== ''
+  })
 
   /** Handles the click event. */
   const onClick = useCallback(() => {
@@ -105,4 +93,4 @@ const NewThought = ({ show, path, cursor, showContexts, label, value = '', type 
   ) : null
 }
 
-export default connect(mapStateToProps)(NewThought)
+export default NewThought
