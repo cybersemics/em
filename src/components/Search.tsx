@@ -1,8 +1,7 @@
 import _ from 'lodash'
-import React, { useRef } from 'react'
+import React, { FC, useRef } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
-import { connect } from 'react-redux'
-import Connected from '../@types/Connected'
+import { useDispatch } from 'react-redux'
 import search from '../action-creators/search'
 import setCursor from '../action-creators/setCursor'
 import store from '../stores/app'
@@ -27,8 +26,9 @@ const onKeyDown = (e: React.KeyboardEvent) => {
 }
 
 /** Searches all thoughts. */
-const Search = ({ dispatch }: Connected<any>) => {
+const Search: FC = () => {
   const ref = useRef<HTMLElement>()
+  const dispatch = useDispatch()
   const state = store.getState()
 
   /** Removes the normal cursor when the search is focused. */
@@ -93,4 +93,4 @@ const Search = ({ dispatch }: Connected<any>) => {
   )
 }
 
-export default connect()(Search)
+export default Search
