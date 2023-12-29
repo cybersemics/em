@@ -3,8 +3,7 @@
  * @param type {button|bullet} Default: bullet.
  */
 import classNames from 'classnames'
-import { connect } from 'react-redux'
-import { Dispatch } from 'redux'
+import { connect, useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
@@ -33,17 +32,6 @@ interface NewThoughtProps {
   type?: string
 }
 
-interface OnClickOptions {
-  distance: number
-  path: SimplePath
-  showContexts?: boolean
-  value: string
-}
-
-interface NewThoughtDispatchProps {
-  onClick?: (options: OnClickOptions) => void
-}
-
 // eslint-disable-next-line jsdoc/require-jsdoc
 const mapStateToProps = (state: State, props: NewThoughtProps) => {
   const { cursor } = state
@@ -54,9 +42,14 @@ const mapStateToProps = (state: State, props: NewThoughtProps) => {
   }
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  onClick: ({ distance, path, value }: OnClickOptions) => {
+/** An input element for a new thought that mimics a normal thought. */
+const NewThought = ({ show, path, cursor, showContexts, label, value = '', type = 'bullet' }: NewThoughtProps) => {
+  const depth = unroot(path).length
+  const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
+  const dispatch = useDispatch()
+
+  /** Handles the click event. */
+  const onClick = () => {
     const state = store.getState()
 
     // do not preventDefault or stopPropagation as it prevents cursor
@@ -88,22 +81,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
         offset: getTextContentFromHTML(value).length,
       }),
     )
-  },
-})
-
-/** An input element for a new thought that mimics a normal thought. */
-const NewThought = ({
-  show,
-  path,
-  cursor,
-  onClick,
-  showContexts,
-  label,
-  value = '',
-  type = 'bullet',
-}: NewThoughtProps & NewThoughtDispatchProps) => {
-  const depth = unroot(path).length
-  const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
+  }
 
   return show ? (
     <ul style={{ marginTop: 0 }} className={'children-new'}>
@@ -116,7 +94,7 @@ const NewThought = ({
               button: type === 'button',
               'button-variable-width': type === 'button',
             })}
-            {...fastClick(() => onClick && onClick({ distance, showContexts, path, value }))}
+            {...fastClick(onClick)}
           >
             {label || <>Add a {showContexts ? 'context' : 'thought'}</>}
           </a>
@@ -126,4 +104,4 @@ const NewThought = ({
   ) : null
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(NewThought)
+export default connect(mapStateToProps)(NewThought)
