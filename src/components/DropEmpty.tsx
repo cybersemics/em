@@ -5,7 +5,6 @@ import { shallowEqual, useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import { isTouch } from '../browser'
 import globals from '../globals'
 import useDropHoverColor from '../hooks/useDropHoverColor'
@@ -56,7 +55,7 @@ const DropEmptyInnerContainer = ({
   simplePath,
 }: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
   const isExpanded = useSelector(
-    (state: State) => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
+    state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
   )
   const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 

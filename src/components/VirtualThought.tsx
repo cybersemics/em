@@ -288,7 +288,7 @@ const Subthought = ({
   const ref = useRef<HTMLDivElement>(null)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const noOtherContexts = useSelector(
-    (state: State) => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+    state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
   const parentId = thought.parentId
   const grandparentId = simplePath[simplePath.length - 3]
@@ -296,12 +296,12 @@ const Subthought = ({
   const autofocusChanged = useChangeRef(autofocus)
 
   const childrenAttributeId = useSelector(
-    (state: State) =>
+    state =>
       (thought.value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) ||
       null,
   )
   const grandchildrenAttributeId = useSelector(
-    (state: State) =>
+    state =>
       (thought.value !== '=style' &&
         findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) ||
       null,

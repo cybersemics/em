@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import setTutorialStep from '../../action-creators/tutorialStep'
 import { isTouch } from '../../browser'
@@ -37,7 +36,7 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
   const isCursorCollapsePossible = ancestorThoughtChildren.length > 1 && !(isCursorRootChildren && isCursorLeaf)
 
   const isParentCollapsed = useSelector(
-    (state: State) => pathToCollapse.current && !state.expanded[hashPath(parentOf(pathToCollapse.current))],
+    state => pathToCollapse.current && !state.expanded[hashPath(parentOf(pathToCollapse.current))],
   )
 
   // It is possible that pathToCollapse is null if the cursor was moved before advancing from the previous tutorial step, or if this tutorial step was selected out of order via the tutorial navigation.

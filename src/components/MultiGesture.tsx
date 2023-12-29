@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
 import Index from '../@types/IndexType'
-import State from '../@types/State'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -89,9 +88,7 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
 /** An overlay for the scroll zone. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const colors = useSelector(themeColors)
-  const hideScrollZone = useSelector(
-    (state: State) => state.showModal || getUserSetting(state, Settings.hideScrollZone),
-  )
+  const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   if (hideScrollZone) return null
 
   return (

@@ -1,6 +1,5 @@
 import { useSelector } from 'react-redux'
 import Path from '../../@types/Path'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
@@ -23,9 +22,7 @@ const Tutorial2StepContext2 = ({
     const cursorThought = childIdsToThoughts(state, state.cursor)
     return cursorThought.length === 2 && cursorThought[0].value === TUTORIAL_CONTEXT2_PARENT[tutorialChoice]
   })
-  const select = useSelector(
-    (state: State) => !cursor || headValue(state, cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice],
-  )
+  const select = useSelector(state => !cursor || headValue(state, cursor) !== TUTORIAL_CONTEXT2_PARENT[tutorialChoice])
 
   return (
     <>

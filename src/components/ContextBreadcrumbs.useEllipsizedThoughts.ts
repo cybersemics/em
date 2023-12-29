@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
 import editingValueStore from '../stores/editingValue'
@@ -31,7 +30,7 @@ const useEllipsizedThoughts = (
   // convert the path to a list of thought values
   // if editing, use the live editing value
   const thoughtValuesLive = useSelector(
-    (state: State) =>
+    state =>
       path.map(id =>
         editingValue && state.cursor && id === head(state.cursor)
           ? editingValue

@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import { TUTORIAL_CONTEXT } from '../../constants'
 import getContexts from '../../selectors/getContexts'
@@ -14,9 +13,7 @@ const Tutorial2StepContextViewToggle = ({ tutorialChoice }: { tutorialChoice: ke
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )
-  const notSelected = useSelector(
-    (state: State) => !state.cursor || headValue(state, state.cursor) !== caseSensitiveValue,
-  )
+  const notSelected = useSelector(state => !state.cursor || headValue(state, state.cursor) !== caseSensitiveValue)
 
   const isHint = useSelector(state => {
     const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)

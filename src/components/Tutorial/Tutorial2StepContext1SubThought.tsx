@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { isMac, isTouch } from '../../browser'
 import {
@@ -25,7 +24,7 @@ const Tutorial2StepContext1SubThought = ({
 }) => {
   const context1SubthoughtisCreated = context1SubthoughtCreated({ rootChildren, tutorialChoice })
   const select = useSelector(
-    (state: State) =>
+    state =>
       !state.cursor || headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
   const tryItYourself = useSelector(state => {

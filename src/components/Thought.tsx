@@ -197,8 +197,7 @@ const ThoughtContainer = ({
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const children = useSelector(
-    (state: State) =>
-      childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath)),
+    state => (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))),
     // only compare id, value, and rank for re-renders
     equalChildren,
   )
@@ -208,7 +207,7 @@ const ThoughtContainer = ({
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
   const colors = useSelector(themeColors)
   const styleAnnotation = useSelector(
-    (state: State) =>
+    state =>
       safeRefMerge(
         // apply normal style color to the annotation style
         style?.color ? { color: style.color } : null,
@@ -256,7 +255,7 @@ const ThoughtContainer = ({
   /** True if a dragged thought is hovering over a visible child of the current thought (ThoughtDrop or SubthoughtsDrop). This determines if the parent should be highlighted. */
   // TODO: It would be nice if we could reuse canDrop.
   const isChildHovering = useSelector(
-    (state: State) =>
+    state =>
       !!isVisible &&
       !!state.hoveringPath &&
       // Do not highlight parent of dragging thought (i.e. when simply reordering but not moving to a new parent).

@@ -2,7 +2,6 @@ import React, { FC, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
@@ -32,10 +31,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
     return !emptyThought && superscript && numContexts! > (showSingle ? 0 : 1)
   })
 
-  const contexts = useSelector(
-    (state: State) => (show ? getContexts(state, head(simplePath)) : NO_CONTEXTS),
-    shallowEqual,
-  )
+  const contexts = useSelector(state => (show ? getContexts(state, head(simplePath)) : NO_CONTEXTS), shallowEqual)
 
   // delay filtering for performance
   // recalculate when Lexeme contexts are loaded

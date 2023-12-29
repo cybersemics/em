@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux'
-import State from '../../@types/State'
 import { isTouch } from '../../browser'
 import {
   TUTORIAL_CONTEXT,
@@ -22,7 +21,7 @@ const tutorialChoiceMap = {
 const Tutorial2StepContext2Parent = ({ tutorialChoice }: { tutorialChoice: keyof typeof TUTORIAL_CONTEXT }) => {
   const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor).startsWith('"'))
   const readyToSelect = useSelector(
-    (state: State) =>
+    state =>
       !state.cursor ||
       headValue(state, state.cursor).toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
   )

@@ -3,7 +3,6 @@ import React from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import showModal from '../action-creators/showModal'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -26,7 +25,7 @@ const navBreadcrumbsClass = {
 /** Renders ContextBreadcrumbs for the cursor. */
 const CursorBreadcrumbs = () => {
   const breadcrumbSimplePath = useSelector(
-    (state: State) => (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path,
+    state => (state.cursor ? state.cursor.slice(publishMode() ? 1 : 0, state.cursor.length) : []) as Path,
     shallowEqual,
   )
 
@@ -66,9 +65,7 @@ const NavBar = ({ position }: { position: string }) => {
   const fontSize = useSelector(state => state.fontSize)
   const scale = fontSize / BASE_FONT_SIZE
 
-  const showHomeLink = useSelector(
-    (state: State) => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2),
-  )
+  const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
 
   return (

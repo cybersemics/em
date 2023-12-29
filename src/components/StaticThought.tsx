@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -88,7 +87,7 @@ const StaticThought = ({
   // eventually the complete SimplePath will be loaded
   // TODO: Should this be done in Thought so that Thought is reloaded?
   const simplePathLive = useSelector(
-    (state: State) => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
+    state => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
     _.isEqual,
   )
 

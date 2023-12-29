@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
-import State from '../@types/State'
 import textColor from '../action-creators/textColor'
 import { isTouch } from '../browser'
 import getStyle from '../selectors/getStyle'
@@ -111,7 +110,7 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fo
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
   const cursorStyle = useSelector(
-    (state: State) =>
+    state =>
       state.showColorPicker && state.cursor
         ? {
             // merge =style (which contains color) and =styleAnnotation (which contains backgroundColor)
