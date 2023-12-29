@@ -1,27 +1,27 @@
-import { connect } from 'react-redux'
+import { FC } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import Connected from '../@types/Connected'
-import State from '../@types/State'
 import error from '../action-creators/error'
 import fastClick from '../util/fastClick'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ error }: State) => ({ value: error })
-
 /** An error message that can be dismissed with a close button. */
-const ErrorMessage = ({ value, dispatch }: Connected<{ value?: any }>) => (
-  <TransitionGroup>
-    {value ? (
-      <CSSTransition key={0} timeout={200} classNames='fade'>
-        <div className='error-message'>
-          {value.toString()}
-          <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
-            ✕
-          </a>
-        </div>
-      </CSSTransition>
-    ) : null}
-  </TransitionGroup>
-)
+const ErrorMessage: FC = () => {
+  const value = useSelector(state => state.error)
+  const dispatch = useDispatch()
+  return (
+    <TransitionGroup>
+      {value ? (
+        <CSSTransition key={0} timeout={200} classNames='fade'>
+          <div className='error-message'>
+            {value.toString()}
+            <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
+              ✕
+            </a>
+          </div>
+        </CSSTransition>
+      ) : null}
+    </TransitionGroup>
+  )
+}
 
-export default connect(mapStateToProps)(ErrorMessage)
+export default ErrorMessage
