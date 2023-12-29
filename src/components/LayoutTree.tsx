@@ -332,8 +332,8 @@ const LayoutTree = () => {
     },
   )
 
-  // setup list virtualization
-  const top = viewportStore.useSelector(
+  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
+  const viewportBottom = viewportStore.useSelector(
     useCallback(
       viewport => {
         // the number of additional thoughts below the bottom of the screen that are rendered
@@ -408,7 +408,7 @@ const LayoutTree = () => {
           // List Virtualization
           // Hide thoughts that are below the viewport.
           // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
-          const isBelowViewport = thoughtY > top + height
+          const isBelowViewport = thoughtY > viewportBottom + height
           if (isBelowViewport) return null
 
           return (
