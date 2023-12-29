@@ -271,16 +271,16 @@ const LayoutTree = () => {
       : 0,
   )
 
-  // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-  // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
-  const estimatedHeight = fontSize * 2 - 2
-
   // singleLineHeight is the measured height of a single line thought.
   // If no heights have been measured yet, use the estimated height.
   // Cache the last measured value in a ref in case heights no longer contains any single line thoughts.
   // Then do not update it again.
   const singleLineHeightPrev = useRef<number | null>(null)
   const singleLineHeight = useMemo(() => {
+    // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
+    const estimatedHeight = fontSize * 2 - 2
+
     const singleLineHeightMeasured = Object.values(heights).find(
       // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different heights.
       ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
@@ -289,7 +289,7 @@ const LayoutTree = () => {
       singleLineHeightPrev.current = singleLineHeightMeasured
     }
     return singleLineHeightPrev.current || estimatedHeight
-  }, [estimatedHeight, heights])
+  }, [fontSize, heights])
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
