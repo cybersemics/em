@@ -419,7 +419,8 @@ const LayoutTree = () => {
         ) => {
           // List Virtualization
           // Hide thoughts that are below the viewport.
-          // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
+          // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+          // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `heights` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
           const isBelowViewport = y > viewportBottom + height
           if (isBelowViewport) return null
 
