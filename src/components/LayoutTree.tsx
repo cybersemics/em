@@ -334,7 +334,7 @@ const LayoutTree = () => {
 
   // setup list virtualization
   const viewport = viewportStore.useState()
-  const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
+  const overshoot = singleLineHeight * 5 // the number of additional thoughts below the bottom of the screen that are rendered
   const top = viewport.scrollTop + viewport.innerHeight + spaceAbove + overshoot
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
