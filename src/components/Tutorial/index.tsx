@@ -1,9 +1,9 @@
-import { FC } from 'react'
-import { connect, useSelector } from 'react-redux'
+import React, { FC } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import Connected from '../../@types/Connected'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
+import Thought from '../../@types/Thought'
 import tutorial from '../../action-creators/tutorial'
 import { isTouch } from '../../browser'
 import {
@@ -34,6 +34,8 @@ import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
+const NO_CHILDREN: Thought[] = []
+
 /** Wrap a component in a slide CSS transition. */
 const withCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
   const Component = component
@@ -52,31 +54,22 @@ if (!newThoughtShortcut) {
   throw new Error('newThought shortcut not found.')
 }
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const { contextViews, cursor } = state
-  const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0)
-  const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
-  return {
-    contextViews,
-    cursor,
-    rootChildren: getAllChildrenAsThoughts(state, HOME_TOKEN),
-    // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
-    tutorialChoice: (isNaN(tutorialChoice) ? 0 : tutorialChoice) as keyof typeof TUTORIAL_CONTEXT1_PARENT,
-    tutorialStep: isNaN(tutorialStep) ? 1 : tutorialStep,
-  }
-}
-
 /** Tutorial component. */
-const Tutorial = ({
-  contextViews,
-  cursor,
-  rootChildren,
-  tutorialChoice,
-  tutorialStep,
-  dispatch,
-}: Connected<ReturnType<typeof mapStateToProps>>) => {
-  rootChildren = rootChildren || []
+const Tutorial: FC = () => {
+  const tutorialStep = useSelector(state => {
+    const step = +(getSetting(state, 'Tutorial Step') || 1)
+    return isNaN(step) ? 1 : step
+  })
+
+  const dispatch = useDispatch()
+  const contextViews = useSelector((state: State) => state.contextViews)
+  const cursor = useSelector((state: State) => state.cursor)
+  const rootChildren = useSelector((state: State) => getAllChildrenAsThoughts(state, HOME_TOKEN) || NO_CHILDREN)
+  const tutorialChoice = useSelector(state => {
+    const choice = +(getSetting(state, 'Tutorial Choice') || 0)
+    // guard against invalid tutorialChoice and tutorialStep in case Settings/Tutorial Step is corrupted
+    return (isNaN(choice) ? 0 : choice) as keyof typeof TUTORIAL_CONTEXT1_PARENT
+  })
 
   const tutorialStepProps = {
     cursor,
@@ -173,4 +166,7 @@ const Tutorial = ({
   )
 }
 
-export default connect(mapStateToProps)(Tutorial)
+const TutorialMemo = React.memo(Tutorial)
+TutorialMemo.displayName = 'Tutorial'
+
+export default TutorialMemo
