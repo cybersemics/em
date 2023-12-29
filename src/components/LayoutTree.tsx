@@ -61,6 +61,7 @@ const HEIGHT_REMOVAL_DEBOUNCE = 1000
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
 /** Generates a VirtualThought key that is unique across context views. */
+// include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 
@@ -344,9 +345,6 @@ const LayoutTree = () => {
     ),
   )
 
-  // accumulate the y position as we iterate the visible thoughts since the heights may vary
-  let y = 0
-
   // memoized style for padding at a cliff
   const cliffPaddingStyle = useMemo(
     () => ({
@@ -354,6 +352,30 @@ const LayoutTree = () => {
     }),
     [fontSize],
   )
+
+  // Accumulate the y position as we iterate the visible thoughts since the heights may vary.
+  // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
+  const virtualThoughtsPositioned = useMemo(() => {
+    let yaccum = 0
+    return virtualThoughts.map((node, i) => {
+      const key = crossContextualKey(node.contextChain, node.thought.id)
+      const next = virtualThoughts[i + 1]
+
+      // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
+      // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
+      // TODO: Fix cliff across context view boundary
+      const cliff = next ? Math.min(0, next.depth - node.depth) : -node.depth - 1
+
+      // The single line height needs to be increased for thoughts that have a cliff below them.
+      // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
+      const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
+      const height = heights[key]?.height ?? singleLineHeightWithCliff
+      const y = yaccum
+      yaccum += height
+
+      return { ...node, cliff, height, key, singleLineHeightWithCliff, y }
+    })
+  }, [fontSize, heights, singleLineHeight, virtualThoughts])
 
   return (
     <div
@@ -371,44 +393,32 @@ const LayoutTree = () => {
         marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
       }}
     >
-      {virtualThoughts.map(
+      {virtualThoughtsPositioned.map(
         (
           {
-            contextChain,
+            cliff,
             depth,
             env,
+            height,
             indexChild,
             indexDescendant,
+            key,
             leaf,
             path,
             prevChild,
             showContexts,
             simplePath,
+            singleLineHeightWithCliff,
             style,
             thought,
+            y,
           },
           i,
         ) => {
-          // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
-          const key = crossContextualKey(contextChain, thought.id)
-          const next = virtualThoughts[i + 1]
-          // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
-          // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
-          // TODO: Fix cliff across context view boundary
-          const cliff = next ? Math.min(0, next.depth - depth) : -depth - 1
-
-          // The single line height needs to be increased for thoughts that have a cliff below them.
-          // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
-          const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? cliffPaddingStyle.paddingBottom : 0)
-          const height = heights[key]?.height ?? singleLineHeightWithCliff
-          const thoughtY = y
-
-          y += height
-
           // List Virtualization
           // Hide thoughts that are below the viewport.
           // Render virtualized thoughts with their estimated height so that documeent height is relatively stable.
-          const isBelowViewport = thoughtY > viewportBottom + height
+          const isBelowViewport = y > viewportBottom + height
           if (isBelowViewport) return null
 
           return (
@@ -422,7 +432,7 @@ const LayoutTree = () => {
                 // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
                 // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
                 left: `${depth}em`,
-                top: thoughtY,
+                top: y,
                 transition: 'left 0.15s ease-out,top 0.15s ease-out',
                 // If width is auto, it unintentionally animates as left animates and the text wraps.
                 // Therefore, set the width so that is stepped and only changes with depth.
