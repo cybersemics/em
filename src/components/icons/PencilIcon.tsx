@@ -1,4 +1,4 @@
-import { connect, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import Icon from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
@@ -25,4 +25,4 @@ const PencilIcon = ({ fill, size = 20, style }: Icon) => {
   )
 }
 
-export default connect()(PencilIcon)
+export default PencilIcon
