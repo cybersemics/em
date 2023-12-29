@@ -35,14 +35,13 @@ import VirtualThought from './VirtualThought'
 type TreeThought = {
   /** If true, the thought is rendered below the cursor (i.e. with a higher y value). This is used to crop hidden thoughts. */
   belowCursor: boolean
-  // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
-  contextChain?: SimplePath[]
   depth: number
   env?: LazyEnv
   // index among visible siblings at the same level
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
+  key: string
   leaf: boolean
   path: Path
   prevChild: Thought
@@ -215,11 +214,11 @@ const virtualTree = (
 
     const node = {
       belowCursor: !!belowCursor,
-      contextChain: contextChainNew,
       depth,
       env: envNew || undefined,
       indexChild: i,
       indexDescendant: virtualIndexNew,
+      key: crossContextualKey(contextChainNew, child.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
       path: childPath,
@@ -319,12 +318,16 @@ const LayoutTree = () => {
     totalHeight,
   } = virtualThoughts.reduce(
     (accum, node) => {
-      const key = crossContextualKey(node.contextChain, node.thought.id)
       const heightNext =
-        key in heights ? (heights[key].isVisible || !node.belowCursor ? heights[key].height : 0) : singleLineHeight
+        node.key in heights
+          ? heights[node.key].isVisible || !node.belowCursor
+            ? heights[node.key].height
+            : 0
+          : singleLineHeight
       return {
         totalHeight: accum.totalHeight + heightNext,
-        spaceAbove: accum.spaceAbove + (heights[key] && !heights[key].isVisible && !node.belowCursor ? heightNext : 0),
+        spaceAbove:
+          accum.spaceAbove + (heights[node.key] && !heights[node.key].isVisible && !node.belowCursor ? heightNext : 0),
       }
     },
     {
@@ -358,7 +361,6 @@ const LayoutTree = () => {
   const virtualThoughtsPositioned = useMemo(() => {
     let yaccum = 0
     return virtualThoughts.map((node, i) => {
-      const key = crossContextualKey(node.contextChain, node.thought.id)
       const next = virtualThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -369,11 +371,11 @@ const LayoutTree = () => {
       // The single line height needs to be increased for thoughts that have a cliff below them.
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
-      const height = heights[key]?.height ?? singleLineHeightWithCliff
+      const height = heights[node.key]?.height ?? singleLineHeightWithCliff
       const y = yaccum
       yaccum += height
 
-      return { ...node, cliff, height, key, singleLineHeightWithCliff, y }
+      return { ...node, cliff, height, singleLineHeightWithCliff, y }
     })
   }, [fontSize, heights, singleLineHeight, virtualThoughts])
 
