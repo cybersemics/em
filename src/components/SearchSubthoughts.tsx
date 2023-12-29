@@ -1,9 +1,6 @@
 import { FC, useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import Connected from '../@types/Connected'
-import Index from '../@types/IndexType'
+import { useDispatch, useSelector } from 'react-redux'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import error from '../action-creators/error'
 import setSearchLimit from '../action-creators/searchLimit'
@@ -17,36 +14,19 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import sort from '../util/sort'
 import NewThought from './NewThought'
 
-interface SearchSubthoughtsProps {
-  search?: string | null
-  archived?: boolean
-  searchLimit?: number
-  remoteSearch: boolean
-  thoughtIndex: Index<Thought>
-}
 /** Number of thoughts to limit the search results to by default. */
 const DEFAULT_SEARCH_LIMIT = 20
 
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = ({ archived, search, remoteSearch, searchLimit, thoughts: { thoughtIndex } }: State) => ({
-  archived,
-  search,
-  remoteSearch,
-  searchLimit,
-  thoughtIndex,
-})
-
 /** Subthoughts of search. */
-const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
-  remoteSearch,
-  search,
-  archived,
-  searchLimit = DEFAULT_SEARCH_LIMIT,
-  thoughtIndex,
-  dispatch,
-}) => {
+const SearchSubthoughts: FC = () => {
   const [isRemoteSearching, setIsRemoteSearching] = useState(false)
   const [isLocalSearching, setIsLocalSearching] = useState(false)
+
+  const dispatch = useDispatch()
+  const search = useSelector(state => state.search)
+  const remoteSearch = useSelector(state => state.remoteSearch)
+  const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
+  const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
 
   /**
    * Search thoughts remotely or locally and add it to pullQueue.
@@ -155,4 +135,4 @@ const SearchSubthoughts: FC<Connected<SearchSubthoughtsProps>> = ({
   )
 }
 
-export default connect(mapStateToProps)(SearchSubthoughts)
+export default SearchSubthoughts
