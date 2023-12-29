@@ -45,14 +45,14 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
-import { ConnectedThoughtContainerProps, ThoughtContainerProps } from './Thought'
+import { ThoughtContainerProps } from './Thought'
 
-export type ConnectedDraggableThoughtContainerProps = ConnectedThoughtContainerProps &
+export type DraggableThoughtContainerProps = ThoughtContainerProps &
   ReturnType<typeof dragCollect> &
   ReturnType<typeof dropCollect>
 
 /** Returns true if the thought can be dragged. */
-const canDrag = (props: ConnectedThoughtContainerProps) => {
+const canDrag = (props: ThoughtContainerProps) => {
   const state = store.getState()
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
@@ -70,7 +70,7 @@ const canDrag = (props: ConnectedThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ConnectedThoughtContainerProps): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -218,7 +218,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 })
 
 /** A draggable and droppable Thought component. */
-const DragAndDropThought = (thoughtContainer: FC<ConnectedDraggableThoughtContainerProps>) =>
+const DragAndDropThought = (thoughtContainer: FC<DraggableThoughtContainerProps>) =>
   DragSource(
     'thought',
     { canDrag, beginDrag, endDrag },

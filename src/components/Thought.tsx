@@ -1,12 +1,11 @@
 import classNames from 'classnames'
 import React, { useCallback, useMemo } from 'react'
-import { connect, shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import expandContextThought from '../action-creators/expandContextThought'
@@ -38,13 +37,12 @@ import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import parseJsonSafe from '../util/parseJsonSafe'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import DragAndDropThought, { ConnectedDraggableThoughtContainerProps } from './DragAndDropThought'
+import DragAndDropThought, { DraggableThoughtContainerProps } from './DragAndDropThought'
 import DropThought from './DropThought'
 import Note from './Note'
 import StaticThought from './StaticThought'
@@ -56,7 +54,6 @@ import StaticThought from './StaticThought'
 export interface ThoughtContainerProps {
   allowSingleContext?: boolean
   childrenForced?: ThoughtId[]
-  contextBinding?: Path
   cursor?: Path | null
   // used by globals.simulateDrop
   debugIndex?: number
@@ -66,7 +63,6 @@ export interface ThoughtContainerProps {
   hideBullet?: boolean
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
-  isCursorGrandparent?: boolean
   isCursorParent?: boolean
   isDeepHovering?: boolean
   isDragging?: boolean
@@ -89,63 +85,12 @@ export interface ThoughtContainerProps {
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
   updateHeight?: () => void
-  view?: string | null
 }
-
-export type ConnectedThoughtContainerProps = ThoughtContainerProps & ReturnType<typeof mapStateToProps>
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
   (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
-  const { cursor, expanded, expandedContextThought, search, expandHoverUpPath } = state
-
-  const { path, simplePath, depth } = props
-
-  // check if the cursor is editing a thought directly
-  const isEditing = equalPath(cursor, path)
-
-  const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
-
-  const isExpandedHoverTopPath = expandHoverUpPath && equalPath(path, expandHoverUpPath)
-  const cursorParent = cursor && parentOf(cursor)
-  const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
-
-  // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
-  const isCursorParent =
-    isExpandedHoverTopPath ||
-    (!!cursor &&
-      (distance === 2
-        ? // grandparent
-          equalPath(cursorGrandparent, path) && !hasChildren(state, head(cursor))
-        : // parent
-          equalPath(cursorParent, path)))
-
-  const contextBinding = parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as
-    | SimplePath
-    | undefined
-
-  // Note: An active expand hover top thought cannot be a cusor's grandparent as it is already treated as cursor's parent.
-  const isCursorGrandparent = !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
-
-  const isExpanded = !!expanded[hashPath(path)]
-
-  return {
-    contextBinding,
-    expandedContextThought,
-    isCursorGrandparent,
-    isCursorParent,
-    isEditing,
-    isExpanded,
-    isPublishChild: !search && publishMode() && simplePath.length === 2,
-    parentView: attribute(state, head(parentOf(simplePath)), '=view'),
-    publish: !search && publishMode(),
-    view: attribute(state, head(simplePath), '=view'),
-  }
-}
 
 /**********************************************************************
  * Components
@@ -158,7 +103,6 @@ const mapStateToProps = (state: State, props: ThoughtContainerProps) => {
 const ThoughtContainer = ({
   allowSingleContext,
   childrenForced,
-  contextBinding,
   cursor,
   debugIndex,
   depth = 0,
@@ -166,34 +110,25 @@ const ThoughtContainer = ({
   dragSource,
   dropTarget,
   env,
-  expandedContextThought,
   hideBullet: hideBulletProp,
   isBeingHoveredOver,
-  isCursorGrandparent,
-  isCursorParent,
   isDeepHovering,
   isDragging,
-  isEditing,
-  isExpanded,
   isHeader,
   isHovering,
   isMultiColumnTable,
   isContextPending,
-  isPublishChild,
   isVisible,
   leaf,
-  parentView,
   path,
   prevChildId,
-  publish,
   rank,
   showContexts,
   simplePath,
   style: styleProp,
   styleContainer: styleContainerProp,
   updateHeight,
-  view,
-}: ConnectedDraggableThoughtContainerProps) => {
+}: DraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const children = useSelector(
@@ -202,6 +137,44 @@ const ThoughtContainer = ({
     equalChildren,
   )
   useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
+  // const contextBinding = useSelector(
+  //   state => parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as SimplePath | undefined,
+  // )
+  // const parentView = useSelector(state => attribute(state, head(parentOf(simplePath)), '=view'))
+  const expandedContextThought = useSelector(state => state.expandedContextThought)
+  const view = useSelector(state => attribute(state, head(simplePath), '=view'))
+  const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
+
+  // Note: An active expand hover top thought cannot be a cursor's grandparent as it is already treated as cursor's parent.
+  const isCursorGrandparent = useSelector(state => {
+    const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
+    const cursorParent = state.cursor && parentOf(state.cursor)
+    const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
+    return !isExpandedHoverTopPath && !!cursor && equalPath(cursorGrandparent, path)
+  })
+
+  // Note: If the thought is the active expand hover top path then it should be treated as a cursor parent. It is because the current implementation allows tree to unfold visually starting from cursor parent.
+  const isCursorParent = useSelector(state => {
+    const isExpandedHoverTopPath = state.expandHoverUpPath && equalPath(path, state.expandHoverUpPath)
+    if (isExpandedHoverTopPath) return true
+    if (!state.cursor) return false
+
+    const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth!)) : 0
+    const cursorParent = state.cursor && parentOf(state.cursor)
+    const cursorGrandparent = cursorParent && rootedParentOf(state, cursorParent)
+
+    return distance === 2
+      ? // grandparent
+        equalPath(cursorGrandparent, path) && !hasChildren(state, head(state.cursor))
+      : // parent
+        equalPath(cursorParent, path)
+  })
+
+  // check if the cursor is editing a thought directly
+  const isEditing = useSelector(state => equalPath(state.cursor, path))
+
+  const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
+  const publish = useSelector(state => !state.search && publishMode())
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
@@ -506,7 +479,9 @@ const ThoughtContainer = ({
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 
-// export connected, drag and drop higher order thought component
-const ThoughtComponent = connect(mapStateToProps)(DragAndDropThought(ThoughtContainer))
+// export drag and drop higher order thought component
+const ThoughtComponent = DragAndDropThought(ThoughtContainer)
+const ThoughtComponentMemo = React.memo(ThoughtComponent)
+ThoughtComponentMemo.displayName = 'ThoughtComponent'
 
-export default ThoughtComponent
+export default ThoughtComponentMemo
