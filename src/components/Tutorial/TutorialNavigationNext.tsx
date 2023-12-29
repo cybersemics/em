@@ -1,5 +1,5 @@
-import { connect, useDispatch } from 'react-redux'
-import State from '../../@types/State'
+import { FC } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import tutorialNext from '../../action-creators/tutorialNext'
 import {
   HOME_TOKEN,
@@ -23,29 +23,16 @@ import TutorialNavigationButton from './TutorialNavigationButton'
 import { context1SubthoughtCreated, context2SubthoughtCreated } from './TutorialUtils'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const mapStateToProps = (state: State) => {
-  const {
-    thoughts: { thoughtIndex },
-    expanded = {},
-  } = state
-  return {
-    thoughtIndex,
-    expanded,
-    rootChildren: getAllChildrenAsThoughts(state, HOME_TOKEN),
-    tutorialChoice: +(getSetting(state, 'Tutorial Choice') || 0),
-    cursorValue: state.cursor ? headValue(state, state.cursor) : null,
-  }
-}
-
-// eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialNavigationNext = ({
-  cursorValue,
-  expanded,
-  rootChildren,
-  tutorialChoice,
-  tutorialStep,
-}: { tutorialStep: number } & ReturnType<typeof mapStateToProps>) => {
+const TutorialNavigationNext: FC<{ tutorialStep: number }> = ({ tutorialStep }) => {
   const dispatch = useDispatch()
+
+  const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN))
+  const tutorialChoice = useSelector(state => +(getSetting(state, 'Tutorial Choice') || 0))
+  const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : null))
+  const expanded = useSelector(state => state.expanded)
+
+  useSelector(state => state.thoughts.thoughtIndex)
+
   return [
     TUTORIAL_STEP_START,
     TUTORIAL_STEP_SUCCESS,
@@ -72,6 +59,4 @@ const TutorialNavigationNext = ({
   )
 }
 
-const TutorialNavigationNextConnected = connect(mapStateToProps)(TutorialNavigationNext)
-
-export default TutorialNavigationNextConnected
+export default TutorialNavigationNext
