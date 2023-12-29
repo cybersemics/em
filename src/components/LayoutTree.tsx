@@ -33,7 +33,7 @@ import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
 type TreeThought = {
-  /** If true, the thought is rendered below the cursor (with a higher y value). This is used to crop hidden thoughts. */
+  /** If true, the thought is rendered below the cursor (i.e. with a higher y value). This is used to crop hidden thoughts. */
   belowCursor: boolean
   // accumulate the context chain in order to provide a unique key for rendering the same thought from normal view and context view
   contextChain?: SimplePath[]
@@ -308,20 +308,34 @@ const LayoutTree = () => {
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 
+  const {
+    // the total amount of space above the first visible thought that will be cropped
+    spaceAbove,
+
+    // Sum all the heights to get the total height of the containing div.
+    // Use estimated single-line height for the thoughts that do not have heights yet.
+    // Exclude hidden thoughts below the cursor to reduce empty scroll space.
+    totalHeight,
+  } = virtualThoughts.reduce(
+    (accum, node) => {
+      const key = crossContextualKey(node.contextChain, node.thought.id)
+      const heightNext =
+        key in heights ? (heights[key].isVisible || !node.belowCursor ? heights[key].height : 0) : singleLineHeight
+      return {
+        totalHeight: accum.totalHeight + heightNext,
+        spaceAbove: accum.spaceAbove + (heights[key] && !heights[key].isVisible && !node.belowCursor ? heightNext : 0),
+      }
+    },
+    {
+      totalHeight: 0,
+      spaceAbove: 0,
+    },
+  )
+
   // setup list virtualization
   const viewport = viewportStore.useState()
   const overshoot = 5 // the number of additional thoughts below the bottom of the screen that are rendered
-  const top = viewport.scrollTop + viewport.innerHeight + overshoot
-
-  // Sum all the heights to get the total height of the containing div.
-  // Use estimated single-line height for the thoughts that do not have heights yet.
-  // Exclude hidden thoughts below the cursor to reduce empty scroll space.
-  const totalHeight = virtualThoughts.reduce((accum, node) => {
-    const key = crossContextualKey(node.contextChain, node.thought.id)
-    const heightNext =
-      key in heights ? (heights[key].isVisible || !node.belowCursor ? heights[key].height : 0) : singleLineHeight
-    return accum + heightNext
-  }, 0)
+  const top = viewport.scrollTop + viewport.innerHeight + spaceAbove + overshoot
 
   // accumulate the y position as we iterate the visible thoughts since the heights may vary
   let y = 0
@@ -339,10 +353,12 @@ const LayoutTree = () => {
       style={{
         // Set a minimum height that fits all thoughts based on their estimated height.
         // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
-        height: totalHeight,
+        height: totalHeight - spaceAbove * 0.9,
         // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-        // The indent multipicand (0.9) causes the translateX counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-        transform: `translateX(${1.5 - indent * 0.9}em)`,
+        // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+        // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
+        // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
+        transform: `translate(${1.5 - indent * 0.9}em, ${-Math.max(spaceAbove * 0.9, fontSize * 3) + fontSize * 3}px)`,
         transition: 'transform 0.75s ease-out',
         // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
         marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
