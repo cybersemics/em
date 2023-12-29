@@ -3,6 +3,7 @@
  * @param type {button|bullet} Default: bullet.
  */
 import classNames from 'classnames'
+import { useCallback } from 'react'
 import { connect, useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -49,7 +50,7 @@ const NewThought = ({ show, path, cursor, showContexts, label, value = '', type 
   const dispatch = useDispatch()
 
   /** Handles the click event. */
-  const onClick = () => {
+  const onClick = useCallback(() => {
     const state = store.getState()
 
     // do not preventDefault or stopPropagation as it prevents cursor
@@ -81,7 +82,7 @@ const NewThought = ({ show, path, cursor, showContexts, label, value = '', type 
         offset: getTextContentFromHTML(value).length,
       }),
     )
-  }
+  }, [dispatch, distance, path, value])
 
   return show ? (
     <ul style={{ marginTop: 0 }} className={'children-new'}>
