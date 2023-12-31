@@ -379,17 +379,41 @@ const LayoutTree = () => {
     })
   }, [fontSize, heights, singleLineHeight, virtualThoughts])
 
+  const spaceAboveLast = useRef(spaceAbove)
+
+  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+
+  // get the scroll position before the render so it can be preserved
+  const scrollY = window.scrollY
+
+  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  useEffect(
+    () => {
+      const spaceAboveDelta = spaceAbove - spaceAboveLast.current
+      if (scrollY > spaceAboveDelta) {
+        window.scrollTo({ top: scrollY - spaceAboveDelta })
+      }
+      spaceAboveLast.current = spaceAbove
+    },
+
+    // do not trigger effect on scrollY change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [spaceAbove],
+  )
+
   return (
     <div
       style={{
-        transform: `translateY(${-Math.max(spaceAbove * 0.9, fontSize * 3) + fontSize * 3}px)`,
+        // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+        transform: `translateY(${-spaceAbove + viewportHeight}px)`,
       }}
     >
       <div
         style={{
           // Set a minimum height that fits all thoughts based on their estimated height.
           // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
-          height: totalHeight - spaceAbove * 0.9,
+          // One viewportHeight to compensate for translateY, and another to ensure room to scroll below.
+          height: totalHeight - spaceAbove + viewportHeight * 2,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
           // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
