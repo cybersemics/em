@@ -382,131 +382,137 @@ const LayoutTree = () => {
   return (
     <div
       style={{
-        // Set a minimum height that fits all thoughts based on their estimated height.
-        // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
-        height: totalHeight - spaceAbove * 0.9,
-        // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-        // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-        // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
-        // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-        transform: `translate(${1.5 - indent * 0.9}em, ${-Math.max(spaceAbove * 0.9, fontSize * 3) + fontSize * 3}px)`,
-        transition: 'transform 0.75s ease-out',
-        // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-        marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
+        transform: `translateY(${-Math.max(spaceAbove * 0.9, fontSize * 3) + fontSize * 3}px)`,
       }}
     >
-      {virtualThoughtsPositioned.map(
-        (
-          {
-            cliff,
-            depth,
-            env,
-            height,
-            indexChild,
-            indexDescendant,
-            key,
-            leaf,
-            path,
-            prevChild,
-            showContexts,
-            simplePath,
-            singleLineHeightWithCliff,
-            style,
-            thought,
-            y,
+      <div
+        style={{
+          // Set a minimum height that fits all thoughts based on their estimated height.
+          // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
+          height: totalHeight - spaceAbove * 0.9,
+          // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
+          // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+          // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
+          // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
+          transform: `translateX(${1.5 - indent * 0.9}em`,
+          transition: 'transform 0.75s ease-out',
+          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
+          marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
+        }}
+      >
+        {virtualThoughtsPositioned.map(
+          (
+            {
+              cliff,
+              depth,
+              env,
+              height,
+              indexChild,
+              indexDescendant,
+              key,
+              leaf,
+              path,
+              prevChild,
+              showContexts,
+              simplePath,
+              singleLineHeightWithCliff,
+              style,
+              thought,
+              y,
+            },
+            i,
+          ) => {
+            // List Virtualization
+            // Hide thoughts that are below the viewport.
+            // Render virtualized thoughts with their estimated height so that document height is relatively stable.
+            // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `heights` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+            const isBelowViewport = y > viewportBottom + height
+            if (isBelowViewport) return null
+
+            return (
+              <div
+                aria-label='tree-node'
+                // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
+                // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
+                key={key}
+                style={{
+                  position: 'absolute',
+                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
+                  // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
+                  left: `${depth}em`,
+                  top: y,
+                  transition: 'left 0.15s ease-out,top 0.15s ease-out',
+                  // If width is auto, it unintentionally animates as left animates and the text wraps.
+                  // Therefore, set the width so that is stepped and only changes with depth.
+                  width: `calc(100% - ${depth - 1}em)`,
+                  ...style,
+                }}
+              >
+                <VirtualThought
+                  debugIndex={globals.simulateDrop ? indexChild : undefined}
+                  depth={depth}
+                  dropBefore={thought.id === cursorUncleId}
+                  env={env}
+                  indexDescendant={indexDescendant}
+                  // isMultiColumnTable={isMultiColumnTable}
+                  isMultiColumnTable={false}
+                  leaf={leaf}
+                  onResize={setHeight}
+                  path={path}
+                  prevChildId={prevChild?.id}
+                  showContexts={showContexts}
+                  simplePath={simplePath}
+                  singleLineHeight={singleLineHeightWithCliff}
+                  // Add a bit of space after a cliff to give nested lists some breathing room.
+                  // Do this as padding instead of y, otherwise there will be a gap between drop targets.
+                  style={cliff < 0 ? cliffPaddingStyle : undefined}
+                  crossContextualKey={key}
+                />
+
+                {/* DropEnd (cliff) */}
+                {dragInProgress &&
+                  cliff < 0 &&
+                  // do not render hidden cliffs
+                  // rough autofocus estimate
+                  autofocusDepth - depth < 2 &&
+                  Array(-cliff)
+                    .fill(0)
+                    .map((x, i) => {
+                      const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
+                      const simplePathEnd =
+                        -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
+                      const cliffDepth = unroot(pathEnd).length
+                      return (
+                        <div
+                          key={'DropEnd-' + head(pathEnd)}
+                          className='z-index-subthoughts-drop-end'
+                          style={{
+                            position: 'relative',
+                            top: '-0.2em',
+                            left: `calc(${cliffDepth - depth}em + ${isTouch ? -1 : 1}px)`,
+                            transition: 'left 0.15s ease-out',
+                          }}
+                        >
+                          <DropEnd
+                            depth={pathEnd.length}
+                            indexDescendant={indexDescendant}
+                            leaf={false}
+                            path={pathEnd}
+                            // not used, just provided since DropEnd props shares the ThoughtProps type
+                            simplePath={simplePathEnd}
+                            // Extend the click area of the drop target when there is nothing below.
+                            // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
+                            // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
+                            // last={!nextChildId}
+                          />
+                        </div>
+                      )
+                    })}
+              </div>
+            )
           },
-          i,
-        ) => {
-          // List Virtualization
-          // Hide thoughts that are below the viewport.
-          // Render virtualized thoughts with their estimated height so that document height is relatively stable.
-          // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `heights` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-          const isBelowViewport = y > viewportBottom + height
-          if (isBelowViewport) return null
-
-          return (
-            <div
-              aria-label='tree-node'
-              // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
-              // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
-              key={key}
-              style={{
-                position: 'absolute',
-                // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
-                // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
-                left: `${depth}em`,
-                top: y,
-                transition: 'left 0.15s ease-out,top 0.15s ease-out',
-                // If width is auto, it unintentionally animates as left animates and the text wraps.
-                // Therefore, set the width so that is stepped and only changes with depth.
-                width: `calc(100% - ${depth - 1}em)`,
-                ...style,
-              }}
-            >
-              <VirtualThought
-                debugIndex={globals.simulateDrop ? indexChild : undefined}
-                depth={depth}
-                dropBefore={thought.id === cursorUncleId}
-                env={env}
-                indexDescendant={indexDescendant}
-                // isMultiColumnTable={isMultiColumnTable}
-                isMultiColumnTable={false}
-                leaf={leaf}
-                onResize={setHeight}
-                path={path}
-                prevChildId={prevChild?.id}
-                showContexts={showContexts}
-                simplePath={simplePath}
-                singleLineHeight={singleLineHeightWithCliff}
-                // Add a bit of space after a cliff to give nested lists some breathing room.
-                // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-                style={cliff < 0 ? cliffPaddingStyle : undefined}
-                crossContextualKey={key}
-              />
-
-              {/* DropEnd (cliff) */}
-              {dragInProgress &&
-                cliff < 0 &&
-                // do not render hidden cliffs
-                // rough autofocus estimate
-                autofocusDepth - depth < 2 &&
-                Array(-cliff)
-                  .fill(0)
-                  .map((x, i) => {
-                    const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
-                    const simplePathEnd =
-                      -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
-                    const cliffDepth = unroot(pathEnd).length
-                    return (
-                      <div
-                        key={'DropEnd-' + head(pathEnd)}
-                        className='z-index-subthoughts-drop-end'
-                        style={{
-                          position: 'relative',
-                          top: '-0.2em',
-                          left: `calc(${cliffDepth - depth}em + ${isTouch ? -1 : 1}px)`,
-                          transition: 'left 0.15s ease-out',
-                        }}
-                      >
-                        <DropEnd
-                          depth={pathEnd.length}
-                          indexDescendant={indexDescendant}
-                          leaf={false}
-                          path={pathEnd}
-                          // not used, just provided since DropEnd props shares the ThoughtProps type
-                          simplePath={simplePathEnd}
-                          // Extend the click area of the drop target when there is nothing below.
-                          // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
-                          // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
-                          // last={!nextChildId}
-                        />
-                      </div>
-                    )
-                  })}
-            </div>
-          )
-        },
-      )}
+        )}
+      </div>
     </div>
   )
 }
