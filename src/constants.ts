@@ -171,6 +171,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'indent',
   'pin',
   'pinChildren',
+  'toggleTableView',
   'toggleSort',
   'toggleDone',
   'bold',
@@ -222,7 +223,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   // 'toggleDone',
   // 'toggleSidebar',
   // 'toggleSplitView',
-  // 'toggleTableView',
 ]
 
 // Throttle editThought when user is typing.

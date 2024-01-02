@@ -11,6 +11,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
 import globals from '../globals'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
@@ -41,6 +42,8 @@ type TreeThought = {
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
+  isTableCol1: boolean
+  isTableCol2: boolean
   key: string
   leaf: boolean
   path: Path
@@ -58,6 +61,9 @@ const HEIGHT_REMOVAL_DEBOUNCE = 1000
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
+
+// maximum table column width (em)
+const MAX_TABLE_COLUMN_WIDTH = 10
 
 /** Generates a VirtualThought key that is unique across context views. */
 // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
@@ -218,6 +224,8 @@ const virtualTree = (
       env: envNew || undefined,
       indexChild: i,
       indexDescendant: virtualIndexNew,
+      isTableCol1: attributeEquals(state, child.parentId, '=view', 'Table'),
+      isTableCol2: attributeEquals(state, getThoughtById(state, child.parentId)?.parentId, '=view', 'Table'),
       key: crossContextualKey(contextChainNew, child.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
@@ -378,7 +386,10 @@ const LayoutTree = () => {
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
       const height = heights[node.key]?.height ?? singleLineHeightWithCliff
       const y = yaccum
-      yaccum += height
+
+      if (!node.isTableCol1) {
+        yaccum += height
+      }
 
       return { ...node, cliff, height, singleLineHeightWithCliff, y }
     })
@@ -433,6 +444,8 @@ const LayoutTree = () => {
               height,
               indexChild,
               indexDescendant,
+              isTableCol1,
+              isTableCol2,
               key,
               leaf,
               path,
@@ -463,13 +476,14 @@ const LayoutTree = () => {
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
-                  left: `${depth}em`,
+                  left: `${depth + (isTableCol2 ? MAX_TABLE_COLUMN_WIDTH : 0)}em`,
                   top: y,
                   transition: 'left 0.15s ease-out,top 0.15s ease-out',
                   // If width is auto, it unintentionally animates as left animates and the text wraps.
                   // Therefore, set the width so that is stepped and only changes with depth.
-                  width: `calc(100% - ${depth - 1}em)`,
+                  width: isTableCol1 ? `${MAX_TABLE_COLUMN_WIDTH - 1}em` : `calc(100% - ${depth - 1}em)`,
                   ...style,
+                  textAlign: isTableCol1 ? 'right' : undefined,
                 }}
               >
                 <VirtualThought
