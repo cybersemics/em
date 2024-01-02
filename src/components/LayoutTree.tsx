@@ -308,6 +308,8 @@ const LayoutTree = () => {
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 
+  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+
   const {
     // the total amount of space above the first visible thought that will be cropped
     spaceAbove,
@@ -348,6 +350,9 @@ const LayoutTree = () => {
     ),
   )
 
+  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
+  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
+
   // memoized style for padding at a cliff
   const cliffPaddingStyle = useMemo(
     () => ({
@@ -379,9 +384,7 @@ const LayoutTree = () => {
     })
   }, [fontSize, heights, singleLineHeight, virtualThoughts])
 
-  const spaceAboveLast = useRef(spaceAbove)
-
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
+  const spaceAboveLast = useRef(spaceAboveExtended)
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
@@ -389,23 +392,20 @@ const LayoutTree = () => {
   // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
   useEffect(
     () => {
-      const spaceAboveDelta = spaceAbove - spaceAboveLast.current
-      if (scrollY > spaceAboveDelta) {
-        window.scrollTo({ top: scrollY - spaceAboveDelta })
-      }
-      spaceAboveLast.current = spaceAbove
+      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
+      window.scrollTo({ top: scrollY - spaceAboveDelta })
+      spaceAboveLast.current = spaceAboveExtended
     },
-
     // do not trigger effect on scrollY change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAbove],
+    [spaceAboveExtended],
   )
 
   return (
     <div
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAbove + viewportHeight}px)`,
+        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
       }}
     >
       <div
@@ -413,7 +413,7 @@ const LayoutTree = () => {
           // Set a minimum height that fits all thoughts based on their estimated height.
           // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
           // One viewportHeight to compensate for translateY, and another to ensure room to scroll below.
-          height: totalHeight - spaceAbove + viewportHeight * 2,
+          height: totalHeight - spaceAboveExtended + viewportHeight,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
           // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
