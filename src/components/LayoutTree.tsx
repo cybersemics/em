@@ -34,6 +34,7 @@ import unroot from '../util/unroot'
 import DropEnd from './DropEnd'
 import VirtualThought from './VirtualThought'
 
+/** 1st Pass: A thought with rendering information after the tree has been linearized. */
 type TreeThought = {
   /** If true, the thought is rendered below the cursor (i.e. with a higher y value). This is used to crop hidden thoughts. */
   belowCursor: boolean
@@ -59,6 +60,16 @@ type TreeThought = {
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
+}
+
+/** 2nd Pass: A thought with position information after its height has been measured. */
+type TreeThoughtPositioned = TreeThought & {
+  cliff: number
+  height: number
+  parentWidth?: number
+  singleLineHeightWithCliff: number
+  width?: number
+  y: number
 }
 
 // ms to debounce removal of size entries as VirtualThoughts are unmounted
@@ -398,7 +409,7 @@ const LayoutTree = () => {
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
-  const virtualThoughtsPositioned = useMemo(() => {
+  const virtualThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
     let yaccum = 0
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key by the key of the thought with the table attribute
