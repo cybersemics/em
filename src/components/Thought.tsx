@@ -347,8 +347,8 @@ const ThoughtContainer = ({
           transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
           ...style,
           ...styleContainer,
-          marginLeft: style?.marginLeft ? `calc(${style.marginLeft} - 100px)` : -100,
-          paddingLeft: style?.paddingLeft ? `calc(${style.paddingLeft} + 100px)` : 100,
+          marginLeft: `calc(${style?.marginLeft || 0} - 100px)`,
+          paddingLeft: `calc(${style?.paddingLeft || 0} + 100px)`,
           ...(globals.simulateDrop
             ? {
                 backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
