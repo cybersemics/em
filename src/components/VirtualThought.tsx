@@ -135,7 +135,7 @@ const VirtualThought = ({
   //   childPath,
   // })
 
-  const updateHeight = useCallback(() => {
+  const updateSize = useCallback(() => {
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
     const autofocusNew = calculateAutofocus(store.getState(), path)
@@ -158,19 +158,19 @@ const VirtualThought = ({
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
-  useSelectorEffect(updateHeight, selectCursor, shallowEqual)
+  useSelectorEffect(updateSize, selectCursor, shallowEqual)
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useEffect(updateHeight, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateHeight])
+  useEffect(updateSize, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateSize])
 
   // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
     if (isEditing) {
       // update height when editingValue changes and return the unsubscribe function
-      return editingValueStore.subscribe(updateHeight)
+      return editingValueStore.subscribe(updateSize)
     }
-  }, [isEditing, updateHeight])
+  }, [isEditing, updateSize])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
@@ -219,7 +219,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
-          updateSize={updateHeight}
+          updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
@@ -370,7 +370,7 @@ const Subthought = ({
           isHeader={false}
           isMultiColumnTable={isMultiColumnTable}
           isVisible={isVisible}
-          updateHeight={updateSize}
+          updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}
           rank={thought.rank}

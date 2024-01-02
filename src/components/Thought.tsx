@@ -85,7 +85,7 @@ export interface ThoughtContainerProps {
   simplePath: SimplePath
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
-  updateHeight?: () => void
+  updateSize?: () => void
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -128,7 +128,7 @@ const ThoughtContainer = ({
   simplePath,
   style: styleProp,
   styleContainer: styleContainerProp,
-  updateHeight,
+  updateSize,
 }: DraggableThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -439,7 +439,7 @@ const ThoughtContainer = ({
             style={styleThought}
             styleAnnotation={styleAnnotation || undefined}
             styleThought={styleThought}
-            updateHeight={updateHeight}
+            updateSize={updateSize}
             view={view}
           />
 

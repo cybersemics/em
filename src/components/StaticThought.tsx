@@ -37,7 +37,7 @@ export interface ThoughtProps {
   isVisible?: boolean
   leaf?: boolean
   onEdit?: (args: { newValue: string; oldValue: string }) => void
-  updateHeight?: () => void
+  updateSize?: () => void
   path: Path
   rank: number
   showContextBreadcrumbs?: boolean
@@ -67,7 +67,7 @@ const StaticThought = ({
   style,
   styleThought,
   styleAnnotation,
-  updateHeight,
+  updateSize,
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
@@ -78,8 +78,8 @@ const StaticThought = ({
   const multiline = useMultiline(editableRef, simplePath, isEditing)
 
   useEffect(() => {
-    updateHeight?.()
-  }, [multiline, updateHeight])
+    updateSize?.()
+  }, [multiline, updateSize])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load

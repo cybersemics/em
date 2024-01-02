@@ -55,8 +55,8 @@ type TreeThought = {
   thought: Thought
 }
 
-// ms to debounce removal of height entries as VirtualThoughts are unmounted
-const HEIGHT_REMOVAL_DEBOUNCE = 1000
+// ms to debounce removal of size entries as VirtualThoughts are unmounted
+const SIZE_REMOVAL_DEBOUNCE = 1000
 
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
@@ -70,45 +70,45 @@ const MAX_TABLE_COLUMN_WIDTH = 10
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
   `${(contextChain || []).map(head).join('')}|${id}`
 
-/** Dynamically update and remove heights for different keys. */
-const useHeightTracking = () => {
-  // Track dynamic thought heights from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [heights, setHeights] = useState<Index<{ height: number; isVisible: boolean }>>({})
+/** Dynamically update and remove sizes for different keys. */
+const useSizeTracking = () => {
+  // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
+  const [sizes, setSizes] = useState<Index<{ height: number; isVisible: boolean }>>({})
   const unmounted = useRef(false)
 
   // Track debounced height removals
-  // See: removeHeight
-  const heightRemovalTimeouts = useRef<Map<string, number>>(new Map())
+  // See: removeSize
+  const sizeRemovalTimeouts = useRef<Map<string, number>>(new Map())
 
-  // Removing a height immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
-  // Debouncing height removal mitigates the issue.
+  // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
+  // Debouncing size removal mitigates the issue.
   // Use throttleConcat to accumulate all keys to be removed during the interval.
   // TODO: Is a root cause of the mount-unmount loop.
-  const removeHeight = useCallback((key: string) => {
-    clearTimeout(heightRemovalTimeouts.current.get(key))
+  const removeSize = useCallback((key: string) => {
+    clearTimeout(sizeRemovalTimeouts.current.get(key))
     const timeout = setTimeout(() => {
       if (unmounted.current) return
-      setHeights(heightsOld => {
-        delete heightsOld[key]
-        return heightsOld
+      setSizes(sizesOld => {
+        delete sizesOld[key]
+        return sizesOld
       })
-    }, HEIGHT_REMOVAL_DEBOUNCE) as unknown as number
-    heightRemovalTimeouts.current.set(key, timeout)
+    }, SIZE_REMOVAL_DEBOUNCE) as unknown as number
+    sizeRemovalTimeouts.current.set(key, timeout)
   }, [])
 
-  /** Update the height record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
-  const setHeight = useCallback(
+  /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
+  const setSize = useCallback(
     ({ height, isVisible, key }: { height: number | null; id: ThoughtId; isVisible: boolean; key: string }) => {
       if (height !== null) {
         // cancel thought removal timeout
-        clearTimeout(heightRemovalTimeouts.current.get(key))
-        heightRemovalTimeouts.current.delete(key)
+        clearTimeout(sizeRemovalTimeouts.current.get(key))
+        sizeRemovalTimeouts.current.delete(key)
 
-        setHeights(heightsOld =>
-          height === heightsOld[key]?.height && isVisible === heightsOld[key]?.isVisible
-            ? heightsOld
+        setSizes(sizesOld =>
+          height === sizesOld[key]?.height && isVisible === sizesOld[key]?.isVisible
+            ? sizesOld
             : {
-                ...heightsOld,
+                ...sizesOld,
                 [key]: {
                   height,
                   isVisible,
@@ -116,10 +116,10 @@ const useHeightTracking = () => {
               },
         )
       } else {
-        removeHeight(key)
+        removeSize(key)
       }
     },
-    [removeHeight],
+    [removeSize],
   )
 
   useEffect(() => {
@@ -130,10 +130,10 @@ const useHeightTracking = () => {
 
   return useMemo(
     () => ({
-      heights,
-      setHeight,
+      sizes,
+      setSize,
     }),
-    [heights, setHeight],
+    [sizes, setSize],
   )
 }
 
@@ -268,7 +268,7 @@ const virtualTree = (
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
-  const { heights, setHeight } = useHeightTracking()
+  const { sizes, setSize } = useSizeTracking()
   const virtualThoughts = useSelector(virtualTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
@@ -280,24 +280,24 @@ const LayoutTree = () => {
   )
 
   // singleLineHeight is the measured height of a single line thought.
-  // If no heights have been measured yet, use the estimated height.
-  // Cache the last measured value in a ref in case heights no longer contains any single line thoughts.
+  // If no sizes have been measured yet, use the estimated height.
+  // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
   // Then do not update it again.
   const singleLineHeightPrev = useRef<number | null>(null)
   const singleLineHeight = useMemo(() => {
     // The estimatedHeight calculation is ostensibly related to the font size, line height, and padding, though the process of determination was guess-and-check. This formula appears to work across font sizes.
-    // If estimatedHeight is off, then totalHeight will fluctuate as actual heights are saved (due to estimatedHeight differing from the actual single-line height).
+    // If estimatedHeight is off, then totalHeight will fluctuate as actual sizes are saved (due to estimatedHeight differing from the actual single-line height).
     const estimatedHeight = fontSize * 2 - 2
 
-    const singleLineHeightMeasured = Object.values(heights).find(
-      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different heights.
+    const singleLineHeightMeasured = Object.values(sizes).find(
+      // TODO: This does not differentiate between leaves, non-leaves, cliff thoughts, which all have different sizes.
       ({ height }) => Math.abs(height - estimatedHeight) < height / 2,
     )?.height
     if (singleLineHeightMeasured) {
       singleLineHeightPrev.current = singleLineHeightMeasured
     }
     return singleLineHeightPrev.current || estimatedHeight
-  }, [fontSize, heights])
+  }, [fontSize, sizes])
 
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
@@ -322,22 +322,22 @@ const LayoutTree = () => {
     // the total amount of space above the first visible thought that will be cropped
     spaceAbove,
 
-    // Sum all the heights to get the total height of the containing div.
-    // Use estimated single-line height for the thoughts that do not have heights yet.
+    // Sum all the sizes to get the total height of the containing div.
+    // Use estimated single-line height for the thoughts that do not have sizes yet.
     // Exclude hidden thoughts below the cursor to reduce empty scroll space.
     totalHeight,
   } = virtualThoughts.reduce(
     (accum, node) => {
       const heightNext =
-        node.key in heights
-          ? heights[node.key].isVisible || !node.belowCursor
-            ? heights[node.key].height
+        node.key in sizes
+          ? sizes[node.key].isVisible || !node.belowCursor
+            ? sizes[node.key].height
             : 0
           : singleLineHeight
       return {
         totalHeight: accum.totalHeight + heightNext,
         spaceAbove:
-          accum.spaceAbove + (heights[node.key] && !heights[node.key].isVisible && !node.belowCursor ? heightNext : 0),
+          accum.spaceAbove + (sizes[node.key] && !sizes[node.key].isVisible && !node.belowCursor ? heightNext : 0),
       }
     },
     {
@@ -369,7 +369,7 @@ const LayoutTree = () => {
     [fontSize],
   )
 
-  // Accumulate the y position as we iterate the visible thoughts since the heights may vary.
+  // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const virtualThoughtsPositioned = useMemo(() => {
     let yaccum = 0
@@ -384,7 +384,7 @@ const LayoutTree = () => {
       // The single line height needs to be increased for thoughts that have a cliff below them.
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
-      const height = heights[node.key]?.height ?? singleLineHeightWithCliff
+      const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
       const y = yaccum
 
       if (!node.isTableCol1) {
@@ -393,7 +393,7 @@ const LayoutTree = () => {
 
       return { ...node, cliff, height, singleLineHeightWithCliff, y }
     })
-  }, [fontSize, heights, singleLineHeight, virtualThoughts])
+  }, [fontSize, sizes, singleLineHeight, virtualThoughts])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
@@ -462,7 +462,7 @@ const LayoutTree = () => {
             // List Virtualization
             // Hide thoughts that are below the viewport.
             // Render virtualized thoughts with their estimated height so that document height is relatively stable.
-            // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `heights` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
+            // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             const isBelowViewport = y > viewportBottom + height
             if (isBelowViewport) return null
 
@@ -495,7 +495,7 @@ const LayoutTree = () => {
                   // isMultiColumnTable={isMultiColumnTable}
                   isMultiColumnTable={false}
                   leaf={leaf}
-                  onResize={setHeight}
+                  onResize={setSize}
                   path={path}
                   prevChildId={prevChild?.id}
                   showContexts={showContexts}
