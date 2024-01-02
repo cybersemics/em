@@ -34,6 +34,7 @@ import Thought from './Thought'
 export type OnResize = (args: {
   /** The real, measured height of the thought after a render. Set to null on unmount. */
   height: number | null
+  width: number | null
   id: ThoughtId
   /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
   isVisible: boolean
@@ -142,6 +143,7 @@ const VirtualThought = ({
     const isVisibleNew = autofocusNew === 'show' || autofocusNew === 'dim'
     if (!ref.current) return
     const heightNew = ref.current.getBoundingClientRect().height
+    const widthNew = ref.current.querySelector('.editable')!.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
     const editable = ref.current.querySelector('.editable')
@@ -150,6 +152,7 @@ const VirtualThought = ({
     setHeight(heightNew)
     onResize?.({
       height: heightNew,
+      width: widthNew,
       id: thought.id,
       isVisible: isVisibleNew,
       key: crossContextualKey,
@@ -176,7 +179,7 @@ const VirtualThought = ({
   useEffect(
     () => {
       return () => {
-        onResize?.({ height: null, id: thought.id, isVisible: true, key: crossContextualKey })
+        onResize?.({ height: null, width: null, id: thought.id, isVisible: true, key: crossContextualKey })
       }
     },
     // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount

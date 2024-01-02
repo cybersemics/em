@@ -73,7 +73,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 /** Dynamically update and remove sizes for different keys. */
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; isVisible: boolean }>>({})
+  const [sizes, setSizes] = useState<Index<{ height: number; width: number; isVisible: boolean }>>({})
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -98,8 +98,20 @@ const useSizeTracking = () => {
 
   /** Update the size record of a single thought. Make sure to use a key that is unique across thoughts and context views. This should be called whenever the size of a thought changes to ensure that y positions are updated accordingly and thoughts are animated into place. Otherwise, y positions will be out of sync and thoughts will start to overlap. */
   const setSize = useCallback(
-    ({ height, isVisible, key }: { height: number | null; id: ThoughtId; isVisible: boolean; key: string }) => {
-      if (height !== null) {
+    ({
+      height,
+      width,
+      id,
+      isVisible,
+      key,
+    }: {
+      height: number | null
+      width: number | null
+      id: ThoughtId
+      isVisible: boolean
+      key: string
+    }) => {
+      if (height !== null && width !== null) {
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
@@ -111,6 +123,7 @@ const useSizeTracking = () => {
                 ...sizesOld,
                 [key]: {
                   height,
+                  width,
                   isVisible,
                 },
               },
