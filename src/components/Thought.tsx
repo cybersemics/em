@@ -18,6 +18,7 @@ import useHoveringPath from '../hooks/useHoveringPath'
 import useThoughtStyle from '../hooks/useThoughtStyle'
 import useThoughtStyleContainer from '../hooks/useThoughtStyleContainer'
 import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -175,6 +176,9 @@ const ThoughtContainer = ({
 
   const isPublishChild = useSelector(state => !state.search && publishMode() && simplePath.length === 2)
   const publish = useSelector(state => !state.search && publishMode())
+  const isTableCol2 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table'),
+  )
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
@@ -347,8 +351,9 @@ const ThoughtContainer = ({
           transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
           ...style,
           ...styleContainer,
-          marginLeft: `calc(${style?.marginLeft || 0} - 100px)`,
-          paddingLeft: `calc(${style?.paddingLeft || 0} + 100px)`,
+          // extend the click area to the left (except if table column 2)
+          marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
+          paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
           ...(globals.simulateDrop
             ? {
                 backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
