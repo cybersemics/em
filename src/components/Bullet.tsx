@@ -8,12 +8,14 @@ import deleteAttribute from '../action-creators/deleteAttribute'
 import setCursor from '../action-creators/setCursor'
 import setDescendant from '../action-creators/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -158,6 +160,9 @@ const Bullet = ({
   // if being edited and meta validation error has occured
   const invalid = useSelector(state => !!isEditing && state.invalidState)
   const fontSize = useSelector(state => state.fontSize)
+  const isTableCol1 = useSelector(state =>
+    attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
+  )
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging
@@ -251,7 +256,8 @@ const Bullet = ({
       style={{
         marginTop: -extendClickHeight,
         // calculate position of thought for different font sizes
-        marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth,
+        // Table column 1 needs more space between the bullet and thought for some reason
+        marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0),
         marginBottom: -extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
