@@ -13,12 +13,13 @@ import { HOME_PATH } from '../constants'
 import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import nextSibling from '../selectors/nextSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import viewportStore from '../stores/viewport'
@@ -38,6 +39,7 @@ type TreeThought = {
   belowCursor: boolean
   depth: number
   env?: LazyEnv
+  grandparentKey: string
   // index among visible siblings at the same level
   indexChild: number
   // index among all visible thoughts in the tree
@@ -46,6 +48,7 @@ type TreeThought = {
   isTableCol2: boolean
   key: string
   leaf: boolean
+  parentKey: string
   path: Path
   prevChild: Thought
   showContexts?: boolean
@@ -53,6 +56,9 @@ type TreeThought = {
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
   thought: Thought
+  // keys of visible children
+  // only used in table view to calculate the width of column 1
+  visibleChildrenKeys?: string[]
 }
 
 // ms to debounce removal of size entries as VirtualThoughts are unmounted
@@ -62,9 +68,6 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
-// maximum table column width (em)
-const MAX_TABLE_COLUMN_WIDTH = 10
-
 /** Generates a VirtualThought key that is unique across context views. */
 // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
 const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
@@ -73,7 +76,7 @@ const crossContextualKey = (contextChain: Path[] | undefined, id: ThoughtId) =>
 /** Dynamically update and remove sizes for different keys. */
 const useSizeTracking = () => {
   // Track dynamic thought sizes from inner refs via VirtualThought. These are used to set the absolute y position which enables animation between any two states. isVisible is used to crop hidden thoughts.
-  const [sizes, setSizes] = useState<Index<{ height: number; width: number; isVisible: boolean }>>({})
+  const [sizes, setSizes] = useState<Index<{ height: number; width?: number; isVisible: boolean }>>({})
   const unmounted = useRef(false)
 
   // Track debounced height removals
@@ -106,12 +109,12 @@ const useSizeTracking = () => {
       key,
     }: {
       height: number | null
-      width: number | null
+      width?: number | null
       id: ThoughtId
       isVisible: boolean
       key: string
     }) => {
-      if (height !== null && width !== null) {
+      if (height !== null) {
         // cancel thought removal timeout
         clearTimeout(sizeRemovalTimeouts.current.get(key))
         sizeRemovalTimeouts.current.delete(key)
@@ -123,7 +126,7 @@ const useSizeTracking = () => {
                 ...sizesOld,
                 [key]: {
                   height,
-                  width,
+                  width: width || undefined,
                   isVisible,
                 },
               },
@@ -231,23 +234,34 @@ const virtualTree = (
       belowCursor = true
     }
 
-    const node = {
+    const isTable = attributeEquals(state, child.id, '=view', 'Table')
+    const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
+    const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+    const parentKey = crossContextualKey(contextChainNew, head(simplePath))
+    const grandparentKey = crossContextualKey(contextChainNew, head(rootedParentOf(state, simplePath)))
+
+    const node: TreeThought = {
       belowCursor: !!belowCursor,
       depth,
       env: envNew || undefined,
+      grandparentKey,
       indexChild: i,
       indexDescendant: virtualIndexNew,
-      isTableCol1: attributeEquals(state, child.parentId, '=view', 'Table'),
-      isTableCol2: attributeEquals(state, getThoughtById(state, child.parentId)?.parentId, '=view', 'Table'),
+      isTableCol1,
+      isTableCol2,
       key: crossContextualKey(contextChainNew, child.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
+      parentKey,
       path: childPath,
       prevChild: filteredChildren[i - 1],
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
       thought: child,
+      ...(isTable
+        ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
+        : null),
     }
 
     // RECURSION
@@ -386,6 +400,9 @@ const LayoutTree = () => {
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const virtualThoughtsPositioned = useMemo(() => {
     let yaccum = 0
+    // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
+    // key by the key of the thought with the table attribute
+    const tableCol1Widths = new Map<string, number>()
     return virtualThoughts.map((node, i) => {
       const next = virtualThoughts[i + 1]
 
@@ -398,13 +415,33 @@ const LayoutTree = () => {
       // For some reason this is not yielding an exact subpixel match, so the first updateHeight will not short circuit. Performance could be improved if th exact subpixel match could be determined. Still, this is better than not taking into account cliff padding.
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
       const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
+
+      // set the width of column 1 to the minimum width of all visible thoughts in the column
+      if (node.visibleChildrenKeys) {
+        const tableCol1Width = node.visibleChildrenKeys?.reduce(
+          (accum, childKey) => Math.max(accum, sizes[childKey]?.width || 0),
+          0,
+        )
+        if (tableCol1Width > 0) {
+          tableCol1Widths.set(node.key, tableCol1Width)
+        }
+      }
+
       const y = yaccum
 
       if (!node.isTableCol1) {
         yaccum += height
       }
 
-      return { ...node, cliff, height, singleLineHeightWithCliff, y }
+      return {
+        ...node,
+        cliff,
+        height,
+        parentWidth: tableCol1Widths.get(node.grandparentKey),
+        singleLineHeightWithCliff,
+        width: tableCol1Widths.get(node.parentKey),
+        y,
+      }
     })
   }, [fontSize, sizes, singleLineHeight, virtualThoughts])
 
@@ -461,6 +498,7 @@ const LayoutTree = () => {
               isTableCol2,
               key,
               leaf,
+              parentWidth,
               path,
               prevChild,
               showContexts,
@@ -468,6 +506,7 @@ const LayoutTree = () => {
               singleLineHeightWithCliff,
               style,
               thought,
+              width,
               y,
             },
             i,
@@ -479,6 +518,8 @@ const LayoutTree = () => {
             const isBelowViewport = y > viewportBottom + height
             if (isBelowViewport) return null
 
+            const maxTableColumnWidth = fontSize * 10
+
             return (
               <div
                 aria-label='tree-node'
@@ -489,12 +530,14 @@ const LayoutTree = () => {
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
-                  left: `${depth + (isTableCol2 ? MAX_TABLE_COLUMN_WIDTH : 0)}em`,
+                  left: `calc(${depth + (isTableCol1 ? -1.5 : isTableCol2 ? 0.5 : 0)}em + ${
+                    isTableCol2 ? Math.min(parentWidth || Infinity, maxTableColumnWidth) : 0
+                  }px)`,
                   top: y,
                   transition: 'left 0.15s ease-out,top 0.15s ease-out',
                   // If width is auto, it unintentionally animates as left animates and the text wraps.
                   // Therefore, set the width so that is stepped and only changes with depth.
-                  width: isTableCol1 ? `${MAX_TABLE_COLUMN_WIDTH - 1}em` : `calc(100% - ${depth - 1}em)`,
+                  width: width || `calc(100% - ${depth - 1}em)`,
                   ...style,
                   textAlign: isTableCol1 ? 'right' : undefined,
                 }}

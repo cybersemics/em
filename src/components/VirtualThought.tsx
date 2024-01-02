@@ -34,7 +34,8 @@ import Thought from './Thought'
 export type OnResize = (args: {
   /** The real, measured height of the thought after a render. Set to null on unmount. */
   height: number | null
-  width: number | null
+  // width may not be defined since it is measured from the ref's .editable
+  width?: number | null
   id: ThoughtId
   /** Used by the LayoutTree to crop hidden thoughts below the cursor without disrupting the autofocus animation when parents fade in. */
   isVisible: boolean
@@ -143,7 +144,7 @@ const VirtualThought = ({
     const isVisibleNew = autofocusNew === 'show' || autofocusNew === 'dim'
     if (!ref.current) return
     const heightNew = ref.current.getBoundingClientRect().height
-    const widthNew = ref.current.querySelector('.editable')!.getBoundingClientRect().width
+    const widthNew = ref.current.querySelector('.editable')?.getBoundingClientRect().width
 
     // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
     const editable = ref.current.querySelector('.editable')
