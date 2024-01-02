@@ -219,7 +219,7 @@ const VirtualThought = ({
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
           leaf={leaf}
-          updateHeight={updateHeight}
+          updateSize={updateHeight}
           path={path}
           prevChildId={prevChildId}
           showContexts={showContexts}
@@ -260,7 +260,7 @@ const Subthought = ({
   indexDescendant,
   isMultiColumnTable,
   leaf,
-  updateHeight,
+  updateSize,
   path,
   prevChildId,
   showContexts,
@@ -276,7 +276,7 @@ const Subthought = ({
   indexDescendant: number
   isMultiColumnTable?: boolean
   leaf?: boolean
-  updateHeight?: () => void
+  updateSize?: () => void
   path: Path
   prevChildId?: ThoughtId
   showContexts?: boolean
@@ -370,7 +370,7 @@ const Subthought = ({
           isHeader={false}
           isMultiColumnTable={isMultiColumnTable}
           isVisible={isVisible}
-          updateHeight={updateHeight}
+          updateHeight={updateSize}
           path={path}
           prevChildId={prevChildId}
           rank={thought.rank}
