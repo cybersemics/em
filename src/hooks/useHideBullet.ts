@@ -5,15 +5,18 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { GLOBAL_STYLE_ENV } from '../constants'
 import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
+import rootedParentOf from '../selectors/rootedParentOf'
+import equalPath from '../util/equalPath'
 import findFirstEnvContextWithZoom from '../util/findFirstEnvContextWithZoom'
 import head from '../util/head'
 
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
 
-/** A hook that returns true if the bullet should be hidden based on the =bullet attribute. */
+/** A hook that returns true if the bullet should be hidden based on the =bullet attribute and table view. */
 const useHideBullet = ({
   children,
   env,
@@ -37,6 +40,11 @@ const useHideBullet = ({
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>
       thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
+
+    /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
+    const hideBulletTable = () =>
+      !equalPath(simplePath, state.cursor) &&
+      attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
 
     /** Returns true if the bullet should be hidden if zoomed. */
     const hideBulletZoom = (): boolean => {
@@ -63,7 +71,7 @@ const useHideBullet = ({
       return bulletEnv.some(envChildBullet => envChildBullet === 'None')
     }
 
-    return hideBullet() || hideBulletZoom() || hideBulletEnv()
+    return hideBullet() || hideBulletTable() || hideBulletZoom() || hideBulletEnv()
   })
 
   return hideBullet
