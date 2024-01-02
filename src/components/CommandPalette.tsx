@@ -265,8 +265,8 @@ const CommandRow: FC<{
               color: disabled
                 ? colors.gray
                 : gestureInProgress === shortcut.gesture
-                ? colors.vividHighlight
-                : colors.fg,
+                  ? colors.vividHighlight
+                  : colors.fg,
               fontWeight: selected ? 'bold' : undefined,
             }}
           >

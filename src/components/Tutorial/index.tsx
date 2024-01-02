@@ -91,14 +91,14 @@ const Tutorial: FC = () => {
       tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
         ? shortcutById('newThought')?.gesture
         : tutorialStep === TUTORIAL_STEP_SUBTHOUGHT ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
-          tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
-        ? shortcutById('newSubthought')?.gesture
-        : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
-        ? shortcutById('toggleContextView')?.gesture
-        : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
+            tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT ||
+            tutorialStep === TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT
+          ? shortcutById('newSubthought')?.gesture
+          : tutorialStep === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE
+            ? shortcutById('toggleContextView')?.gesture
+            : null) || null) as GesturePath | null, // Why does it add 'string' to the type union without this?
   )
 
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))

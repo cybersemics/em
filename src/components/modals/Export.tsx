@@ -206,8 +206,8 @@ const ExportThoughtsPhrase = ({
     numDescendantsFinal || numDescendants
       ? exportPhrase(id, n, { value: title })
       : n === 0 || n === 1
-      ? '1 thought'
-      : 'thoughts'
+        ? '1 thought'
+        : 'thoughts'
 
   return <span dangerouslySetInnerHTML={{ __html: phrase }} />
 }

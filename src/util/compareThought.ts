@@ -50,9 +50,9 @@ const parseDate = (s: string): number =>
     REGEX_SHORT_DATE_WITH_DASH.test(s)
       ? `${s}-${CURRENT_YEAR}`
       : // eslint-disable-next-line @typescript-eslint/no-extra-parens
-      REGEX_SHORT_DATE_WITH_SLASH.test(s)
-      ? `${s}/${CURRENT_YEAR}`
-      : s,
+        REGEX_SHORT_DATE_WITH_SLASH.test(s)
+        ? `${s}/${CURRENT_YEAR}`
+        : s,
   )
 
 /** Returns trure if the given string is an integer or decimal number. Recognizes prefixed number strings like "#1" and "$1" as numbers. */

@@ -301,8 +301,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           actionType === 'undoAction'
             ? undoReducer(state, undoPatches)
             : actionType === 'redoAction'
-            ? redoReducer(state, redoPatches)
-            : null
+              ? redoReducer(state, redoPatches)
+              : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
         const omitted = _.pick(

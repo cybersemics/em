@@ -806,8 +806,8 @@ export const replicateChildren = async (
         docKey === ROOT_PARENT_ID
           ? null
           : docKey === HOME_TOKEN || docKey === EM_TOKEN
-          ? ROOT_PARENT_ID
-          : doc.getMap<ThoughtId>('thought').get('docKey')
+            ? ROOT_PARENT_ID
+            : doc.getMap<ThoughtId>('thought').get('docKey')
       if (parentDocKey) {
         docKeys.set(docKey as ThoughtId, parentDocKey)
       }
@@ -859,8 +859,8 @@ export const replicateChildren = async (
           docKey === ROOT_PARENT_ID
             ? null
             : docKey === HOME_TOKEN || docKey === EM_TOKEN
-            ? ROOT_PARENT_ID
-            : doc.getMap<ThoughtId>('thought').get('docKey')
+              ? ROOT_PARENT_ID
+              : doc.getMap<ThoughtId>('thought').get('docKey')
         if (parentDocKey) {
           docKeys.set(docKey as ThoughtId, parentDocKey)
         }

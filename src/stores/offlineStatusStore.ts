@@ -51,10 +51,10 @@ export const init = (websocket: HocuspocusProviderWebsocket) => {
           ? statusOld
           : 'reconnecting'
         : status === 'connected'
-        ? (stopConnecting(), 'connected')
-        : status === 'disconnected'
-        ? (startConnecting(), 'reconnecting')
-        : (new Error('Unknown connection status: ' + status), statusOld),
+          ? (stopConnecting(), 'connected')
+          : status === 'disconnected'
+            ? (startConnecting(), 'reconnecting')
+            : (new Error('Unknown connection status: ' + status), statusOld),
     )
   })
 

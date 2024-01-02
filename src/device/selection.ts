@@ -34,8 +34,8 @@ export const clear = (): void => {
     focusNode?.nodeType === Node.ELEMENT_NODE
       ? (focusNode as HTMLElement)
       : focusNode?.parentNode?.nodeType === Node.ELEMENT_NODE
-      ? (focusNode.parentNode as HTMLElement)
-      : null
+        ? (focusNode.parentNode as HTMLElement)
+        : null
   if (focusElement) {
     focusElement.blur()
   }

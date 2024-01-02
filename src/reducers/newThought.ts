@@ -133,18 +133,18 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
     : value !== '' && getSortPreference(state, thoughtId).type === 'Alphabetical'
-    ? getSortedRank(state, thoughtId, value)
-    : insertBefore
-    ? insertNewSubthought || !simplePath || isRoot(simplePath)
-      ? getPrevRank(state, thoughtId, { aboveMeta })
-      : getRankBefore(state, simplePath)
-    : insertNewSubthought || !simplePath
-    ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
-      // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
-      value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
-      ? getRankAfter(state, getLastSortedChildPath()!)
-      : getNextRank(state, thoughtId)
-    : getRankAfter(state, simplePath)
+      ? getSortedRank(state, thoughtId, value)
+      : insertBefore
+        ? insertNewSubthought || !simplePath || isRoot(simplePath)
+          ? getPrevRank(state, thoughtId, { aboveMeta })
+          : getRankBefore(state, simplePath)
+        : insertNewSubthought || !simplePath
+          ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
+            // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
+            value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
+            ? getRankAfter(state, getLastSortedChildPath()!)
+            : getNextRank(state, thoughtId)
+          : getRankAfter(state, simplePath)
 
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
   const newThoughtId = createId()
@@ -190,15 +190,15 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     tutorialStepNewThoughtCompleted
       ? tutorialNext({})
       : // some hints are rolled back when a new thought is created
-      tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT
-      ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1_PARENT })
-      : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT
-      ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1 })
-      : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
-      ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT2_PARENT })
-      : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT
-      ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT2 })
-      : null,
+        tutorialStep === TUTORIAL2_STEP_CONTEXT1_PARENT_HINT
+        ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1_PARENT })
+        : tutorialStep === TUTORIAL2_STEP_CONTEXT1_HINT
+          ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT1 })
+          : tutorialStep === TUTORIAL2_STEP_CONTEXT2_PARENT_HINT
+            ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT2_PARENT })
+            : tutorialStep === TUTORIAL2_STEP_CONTEXT2_HINT
+              ? tutorialStepReducer({ value: TUTORIAL2_STEP_CONTEXT2 })
+              : null,
   ]
 
   return reducerFlow(reducers)(state)

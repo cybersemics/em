@@ -55,10 +55,10 @@ const ColorSwatch: FC<{
               color: 'default',
             }
           : color
-          ? { color: label }
-          : {
-              backgroundColor: label,
-            }),
+            ? { color: label }
+            : {
+                backgroundColor: label,
+              }),
         shape,
       }),
     )

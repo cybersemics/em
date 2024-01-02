@@ -13,10 +13,10 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   return index === -1
     ? (children[children.length - 1]?.rank || 0) + 1
     : // if the value is less than all children, return the rank of the first child - 1
-    index === 0
-    ? children[0].rank - 1
-    : // otherwise, return the rank at the halfway point between the previous child and the next child
-      (children[index - 1].rank + children[index].rank) / 2
+      index === 0
+      ? children[0].rank - 1
+      : // otherwise, return the rank at the halfway point between the previous child and the next child
+        (children[index - 1].rank + children[index].rank) / 2
 }
 
 export default getSortedRank

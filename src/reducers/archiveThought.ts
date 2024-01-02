@@ -71,8 +71,8 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
     showContexts && contextChain.length > 1
       ? contextChain[contextChain.length - 1]
       : !showContexts && simplePath.length > 1
-      ? parentOf(simplePath)
-      : HOME_PATH
+        ? parentOf(simplePath)
+        : HOME_PATH
   const context = pathToContext(state, pathParent)
   const thought = getThoughtById(state, head(simplePath))
 
@@ -137,13 +137,16 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       ? // TODO: Fix offset here
         [appendToPath(parentOf(path), prev.id), 0]
       : // Case II: set cursor on next thought
-      next
-      ? [unroot(showContexts ? appendToPath(parentOf(path), next) : appendToPath(parentOf(path), next as ThoughtId)), 0]
-      : // Case III: delete last thought in context; set cursor on context
-      thoughts.length > 1
-      ? [rootedParentOf(state, path), head(context).length]
-      : // Case IV: delete very last thought; remove cursor
-        [null, undefined]
+        next
+        ? [
+            unroot(showContexts ? appendToPath(parentOf(path), next) : appendToPath(parentOf(path), next as ThoughtId)),
+            0,
+          ]
+        : // Case III: delete last thought in context; set cursor on context
+          thoughts.length > 1
+          ? [rootedParentOf(state, path), head(context).length]
+          : // Case IV: delete very last thought; remove cursor
+            [null, undefined]
 
   return reducerFlow([
     ...(isDeletable

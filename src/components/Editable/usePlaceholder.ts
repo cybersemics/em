@@ -32,9 +32,9 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
       experienceMode || isTableColumn1
         ? ''
         : // only check the time if value is non-empty, otherwise the result will change for non-empty thoughts and cause the ContentEditable to re-render even when the placeholder is not displayed.
-        Date.now() - lastUpdated > EMPTY_THOUGHT_TIMEOUT
-        ? 'This is an empty thought'
-        : 'Add a thought'
+          Date.now() - lastUpdated > EMPTY_THOUGHT_TIMEOUT
+          ? 'This is an empty thought'
+          : 'Add a thought'
 
     return emptyValue
   })

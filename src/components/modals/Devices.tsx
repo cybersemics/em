@@ -538,8 +538,8 @@ const ShareDetail = React.memo(
             {isLastDevice
               ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
               : isCurrent
-              ? 'When removed, you will lose access to the thoughtspace on this device.'
-              : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
+                ? 'When removed, you will lose access to the thoughtspace on this device.'
+                : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
           were saved for offline use.`}
           </p>
           <a

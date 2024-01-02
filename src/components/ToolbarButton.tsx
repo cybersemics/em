@@ -130,10 +130,10 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       fill: buttonError
         ? colors.red
         : longPress.isPressed || isDragging
-        ? undefined
-        : isButtonExecutable && isButtonActive
-        ? colors.fg
-        : 'gray',
+          ? undefined
+          : isButtonExecutable && isButtonActive
+            ? colors.fg
+            : 'gray',
       width: fontSize + 4,
       height: fontSize + 4,
       opacity: dropToRemove ? 0 : 1,

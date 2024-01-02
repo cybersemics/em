@@ -53,10 +53,10 @@ const Tutorial2StepContext1SubThought = ({
         {tutorialChoice === TUTORIAL_VERSION_TODO
           ? "This could be any task you'd like to get done."
           : tutorialChoice === TUTORIAL_VERSION_JOURNAL
-          ? 'This could be a specific person or a general thought about relationships.'
-          : tutorialChoice === TUTORIAL_VERSION_BOOK
-          ? 'You can just make up something about Psychology you could imagine hearing on a podcast.'
-          : null}
+            ? 'This could be a specific person or a general thought about relationships.'
+            : tutorialChoice === TUTORIAL_VERSION_BOOK
+              ? 'You can just make up something about Psychology you could imagine hearing on a podcast.'
+              : null}
       </p>
       {
         // e.g. Home

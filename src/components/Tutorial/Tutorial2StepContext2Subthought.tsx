@@ -100,10 +100,10 @@ const Tutorial2StepContext2Subthought = ({
         {tutorialChoice === TUTORIAL_VERSION_TODO
           ? 'a new work task.'
           : tutorialChoice === TUTORIAL_VERSION_JOURNAL
-          ? 'a realization you have about relationships in therapy.'
-          : tutorialChoice === TUTORIAL_VERSION_BOOK
-          ? 'a new thought related to psychology.'
-          : null}{' '}
+            ? 'a realization you have about relationships in therapy.'
+            : tutorialChoice === TUTORIAL_VERSION_BOOK
+              ? 'a new thought related to psychology.'
+              : null}{' '}
         Add it to this “{TUTORIAL_CONTEXT[tutorialChoice]}” list.
       </p>
       {

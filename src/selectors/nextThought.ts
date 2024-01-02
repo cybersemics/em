@@ -72,16 +72,16 @@ const nextThought = (state: State, path?: Path, { ignoreChildren }: { ignoreChil
     onContextView
       ? firstContext(state, path)
       : // in normal view, move to the first child
-      firstChild
-      ? appendToPath(path, firstChild.id)
-      : // in the context view, move to the next context
-      isEmptyContext
-      ? nextContext(state, path)
-      : // in normal view, move to the next sibling
-      sibling()
-      ? appendToPath(parentOf(path), sibling()!.id)
-      : // otherwise, move to the next uncle
-        nextUncle(state, path)
+        firstChild
+        ? appendToPath(path, firstChild.id)
+        : // in the context view, move to the next context
+          isEmptyContext
+          ? nextContext(state, path)
+          : // in normal view, move to the next sibling
+            sibling()
+            ? appendToPath(parentOf(path), sibling()!.id)
+            : // otherwise, move to the next uncle
+              nextUncle(state, path)
 
   return next
 }

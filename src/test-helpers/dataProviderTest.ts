@@ -77,25 +77,25 @@ expect.extend({
           message: () => `expected ${JSON.stringify(context1)} to be in the given thoughts array`,
         }
       : index2 === -1
-      ? {
-          pass: false,
-          message: () => `expected ${JSON.stringify(context2)} to be in the given thoughts array`,
-        }
-      : index1 >= index2
-      ? {
-          pass: false,
-          message: () =>
-            `expected ${JSON.stringify(context1)} to appear before ${JSON.stringify(
-              context2,
-            )} in the given thoughts array`,
-        }
-      : {
-          pass: true,
-          message: () =>
-            `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(
-              context2,
-            )} in the given thoughts array`,
-        }
+        ? {
+            pass: false,
+            message: () => `expected ${JSON.stringify(context2)} to be in the given thoughts array`,
+          }
+        : index1 >= index2
+          ? {
+              pass: false,
+              message: () =>
+                `expected ${JSON.stringify(context1)} to appear before ${JSON.stringify(
+                  context2,
+                )} in the given thoughts array`,
+            }
+          : {
+              pass: true,
+              message: () =>
+                `expected ${JSON.stringify(context1)} to not appear before ${JSON.stringify(
+                  context2,
+                )} in the given thoughts array`,
+            }
   },
 })
 

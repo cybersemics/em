@@ -21,10 +21,10 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
         level === 3
           ? ' Perhaps a pattern is emerging?'
           : level === 4
-          ? ' You get the idea.'
-          : level === 5
-          ? ' Impressive that you read this far.'
-          : ''
+            ? ' You get the idea.'
+            : level === 5
+              ? ' Impressive that you read this far.'
+              : ''
       }`
     : 'Sets a heading to normal text.',
   keyboard: { key: level.toString(), meta: true, alt: true },

@@ -261,8 +261,8 @@ const importFilesActionCreator =
             insertBeforeNew
               ? rootedParentOf(stateAfterPull, path)
               : destEmpty && ancestors.length === 0
-              ? rootedParentOf(stateAfterPull, path)
-              : path,
+                ? rootedParentOf(stateAfterPull, path)
+                : path,
           )
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]

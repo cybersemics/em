@@ -83,8 +83,8 @@ const TutorialStepAutoExpand = ({ cursor }: { cursor?: Path } = {}) => {
                   isCursorLeaf && headValue(state, cursor).length > 0
                     ? ` "${headValue(state, cursor)}"`
                     : cursorChildren[0]?.value
-                    ? `"${cursorChildren[0]?.value}"`
-                    : '',
+                      ? `"${cursorChildren[0]?.value}"`
+                      : '',
                 )}
                 .
               </>

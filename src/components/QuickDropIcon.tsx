@@ -46,8 +46,8 @@ const DroppableQuickDropIcon = ({
           ? onHoverMessage(state, zone)
           : onHoverMessage
         : zone === DragThoughtZone.Thoughts
-        ? AlertText.DragAndDrop
-        : AlertText.ReorderFavorites
+          ? AlertText.DragAndDrop
+          : AlertText.ReorderFavorites
 
       store.dispatch(
         alert(message, {

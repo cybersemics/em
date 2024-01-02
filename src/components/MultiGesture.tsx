@@ -79,10 +79,10 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
   return angle >= dirToRad.NW && angle < dirToRad.NE
     ? 'u'
     : angle >= dirToRad.NE && angle < dirToRad.SE
-    ? 'r'
-    : angle >= dirToRad.SE && angle < dirToRad.SW
-    ? 'd'
-    : 'l'
+      ? 'r'
+      : angle >= dirToRad.SE && angle < dirToRad.SW
+        ? 'd'
+        : 'l'
 }
 
 /** An overlay for the scroll zone. */

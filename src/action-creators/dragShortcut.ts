@@ -20,10 +20,10 @@ const dragShortcutActionCreator =
             showCloseLink: false,
           })
         : alertType === AlertType.ToolbarButtonRemoveHint ||
-          alertType === AlertType.DragAndDropToolbarAdd ||
-          alertType === AlertType.DragAndDropToolbarHint
-        ? alert(null)
-        : null,
+            alertType === AlertType.DragAndDropToolbarAdd ||
+            alertType === AlertType.DragAndDropToolbarHint
+          ? alert(null)
+          : null,
       { type: 'dragShortcut', shortcutId },
     ])
   }

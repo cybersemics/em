@@ -32,25 +32,25 @@ const Status = () => {
           status === 'preconnecting' || status === 'offline'
             ? colors.gray50
             : status === 'connecting' || status === 'reconnecting'
-            ? colors.yellow
-            : status === 'connected' || status === 'synced'
-            ? colors.lightgreen
-            : (new Error('test'), undefined),
+              ? colors.yellow
+              : status === 'connected' || status === 'synced'
+                ? colors.lightgreen
+                : (new Error('test'), undefined),
       }}
     >
       {savingPercentage < 100
         ? `Saving ${savingPercentage}%`
         : status === 'preconnecting'
-        ? 'Initializing'
-        : status === 'connecting' || status === 'reconnecting'
-        ? 'Connecting'
-        : status === 'connected' || status === 'synced'
-        ? !replicationPercentage || replicationPercentage < 100
-          ? `Replicating ${replicationPercentage ? replicationPercentage + '%' : '...'}`
-          : 'Online'
-        : status === 'offline'
-        ? 'Offline'
-        : null}
+          ? 'Initializing'
+          : status === 'connecting' || status === 'reconnecting'
+            ? 'Connecting'
+            : status === 'connected' || status === 'synced'
+              ? !replicationPercentage || replicationPercentage < 100
+                ? `Replicating ${replicationPercentage ? replicationPercentage + '%' : '...'}`
+                : 'Online'
+              : status === 'offline'
+                ? 'Offline'
+                : null}
     </span>
   )
 }

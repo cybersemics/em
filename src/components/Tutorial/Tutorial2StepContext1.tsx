@@ -31,10 +31,10 @@ const Tutorial2StepContext1 = ({
         {tutorialChoice === TUTORIAL_VERSION_TODO
           ? 'you want to make a list of things you have to do at home.'
           : tutorialChoice === TUTORIAL_VERSION_JOURNAL
-          ? 'one of the themes in your journal is "Relationships".'
-          : tutorialChoice === TUTORIAL_VERSION_BOOK
-          ? `you hear a podcast on ${TUTORIAL_CONTEXT[tutorialChoice]}.`
-          : null}{' '}
+            ? 'one of the themes in your journal is "Relationships".'
+            : tutorialChoice === TUTORIAL_VERSION_BOOK
+              ? `you hear a podcast on ${TUTORIAL_CONTEXT[tutorialChoice]}.`
+              : null}{' '}
         Add a thought with the text "{TUTORIAL_CONTEXT[tutorialChoice]}" <i>within</i> “
         {TUTORIAL_CONTEXT1_PARENT[tutorialChoice]}”.
       </p>

@@ -159,9 +159,9 @@ const ThoughtAnnotationContainer = React.memo(
       const urlValue = isURL(value)
         ? value
         : // if the only subthought is a url and the thought is not expanded, link the thought
-        !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-        ? childrenUrls[0].value
-        : null
+          !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
+          ? childrenUrls[0].value
+          : null
       return urlValue
     })
 

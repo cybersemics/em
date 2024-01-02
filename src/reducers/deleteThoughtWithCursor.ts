@@ -70,10 +70,10 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
         ? nextContext(state, path)
         : null
       : // never move the cursor to the next thought after deleting an empty thought, as it is more intuitive to move the cursor to the previous thought like a word processor
-      // this does not apply to context view or when there is a reverted cursor
-      thought.value !== ''
-      ? nextSibling(state, simplePath)
-      : null,
+        // this does not apply to context view or when there is a reverted cursor
+        thought.value !== ''
+        ? nextSibling(state, simplePath)
+        : null,
   )
 
   // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
@@ -133,18 +133,18 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
       const cursorNew = revertedCursor()
         ? revertedCursor()
         : // Case I: set cursor on next thought
-        next()
-        ? appendToPath(parentOf(path), next()!.id)
-        : // Case II: set cursor on first thought
-        // allow revertNewSubthought to fall through to Case III (parent)
-        prev()
-        ? appendToPath(closestAncestor, prev()!.id)
-        : // Case III: delete last thought in context; set cursor on parent
-        // if showContexts falls through here, it means either the last context was deleted or a cyclic context was deleted
-        showContexts || simplePath.length > 1
-        ? closestAncestor
-        : // Case IV: delete last thought in thoughtspace; remove cursor
-          null
+          next()
+          ? appendToPath(parentOf(path), next()!.id)
+          : // Case II: set cursor on first thought
+            // allow revertNewSubthought to fall through to Case III (parent)
+            prev()
+            ? appendToPath(closestAncestor, prev()!.id)
+            : // Case III: delete last thought in context; set cursor on parent
+              // if showContexts falls through here, it means either the last context was deleted or a cyclic context was deleted
+              showContexts || simplePath.length > 1
+              ? closestAncestor
+              : // Case IV: delete last thought in thoughtspace; remove cursor
+                null
 
       return cursorNew
         ? setCursor(state, {

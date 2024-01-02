@@ -68,9 +68,9 @@ export const findTreeDescendants = (
   return !node
     ? []
     : // check node.path here instead of node.leaf to not break on legacy tree structure
-    node.path
-    ? [].concat(!showHiddenThoughts && shouldHide(pathToContext(state, node.path)) ? [] : { ...node })
-    : _.flatMap(Object.keys(node).map(child => findTreeDescendants(state, node[child], { showHiddenThoughts })))
+      node.path
+      ? [].concat(!showHiddenThoughts && shouldHide(pathToContext(state, node.path)) ? [] : { ...node })
+      : _.flatMap(Object.keys(node).map(child => findTreeDescendants(state, node[child], { showHiddenThoughts })))
 }
 
 /**

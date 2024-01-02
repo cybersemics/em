@@ -64,16 +64,16 @@ const calculateAutofocus = (state: State, path: Path) => {
   return (isCursorLeaf && isParentOrSibling()) || isDescendantOfCursor()
     ? 'show'
     : isParentOrSibling() ||
-      isDescendantOfUncle() ||
-      (isCursorLeaf && isGrandparent()) ||
-      (isCursorLeaf && isUncle()) ||
-      (isCursorLeaf && isDescendantOfGreatUncle()) ||
-      isExpandedBottom() ||
-      isExpandedTop()
-    ? 'dim'
-    : isGrandparent() || isUncle()
-    ? 'hide-parent'
-    : 'hide'
+        isDescendantOfUncle() ||
+        (isCursorLeaf && isGrandparent()) ||
+        (isCursorLeaf && isUncle()) ||
+        (isCursorLeaf && isDescendantOfGreatUncle()) ||
+        isExpandedBottom() ||
+        isExpandedTop()
+      ? 'dim'
+      : isGrandparent() || isUncle()
+        ? 'hide-parent'
+        : 'hide'
 }
 
 export default _.curryRight(calculateAutofocus)

@@ -93,9 +93,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
       ? lexemeWithoutContext
       : null
     : (lexemeWithoutContext?.contexts || []).some(cxid => getThoughtById(state, cxid))
-    ? // ! lexeme must be defined because lexemeWithoutContext exists
-      lexeme!
-    : null
+      ? // ! lexeme must be defined because lexemeWithoutContext exists
+        lexeme!
+      : null
 
   // update state so that we do not have to wait for the remote
   if (key) {
@@ -136,9 +136,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
             ? lexemeChildWithoutContext
             : null
           : lexemeChildWithoutContext?.contexts.some(cxid => getThoughtById(state, cxid))
-          ? // !: lexemeChild must be defined because lexemeChildWithoutContext exists
-            lexemeChild!
-          : null
+            ? // !: lexemeChild must be defined because lexemeChildWithoutContext exists
+              lexemeChild!
+            : null
 
         // update local lexemeIndex so that we do not have to wait for the remote
         if (lexemeChildNew) {

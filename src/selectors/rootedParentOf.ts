@@ -19,8 +19,8 @@ const rootedParentOf = <T extends Context | Path>(state: State, thoughts: T): T 
   return thoughts && thoughts.length > 1
     ? (parentOf(thoughts) as T)
     : isPath(thoughts)
-    ? (startingRankedRoot as T)
-    : (state.rootContext as T)
+      ? (startingRankedRoot as T)
+      : (state.rootContext as T)
 }
 
 export default rootedParentOf

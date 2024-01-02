@@ -28,8 +28,8 @@ const getSetting = (state: State, context: Context | string): string | undefined
       ? 'Off'
       : 'On'
     : context === 'Tutorial Step'
-    ? state.storageCache?.tutorialStep?.toString() || '1'
-    : undefined
+      ? state.storageCache?.tutorialStep?.toString() || '1'
+      : undefined
 }
 
 /** Memoize getSettings by thoughtIndex and context. */

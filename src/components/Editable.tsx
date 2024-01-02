@@ -564,14 +564,14 @@ const Editable = ({
         value === EM_TOKEN
           ? '<b>em</b>'
           : // render as empty string during temporary clear state
-          // see: /reducers/cursorCleared
-          isCursorCleared
-          ? ''
-          : isEditing
-          ? value
-          : childrenLabel
-          ? childrenLabel.value
-          : ellipsizeUrl(value)
+            // see: /reducers/cursorCleared
+            isCursorCleared
+            ? ''
+            : isEditing
+              ? value
+              : childrenLabel
+                ? childrenLabel.value
+                : ellipsizeUrl(value)
       }
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)

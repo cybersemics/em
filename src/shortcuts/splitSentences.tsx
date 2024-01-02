@@ -59,8 +59,8 @@ const splitSentencesShortcut: Shortcut = {
       (showContexts && cursor.length > 2
         ? parentOf(parentOf(cursor))
         : !showContexts && cursor.length > 1
-        ? parentOf(cursor)
-        : [HOME_TOKEN])
+          ? parentOf(cursor)
+          : [HOME_TOKEN])
     const siblings = path && getAllChildrenAsThoughts(state, head(path)).map(({ value }) => value)
     const duplicates = _.intersection(sentences, siblings)
     if (duplicates.length !== 0) {

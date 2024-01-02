@@ -24,9 +24,9 @@ const cursorUp = (state: State) => {
     ? // non-first child path
       appendToPath(parentOf(path), prevThought.id)
     : // when the cursor is on the first child in a context, move up a level
-    !isRoot(pathParent)
-    ? pathParent
-    : null
+      !isRoot(pathParent)
+      ? pathParent
+      : null
 
   // noop if there is no previous path, i.e. the cursor is on the very first thought
   return prevPath ? setCursor(state, { path: prevPath }) : state

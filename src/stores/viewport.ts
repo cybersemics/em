@@ -40,8 +40,8 @@ export const updateHeight = _.throttle(
         isViewportValid
           ? virtualKeyboardHeight
           : isPortrait
-          ? virtualKeyboardHeightPortrait
-          : virtualKeyboardHeightLandscape,
+            ? virtualKeyboardHeightPortrait
+            : virtualKeyboardHeightLandscape,
     })
   },
   // lock to 60 fps

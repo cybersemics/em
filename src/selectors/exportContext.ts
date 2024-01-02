@@ -19,8 +19,8 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
   return format === 'text/html'
     ? `<ul>\n  <li>${title}${text.slice(startText.length + 1)}`
     : format === 'text/plain'
-    ? `- ${title}${text.slice(text.indexOf('\n'))}`
-    : text
+      ? `- ${title}${text.slice(text.indexOf('\n'))}`
+      : text
 }
 
 /** Convert formatting HTML tags to markdown asterisks. */

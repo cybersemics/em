@@ -26,18 +26,18 @@ const cursorBack = (state: State) => {
           cursorHistory({ cursor: cursorOld }),
         ]
       : // if there is no cursor and isAbsoluteRoot is active, toggle the context
-      // else of search is active, close the search
-      isAbsoluteRoot
-      ? [toggleAbsoluteContext]
-      : search === ''
-      ? [
-          // close the search
-          searchReducer({ value: null }),
+        // else of search is active, close the search
+        isAbsoluteRoot
+        ? [toggleAbsoluteContext]
+        : search === ''
+          ? [
+              // close the search
+              searchReducer({ value: null }),
 
-          // restore the cursor
-          state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, editing }) : null,
-        ]
-      : [],
+              // restore the cursor
+              state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, editing }) : null,
+            ]
+          : [],
   )(state)
 }
 

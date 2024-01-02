@@ -123,12 +123,12 @@ const liToBlock = (node: Element): Block | Block[] => {
         children: [],
       }
     : // only add empty parent if the li node is empty and has nested list
-    firstChild.type === 'element' && firstChild.tagName === 'ul'
-    ? {
-        scope: '',
-        children: himalayaToBlock((firstChild as Element).children) as Block[],
-      }
-    : (himalayaToBlock(node.children) as Block[])
+      firstChild.type === 'element' && firstChild.tagName === 'ul'
+      ? {
+          scope: '',
+          children: himalayaToBlock((firstChild as Element).children) as Block[],
+        }
+      : (himalayaToBlock(node.children) as Block[])
 }
 
 /** Converts a <ul> element to a Block. */
@@ -159,14 +159,14 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
     node.type === 'comment'
       ? []
       : node.type === 'text'
-      ? textNodeToBlock(node)
-      : isWorkflowyNote(node)
-      ? workflowyNoteToBlock(node)
-      : node.tagName === 'ul'
-      ? ulToBlock(node, nodes[index - 1] as Element)
-      : node.tagName === 'li' && node.children.length === 1
-      ? liToBlock(node)
-      : himalayaToBlock(node.children),
+        ? textNodeToBlock(node)
+        : isWorkflowyNote(node)
+          ? workflowyNoteToBlock(node)
+          : node.tagName === 'ul'
+            ? ulToBlock(node, nodes[index - 1] as Element)
+            : node.tagName === 'li' && node.children.length === 1
+              ? liToBlock(node)
+              : himalayaToBlock(node.children),
   )
 
   if (Array.isArray(blocks[0])) return blocks.flat()
@@ -184,8 +184,8 @@ const findUniqueTags = (nodes: Element[]): string[] => {
     return current?.children?.length
       ? [...accum, current.tagName, ...findUniqueTags(current.children as Element[])]
       : current.tagName
-      ? [...accum, current.tagName]
-      : [...accum]
+        ? [...accum, current.tagName]
+        : [...accum]
   }, [] as string[])
   return _.uniq(tagLists)
 }

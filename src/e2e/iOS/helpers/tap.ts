@@ -51,8 +51,8 @@ const tap = async (
           (horizontalTapLine === 'left'
             ? 0
             : horizontalTapLine === 'right'
-            ? boundingBox.width - 1
-            : boundingBox.width / 2),
+              ? boundingBox.width - 1
+              : boundingBox.width / 2),
         y: boundingBox.y + boundingBox.height / 2,
       }
     : await offsetCoordinates()
