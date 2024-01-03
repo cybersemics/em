@@ -4,6 +4,7 @@ import thoughtToNote from '../../reducers/thoughtToNote'
 import exportContext from '../../selectors/exportContext'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
+import pathToContext from '../../util/pathToContext'
 import reducerFlow from '../../util/reducerFlow'
 
 it('convert the cursor to a note', () => {
@@ -20,4 +21,6 @@ it('convert the cursor to a note', () => {
   - a
     - =note
       - b`)
+
+  expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a'])
 })

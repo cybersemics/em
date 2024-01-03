@@ -12,6 +12,7 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import newThought from './newThought'
+import setCursor from './setCursor'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
 const thoughtToNote = (state: State) => {
@@ -65,6 +66,7 @@ const thoughtToNote = (state: State) => {
         newRank: 0,
       })
     },
+    setCursor({ path: parentOf(cursor) }),
   ])(state)
 }
 
