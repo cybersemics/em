@@ -416,7 +416,7 @@ const LayoutTree = () => {
     // key by the key of the thought with the table attribute
     const tableCol1Widths = new Map<string, number>()
     return treeThoughts.map((node, i) => {
-      const next = treeThoughts[i + 1]
+      const next: TreeThought | undefined = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
