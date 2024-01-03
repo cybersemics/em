@@ -166,7 +166,7 @@ const useSizeTracking = () => {
 }
 
 /** Recursiveley calculates the tree of visible thoughts, in order, represented as a flat list of thoughts with tree layout information. */
-const virtualTree = (
+const linearizeTree = (
   state: State,
   {
     // Base path to start the traversal. Defaults to HOME_PATH.
@@ -277,7 +277,7 @@ const virtualTree = (
     }
 
     // RECURSION
-    const descendants = virtualTree(state, {
+    const descendants = linearizeTree(state, {
       basePath: childPath,
       belowCursor,
       contextId: contextViewActive ? filteredChild.id : undefined,
@@ -308,7 +308,7 @@ const virtualTree = (
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
-  const virtualThoughts = useSelector(virtualTree, _.isEqual)
+  const virtualThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const indent = useSelector(state =>
