@@ -28,6 +28,7 @@ import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
+import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
 import safeRefMerge from '../util/safeRefMerge'
 import unroot from '../util/unroot'
@@ -413,8 +414,8 @@ const LayoutTree = () => {
   const treeThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
     let yaccum = 0
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
-    // key by the key of the thought with the table attribute
-    const tableCol1Widths = new Map<string, number>()
+    // key thoughtId of thought with =table attribute
+    const tableCol1Widths = new Map<ThoughtId, number>()
     return treeThoughts.map((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
 
@@ -435,12 +436,15 @@ const LayoutTree = () => {
           0,
         )
         if (tableCol1Width > 0) {
-          tableCol1Widths.set(node.key, tableCol1Width)
+          tableCol1Widths.set(head(node.path), tableCol1Width)
         }
       }
 
       const maxTableColumnWidth = fontSize * 10
-      const parentWidth = Math.min(tableCol1Widths.get(node.grandparentKey) || Infinity, maxTableColumnWidth)
+      const parentWidth = Math.min(
+        tableCol1Widths.get(head(parentOf(parentOf(node.path)))) || Infinity,
+        maxTableColumnWidth,
+      )
 
       const x =
         // indentation
@@ -460,7 +464,7 @@ const LayoutTree = () => {
         height,
         parentWidth,
         singleLineHeightWithCliff,
-        width: tableCol1Widths.get(node.parentKey),
+        width: tableCol1Widths.get(head(parentOf(node.path))),
         x,
         y,
       }
