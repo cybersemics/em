@@ -69,6 +69,7 @@ type TreeThoughtPositioned = TreeThought & {
   parentWidth?: number
   singleLineHeightWithCliff: number
   width?: number
+  x: number
   y: number
 }
 
@@ -438,6 +439,14 @@ const LayoutTree = () => {
         }
       }
 
+      const parentWidth = tableCol1Widths.get(node.grandparentKey)
+      const maxTableColumnWidth = fontSize * 10
+      const x =
+        // indentation
+        // space between table columns
+        fontSize * (node.depth + (node.isTableCol1 ? -1.5 : node.isTableCol2 ? 0.5 : 0)) +
+        // table column 2
+        (node.isTableCol2 ? Math.min(parentWidth || Infinity, maxTableColumnWidth) : 0)
       const y = yaccum
 
       if (!node.isTableCol1) {
@@ -448,9 +457,10 @@ const LayoutTree = () => {
         ...node,
         cliff,
         height,
-        parentWidth: tableCol1Widths.get(node.grandparentKey),
+        parentWidth,
         singleLineHeightWithCliff,
         width: tableCol1Widths.get(node.parentKey),
+        x,
         y,
       }
     })
@@ -518,6 +528,7 @@ const LayoutTree = () => {
               style,
               thought,
               width,
+              x,
               y,
             },
             i,
@@ -529,8 +540,6 @@ const LayoutTree = () => {
             const isBelowViewport = y > viewportBottom + height
             if (isBelowViewport) return null
 
-            const maxTableColumnWidth = fontSize * 10
-
             return (
               <div
                 aria-label='tree-node'
@@ -541,9 +550,7 @@ const LayoutTree = () => {
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
-                  left: `calc(${depth + (isTableCol1 ? -1.5 : isTableCol2 ? 0.5 : 0)}em + ${
-                    isTableCol2 ? Math.min(parentWidth || Infinity, maxTableColumnWidth) : 0
-                  }px)`,
+                  left: x,
                   top: y,
                   transition: 'left 0.15s ease-out,top 0.15s ease-out',
                   // If width is auto, it unintentionally animates as left animates and the text wraps.
