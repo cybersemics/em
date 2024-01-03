@@ -439,14 +439,15 @@ const LayoutTree = () => {
         }
       }
 
-      const parentWidth = tableCol1Widths.get(node.grandparentKey)
       const maxTableColumnWidth = fontSize * 10
+      const parentWidth = Math.min(tableCol1Widths.get(node.grandparentKey) || Infinity, maxTableColumnWidth)
+
       const x =
         // indentation
-        // space between table columns
+        // + space between table columns
         fontSize * (node.depth + (node.isTableCol1 ? -1.5 : node.isTableCol2 ? 0.5 : 0)) +
         // table column 2
-        (node.isTableCol2 ? Math.min(parentWidth || Infinity, maxTableColumnWidth) : 0)
+        (node.isTableCol2 ? parentWidth : 0)
       const y = yaccum
 
       if (!node.isTableCol1) {
