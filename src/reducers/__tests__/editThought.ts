@@ -334,133 +334,107 @@ it('data integrity test after editing a parent with multiple descendants with sa
   expect(missingParentIds).toHaveLength(0)
 })
 
-it('rank should change when editing a thought in a sorted context', () => {
-  const text = `
+describe('sort', () => {
+  it('rank should change when editing a thought in a sorted context', () => {
+    const text = `
     - =sort
       - Alphabetical
     - a
     - b
     - d`
 
-  const state1 = importText({ text })(initialState())
+    const state1 = importText({ text })(initialState())
 
-  const a1 = contextToThought(state1, ['a'])!
-  const b1 = contextToThought(state1, ['b'])!
-  const d1 = contextToThought(state1, ['d'])!
+    const a1 = contextToThought(state1, ['a'])!
+    const b1 = contextToThought(state1, ['b'])!
+    const d1 = contextToThought(state1, ['d'])!
 
-  const steps = [setCursor(['a']), editThought(['a'], 'c')]
+    const steps = [setCursor(['a']), editThought(['a'], 'c')]
 
-  const stateNew = reducerFlow(steps)(state1)
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    const stateNew = reducerFlow(steps)(state1)
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - =sort
     - Alphabetical
   - b
   - c
   - d`)
 
-  const b2 = contextToThought(stateNew, ['b'])!
-  const c2 = contextToThought(stateNew, ['c'])!
-  const d2 = contextToThought(stateNew, ['d'])!
+    const b2 = contextToThought(stateNew, ['b'])!
+    const c2 = contextToThought(stateNew, ['c'])!
+    const d2 = contextToThought(stateNew, ['d'])!
 
-  // rank of edited thought should change
-  expect(c2.rank).not.toEqual(a1.rank)
+    // rank of edited thought should change
+    expect(c2.rank).not.toEqual(a1.rank)
 
-  // rank of siblings should not
-  expect(b2.rank).toEqual(b1.rank)
-  expect(d2.rank).toEqual(d1.rank)
-})
+    // rank of siblings should not
+    expect(b2.rank).toEqual(b1.rank)
+    expect(d2.rank).toEqual(d1.rank)
+  })
 
-it('empty thought in sorted context should be sorted on edit', () => {
-  const text = `
-    - =sort
-      - Alphabetical
-    - a
-    - c
-    - d`
-
-  const steps = [
-    importText({ text }),
-    newThought({ value: '', insertNewSubthought: true }),
-    setCursor(['']),
-    editThought([''], 'b'),
-  ]
-
-  const state = reducerFlow(steps)(initialState())
-
-  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - =sort
-    - Alphabetical
-  - a
-  - b
-  - c
-  - d`)
-})
-
-it('empty thought in sorted context should be sorted case insensitively on edit', () => {
-  const text = `
+  it('empty thought in sorted context should be sorted on edit', () => {
+    const text = `
     - =sort
       - Alphabetical
     - A
     - C
     - D`
 
-  const steps = [
-    importText({ text }),
-    newThought({ value: '', insertNewSubthought: true }),
-    setCursor(['']),
-    editThought([''], 'b'),
-  ]
+    const steps = [
+      importText({ text }),
+      newThought({ value: '', insertNewSubthought: true }),
+      setCursor(['']),
+      editThought([''], 'b'),
+    ]
 
-  const state = reducerFlow(steps)(initialState())
+    const state = reducerFlow(steps)(initialState())
 
-  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - =sort
     - Alphabetical
   - A
   - b
   - C
   - D`)
-})
+  })
 
-it('rank should not change when editing a thought to empty', () => {
-  const text = `
+  it('rank should not change when editing a thought to empty', () => {
+    const text = `
     - =sort
       - Alphabetical
     - a
     - b
     - c`
 
-  const state1 = importText({ text })(initialState())
+    const state1 = importText({ text })(initialState())
 
-  const a1 = contextToThought(state1, ['a'])!
-  const b1 = contextToThought(state1, ['b'])!
-  const c1 = contextToThought(state1, ['c'])!
+    const a1 = contextToThought(state1, ['a'])!
+    const b1 = contextToThought(state1, ['b'])!
+    const c1 = contextToThought(state1, ['c'])!
 
-  const steps = [setCursor(['b']), editThought(['b'], '')]
+    const steps = [setCursor(['b']), editThought(['b'], '')]
 
-  const stateNew = reducerFlow(steps)(state1)
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    const stateNew = reducerFlow(steps)(state1)
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - =sort
     - Alphabetical
   - a
   - 
   - c`)
 
-  const a2 = contextToThought(stateNew, ['a'])!
-  const empty2 = contextToThought(stateNew, [''])!
-  const c2 = contextToThought(stateNew, ['c'])!
+    const a2 = contextToThought(stateNew, ['a'])!
+    const empty2 = contextToThought(stateNew, [''])!
+    const c2 = contextToThought(stateNew, ['c'])!
 
-  expect(a2.rank).toEqual(a1.rank)
-  expect(empty2.rank).toEqual(b1.rank)
-  expect(c2.rank).toEqual(c1.rank)
+    expect(a2.rank).toEqual(a1.rank)
+    expect(empty2.rank).toEqual(b1.rank)
+    expect(c2.rank).toEqual(c1.rank)
+  })
 })
 
 describe('changing thought with duplicate descendent', () => {
