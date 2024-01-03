@@ -440,11 +440,10 @@ const LayoutTree = () => {
         }
       }
 
+      const parentId = head(parentOf(node.path))
+      const grandparentId = head(parentOf(parentOf(node.path)))
       const maxTableColumnWidth = fontSize * 10
-      const parentWidth = Math.min(
-        tableCol1Widths.get(head(parentOf(parentOf(node.path)))) || Infinity,
-        maxTableColumnWidth,
-      )
+      const parentWidth = Math.min(tableCol1Widths.get(grandparentId) || Infinity, maxTableColumnWidth)
 
       const x =
         // indentation
@@ -464,7 +463,7 @@ const LayoutTree = () => {
         height,
         parentWidth,
         singleLineHeightWithCliff,
-        width: tableCol1Widths.get(head(parentOf(node.path))),
+        width: tableCol1Widths.get(parentId),
         x,
         y,
       }
