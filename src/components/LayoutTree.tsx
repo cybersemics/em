@@ -308,7 +308,7 @@ const linearizeTree = (
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
-  const virtualThoughts = useSelector(linearizeTree, _.isEqual)
+  const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
   const indent = useSelector(state =>
@@ -365,7 +365,7 @@ const LayoutTree = () => {
     // Use estimated single-line height for the thoughts that do not have sizes yet.
     // Exclude hidden thoughts below the cursor to reduce empty scroll space.
     totalHeight,
-  } = virtualThoughts.reduce(
+  } = treeThoughts.reduce(
     (accum, node) => {
       const heightNext =
         node.key in sizes
@@ -410,13 +410,13 @@ const LayoutTree = () => {
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
-  const virtualThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
+  const treeThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
     let yaccum = 0
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key by the key of the thought with the table attribute
     const tableCol1Widths = new Map<string, number>()
-    return virtualThoughts.map((node, i) => {
-      const next = virtualThoughts[i + 1]
+    return treeThoughts.map((node, i) => {
+      const next = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
       // This is used to determine how many DropEnd to insert before the next thought (one for each level dropped).
@@ -464,7 +464,7 @@ const LayoutTree = () => {
         y,
       }
     })
-  }, [fontSize, sizes, singleLineHeight, virtualThoughts])
+  }, [fontSize, sizes, singleLineHeight, treeThoughts])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
 
@@ -506,7 +506,7 @@ const LayoutTree = () => {
           marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
         }}
       >
-        {virtualThoughtsPositioned.map(
+        {treeThoughtsPositioned.map(
           (
             {
               cliff,
