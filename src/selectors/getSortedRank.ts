@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { compareReasonable } from '../util/compareThought'
 import { getAllChildrenSorted } from './getChildren'
 
 /** Gets the new rank of a value to be inserted into a sorted context. */
@@ -7,7 +8,7 @@ const getSortedRank = (state: State, id: ThoughtId, value: string) => {
   const children = id ? getAllChildrenSorted(state, id) : []
 
   // find the first child with value greater than or equal to the new value
-  const index = children.findIndex(child => child.value >= value)
+  const index = children.findIndex(child => compareReasonable(child.value, value) !== -1)
 
   // if there is no such child, return the rank of the last child + 1
   return index === -1

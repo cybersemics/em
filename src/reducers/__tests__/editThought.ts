@@ -372,6 +372,62 @@ it('rank should change when editing a thought in a sorted context', () => {
   expect(d2.rank).toEqual(d1.rank)
 })
 
+it('empty thought in sorted context should be sorted on edit', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+    - d`
+
+  const steps = [
+    importText({ text }),
+    newThought({ value: '', insertNewSubthought: true }),
+    setCursor(['']),
+    editThought([''], 'b'),
+  ]
+
+  const state = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
+  - b
+  - c
+  - d`)
+})
+
+it('empty thought in sorted context should be sorted case insensitively on edit', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - A
+    - C
+    - D`
+
+  const steps = [
+    importText({ text }),
+    newThought({ value: '', insertNewSubthought: true }),
+    setCursor(['']),
+    editThought([''], 'b'),
+  ]
+
+  const state = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - A
+  - b
+  - C
+  - D`)
+})
+
 it('rank should not change when editing a thought to empty', () => {
   const text = `
     - =sort
