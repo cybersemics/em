@@ -25,6 +25,8 @@ const thoughtToNote = (state: State) => {
   if (!cursor) return state
 
   const thoughtId = head(cursor)
+  const parentNoteId = findDescendant(state, head(parentOf(cursor)), '=note')
+  const parentNoteChildId = anyChild(state, parentNoteId)?.id
   const noteId = findDescendant(state, thoughtId, '=note')
 
   // cancel if cursor is the em or home contexts
@@ -57,10 +59,10 @@ const thoughtToNote = (state: State) => {
   }
 
   return reducerFlow(
+    // if the cursor thought has a note, then convert the note to a thought
     noteId
-      ? // note to thought
+      ? // move =note's child to the parent
         [
-          // move =note's child to the parent
           state => {
             const noteChildId = anyChild(state, noteId)!.id
             const simplePath = simplifyPath(state, cursor)
@@ -78,16 +80,33 @@ const thoughtToNote = (state: State) => {
             ])(state)
           },
         ]
-      : // thought to note
+      : // if the cursor thought does not have a note, swap it with its parent's note (or create a note if one does not exist)
         [
-          // create =note in the parent
-          newThought({
-            at: parentOf(cursor),
-            insertBefore: true,
-            insertNewSubthought: true,
-            preventSetCursor: true,
-            value: '=note',
-          }),
+          // create =note in thn cursor's parent if one does not exist
+          !parentNoteId
+            ? newThought({
+                at: parentOf(cursor),
+                insertBefore: true,
+                insertNewSubthought: true,
+                preventSetCursor: true,
+                value: '=note',
+              })
+            : null,
+          // move the existing =note child into the parent if it exists
+          state => {
+            const simplePath = simplifyPath(state, cursor)
+            return parentNoteChildId
+              ? moveThought(state, {
+                  oldPath: appendToPath(
+                    parentOf(cursor),
+                    findDescendant(state, head(parentOf(cursor)), '=note')!,
+                    parentNoteChildId,
+                  ),
+                  newPath: appendToPath(parentOf(cursor), parentNoteChildId),
+                  newRank: getRankAfter(state, simplePath),
+                })
+              : null
+          },
           // move the cursor into =note
           state => {
             return moveThought(state, {
@@ -100,7 +119,7 @@ const thoughtToNote = (state: State) => {
               newRank: 0,
             })
           },
-          setCursor({ path: parentOf(cursor) }),
+          setCursor({ path: parentNoteChildId ? appendToPath(parentOf(cursor), parentNoteChildId) : parentOf(cursor) }),
         ],
   )(state)
 }

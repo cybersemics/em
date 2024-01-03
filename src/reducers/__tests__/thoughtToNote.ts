@@ -42,3 +42,24 @@ it('note to thought', () => {
 
   expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'b'])
 })
+
+it('swap thought and note', () => {
+  const text = `
+    - a
+      - =note
+        - b
+      - c
+  `
+  const steps = [importText({ text }), setCursor(['a', 'c']), thoughtToNote]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - c
+    - b`)
+
+  expect(pathToContext(stateNew, stateNew.cursor!)).toEqual(['a', 'b'])
+})
