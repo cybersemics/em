@@ -1,11 +1,11 @@
 import Shortcut from '../@types/Shortcut'
-import thoughtToNoteActionCreator from '../action-creators/thoughtToNote'
+import swapNoteActionCreator from '../action-creators/swapNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import asyncFocus from '../device/asyncFocus'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const thoughtToNote: Shortcut = {
-  id: 'thoughtToNote',
+const swapNote: Shortcut = {
+  id: 'swapNote',
   label: 'Convert to Note',
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
@@ -14,8 +14,8 @@ const thoughtToNote: Shortcut = {
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: (dispatch, getState) => {
     asyncFocus()
-    dispatch(thoughtToNoteActionCreator())
+    dispatch(swapNoteActionCreator())
   },
 }
 
-export default thoughtToNote
+export default swapNote

@@ -1,6 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import importText from '../../reducers/importText'
-import thoughtToNote from '../../reducers/thoughtToNote'
+import swapNote from '../../reducers/swapNote'
 import exportContext from '../../selectors/exportContext'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
@@ -12,7 +12,7 @@ it('thought to note', () => {
     - a
       - b
   `
-  const steps = [importText({ text }), setCursor(['a', 'b']), thoughtToNote]
+  const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -31,7 +31,7 @@ it('note to thought', () => {
       - =note
         - b
   `
-  const steps = [importText({ text }), setCursor(['a']), thoughtToNote]
+  const steps = [importText({ text }), setCursor(['a']), swapNote]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -50,7 +50,7 @@ it('swap thought and note', () => {
         - b
       - c
   `
-  const steps = [importText({ text }), setCursor(['a', 'c']), thoughtToNote]
+  const steps = [importText({ text }), setCursor(['a', 'c']), swapNote]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')

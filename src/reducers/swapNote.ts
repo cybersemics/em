@@ -19,7 +19,7 @@ import newThought from './newThought'
 import setCursor from './setCursor'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const thoughtToNote = (state: State) => {
+const swapNote = (state: State) => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -124,4 +124,4 @@ const thoughtToNote = (state: State) => {
   )(state)
 }
 
-export default thoughtToNote
+export default swapNote
