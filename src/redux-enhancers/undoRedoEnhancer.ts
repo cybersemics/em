@@ -111,6 +111,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   subCategorizeAll: true,
   subCategorizeOne: true,
   textColor: true,
+  thoughtToNote: true,
   toggleAbsoluteContext: false,
   toggleAttribute: true,
   toggleColorPicker: false,

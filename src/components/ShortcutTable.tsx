@@ -58,6 +58,7 @@ const groups: {
     title: 'Special Views',
     shortcuts: [
       'note',
+      'thoughtToNote',
       'toggleContextView',
       'proseView',
       'toggleTableView',
