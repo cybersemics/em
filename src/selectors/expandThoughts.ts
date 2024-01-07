@@ -162,8 +162,10 @@ function expandThoughtsRecursive(
 
   const childrenExpanded =
     isTable(state, thoughtId) || hasOnlyChild || publishPinChildren(state, simplePath)
-      ? visibleChildren
-      : visibleChildren.filter(child => {
+      ? // all children are expanded
+        visibleChildren
+      : // some children expanded
+        visibleChildren.filter(child => {
           const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
 
           /** Check if the path is equal to the expansion path. */
