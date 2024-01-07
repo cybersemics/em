@@ -39,7 +39,7 @@ const useHideBullet = ({
 
     /** Returns true if the bullet should be hidden. */
     const hideBullet = () =>
-      thought.value !== '=grandchildren' && attribute(state, head(simplePath), '=bullet') === 'None'
+      thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
 
     /** Returns true if the bullet should be hidden because it is in table column 1 and is not the cursor. */
     const hideBulletTable = () =>
@@ -51,7 +51,9 @@ const useHideBullet = ({
       if (!isEditing) return false
       const childEnvZoomId = findFirstEnvContextWithZoom(state, { id: thought.id, env: env || {} })
       const zoomId = findDescendant(state, head(simplePath), ['=focus', 'Zoom'])
-      return attribute(state, zoomId, '=bullet') === 'None' || attribute(state, childEnvZoomId, '=bullet') === 'None'
+      return (
+        attributeEquals(state, zoomId, '=bullet', 'None') || attributeEquals(state, childEnvZoomId, '=bullet', 'None')
+      )
     }
 
     /** Load =bullet from child expressions that are found in the environment. */
