@@ -381,7 +381,7 @@ describe('pin', () => {
       expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
     })
 
-    it('thoughts with =pin/false are not expanded even if ancestor has =children/=pin/true', () => {
+    it('child with =pin/false is not expanded by =children/=pin/true', () => {
       const text = `
       - a
         - =children
@@ -401,6 +401,46 @@ describe('pin', () => {
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
       expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
+    })
+
+    it('child with =pin/false is expanded by cursor despite =children/=pin/true on parent', () => {
+      const text = `
+        - a
+          - =children
+            - =pin
+              - true
+          - b
+            - =pin
+              - false
+            - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'b'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    })
+
+    it('descendant of cursor with =pin/false is expanded despite =children/=pin/true on parent', () => {
+      const text = `
+        - a
+          - =children
+            - =pin
+              - true
+          - b
+            - =pin
+              - false
+            - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+      expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     })
 
     it('children of cursor should always be visible, it should take precedence over =pin/false', () => {

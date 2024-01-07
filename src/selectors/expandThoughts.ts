@@ -164,15 +164,16 @@ function expandThoughtsRecursive(
     isTable(state, thoughtId) || hasOnlyChild || publishPinChildren(state, simplePath)
       ? visibleChildren
       : visibleChildren.filter(child => {
-          if (childrenPinned(state, thoughtId)) return pinned(state, child.id) !== false
-
           const childPath = path ? appendToPath(path, showContexts ? child.parentId : child.id) : ([child.id] as Path)
+
+          /** Check if the path is equal to the expansion path. */
+          const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
           /** Check of the path is the ancestor of the expansion path. */
           const isAncestor = () => isDescendant(childPath, expansionBasePath)
 
-          /** Check if the path is equal to the expansion path. */
-          const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
+          if (!isExpansionBasePath() && !isAncestor() && childrenPinned(state, thoughtId))
+            return pinned(state, child.id) !== false
 
           /**
             Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
