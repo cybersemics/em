@@ -177,12 +177,12 @@ function expandThoughtsRecursive(
             If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
             So this predicate prevents from recalculating isAncestor or isexpansionBasePath again by checking if those calculations are already done in visibleChildren logic.
            */
-          const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isAttribute(child.value)
+          const isHiddenAttribute = () => !state.showHiddenThoughts && isAttribute(child.value)
 
           return (
             isExpansionBasePath() ||
             isAncestor() ||
-            isEitherMetaAncestorOrCursor() ||
+            isHiddenAttribute() ||
             strip(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
             pinned(state, child.id) ||
             (childrenPinned(state, thoughtId) && pinned(state, child.id) === null)
