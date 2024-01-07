@@ -20,7 +20,6 @@ import isDescendant from '../util/isDescendant'
 import isURL from '../util/isURL'
 import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
-import pathToContext from '../util/pathToContext'
 import publishMode from '../util/publishMode'
 import strip from '../util/strip'
 import unroot from '../util/unroot'
@@ -59,11 +58,6 @@ const publishPinChildren = (state: State, context: Context) => {
 }
 
 function expandThoughts(state: State, path: Path | null): Index<Path>
-function expandThoughts<B extends boolean>(
-  state: State,
-  path: Path | null,
-  options?: { returnContexts?: B },
-): Index<B extends true ? Context : Path>
 
 /** Returns an expansion map marking all contexts that should be expanded when for the given path.
  *
@@ -76,16 +70,12 @@ function expandThoughts<B extends boolean>(
  *   ...
  * }
  */
-function expandThoughts(
-  state: State,
-  path: Path | null,
-  options?: { returnContexts?: boolean },
-): Index<Path | Context> {
+function expandThoughts(state: State, path: Path | null): Index<Path | Context> {
   if (path && !getThoughtById(state, head(path))) {
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH, options)
+  return expandThoughtsRecursive(state, path || HOME_PATH, HOME_PATH)
 }
 
 /**
@@ -94,12 +84,7 @@ function expandThoughts(
  * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
  */
-function expandThoughtsRecursive(
-  state: State,
-  expansionBasePath: Path,
-  path: Path,
-  { returnContexts }: { returnContexts?: boolean } = {},
-): Index<Path | Context> {
+function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     path.length - expansionBasePath.length + 1 >
@@ -120,7 +105,6 @@ function expandThoughtsRecursive(
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   const thoughtId = head(path)
   const thought = getThoughtById(state, thoughtId)
-  const context = pathToContext(state, path)
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
     ? childIdsToThoughts(state, getContexts(state, thought.value))
@@ -193,7 +177,7 @@ function expandThoughtsRecursive(
 
   // always expand current thought
   const initialExpanded = {
-    [hashPath(path)]: returnContexts ? context : path,
+    [hashPath(path)]: path,
   }
 
   // expand children (recursive)
@@ -201,7 +185,7 @@ function expandThoughtsRecursive(
     childrenExpanded,
     childOrContext => {
       const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
-      return expandThoughtsRecursive(state, expansionBasePath, newPath, { returnContexts })
+      return expandThoughtsRecursive(state, expansionBasePath, newPath)
     },
     initialExpanded,
   )
