@@ -142,7 +142,7 @@ function expandThoughtsRecursive(
         /** Check if the path is equal to the expansion path. */
         const isExpansionBasePath = () => equalArrays(childPath, expansionBasePath)
 
-        return !isAttribute(value) || isExpansionBasePath() || isAncestor()
+        return !isAttribute(value) || isAncestor() || isExpansionBasePath()
       })
 
   // expand if child is an only child
@@ -180,12 +180,12 @@ function expandThoughtsRecursive(
           const isHiddenAttribute = () => !state.showHiddenThoughts && isAttribute(child.value)
 
           return (
-            isExpansionBasePath() ||
             isAncestor() ||
+            isExpansionBasePath() ||
             isHiddenAttribute() ||
-            strip(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
             pinned(state, child.id) ||
-            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null)
+            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null) ||
+            strip(child.value).endsWith(EXPAND_THOUGHT_CHAR)
           )
         })
 
