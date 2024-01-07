@@ -9,7 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import useChangeRef from '../hooks/useChangeRef'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
-import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, hasChildren } from '../selectors/getChildren'
@@ -52,7 +52,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
   const child = findAnyChild(
     state,
     id,
-    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+    child => isAttribute(child.value) && attributeEquals(state, env[child.value], '=focus', 'Zoom'),
   )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
@@ -311,10 +311,10 @@ const Subthought = ({
       null,
   )
   const hideBullet = useSelector(state => {
-    const hideBulletsChildren = attribute(state, childrenAttributeId, '=bullet') === 'None'
+    const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =
-      thought.value !== '=bullet' && attribute(state, grandchildrenAttributeId, '=bullet') === 'None'
+      thought.value !== '=bullet' && attributeEquals(state, grandchildrenAttributeId, '=bullet', 'None')
     if (hideBulletsGrandchildren) return true
     return false
   })
