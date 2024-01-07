@@ -1,7 +1,7 @@
 import LazyEnv from '../@types/LazyEnv'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
 import isAttribute from './isAttribute'
@@ -11,7 +11,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
   const child = findAnyChild(
     state,
     id,
-    child => isAttribute(child.value) && attribute(state, env[child.value], '=focus') === 'Zoom',
+    child => isAttribute(child.value) && attributeEquals(state, env[child.value], '=focus', 'Zoom'),
   )
   return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
 }
