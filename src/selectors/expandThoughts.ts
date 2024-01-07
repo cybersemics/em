@@ -172,9 +172,6 @@ function expandThoughtsRecursive(
           /** Check of the path is the ancestor of the expansion path. */
           const isAncestor = () => isDescendant(childPath, expansionBasePath)
 
-          if (!isExpansionBasePath() && !isAncestor() && childrenPinned(state, thoughtId))
-            return pinned(state, child.id) !== false
-
           /**
             Only meta thoughts that are ancestor of expansionBasePath or expansionBasePath itself are visible when shouldHiddenThoughts is false. They are also automatically expanded.
             If state.showHiddenThoughts is false then for calculating visibleChildren those conditions are always checked for meta child.
@@ -185,11 +182,12 @@ function expandThoughtsRecursive(
           const strippedValue = strip(child.value)
 
           return (
+            isExpansionBasePath() ||
+            isAncestor() ||
+            isEitherMetaAncestorOrCursor() ||
             strippedValue[strippedValue.length - 1] === EXPAND_THOUGHT_CHAR ||
             pinned(state, child.id) ||
-            isEitherMetaAncestorOrCursor() ||
-            isExpansionBasePath() ||
-            isAncestor()
+            (childrenPinned(state, thoughtId) && pinned(state, child.id) === null)
           )
         })
 
