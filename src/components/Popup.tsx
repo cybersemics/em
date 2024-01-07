@@ -7,6 +7,7 @@ import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
+import strip from '../util/strip'
 
 /** A popup component that can be dismissed. */
 const Popup: FC<{
@@ -51,8 +52,18 @@ const Popup: FC<{
         ...(isTouch ? useSwipeToDismissProps.style : null),
       }}
     >
-      <div className='alert-text' style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}>
-        {children}
+      <div
+        className='alert-text'
+        style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}
+        dangerouslySetInnerHTML={
+          typeof children === 'string'
+            ? {
+                __html: strip(children, { preserveFormatting: true }),
+              }
+            : undefined
+        }
+      >
+        {typeof children !== 'string' ? children : undefined}
       </div>
       {importFileId && (
         <a
