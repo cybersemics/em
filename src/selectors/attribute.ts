@@ -8,7 +8,7 @@ const attribute = (state: State, thoughtId: ThoughtId | null, attributeName: str
   const attributeId = findDescendant(state, thoughtId, attributeName)
   if (!attributeId) return null
   const firstVisibleChild = findAnyChild(state, attributeId, isVisible(state))
-  return firstVisibleChild?.value || null
+  return firstVisibleChild?.value ?? null
 }
 
 export default attribute
