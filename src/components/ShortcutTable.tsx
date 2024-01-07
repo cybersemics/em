@@ -40,6 +40,7 @@ const groups: {
       'subcategorizeOne',
       'subcategorizeAll',
       'extractThought',
+      'generateThought',
     ],
   },
   {

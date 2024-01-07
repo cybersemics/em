@@ -1,11 +1,14 @@
 import { Redis } from '@hocuspocus/extension-redis'
 import { Server } from '@hocuspocus/server'
+import bodyParser from 'body-parser'
+import cors from 'cors'
 import { EventEmitter } from 'events'
-import express from 'express'
+import express, { Request } from 'express'
 import basicAuth from 'express-basic-auth'
 import expressWebsockets from 'express-ws'
 import client, { register } from 'prom-client'
 import ThoughtspaceExtension from './ThoughtspaceExtension'
+import ai from './ai'
 import observe, { observeNodeMetrics } from './metrics'
 
 // bump maxListeners to avoid warnings when many websocket connections are created
@@ -59,6 +62,7 @@ setInterval(() => {
 
 // express
 const { app } = expressWebsockets(express())
+app.use(bodyParser.text())
 
 // basic auth middleware to protect the metrics endpoint
 const metricsAuthMiddleware = basicAuth({
@@ -69,7 +73,6 @@ const metricsAuthMiddleware = basicAuth({
     !hasMetricsCredentials ? METRICS_DISABLED_MESSAGE : !req.auth ? 'Basic auth required' : 'Unauthorized',
 })
 
-// prometheus metrics route
 app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
 })
@@ -78,6 +81,26 @@ app.get('/', async (req, res) => {
 app.get('/metrics', metricsAuthMiddleware, async (req, res) => {
   res.contentType(register.contentType).send(await register.metrics())
 })
+
+app.post(
+  '/ai',
+  cors({
+    // TODO
+    // origin: /http:\/\/localhost:\d+/,
+  }),
+  async (req: Request<any, any, string, any>, res) => {
+    if (!req.body) {
+      return res.status(400).send('Missing req.body')
+    }
+
+    const result = await ai(req.body)
+
+    res
+      .type('json')
+      .status(result.err ? result.err.status : 200)
+      .send(result)
+  },
+)
 
 // hocuspocus websocket route
 app.ws('/hocuspocus', (ws, req) => {

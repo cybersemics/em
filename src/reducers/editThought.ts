@@ -173,10 +173,10 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
   // new state
   const stateNew: State = {
     ...state,
+    contextViews: contextViewsNew,
     // clear the clearThought state on edit instead of waiting till blur
     // otherwise activating clearThought after edit will toggle it off
-    cursorCleared: false,
-    contextViews: contextViewsNew,
+    ...(state.cursorCleared ? { cursorCleared: false, editableNonce: state.editableNonce + 1 } : null),
   }
 
   return updateThoughts(stateNew, {
