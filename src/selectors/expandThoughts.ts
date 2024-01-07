@@ -179,13 +179,11 @@ function expandThoughtsRecursive(
            */
           const isEitherMetaAncestorOrCursor = () => !state.showHiddenThoughts && isAttribute(child.value)
 
-          const strippedValue = strip(child.value)
-
           return (
             isExpansionBasePath() ||
             isAncestor() ||
             isEitherMetaAncestorOrCursor() ||
-            strippedValue[strippedValue.length - 1] === EXPAND_THOUGHT_CHAR ||
+            strip(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
             pinned(state, child.id) ||
             (childrenPinned(state, thoughtId) && pinned(state, child.id) === null)
           )
