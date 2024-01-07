@@ -30,7 +30,7 @@ const noteShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return attribute(state, head(path), '=note') != null
+    return attribute(state, head(path), '=note') !== null
   },
 }
 
