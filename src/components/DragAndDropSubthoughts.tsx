@@ -11,7 +11,7 @@ import error from '../action-creators/error'
 import importFiles from '../action-creators/importFiles'
 import moveThought from '../action-creators/moveThought'
 import { AlertType, HOME_TOKEN } from '../constants'
-import attribute from '../selectors/attribute'
+import attributeEquals from '../selectors/attributeEquals'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -104,7 +104,7 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
   const parentIdTo = head(rootedParentOf(state, pathTo))
   const sameContext = parentIdFrom === parentIdTo
-  const dropTop = attribute(state, parentIdTo, '=drop') === 'top'
+  const dropTop = attributeEquals(state, parentIdTo, '=drop', 'top')
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, props.simplePath)) return
