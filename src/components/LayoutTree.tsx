@@ -461,9 +461,19 @@ const LayoutTree = () => {
         0,
       )
 
-      // calculate the cursor ancestor table width when we are on the cursor node
+      // Calculate the cursor ancestor table width when we are on the cursor node.
+      // This is used to animate the entire tree to the left as the cursor moves right.
       if (node.isCursor) {
-        indentCursorAncestorTables = ancestorTableWidths
+        indentCursorAncestorTables =
+          ancestorTableWidths +
+          (node.isTableCol1
+            ? // shift left by an additional 1 em on table column 1 so that the shift at the next depth does not feel so extreme
+              fontSize
+            : // shift right by the width of table column 1 to offset ancestorTableWidths, since column 1 is still visible when the cursor is on column 2
+              // then shift left by 3 em, which is about the most we can do without column 1 getting cropped by the left edge of the screen
+              node.isTableCol2
+              ? -(tableCol1Widths.get(node.path[node.path.length - 3]) || 0) + fontSize * 3
+              : 0)
       }
 
       const x =
@@ -500,7 +510,7 @@ const LayoutTree = () => {
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
-  const indent = indentDepth * 0.9 + (indentCursorAncestorTables / fontSize) * 0.5
+  const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
