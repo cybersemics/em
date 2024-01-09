@@ -603,9 +603,11 @@ const LayoutTree = () => {
                   left: x,
                   top: y,
                   transition: 'left 0.15s ease-out,top 0.15s ease-out',
-                  // If width is auto, it unintentionally animates as left animates and the text wraps.
-                  // Therefore, set the width so that is stepped and only changes with depth.
-                  width: width || `calc(100% - ${depth - 1}em)`,
+                  // Table col1 uses its exact width since cannot extend to the right edge of the screen.
+                  // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
+                  // 1em + 10px is an eyeball measurement at font sizes 14 and 18
+                  // (Maybe the 10px is from .content padding-left?)
+                  width: isTableCol1 ? width : `calc(100% - ${x}px + 1em + 10px)`,
                   ...style,
                   textAlign: isTableCol1 ? 'right' : undefined,
                 }}
