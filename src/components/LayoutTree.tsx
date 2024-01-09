@@ -49,6 +49,7 @@ type TreeThought = {
   isCursor: boolean
   isTableCol1: boolean
   isTableCol2: boolean
+  isTableCol2Child: boolean
   key: string
   leaf: boolean
   parentKey: string
@@ -251,6 +252,7 @@ const linearizeTree = (
     const isTable = attributeEquals(state, child.id, '=view', 'Table')
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
+    const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
     const parentKey = crossContextualKey(contextChainNew, head(simplePath))
     const grandparentKey = crossContextualKey(contextChainNew, head(rootedParentOf(state, simplePath)))
 
@@ -264,6 +266,7 @@ const linearizeTree = (
       isCursor,
       isTableCol1,
       isTableCol2,
+      isTableCol2Child,
       key: crossContextualKey(contextChainNew, child.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
@@ -443,7 +446,7 @@ const LayoutTree = () => {
       const singleLineHeightWithCliff = singleLineHeight + (cliff < 0 ? fontSize / 4 : 0)
       const height = sizes[node.key]?.height ?? singleLineHeightWithCliff
 
-      // set the width of column 1 to the minimum width of all visible thoughts in the column
+      // set the width of table col1 to the minimum width of all visible thoughts in the column
       if (node.visibleChildrenKeys) {
         const tableCol1Width = node.visibleChildrenKeys?.reduce(
           (accum, childKey) => Math.max(accum, sizes[childKey]?.width || 0),
@@ -466,14 +469,20 @@ const LayoutTree = () => {
       if (node.isCursor) {
         indentCursorAncestorTables =
           ancestorTableWidths +
+          // table col1: shift left by an additional 1 em so that the shift at the next depth does not feel so extreme
           (node.isTableCol1
-            ? // shift left by an additional 1 em on table column 1 so that the shift at the next depth does not feel so extreme
-              fontSize
-            : // shift right by the width of table column 1 to offset ancestorTableWidths, since column 1 is still visible when the cursor is on column 2
-              // then shift left by 3 em, which is about the most we can do without column 1 getting cropped by the left edge of the screen
+            ? fontSize
+            : // table col2: shift right by the width of table col1 to offset ancestorTableWidths, since col1 is still visible
+              // then shift left by 3 em, which is about the most we can do without col1 getting cropped by the left edge of the screen
               node.isTableCol2
               ? -(tableCol1Widths.get(node.path[node.path.length - 3]) || 0) + fontSize * 3
-              : 0)
+              : // table col2 child: if the child is a leaf, shift right by the width of table col1 again since col1 is still visible
+                // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
+                node.isTableCol2Child
+                ? node.leaf
+                  ? -(tableCol1Widths.get(node.path[node.path.length - 4]) || 0) + fontSize * 4
+                  : -fontSize * 3
+                : 0)
       }
 
       const x =
@@ -481,7 +490,7 @@ const LayoutTree = () => {
         fontSize * node.depth +
         // space between table columns
         fontSize * (node.isTableCol1 ? -1.5 : 0) +
-        // table column 2
+        // table col2
         ancestorTableWidths
 
       // capture the y position of the current thought before it is incremented by its own height
