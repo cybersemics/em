@@ -219,7 +219,6 @@ const ThoughtAnnotation = React.memo(
     url?: string | null
     value: string
   }) => {
-    const fontSize = useSelector(state => state.fontSize)
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
       isEditing ? editingValue ?? value : null,
     )
@@ -240,13 +239,7 @@ const ThoughtAnnotation = React.memo(
     })
 
     return (
-      <div
-        className='thought-annotation'
-        style={{
-          // must match marginLeft of Editable
-          marginLeft: fontSize - 18,
-        }}
-      >
+      <div className='thought-annotation'>
         <div
           className={classNames({
             'editable-annotation': true,
@@ -254,12 +247,7 @@ const ThoughtAnnotation = React.memo(
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
-          style={{
-            // add a little padding for highlighting
-            padding: '0 3px',
-            marginLeft: -3,
-            ...styleAnnotation,
-          }}
+          style={styleAnnotation}
         >
           <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
           {

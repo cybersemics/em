@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -540,15 +540,6 @@ const Editable = ({
     [disabled, isVisible, path, setCursorOnThought],
   )
 
-  const styleMemo = useMemo(
-    () => ({
-      // must match marginLeft of ThoughtAnnotation
-      marginLeft: fontSize - 18,
-      ...style,
-    }),
-    [fontSize, style],
-  )
-
   return (
     <ContentEditable
       disabled={disabled}
@@ -584,7 +575,7 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onPaste={onPaste}
-      style={styleMemo}
+      style={style}
     />
   )
 }
