@@ -46,6 +46,7 @@ type TreeThought = {
   indexChild: number
   // index among all visible thoughts in the tree
   indexDescendant: number
+  isCursor: boolean
   isTableCol1: boolean
   isTableCol2: boolean
   key: string
@@ -242,7 +243,8 @@ const linearizeTree = (
 
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
-    if (!belowCursor && equalPath(childPath, state.cursor)) {
+    const isCursor = !belowCursor && equalPath(childPath, state.cursor)
+    if (isCursor) {
       belowCursor = true
     }
 
@@ -259,6 +261,7 @@ const linearizeTree = (
       grandparentKey,
       indexChild: i,
       indexDescendant: virtualIndexNew,
+      isCursor,
       isTableCol1,
       isTableCol2,
       key: crossContextualKey(contextChainNew, child.id),
@@ -311,7 +314,7 @@ const LayoutTree = () => {
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
-  const indent = useSelector(state =>
+  const indentDepth = useSelector(state =>
     state.cursor && state.cursor.length > 2
       ? // when the cursor is on a leaf, the indention level should not change
         state.cursor.length - (hasChildren(state, head(state.cursor)) ? 2 : 3)
@@ -410,16 +413,24 @@ const LayoutTree = () => {
 
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
-  const treeThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
+  const {
+    indentCursorAncestorTables,
+    treeThoughtsPositioned,
+  }: {
+    // the global indent based on the depth of the cursor and how many ancestors are tables
+    indentCursorAncestorTables: number
+    treeThoughtsPositioned: TreeThoughtPositioned[]
+  } = useMemo(() => {
     // y increases monotically, so it is more efficent to accumulate than to calculate each time
     // x varies, so we calculate it each time
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
+    let indentCursorAncestorTables = 0
 
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
-    return treeThoughts.map((node, i) => {
+    const treeThoughtsPositioned = treeThoughts.map((node, i) => {
       const next: TreeThought | undefined = treeThoughts[i + 1]
 
       // cliff is the number of levels that drop off after the last thought at a given depth. Increase in depth is ignored.
@@ -450,6 +461,11 @@ const LayoutTree = () => {
         0,
       )
 
+      // calculate the cursor ancestor table width when we are on the cursor node
+      if (node.isCursor) {
+        indentCursorAncestorTables = ancestorTableWidths
+      }
+
       const x =
         // indentation
         fontSize * node.depth +
@@ -475,9 +491,16 @@ const LayoutTree = () => {
         y,
       }
     })
+
+    return { indentCursorAncestorTables, treeThoughtsPositioned }
   }, [fontSize, sizes, singleLineHeight, treeThoughts])
 
   const spaceAboveLast = useRef(spaceAboveExtended)
+
+  // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
+  // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
+  // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
+  const indent = indentDepth * 0.9 + (indentCursorAncestorTables / fontSize) * 0.5
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
@@ -508,13 +531,11 @@ const LayoutTree = () => {
           // One viewportHeight to compensate for translateY, and another to ensure room to scroll below.
           height: totalHeight - spaceAboveExtended + viewportHeight,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-          // The indent multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
-          // The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent * 0.9}em`,
+          transform: `translateX(${1.5 - indent}em`,
           transition: 'transform 0.75s ease-out',
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-          marginRight: `${-indent * 0.9 + (isTouch ? 2 : -1)}em`,
+          marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
       >
         {treeThoughtsPositioned.map(
