@@ -448,7 +448,8 @@ const LayoutTree = () => {
       const x =
         // indentation
         // + space between table columns
-        fontSize * (node.depth + (node.isTableCol1 ? -1.5 : node.isTableCol2 ? 0.5 : 0)) +
+        // TODO: Why does column 2 require an additonal em of margin on desktop?
+        fontSize * (node.depth + (node.isTableCol1 ? -1.5 : node.isTableCol2 ? (isTouch ? 0.5 : 1.5) : 0)) +
         // table column 2
         (node.isTableCol2 ? parentWidth : 0)
       const y = yaccum
