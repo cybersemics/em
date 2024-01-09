@@ -251,8 +251,10 @@ const ThoughtAnnotation = React.memo(
             ...styleAnnotation,
             // Extend background color to the right to match .editable padding-left.
             // Match .editable-annotation-text padding-left.
-            marginRight: '-0.333em',
-            paddingRight: '0.333em',
+            // Add 0.5em to account for the superscript.
+            // TODO: Add space for dynamic superscript. This is currently only correct for single digit superscript.
+            marginRight: showSuperscript ? '-0.833em' : '-0.333em',
+            paddingRight: showSuperscript ? '0.833em' : '0.333em',
           }}
         >
           <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
