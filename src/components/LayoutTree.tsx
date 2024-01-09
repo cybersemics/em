@@ -67,7 +67,6 @@ type TreeThought = {
 type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
-  parentWidth?: number
   singleLineHeightWithCliff: number
   width?: number
   x: number
@@ -444,11 +443,6 @@ const LayoutTree = () => {
         }
       }
 
-      const parentId = head(parentOf(node.path))
-      const grandparentId = head(parentOf(parentOf(node.path)))
-      const maxTableColumnWidth = fontSize * 10
-      const parentWidth = Math.min(tableCol1Widths.get(grandparentId) || Infinity, maxTableColumnWidth)
-
       // sum ancestor table widths
       // start with the grandparent of the first table, i.e. column 2
       const ancestorTableWidths = parentOf(parentOf(node.path)).reduce(
@@ -475,9 +469,8 @@ const LayoutTree = () => {
         ...node,
         cliff,
         height,
-        parentWidth,
         singleLineHeightWithCliff,
-        width: tableCol1Widths.get(parentId),
+        width: tableCol1Widths.get(head(parentOf(node.path))),
         x,
         y,
       }
@@ -537,7 +530,6 @@ const LayoutTree = () => {
               isTableCol2,
               key,
               leaf,
-              parentWidth,
               path,
               prevChild,
               showContexts,
