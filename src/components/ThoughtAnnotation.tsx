@@ -251,8 +251,8 @@ const ThoughtAnnotation = React.memo(
             ...styleAnnotation,
             // Extend background color to the right to match .editable padding-left.
             // Match .editable-annotation-text padding-left.
-            marginRight: -5,
-            paddingRight: 5,
+            marginRight: '-0.333em',
+            paddingRight: '0.333em',
           }}
         >
           <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
