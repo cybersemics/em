@@ -444,9 +444,9 @@ const LayoutTree = () => {
       }
 
       // sum ancestor table widths
-      // start with the grandparent of the first table, i.e. column 2
-      const ancestorTableWidths = parentOf(parentOf(node.path)).reduce(
-        (accum, id) => accum + (tableCol1Widths.get(id) || 0),
+      // ignore thought and parent since horizontal shift should begin with col 2, and tableCol1Widths is keyed by the thought with =table
+      const ancestorTableWidths = node.path.reduce(
+        (accum, id, i) => accum + (tableCol1Widths.get(node.path[i - 2]) || 0),
         0,
       )
 
