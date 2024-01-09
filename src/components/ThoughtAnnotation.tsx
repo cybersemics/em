@@ -243,8 +243,8 @@ const ThoughtAnnotation = React.memo(
       <div
         className='thought-annotation'
         style={{
-          // must match marginLeft of StaticThought
-          marginLeft: fontSize - 13,
+          // must match marginLeft of Editable
+          marginLeft: fontSize - 18,
         }}
       >
         <div
