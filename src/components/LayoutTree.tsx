@@ -453,7 +453,7 @@ const LayoutTree = () => {
         (node.isTableCol2 ? parentWidth : 0)
       const y = yaccum
 
-      if (!node.isTableCol1) {
+      if (!node.isTableCol1 || node.leaf) {
         yaccum += height
       }
 
