@@ -412,7 +412,11 @@ const LayoutTree = () => {
   // Accumulate the y position as we iterate the visible thoughts since the sizes may vary.
   // We need to do this in a second pass since we do not know the height of a thought until it is rendered, and since we need to linearize the tree to get the depth of the next node for calculating the cliff.
   const treeThoughtsPositioned: TreeThoughtPositioned[] = useMemo(() => {
+    // y increases monotically, so it is more efficent to accumulate than to calculate each time
+    // x varies, so we calculate it each time
+    // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
+
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
@@ -445,13 +449,22 @@ const LayoutTree = () => {
       const maxTableColumnWidth = fontSize * 10
       const parentWidth = Math.min(tableCol1Widths.get(grandparentId) || Infinity, maxTableColumnWidth)
 
+      // sum ancestor table widths
+      // start with the grandparent of the first table, i.e. column 2
+      const ancestorTableWidths = parentOf(parentOf(node.path)).reduce(
+        (accum, id) => accum + (tableCol1Widths.get(id) || 0),
+        0,
+      )
+
       const x =
         // indentation
-        // + space between table columns
-        // TODO: Why does column 2 require an additonal em of margin on desktop?
-        fontSize * (node.depth + (node.isTableCol1 ? -1.5 : node.isTableCol2 ? (isTouch ? 0.5 : 1.5) : 0)) +
+        fontSize * node.depth +
+        // space between table columns
+        fontSize * (node.isTableCol1 ? -1.5 : 0) +
         // table column 2
-        (node.isTableCol2 ? parentWidth : 0)
+        ancestorTableWidths
+
+      // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
 
       if (!node.isTableCol1 || node.leaf) {
