@@ -174,7 +174,7 @@ const ThoughtAnnotationContainer = React.memo(
       setCalculateContexts(true)
     }, [])
 
-    return showSuperscript || url || email ? (
+    return showSuperscript || url || email || styleAnnotation ? (
       <ThoughtAnnotation
         {...{
           simplePath,
