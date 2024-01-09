@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -91,6 +92,8 @@ const StaticThought = ({
     _.isEqual,
   )
 
+  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
+
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
   //   editing,
@@ -121,7 +124,14 @@ const StaticThought = ({
         style={styleThought}
         styleAnnotation={styleAnnotation || undefined}
       />
-      <div aria-label='thought' className='thought'>
+      <div
+        aria-label='thought'
+        className='thought'
+        style={{
+          // do not set a min-width on table column 1 since there is no room for additional click area
+          minWidth: !isTableCol1 ? '3em' : undefined,
+        }}
+      >
         {homeContext ? (
           // left, top are eyeballed for different font sizes
           <HomeIcon style={{ position: 'relative', left: fontSize - 14, top: fontSize / 4 - 1 }} />
