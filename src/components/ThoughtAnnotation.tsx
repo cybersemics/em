@@ -247,7 +247,13 @@ const ThoughtAnnotation = React.memo(
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
-          style={styleAnnotation}
+          style={{
+            ...styleAnnotation,
+            // Extend background color to the right to match .editable padding-left.
+            // Match .editable-annotation-text padding-left.
+            marginRight: -5,
+            paddingRight: 5,
+          }}
         >
           <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
           {
