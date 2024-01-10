@@ -14,9 +14,6 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 
-/** Repeats a string n time. */
-const repeat = (s: string, n: number) => new Array(n).fill(s).join('')
-
 /** Generate a thought using AI. */
 const generateThought: Shortcut = {
   id: 'generateThought',
@@ -42,10 +39,18 @@ const generateThought: Shortcut = {
 
     // prompt with ancestors and siblings
     const ancestors = pathToContext(state, parentOf(simplePath))
-    const siblings = getChildrenRanked(state, thought.parentId)
-    const ancestorsText = ancestors.map((value, i) => `${repeat('  ', i)}- ${value}`).join('\n')
-    const siblingsText = siblings.map(child => `${repeat('  ', ancestors.length)}- ${child.value}`).join('\n')
-    const input = `${ancestorsText}\n${siblingsText}`
+    const children = getChildrenRanked(state, thought.parentId)
+    const ancestorsText = ancestors.join('/')
+    const siblingsText = children.map(child => (child.id === thought.id ? `${child.value}_` : child.value)).join('\n')
+
+    // if there is only one child, then insert the "blank" at the end of the ancestor chain:
+    //   e.g. Films/Watched/Carol/Starring:/_
+    // Otherwise, insert it after all the children:
+    //   e.g. Films/Watched/Carol/Starring:/
+    //        Cate Blanchett
+    //        Rooney Mara
+    //        _
+    const input = `${ancestorsText}${children.length > 1 ? '/\n' : ''}${siblingsText}`
 
     // set to pending while thought is being generated
     dispatch([
