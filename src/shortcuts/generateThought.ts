@@ -82,6 +82,7 @@ const generateThought: Shortcut = {
     // must reset cursorCleared before thought is updated for some reason, otherwise it is not updated in the DOM
     dispatch([
       editThoughtActionCreator({
+        force: true,
         oldValue: valuePending,
         newValue: valueNew,
         path: simplePath,

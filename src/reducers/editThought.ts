@@ -28,6 +28,9 @@ import setCursor from './setCursor'
 import updateThoughts from './updateThoughts'
 
 export interface editThoughtPayload {
+  /** Force the Editable to re-render. */
+  // TODO: This is used to force the Editable to re-render on generateThought, which co-opts clearThought during its pending state. Is there a better way to do this?
+  force?: boolean
   oldValue: string
   newValue: string
   path: SimplePath
@@ -35,7 +38,7 @@ export interface editThoughtPayload {
 }
 
 /** Changes the text of an existing thought. */
-const editThought = (state: State, { oldValue, newValue, path, rankInContext }: editThoughtPayload) => {
+const editThought = (state: State, { force, oldValue, newValue, path, rankInContext }: editThoughtPayload) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
   // thoughts may exist for both the old value and the new value
@@ -176,7 +179,8 @@ const editThought = (state: State, { oldValue, newValue, path, rankInContext }: 
     contextViews: contextViewsNew,
     // clear the clearThought state on edit instead of waiting till blur
     // otherwise activating clearThought after edit will toggle it off
-    ...(state.cursorCleared ? { cursorCleared: false, editableNonce: state.editableNonce + 1 } : null),
+    ...(state.cursorCleared ? { cursorCleared: false } : null),
+    ...(force ? { editableNonce: state.editableNonce + 1 } : null),
   }
 
   return updateThoughts(stateNew, {
