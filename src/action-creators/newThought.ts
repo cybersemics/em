@@ -96,7 +96,9 @@ const newThought =
       value,
     })
 
-    scrollCursorIntoView()
+    if (!preventSetCursor) {
+      scrollCursorIntoView()
+    }
   }
 
 export default newThought
