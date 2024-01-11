@@ -2,7 +2,7 @@ import Shortcut from '../@types/Shortcut'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
-import addLatestShortcuts from './addLatestShortcuts'
+import { addLatestShortcutsActionCreator } from '../reducers/addLatestShortcuts'
 import clearLatestShortcuts from './clearLatestShortcuts'
 
 interface Options {
@@ -36,7 +36,7 @@ const showLatestShortcuts =
       if (exceedsLimit) dispatch(clearLatestShortcuts())
 
       clearTimer()
-      dispatch(addLatestShortcuts(shortcut))
+      dispatch(addLatestShortcutsActionCreator(shortcut))
       timeoutId = setTimeout(() => {
         dispatch(clearLatestShortcuts())
         clearTimer()
