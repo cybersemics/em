@@ -1,7 +1,7 @@
 import ShortcutId from '../@types/ShortcutId'
 import Thunk from '../@types/Thunk'
 import { AlertText, AlertType } from '../constants'
-import alert from './alert'
+import { alertActionCreator as alert } from '../reducers/alert'
 
 /** Action-creator for dragShortcut. */
 const dragShortcutActionCreator =

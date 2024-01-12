@@ -1,7 +1,7 @@
 import Alert from '../@types/Alert'
 import Thunk from '../@types/Thunk'
+import { alertActionCreator as alert } from '../reducers/alert'
 import alertStore from '../stores/alert'
-import alert from './alert'
 
 type Options = Omit<Alert, 'value'> & {
   clearDelay?: number

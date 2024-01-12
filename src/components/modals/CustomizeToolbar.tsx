@@ -6,7 +6,6 @@ import { CSSTransition } from 'react-transition-group'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
-import alert from '../../action-creators/alert'
 import closeModal from '../../action-creators/closeModal'
 import deleteThought from '../../action-creators/deleteThought'
 import dragShortcutZone from '../../action-creators/dragShortcutZone'
@@ -14,6 +13,7 @@ import initUserToolbar from '../../action-creators/initUserToolbar'
 import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
 import { AlertText, AlertType, EM_TOKEN } from '../../constants'
+import { alertActionCreator as alert } from '../../reducers/alert'
 import contextToPath from '../../selectors/contextToPath'
 import findDescendant from '../../selectors/findDescendant'
 import { getChildrenRanked } from '../../selectors/getChildren'
@@ -45,7 +45,10 @@ const drop = (props: unknown, monitor: DropTargetMonitor) => {
   const fromThoughtId = userShortcutChildren[fromIndex].id
 
   store.dispatch([
-    alert(`Removed ${shortcut.label} from toolbar`, { alertType: AlertType.ToolbarButtonRemoved, clearDelay: 5000 }),
+    alert(`Removed ${shortcut.label} from toolbar`, {
+      alertType: AlertType.ToolbarButtonRemoved,
+      clearDelay: 5000,
+    }),
     deleteThought({
       thoughtId: fromThoughtId,
       pathParent: userShortcutsPath,

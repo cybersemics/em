@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Shortcut from '../@types/Shortcut'
-import alert from '../action-creators/alert'
 import toolbarLongPress from '../action-creators/toolbarLongPress'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { alertActionCreator as alert } from '../reducers/alert'
 import useLongPress from './useLongPress'
 
 /** Set state.toolbarLongPress when long pressing a toolbar button in the customize modal. */

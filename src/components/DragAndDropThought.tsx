@@ -13,7 +13,6 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
-import alert from '../action-creators/alert'
 import createThought from '../action-creators/createThought'
 import dragHold from '../action-creators/dragHold'
 import dragInProgress from '../action-creators/dragInProgress'
@@ -24,6 +23,7 @@ import { isTouch } from '../browser'
 import { AlertType, noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import { alertActionCreator as alert } from '../reducers/alert'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -194,7 +194,10 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
         const alertFrom = '"' + ellipsize(fromThought.value) + '"'
         const alertTo = isRoot([parentThought.id]) ? 'home' : '"' + ellipsize(parentThought.value) + '"'
         dispatch(
-          alert(`${alertFrom} moved to ${alertTo} context.`, { alertType: AlertType.ThoughtMoved, clearDelay: 5000 }),
+          alert(`${alertFrom} moved to ${alertTo} context.`, {
+            alertType: AlertType.ThoughtMoved,
+            clearDelay: 5000,
+          }),
         )
       })
     }, 100)

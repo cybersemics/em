@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
-import alert from '../action-creators/alert'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import StarIcon from '../components/icons/StarIcon'
+import { alertActionCreator as alert } from '../reducers/alert'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import head from '../util/head'

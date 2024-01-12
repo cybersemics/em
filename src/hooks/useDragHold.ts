@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
-import alert from '../action-creators/alert'
 import dragHold from '../action-creators/dragHold'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import { alertActionCreator as alert } from '../reducers/alert'
 import useLongPress from './useLongPress'
 
 /** Set state.dragHold on longPress. */

@@ -1,9 +1,9 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import alertActionCreator from '../action-creators/alert'
 import { deleteResumableFile } from '../action-creators/importFiles'
 import { isTouch } from '../browser'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
+import { alertActionCreator as alert } from '../reducers/alert'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
@@ -26,7 +26,7 @@ const Popup: FC<{
     ...(isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
-      dispatch(alertActionCreator(null))
+      dispatch(alert(null))
     },
   })
 

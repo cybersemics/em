@@ -1,10 +1,10 @@
 import Shortcut from '../@types/Shortcut'
-import alert from '../action-creators/alert'
 import deleteAttribute from '../action-creators/deleteAttribute'
 import setDescendant from '../action-creators/setDescendant'
 import toggleAttribute from '../action-creators/toggleAttribute'
 import PinChildrenIcon from '../components/icons/PinChildrenIcon'
 import { HOME_PATH } from '../constants'
+import { alertActionCreator as alert } from '../reducers/alert'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
@@ -34,7 +34,10 @@ const pinChildrenShortcut: Shortcut = {
     if (type === 'keyboard') {
       const pinned = findDescendant(state, thoughtId, ['=children', '=pin', 'true'])
       dispatch(
-        alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', { clearDelay: 2000, showCloseLink: false }),
+        alert(pinned ? 'Unpinned subthoughts' : 'Pinned subthoughts', {
+          clearDelay: 2000,
+          showCloseLink: false,
+        }),
       )
     }
 

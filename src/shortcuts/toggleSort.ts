@@ -1,8 +1,8 @@
 import Shortcut from '../@types/Shortcut'
-import alert from '../action-creators/alert'
 import toggleSort from '../action-creators/toggleSort'
 import Icon from '../components/icons/Sort'
 import { HOME_PATH } from '../constants'
+import { alertActionCreator as alert } from '../reducers/alert'
 import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import simplifyPath from '../selectors/simplifyPath'
@@ -28,7 +28,11 @@ const toggleSortShortcut: Shortcut = {
       const stateNew = getState()
       const sortPreference = getSortPreference(stateNew, id)
       const sortDirectionLabel = sortPreference.direction === 'Asc' ? 'ascending' : 'descending'
-      dispatch(alert(sortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', { clearDelay: 2000 }))
+      dispatch(
+        alert(sortPreference.direction ? `Sort ${sortDirectionLabel}` : 'Sort manually', {
+          clearDelay: 2000,
+        }),
+      )
     }
   },
   isActive: getState => {

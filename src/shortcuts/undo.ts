@@ -1,7 +1,7 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
-import alertAction from '../action-creators/alert'
 import UndoIcon from '../components/UndoIcon'
+import { alertActionCreator as alert } from '../reducers/alert'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
@@ -27,9 +27,7 @@ const undoShortcut: Shortcut = {
 
     if (!lastActionType) return
 
-    dispatch(
-      alertAction(`Undo: ${startCase(lastActionType)}`, { isInline: true, clearDelay: 3000, showCloseLink: false }),
-    )
+    dispatch(alert(`Undo: ${startCase(lastActionType)}`, { isInline: true, clearDelay: 3000, showCloseLink: false }))
   },
   canExecute: getState => isUndoEnabled(getState()),
 }
