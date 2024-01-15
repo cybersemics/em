@@ -6,7 +6,7 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
-import getManyDescendants from '../data-providers/data-helpers/getManyDescendants'
+import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
 import db from '../data-providers/yjs/thoughtspace.main'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
@@ -74,7 +74,7 @@ const pull =
 
     const thoughtChunks: ThoughtIndices[] = []
 
-    const thoughtsIterable = getManyDescendants(db, filteredThoughtIds, getState, {
+    const thoughtsIterable = getDescendantThoughts(db, filteredThoughtIds, getState, {
       cancelRef,
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })

@@ -15,6 +15,7 @@ import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
+import yieldAll from '../../util/yieldAll'
 import { DataProvider } from '../DataProvider'
 import { clientId } from '../yjs'
 
@@ -81,7 +82,7 @@ const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* getDescendantThoughts(
+export async function* getDescendantThoughts(
   provider: DataProvider,
   thoughtId: ThoughtId,
   getState: () => State,
@@ -239,4 +240,33 @@ async function* getDescendantThoughts(
   }
 }
 
-export default getDescendantThoughts
+/** Gets descendants of many contexts, returning them in a single ThoughtIndices. Does not limit the depth of the em context. */
+const getManyDescendants = async function* getManyDescendants(
+  provider: DataProvider,
+  thoughtIds: ThoughtId[],
+  getState: () => State,
+  {
+    /** See: cancelRef param to getDescendantThoughts. */
+    cancelRef,
+    /* Maximum number of levels to fetch. */
+    maxDepth = 100,
+  }: {
+    cancelRef?: {
+      canceled: boolean
+    }
+    maxDepth?: number
+  } = {},
+): AsyncIterable<ThoughtIndices> {
+  // fetch descendant thoughts for each context in contextMap
+  yield* yieldAll(
+    thoughtIds.map(key =>
+      getDescendantThoughts(provider, key, getState, {
+        cancelRef,
+        // do not limit the depth of the em context
+        maxDepth: key === EM_TOKEN ? Infinity : maxDepth,
+      }),
+    ),
+  )
+}
+
+export default getManyDescendants
