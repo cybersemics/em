@@ -40,7 +40,7 @@ const getThoughtIdsForContexts = async (provider: DataProvider, contexts: Contex
 /**
  * Returns many descandants fot the given contexts,.
  */
-const getManyDescendantsByContext = async (
+const fetchDescendantsByContext = async (
   provider: DataProvider,
   contextArray: Context[],
   options?: { maxDepth?: number },
@@ -514,7 +514,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
-      const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']])
+      const thoughtChunks = await fetchDescendantsByContext(provider, [['x'], ['t']])
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       expect(thoughts.thoughtIndex).toEqual(
@@ -563,7 +563,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
-      const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
+      const thoughtChunks = await fetchDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const [thoughtZ, thoughtV, thoughtM1, thoughtM2] = await Promise.all([
@@ -629,7 +629,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
-      const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], [EM_TOKEN]], { maxDepth: 2 })
+      const thoughtChunks = await fetchDescendantsByContext(provider, [['x'], [EM_TOKEN]], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
@@ -694,7 +694,7 @@ const dataProviderTest = (provider: DataProvider) => {
       await provider.updateThoughtIndex?.(thoughtIndex)
       await provider.updateLexemeIndex?.(lexemeIndex)
 
-      const thoughtChunks = await getManyDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
+      const thoughtChunks = await fetchDescendantsByContext(provider, [['x'], ['t']], { maxDepth: 2 })
       const thoughts = thoughtChunks.reduce(_.ary(mergeThoughts, 2))
 
       const thoughtZ = await getContext(provider, ['x', 'y', 'z'])
