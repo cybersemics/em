@@ -6,7 +6,7 @@ import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../action-creators/updateThoughts'
 import { HOME_TOKEN } from '../constants'
-import getDescendantThoughts from '../data-providers/data-helpers/getDescendantThoughts'
+import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
 import db from '../data-providers/yjs/thoughtspace.main'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
@@ -16,7 +16,7 @@ import mergeThoughts from '../util/mergeThoughts'
 const BUFFER_DEPTH = 2
 
 export interface PullOptions {
-  /** See: cancelRef param to getDescendantThoughts. */
+  /** See: cancelRef param to fetchDescendants. */
   cancelRef?: { canceled: boolean }
   /** Pull descendants regardless of pending status. */
   force?: boolean
@@ -74,7 +74,7 @@ const pull =
 
     const thoughtChunks: ThoughtIndices[] = []
 
-    const thoughtsIterable = getDescendantThoughts(db, filteredThoughtIds, getState, {
+    const thoughtsIterable = fetchDescendants(db, filteredThoughtIds, getState, {
       cancelRef,
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })

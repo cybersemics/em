@@ -218,7 +218,7 @@ const updateThoughts = (
   const thoughtIndex = mergeUpdates(
     thoughtIndexOld,
     keyValueBy(thoughtIndexUpdates, (id, thought) => ({
-      // Clear pending from parent that is set in getDescendantThoughts.
+      // Clear pending from parent that is set in fetchDescendants.
       // If one child has loaded, we can assume that all children have loaded since children are stored in a single YJS Doc.
       // Exclude root children, otherwise pending will be cleared prematurely from the root context. Not sure why that matters, but it causes decodeThoughtsUrl to fail.
       ...(thought &&

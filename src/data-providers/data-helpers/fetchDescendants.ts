@@ -82,7 +82,7 @@ const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-export async function* getDescendantThoughts(
+async function* fetchDescendants(
   provider: DataProvider,
   thoughtId: ThoughtId,
   getState: () => State,
@@ -112,7 +112,7 @@ export async function* getDescendantThoughts(
 
     // Add the cursor to the queue if the cursor is pending.
     // This ensures that if the cursor is moved while thoughts are still loading, the cursor will always be loaded at the first possible opportunity.
-    // This must be done here (within getDescendantThoughts) instead of in the pull queue to ensure that the cursor is fetched even in the middle of a long pull.
+    // This must be done here (within fetchDescendants) instead of in the pull queue to ensure that the cursor is fetched even in the middle of a long pull.
     // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
@@ -246,7 +246,7 @@ const getManyDescendants = async function* getManyDescendants(
   thoughtIds: ThoughtId[],
   getState: () => State,
   {
-    /** See: cancelRef param to getDescendantThoughts. */
+    /** See: cancelRef param to fetchDescendants. */
     cancelRef,
     /* Maximum number of levels to fetch. */
     maxDepth = 100,
@@ -260,7 +260,7 @@ const getManyDescendants = async function* getManyDescendants(
   // fetch descendant thoughts for each context in contextMap
   yield* yieldAll(
     thoughtIds.map(key =>
-      getDescendantThoughts(provider, key, getState, {
+      fetchDescendants(provider, key, getState, {
         cancelRef,
         // do not limit the depth of the em context
         maxDepth: key === EM_TOKEN ? Infinity : maxDepth,
