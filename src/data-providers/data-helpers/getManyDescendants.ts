@@ -6,9 +6,6 @@ import yieldAll from '../../util/yieldAll'
 import { DataProvider } from '../DataProvider'
 import getDescendantThoughts from './getDescendantThoughts'
 
-// hash the EM context once on load
-const emContextEncoded = EM_TOKEN
-
 /** Gets descendants of many contexts, returning them in a single ThoughtIndices. Does not limit the depth of the em context. */
 const getManyDescendants = async function* getManyDescendants(
   provider: DataProvider,
@@ -32,7 +29,7 @@ const getManyDescendants = async function* getManyDescendants(
       getDescendantThoughts(provider, key, getState, {
         cancelRef,
         // do not limit the depth of the em context
-        maxDepth: key === emContextEncoded ? Infinity : maxDepth,
+        maxDepth: key === EM_TOKEN ? Infinity : maxDepth,
       }),
     ),
   )
