@@ -430,6 +430,30 @@ const LayoutTree = () => {
     let yaccum = 0
     let indentCursorAncestorTables = 0
 
+    /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
+    /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node after the cliff (either a col1 sibling or ancestor if the cliff is steeper) needs to be positioned below col1. Otherwise it will overlap col1. Therefore, this stack stores the minimum y value of the next node to come after col1, ensuring that they do not overlap. Depth is used to detect the next node after the col1 node.
+
+    Unfortunately we need to partially un-linearize the tree in order to handle nested tables. Because this requires measured y values, we cannot do it earlier in linearizeTree.
+
+    e.g. The height of Boston with its long note exceeds the height of b, c, and d combined. Therefore, the next node, x, needs to be positioned below Boston.
+
+    - a
+      - =view
+        - Table
+      - Boston
+        - =note
+          - What to do when the thought extends onto two or three lines or four lines if we keep going
+        - b
+          - =pin
+            - true
+          - c
+            - d
+      - =pin
+        - true
+
+    */
+    let ycol1Ancestors: { depth: number; y: number }[] = []
+
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
     const tableCol1Widths = new Map<ThoughtId, number>()
@@ -492,6 +516,31 @@ const LayoutTree = () => {
         fontSize * (node.isTableCol1 ? -1.5 : 0) +
         // table col2
         ancestorTableWidths
+
+      // When rendering the next node after col1, make sure yaccum clears the col1 height.
+      // See: ycol1Ancestors
+      while (ycol1Ancestors.length > 0 && ycol1Ancestors[ycol1Ancestors.length - 1].depth >= node.depth) {
+        const ycol1 = ycol1Ancestors.pop()!
+        if (ycol1.y > yaccum) {
+          yaccum = ycol1.y
+        }
+      }
+
+      // Push or pop col1 ancestors.
+      // See: ycol1Ancestors
+      if (node.isTableCol1) {
+        if (cliff > 0) {
+          ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
+        } else if (cliff < 0) {
+          ycol1Ancestors = ycol1Ancestors.slice(cliff)
+        } else {
+          if (ycol1Ancestors.length === 0) {
+            ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
+          } else {
+            ycol1Ancestors[ycol1Ancestors.length - 1].y = yaccum + height
+          }
+        }
+      }
 
       // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
