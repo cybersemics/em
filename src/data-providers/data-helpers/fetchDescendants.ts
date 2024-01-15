@@ -15,7 +15,6 @@ import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
-import yieldAll from '../../util/yieldAll'
 import { DataProvider } from '../DataProvider'
 import { clientId } from '../yjs'
 
@@ -82,9 +81,9 @@ const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
  * @param children
  * @param maxDepth    The maximum number of levels to traverse. When reached, adds pending: true to the returned Parent. Ignored for EM context. Default: 100.
  */
-async function* fetchThoughtDescendants(
+async function* fetchDescendants(
   provider: DataProvider,
-  thoughtId: ThoughtId,
+  thoughtIdOrIds: ThoughtId | ThoughtId[],
   getState: () => State,
   {
     cancelRef,
@@ -100,7 +99,7 @@ async function* fetchThoughtDescendants(
   } = {},
 ): AsyncIterable<ThoughtIndices> {
   // use queue for breadth-first loading
-  const thoughtIdQueue = queue([thoughtId])
+  const thoughtIdQueue = queue(typeof thoughtIdOrIds === 'string' ? [thoughtIdOrIds] : thoughtIdOrIds)
   const depth = counter()
 
   // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
@@ -112,7 +111,7 @@ async function* fetchThoughtDescendants(
 
     // Add the cursor to the queue if the cursor is pending.
     // This ensures that if the cursor is moved while thoughts are still loading, the cursor will always be loaded at the first possible opportunity.
-    // This must be done here (within fetchThoughtDescendants) instead of in the pull queue to ensure that the cursor is fetched even in the middle of a long pull.
+    // This must be done here (within fetchDescendants) instead of in the pull queue to ensure that the cursor is fetched even in the middle of a long pull.
     // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
@@ -149,7 +148,8 @@ async function* fetchThoughtDescendants(
 
         const thought: Thought = thoughtDb
         const childrenIds = Object.values(thought.childrenMap)
-        const isEmDescendant = thoughtId === EM_TOKEN
+        const path = thoughtToPath(updatedState, thoughtDb.id)
+        const isEmDescendant = path[0] === EM_TOKEN
         const hasChildren = Object.keys(thought.childrenMap || {}).length > 0
         const isMaxDepthReached = depth.get() >= maxDepth
         // If adding the children would exceed MAX_THOUGHTS_QUEUE, then mark thought as pending.
@@ -238,35 +238,6 @@ async function* fetchThoughtDescendants(
 
     depth.inc()
   }
-}
-
-/** Gets descendants of many contexts, returning them in a single ThoughtIndices. Does not limit the depth of the em context. */
-const fetchDescendants = async function* fetchDescendants(
-  provider: DataProvider,
-  thoughtIds: ThoughtId[],
-  getState: () => State,
-  {
-    /** See: cancelRef param to fetchThoughtDescendants. */
-    cancelRef,
-    /* Maximum number of levels to fetch. */
-    maxDepth = 100,
-  }: {
-    cancelRef?: {
-      canceled: boolean
-    }
-    maxDepth?: number
-  } = {},
-): AsyncIterable<ThoughtIndices> {
-  // fetch descendant thoughts for each context in contextMap
-  yield* yieldAll(
-    thoughtIds.map(key =>
-      fetchThoughtDescendants(provider, key, getState, {
-        cancelRef,
-        // do not limit the depth of the em context
-        maxDepth: key === EM_TOKEN ? Infinity : maxDepth,
-      }),
-    ),
-  )
 }
 
 export default fetchDescendants
