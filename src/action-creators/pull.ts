@@ -79,7 +79,6 @@ const pull =
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    // parallelizing may result in conficts since there is no conflict resolution mechanism currently
     await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
       thoughtChunks.push(thoughtsChunk)
 
