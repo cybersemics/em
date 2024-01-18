@@ -431,9 +431,7 @@ const LayoutTree = () => {
     let indentCursorAncestorTables = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
-    /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node after the cliff (either a col1 sibling or ancestor if the cliff is steeper) needs to be positioned below col1. Otherwise it will overlap col1. Therefore, this stack stores the minimum y value of the next node to come after col1, ensuring that they do not overlap. Depth is used to detect the next node after the col1 node.
-
-    Unfortunately we need to partially un-linearize the tree in order to handle nested tables. Because this requires measured y values, we cannot do it earlier in linearizeTree.
+    /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
 
     e.g. The height of Boston with its long note exceeds the height of b, c, and d combined. Therefore, the next node, x, needs to be positioned below Boston.
 
@@ -444,15 +442,11 @@ const LayoutTree = () => {
         - =note
           - What to do when the thought extends onto two or three lines or four lines if we keep going
         - b
-          - =pin
-            - true
           - c
             - d
-      - =pin
-        - true
 
     */
-    let ycol1Ancestors: { depth: number; y: number }[] = []
+    const ycol1Ancestors: { depth: number; y: number }[] = []
 
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
@@ -517,36 +511,27 @@ const LayoutTree = () => {
         // table col2
         ancestorTableWidths
 
-      // When rendering the next node after col1, make sure yaccum clears the col1 height.
+      // Set yaccum to the bottom of the previous row's col1 if it is higher than col2.
       // See: ycol1Ancestors
-      while (ycol1Ancestors.length > 0 && ycol1Ancestors[ycol1Ancestors.length - 1].depth >= node.depth) {
+      if (ycol1Ancestors[ycol1Ancestors.length - 1]?.depth >= node.depth) {
         const ycol1 = ycol1Ancestors.pop()!
         if (ycol1.y > yaccum) {
           yaccum = ycol1.y
         }
       }
 
-      // Push or pop col1 ancestors.
-      // See: ycol1Ancestors
-      if (node.isTableCol1) {
-        if (cliff > 0) {
-          ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
-        } else if (cliff < 0) {
-          ycol1Ancestors = ycol1Ancestors.slice(cliff)
-        } else {
-          if (ycol1Ancestors.length === 0) {
-            ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
-          } else {
-            ycol1Ancestors[ycol1Ancestors.length - 1].y = yaccum + height
-          }
-        }
-      }
-
       // capture the y position of the current thought before it is incremented by its own height
       const y = yaccum
 
+      // increase y by the height of the current thought
       if (!node.isTableCol1 || node.leaf) {
         yaccum += height
+      }
+
+      // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
+      // See: ycol1Ancestors
+      if (node.isTableCol1) {
+        ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
       }
 
       return {
