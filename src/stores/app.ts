@@ -9,6 +9,7 @@ import cursorChanged from '../redux-enhancers/cursorChanged'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
@@ -20,10 +21,21 @@ if (!appReducer) {
   throw new Error('appReducer is undefined. This probably means there is a circular import.')
 }
 
+const middlewareEnhancer = applyMiddleware(
+  // prevent accidentally passing a reducer to the dispatch function (dev and test only)
+  // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
+  ...(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? [doNotDispatchReducer] : []),
+  multi,
+  thunk,
+  pullQueue,
+  updateUrlHistory,
+  freeThoughts,
+)
+
 const store = createStore(
   appReducer,
   composeEnhancers(
-    applyMiddleware(multi, thunk, pullQueue, updateUrlHistory, freeThoughts),
+    middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
     cursorChanged,
