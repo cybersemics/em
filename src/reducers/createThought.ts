@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/yjs'
 import updateThoughts from '../reducers/updateThoughts'
 import getLexeme from '../selectors/getLexeme'
@@ -102,5 +103,11 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
 
   return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
 }
+
+/** Action-creator for createThought. */
+export const createThoughtActionCreator =
+  (payload: Parameters<typeof createThought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'createThought', ...payload })
 
 export default _.curryRight(createThought)
