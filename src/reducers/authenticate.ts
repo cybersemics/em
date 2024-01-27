@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 
 interface Options {
   // used by the pullQueue to detect if the authenticated user is connected and thus able to pull
@@ -17,5 +18,11 @@ const authenticate = (state: State, { value }: Options) => ({
   autologin: value || state.autologin,
   status: value ? 'loading' : 'disconnected',
 })
+
+/** Action-creator for authenticate. */
+export const authenticateActionCreator =
+  (payload: Parameters<typeof authenticate>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'authenticate', ...payload })
 
 export default _.curryRight(authenticate)
