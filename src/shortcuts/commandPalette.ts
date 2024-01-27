@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
-import commandPalette from '../action-creators/commandPalette'
 import Icon from '../components/icons/ItalicTextIcon'
+import { commandPaletteActionCreator as commandPalette } from '../reducers/commandPalette'
 
 const commandPaletteShortcut: Shortcut = {
   id: 'commandPalette',
