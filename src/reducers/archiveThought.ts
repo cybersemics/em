@@ -4,6 +4,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import { AlertType, HOME_PATH } from '../constants'
 import alert from '../reducers/alert'
 import deleteThought from '../reducers/deleteThought'
@@ -196,6 +197,11 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
       offset,
     }),
   ])(state)
+}
+
+/** Action-creator for archiveThought. */
+export function archiveThoughtActionCreator(payload: Parameters<typeof archiveThought>[1]): Thunk {
+  return dispatch => dispatch({ type: 'archiveThought', ...payload })
 }
 
 export default _.curryRight(archiveThought)
