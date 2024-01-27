@@ -3,6 +3,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import createThought from '../reducers/createThought'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
@@ -78,5 +79,11 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
     editableRender,
   ])(state)
 }
+
+/** Action-creator for bumpThoughtDown. */
+export const bumpThoughtDownActionCreator =
+  (payload?: Parameters<typeof bumpThoughtDown>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'bumpThoughtDown', ...payload })
 
 export default _.curryRight(bumpThoughtDown)
