@@ -1,7 +1,7 @@
-import clear from '../../action-creators/clear'
 import importTextAction from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
+import { clearActionCreator as clear } from '../../reducers/clear'
 import exportContext from '../../selectors/exportContext'
 import appStore from '../../stores/app'
 import { cleanupTestApp } from '../../test-helpers/createTestApp'

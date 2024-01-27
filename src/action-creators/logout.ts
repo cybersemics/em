@@ -1,6 +1,6 @@
 import Thunk from '../@types/Thunk'
-import clear from '../action-creators/clear'
 import scrollTo from '../device/scrollTo'
+import { clearActionCreator as clear } from '../reducers/clear'
 import storage from '../util/storage'
 
 /** Logs the user out and clears the state. */

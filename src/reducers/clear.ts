@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import initialState from '../util/initialState'
 
 interface Options {
@@ -15,5 +16,11 @@ const clear = (state: State, { full }: Options = {}): State => ({
         isLoading: false,
       }),
 })
+
+/** Action-creator for clear. */
+export const clearActionCreator =
+  (payload?: Parameters<typeof clear>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'clear', ...payload })
 
 export default clear
