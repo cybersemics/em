@@ -3,7 +3,7 @@ import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { LATEST_SHORTCUT_DIAGRAM_DURATION, LATEST_SHORTCUT_LIMIT } from '../constants'
 import { addLatestShortcutsActionCreator } from '../reducers/addLatestShortcuts'
-import clearLatestShortcuts from './clearLatestShortcuts'
+import { clearLatestShortcutsActionCreator as clearLatestShortcuts } from '../reducers/clearLatestShortcuts'
 
 interface Options {
   clear?: number
