@@ -3,10 +3,10 @@ import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { AlertType, EXPAND_HOVER_DELAY } from '../constants'
+import { clearExpandDownActionCreator as clearExpandDown } from '../reducers/clearExpandDown'
 import { getChildren } from '../selectors/getChildren'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
-import clearExpandDown from './clearExpandDown'
 
 // eslint-disable-next-line prefer-const
 let expandDownTimer: Timer | null = null
