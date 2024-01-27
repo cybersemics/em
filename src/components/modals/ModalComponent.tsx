@@ -1,8 +1,8 @@
 import classNames from 'classnames'
 import React from 'react'
 import ModalType from '../../@types/Modal'
-import closeModal from '../../action-creators/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
+import { closeModalActionCreator as closeModal } from '../../reducers/closeModal'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 

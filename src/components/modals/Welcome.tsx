@@ -1,7 +1,7 @@
 /* eslint-disable no-unmodified-loop-condition */
 import { useDispatch } from 'react-redux'
-import closeModal from '../../action-creators/closeModal'
 import tutorial from '../../action-creators/tutorial'
+import { closeModalActionCreator as closeModal } from '../../reducers/closeModal'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
