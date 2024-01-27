@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
@@ -90,5 +91,11 @@ const collapseContext = (state: State, { at }: Options) => {
       }),
   ])(state)
 }
+
+/** Action-creator for collapseContext. */
+export const collapseContextActionCreator =
+  (payload: Parameters<typeof collapseContext>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'collapseContext', ...payload })
 
 export default _.curryRight(collapseContext)
