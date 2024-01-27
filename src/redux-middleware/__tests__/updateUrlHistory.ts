@@ -1,7 +1,7 @@
 import Index from '../../@types/IndexType'
-import cursorBack from '../../action-creators/cursorBack'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import newThought from '../../action-creators/newThought'
+import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 

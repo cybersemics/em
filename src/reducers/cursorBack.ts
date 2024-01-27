@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import cursorHistory from '../reducers/cursorHistory'
 import searchReducer from '../reducers/search'
 import setCursor from '../reducers/setCursor'
@@ -40,5 +41,8 @@ const cursorBack = (state: State) => {
           : [],
   )(state)
 }
+
+/** Action-creator for cursorBack. */
+export const cursorBackActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorBack' })
 
 export default cursorBack

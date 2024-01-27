@@ -1,7 +1,7 @@
 import { Key } from 'ts-key-enum'
 import Shortcut from '../@types/Shortcut'
-import cursorBack from '../action-creators/cursorBack'
 import outdent from '../action-creators/outdent'
+import { cursorBackActionCreator as cursorBack } from '../reducers/cursorBack'
 import attributeEquals from '../selectors/attributeEquals'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
