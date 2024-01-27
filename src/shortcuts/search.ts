@@ -1,9 +1,9 @@
 import Shortcut from '../@types/Shortcut'
-import cursorBeforeSearch from '../action-creators/cursorBeforeSearch'
 import restoreCursorBeforeSearch from '../action-creators/restoreCursorBeforeSearch'
 import search from '../action-creators/search'
 import SearchIcon from '../components/SearchIcon'
 import * as selection from '../device/selection'
+import { cursorBeforeSearchActionCreator as cursorBeforeSearch } from '../reducers/cursorBeforeSearch'
 
 const searchShortcut: Shortcut = {
   id: 'search',
