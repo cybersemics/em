@@ -8,8 +8,8 @@ export type ReducerThunk = (state: State) => State
 // TODO: Fix type.
 // For now, type curryReducer as a drop-in replacement for _.curryRight.
 /** Curries a reducer and allows it to be dispatched with arguments. */
-export const curryReducer = (<A extends any[]>(reducer: (state: State, ...args: A) => State) => {
-  const curry = _.curryRight(reducer)
+export const curryReducer = (<A extends any[]>(reducer: (state: State, ...args: A) => State, arity?: number) => {
+  const curry = _.curryRight(reducer, arity)
   return (...args: Parameters<typeof curry>) => {
     const curried = curry(...args)
     curried.curriedAction = {
