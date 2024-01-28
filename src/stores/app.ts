@@ -1,6 +1,7 @@
 /**
  * Defines the Redux app reducer, loads middleware and enhancers, and exports a global store.
  */
+import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
@@ -15,7 +16,9 @@ import pullQueue from '../redux-middleware/pullQueue'
 import reducerThunk from '../redux-middleware/reducerThunk'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
-const composeEnhancers = composeWithDevTools({ trace: true })
+// composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
+// Therefore, type it as the functionally equivalent _.flowRight in order to compose more than four enhancers.
+const composeEnhancers: typeof _.flowRight = composeWithDevTools({ trace: true })
 
 if (!appReducer) {
   throw new Error('appReducer is undefined. This probably means there is a circular import.')
