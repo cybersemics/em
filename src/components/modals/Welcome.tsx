@@ -56,7 +56,7 @@ const ModalWelcome = () => {
 
   /** End the tutorial. */
   const endTutorial = () => {
-    // If the websocket is still connecting for the first time when the tutorial is dismissed, change the status to reconnecting (which occurs in the background) to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
+    // If the websocket is still connecting for the first time when the tutorial is dismissed, change the status to reconnecting (which occurs in the background) to dismiss "Connecting..." and render the available thoughts. See: EmptyThoughtspace.tsx.
     offlineStatusStore.update(statusOld =>
       statusOld === 'preconnecting' || statusOld === 'connecting' ? 'reconnecting' : statusOld,
     )

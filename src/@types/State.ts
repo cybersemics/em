@@ -77,7 +77,7 @@ interface State {
   invalidState: boolean
   // Displays a loading screen when the app starts.
   // This is disabled by updateThoughts once it detects that the root thought is loaded.
-  // Used by the Content component to determine if there are no root children and NoThoughts should be displayed.
+  // Used by the Content component to determine if there are no root children and EmptyThoughtspace should be displayed.
   isLoading: boolean
   // History of edit points that can be navigated with the jump command.
   // New edit points are added to the beginning of the list.

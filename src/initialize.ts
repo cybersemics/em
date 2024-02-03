@@ -131,7 +131,7 @@ export const initialize = async () => {
       })
     },
     onThoughtIDBSynced: (thought, { background }) => {
-      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: NoThoughts.tsx.
+      // If the websocket is still connecting for the first time when IDB is synced and non-empty, change the status to reconnecting to dismiss "Connecting..." and render the available thoughts. See: EmptyThoughtspace.tsx.
       if (!background && thought?.id === HOME_TOKEN) {
         const hasRootChildren = Object.keys(thought?.childrenMap || {}).length > 0
         if (hasRootChildren) {

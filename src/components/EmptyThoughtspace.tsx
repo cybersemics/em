@@ -22,11 +22,11 @@ const CenteredLoadingEllipsis = ({ text }: { text?: string }) => (
 )
 
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
-const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
+const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   /*
     Determining when to show the loader is nontrivial due to many loading states of local and remote, connection and authentication status, and pending thoughts.
 
-    state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and NoThoughts.
+    state.status and state.isLoading are very fragile. They are coupled to pull, updateThoughts, and EmptyThoughtspace.
 
     Related:
     - https://github.com/cybersemics/em/issues/1344
@@ -40,7 +40,7 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
   const colors = useSelector(themeColors)
 
   return (
-    <div className='new-thought-instructions'>
+    <div className='empty-thoughtspace'>
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)
         // show loading ellipsis when connecting or loading
@@ -77,7 +77,7 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
   )
 }
 
-const NoThoughtsMemo = React.memo(NoThoughts)
-NoThoughtsMemo.displayName = 'NoThoughts'
+const EmptyThoughtspaceMemo = React.memo(EmptyThoughtspace)
+EmptyThoughtspaceMemo.displayName = 'EmptyThoughtspace'
 
-export default NoThoughtsMemo
+export default EmptyThoughtspaceMemo

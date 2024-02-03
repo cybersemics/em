@@ -18,8 +18,8 @@ import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
 import publishMode from '../util/publishMode'
 import Editable from './Editable'
+import EmptyThoughtspace from './EmptyThoughtspace'
 import LayoutTree from './LayoutTree'
-import NoThoughts from './NoThoughts'
 import Search from './Search'
 
 const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
@@ -96,7 +96,7 @@ const Content: FC = () => {
         ) : (
           <>
             {rootThoughtsLength === 0 ? (
-              <NoThoughts isTutorial={tutorial} />
+              <EmptyThoughtspace isTutorial={tutorial} />
             ) : isAbsoluteContext ? (
               TransientEditable
             ) : (
