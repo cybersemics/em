@@ -3,13 +3,13 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import createThought from '../reducers/createThought'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
 import subCategorizeOne from '../reducers/subCategorizeOne'
-import { curryReducer } from '../redux-middleware/reducerThunk'
 import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -80,4 +80,10 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   ])(state)
 }
 
-export default curryReducer(bumpThoughtDown)
+/** Action-creator for bumpThoughtDown. */
+export const bumpThoughtDownActionCreator =
+  (payload?: Parameters<typeof bumpThoughtDown>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'bumpThoughtDown', ...payload })
+
+export default _.curryRight(bumpThoughtDown)
