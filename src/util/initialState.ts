@@ -127,7 +127,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     remoteSearch: false,
     searchContexts: null,
     showHiddenThoughts: false,
-    showModal: !storage.getItem('welcomeComplete') && !tsidShared ? 'welcome' : null,
+    showModal: process.env.REACT_APP_DEMO || (!storage.getItem('welcomeComplete') && !tsidShared) ? 'welcome' : null,
     showSidebar: false,
     showSplitView: !!storage.getItem('showSplitView'),
     splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),

@@ -1,7 +1,11 @@
 /* eslint-disable no-unmodified-loop-condition */
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import tutorial from '../../action-creators/tutorial'
+import tutorialStep from '../../action-creators/tutorialStep'
+import { HOME_TOKEN } from '../../constants'
+import { clearActionCreator as clear } from '../../reducers/clear'
 import { closeModalActionCreator as closeModal } from '../../reducers/closeModal'
+import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
@@ -45,6 +49,7 @@ const onRef = (el: HTMLDivElement) => {
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
   const dispatch = useDispatch()
+  const isEmpty = useSelector(state => !hasChildren(state, HOME_TOKEN))
 
   /** Close the welcome modal. */
   const close = () => dispatch(closeModal())
@@ -76,25 +81,39 @@ const ModalWelcome = () => {
         onClose={endTutorial}
         actions={() => (
           <div>
-            <ActionButton key='start' title='START TUTORIAL' {...fastClick(close)} />
-            {
-              <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
-                <a
-                  id='skip-tutorial'
-                  className='text-small'
+            <div>
+              <ActionButton key='start' title={`${isEmpty ? 'START' : 'RESUME'} TUTORIAL`} {...fastClick(close)} />
+            </div>
+            {!isEmpty && (
+              <div style={{ margin: '1em 0' }}>
+                <ActionButton
+                  key='resume'
+                  title='RESTART TUTORIAL'
+                  inverse
                   {...fastClick(() => {
-                    endTutorial()
-                    close()
+                    dispatch([tutorial({ value: true }), tutorialStep({ value: 1 }), closeModal()])
                   })}
-                  style={{
-                    marginBottom: '-1em',
-                    paddingBottom: '1em',
-                  }}
-                >
-                  This ain’t my first rodeo. Skip it.
-                </a>
+                />
               </div>
-            }
+            )}
+            <div key='skip' style={{ marginTop: 15, opacity: 0.5 }}>
+              <a
+                id='skip-tutorial'
+                className='text-small'
+                {...fastClick(() => {
+                  dispatch([clear({ local: true, remote: true })])
+                  endTutorial()
+                  close()
+                })}
+                style={{
+                  marginBottom: '-1em',
+                  paddingBottom: '1em',
+                  textDecoration: 'none',
+                }}
+              >
+                New, empty thoughtspace
+              </a>
+            </div>
           </div>
         )}
       >
