@@ -10,6 +10,7 @@ import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_JUMPS } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
 import { getLexeme } from '../selectors/getLexeme'
+import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -254,9 +255,14 @@ const updateThoughts = (
     updates,
   }
 
-  /** Returns false if the root thought is loaded and not pending. */
+  /** Returns true if the thoughtspace is still loading because root thought is missing or pending and the tutorial is not running. */
   const isStillLoading = () => {
+    // isLoading arg takes precedence
     if (isLoading != null) return isLoading
+
+    // disable isLoading if tutorial is on
+    if (getSetting(state, 'Tutorial') === 'On') return false
+
     const rootThought: Thought | null = thoughtIndexUpdates[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
     const isRootLoaded =
       rootThought &&
