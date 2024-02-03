@@ -43,8 +43,9 @@ const NoThoughts = ({ isTutorial }: { isTutorial?: boolean }) => {
     <div className='new-thought-instructions'>
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)
-        status === 'preconnecting' ? null : status === 'connecting' || isLoading ? (
-          // show loading ellipsis when loading
+        // show loading ellipsis when connecting or loading
+        status === 'preconnecting' ? null : status === 'connecting' || (isLoading && status !== 'offline') ? (
+          // (except when offline, otherwise the loading ellipsis will be shown indefinitely in the rare case where the tutorial has been closed but there are no thoughts)
           <CenteredLoadingEllipsis text={status === 'connecting' ? 'Connecting' : 'Loading'} />
         ) : // tutorial no children
         // show special message when there are no children in tutorial
