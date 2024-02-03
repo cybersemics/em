@@ -12,15 +12,6 @@ import LoadingEllipsis from './LoadingEllipsis'
 
 const newThoughtShortcut = shortcutById('newThought')
 
-/** An absolutely centered LoadingEllipsis. */
-const CenteredLoadingEllipsis = ({ text }: { text?: string }) => (
-  <div className='absolute-center'>
-    <i className='text-note'>
-      <LoadingEllipsis text={text} />
-    </i>
-  </div>
-)
-
 /** Display platform-specific instructions of how to create a thought when a context has no thoughts. */
 const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   /*
@@ -46,7 +37,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
         // show loading ellipsis when connecting or loading
         status === 'preconnecting' ? null : status === 'connecting' || (isLoading && status !== 'offline') ? (
           // (except when offline, otherwise the loading ellipsis will be shown indefinitely in the rare case where the tutorial has been closed but there are no thoughts)
-          <CenteredLoadingEllipsis text={status === 'connecting' ? 'Connecting' : 'Loading'} />
+          <LoadingEllipsis text={status === 'connecting' ? 'Connecting' : 'Loading'} center />
         ) : // tutorial no children
         // show special message when there are no children in tutorial
         isTutorial ? (
