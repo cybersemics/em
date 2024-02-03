@@ -37,7 +37,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
         // show loading ellipsis when connecting or loading
         status === 'preconnecting' ? null : status === 'connecting' || (isLoading && status !== 'offline') ? (
           // (except when offline, otherwise the loading ellipsis will be shown indefinitely in the rare case where the tutorial has been closed but there are no thoughts)
-          <LoadingEllipsis text={status === 'connecting' ? 'Connecting' : 'Loading'} center />
+          <LoadingEllipsis delay={1500} text={status === 'connecting' ? 'Connecting' : 'Loading'} center />
         ) : // tutorial no children
         // show special message when there are no children in tutorial
         isTutorial ? (
