@@ -9,7 +9,6 @@ import error from '../action-creators/error'
 import setCursor from '../action-creators/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { AlertText, AlertType, THROTTLE_DISTRACTION_FREE_TYPING } from '../constants'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import { alertActionCreator as alert } from '../reducers/alert'
 import { commandPaletteActionCreator as commandPalette } from '../reducers/commandPalette'
@@ -148,13 +147,8 @@ const initEvents = (store: Store<State, any>) => {
     // set the cursor
     const cursor = toRoot ? null : path
 
-    store.dispatch([
-      // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
-      setCursor({ path: cursor, replaceContextViews: contextViews }),
-
-      // scroll cursor into view
-      scrollCursorIntoView(),
-    ])
+    // check if path is the root, since decodeThoughtsUrl returns a rooted path rather than null
+    store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
   }
 
   /** Save selection offset to storage. */

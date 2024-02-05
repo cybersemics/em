@@ -2,7 +2,6 @@ import Thunk from '../@types/Thunk'
 import setCursor from '../action-creators/setCursor'
 import suppressExpansion from '../action-creators/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -23,7 +22,6 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
     const children = getChildrenSorted(state, HOME_TOKEN)
     if (children.length > 0) {
       dispatch(setCursor({ path: [children[0].id] }))
-      scrollCursorIntoView()
     }
     return
   }
@@ -45,7 +43,6 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
   }
 
   dispatch(setCursor({ path }))
-  scrollCursorIntoView()
 }
 
 export default cursorNext

@@ -7,7 +7,6 @@ import searchContexts from '../action-creators/searchContexts'
 import setCursor from '../action-creators/setCursor'
 import toggleSidebar from '../action-creators/toggleSidebar'
 import { EM_TOKEN } from '../constants'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
@@ -44,7 +43,6 @@ const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }
           setCursor({ path: simplePath }),
           toggleSidebar({ value: false }),
         ])
-        scrollCursorIntoView()
       })}
       style={{
         userSelect: 'none',

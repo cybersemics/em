@@ -1,7 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import cursorForward from '../action-creators/cursorForward'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
@@ -29,10 +28,7 @@ const cursorForwardShortcut: Shortcut = {
   gesture: 'l',
   svg: Icon,
   // must wrap in anonymous function since exit is defined at run time
-  exec: dispatch => {
-    dispatch(cursorForward())
-    scrollCursorIntoView()
-  },
+  exec: dispatch => dispatch(cursorForward()),
 }
 
 export default cursorForwardShortcut

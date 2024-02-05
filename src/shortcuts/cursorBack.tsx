@@ -1,6 +1,5 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import { cursorBackActionCreator as cursorBack } from '../reducers/cursorBack'
 // import directly since util/index is not loaded yet when shortcut is initialized
@@ -34,7 +33,6 @@ const cursorBackShortcut: Shortcut = {
     const { cursor, search } = getState()
     if (cursor || search != null) {
       dispatch(cursorBack())
-      scrollCursorIntoView()
 
       // clear browser selection if cursor has been removed
       const { cursor: cursorNew } = getState()

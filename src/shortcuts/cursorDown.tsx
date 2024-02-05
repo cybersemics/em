@@ -3,7 +3,6 @@ import Dispatch from '../@types/Dispatch'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import cursorDown from '../action-creators/cursorDown'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -52,10 +51,7 @@ const cursorDownShortcut: Shortcut = {
     // use default browser behavior (i.e. caret down) if there is a valid selection and it's not on the last line of a multi-line editable
     return selection.isOnLastLine()
   },
-  exec: throttleByAnimationFrame((dispatch: Dispatch) => {
-    dispatch(cursorDown())
-    scrollCursorIntoView()
-  }),
+  exec: throttleByAnimationFrame((dispatch: Dispatch) => dispatch(cursorDown())),
 }
 
 export default cursorDownShortcut
