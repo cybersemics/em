@@ -1,9 +1,11 @@
 import { isSafari, isTouch } from '../browser'
+import viewportStore from '../stores/viewport'
 
 /** Returns true if the given element is visible within the vertical viewport. */
 const isElementInViewport = (el: Element) => {
   const rect = el.getBoundingClientRect()
-  return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight)
+  const viewport = viewportStore.getState()
+  return rect.top >= 0 && rect.bottom <= viewport.innerHeight
 }
 
 /** Scrolls the given element to the top 1/3 of the screen. */
@@ -16,8 +18,10 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   /** The y position of the element relative to the document. */
   const y = window.scrollY + el.getBoundingClientRect().y
 
-  /** The new y position that the element will be scrolled to. */
-  const scrollYNew = y - window.innerHeight / 3
+  const viewport = viewportStore.getState()
+
+  /** The new y position that the element will be scrolled to, one third from the top of the screen. */
+  const scrollYNew = y - viewport.innerHeight / 3
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
