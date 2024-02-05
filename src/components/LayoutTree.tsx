@@ -75,6 +75,9 @@ type TreeThoughtPositioned = TreeThought & {
   y: number
 }
 
+/** The padding-bottom of the .content element. Make sure it matches the CSS. */
+const CONTENT_PADDING_BOTTOM = 153
+
 // ms to debounce removal of size entries as VirtualThoughts are unmounted
 const SIZE_REMOVAL_DEBOUNCE = 1000
 
@@ -570,6 +573,30 @@ const LayoutTree = () => {
     [spaceAboveExtended],
   )
 
+  // Get the nav and footer heights for the spaceBelow calculation.
+  // Nav hight changes when the breadcrumbs wrap onto multiple lines.
+  // Footer height changes on font size change.
+  const footerHeightRef = useRef(0)
+  const navHeightRef = useRef(0)
+
+  // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
+  // This works because there is always a second render due to useSizeTracking.
+  useEffect(() => {
+    const footerEl = document.querySelector('.footer')
+    if (footerEl) {
+      footerHeightRef.current = footerEl.getBoundingClientRect().height
+    }
+    const navEl = document.querySelector('.nav')
+    if (navEl) {
+      navHeightRef.current = navEl.getBoundingClientRect().height
+    }
+  })
+
+  /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
+  // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
+  const spaceBelow =
+    viewportHeight - footerHeightRef.current - navHeightRef.current - CONTENT_PADDING_BOTTOM - singleLineHeight
+
   return (
     <div
       style={{
@@ -579,10 +606,9 @@ const LayoutTree = () => {
     >
       <div
         style={{
-          // Set a minimum height that fits all thoughts based on their estimated height.
-          // Otherwise scrolling down quickly will bottom out as the thoughts are re-rendered and the document height is built back up.
-          // One viewportHeight to compensate for translateY, and another to ensure room to scroll below.
-          height: totalHeight - spaceAboveExtended + viewportHeight,
+          // Set a container height that fits all thoughts.
+          // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
+          height: totalHeight + spaceBelow,
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
