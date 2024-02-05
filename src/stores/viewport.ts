@@ -5,7 +5,7 @@ import reactMinistore from './react-ministore'
 let virtualKeyboardHeightPortrait = window.innerHeight / 2.275
 let virtualKeyboardHeightLandscape = window.innerWidth / 1.75
 
-/** A store that tracks the top and bottom of the viewport. */
+/** A store that tracks the top and bottom of the viewport, taking into account the virtual keyboard. */
 const viewportStore = reactMinistore({
   scrollTop: document.documentElement.scrollTop,
   innerHeight: window.innerHeight,
