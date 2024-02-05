@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import deleteThought from '../reducers/deleteThought'
 import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
@@ -126,5 +127,8 @@ const deleteEmptyThought = (state: State): State => {
 
   return state
 }
+
+/** Action-creator for deleteEmptyThought. */
+export const deleteEmptyThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'deleteEmptyThought' })
 
 export default deleteEmptyThought
