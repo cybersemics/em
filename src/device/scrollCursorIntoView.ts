@@ -30,7 +30,7 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
 }
 
 /** Scrolls the cursor into view if needed. */
-const scrollCursorIntoView = (delay?: number) => {
+const scrollCursorIntoView = () => {
   // web only
   // TODO: Implement on React Native
   if (typeof window === 'undefined' || typeof document === 'undefined' || !document.querySelector) return
@@ -42,9 +42,11 @@ const scrollCursorIntoView = (delay?: number) => {
     window.scrollBy(0, 1)
   }
 
-  setTimeout(() => {
+  // Wait for the next render as this function is called immediately after an action is dispatched.
+  // An animation frame should be enough time.
+  requestAnimationFrame(() => {
     scrollIntoViewIfNeeded(document.querySelector('.editing'))
-  }, delay)
+  })
 }
 
 export default scrollCursorIntoView

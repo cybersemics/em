@@ -14,8 +14,7 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
     // if the cursor has changed, scroll it into view
     const cursor = getState().cursor
     if (cursor !== cursorLast) {
-      // give new cursor time to render
-      scrollCursorIntoView(10)
+      scrollCursorIntoView()
     }
     cursorLast = cursor
   }
