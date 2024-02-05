@@ -594,12 +594,14 @@ const LayoutTree = () => {
         {treeThoughtsPositioned.map(
           (
             {
+              belowCursor,
               cliff,
               depth,
               env,
               height,
               indexChild,
               indexDescendant,
+              isCursor,
               isTableCol1,
               isTableCol2,
               key,
@@ -618,11 +620,11 @@ const LayoutTree = () => {
             i,
           ) => {
             // List Virtualization
-            // Hide thoughts that are below the viewport.
+            // Do not render thoughts that are below the viewport.
+            // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
             // Render virtualized thoughts with their estimated height so that document height is relatively stable.
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-            const isBelowViewport = y > viewportBottom + height
-            if (isBelowViewport) return null
+            if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
             return (
               <div
