@@ -576,26 +576,26 @@ const LayoutTree = () => {
   // Get the nav and footer heights for the spaceBelow calculation.
   // Nav hight changes when the breadcrumbs wrap onto multiple lines.
   // Footer height changes on font size change.
-  const footerHeightRef = useRef(0)
-  const navHeightRef = useRef(0)
+  const [navAndFooterHeight, setNavAndFooterHeight] = useState(0)
 
   // Read the footer and nav heights on render and set the refs so that the spaceBelow calculation is updated on the next render.
   // This works because there is always a second render due to useSizeTracking.
-  useEffect(() => {
-    const footerEl = document.querySelector('.footer')
-    if (footerEl) {
-      footerHeightRef.current = footerEl.getBoundingClientRect().height
-    }
-    const navEl = document.querySelector('.nav')
-    if (navEl) {
-      navHeightRef.current = navEl.getBoundingClientRect().height
-    }
-  })
+  // No risk of infinite render since the effect cannot change the height of the nav or footer.
+  // nav/footer height -> effect -> setNavAndFooterHeight -> render -> effect -> setNavAndFooterHeight (same values)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(
+    _.throttle(() => {
+      const navEl = document.querySelector('.nav')
+      const footerEl = document.querySelector('.footer')
+      setNavAndFooterHeight(
+        (navEl?.getBoundingClientRect().height || 0) + (footerEl?.getBoundingClientRect().height || 0),
+      )
+    }, 16.666),
+  )
 
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
-  const spaceBelow =
-    viewportHeight - footerHeightRef.current - navHeightRef.current - CONTENT_PADDING_BOTTOM - singleLineHeight
+  const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   return (
     <div
