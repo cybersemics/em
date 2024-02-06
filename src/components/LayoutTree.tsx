@@ -10,6 +10,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH } from '../constants'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
@@ -597,6 +598,10 @@ const LayoutTree = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [spaceAboveExtended],
   )
+
+  // scrollCursorIntoView is safely debounced, so we can call it on every render.
+  // We want to call it as frequently as possible so that it gets debounced
+  useEffect(scrollCursorIntoView)
 
   const navAndFooterHeight = useNavAndFooterHeight()
 
