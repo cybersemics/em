@@ -1,12 +1,17 @@
-A websocket server that automatically connects to the em front-end and syncs thoughts across devices.
+A websocket server that synchronizes thoughts between multiple devices and users.
 
-# Setup
+The app will automatically connect to the server specified by the client-side env variables `REACT_APP_WEBSOCKET_HOST` and `REACT_APP_WEBSOCKET_PORT` (see [client](https://github.com/cybersemics/em/tree/staging2/server#client)).
 
-1. Install [MongoDB](#mongodb)
+# Local Development
+
+## Setup
+
 1. `yarn`
 1. `npm run build`
+1. _optional:_ Install MongoDB (see [below](#mongodb))
+   - Add the connection string to the server env variable (see [server](https://github.com/cybersemics/em/tree/staging2/server#server))
 
-# Running the server
+## Running the server
 
 The server process is managed by pm2, which restarts the server if it crashes.
 
@@ -28,39 +33,17 @@ Other npm scripts:
 - `status` - Show the pm2 process status.
 - `stop` - Stop the server.
 
-# Environment Variables
+## Testing with live staging or production data
 
-If you are setting up the em server locally, you do not need to set any environment variables. The defaults are sufficient.
+Normally in local development the app connects to the local websocket server and database. To test with live staging or production data, override `REACT_APP_WEBSOCKET_HOST` in `.env.development` with the value from `.env.production` or `.env.staging` and restart localhost. It is recommended that you run the app on a different port to ensure that local storage stays sandboxed, i.e. `PORT=3012 npm start`.
 
-For running the em server on a cloud hosting platform, see below.
+Note: `NODE_ENV` itself cannot be manually overwritten, and is set based on how the server is started:
 
-### Client
+- `npm start` → **development**
+- `npm test` → **test**
+- `npm run build` → **production**
 
-The client-side app needs these envirionment variables set to connect to the websocket server. They are stored in `.env` files and embedded in the static build by react-scripts. See: https://create-react-app.dev/docs/adding-custom-environment-variables/#what-other-env-files-can-be-used.
-
-```ini
-# .env.production
-REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app
-REACT_APP_WEBSOCKET_PORT=
-```
-
-### Server
-
-The server uses its own environment variables for configuration (not to be confused with the `.env` files on the front-end). The defaults are generally sufficient for running locally. When deploying to a hosting platform, they should be set within the platform's secure dashboard.
-
-- `process.env.HOST` - Default: `localhost`. DigitalOcean uses `0.0.0.0`.
-- `process.env.PORT` - Default: `3001`. Should be kept empty for DigitalOcean.
-- `process.env.REDIS_HOST` - Redis host name. If none is provided, the Redis extension will be disabled.
-- `process.env.REDIS_PORT` - Redis port.
-- `process.env.MONGODB_CONNECTION_STRING` - MongoDB [connection string](https://www.mongodb.com/docs/manual/reference/connection-string/).
-  - Local: `mongodb://localhost:27017` (default)
-  - Cloud: `mongodb+srv://USER:PASSWORD@cluster0.2dxe1jb.mongodb.net/em?retryWrites=true&w=majority`
-  - Note: The recommended connection strings from MongoDB Atlas do not work. This is probably due to the way that mongoist connects to mongodb within y-mongodb-provider.
-- `process.env.GRAPHITE_URL` - Metrics endpoint.
-- `process.env.GRAPHITE_USERID` - Metrics user id.
-- `process.env.GRAPHITE_APIKEY` - Metrics cloud access policy token.
-- `process.env.METRICS_USERNAME` - Basic auth username for /metrics endpoint.
-- `process.env.METRICS_PASSWORD` - Basic auth password for /metrics endpoint.
+For additional information about how environment variables are used on the client-side, see: https://create-react-app.dev/docs/adding-custom-environment-variables/.
 
 # Deploying to a hosting platform
 
@@ -107,6 +90,35 @@ services:
     run_command: cd server && HOST=0.0.0.0 PORT=3001 npm run start
     source_dir: /
 ```
+
+## Environment Variables
+
+### Client
+
+The client-side app needs the following envirionment variables set to connect to the websocket server. They are stored in `.env` files and embedded in the static build by react-scripts. See: https://create-react-app.dev/docs/adding-custom-environment-variables/#what-other-env-files-can-be-used.
+
+```ini
+REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app
+REACT_APP_WEBSOCKET_PORT=
+```
+
+### Server
+
+The server uses its own environment variables for configuration (not to be confused with the `.env` files on the front-end). You can run the em server locally without setting any env variables. When deploying to a hosting platform, set the appropriate env variables in the platform's secure dashboard.
+
+- `process.env.HOST` - Default: `localhost`. DigitalOcean uses `0.0.0.0`.
+- `process.env.PORT` - Default: `3001`. Should be kept empty for DigitalOcean.
+- `process.env.REDIS_HOST` - Redis host name. If none is provided, the Redis extension will be disabled.
+- `process.env.REDIS_PORT` - Redis port.
+- `process.env.MONGODB_CONNECTION_STRING` - MongoDB [connection string](https://www.mongodb.com/docs/manual/reference/connection-string/).
+  - Local: `mongodb://localhost:27017` (default)
+  - Cloud: `mongodb+srv://USER:PASSWORD@cluster0.2dxe1jb.mongodb.net/em?retryWrites=true&w=majority`
+  - Note: The recommended connection strings from MongoDB Atlas do not work. This is probably due to the way that mongoist connects to mongodb within y-mongodb-provider.
+- `process.env.GRAPHITE_URL` - Metrics endpoint.
+- `process.env.GRAPHITE_USERID` - Metrics user id.
+- `process.env.GRAPHITE_APIKEY` - Metrics cloud access policy token.
+- `process.env.METRICS_USERNAME` - Basic auth username for /metrics endpoint.
+- `process.env.METRICS_PASSWORD` - Basic auth password for /metrics endpoint.
 
 # MongoDB
 
