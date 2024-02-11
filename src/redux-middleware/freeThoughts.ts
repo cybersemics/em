@@ -20,7 +20,11 @@ const checkThrottled = _.throttle(checkThreshold, FREE_THOUGHTS_THROTTLE, { lead
 const freeThoughtsMiddleware: ThunkMiddleware<State> = ({ dispatch, getState }) => {
   return next => action => {
     next(action)
-    checkThrottled(dispatch, getState)
+
+    // do not run checkThrottled on freeThoughts action to avoid infinite loop
+    if (action.type !== 'freeThoughts') {
+      checkThrottled(dispatch, getState)
+    }
   }
 }
 
