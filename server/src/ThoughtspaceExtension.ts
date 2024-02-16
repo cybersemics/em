@@ -99,6 +99,9 @@ const bindState = async ({
 
   Y.applyUpdate(doc, Y.encodeStateAsUpdate(docPersisted))
 
+  // clean up persisted doc once it has been loaded and applied to the server
+  docPersisted.destroy()
+
   // throttled update handler accumulates and merges updates
   const storeUpdateThrottled = throttleConcat(
     // Note: Is it a problem that mergeUpdates does not perform garbage collection?
