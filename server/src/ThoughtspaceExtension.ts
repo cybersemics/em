@@ -86,14 +86,17 @@ const bindState = async ({
   docName: string
   doc: Y.Doc
 }): Promise<void> => {
-  const docPersisted = await db.getYDoc(docName)
   const { tsid, type } = parseDocumentName(docName)
 
-  // store initial state of Doc if non-empty
-  const update = Y.encodeStateAsUpdate(doc)
-  if (update.length > 2) {
-    await db.storeUpdate(docName, update).catch(e => {
-      console.error('initState: storeUpdate', e)
+  const docPersisted = await db.getYDoc(docName)
+  const stateVectorPersisted = Y.encodeStateVector(docPersisted)
+
+  // store any state that has not been persisted
+  const updateDiff = Y.encodeStateAsUpdate(doc, stateVectorPersisted)
+  if (updateDiff.length > 2) {
+    // TODO: Do we need await? db.getYDoc has already succeeded, so it seems that storing the update from the client can happen in the background.
+    await db.storeUpdate(docName, updateDiff).catch(e => {
+      console.error('bindState: initial storeUpdate error', e)
     })
   }
 
