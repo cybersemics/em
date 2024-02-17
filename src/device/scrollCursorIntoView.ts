@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { isSafari, isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 
@@ -10,29 +9,25 @@ const isElementInViewport = (el: Element) => {
 }
 
 /** Scrolls the given element to the top 1/3 of the screen. */
-const scrollIntoViewIfNeeded = _.debounce(
-  (el: Element | null | undefined) => {
-    if (!el || isElementInViewport(el)) return
+const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
+  if (!el || isElementInViewport(el)) return
 
-    // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
-    // Therefore, we need to calculate the scroll position ourselves
+  // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
+  // Therefore, we need to calculate the scroll position ourselves
 
-    /** The y position of the element relative to the document. */
-    const y = window.scrollY + el.getBoundingClientRect().y
+  /** The y position of the element relative to the document. */
+  const y = window.scrollY + el.getBoundingClientRect().y
 
-    const viewport = viewportStore.getState()
+  const viewport = viewportStore.getState()
 
-    /** The new y position that the element will be scrolled to, one third from the top of the screen. */
-    const scrollYNew = y - viewport.innerHeight / 3
+  /** The new y position that the element will be scrolled to, one third from the top of the screen. */
+  const scrollYNew = y - viewport.innerHeight / 3
 
-    // scroll to 1 instead of 0
-    // otherwise Mobile Safari scrolls to the top after MultiGesture
-    // See: touchmove in MultiGesture.tsx
-    window.scrollTo(0, Math.max(1, scrollYNew))
-  },
-  // Aggressively debounce this call since we want to wait until everything has rendered
-  100,
-)
+  // scroll to 1 instead of 0
+  // otherwise Mobile Safari scrolls to the top after MultiGesture
+  // See: touchmove in MultiGesture.tsx
+  window.scrollTo(0, Math.max(1, scrollYNew))
+}
 
 /** Scrolls the cursor into view if needed. */
 const scrollCursorIntoView = () => {
@@ -49,7 +44,9 @@ const scrollCursorIntoView = () => {
 
   // Wait for the next render as this function is called immediately after an action is dispatched.
   // An animation frame should be enough time.
-  scrollIntoViewIfNeeded(document.querySelector('.editing'))
+  requestAnimationFrame(() => {
+    scrollIntoViewIfNeeded(document.querySelector('.editing'))
+  })
 }
 
 export default scrollCursorIntoView
