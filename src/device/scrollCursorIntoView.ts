@@ -4,8 +4,13 @@ import viewportStore from '../stores/viewport'
 /** Returns true if the given element is visible within the vertical viewport. */
 const isElementInViewport = (el: Element) => {
   const rect = el.getBoundingClientRect()
+  // toolbar element is not present when distractionFreeTyping is activated
+  const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
+  const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
   const viewport = viewportStore.getState()
-  return rect.top >= 0 && rect.bottom <= viewport.innerHeight
+
+  // an element is considered outside the viewport if its centerline is above the bottom of the toolbar
+  return rect.top + rect.height / 2 >= toolbarBottom && rect.bottom <= viewport.innerHeight
 }
 
 /** Scrolls the given element to the top 1/3 of the screen. */
