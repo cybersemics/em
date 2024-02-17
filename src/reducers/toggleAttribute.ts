@@ -7,6 +7,8 @@ import setFirstSubthought from '../reducers/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren, hasChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -43,7 +45,10 @@ const toggleAttribute = (
         id: idNew,
         path,
         value: _values[0],
-        rank: getPrevRank(state, thoughtId),
+        rank:
+          getSortPreference(state, thoughtId).type === 'Alphabetical'
+            ? getSortedRank(state, thoughtId, _values[0])
+            : getPrevRank(state, thoughtId),
       })
 
   // recursion

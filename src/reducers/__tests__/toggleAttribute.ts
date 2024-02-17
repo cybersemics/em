@@ -245,3 +245,30 @@ it('preserve other descendants when toggling deep attribute off', () => {
       - x
         - m`)
 })
+
+it('preserve sorted context', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - =sort
+          - Alphabetical
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['=pin', 'true'],
+      }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =pin
+      - true
+    - =sort
+      - Alphabetical`)
+})
