@@ -9,7 +9,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { HOME_PATH } from '../constants'
+import { HOME_PATH, LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
 import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
@@ -671,7 +671,7 @@ const LayoutTree = () => {
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
                   left: x,
                   top: y,
-                  transition: 'left 0.15s ease-out,top 0.15s ease-out',
+                  transition: `left ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out,top ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out`,
                   // Table col1 uses its exact width since cannot extend to the right edge of the screen.
                   // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
                   // 1em + 10px is an eyeball measurement at font sizes 14 and 18
