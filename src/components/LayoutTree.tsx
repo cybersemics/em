@@ -295,7 +295,10 @@ const linearizeTree = (
       isTableCol1,
       isTableCol2,
       isTableCol2Child,
-      key: crossContextualKey(contextChainNew, child.id),
+      // In the context view, use filteredChild.id (the context) rather than child.id (the context parent), otherwise duplicate thoughts in the same context will have the same key.
+      // For example, a/~m/cat and a/~m/cats need to use the ids of cat/cats rather than m.
+      // filteredChild === child in normal view, so it does not matter in that case.
+      key: crossContextualKey(contextChainNew, filteredChild.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
       parentKey,
