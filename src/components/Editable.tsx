@@ -122,6 +122,10 @@ const Editable = ({
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
 
+  /** Used to prevent edit mode from being incorrectly activated on long tap. The default browser behavior must be prevented if setCursorOnThought was just called. */
+  // https://github.com/cybersemics/em/issues/1793
+  const disableTapRef = useRef(false)
+
   // console.info('<Editable> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<Editable> ' + prettyPath(state, simplePath), {
   //   cursorOffset,
@@ -493,6 +497,15 @@ const Editable = ({
       // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
       if (e.nativeEvent instanceof MouseEvent) {
         e.stopPropagation()
+
+        // preventDefault after setCursorOnThought to avoid activating edit mode.
+        // onMouseDown is the only place that the browser selection can be prevented on tap.
+        if (disableTapRef.current) {
+          e.preventDefault()
+
+          // after the default browser behavior has been prevented, we can safely reset disableTapRef
+          disableTapRef.current = false
+        }
       }
       // when the MultiGesture is below the gesture threshold it is possible that onTap and onMouseDown are both triggered
       // in this case, we need to prevent onTap from being called a second time via onMouseDown
@@ -520,8 +533,14 @@ const Editable = ({
             dispatch(toggleColorPicker({ value: false }))
           }
         } else {
-          // prevent focus to allow navigation with mobile keyboard down
           setCursorOnThought()
+
+          // When the the cursor is first set on a thought, prevent the default browser behavior to avoid activating edit mode.
+          // Do not reset until the long tap is definitely over.
+          disableTapRef.current = true
+          setTimeout(() => {
+            disableTapRef.current = false
+          }, 400)
         }
       } else {
         // for some reason doesn't work ontouchend
