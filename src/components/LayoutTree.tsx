@@ -41,7 +41,6 @@ type TreeThought = {
   belowCursor: boolean
   depth: number
   env?: LazyEnv
-  grandparentKey: string
   // index among visible siblings at the same level
   indexChild: number
   // index among all visible thoughts in the tree
@@ -52,7 +51,6 @@ type TreeThought = {
   isTableCol2Child: boolean
   key: string
   leaf: boolean
-  parentKey: string
   path: Path
   prevChild: Thought
   showContexts?: boolean
@@ -281,14 +279,11 @@ const linearizeTree = (
     const isTableCol1 = attributeEquals(state, head(simplePath), '=view', 'Table')
     const isTableCol2 = attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table')
     const isTableCol2Child = attributeEquals(state, head(rootedParentOf(state, parentOf(simplePath))), '=view', 'Table')
-    const parentKey = crossContextualKey(contextChainNew, head(simplePath))
-    const grandparentKey = crossContextualKey(contextChainNew, head(rootedParentOf(state, simplePath)))
 
     const node: TreeThought = {
       belowCursor: !!belowCursor,
       depth,
       env: envNew || undefined,
-      grandparentKey,
       indexChild: i,
       indexDescendant: virtualIndexNew,
       isCursor,
@@ -301,7 +296,6 @@ const linearizeTree = (
       key: crossContextualKey(contextChainNew, filteredChild.id),
       // must filteredChild.id to work for both normal view and context view
       leaf: !hasChildren(state, filteredChild.id),
-      parentKey,
       path: childPath,
       prevChild: filteredChildren[i - 1],
       showContexts: contextViewActive,
