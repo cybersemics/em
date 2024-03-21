@@ -272,6 +272,11 @@ export const init = async (options: ThoughtspaceOptions) => {
   const websocketUrl = await options.websocketUrl
   const cursor = await options.cursor
 
+  console.info(
+    'TODO_RXDB: thoughtspace.init - The web worker has been initialized and has received the thoughtspace id (tsid), secret access token (accessToken) and various callbacks from the main thread.',
+    { accessToken, tsid },
+  )
+
   // generate docKeys for cursor, otherwise replicateThought will fail
   if (cursor) {
     cursor.forEach((id, i) => docKeys.set(id, cursor[i - 1] ?? HOME_TOKEN))
@@ -441,6 +446,10 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   let docKey = docKeys.get(id)
   let lexemeOldIDBSynced: Promise<unknown> | undefined
   let thoughtOldIDBSynced: Promise<unknown> | undefined
+  console.info(
+    'TODO_RXDB: thoughtspace.updateThought - A thought has been updated in the Redux state and the change needs to be synced to the persistence layer and other clients.',
+    { id, thought },
+  )
   if (docKey) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
@@ -666,6 +675,11 @@ const onThoughtChange = (id: ThoughtId) => (e: SimpleYMapEvent<ThoughtYjs>) => {
   const thought = getThought(thoughtDoc, id)
   if (!thought) return
 
+  console.info(
+    'TODO_RXDB: thoughtspace.onThoughtChange - A reactive update from another client has been received. Updates from self have already been filtered out. Updates from other clients are passed to the main thread through config.onThoughtChange (which was provided to thoughtspace.init).',
+    { id, thought },
+  )
+
   // update docKeys of children
   Object.values(thought.childrenMap).forEach(childId => {
     docKeys.set(childId, id)
@@ -722,6 +736,10 @@ export const replicateThought = async (
     remote?: boolean
   } = {},
 ): Promise<Thought | undefined> => {
+  console.info(
+    'TODO_RXDB: thoughtspace.replicateThought - A thought has been created or made visible in the Redux state and needs to be synced from the persistence layer. It should stay in memory and we should be subscribed to realtime changes from other clients until freeThought is called. If background is true, this function should resolve as soon as the thought is loaded from the local db, but not wait until it is synced with the server. If background is false, this function should only resolve when the thought is fully synced with the server.',
+    { id, background: !!background, remote: !!remote },
+  )
   const docKey = docKeys.get(id)
   if (!docKey) {
     throw new Error(`replicateThought: Missing docKey for thought ${id}`)
@@ -1158,6 +1176,10 @@ const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
 // Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
 // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
 export const freeThought = async (docKey: string): Promise<void> => {
+  console.info(
+    'TODO_RXDB: thoughtspace.freeThought - The thought is no longer visible and should be removed from memory. Realtime changes to this thought from other clients no longer need to be subscribed to.',
+    { id: docKey },
+  )
   thoughtRetained.delete(docKey)
 
   // wait for idb replication, otherwise the deletion may not be saved to disk
@@ -1212,6 +1234,10 @@ const tryDeallocateThought = async (docKey: string): Promise<void> => {
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
 const deleteThought = async (docKey: string): Promise<void> => {
+  console.info(
+    'TODO_RXDB: thoughtspace.deleteThought - The thought has been permanently deleted, which should be synced to the persistence layer and other clients.',
+    { id: docKey },
+  )
   // freeThought and deleteThought are the only places where we use the id as the docKey directly.
   // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
 
@@ -1417,12 +1443,16 @@ export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined
 
 /** Pauses replication for higher priority network activity, such as push or pull. */
 export const pauseReplication = async () => {
+  console.info(
+    'TODO_RXDB: thoughtspace.pauseReplication - Background replication should be paused, e.g. to give priority to loading visible thoughts or syncing realtime edits.',
+  )
   const { replication } = await config
   replication.pause()
 }
 
 /** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. */
 export const startReplication = async () => {
+  console.info('TODO_RXDB: thoughtspace.startReplication - Background replication can be resumed.')
   // Disable replication controller as part of winding down YJS
   // const { replication } = await config
   // replication.start()
