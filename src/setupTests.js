@@ -22,12 +22,3 @@ global.TextDecoder = TextDecoder
 window.blur = noop
 window.scrollTo = noop
 window.matchMedia = window.matchMedia || (() => false)
-
-// replace the thoughtspace web worker with a direct import
-jest.mock('./data-providers/yjs/thoughtspace.main', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return {
-    ...jest.requireActual('./data-providers/yjs/thoughtspace.worker').api,
-    monitor: () => {},
-  }
-})

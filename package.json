@@ -176,7 +176,6 @@
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.2",
     "browserstack-local": "^1.4.8",
     "chalk": "^4.1.1",
-    "comlink": "^4.4.1",
     "dotenv": "8.2.0",
     "em-typedoc-theme": "^0.3.0",
     "enzyme": "^3.11.0",
@@ -217,7 +216,6 @@
     "typedoc-plugin-external-module-name": "^4.0.6",
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
     "typescript": "^4.3.2",
-    "webdriverio": "^7.7.3",
-    "worker-loader": "^3.0.8"
+    "webdriverio": "^7.7.3"
   }
 }

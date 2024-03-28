@@ -19,12 +19,7 @@ import updateThoughtsActionCreator from './action-creators/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
-import db, {
-  init as initThoughtspace,
-  monitor,
-  pauseReplication,
-  startReplication,
-} from './data-providers/yjs/thoughtspace.main'
+import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -152,24 +147,6 @@ export const initialize = async () => {
     tsid,
     tsidShared,
     websocketUrl,
-  })
-
-  // monitor web worker and show an error if unresponsive
-  const workerUnresponsiveErrorMessage = 'Thoughtspace web worker unresponsive'
-  monitor(err => {
-    // error if unresponsive
-    if (err) {
-      store.dispatch(error({ value: workerUnresponsiveErrorMessage }))
-    }
-    // clear error if responsive
-    else {
-      store.dispatch((dispatch, getState) => {
-        const state = getState()
-        if (state.error === workerUnresponsiveErrorMessage) {
-          dispatch(error({ value: null }))
-        }
-      })
-    }
   })
 
   // pause replication during pushing and pulling

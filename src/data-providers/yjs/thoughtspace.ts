@@ -1,4 +1,3 @@
-/** Thoughtspace worker accessed from the main thread via thoughtspace.main.ts. */
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
 import { IndexeddbPersistence } from 'y-indexeddb'
@@ -250,13 +249,13 @@ let doclog: Y.Doc
  * Module variables
  **********************************************************************/
 
-/** The thoughtspace config that is resolved after init is called. Mainly used to pass objects and callbacks into the worker that it cannot access natively, e.g. localStorage. After they are initialized, they can be accessed synchronously on the module-level config variable. This avoids timing issues with concurrent replicateChildren calls that need conflict to check if the doc already exists. */
+/** The thoughtspace config that is resolved after init is called. Used to pass objects and callbacks into the thoughtspace from the UI. After they are initialized, they can be accessed synchronously on the module-level config variable. This avoids timing issues with concurrent replicateChildren calls that need conflict to check if the doc already exists. */
 const config = resolvable<ThoughtspaceConfig>()
 
 /** Cache the config for synchronous access. This is needed by replicateChildren to set thoughtDocs synchronously, otherwise it will not be idempotent. */
 let configCache: ThoughtspaceConfig
 
-/** Initialize the thoughtspace with a storage module; localStorage cannot be accessed from within a web worker, so we need the caller to pass in the tsid and access token. */
+/** Initialize the thoughtspace with event handlers and selectors to call back to the UI. */
 export const init = async (options: ThoughtspaceOptions) => {
   const {
     isLexemeLoaded,

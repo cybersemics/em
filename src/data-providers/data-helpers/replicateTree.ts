@@ -2,7 +2,7 @@ import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
-import { replicateChildren, replicateThought } from '../yjs/thoughtspace.main'
+import { replicateChildren, replicateThought } from '../yjs/thoughtspace'
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
 const replicateTree = (
@@ -17,7 +17,6 @@ const replicateTree = (
   } = {},
 ): {
   promise: Promise<Index<Thought>>
-  // CancellablePromise use an ad hoc property that cannot cross the worker boundary, so we need to return a cancel function separately from the promise.
   cancel: () => void
 } => {
   // no significant performance gain above concurrency 4

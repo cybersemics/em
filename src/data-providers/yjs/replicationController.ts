@@ -27,7 +27,6 @@ interface ReplicationTask {
 type SubdocsEventArgs = { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }
 
 /** Max number of thoughts per doclog block. When the limit is reached, a new block (subdoc) is created to take updates. Only the active block needs to be loaded into memory. */
-// TODO: Consolidate into constants without breaking worker bundle
 const DOCLOG_BLOCK_SIZE = 1000
 
 /** Throttle rate of storing the replication cursor after a thought or lexeme has been successfully replicated. */
