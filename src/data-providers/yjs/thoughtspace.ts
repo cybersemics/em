@@ -273,7 +273,7 @@ export const init = async (options: ThoughtspaceOptions) => {
   const cursor = await options.cursor
 
   console.info(
-    'TODO_RXDB: thoughtspace.init - The web worker has been initialized and has received the thoughtspace id (tsid), secret access token (accessToken) and various callbacks from the main thread.',
+    'TODO_RXDB: thoughtspace.init - The thoughtspace has been initialized and has received the thoughtspace id (tsid), secret access token (accessToken) and various callbacks from the UI.',
     { accessToken, tsid },
   )
 
