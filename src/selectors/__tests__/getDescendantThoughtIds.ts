@@ -2,6 +2,7 @@ import SimplePath from '../../@types/SimplePath'
 import { HOME_TOKEN } from '../../constants'
 import importText from '../../reducers/importText'
 import newThought from '../../reducers/newThought'
+import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -48,7 +49,7 @@ it('get descendants ordered by rank', () => {
     - c
   `
 
-  const steps = [importText({ text }), newThought({ value: 'x', insertBefore: true })]
+  const steps = [importText({ text }), setCursorFirstMatch(['c']), newThought({ value: 'x', insertBefore: true })]
 
   const state = reducerFlow(steps)(initialState())
 
