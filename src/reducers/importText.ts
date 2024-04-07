@@ -189,8 +189,6 @@ const importText = (
 
     /** Set cursor to the last thought on the first level of imports. */
     const setLastImportedCursor = (state: State) => {
-      if (!imported.lastImported) return state
-
       /** Get last imported cursor after using collapse. */
       const getLastImportedAfterCollapse = () => {
         const pathStart = imported.lastImported!.slice(0, newDestinationPath.length - (destEmpty ? 2 : 1)) as Path
@@ -223,17 +221,21 @@ const importText = (
         return appendToPath(pathStart, ...pathMiddle, thought ? id : idMerged()!)
       }
 
-      const newCursor = shouldImportIntoDummy ? getLastImportedAfterCollapse() : imported.lastImported
+      const newCursor = imported.lastImported
+        ? shouldImportIntoDummy
+          ? getLastImportedAfterCollapse()
+          : imported.lastImported
+        : // setCursor must still be called even if the cursor has not changed, as setCursor sets some other state, such as state.expanded. See the note about collapseContext below.
+          // Note: Failing to call setCursor may not be noticeable in the app if expandThoughts gets triggered by another action, such as updateThoughts. However ommitting this will fail component tests that rely on the expanded state immediately after importText.
+          state.cursor
 
-      return setCursor(state, {
-        path: newCursor,
-      })
+      return setCursor(state, { path: newCursor })
     }
 
     const parentOfDestination = parentOf(newDestinationPath)
 
     return reducerFlow([
-      // thoughts will be expanded by setCursor
+      // thoughts will be expanded by setCursor, so no need to expand them here
       updateThoughts({ ...imported, preventExpandThoughts: true, idbSynced }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? collapseContext({ at: unroot(newDestinationPath) }) : null,
