@@ -1,5 +1,4 @@
 import Emitter from 'emitter20'
-import { act } from 'react-dom/test-utils'
 import cancellable, { CancellablePromise } from '../util/cancellable'
 
 export interface Ministore<T> {
@@ -43,19 +42,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
    * @returns Unsubscribe function.
    */
   const subscribe = (f: (state: T) => void): (() => void) => {
-    // We need to wrap the callback in act when the tests are running.
-    // Do this here rather than in every test.
-    // TODO: Move this to a stubbing function.
-    const onChange =
-      process.env.NODE_ENV === 'test'
-        ? async (state: T) => {
-            setTimeout(async () => {
-              await act(() => Promise.resolve(f(state)))
-            })
-          }
-        : f
-    emitter.on('change', onChange)
-    return () => emitter.off('change', onChange)
+    emitter.on('change', f)
+    return () => emitter.off('change', f)
   }
 
   /** Subscribe to a slice of the state. */
@@ -91,15 +79,8 @@ const ministore = <T>(initialState: T): Ministore<T> => {
       // TODO: Move this to a stubbing function.
       onChange = (stateNew: T) => {
         if (predicate && !predicate(stateNew)) return
-        const done =
-          process.env.NODE_ENV === 'test'
-            ? async (state: T) => {
-                await act(() => Promise.resolve(resolve(state)))
-              }
-            : resolve
-
         unsubscribe()
-        done(stateNew)
+        resolve(stateNew)
       }
       emitter.on('change', onChange)
     })
