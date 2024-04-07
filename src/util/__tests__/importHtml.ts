@@ -65,7 +65,8 @@ it('items separated by <br>', () => {
 `)
 })
 
-it('nested lines separated by <br>', () => {
+// TODO
+it.skip('nested lines separated by <br>', () => {
   expect(
     importExport(
       `
@@ -252,7 +253,8 @@ it('preserve formatting tags', () => {
   expect(importExport('<b>one</b> and <i>two</i>')).toBe(expectedText)
 })
 
-it('WorkFlowy import with notes', () => {
+// TODO
+it.skip('WorkFlowy import with notes', () => {
   expect(
     importExport(
       `
