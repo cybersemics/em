@@ -7,7 +7,7 @@ import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import exportContext from '../exportContext'
 
-it('meta and archived thoughts are included', () => {
+it('meta and archived thoughts are included by default', () => {
   const text = `
     - a
       - =archive
@@ -31,7 +31,7 @@ it('meta and archived thoughts are included', () => {
   - b`)
 })
 
-it('meta is included but archived thoughts are excluded', () => {
+it('exclude archived thoughts', () => {
   const text = `
     - a
       - =archive
@@ -53,30 +53,7 @@ it('meta is included but archived thoughts are excluded', () => {
   - b`)
 })
 
-it('meta is excluded', () => {
-  const text = `
-    - a
-      - =archive
-        - c
-      - =pin
-        - true
-      - b
-  `
-
-  const steps = [importText({ text }), setCursor(['a'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
-
-  const exported = exportContext(stateNew, ['a'], 'text/plain', {
-    excludeMeta: true,
-    excludeArchived: true,
-  })
-
-  expect(exported).toBe(`- a
-  - b`)
-})
-
-it('meta is excluded but archived is included', () => {
+it('exclude meta attributes but not archived thoughts', () => {
   const text = `
     - a
       - =archive
@@ -93,6 +70,28 @@ it('meta is excluded but archived is included', () => {
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true })
 
   expect(exported).toBe(`- a
+  - =archive
+    - c
+  - b`)
+})
+
+it('exclude all meta attributes, including archived thoughts', () => {
+  const text = `
+    - a
+      - =archive
+        - c
+      - =pin
+        - true
+      - b
+  `
+
+  const steps = [importText({ text }), setCursor(['a'])]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true, excludeArchived: true })
+
+  expect(exported).toBe(`- a
   - b`)
 })
 
@@ -106,7 +105,7 @@ it('exported as plain text with no formatting', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true, excludeMarkdownFormatting: true })
+  const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMarkdownFormatting: true })
 
   expect(exported).toBe(`- a
   - Hello world`)
@@ -122,7 +121,7 @@ it('exported as html', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const exported = exportContext(stateNew, ['a'], 'text/html', { excludeMeta: true })
+  const exported = exportContext(stateNew, ['a'], 'text/html')
 
   expect(exported).toBe(`<ul>
   <li>a${EMPTY_SPACE}

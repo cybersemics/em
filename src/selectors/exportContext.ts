@@ -1,4 +1,3 @@
-import { and } from 'fp-and-or'
 import { unescape as decodeCharacterEntities } from 'lodash'
 import Context from '../@types/Context'
 import MimeType from '../@types/MimeType'
@@ -27,20 +26,21 @@ const replaceTitle = (text: string, title: string, format: MimeType) => {
 const formattingTagsToMarkdown = (s: string) => s.replace(/(<\/?(b|strong)>)/gi, '**').replace(/(<\/?(i|em)>)/gi, '*')
 
 /** Creates a filter predicate that filters thoughts by various export options. */
-export const exportFilter = ({ excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean }) =>
-  and(
-    !excludeMeta || !excludeArchived || ((child: Thought) => child.value !== '=archive'),
-    !excludeMeta || ((child: Thought) => !isAttribute(child.value) || child.value === '=note'),
-  )
+export const exportFilter =
+  ({ excludeArchived, excludeMeta }: { excludeArchived?: boolean; excludeMeta?: boolean }) =>
+  (child: Thought) =>
+    child.value === '=archive' ? !excludeArchived : !excludeMeta || !isAttribute(child.value) || child.value === '=note'
 
 interface Options {
   indent?: number
-  // replaces the value of the root thought with a new title.
+  /** Replaces the value of the root thought with a new title. */
   title?: string
   excludeMarkdownFormatting?: boolean
   excludeSrc?: boolean
+  /** Exclude meta attributes, except archived thoughts unless excludeArchived is true. */
   excludeMeta?: boolean
   depth?: number
+  /** Exclude archived thoughts. */
   excludeArchived?: boolean
 }
 
