@@ -5,15 +5,16 @@ import reactMinistore from './react-ministore'
 let virtualKeyboardHeightPortrait = window.innerHeight / 2.275
 let virtualKeyboardHeightLandscape = window.innerWidth / 1.75
 
-/** A store that tracks the top and bottom of the viewport, taking into account the virtual keyboard. */
+/** A store that tracks the viewport dimensions, including the nontrival virtual keyboard height. */
 const viewportStore = reactMinistore({
   scrollTop: document.documentElement.scrollTop,
+  /** Height of the viewport, not including the virtual keyboard. */
   innerHeight: window.innerHeight,
   virtualKeyboardHeight:
     window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
 })
 
-/** Throttled update of viewport height. */
+/** Throttled update of viewport height. Invoked on window resize. */
 export const updateHeight = _.throttle(
   () => {
     // There is a bug in iOS Safari where visualViewport.height is incorrect if the phone is rotated with the keyboard up, rotated back, and the keyboard is closed.
@@ -49,7 +50,7 @@ export const updateHeight = _.throttle(
   { leading: true },
 )
 
-/** Throttled update of scrollTop. */
+/** Throttled update of scrollTop. Invoked on window scroll. */
 export const updateScrollTop = _.throttle(
   () => {
     viewportStore.update({

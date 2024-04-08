@@ -3,18 +3,9 @@ import viewportStore from '../stores/viewport'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from './preventAutoscroll'
 
 /** Returns true if the given element is visible within the vertical viewport. */
-const isElementInViewport = (el: Element) => {
-  const rect = el.getBoundingClientRect()
-  // toolbar element is not present when distractionFreeTyping is activated
-  const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
-  const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
-  const viewport = viewportStore.getState()
+// const isElementInViewport = (el: Element) => {}
 
-  // an element is considered outside the viewport if its centerline is above the bottom of the toolbar
-  return rect.top + rect.height / 2 >= toolbarBottom && rect.bottom <= viewport.innerHeight
-}
-
-/** Scrolls the given element to the top 1/3 of the screen. */
+/** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
   // Therefore, we need to wait until preventAutoscroll is done.
@@ -26,18 +17,29 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
     return
   }
 
-  if (!el || isElementInViewport(el)) return
+  if (!el) return
+
+  // determine if the elements is above or below the viewport
+  const rect = el.getBoundingClientRect()
+  // toolbar element is not present when distractionFreeTyping is activated
+  const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
+  const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
+  const viewport = viewportStore.getState()
+  const isAboveViewport = rect.top < toolbarBottom
+  const isBelowViewport = rect.bottom > viewport.innerHeight - viewport.virtualKeyboardHeight
+
+  if (!isAboveViewport && !isBelowViewport) return
 
   // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
   // Therefore, we need to calculate the scroll position ourselves
 
   /** The y position of the element relative to the document. */
-  const y = window.scrollY + el.getBoundingClientRect().y
+  const y = window.scrollY + rect.y
 
-  const viewport = viewportStore.getState()
-
-  /** The new y position that the element will be scrolled to, one third from the top of the screen. */
-  const scrollYNew = y - viewport.innerHeight / 3
+  // leave a margin between the element and the viewport edge equal to half the element's height
+  const scrollYNew = isAboveViewport
+    ? y - (toolbarRect?.height ?? 0) - rect.height / 2
+    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
