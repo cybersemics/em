@@ -1,6 +1,9 @@
 import { isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
 
+/** Duration after preventAutoscroll is called before the temporary styles are reset. */
+export const PREVENT_AUTOSCROLL_TIMEOUT = 10
+
 // store the existinp css properties so they can be restored after preventAutoscroll
 let transformOld = ''
 let paddingBottomOld = ''
@@ -52,7 +55,7 @@ const preventAutoscroll = (
   }
 
   // 10ms should be plenty of time for Editable.onFocus to fire after preventAutoscroll is first called, and thus call preventAutoscrollEnd, but if for some reason that does not happen we should go ahead and call it to clean up. This will result in a noticeable blink, but it is better than the thought getting stuck.
-  timeoutId = setTimeout(() => preventAutoscrollEnd(el), 10) as unknown as number
+  timeoutId = setTimeout(() => preventAutoscrollEnd(el), PREVENT_AUTOSCROLL_TIMEOUT) as unknown as number
 
   // return cleanup function
   return () => preventAutoscrollEnd(el)
@@ -61,6 +64,7 @@ const preventAutoscroll = (
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   clearTimeout(timeoutId)
+  timeoutId = undefined
 
   if (!el) return
 
@@ -69,5 +73,8 @@ export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
   el.style.paddingTop = paddingTopOld
   el.removeAttribute('data-prevent-autoscroll')
 }
+
+/** Returns true if preventAutoscroll is currently in progress. */
+export const isPreventAutoscrollInProgress = () => !!timeoutId
 
 export default preventAutoscroll

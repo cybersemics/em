@@ -1,5 +1,6 @@
 import { isSafari, isTouch } from '../browser'
 import viewportStore from '../stores/viewport'
+import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from './preventAutoscroll'
 
 /** Returns true if the given element is visible within the vertical viewport. */
 const isElementInViewport = (el: Element) => {
@@ -15,6 +16,16 @@ const isElementInViewport = (el: Element) => {
 
 /** Scrolls the given element to the top 1/3 of the screen. */
 const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
+  // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
+  // Therefore, we need to wait until preventAutoscroll is done.
+  // See: preventAutoscroll.ts
+  if (isPreventAutoscrollInProgress()) {
+    setTimeout(() => {
+      scrollIntoViewIfNeeded(el)
+    }, PREVENT_AUTOSCROLL_TIMEOUT)
+    return
+  }
+
   if (!el || isElementInViewport(el)) return
 
   // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
