@@ -1,5 +1,9 @@
+import cursorDown from '../../action-creators/cursorDown'
+import cursorUp from '../../action-creators/cursorUp'
 import importText from '../../action-creators/importText'
+import indent from '../../action-creators/indent'
 import { HOME_TOKEN } from '../../constants'
+import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
@@ -51,17 +55,17 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
         - c`,
     }),
     setCursor(['c']),
-    { type: 'cursorUp' },
-    { type: 'indent' },
-    { type: 'cursorUp' },
+    cursorUp(),
+    indent(),
+    cursorUp(),
     editThought(['a'], 'arizona'),
     setCursor(['arizona', 'b']),
-    { type: 'cursorBack' },
-    { type: 'cursorUp' },
-    { type: 'cursorDown' },
+    cursorBack(),
+    cursorUp(),
+    cursorDown(),
 
     editThought(['arizona', 'b'], 'boston'),
-    { type: 'cursorDown' },
+    cursorDown(),
     { type: 'undoAction' },
     { type: 'undoAction' },
     // redo all actions preceding a thoughtchange as a single operation

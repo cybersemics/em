@@ -1,8 +1,13 @@
+import cursorDown from '../../action-creators/cursorDown'
 import importText from '../../action-creators/importText'
+import indent from '../../action-creators/indent'
+import moveThoughtDown from '../../action-creators/moveThoughtDown'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
+import { archiveThoughtActionCreator as archiveThought } from '../../reducers/archiveThought'
 import { clearActionCreator as clear } from '../../reducers/clear'
+import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
@@ -116,7 +121,7 @@ describe('undo', () => {
           - B`,
       }),
       setCursor(['A']),
-      { type: 'archiveThought' },
+      archiveThought({}),
     ])
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
@@ -339,11 +344,11 @@ describe('grouping', () => {
         - d`,
       }),
       setCursor(['b']),
-      { type: 'indent' },
+      indent(),
       editThought(['a', 'b'], 'b1', { rankInContext: 0 }),
-      { type: 'cursorBack' },
-      { type: 'moveThoughtDown' },
-      { type: 'cursorDown' },
+      cursorBack(),
+      moveThoughtDown(),
+      cursorDown(),
       setCursor(['a', 'b1']),
       // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
       { type: 'undoAction' },
@@ -385,8 +390,8 @@ describe('grouping', () => {
           - a
           - b`,
       }),
-      { type: 'newThought', value: 'c' },
-      { type: 'newThought', value: 'd' },
+      newThought({ value: 'c' }),
+      newThought({ value: 'd' }),
       editThought(['d'], 'd1', { rankInContext: 3 }),
       // undo thought change and preceding newThought action
       { type: 'undoAction' },
