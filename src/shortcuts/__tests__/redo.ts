@@ -2,6 +2,8 @@ import cursorDown from '../../action-creators/cursorDown'
 import cursorUp from '../../action-creators/cursorUp'
 import importText from '../../action-creators/importText'
 import indent from '../../action-creators/indent'
+import redo from '../../action-creators/redo'
+import undo from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
@@ -21,7 +23,7 @@ it('redo thought change', () => {
     }),
     { type: 'cursorUp' },
     editThought(['a'], 'aa'),
-    { type: 'undoAction' },
+    undo(),
   ])
 
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -33,7 +35,7 @@ it('redo thought change', () => {
   expect(exportedBeforeRedo).toEqual(expectedOutputAfterUndo)
 
   // redo thought change
-  store.dispatch({ type: 'redoAction' })
+  store.dispatch(redo())
 
   const exportedAfterRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -66,16 +68,16 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
 
     editThought(['arizona', 'b'], 'boston'),
     cursorDown(),
-    { type: 'undoAction' },
-    { type: 'undoAction' },
+    undo(),
+    undo(),
     // redo all actions preceding a thoughtchange as a single operation
-    { type: 'redoAction' },
+    redo(),
   ])
 
   const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
 
-  store.dispatch({ type: 'redoAction' })
+  store.dispatch(redo())
   const state = store.getState()
   const cursorAfterSecondRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
   expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
@@ -101,7 +103,7 @@ it('redo contiguous changes', () => {
     editThought(['A'], 'Atlantic'),
     editThought(['Atlantic'], 'Atlantic '),
     editThought(['Atlantic '], 'Atlantic City'),
-    { type: 'undoAction' },
+    undo(),
   ])
 
   const exportedBeforeRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -113,7 +115,7 @@ it('redo contiguous changes', () => {
   expect(exportedBeforeRedo).toEqual(expectedOutputBeforeRedo)
 
   store.dispatch({
-    type: 'redoAction',
+    type: 'redo',
   })
 
   const exportedAfterRedo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')

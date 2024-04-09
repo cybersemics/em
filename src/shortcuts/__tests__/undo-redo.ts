@@ -3,6 +3,7 @@ import importText from '../../action-creators/importText'
 import indent from '../../action-creators/indent'
 import moveThoughtDown from '../../action-creators/moveThoughtDown'
 import newThought from '../../action-creators/newThought'
+import undo from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { archiveThoughtActionCreator as archiveThought } from '../../reducers/archiveThought'
@@ -40,7 +41,11 @@ describe('undo', () => {
 
     executeShortcut(undoShortcut, { store })
 
-    expect(store.getActions()).toEqual([{ type: 'undoAction' }])
+    expect(store.getActions()).toEqual([
+      {
+        type: 'undo',
+      },
+    ])
   })
 
   it('does not dispatch an undo action if undo is disabled', () => {
@@ -66,7 +71,7 @@ describe('undo', () => {
       }),
       setCursor(['a']),
       editThought(['a'], 'aa'),
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const stateNew = store.getState()
@@ -106,7 +111,7 @@ describe('undo', () => {
     const prevState = store.getState()
     expect(prevState.undoPatches.length).toEqual(0)
 
-    store.dispatch({ type: 'undoAction' })
+    store.dispatch(undo())
 
     expect(store.getState()).toEqual(prevState)
   })
@@ -150,7 +155,7 @@ describe('undo', () => {
         - A
         - B`,
       }),
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -170,7 +175,7 @@ describe('undo', () => {
       editThought([''], 'b'),
       setCursor(['a']),
       editThought(['a'], 'aa'),
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const expectedCursor = [{ value: 'a', rank: 0 }]
@@ -186,12 +191,7 @@ describe('undo', () => {
     initialize()
     await timer.runAllAsync()
 
-    appStore.dispatch([
-      newThought({ value: 'a' }),
-      setCursor(['a']),
-      { type: 'archiveThought' },
-      { type: 'undoAction' },
-    ])
+    appStore.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
     await timer.runAllAsync()
 
     timer.useRealTimer()
@@ -222,7 +222,7 @@ describe('undo', () => {
       }),
       setCursor(['a']),
       newThought({ value: 'alpha', insertNewSubthought: true }),
-      { type: 'undoAction' },
+      undo(),
     ])
     await timer.runAllAsync()
 
@@ -260,8 +260,8 @@ describe('redo', () => {
       }),
       setCursor(['a']),
       editThought(['a'], 'aa'),
-      { type: 'undoAction' },
-      { type: 'redoAction' },
+      undo(),
+      { type: 'redo' },
     ])
 
     const stateNew = store.getState()
@@ -288,11 +288,11 @@ describe('redo', () => {
         - A
         - B`,
       }),
-      { type: 'undoAction' },
+      undo(),
     ])
 
     // redo thought change
-    store.dispatch({ type: 'redoAction' })
+    store.dispatch({ type: 'redo' })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
@@ -314,8 +314,8 @@ describe('redo', () => {
       }),
       editThought(['A'], 'Atlantic'),
       { type: 'newThought', value: 'New Jersey' },
-      { type: 'undoAction' },
-      { type: 'undoAction' },
+      undo(),
+      undo(),
     ])
 
     expect(store.getState().redoPatches.length).toEqual(2)
@@ -351,7 +351,7 @@ describe('grouping', () => {
       cursorDown(),
       setCursor(['a', 'b1']),
       // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const cursorAfterFirstUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
@@ -366,7 +366,7 @@ describe('grouping', () => {
 
     expect(exportedAfterFirstUndo).toEqual(expectedOutputAfterFirstUndo)
     // undo 'cursorBack' and 'editThought'
-    store.dispatch({ type: 'undoAction' })
+    store.dispatch(undo())
 
     const cursorAfterSecondUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
     expect(cursorAfterSecondUndo).toMatchObject([{ value: 'a' }, { value: 'b' }])
@@ -394,7 +394,7 @@ describe('grouping', () => {
       newThought({ value: 'd' }),
       editThought(['d'], 'd1', { rankInContext: 3 }),
       // undo thought change and preceding newThought action
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -418,7 +418,7 @@ describe('grouping', () => {
       }),
       editThought(['A'], 'Atlantic'),
       editThought(['Atlantic'], 'Atlantic City'),
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -446,7 +446,7 @@ describe('grouping', () => {
       // dispensible set cursor (which only updates datanonce)
       setCursor(null),
       // undo setCursor and thoughtChange in a sinle action
-      { type: 'undoAction' },
+      undo(),
     ])
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')

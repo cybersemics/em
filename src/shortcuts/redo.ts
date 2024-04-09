@@ -1,5 +1,6 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
+import redo from '../action-creators/redo'
 import RedoIcon from '../components/RedoIcon'
 import { alertActionCreator as alert } from '../reducers/alert'
 import getLatestActionType from '../util/getLastActionType'
@@ -20,7 +21,7 @@ const redoShortcut: Shortcut = {
   exec: (dispatch, getState) => {
     const lastActionType = getLatestActionType(getState().redoPatches)
 
-    dispatch({ type: 'redoAction' })
+    dispatch(redo())
 
     if (!lastActionType) return
 

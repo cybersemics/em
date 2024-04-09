@@ -295,13 +295,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
-      // Handle undoAction and redoAction.
+      // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /reducers.
-      if (actionType === 'undoAction' || actionType === 'redoAction') {
+      if (actionType === 'undo' || actionType === 'redo') {
         const undoOrRedoState =
-          actionType === 'undoAction'
+          actionType === 'undo'
             ? undoReducer(state, undoPatches)
-            : actionType === 'redoAction'
+            : actionType === 'redo'
               ? redoReducer(state, redoPatches)
               : null
 
