@@ -50,6 +50,7 @@ it('group contiguous navigation actions preceding a thought change on redo', () 
         - b
         - c`,
     }),
+    setCursor(['c']),
     { type: 'cursorUp' },
     { type: 'indent' },
     { type: 'cursorUp' },
