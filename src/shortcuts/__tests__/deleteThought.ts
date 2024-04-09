@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import importText from '../../action-creators/importText'
 import { HOME_TOKEN } from '../../constants'
@@ -8,23 +9,22 @@ import { getLexeme } from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import keyValueBy from '../../util/keyValueBy'
 
 const timer = testTimer()
 
-// Note: Since we are using intialize for these tests, we need to make sure to cleanup dbs, storage and window location.
+beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 /** Mount tests required for caret. */
 describe('mount', () => {
-  beforeEach(createTestApp)
-
   it('after deleteEmptyThought, caret should move to end of previous thought', async () => {
-    store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
-    jest.runOnlyPendingTimers()
+    await act(async () => {
+      store.dispatch([{ type: 'newThought', value: 'apple' }, { type: 'newThought' }, { type: 'deleteEmptyThought' }])
+    })
 
     // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
     // In this case, the selection is at the end of the apple element.
@@ -34,16 +34,17 @@ describe('mount', () => {
   })
 
   it('after merging siblings, caret should be in between', async () => {
-    store.dispatch([
-      importText({
-        text: `
+    await act(async () => {
+      store.dispatch([
+        importText({
+          text: `
           - apple
           - banana`,
-      }),
-      setCursor(['banana']),
-      { type: 'deleteEmptyThought' },
-    ])
-    jest.runOnlyPendingTimers()
+        }),
+        setCursor(['banana']),
+        { type: 'deleteEmptyThought' },
+      ])
+    })
 
     // Selection.focusOffset a number representing the offset of the selection's anchor within the focusNode. If focusNode is a text node, this is the number of characters within focusNode preceding the focus. If focusNode is an element, this is the number of chi,ld nodes of the focusNode preceding the focus.
     // In this case, the selection is in the applebanana text node, in between apple and banana.
