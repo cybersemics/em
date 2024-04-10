@@ -1,7 +1,6 @@
 import { HOME_TOKEN } from '../../constants'
 import collapseContext from '../../reducers/collapseContext'
 import cursorBack from '../../reducers/cursorBack'
-import cursorDown from '../../reducers/cursorDown'
 import cursorUp from '../../reducers/cursorUp'
 import importText from '../../reducers/importText'
 import newSubthought from '../../reducers/newSubthought'
@@ -143,8 +142,7 @@ describe('normal view', () => {
             - b
     `,
       }),
-      cursorDown,
-      cursorDown,
+      setCursor(['a', '']),
       collapseContext({}),
     ]
 

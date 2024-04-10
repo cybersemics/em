@@ -383,6 +383,7 @@ describe('sort', () => {
 
     const steps = [
       importText({ text }),
+      setCursor(null),
       newThought({ value: '', insertNewSubthought: true }),
       setCursor(['']),
       editThought([''], 'b'),

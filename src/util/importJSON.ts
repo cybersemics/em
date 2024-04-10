@@ -24,6 +24,7 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import timestamp from '../util/timestamp'
 import createId from './createId'
+import isRoot from './isRoot'
 import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
 
@@ -259,8 +260,14 @@ const importJSON = (
 
   // get the last child imported in the first level so the cursor can be set
   const parent = thoughtIndex[parentId]
+
+  // When importing directly into the root, pathParent and importPath will be the same (confusingly).
+  // In this case, do not double count the root subthoughts, as they are already counted in blocksNormalized.
+  // (Currently this is not possible in the app, but it is possible in the test suite, and the behavior should be consistent.)
   const lastChildIndex =
-    (parent && !destEmpty ? Object.values(parent.childrenMap).length : 0) + blocksNormalized.length - 1
+    (parent && !destEmpty && !isRoot(importPath) ? Object.values(parent.childrenMap).length : 0) +
+    blocksNormalized.length -
+    1
   const importId = head(importPath)
   const lastChildFirstLevel =
     thoughtIndex[importId] && Object.values(thoughtIndex[importId].childrenMap)[lastChildIndex]

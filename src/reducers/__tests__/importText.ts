@@ -444,6 +444,19 @@ it('set cursor to last imported subthought at first level', () => {
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'y'])!)
 })
 
+it('set cursor to last imported subthought in the root', () => {
+  const text = `
+    - a
+    - b
+    - c
+  `
+
+  // import directly into the root
+  const stateNew = reducerFlow([importText({ text })])(initialState())
+
+  expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['c'])!)
+})
+
 it('do not move cursor when importing only meta attributes', () => {
   const paste = `
     - =style
