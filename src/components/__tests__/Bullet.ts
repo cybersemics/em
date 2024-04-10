@@ -6,6 +6,7 @@ import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
 import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -14,8 +15,8 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 describe('render', () => {
-  it('render a bullet next to each thought', () => {
-    store.dispatch([
+  it('render a bullet next to each thought', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -29,8 +30,8 @@ describe('render', () => {
     expect(bullets.length).toBe(3)
   })
 
-  it('do not render a bullet with =bullet/None', () => {
-    store.dispatch([
+  it('do not render a bullet with =bullet/None', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -46,8 +47,8 @@ describe('render', () => {
     expect(bullets.length).toBe(0)
   })
 
-  it('do not render bullets on a child of a thought with =children/=bullet/None', () => {
-    store.dispatch([
+  it('do not render bullets on a child of a thought with =children/=bullet/None', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -68,8 +69,8 @@ describe('render', () => {
 
   // this is in contrast to how =children/=style works
   // it seems visually disruptive to have inconsistent bullets within a context
-  it('do not render bullet of =children itself since it is one of the children', () => {
-    store.dispatch([
+  it('do not render bullet of =children itself since it is one of the children', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -86,8 +87,8 @@ describe('render', () => {
     expect(bullets.length).toBe(3)
   })
 
-  it('do not render bullets on a grandchild of a thought with =grandchildren/=bullet/None', () => {
-    store.dispatch([
+  it('do not render bullets on a grandchild of a thought with =grandchildren/=bullet/None', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -109,8 +110,8 @@ describe('render', () => {
   })
 
   // in contrast to =children/=bullet, =grandchildren/=bullet does not naturally apply to =grandchildren, so we need to prevent the normal behavior of =bullet being applied to its parent
-  it('render bullet of =grandchildren itself', () => {
-    store.dispatch([
+  it('render bullet of =grandchildren itself', async () => {
+    await dispatch([
       importText({
         text: `
         - a
@@ -130,7 +131,7 @@ describe('render', () => {
 // TODO: findSubthoughts is broken after LayoutTree
 describe.skip('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
@@ -151,7 +152,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - x
@@ -173,7 +174,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping an expanded root thought bullet should set the cursor to null', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
@@ -193,7 +194,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping on a collapsed non-cursor bullet should move the cursor to that thought', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
@@ -213,7 +214,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping on a pinned thought should unpin it', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
@@ -241,7 +242,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping on an expanded only child should unpin it', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
@@ -265,7 +266,7 @@ describe.skip('expansion', () => {
   })
 
   it('tapping on a thought expanded by =children should unpin it', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - a
