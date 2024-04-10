@@ -1,22 +1,19 @@
-import userEvent from '@testing-library/user-event'
 import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('Set the text color using the ColorPicker', async () => {
-  store.dispatch([newThought({ value: 'a' })])
-
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textBlue = document.querySelector('[aria-label="text color swatches"] [aria-label="blue"]')!
-  userEvent.click(textBlue)
+  await dispatch([newThought({ value: 'a' })])
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -31,7 +28,7 @@ it('Set the text color using the ColorPicker', async () => {
 })
 
 it('Set the text color from another color using the ColorPicker', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -42,11 +39,8 @@ it('Set the text color from another color using the ColorPicker', async () => {
     }),
   ])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textBlue = document.querySelector('[aria-label="text color swatches"] [aria-label="red"]')!
-  userEvent.click(textBlue)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -61,13 +55,10 @@ it('Set the text color from another color using the ColorPicker', async () => {
 })
 
 it('Set the background color using the ColorPicker', async () => {
-  store.dispatch([newThought({ value: 'a' })])
+  await dispatch([newThought({ value: 'a' })])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textBlue = document.querySelector('[aria-label="background color swatches"] [aria-label="blue"]')!
-  userEvent.click(textBlue)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="blue"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -81,13 +72,10 @@ it('Set the background color using the ColorPicker', async () => {
 })
 
 it('Set the background color to the theme inverse color', async () => {
-  store.dispatch([newThought({ value: 'a' })])
+  await dispatch([newThought({ value: 'a' })])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textBlue = document.querySelector('[aria-label="background color swatches"] [aria-label="inverse"]')!
-  userEvent.click(textBlue)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="inverse"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -101,7 +89,7 @@ it('Set the background color to the theme inverse color', async () => {
 })
 
 it('Clear the text color when selecting white', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -112,11 +100,8 @@ it('Clear the text color when selecting white', async () => {
     }),
   ])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textWhite = document.querySelector('[aria-label="text color swatches"] [aria-label="default"]')!
-  userEvent.click(textWhite)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="default"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -124,7 +109,7 @@ it('Clear the text color when selecting white', async () => {
 })
 
 it('Clear background color when selecting text color', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -138,11 +123,8 @@ it('Clear background color when selecting text color', async () => {
     }),
   ])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textRed = document.querySelector('[aria-label="text color swatches"] [aria-label="red"]')!
-  userEvent.click(textRed)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="red"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -157,7 +139,7 @@ it('Clear background color when selecting text color', async () => {
 })
 
 it('Change color to black when setting background color', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -168,11 +150,8 @@ it('Change color to black when setting background color', async () => {
     }),
   ])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textRed = document.querySelector('[aria-label="background color swatches"] [aria-label="red"]')!
-  userEvent.click(textRed)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -186,7 +165,7 @@ it('Change color to black when setting background color', async () => {
 })
 
 it('Preserve other bullet attributes and styles when clearing text color', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -204,11 +183,8 @@ it('Preserve other bullet attributes and styles when clearing text color', async
     }),
   ])
 
-  const textColorButton = document.querySelector('.toolbar-icon[aria-label="Text Color"]')!
-  userEvent.click(textColorButton)
-
-  const textBlue = document.querySelector('[aria-label="text color swatches"] [aria-label="default"]')!
-  userEvent.click(textBlue)
+  await click('.toolbar-icon[aria-label="Text Color"]')
+  await click('[aria-label="text color swatches"] [aria-label="default"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
