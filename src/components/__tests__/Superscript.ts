@@ -1,14 +1,14 @@
 import { screen } from '@testing-library/dom'
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughtsActionCreator from '../../action-creators/toggleHiddenThoughts'
-import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('Superscript should count all the contexts in which it is defined.', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -28,7 +28,7 @@ it('Superscript should count all the contexts in which it is defined.', async ()
 })
 
 it('Superscript should not render on thoughts in a single context', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -42,7 +42,7 @@ it('Superscript should not render on thoughts in a single context', async () => 
 })
 
 it('Superscript should not render on empty thoughts', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -59,7 +59,7 @@ it('Superscript should not render on empty thoughts', async () => {
 // Showing archived descendants is unavoidable since we do not have the full path of unloaded contexts
 // See: isVisibleContext
 it.skip('Superscript should not count archived contexts', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -80,7 +80,7 @@ it.skip('Superscript should not count archived contexts', async () => {
 })
 
 it('Superscript should not render on thoughts that match EM descendants', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - on
@@ -92,7 +92,7 @@ it('Superscript should not render on thoughts that match EM descendants', async 
 })
 
 it('Superscript should not render on punctuation-only thoughts', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -129,7 +129,7 @@ it('Superscript should not render on punctuation-only thoughts', async () => {
 })
 
 it('Superscript should not render on punctuation-only thoughts with HTML', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -144,7 +144,7 @@ it('Superscript should not render on punctuation-only thoughts with HTML', async
 })
 
 it('Superscript should not count for hashed version of metaprogramming attributes like =archive | archive', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
       - a
