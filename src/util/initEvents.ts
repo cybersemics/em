@@ -357,7 +357,7 @@ const initEvents = (store: Store<State, any>) => {
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
 const onError = (e: any) => {
-  console.error({ message: e.message, code: e.code, 'error.code': (error as any).code, errors: e.errors })
+  console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)
   }
