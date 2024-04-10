@@ -2,15 +2,15 @@ import { screen } from '@testing-library/dom'
 import SimplePath from '../../@types/SimplePath'
 import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
-import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('basic note', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
       - a
@@ -26,7 +26,7 @@ it('basic note', async () => {
 })
 
 it('re-render note when =note subthought value changes', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
       - a
@@ -52,7 +52,7 @@ it('re-render note when =note subthought value changes', async () => {
 })
 
 it('render note when subthought is edited from non-attribute', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
       - a
@@ -78,7 +78,7 @@ it('render note when subthought is edited from non-attribute', async () => {
 })
 
 it('render note when subthought is edited from non-note attribute', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
       - a
