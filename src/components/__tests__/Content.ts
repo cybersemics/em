@@ -1,24 +1,16 @@
-import { ReactWrapper } from 'enzyme'
-import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import importText from '../../action-creators/importText'
-import contextToPath from '../../selectors/contextToPath'
-import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-import EmptyThoughtspace from '../EmptyThoughtspace'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 
-let wrapper: ReactWrapper<unknown, unknown>
-
-beforeEach(async () => {
-  wrapper = await createTestApp()
-})
-
+beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('show EmptyThoughtspace when there are no visible thoughts in the root context', () => {
-  // EmptyThoughtspace should be visible when there are no thoughts
-  expect(wrapper.find(EmptyThoughtspace)).toHaveLength(1)
+it('render EmptyThoughtspace when there are no thoughts in the root context', async () => {
+  expect(document.querySelector('.empty-thoughtspace')).toBeTruthy()
+})
 
-  store.dispatch(
+it('do not render EmptyThoughtspace when there are thoughts in the root context', async () => {
+  await dispatch(
     importText({
       text: `
       - a
@@ -28,28 +20,17 @@ it('show EmptyThoughtspace when there are no visible thoughts in the root contex
     }),
   )
 
-  wrapper.update()
+  expect(document.querySelector('.empty-thoughtspace')).toBeNull()
+})
 
-  // EmptyThoughtspace should not be visible when there is at least one visible thought
-  expect(wrapper.find(EmptyThoughtspace)).toHaveLength(0)
-
-  store.dispatch(
-    deleteThoughtWithCursor({
-      path: contextToPath(store.getState(), ['b'])!,
+it('render EmptyThoughtspace when there are only invisible thoughts in the root context', async () => {
+  await dispatch(
+    importText({
+      text: `
+      - =test
+    `,
     }),
   )
 
-  // still has one visible thought
-  expect(wrapper.find(EmptyThoughtspace)).toHaveLength(0)
-
-  store.dispatch(
-    deleteThoughtWithCursor({
-      path: contextToPath(store.getState(), ['b'])!,
-    }),
-  )
-
-  wrapper.update()
-
-  // There are no visible thoughts
-  expect(wrapper.find(EmptyThoughtspace)).toHaveLength(1)
+  expect(document.querySelector('.empty-thoughtspace')).toBeTruthy()
 })
