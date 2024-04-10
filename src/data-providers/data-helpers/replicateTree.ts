@@ -55,7 +55,7 @@ const replicateTree = (
           const startThought = await replicateThought(id, { background: true, remote })
 
           if (!startThought) {
-            throw new Error('Missing startThought: ' + id)
+            throw new Error(`Thought ${id} not replicated. Either replication is broken or this is a timing issue.`)
           }
 
           thoughtIndexAccum[id] = startThought
