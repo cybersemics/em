@@ -52,9 +52,14 @@ const replicateTree = (
       // replicate the starting thought individually (should already be cached)
       {
         function: async () => {
-          const startThought = await replicateThought(id, { background: true, remote })!
-          thoughtIndexAccum[id] = startThought!
-          onThought?.(startThought!, thoughtIndexAccum)
+          const startThought = await replicateThought(id, { background: true, remote })
+
+          if (!startThought) {
+            throw new Error('Missing startThought: ' + id)
+          }
+
+          thoughtIndexAccum[id] = startThought
+          onThought?.(startThought, thoughtIndexAccum)
         },
         description: `replicateTree: ${id} (starting thought)`,
       },
