@@ -1,9 +1,10 @@
 import _ from 'lodash'
+import { isTouch } from '../browser'
 import reactMinistore from './react-ministore'
 
 // take a guess at the height of the virtual keyboard until we can measure it directly
-let virtualKeyboardHeightPortrait = window.innerHeight / 2.275
-let virtualKeyboardHeightLandscape = window.innerWidth / 1.75
+let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
+let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
 /** A store that tracks the viewport dimensions, including the nontrival virtual keyboard height. */
 const viewportStore = reactMinistore({
