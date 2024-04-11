@@ -166,19 +166,114 @@ describe('normal view', () => {
     - d
     - e`)
     })
+
+    it('do not sort empty subthought', () => {
+      const text = `
+        - a
+          - =sort
+            - Alphabetical
+          - b
+          - c
+      `
+      const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: '' })]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+      expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+    - ${''}`)
+    })
+
+    it('do not sort empty subthought inserted at beginning', () => {
+      const text = `
+        - a
+          - =sort
+            - Alphabetical
+          - b
+          - c
+      `
+
+      const steps = [
+        importText({ text }),
+        setCursor(['a']),
+        newThought({ insertBefore: true, insertNewSubthought: true, value: '' }),
+      ]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+      expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - ${''}
+    - b
+    - c`)
+    })
+
+    it('do not sort empty subthought inserted after a sibling', () => {
+      const text = `
+        - a
+          - =sort
+            - Alphabetical
+          - b
+          - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'b']), newThought({ value: '' })]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+      expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - ${''}
+    - c`)
+    })
+
+    it('do not sort empty subthought inserted before a sibling', () => {
+      const text = `
+        - a
+          - =sort
+            - Alphabetical
+          - b
+          - c
+      `
+
+      const steps = [importText({ text }), setCursor(['a', 'c']), newThought({ value: '', insertBefore: true })]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+      expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - ${''}
+    - c`)
+    })
   })
 })
 
 describe('context view', () => {
   it('new subthought on a context view adds the thought to a new context in the absolute context', () => {
     const text = `
-        - a
-          - m
-            - x
-        - b
-          - m
-            - y
-      `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
     const steps = [
       importText({ text }),
       setCursor(['a', 'm']),
