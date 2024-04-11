@@ -10,12 +10,12 @@ import db from '../../data-providers/yjs/thoughtspace'
 import { clearActionCreator as clear } from '../../reducers/clear'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createRtlTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
+import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
-import runDispatch from '../../test-helpers/runDispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 import sleep from '../../util/sleep'
@@ -47,7 +47,7 @@ it('disable isLoading after initialize', async () => {
 // y-indexeddb breaks tests
 it.skip('load thought', async () => {
   // create a thought, which will get persisted to local db
-  await runDispatch(newThought({ value: 'a' }))
+  await dispatch(newThought({ value: 'a' }))
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
 
@@ -57,7 +57,7 @@ it.skip('load thought', async () => {
   })
 
   // clear state
-  await runDispatch(clear())
+  await dispatch(clear())
 
   const children = getAllChildrenByContext(store.getState(), [HOME_TOKEN])
   expect(children).toHaveLength(0)
@@ -77,7 +77,7 @@ it.skip('load thought', async () => {
 })
 
 it('do not repopulate deleted thought', async () => {
-  await runDispatch([
+  await dispatch([
     newThought({}),
     deleteThoughtAtFirstMatchActionCreator(['']),
     // Need to setCursor to trigger the pullQueue
@@ -97,7 +97,7 @@ it('do not repopulate deleted thought', async () => {
 
 // y-indexeddb breaks tests
 it.skip('load buffered thoughts', async () => {
-  await runDispatch(
+  await dispatch(
     importText({
       text: `
       - a
@@ -137,7 +137,7 @@ it.skip('load buffered thoughts', async () => {
 
 // y-indexeddb breaks tests
 it.skip('delete thought with buffered descendants', async () => {
-  await runDispatch([
+  await dispatch([
     importText({
       text: `
         - x
@@ -163,7 +163,7 @@ it.skip('delete thought with buffered descendants', async () => {
   fakeTimer.useFakeTimer()
 
   // delete thought with buffered descendants
-  runDispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
+  dispatch(deleteThoughtAtFirstMatchActionCreator(['a']))
   await fakeTimer.runAllAsync()
 
   fakeTimer.useRealTimer()
@@ -181,7 +181,7 @@ it.skip('move thought with buffered descendants', async () => {
   // There is a timing issue that causes an error "root.setTimeout is not defined" and sometimes causes the test runner to crash when running multiple tests. Only occurring with yjs schema v2. For some reason, delay(0) here seems to fix it.
   await sleep(0)
 
-  await runDispatch([
+  await dispatch([
     importText({
       text: `
         - x
@@ -219,7 +219,7 @@ it.skip('move thought with buffered descendants', async () => {
   await refreshTestApp()
 
   // delete thought with buffered descendants
-  await runDispatch(
+  await dispatch(
     moveThoughtAtFirstMatchActionCreator({
       from: ['a'],
       to: ['x', 'a'],
@@ -244,7 +244,7 @@ it.skip('move thought with buffered descendants', async () => {
 
 // y-indexeddb breaks tests
 it.skip('edit thought with buffered descendants', async () => {
-  await runDispatch([
+  await dispatch([
     importText({
       text: `
         - x
@@ -270,7 +270,7 @@ it.skip('edit thought with buffered descendants', async () => {
   await refreshTestApp()
 
   // edit thought with buffered descendants
-  await runDispatch(editThought(['a'], 'k'))
+  await dispatch(editThought(['a'], 'k'))
 
   await matchContextsChildren(db, [HOME_TOKEN], [{ value: 'x' }, { value: 'k' }])
   expect(await getContext(db, ['a'])).toBeFalsy()

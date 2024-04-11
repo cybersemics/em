@@ -83,4 +83,12 @@ export const cleanupTestApp = async () => {
   })
 }
 
+/** Refresh the test app. */
+export const refreshTestApp = async () => {
+  await act(async () => {
+    await store.dispatch(clear())
+    await initialize()
+  })
+}
+
 export default createTestApp
