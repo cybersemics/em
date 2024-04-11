@@ -1416,8 +1416,9 @@ export const pauseReplication = async () => {
 
 /** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. */
 export const startReplication = async () => {
-  const { replication } = await config
-  replication.start()
+  // Disable replication controller as part of winding down YJS
+  // const { replication } = await config
+  // replication.start()
 }
 
 const db: DataProvider = {
