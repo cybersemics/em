@@ -101,6 +101,29 @@ describe('normal view', () => {
   })
 
   describe('sorted', () => {
+    it('sort new thought in sorted root', () => {
+      const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - b
+    - c
+  `
+      const steps = [importText({ text }), setCursor(['c']), newThought({ value: 'e' }), newThought({ value: 'd' })]
+
+      const stateNew = reducerFlow(steps)(initialState())
+
+      const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+      expect(exportedRoot).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - a
+  - b
+  - c
+  - d
+  - e`)
+    })
+
     it('new subthought at beginning of sorted context', () => {
       const text = `
         - a

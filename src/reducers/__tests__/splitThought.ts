@@ -93,7 +93,7 @@ it('cursor moves to second thought', () => {
   expect(cursorThoughts).toMatchObject([{ value: 'ple', rank: 1 }])
 })
 
-it('move children to the new sibling even when the context is sorted and the new sibling is not the next sibling', () => {
+it('move children to the correct sibling in a sorted context', () => {
   const steps = [
     importText({
       text: `
@@ -126,9 +126,9 @@ it('move children to the new sibling even when the context is sorted and the new
       - Alphabetical
         - Asc
     - Baton
+    - New Orleans
     - Rouge
       - A
       - B
-      - C
-    - New Orleans`)
+      - C`)
 })

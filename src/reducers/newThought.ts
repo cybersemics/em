@@ -101,7 +101,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const simplePath = simplifyPath(state, path)
 
   const parentPath = rootedParentOf(state, simplePath)
-  const thoughtId = head(simplePath)
+  const insertPath = insertNewSubthought ? simplePath : parentPath
+  const insertId = head(insertPath)
 
   // TODO: Disable =readonly during resumable import.
   // prevent adding Subthought to readonly or unextendable Thought
@@ -124,7 +125,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
   const getLastSortedChildPath = once((): SimplePath | null => {
-    const lastChild = _.last(getChildrenSorted(state, thoughtId))
+    const lastChild = _.last(getChildrenSorted(state, head(simplePath)))
     return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
@@ -132,18 +133,18 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   // if shift key is pressed, insert the child before the current thought
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
-    : value !== '' && getSortPreference(state, thoughtId).type === 'Alphabetical'
-      ? getSortedRank(state, thoughtId, value)
+    : value !== '' && getSortPreference(state, insertId).type === 'Alphabetical'
+      ? getSortedRank(state, insertId, value)
       : insertBefore
         ? insertNewSubthought || !simplePath || isRoot(simplePath)
-          ? getPrevRank(state, thoughtId, { aboveMeta })
+          ? getPrevRank(state, insertId, { aboveMeta })
           : getRankBefore(state, simplePath)
         : insertNewSubthought || !simplePath
           ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
             // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
-            value === '' && getSortPreference(state, thoughtId).type === 'Alphabetical' && getLastSortedChildPath()
+            value === '' && getSortPreference(state, insertId).type === 'Alphabetical' && getLastSortedChildPath()
             ? getRankAfter(state, getLastSortedChildPath()!)
-            : getNextRank(state, thoughtId)
+            : getNextRank(state, insertId)
           : getRankAfter(state, simplePath)
 
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
