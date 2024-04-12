@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import { Browser, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
@@ -22,7 +23,22 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
+
   page.on('dialog', async dialog => dialog.accept())
+
+  // forward console.logs to test logs
+  page.on('console', log => {
+    const messageType = log.type()
+
+    // console.error logs the stack trace, but it's useless if the error originated in the Page context.
+    // Therefore, just log info in red to avoid the noise.
+    if (messageType === 'error') {
+      console.info(chalk.red(log.text()))
+    } else {
+      const c = console
+      c[messageType](log.text())
+    }
+  })
 
   await page.goto(url)
 
