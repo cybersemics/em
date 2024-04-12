@@ -1,7 +1,6 @@
 import { Browser, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
-import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 
 export interface InitPageOptions {
   puppeteerBrowser?: Browser
@@ -10,19 +9,7 @@ export interface InitPageOptions {
   emulatedDevice?: Device
 }
 
-/**
- * Skip tutorial screen.
- */
-const skipTutorialScreen = async (page: Page) => {
-  await waitForContextHasChildWithValue(page, ['__EM__', 'Settings', 'Tutorial'], 'On')
-  await page.waitForSelector('#skip-tutorial')
-  await page.evaluate(() => document.getElementById('skip-tutorial')?.click())
-  await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
-}
-
-/**
- * Create a new incognito context and page.
- */
+/** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
   puppeteerBrowser = browser,
   url = 'http://localhost:3000',
@@ -40,7 +27,9 @@ const setup = async ({
   await page.goto(url)
 
   if (skipTutorial) {
-    await skipTutorialScreen(page)
+    await page.waitForSelector('#skip-tutorial')
+    await page.click('#skip-tutorial')
+    await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
 
   // wait for YJS to give up connecting to WebsocketProvider

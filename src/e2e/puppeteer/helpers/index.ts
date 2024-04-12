@@ -71,7 +71,9 @@ const index = <T extends any[]>(...setupArgs: T) => {
   })
 
   afterEach(async () => {
-    await pageRef.current!.browserContext().close()
+    if (pageRef.current) {
+      await pageRef.current.browserContext().close()
+    }
   })
 
   return index as typeof index & {
