@@ -43,8 +43,15 @@ const setup = async ({
   await page.goto(url)
 
   if (skipTutorial) {
+    // wait for welcome modal to appear
     await page.waitForSelector('#skip-tutorial')
-    await page.click('#skip-tutorial')
+
+    // click the skip tutorial link
+    // tap for mobile devices, since fastClick uses touch events
+    const isMobile = emulatedDevice?.name.startsWith?.('iPhone')
+    await page[isMobile ? 'tap' : 'click']('#skip-tutorial')
+
+    // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))
   }
 
