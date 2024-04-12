@@ -14,7 +14,7 @@ const clickBullet = async (page: Page, value: string) => {
 
     if (!thoughtContainer) return
 
-    return thoughtContainer.querySelector(':scope > .bullet .glyph')
+    return thoughtContainer.querySelector(':scope > .bullet')
   }, editableNode)
 
   if (!bulletNode) throw new Error('Bullet node not found.')
