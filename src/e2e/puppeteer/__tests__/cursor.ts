@@ -1,12 +1,13 @@
 /**
  * @jest-environment ./src/e2e/puppeteer-environment.js
  */
+import { LAYOUT_NODE_ANIMATION_DURATION } from '../../../constants'
+import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
 jest.setTimeout(20000)
 
-const { paste, getEditingText, refresh, waitForEditable, waitForThoughtExistInDb, waitForState, clickThought, press } =
-  helpers()
+const { paste, getEditingText, refresh, waitForEditable, clickThought, press } = helpers()
 
 it('set the cursor to a thought in the home context on load', async () => {
   const importText = `
@@ -16,9 +17,6 @@ it('set the cursor to a thought in the home context on load', async () => {
   await waitForEditable('b')
   await clickThought('b')
 
-  await waitForState('isPushing', false)
-  await waitForThoughtExistInDb('b')
-  await waitForThoughtExistInDb('a')
   await refresh()
 
   await waitForEditable('b')
@@ -26,7 +24,7 @@ it('set the cursor to a thought in the home context on load', async () => {
   // wait for a re-render in case the lexeme was loaded after the parent
   // getEditingText will return undefined if we don't wait
   // we don't currently have a way to tell if a lexeme is missing or just loading
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('b')
@@ -45,11 +43,6 @@ it('set the cursor on a subthought on load', async () => {
   await waitForEditable('z')
   await clickThought('z')
 
-  await waitForState('isPushing', false)
-  await waitForThoughtExistInDb('b')
-  await waitForThoughtExistInDb('z')
-  await waitForThoughtExistInDb('a')
-
   await refresh()
 
   await waitForEditable('z')
@@ -57,7 +50,7 @@ it('set the cursor on a subthought on load', async () => {
   // wait for a re-render in case the lexeme was loaded after the parent
   // getEditingText will return undefined if we don't wait
   // we don't currently have a way to tell if a lexeme is missing or just loading
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('z')
@@ -118,9 +111,15 @@ it('do nothing when clicking on a hidden great uncle', async () => {
       - c
   - d`
   await paste(importText)
+
+  // click a to expand b and c
   await waitForEditable('a')
   await clickThought('a')
+
+  // click c to hide d
+  // for some reason we need to sleep before clicking c, otherwise the cursor is moved to d
   await waitForEditable('c')
+  await sleep(LAYOUT_NODE_ANIMATION_DURATION)
   await clickThought('c')
   await clickThought('d')
 
