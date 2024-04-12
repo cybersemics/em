@@ -19,7 +19,6 @@ import screenshot from './screenshot'
 import scroll from './scroll'
 import setup from './setup'
 import type from './type'
-import waitForAlert from './waitForAlert'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import waitForEditable from './waitForEditable'
 import waitForHiddenEditable from './waitForHiddenEditable'
@@ -52,7 +51,6 @@ const helpers = {
   screenshot,
   scroll,
   type,
-  waitForAlert,
   waitForContextHasChildWithValue,
   waitForEditable,
   waitUntil,
