@@ -21,8 +21,8 @@ it('load buffered ancestors of contexts when context view is activated', async (
   await waitForEditable('m')
   await clickThought('m')
 
-  await waitForThoughtExistInDb('m')
-  await waitForThoughtExistInDb('a')
+  await Promise.all([waitForThoughtExistInDb('m'), waitForThoughtExistInDb('a')])
+
   await refresh()
 
   await waitForEditable('m')
