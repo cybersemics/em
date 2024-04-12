@@ -19,9 +19,17 @@ const click = async (
   nodeHandleOrSelector: JSHandle | string,
   { edge = 'left', offset, x = 0, y = 0 }: Options = {},
 ) => {
-  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click
+  const isMobile = page.viewport()?.isMobile
+
+  if (isMobile && (offset || x || y)) {
+    throw new Error(
+      'page.tap does not accept x,y coordinates, so the offset, x, and y options are not supported in mobile emulation mode.',
+    )
+  }
+
+  // if nodeHandleOrSelector is a selector and there is no text offset or x,y offset, simply call page.click or page.tap
   if (typeof nodeHandleOrSelector === 'string' && !offset && !x && !y) {
-    return page.click(nodeHandleOrSelector)
+    return page[isMobile ? 'tap' : 'click'](nodeHandleOrSelector)
   }
 
   // otherwise if nodeHandleOrSelector is a selector, fetch the node handle
