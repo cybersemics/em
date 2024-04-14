@@ -4,7 +4,6 @@ module.exports = {
     es6: true,
     mocha: true,
     jest: true,
-    'react-native/react-native': true,
   },
   extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
   overrides: [
@@ -82,7 +81,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['export-default-identifier', 'jsdoc', 'react', 'react-native', 'prettier'],
+  plugins: ['export-default-identifier', 'jsdoc', 'react', 'prettier'],
   settings: {
     react: {
       version: 'detect',

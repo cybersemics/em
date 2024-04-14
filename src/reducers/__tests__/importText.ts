@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import 'react-native-get-random-values'
 import State from '../../@types/State'
 import { ABSOLUTE_TOKEN, EMPTY_SPACE, EM_TOKEN, HOME_TOKEN } from '../../constants'
 import importText, { ImportTextPayload } from '../../reducers/importText'

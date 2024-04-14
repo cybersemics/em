@@ -12,10 +12,6 @@ module.exports = (explicit, implicit, path) => {
   // make index.js files root modules (e.g. action-creators.index.js => action-creators)
   if (path.includes('index.js') || path.includes('index.ts')) return implicit
 
-  // ignore native modules otherwise typedoc crashes
-  // https://github.com/christopherthielen/typedoc-plugin-external-module-name/issues/682
-  if (path.includes('.native.')) return
-
   // check for files which are placed in subdirectories of src
   if (implicit !== '.') {
     const matches = path.match(RegExp(`${implicit}/.*`))

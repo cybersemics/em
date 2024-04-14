@@ -1,6 +1,5 @@
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 import { Capacitor } from '@capacitor/core'
-import 'react-native-get-random-values'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 

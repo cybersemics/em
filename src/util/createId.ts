@@ -1,5 +1,4 @@
 import { nanoid } from 'nanoid'
-import 'react-native-get-random-values'
 import ThoughtId from '../@types/ThoughtId'
 import globals from '../globals'
 

@@ -430,10 +430,6 @@ a.text-link {
   padding-top: 500px;
 }
 
-.native .toolbar-container {
-  top: var(--safe-area-top) !important;
-}
-
 .toolbar {
   max-width: 100%;
   position: relative;
@@ -641,11 +637,6 @@ a.text-link {
 /* TODO: Safari only? */
 .mobile .child .editable {
   margin-top: -2px;
-}
-
-/*  */
-.native {
-  padding-top: var(--safe-area-top);
 }
 
 /* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is used instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. Increase specificity to override ".mobiile .child .editable". */
@@ -860,10 +851,6 @@ body.dark {
   text-align: center;
   z-index: var(--z-index-popup);
   word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
-}
-
-.native .popup {
-  top: var(--safe-area-top) !important;
 }
 
 .status {
@@ -1711,10 +1698,6 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.native .popup-close-x {
-  top: var(--safe-area-top);
-}
-
 .status-close-x {
   font-size: 16px;
   top: 0;
@@ -2342,10 +2325,6 @@ code,
 .hamburger-menu,
 .hamburger-menu * {
   user-select: none;
-}
-
-.native .hamburger-menu {
-  top: var(--safe-area-top) !important;
 }
 
 .hamburger-menu > div > span {
