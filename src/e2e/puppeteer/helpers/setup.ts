@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { Browser, Device, Page } from 'puppeteer'
+import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
 
@@ -26,17 +26,28 @@ const setup = async ({
 
   page.on('dialog', async dialog => dialog.accept())
 
-  // forward console.logs to test logs
-  page.on('console', log => {
-    const messageType = log.type()
+  // forward puppeteer logs to console logs
+  page.on('console', (message: ConsoleMessage): void => {
+    const messageType = message.type()
+    const text = message.text()
 
-    // console.error logs the stack trace, but it's useless if the error originated in the Page context.
-    // Therefore, just log info in red to avoid the noise.
-    if (messageType === 'error') {
-      console.info(chalk.red(log.text()))
-    } else {
-      const c = console
-      c[messageType](log.text())
+    switch (messageType) {
+      // console.error logs the stack trace, but it's useless if the error originated in the Page context.
+      // Therefore, just log info in red to avoid the noise.
+      case 'error':
+        console.info(chalk.red(text))
+        break
+      case 'info':
+      case 'log':
+        // eslint-disable-next-line no-console
+        console[messageType](text)
+        break
+      // ConsoleMessage 'warning needs to be converted to native console 'warn'
+      case 'warning':
+        console.warn(text)
+        break
+      default:
+        break
     }
   })
 
