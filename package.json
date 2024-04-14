@@ -89,7 +89,7 @@
     "html-escaper": "^3.0.3",
     "idb-keyval": "^6.2.0",
     "immer": "^9.0.5",
-    "indexeddbshim": "^7.1.0",
+    "indexeddbshim": "^13.0.0",
     "ipfs-http-client": "^43.0.1",
     "lodash": "^4.17.21",
     "moize": "^6.0.3",
