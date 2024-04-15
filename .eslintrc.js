@@ -5,7 +5,15 @@ module.exports = {
     mocha: true,
     jest: true,
   },
-  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
+  extends: [
+    'standard',
+    // provided by eslint-config-react-app
+    'react-app',
+    'plugin:react/recommended',
+    'plugin:import/typescript',
+    'raine',
+    'prettier',
+  ],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],
