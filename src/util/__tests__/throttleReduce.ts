@@ -112,69 +112,70 @@ it('asynchronous: trailing edge only', async () => {
     calls++
     output = [...output, ...values]
   }
-  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 103, { leading: false })
+  const g = throttleReduce<number, number[], void>(f, append, [] as number[], 500, { leading: false })
 
-  // Call the throttled function every 10 ms, completing in 100 ms.
+  // Call the throttled function every 100 ms, completing in 1000 ms.
+  // NOTE: Sleeping less (e.g. 20ms) works locally but results in timing issues when run in the GitHub Action workflow.
 
   // The 1st call is suppressed
   g(0)
   expect(calls).toBe(0)
   expect(output).toEqual([])
-  await sleep(20)
+  await sleep(100)
 
-  // The 2nd call is suppressed (10ms)
+  // The 2nd call is suppressed (100ms)
   g(1)
   expect(calls).toBe(0)
   expect(output).toEqual([])
-  await sleep(20)
+  await sleep(100)
 
-  // The 3rd call is suppressed (30ms)
+  // The 3rd call is suppressed (200ms)
   g(2)
   expect(calls).toBe(0)
   expect(output).toEqual([])
-  await sleep(20)
+  await sleep(100)
 
-  // The 4th call is suppressed (40ms)
+  // The 4th call is suppressed (300ms)
   g(3)
   expect(calls).toBe(0)
   expect(output).toEqual([])
-  await sleep(20)
+  await sleep(100)
 
-  // The 5th call is suppressed (40ms)
+  // The 5th call is suppressed (400ms)
   g(4)
   expect(calls).toBe(0)
   expect(output).toEqual([])
-  await sleep(20)
+  await sleep(100)
 
-  // The 6th call is triggered (50ms)
+  // The 6th call is triggered (500ms)
   g(5)
   expect(calls).toBe(1)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(20)
+  await sleep(100)
 
-  // The 7th call is suppressed (60ms)
+  // The 7th call is suppressed (600ms)
   g(6)
   expect(calls).toBe(1)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(20)
+  await sleep(100)
 
-  // The 8th call is suppressed (70ms)
+  // The 8th call is suppressed (700ms)
   g(7)
   expect(calls).toBe(1)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(20)
+  await sleep(100)
 
-  // The 9th call is suppressed (80ms)
+  // The 9th call is suppressed (800ms)
   g(8)
   expect(calls).toBe(1)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(20)
+  await sleep(100)
 
-  // The 10th call is suppressed (90ms)
+  // The 10th call is suppressed (900ms)
   g(9)
   expect(calls).toBe(1)
   expect(output).toEqual([0, 1, 2, 3, 4])
-  await sleep(20)
+  await sleep(100)
 
   // The final call is triggered on the trailing edge (100ms)
   expect(calls).toBe(2)
