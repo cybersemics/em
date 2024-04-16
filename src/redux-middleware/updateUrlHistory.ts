@@ -72,7 +72,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
   // if the welcome modal has not been completed and there are no root thoughts, then we can assume that IndexedDB was cleared and clear the obsolete path encoded in the url
   if (
     state.showModal !== 'welcome' &&
-    typeof window !== undefined &&
+    typeof window !== 'undefined' &&
     /\/~\/./.test(window.location.pathname) &&
     !hasChildren(state, HOME_TOKEN)
   ) {
