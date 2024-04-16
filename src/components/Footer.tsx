@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import * as pkg from '../../package.json'
+import pkg from '../../package.json'
 import Modal from '../@types/Modal'
 import { scaleFontDown, scaleFontUp } from '../action-creators/scaleSize'
 import showModal from '../action-creators/showModal'
