@@ -1,6 +1,4 @@
 import { CSSProperties } from 'react'
-import ArrowDownBlack from '../images/iconfinder_ic_keyboard_arrow_down_black_352466.svg'
-import ArrowDownWhite from '../images/keyboard_arrow_down_352466.svg'
 import fastClick from '../util/fastClick'
 
 interface ChevronImgProps {
@@ -10,19 +8,19 @@ interface ChevronImgProps {
   additonalStyle?: CSSProperties
 }
 
-/**
- * Loading component.
- */
+/** A downward facing chevron. */
 const ChevronImg = ({ dark, onClickHandle, className, additonalStyle }: ChevronImgProps) => (
-  <img
-    src={dark ? ArrowDownWhite : ArrowDownBlack}
-    alt='Arrow'
+  <svg
+    viewBox='0 0 48 48'
     height='22px'
     width='22px'
     style={{ ...additonalStyle, cursor: 'pointer' }}
     {...fastClick(onClickHandle)}
     className={className || ''}
-  />
+  >
+    <path d='M14.83 16.42l9.17 9.17 9.17-9.17 2.83 2.83-12 12-12-12z' fill={dark ? '#fff' : '#000'} />
+    <path d='M0-.75h48v48h-48z' fill='none' />
+  </svg>
 )
 
 export default ChevronImg
