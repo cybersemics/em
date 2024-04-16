@@ -64,6 +64,10 @@
   "jest": {
     "resetMocks": false
   },
+  "resolutions": {
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0"
+  },
   "dependencies": {
     "@bit/mui-org.material-ui.swipeable-drawer": "^4.9.10",
     "@capacitor/android": "^4.6.1",
