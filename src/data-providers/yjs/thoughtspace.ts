@@ -290,54 +290,60 @@ export const init = async (options: ThoughtspaceOptions) => {
   // bind blocks to providers on load
   doclog.on('subdocs', ({ added, removed, loaded }: { added: Set<Y.Doc>; removed: Set<Y.Doc>; loaded: Set<Y.Doc> }) => {
     loaded.forEach((subdoc: Y.Doc) => {
-      const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
-      persistence.whenSynced
-        .then(() => {
-          // eslint-disable-next-line no-new
-          new HocuspocusProvider({
-            // disable awareness for performance
-            // doclog doc has awareness enabled to keep the websocket open
-            awareness: null,
-            websocketProvider: websocket,
-            name: subdoc.guid,
-            document: subdoc,
-            token: accessToken,
+      // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
+      if (process.env.NODE_ENV !== 'test') {
+        const persistence = new IndexeddbPersistence(subdoc.guid, subdoc)
+        persistence.whenSynced
+          .then(() => {
+            // eslint-disable-next-line no-new
+            new HocuspocusProvider({
+              // disable awareness for performance
+              // doclog doc has awareness enabled to keep the websocket open
+              awareness: null,
+              websocketProvider: websocket,
+              name: subdoc.guid,
+              document: subdoc,
+              token: accessToken,
+            })
           })
-        })
-        .catch(e => {
-          const errorMessage = `Error loading doclog block: ${e.message}`
-          onError?.(errorMessage, e)
-        })
+          .catch(e => {
+            const errorMessage = `Error loading doclog block: ${e.message}`
+            onError?.(errorMessage, e)
+          })
+      }
     })
   })
 
-  const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
-  doclogPersistence.whenSynced
-    .then(() => {
-      const blocks = doclog.getArray<Y.Doc>('blocks')
-      // The doclog's initial block must be created outside the replicationController, after IDB syncs. This is necessary to avoid creating a new block when one already exists.
-      // Do not create a starting block if this is shared from another device.
-      // We need to wait for the existing block(s) to load.
-      if (blocks.length === 0 && !tsidShared) {
-        const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
+  // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
+  if (process.env.NODE_ENV !== 'test') {
+    const doclogPersistence = new IndexeddbPersistence(encodeDocLogDocumentName(tsid), doclog)
+    doclogPersistence.whenSynced
+      .then(() => {
+        const blocks = doclog.getArray<Y.Doc>('blocks')
+        // The doclog's initial block must be created outside the replicationController, after IDB syncs. This is necessary to avoid creating a new block when one already exists.
+        // Do not create a starting block if this is shared from another device.
+        // We need to wait for the existing block(s) to load.
+        if (blocks.length === 0 && !tsidShared) {
+          const blockNew = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, nanoid(13)) })
 
-        blocks.push([blockNew])
-      }
+          blocks.push([blockNew])
+        }
 
-      // eslint-disable-next-line no-new
-      new HocuspocusProvider({
-        // doclog doc has awareness enabled to keep the websocket open
-        // disable awareness for all other websocket providers
-        websocketProvider: websocket,
-        name: encodeDocLogDocumentName(tsid),
-        document: doclog,
-        token: accessToken,
+        // eslint-disable-next-line no-new
+        new HocuspocusProvider({
+          // doclog doc has awareness enabled to keep the websocket open
+          // disable awareness for all other websocket providers
+          websocketProvider: websocket,
+          name: encodeDocLogDocumentName(tsid),
+          document: doclog,
+          token: accessToken,
+        })
       })
-    })
-    .catch(e => {
-      const errorMessage = `Error loading doclog: ${e.message}`
-      onError?.(errorMessage, e)
-    })
+      .catch(e => {
+        const errorMessage = `Error loading doclog: ${e.message}`
+        onError?.(errorMessage, e)
+      })
+  }
 
   const replication = replicationController({
     // begin paused and only start after initial pull has completed
