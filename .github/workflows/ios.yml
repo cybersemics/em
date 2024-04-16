@@ -9,7 +9,6 @@ on:
 
 env:
   CI: true
-  HUSKY: 0
 
 jobs:
   run:
@@ -18,15 +17,15 @@ jobs:
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
 
       - name: Set Node.js version
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14
+          node-version: 20
 
       - name: 'BrowserStack Env Setup'
         uses: 'browserstack/github-actions/setup-env@master'

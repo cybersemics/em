@@ -10,7 +10,6 @@ on:
 
 env:
   CI: true
-  HUSKY: 0
 
 jobs:
   run:
@@ -19,15 +18,15 @@ jobs:
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set Node.js version
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14
+          node-version: 20
 
       - name: Install npm dependencies
-        run: yarn && cd functions && yarn
+        run: yarn
 
       - name: Test
         run: yarn test
