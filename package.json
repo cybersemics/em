@@ -130,6 +130,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^4.6.1",
     "@sinonjs/fake-timers": "^6.0.1",
     "@testing-library/dom": "^7.31.2",
