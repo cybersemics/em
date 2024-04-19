@@ -6,76 +6,6 @@ module.exports = {
     jest: true,
   },
   extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'raine', 'prettier'],
-  overrides: [
-    {
-      files: ['**/*.ts', '**/*.tsx'],
-      env: {
-        browser: true,
-        es6: true,
-        node: true,
-      },
-      extends: [
-        'eslint:recommended',
-        'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
-      ],
-      globals: {
-        Atomics: 'readonly',
-        SharedArrayBuffer: 'readonly',
-      },
-      plugins: ['@typescript-eslint'],
-      rules: {
-        semi: ['error', 'never'],
-        'import/prefer-default-export': 0,
-        // temporary fix from 'typescript-eslint' docs
-        // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
-        'no-extra-parens': 0,
-        'no-unused-vars': 0,
-        'no-use-before-define': 0,
-        '@typescript-eslint/member-delimiter-style': [
-          2,
-          {
-            multiline: {
-              delimiter: 'none',
-            },
-          },
-        ],
-        '@typescript-eslint/no-explicit-any': 0,
-        '@typescript-eslint/no-non-null-assertion': 0,
-        '@typescript-eslint/no-use-before-define': 2,
-        '@typescript-eslint/no-unused-vars': 2,
-        '@typescript-eslint/explicit-function-return-type': 0,
-        '@typescript-eslint/explicit-module-boundary-types': 0,
-        '@typescript-eslint/array-type': [
-          2,
-          {
-            'array-type': 'array',
-          },
-        ],
-        // jsx
-        'jsx-quotes': [2, 'prefer-single'],
-      },
-      settings: { react: { version: 'detect' } },
-      overrides: [
-        {
-          files: ['./src/**/*.ts', './src/**/*.tsx'],
-          parser: '@typescript-eslint/parser',
-          parserOptions: {
-            ecmaFeatures: { jsx: true },
-            ecmaVersion: 2018,
-            sourceType: 'module',
-            project: './tsconfig.json',
-          },
-        },
-        {
-          files: ['./src/e2e/**/*.ts'],
-          rules: {
-            'jsdoc/check-tag-names': 0,
-          },
-        },
-      ],
-    },
-  ],
   // to be removed later
   globals: {
     Atomics: 'readonly',
@@ -145,4 +75,74 @@ module.exports = {
     'arrow-body-style': 0,
     'prefer-arrow-callback': 0,
   },
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      env: {
+        browser: true,
+        es6: true,
+        node: true,
+      },
+      extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/eslint-recommended',
+        'plugin:@typescript-eslint/recommended',
+      ],
+      globals: {
+        Atomics: 'readonly',
+        SharedArrayBuffer: 'readonly',
+      },
+      plugins: ['@typescript-eslint'],
+      settings: { react: { version: 'detect' } },
+      rules: {
+        semi: ['error', 'never'],
+        'import/prefer-default-export': 0,
+        // temporary fix from 'typescript-eslint' docs
+        // https://github.com/typescript-eslint/typescript-eslint/blob/master/packages/eslint-plugin/docs/rules/no-unused-vars.md
+        'no-extra-parens': 0,
+        'no-unused-vars': 0,
+        'no-use-before-define': 0,
+        '@typescript-eslint/member-delimiter-style': [
+          2,
+          {
+            multiline: {
+              delimiter: 'none',
+            },
+          },
+        ],
+        '@typescript-eslint/no-explicit-any': 0,
+        '@typescript-eslint/no-non-null-assertion': 0,
+        '@typescript-eslint/no-use-before-define': 2,
+        '@typescript-eslint/no-unused-vars': 2,
+        '@typescript-eslint/explicit-function-return-type': 0,
+        '@typescript-eslint/explicit-module-boundary-types': 0,
+        '@typescript-eslint/array-type': [
+          2,
+          {
+            'array-type': 'array',
+          },
+        ],
+        // jsx
+        'jsx-quotes': [2, 'prefer-single'],
+      },
+      overrides: [
+        {
+          files: ['./src/**/*.ts', './src/**/*.tsx'],
+          parser: '@typescript-eslint/parser',
+          parserOptions: {
+            ecmaFeatures: { jsx: true },
+            ecmaVersion: 2018,
+            sourceType: 'module',
+            project: './tsconfig.json',
+          },
+        },
+        {
+          files: ['./src/e2e/**/*.ts'],
+          rules: {
+            'jsdoc/check-tag-names': 0,
+          },
+        },
+      ],
+    },
+  ],
 }
