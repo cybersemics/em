@@ -118,7 +118,7 @@
     "sanitize-html": "^2.4.0",
     "text-block-parser": "^1.1.0",
     "truncate-html": "^1.0.3",
-    "ts-key-enum": "^2.0.6",
+    "ts-key-enum": "^2.0.12",
     "use-onclickoutside": "^0.3.2",
     "xhtml-purifier": "^0.4.1",
     "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
