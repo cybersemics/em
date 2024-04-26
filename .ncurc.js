@@ -32,13 +32,7 @@ module.exports = {
     '@sinonjs/fake-timers',
 
     // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
-    //
-    // em@163.0.0
-    // └─┬ react-scripts@3.4.4
-    //   └─┬ babel-preset-react-app@9.1.2
-    //     └─┬ @babel/preset-typescript@7.9.0
-    //       └── @babel/plugin-transform-typescript@7.12.1
-    //
+    // Currently v2 appears to be published to the latest tag, but keep this locked in case v3 is published to latest in the future. Minor and patch versions are safe to upgrade to.
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
     'ts-key-enum',
   ],
