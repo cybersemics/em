@@ -195,9 +195,8 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 
   // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
   setTimeout(() => {
-    config.then(
-      ({ onUpdateThoughts: updateThoughts }) =>
-        updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+    config.then(({ onUpdateThoughts: updateThoughts }) =>
+      updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
     )
   })
 }, UPDATE_THOUGHTS_THROTTLE)

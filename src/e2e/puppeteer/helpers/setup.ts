@@ -12,7 +12,7 @@ export interface InitPageOptions {
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
-  puppeteerBrowser = browser,
+  puppeteerBrowser = browser as any,
   url = 'http://localhost:3000',
   emulatedDevice,
   skipTutorial = true,
