@@ -7174,18 +7174,6 @@ expect-puppeteer@^5.0.4:
   resolved "https://registry.yarnpkg.com/expect-puppeteer/-/expect-puppeteer-5.0.4.tgz#54bfdecabb2acb3e3f0d0292cd3dab2dd8ff5a81"
   integrity sha512-NV7jSiKhK+byocxg9A+0av+Q2RSCP9bcLVRz7zhHaESeCOkuomMvl9oD+uo1K+NdqRCXhNkQlUGWlmtbrpR1qw==
 
-expect@^26.6.2:
-  version "26.6.2"
-  resolved "https://registry.yarnpkg.com/expect/-/expect-26.6.2.tgz#c6b996bf26bf3fe18b67b2d0f51fc981ba934417"
-  integrity sha512-9/hlOBkQl2l/PLHJx6JjoDF6xPKcJEsUlWKb23rKE7KzeDqUZKXKNMW27KIue5JMdBV9HgmoJPcc8HtO85t9IA==
-  dependencies:
-    "@jest/types" "^26.6.2"
-    ansi-styles "^4.0.0"
-    jest-get-type "^26.3.0"
-    jest-matcher-utils "^26.6.2"
-    jest-message-util "^26.6.2"
-    jest-regex-util "^26.0.0"
-
 expect@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/expect/-/expect-27.5.1.tgz#83ce59f1e5bdf5f9d2b94b61d2050db48f3fef74"
@@ -9381,7 +9369,7 @@ jest-dev-server@^5.0.3:
     tree-kill "^1.2.2"
     wait-on "^5.3.0"
 
-jest-diff@^26.0.0, jest-diff@^26.6.2:
+jest-diff@^26.0.0:
   version "26.6.2"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-26.6.2.tgz#1aa7468b52c3a68d7d5c5fdcdfcd5e49bd164394"
   integrity sha512-6m+9Z3Gv9wN0WFVasqjCL/06+EFCMTqDEUl/b87HYK2rAPTyfz4ZIuSlPhY51PIQRWx5TaxeF1qmXKe9gfN3sA==
@@ -9391,7 +9379,7 @@ jest-diff@^26.0.0, jest-diff@^26.6.2:
     jest-get-type "^26.3.0"
     pretty-format "^26.6.2"
 
-jest-diff@^27.2.5, jest-diff@^27.5.1:
+jest-diff@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-27.5.1.tgz#a07f5011ac9e6643cf8a95a462b7b1ecf6680def"
   integrity sha512-m0NvkX55LDt9T4mctTEgnZk3fmEg3NRYutvMPWM/0iPnkFj2wIeF45O1718cMSOFO1vINkqmxqD8vE37uTEbqw==
@@ -9401,7 +9389,7 @@ jest-diff@^27.2.5, jest-diff@^27.5.1:
     jest-get-type "^27.5.1"
     pretty-format "^27.5.1"
 
-jest-diff@^29.7.0:
+jest-diff@^29.0.0, jest-diff@^29.7.0:
   version "29.7.0"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-29.7.0.tgz#017934a66ebb7ecf6f205e84699be10afd70458a"
   integrity sha512-LMIgiIrhigmPrs03JHpxUh2yISK3vLFPkAodPeo0+BuF7wA2FoQbkEg1u8gBYBThncu7e1oEDUfIXVuTqLRUjw==
@@ -9500,27 +9488,25 @@ jest-environment-puppeteer@^5.0.4:
     jest-environment-node "^27.0.1"
     merge-deep "^3.0.3"
 
-jest-extended@1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/jest-extended/-/jest-extended-1.2.1.tgz#bf94031b76fa19f8b8a0a9a98bdddff16beb2d71"
-  integrity sha512-eKZR5iDpyTkcDesj16FpIPnjAWQNUB81ZFQW08EIddM6iqO7DjRIi39td9qol+1dpJS4Mqr9Qzp8ZMhanbSeug==
+jest-extended@4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/jest-extended/-/jest-extended-4.0.2.tgz#d23b52e687cedf66694e6b2d77f65e211e99e021"
+  integrity sha512-FH7aaPgtGYHc9mRjriS0ZEHYM5/W69tLrFTIdzm+yJgeoCmmrSB/luSfMSqWP9O29QWHPEmJ4qmU6EwsZideog==
   dependencies:
-    expect "^26.6.2"
-    jest-diff "^27.2.5"
-    jest-get-type "^27.0.6"
-    jest-matcher-utils "^27.2.4"
+    jest-diff "^29.0.0"
+    jest-get-type "^29.0.0"
 
 jest-get-type@^26.3.0:
   version "26.3.0"
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-26.3.0.tgz#e97dc3c3f53c2b406ca7afaed4493b1d099199e0"
   integrity sha512-TpfaviN1R2pQWkIihlfEanwOXK0zcxrKEE4MlU6Tn7keoXdN6/3gK/xl0yEh8DOunn5pOVGKf8hB4R9gVh04ig==
 
-jest-get-type@^27.0.6, jest-get-type@^27.5.1:
+jest-get-type@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-27.5.1.tgz#3cd613c507b0f7ace013df407a1c1cd578bcb4f1"
   integrity sha512-2KY95ksYSaK7DMBWQn6dQz3kqAf3BB64y2udeG+hv4KfSOb9qwcYQstTJc1KCbsix+wLZWZYN8t7nwX3GOBLRw==
 
-jest-get-type@^29.6.3:
+jest-get-type@^29.0.0, jest-get-type@^29.6.3:
   version "29.6.3"
   resolved "https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-29.6.3.tgz#36f499fdcea197c1045a127319c0481723908fd1"
   integrity sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==
@@ -9615,17 +9601,7 @@ jest-localstorage-mock@^2.4.14:
   resolved "https://registry.yarnpkg.com/jest-localstorage-mock/-/jest-localstorage-mock-2.4.26.tgz#7d57fb3555f2ed5b7ed16fd8423fd81f95e9e8db"
   integrity sha512-owAJrYnjulVlMIXOYQIPRCCn3MmqI3GzgfZCXdD3/pmwrIvFMXcKVWZ+aMc44IzaASapg0Z4SEFxR+v5qxDA2w==
 
-jest-matcher-utils@^26.6.2:
-  version "26.6.2"
-  resolved "https://registry.yarnpkg.com/jest-matcher-utils/-/jest-matcher-utils-26.6.2.tgz#8e6fd6e863c8b2d31ac6472eeb237bc595e53e7a"
-  integrity sha512-llnc8vQgYcNqDrqRDXWwMr9i7rS5XFiCwvh6DTP7Jqa2mqpcCBBlpCbn+trkG0KNhPu/h8rzyBkriOtBstvWhw==
-  dependencies:
-    chalk "^4.0.0"
-    jest-diff "^26.6.2"
-    jest-get-type "^26.3.0"
-    pretty-format "^26.6.2"
-
-jest-matcher-utils@^27.2.4, jest-matcher-utils@^27.5.1:
+jest-matcher-utils@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/jest-matcher-utils/-/jest-matcher-utils-27.5.1.tgz#9c0cdbda8245bc22d2331729d1091308b40cf8ab"
   integrity sha512-z2uTx/T6LBaCoNWNFWwChLBKYxTMcGBRjAt+2SbP929/Fflb9aa5LGma654Rz8z9HLxsrUaYzxE9T/EFIL/PAw==
@@ -9759,11 +9735,6 @@ jest-regex-util@^24.9.0:
   version "24.9.0"
   resolved "https://registry.yarnpkg.com/jest-regex-util/-/jest-regex-util-24.9.0.tgz#c13fb3380bde22bf6575432c493ea8fe37965636"
   integrity sha512-05Cmb6CuxaA+Ys6fjr3PhvV3bGQmO+2p2La4hFbU+W5uOc479f7FdLXUWXw4pYMAhhSZIuKHwSXSu6CsSBAXQA==
-
-jest-regex-util@^26.0.0:
-  version "26.0.0"
-  resolved "https://registry.yarnpkg.com/jest-regex-util/-/jest-regex-util-26.0.0.tgz#d25e7184b36e39fd466c3bc41be0971e821fee28"
-  integrity sha512-Gv3ZIs/nA48/Zvjrl34bf+oD76JHiGDUxNOVgUjh3j890sblXryjY4rss71fPtD/njchl6PSE2hIhvyWa1eT0A==
 
 jest-regex-util@^27.5.1:
   version "27.5.1"
