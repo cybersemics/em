@@ -10,16 +10,17 @@ const clickBullet = async (page: Page, value: string) => {
   if (!editableNode) throw new Error('editable node for the given value not found.')
 
   const bulletNode = await page.evaluateHandle((editableNode: Element) => {
-    const thoughtContainer = editableNode.closest('.thought-container') as HTMLElement
+    const thoughtContainer = editableNode.closest('.thought-container') as HTMLElement | null
 
-    if (!thoughtContainer) return
+    if (!thoughtContainer) return null
 
     return thoughtContainer.querySelector(':scope > .bullet')
   }, editableNode)
 
   if (!bulletNode) throw new Error('Bullet node not found.')
 
-  await bulletNode.asElement()?.click()
+  // TODO
+  await (bulletNode as any).asElement()?.click()
 }
 
 export default clickBullet
