@@ -43,6 +43,9 @@ it('set the cursor on a subthought on load', async () => {
   await waitForEditable('z')
   await clickThought('z')
 
+  // wait for browser selection to update
+  await sleep(100)
+
   await refresh()
 
   await waitForEditable('z')
