@@ -133,7 +133,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^4.6.1",
     "@sinonjs/fake-timers": "^6.0.1",
-    "@testing-library/dom": "^7.31.2",
+    "@testing-library/dom": "^10.0.0",
     "@testing-library/jest-dom": "^5.14.0",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^13.1.9",
