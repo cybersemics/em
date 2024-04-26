@@ -22,7 +22,9 @@ const Alert: FC = () => {
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
-    <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
+    <TransitionGroup
+      childFactory={(child: React.ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
+    >
       {alert ? (
         <CSSTransition key={0} timeout={800} classNames='fade-slow-out' onEntering={() => setDismiss(false)}>
           {/* Specify a key to force the component to re-render and thus recalculate useSwipeToDismissProps when the alert changes. Otherwise the alert gets stuck off screen in the dismiss state. */}

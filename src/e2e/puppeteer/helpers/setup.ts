@@ -12,7 +12,7 @@ export interface InitPageOptions {
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
-  puppeteerBrowser = browser,
+  puppeteerBrowser = browser as any,
   url = 'http://localhost:3000',
   emulatedDevice,
   skipTutorial = true,
@@ -59,8 +59,7 @@ const setup = async ({
 
     // click the skip tutorial link
     // tap for mobile devices, since fastClick uses touch events
-    const isMobile = emulatedDevice?.name.startsWith?.('iPhone')
-    await page[isMobile ? 'tap' : 'click']('#skip-tutorial')
+    await page.tap('#skip-tutorial')
 
     // wait for welcome modal to disappear
     await page.waitForFunction(() => !document.getElementById('skip-tutorial'))

@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Shortcut from '../@types/Shortcut'
@@ -591,7 +591,9 @@ const CommandPaletteWithTransition: FC = () => {
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
-    <TransitionGroup childFactory={child => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}>
+    <TransitionGroup
+      childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
+    >
       {showCommandPalette ? (
         <CSSTransition key={0} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
           <Popup

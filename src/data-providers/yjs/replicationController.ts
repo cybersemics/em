@@ -445,7 +445,7 @@ const replicationController = ({
 
     // Emit a custom event on the block so that log can detect when it is safe to push.
     // Otherwise the doclog observe handlers will not be added and the first thought of a new block will not get replicated until there is a refresh.
-    block.emit('em:observed', [blockId])
+    block.emit('em:observed' as any, [blockId])
   }
 
   /** Append thought or lexeme logs to the active doclog block. */
@@ -478,7 +478,7 @@ const replicationController = ({
       const blockOld = activeBlock
       blockId = nanoid(13)
       activeBlock = new Y.Doc({ guid: encodeDocLogBlockDocumentName(tsid, blockId) })
-      const observed = when<string>(activeBlock, 'em:observed')
+      const observed = when<string>(activeBlock as any, 'em:observed')
       doc.getArray('blocks').push([activeBlock])
 
       // Wait for the new block subdoc and the observe handlers to be added before pushing.

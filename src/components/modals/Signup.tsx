@@ -71,8 +71,8 @@ const ModalSignup = () => {
         // Set the invite code and is validating to false, only if code is valid.
         setInviteCode(inviteCode)
         setIsValidatingCode(false)
-      } catch (err) {
-        setValidationError(err.message)
+      } catch (e: any) {
+        setValidationError(e.message)
         setIsValidatingCode(false)
       }
     },

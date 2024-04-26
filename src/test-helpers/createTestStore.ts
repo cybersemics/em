@@ -9,7 +9,8 @@ import multi from '../redux-middleware/multi'
  * Returns new store for test.
  */
 export const createTestStore = () => {
-  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoEnhancer))
+  // TODO: Type properly
+  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoEnhancer) as any)
 
   store.dispatch([
     // skip tutorial
