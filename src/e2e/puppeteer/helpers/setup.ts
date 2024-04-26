@@ -1,10 +1,10 @@
 import chalk from 'chalk'
-import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
+import puppeteer, { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
 
 export interface InitPageOptions {
-  puppeteerBrowser?: Browser
+  browser?: Browser
   url?: string
   skipTutorial?: boolean
   emulatedDevice?: Device
@@ -12,13 +12,13 @@ export interface InitPageOptions {
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
-  puppeteerBrowser = browser as any,
+  browser,
   url = 'http://localhost:3000',
   emulatedDevice,
   skipTutorial = true,
 }: InitPageOptions = {}): Promise<Page> => {
-  const context = await puppeteerBrowser.createIncognitoBrowserContext()
-  const page: Page = await context.newPage()
+  const puppeteerBrowser = browser || (await puppeteer.launch({ args: ['--incognito'] }))
+  const page = await puppeteerBrowser.newPage()
 
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
@@ -39,12 +39,9 @@ const setup = async ({
         break
       case 'info':
       case 'log':
+      case 'warn':
         // eslint-disable-next-line no-console
         console[messageType](text)
-        break
-      // ConsoleMessage 'warning needs to be converted to native console 'warn'
-      case 'warning':
-        console.warn(text)
         break
       default:
         break

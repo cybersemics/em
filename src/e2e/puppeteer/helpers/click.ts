@@ -44,7 +44,7 @@ const click = async (
   /** Get cordinates for specific text node if the given node has text child. */
   const offsetCoordinates = () =>
     page.evaluate(
-      (node: HTMLElement, offset: number) => {
+      (node, offset) => {
         const textNode = node.firstChild
         if (!textNode || textNode.nodeName !== '#text') return
         const range = document.createRange()

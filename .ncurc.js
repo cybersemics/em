@@ -24,9 +24,6 @@ module.exports = {
     // https://github.com/jsdom/whatwg-encoding/pull/11
     'ipfs-http-client',
 
-    // jest-puppeteer requires puppeteer <v10
-    'puppeteer',
-
     // Broken:  ^6.0.1 → ^7.0.5
     // InstalledClock not exported; need to troubleshoot
     '@sinonjs/fake-timers',
