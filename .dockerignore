@@ -1,0 +1,4 @@
+# Do not ignore .git which is needed for postinstall script to complete
+node_modules
+build
+docs
