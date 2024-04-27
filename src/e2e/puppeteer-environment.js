@@ -15,13 +15,22 @@ class PuppeteerEnvironment extends JsDomEnvironment {
     await super.setup()
 
     // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
-    this.global.browser = await puppeteer.launch({
-      headless: true,
-    })
+    this.global.browser = await puppeteer
+      .launch({
+        headless: true,
+      })
+      // catch and log a launch error, otherwise it will not appear in the CI logs
+      .catch(e => {
+        console.error('Error launching puppeteer:', e)
+        throw e
+      })
   }
 
   async teardown() {
-    await this.global.browser.close()
+    // browser will only be undefined if setup failed
+    if (this.global.browser) {
+      await this.global.browser.close()
+    }
     await super.teardown()
   }
 }
