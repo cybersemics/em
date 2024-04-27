@@ -1,7 +1,6 @@
 /* eslint-disable no-useless-constructor */
 /* eslint-disable no-console */
 
-const chalk = require('chalk')
 const JsDomEnvironment = require('jest-environment-jsdom')
 const puppeteer = require('puppeteer')
 
@@ -13,8 +12,6 @@ class PuppeteerEnvironment extends JsDomEnvironment {
   }
 
   async setup() {
-    console.info(chalk.yellow('Setup Test Environment.'))
-
     await super.setup()
 
     // Note: this.global is not global to all test suites; it is sandboxed to a single test module, e.g. caret.ts
@@ -24,7 +21,6 @@ class PuppeteerEnvironment extends JsDomEnvironment {
   }
 
   async teardown() {
-    console.info(chalk.yellow('Teardown Test Environment.'))
     await this.global.browser.close()
     await super.teardown()
   }
