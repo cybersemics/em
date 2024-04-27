@@ -282,7 +282,12 @@ export const init = async (options: ThoughtspaceOptions) => {
 
   // websocket provider
   // TODO: Reuse websocket connection from ./index?
-  const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
+  const websocket = new HocuspocusProviderWebsocket({
+    // disable websocket since YJS is being sunset and server is no longer deployed.
+    // eslint-disable-next-line no-constant-condition
+    connect: false,
+    url: websocketUrl,
+  })
 
   doclog = new Y.Doc({ guid: encodeDocLogDocumentName(tsid) })
 

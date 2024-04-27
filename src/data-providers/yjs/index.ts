@@ -65,7 +65,12 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // websocket provider
-export const websocket = new HocuspocusProviderWebsocket({ url: websocketUrl })
+export const websocket = new HocuspocusProviderWebsocket({
+  // disable websocket since YJS is being sunset and server is no longer deployed.
+  // eslint-disable-next-line no-constant-condition
+  connect: false,
+  url: websocketUrl,
+})
 export const websocketProviderPermissions = new HocuspocusProvider({
   // disable awareness for performance
   // doclog doc has awareness enabled to keep the websocket open
