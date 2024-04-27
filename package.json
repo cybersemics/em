@@ -187,6 +187,7 @@
     "eslint-plugin-react-native": "^3.11.0",
     "fake-indexeddb": "^3.1.2",
     "it-all": "^1.0.5",
+    "jest": "^27.5.1",
     "jest-environment-node": "^27.0.3",
     "jest-environment-puppeteer-jsdom": "^4.3.1",
     "jest-extended": "^4.0.2",
