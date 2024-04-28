@@ -1238,11 +1238,6 @@ h1 .num-contexts {
   top: 0;
 }
 
-/* Disable pointer events on the bullet when dragging, otherwise the extended bullet area will obscure the drop targets. This causes the Thought drop target to receive the hover event outside the edges of the actual Thought. */
-.drag-in-progress .bullet {
-  pointer-events: none;
-}
-
 /* Disable long press to select on iOS. See useLongPress for details. */
 .pressed .editable {
   user-select: none;
