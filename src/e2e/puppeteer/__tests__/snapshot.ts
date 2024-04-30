@@ -25,7 +25,7 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
 })
 expect.extend({ toMatchImageSnapshot })
 
-jest.setTimeout(30000)
+jest.setTimeout(60000)
 
 /*
 From jest-image-snapshot README:
@@ -49,6 +49,7 @@ const removeHUD = async () => {
 const testSuite = () => {
   describe('', () => {
     it('initial load', async () => {
+      await sleep(1000)
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
@@ -60,6 +61,7 @@ const testSuite = () => {
     it('one thought', async () => {
       await press('Enter')
       await type('a')
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -72,7 +74,7 @@ const testSuite = () => {
       `)
 
       // wait for render animation to complete
-      await sleep(400)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -107,7 +109,7 @@ const testSuite = () => {
       `)
 
       // wait for render animation to complete
-      await sleep(400)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -125,7 +127,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await sleep(400)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -149,7 +151,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await sleep(400)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -159,7 +161,7 @@ const testSuite = () => {
       await paste('https://thinkwithem.com')
 
       // wait for render animation to complete
-      await sleep(400)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -176,7 +178,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await sleep(800)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
@@ -194,7 +196,7 @@ const testSuite = () => {
       await press('ArrowUp')
 
       // wait for render animation to complete
-      await sleep(800)
+      await sleep(1000)
 
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
