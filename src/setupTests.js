@@ -5,7 +5,6 @@ import { configure } from 'enzyme'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
-import 'jest-localstorage-mock'
 import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 
