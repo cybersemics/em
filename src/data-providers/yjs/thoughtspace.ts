@@ -1,6 +1,6 @@
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
-import { IndexeddbPersistence } from 'y-indexeddb'
+import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
@@ -32,9 +32,6 @@ import {
   parseDocumentName,
 } from './documentNameEncoder'
 import replicationController from './replicationController'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { clearDocument } = require('y-indexeddb') as { clearDocument: (name: string) => Promise<void> }
 
 /**********************************************************************
  * Types
