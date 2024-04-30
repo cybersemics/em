@@ -28,7 +28,7 @@ if (!appReducer) {
 const middlewareEnhancer = applyMiddleware(
   // prevent accidentally passing a reducer to the dispatch function (dev and test only)
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
-  ...(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? [doNotDispatchReducer] : []),
+  ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
   pullQueue,

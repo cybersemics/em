@@ -1,6 +1,6 @@
 A websocket server that synchronizes thoughts between multiple devices and users.
 
-The app will automatically connect to the server specified by the client-side env variables `REACT_APP_WEBSOCKET_HOST` and `REACT_APP_WEBSOCKET_PORT` (see [client](https://github.com/cybersemics/em/tree/staging2/server#client)).
+The app will automatically connect to the server specified by the client-side env variables `VITE_WEBSOCKET_HOST` and `VITE_WEBSOCKET_PORT` (see [client](https://github.com/cybersemics/em/tree/staging2/server#client)).
 
 # Local Development
 
@@ -35,7 +35,7 @@ Other npm scripts:
 
 ## Testing with live staging or production data
 
-Normally in local development the app connects to the local websocket server and database. To test with live staging or production data, override `REACT_APP_WEBSOCKET_HOST` in `.env.development` with the value from `.env.production` or `.env.staging` and restart localhost. It is recommended that you run the app on a different port to ensure that local storage stays sandboxed, i.e. `PORT=3012 npm start`.
+Normally in local development the app connects to the local websocket server and database. To test with live staging or production data, override `VITE_WEBSOCKET_HOST` in `.env.development` with the value from `.env.production` or `.env.staging` and restart localhost. It is recommended that you run the app on a different port to ensure that local storage stays sandboxed, i.e. `PORT=3012 npm start`.
 
 Note: `NODE_ENV` itself cannot be manually overwritten, and is set based on how the server is started:
 
@@ -67,10 +67,10 @@ services:
       npm run build
     environment_slug: node-js
     envs:
-      - key: REACT_APP_WEBSOCKET_HOST
+      - key: VITE_WEBSOCKET_HOST
         scope: RUN_AND_BUILD_TIME
         value: 0.0.0.0
-      - key: REACT_APP_WEBSOCKET_PORT
+      - key: VITE_WEBSOCKET_PORT
         scope: RUN_AND_BUILD_TIME
         value: '80'
       - key: MONGODB_CONNECTION_STRING
@@ -98,8 +98,8 @@ services:
 The client-side app needs the following envirionment variables set to connect to the websocket server. They are stored in `.env` files and embedded in the static build by react-scripts. See: https://create-react-app.dev/docs/adding-custom-environment-variables/#what-other-env-files-can-be-used.
 
 ```ini
-REACT_APP_WEBSOCKET_HOST=app12345.ondigitalocean.app
-REACT_APP_WEBSOCKET_PORT=
+VITE_WEBSOCKET_HOST=app12345.ondigitalocean.app
+VITE_WEBSOCKET_PORT=
 ```
 
 ### Server
