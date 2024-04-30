@@ -44,7 +44,9 @@
     "test": "react-app-rewired test --testPathIgnorePatterns=./src/e2e",
     "test:ios": "react-app-rewired test ./src/e2e/iOS --verbose",
     "test:puppeteer": "react-app-rewired test ./src/e2e/puppeteer",
-    "websocket-server": "cd server && npm run build && npm start"
+    "websocket-server": "cd server && npm run build && npm start",
+    "vite-start": "vite",
+    "vite-build": "vite build"
   },
   "lockfile-lint": {
     "allowed-schemes": [
@@ -164,6 +166,7 @@
     "@types/yallist": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.2",
     "browserstack-local": "^1.4.8",
     "chalk": "^4.1.1",
@@ -209,6 +212,7 @@
     "typedoc-plugin-external-module-name": "^4.0.6",
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
     "typescript": "^4.9.5",
+    "vite": "^5.2.10",
     "webdriverio": "^7.7.3"
   }
 }
