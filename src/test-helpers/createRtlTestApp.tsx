@@ -31,7 +31,7 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   await act(async () => {
-    jest.useFakeTimers()
+    vi.useFakeTimers()
 
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()
@@ -53,7 +53,7 @@ const createTestApp = async () => {
       { type: 'closeModal' },
     ])
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
@@ -79,7 +79,7 @@ export const cleanupTestApp = async () => {
     // set url back to home
     window.history.pushState({}, '', '/')
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
   })
 }
 

@@ -25,7 +25,7 @@ describe.skip('Divider', () => {
     // cursor back to trigger editThought
     windowEvent('keydown', { key: 'Escape' })
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     wrapper.update()
 
     const divider = wrapper.find('Divider')
@@ -42,7 +42,7 @@ describe.skip('Divider', () => {
     // cursor back to trigger editThought
     windowEvent('keydown', { key: 'Escape' })
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
     wrapper.update()
 
     const divider = wrapper.find('Divider')
@@ -59,7 +59,7 @@ describe.skip('Divider', () => {
     // cursor back to trigger editThought
     windowEvent('keydown', { key: 'Escape' })
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
 
     // state
     const rootSubthoughts = getChildrenRanked(store.getState(), HOME_TOKEN)
@@ -82,7 +82,7 @@ describe.skip('Divider', () => {
     // cursor back to trigger editThought
     windowEvent('keydown', { key: 'Escape' })
 
-    jest.runOnlyPendingTimers()
+    vi.runOnlyPendingTimers()
 
     // state
     const rootSubthoughts = getChildrenRanked(store.getState(), HOME_TOKEN)

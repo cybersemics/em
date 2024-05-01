@@ -30,7 +30,7 @@ const timer = testTimer()
  ******************************************************************/
 
 describe('undo', () => {
-  const isUndoEnabled = jest.spyOn(isUndoEnabledModule, 'isUndoEnabled')
+  const isUndoEnabled = vi.spyOn(isUndoEnabledModule, 'isUndoEnabled')
 
   it('dispatches undo action on shortcut if undo is enabled', () => {
     // enable undo

@@ -81,7 +81,7 @@ const createTestApp = async () => {
   fakeTimer.useRealTimer()
 
   // Note: Use jest fake timer by default. It allows flushing microtasks. But inorder to flush promises use test timer that uses sinon.
-  jest.useFakeTimers()
+  vi.useFakeTimers()
 
   // since act cannot return anything, we have to wait for wrapper to be set and then convince Typescript that it is not being used before it is assigned
   return wrapper as unknown as ReactWrapper<unknown, unknown>

@@ -9,7 +9,7 @@ import initialState from '../initialState'
 import keyValueBy from '../keyValueBy'
 import roamJsonToBlocks, { RoamPage } from '../roamJsonToBlocks'
 
-jest.mock('../timestamp', () => () => '2020-11-02T01:11:58.869Z')
+vi.mock('../timestamp', () => ({ default: () => '2020-11-02T01:11:58.869Z' }))
 
 const testData: RoamPage[] = [
   {
