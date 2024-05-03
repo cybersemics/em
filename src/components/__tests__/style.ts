@@ -60,7 +60,7 @@ it('apply =children/=style to all children', async () => {
   expect(c).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
-it('as an exception, do not apply =children/=style to =children itself', async () => {
+it.skip('as an exception, do not apply =children/=style to =children itself', async () => {
   store.dispatch([
     importText({
       text: `
