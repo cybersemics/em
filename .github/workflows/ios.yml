@@ -1,11 +1,15 @@
 name: BrowserStack
 
-on:
-  push:
-    branches:
-      - main
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+# Temporarily disable the workflow except when manually triggered
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+on: workflow_dispatch
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request_target:
+#     types: [opened, synchronize, reopened]
 
 env:
   CI: true
