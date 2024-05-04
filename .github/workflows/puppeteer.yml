@@ -14,7 +14,10 @@ env:
 jobs:
   run:
     name: Puppeteer
-    runs-on: ubuntu-latest
+    # Run on Mac since Puppeteer snapshots were generated on a Mac.
+    # Otherwise snapshot tests will fail.
+    # https://github.com/cybersemics/em/pull/1836
+    runs-on: macos-latest
 
     steps:
       - name: Clone repository
