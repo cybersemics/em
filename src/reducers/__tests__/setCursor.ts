@@ -1,10 +1,7 @@
-// TODO: Why does util have to be imported before selectors and reducers?
-import State from '../../@types/State'
 import importText from '../../reducers/importText'
-import setCursor from '../../reducers/setCursor'
 import toggleContextView from '../../reducers/toggleContextView'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
-import contextToPath from '../../selectors/contextToPath'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -14,14 +11,7 @@ it('set the cursor to a SimplePath', () => {
       - b
         - c`
 
-  const steps = [
-    importText({ text }),
-    (newState: State) =>
-      setCursor(newState, {
-        path: contextToPath(newState, ['a', 'b', 'c']),
-      }),
-    toggleContextView,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'b', 'c']), toggleContextView]
 
   const expectedCursor = [
     { value: 'a', rank: 0 },
@@ -35,8 +25,7 @@ it('set the cursor to a SimplePath', () => {
   expect(cursorThoughts).toMatchObject(expectedCursor)
 })
 
-// @MIGRATION_TODO: Skipped until context view is figured out.
-it.skip('set the cursor to a Path across a context view', () => {
+it('set the cursor to a Path across a context view', () => {
   const text = `
     - a
       - m
@@ -46,14 +35,7 @@ it.skip('set the cursor to a Path across a context view', () => {
         - y
   `
 
-  const steps = [
-    importText({ text }),
-    (newState: State) =>
-      setCursor(newState, {
-        path: contextToPath(newState, ['a', 'm', 'b', 'y']),
-      }),
-    toggleContextView,
-  ]
+  const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['a', 'm', 'b', 'y'])]
 
   const stateNew = reducerFlow(steps)(initialState())
 
