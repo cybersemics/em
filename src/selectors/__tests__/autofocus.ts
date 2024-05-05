@@ -431,7 +431,7 @@ describe('normal view', () => {
   })
 })
 
-describe.skip('table view', () => {
+describe('table view', () => {
   it('when the cursor is on a table grandchild leaf (column 2), other grandchildren of the table should be visible and dimmed', () => {
     const text = `
       - a
