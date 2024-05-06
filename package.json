@@ -147,7 +147,7 @@
     "@types/jest-image-snapshot": "^5.1.0",
     "@types/lodash": "^4.14.170",
     "@types/murmurhash3js": "^3.0.2",
-    "@types/node": "^15.12.2",
+    "@types/node": "^20.12.10",
     "@types/pluralize": "0.0.29",
     "@types/puppeteer": "^5.4.3",
     "@types/react": "17.0.11",
