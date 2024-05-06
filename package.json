@@ -168,7 +168,7 @@
     "dotenv": "8.2.0",
     "em-typedoc-theme": "^0.3.0",
     "eslint": "^8.57.0",
-    "eslint-config-prettier": "^8.8.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-config-raine": "^0.5.0",
     "eslint-config-react-app": "^7.0.1",
     "eslint-config-standard": "^16.0.3",
