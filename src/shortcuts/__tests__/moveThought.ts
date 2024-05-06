@@ -4,15 +4,15 @@ import { initialize } from '../../initialize'
 import { clearActionCreator as clear } from '../../reducers/clear'
 import exportContext from '../../selectors/exportContext'
 import appStore from '../../stores/app'
-import { cleanupTestApp } from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
 
 const timer = testTimer()
 
-// Note: Since we are using intialize for these tests, we need to make sure to cleanup dbs, storage and window location.
-afterEach(async () => await cleanupTestApp())
+beforeEach(createTestApp)
+afterEach(cleanupTestApp)
 
 // TODO: TransactionInactiveError: A request was placed against a transaction which is currently not active, or which is finished.
 it.skip('merge up to pending destination descendant', async () => {

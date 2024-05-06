@@ -1,7 +1,5 @@
 import '@testing-library/jest-dom'
-import EnzymeAdapter from '@wojtekmaj/enzyme-adapter-react-17'
 import crypto from 'crypto'
-import { configure } from 'enzyme'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
@@ -10,8 +8,6 @@ import { noop } from 'lodash'
 import { TextDecoder, TextEncoder } from 'util'
 
 expect.extend(matchers)
-
-configure({ adapter: new EnzymeAdapter() })
 
 // define missing global built-ins for jest
 global.crypto = crypto.webcrypto
