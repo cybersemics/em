@@ -183,7 +183,7 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "eslint-plugin-react-native": "^3.11.0",
-    "fake-indexeddb": "^3.1.2",
+    "fake-indexeddb": "^5.0.2",
     "happy-dom": "^14.7.1",
     "it-all": "^1.0.5",
     "jest": "^27.5.1",
