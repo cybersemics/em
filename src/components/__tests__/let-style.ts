@@ -1,6 +1,6 @@
 import importText from '../../action-creators/importText'
-import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -9,7 +9,7 @@ afterEach(cleanupTestApp)
 
 describe.skip('let-style', () => {
   it('define =style in a =let expressions and apply it to a child of the parent context', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -32,7 +32,7 @@ describe.skip('let-style', () => {
   })
 
   it('=let/x/=style is not applied to siblings and sibling descendants', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -55,7 +55,7 @@ describe.skip('let-style', () => {
   })
 
   it('=let/=test/=style is not applied to =test within the =let definition', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -73,7 +73,7 @@ describe.skip('let-style', () => {
   })
 
   it('=let/x/=style is not applied to =let itself', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -91,7 +91,7 @@ describe.skip('let-style', () => {
   })
 
   it('=let/x/=style is available to all descendants', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -119,7 +119,7 @@ describe.skip('let-style', () => {
   })
 
   it('multiple definitions in same =let', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
@@ -151,7 +151,7 @@ describe.skip('let-style', () => {
   })
 
   it('deep let > shallow let', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
         - =let
