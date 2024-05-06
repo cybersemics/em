@@ -430,8 +430,8 @@ const Editable = ({
       // (does not work when clicking a bullet as it is set to null)
       const isRelatedTargetEditableOrNote =
         e.relatedTarget &&
-        ((e.relatedTarget as Element).classList.contains('editable') ||
-          (e.relatedTarget as Element).classList.contains('note-editable'))
+        ((e.relatedTarget as Element).classList?.contains('editable') ||
+          (e.relatedTarget as Element).classList?.contains('note-editable'))
 
       if (isRelatedTargetEditableOrNote) return
 

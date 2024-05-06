@@ -1,97 +1,39 @@
-import { ReactWrapper } from 'enzyme'
-import { HOME_TOKEN } from '../../constants'
-import { getChildrenRanked } from '../../selectors/getChildren'
-import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import { act, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import { findThoughtByText } from '../../test-helpers/queries'
 import windowEvent from '../../test-helpers/windowEvent'
 
-let wrapper: ReactWrapper<unknown, unknown>
-
-beforeEach(async () => {
-  wrapper = await createTestApp()
-})
-
+beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// TODO: Convert Enzyme tests to React Testing Library
-describe.skip('Divider', () => {
+describe('Divider', () => {
   it('convert "---" to divider', async () => {
-    // create thought
-    windowEvent('keydown', { key: 'Enter' })
-    wrapper.update()
-    const editable = wrapper.find('div.editable')
-    await editable.simulate('change', { target: { value: '---' } })
+    await act(async () => {
+      windowEvent('keydown', { key: 'Enter' })
+    })
 
-    // cursor back to trigger editThought
-    windowEvent('keydown', { key: 'Escape' })
+    const editable = await findThoughtByText('')
 
-    jest.runOnlyPendingTimers()
-    wrapper.update()
+    // '-' is not a divider
+    await act(async () => {
+      userEvent.type(editable!, '-')
+    })
+    const divider1 = screen.queryByLabelText('divider')
+    expect(divider1).toBeNull()
 
-    const divider = wrapper.find('Divider')
-    expect(divider).toHaveLength(1)
-  })
+    // '--' is not a divider
+    await act(async () => {
+      userEvent.type(editable!, '-')
+    })
+    const divider2 = screen.queryByLabelText('divider')
+    expect(divider2).toBeNull()
 
-  it('convert "–-" (emdash + dash) to divider', async () => {
-    // create thought
-    windowEvent('keydown', { key: 'Enter' })
-    wrapper.update()
-    const editable = wrapper.find('div.editable')
-    await editable.simulate('change', { target: { value: '—-' } })
-
-    // cursor back to trigger editThought
-    windowEvent('keydown', { key: 'Escape' })
-
-    jest.runOnlyPendingTimers()
-    wrapper.update()
-
-    const divider = wrapper.find('Divider')
-    expect(divider).toHaveLength(1)
-  })
-
-  it('do not convert "-" to divider', async () => {
-    // create thought
-    windowEvent('keydown', { key: 'Enter' })
-    wrapper.update()
-    const editable = wrapper.find('div.editable')
-    await editable.simulate('change', { target: { value: '-' } })
-
-    // cursor back to trigger editThought
-    windowEvent('keydown', { key: 'Escape' })
-
-    jest.runOnlyPendingTimers()
-
-    // state
-    const rootSubthoughts = getChildrenRanked(store.getState(), HOME_TOKEN)
-    expect(rootSubthoughts).toHaveLength(1)
-    expect(rootSubthoughts[0]).toMatchObject({ value: '-', rank: 0 })
-
-    // DOM
-    wrapper.update()
-    const aEditable = wrapper.find('div.editable')
-    expect(aEditable.at(0).text()).toBe('-')
-  })
-
-  it('do not convert "—" (emdash) to divider', async () => {
-    // create thought
-    windowEvent('keydown', { key: 'Enter' })
-    wrapper.update()
-    const editable = wrapper.find('div.editable')
-    await editable.simulate('change', { target: { value: '—' } })
-
-    // cursor back to trigger editThought
-    windowEvent('keydown', { key: 'Escape' })
-
-    jest.runOnlyPendingTimers()
-
-    // state
-    const rootSubthoughts = getChildrenRanked(store.getState(), HOME_TOKEN)
-    expect(rootSubthoughts).toHaveLength(1)
-    expect(rootSubthoughts[0]).toMatchObject({ value: '—', rank: 0 })
-
-    // DOM
-    wrapper.update()
-    const aEditable = wrapper.find('div.editable')
-    expect(aEditable.at(0).text()).toBe('—')
+    // '--' is a divider
+    await act(async () => {
+      userEvent.type(editable!, '-')
+    })
+    const divider3 = screen.queryByLabelText('divider')
+    expect(divider3).toBeTruthy()
   })
 })
