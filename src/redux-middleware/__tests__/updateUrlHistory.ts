@@ -1,46 +1,43 @@
-import Index from '../../@types/IndexType'
 import deleteThoughtWithCursor from '../../action-creators/deleteThoughtWithCursor'
 import newThought from '../../action-creators/newThought'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
-
-// mock debounce and throttle so debounced updateUrlHistory will trigger
-// fake timers cause an infinite loop on _.debounce
-// Jest v26 contains a 'modern' option for useFakeTimers (https://github.com/facebook/jest/pull/7776), but I am getting a "TypeError: Cannot read property 'useFakeTimers' of undefined" error when I call jest.useFakeTimers('modern'). The same error does not occor when I use 'legacy' or omit the argument (react-scripts v4.0.0-next.64).
-// https://github.com/facebook/jest/issues/3465#issuecomment-504908570
-jest.mock('lodash', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { debounce, throttle } = require('../../test-helpers/mock-debounce-throttle')
-  return {
-    ...(jest.requireActual('lodash') as Index<any>),
-    debounce,
-    throttle,
-  }
-})
+import contextToThought from '../../test-helpers/contextToThought'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// @MIGRATION_TODO: Fix this after enabling the middleware.
-it.skip('set url to cursor', () => {
-  store.dispatch(newThought({ value: 'a' }))
-  expect(window.location.pathname).toBe('/~/a')
+it('set url to cursor', async () => {
+  await dispatch(newThought({ value: 'a' }))
+  jest.runOnlyPendingTimers()
 
-  store.dispatch(newThought({ value: 'b', insertNewSubthought: true }))
-  expect(window.location.pathname).toBe('/~/a/b')
+  const thoughtA = contextToThought(store.getState(), ['a'])!
+  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
 
-  store.dispatch(cursorBack())
-  expect(window.location.pathname).toBe('/~/a')
+  await dispatch(newThought({ value: 'b', insertNewSubthought: true }))
+  jest.runOnlyPendingTimers()
 
-  store.dispatch(cursorBack())
+  const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
+  expect(window.location.pathname).toBe(`/~/${thoughtA.id}/${thoughtB.id}`)
+
+  await dispatch(cursorBack())
+  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+
+  await dispatch(cursorBack())
+  jest.runOnlyPendingTimers()
+
   expect(window.location.pathname).toBe('/')
 })
 
-it.skip('set url to home after deleting last empty thought', () => {
-  store.dispatch(newThought({}))
-  expect(window.location.pathname).toBe('/~/')
+it('set url to home after deleting last empty thought', async () => {
+  await dispatch(newThought({}))
+  jest.runOnlyPendingTimers()
 
-  store.dispatch(deleteThoughtWithCursor())
+  const thoughtA = contextToThought(store.getState(), [''])!
+  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+
+  await dispatch(deleteThoughtWithCursor({}))
   expect(window.location.pathname).toBe('/')
 })
