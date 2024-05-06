@@ -159,7 +159,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    jest.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
@@ -184,7 +183,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    jest.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
@@ -210,7 +208,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    jest.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
