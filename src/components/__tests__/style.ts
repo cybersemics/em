@@ -1,14 +1,14 @@
 import importText from '../../action-creators/importText'
 import toggleHiddenThoughts from '../../action-creators/toggleHiddenThoughts'
-import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { findThoughtByText } from '../../test-helpers/queries'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 it('apply =style attribute to a thought', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - Razzle
@@ -28,7 +28,7 @@ it('apply =style attribute to a thought', async () => {
 })
 
 it('apply =children/=style to all children', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -60,8 +60,8 @@ it('apply =children/=style to all children', async () => {
   expect(c).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
 
-it.skip('as an exception, do not apply =children/=style to =children itself', async () => {
-  store.dispatch([
+it('as an exception, do not apply =children/=style to =children itself', async () => {
+  await dispatch([
     importText({
       text: `
         - a
@@ -79,7 +79,7 @@ it.skip('as an exception, do not apply =children/=style to =children itself', as
 })
 
 it('apply =grandchildren/=style to all grandchildren', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
@@ -109,7 +109,7 @@ it('apply =grandchildren/=style to all grandchildren', async () => {
 })
 
 it('as an exception, do not apply =grandchildren/=style to =grandchildren itself', async () => {
-  store.dispatch([
+  await dispatch([
     importText({
       text: `
         - a
