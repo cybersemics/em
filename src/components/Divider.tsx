@@ -37,6 +37,7 @@ const Divider = ({ path }: { path: Path }) => {
 
   return (
     <div
+      aria-label='divider'
       ref={dividerSetWidth}
       style={{
         margin: '-2px -4px -5px',
