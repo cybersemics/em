@@ -177,7 +177,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    vi.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
@@ -202,7 +201,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    vi.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
@@ -228,7 +226,6 @@ describe('global suppress expansion', () => {
         - e
         - f`
 
-    vi.useFakeTimers()
     const store = createTestStore()
 
     store.dispatch([
