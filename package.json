@@ -42,7 +42,7 @@
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "postinstall": "scripts/install-hooks",
     "servebuild": "npx serve -s build -l 3000",
-    "test": "vitest",
+    "test": "vitest --project unit",
     "test:ios": "jest ./src/e2e/iOS --verbose",
     "test:puppeteer": "jest ./src/e2e/puppeteer",
     "websocket-server": "cd server && npm run build && npm start"
