@@ -13,4 +13,14 @@ export default defineWorkspace([
       setupFiles: ['src/setupTests.js'],
     },
   },
+  {
+    extends: './vite.config.ts',
+    test: {
+      name: 'puppeteer-e2e',
+      globals: true,
+      include: ['src/e2e/puppeteer/__tests__/*.ts'],
+      exclude: ['node_modules/**'],
+      environment: './src/e2e/puppeteer-environment.ts',
+    },
+  },
 ])

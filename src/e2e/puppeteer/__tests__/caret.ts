@@ -1,10 +1,7 @@
-/**
- * @jest-environment ./src/e2e/puppeteer-environment.js
- */
 import { devices } from 'puppeteer'
 import helpers from '../helpers'
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20000 })
 
 describe('all platforms', () => {
   const {
