@@ -8,7 +8,7 @@ export default defineWorkspace([
       globals: true,
       include: ['**/__tests__/**/*.ts'],
       exclude: ['node_modules/**', '**/e2e/**'],
-      environment: 'happy-dom',
+      environment: 'jsdom',
       mockReset: false,
       setupFiles: ['src/setupTests.js'],
     },
