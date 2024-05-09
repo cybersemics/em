@@ -7,8 +7,6 @@ import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
-const SNAPSHOT_PREFIX_PATH = 'snapshot-ts-src-e-2-e-puppeteer-tests-'
-
 const toMatchImageSnapshot = configureToMatchImageSnapshot({
   customDiffConfig: {
     // per-pixel failure threshold (percent)
@@ -20,8 +18,6 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
   // 14 px definitely has false negatives.
   // Hopefully 8 is the sweet spot.
   failureThreshold: 8,
-
-  customSnapshotIdentifier: ({ defaultIdentifier }) => `${defaultIdentifier.replace(SNAPSHOT_PREFIX_PATH, '')}-snap`,
 })
 expect.extend({ toMatchImageSnapshot })
 
