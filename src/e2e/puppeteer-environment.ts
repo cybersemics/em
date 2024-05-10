@@ -25,6 +25,8 @@ const PuppeteerEnvironment: Environment = {
           '--no-sandbox',
           '--no-zygote',
         ],
+        // Increase timeout to avoid: "TimeoutError: Timed out after 30000 ms while trying to connect to the browser! Only Chrome at revision r869685 is guaranteed to work."
+        timeout: 60000,
       })
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch(e => {
