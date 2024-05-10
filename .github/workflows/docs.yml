@@ -1,9 +1,13 @@
 name: Docs
 
-on:
-  push:
-    branches:
-      - main
+# Temporarily disable the workflow except when manually triggered
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+on: workflow_dispatch
+
+# on:
+#   push:
+#     branches:
+#       - main
 
 jobs:
   build-and-deploy:
