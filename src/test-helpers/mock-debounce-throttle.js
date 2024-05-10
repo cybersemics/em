@@ -1,9 +1,11 @@
+import { vi } from 'vitest'
+
 /** Simple debounce with default leading false. Lodash's debounce breaks jest fake timers in Jest < 26. */
 export const debounce = (fn, wait, { leading } = {}) => {
   let timer = null
   let pendingArgs = null
 
-  const cancel = jest.fn(() => {
+  const cancel = vi.fn(() => {
     if (timer) {
       clearTimeout(timer)
     }
@@ -11,7 +13,7 @@ export const debounce = (fn, wait, { leading } = {}) => {
     pendingArgs = null
   })
 
-  const flush = jest.fn(() => {
+  const flush = vi.fn(() => {
     if (timer) {
       fn(...pendingArgs)
       cancel()

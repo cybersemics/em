@@ -11,13 +11,13 @@ afterEach(cleanupTestApp)
 
 it('set url to cursor', async () => {
   await dispatch(newThought({ value: 'a' }))
-  jest.runOnlyPendingTimers()
+  vi.runOnlyPendingTimers()
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
   expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
 
   await dispatch(newThought({ value: 'b', insertNewSubthought: true }))
-  jest.runOnlyPendingTimers()
+  vi.runOnlyPendingTimers()
 
   const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
   expect(window.location.pathname).toBe(`/~/${thoughtA.id}/${thoughtB.id}`)
@@ -26,14 +26,14 @@ it('set url to cursor', async () => {
   expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
 
   await dispatch(cursorBack())
-  jest.runOnlyPendingTimers()
+  vi.runOnlyPendingTimers()
 
   expect(window.location.pathname).toBe('/')
 })
 
 it('set url to home after deleting last empty thought', async () => {
   await dispatch(newThought({}))
-  jest.runOnlyPendingTimers()
+  vi.runOnlyPendingTimers()
 
   const thoughtA = contextToThought(store.getState(), [''])!
   expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)

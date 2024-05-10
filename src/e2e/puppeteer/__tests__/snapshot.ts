@@ -1,7 +1,3 @@
-/**
- * @jest-environment ./src/e2e/puppeteer-environment.js
- */
-
 /* Visual regression tests
  * Snapshot Directory: ./__image_snapshots__
  * In jest watch, Press i to update failing snapshots interactively.
@@ -25,7 +21,7 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
 })
 expect.extend({ toMatchImageSnapshot })
 
-jest.setTimeout(60000)
+vi.setConfig({ testTimeout: 60000 })
 
 /*
 From jest-image-snapshot README:

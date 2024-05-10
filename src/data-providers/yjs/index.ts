@@ -6,8 +6,8 @@ import Share from '../../@types/Share'
 import storage from '../../util/storage'
 import { encodePermissionsDocumentName } from './documentNameEncoder'
 
-const host = process.env.REACT_APP_WEBSOCKET_HOST || 'localhost'
-const port = process.env.REACT_APP_WEBSOCKET_PORT || (host === 'localhost' ? 3001 : '')
+const host = import.meta.env.VITE_WEBSOCKET_HOST || 'localhost'
+const port = import.meta.env.VITE_WEBSOCKET_PORT || (host === 'localhost' ? 3001 : '')
 const protocol = host === 'localhost' ? 'ws' : 'wss'
 
 export const websocketUrl = `${protocol}://${host}${port ? ':' + port : ''}/hocuspocus`
@@ -59,7 +59,7 @@ export const clientIdReady = (
 })
 
 // Disable IndexedDB during tests because of TransactionInactiveError in fake-indexeddb.
-if (process.env.NODE_ENV !== 'test') {
+if (import.meta.env.MODE !== 'test') {
   // eslint-disable-next-line no-new
   new IndexeddbPersistence(encodePermissionsDocumentName(tsid), permissionsClientDoc)
 }

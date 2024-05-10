@@ -1,6 +1,3 @@
-/**
- * @jest-environment ./src/e2e/puppeteer-environment.js
- */
 import { JSHandle } from 'puppeteer'
 import helpers from '../helpers'
 
@@ -10,7 +7,7 @@ const getFirstSubthought = (editable: JSHandle) =>
     .asElement()!
     .evaluateHandle(el => el.parentElement?.parentElement?.nextElementSibling?.querySelector('.editable'))
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20000 })
 
 const { $, clickThought, getEditable, paste, press, type } = helpers()
 

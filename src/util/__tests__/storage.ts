@@ -1,6 +1,8 @@
 import storage from '../storage'
 
-beforeEach(localStorage.clear)
+beforeEach(() => {
+  localStorage.clear()
+})
 
 // these type assertions are done at compile-time
 it('types', () => {

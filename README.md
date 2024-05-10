@@ -62,7 +62,7 @@ The above scripts run in development mode by default. You can copy or sync in pr
 
 em is an offline-first app that can run on a static web server.
 
-Environment variables are set in the appropriate .env file: `.env.development` and `.env.production`. Only `.env.production` is kept in source control. Environment variables that are prepended with `REACT_APP_` will be bundled with the build and available client-side.
+Environment variables are set in the appropriate .env file: `.env.development` and `.env.production`. Only `.env.production` is kept in source control. Environment variables that are prepended with `VITE_` will be bundled with the build and available client-side.
 
 ```sh
 # build the static HTML/CSS/JS app in the /build directory

@@ -24,8 +24,8 @@ const generateThought: Shortcut = {
   gesture: 'ur',
   canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec: async (dispatch, getState) => {
-    if (!process.env.REACT_APP_AI_URL) {
-      throw new Error('process.env.REACT_APP_AI_URL is not configured')
+    if (!import.meta.env.VITE_AI_URL) {
+      throw new Error('import.meta.env.VITE_AI_URL is not configured')
     }
 
     const state = getState()
@@ -72,7 +72,7 @@ const generateThought: Shortcut = {
 
     // generate thought
     let valueNew = thought.value
-    const res = await fetch(process.env.REACT_APP_AI_URL!, { method: 'POST', body: input })
+    const res = await fetch(import.meta.env.VITE_AI_URL!, { method: 'POST', body: input })
     const { content, err } = await res.json()
     if (err) {
       if (err.status === 429) {

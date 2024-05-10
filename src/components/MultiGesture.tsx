@@ -1,5 +1,5 @@
 import React from 'react'
-import { GestureResponderEvent } from 'react-native'
+import { GestureResponderEvent, PanResponder, View } from 'react-native'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
@@ -9,10 +9,6 @@ import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import gestureStore from '../stores/gesture'
 import TraceGesture from './TraceGesture'
-
-// expects peer dependencies react-dom and react-native-web
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PanResponder, View } = require('react-native')
 
 interface Point {
   x: number

@@ -1,10 +1,7 @@
-/**
- * @jest-environment ./src/e2e/puppeteer-environment.js
- */
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
-jest.setTimeout(20000)
+vi.setConfig({ testTimeout: 20000 })
 
 const { click, paste, refresh, waitForEditable, waitForThoughtExistInDb, clickThought } = helpers()
 
