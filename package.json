@@ -203,7 +203,7 @@
     "typedoc-plugin-exclude-references": "^1.0.0",
     "typedoc-plugin-external-module-name": "^4.0.6",
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
-    "typescript": "^4.9.5",
+    "typescript": "^5.4.5",
     "vite": "^5.2.10",
     "vitest": "^1.5.3",
     "webdriverio": "^7.7.3"
