@@ -17,7 +17,7 @@ const setup = async ({
   emulatedDevice,
   skipTutorial = true,
 }: InitPageOptions = {}): Promise<Page> => {
-  const context = await puppeteerBrowser.createIncognitoBrowserContext()
+  const context = await puppeteerBrowser.createBrowserContext()
   const page: Page = await context.newPage()
 
   if (emulatedDevice) {
@@ -43,7 +43,7 @@ const setup = async ({
         console[messageType](text)
         break
       // ConsoleMessage 'warning needs to be converted to native console 'warn'
-      case 'warning':
+      case 'warn':
         console.warn(text)
         break
       default:

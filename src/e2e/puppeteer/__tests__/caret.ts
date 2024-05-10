@@ -1,4 +1,4 @@
-import { devices } from 'puppeteer'
+import { KnownDevices } from 'puppeteer'
 import helpers from '../helpers'
 
 vi.setConfig({ testTimeout: 20000 })
@@ -176,7 +176,7 @@ describe('mobile only', () => {
     getSelection,
     waitForEditable,
     waitForHiddenEditable,
-  } = helpers({ emulatedDevice: devices['iPhone 11'] })
+  } = helpers({ emulatedDevice: KnownDevices['iPhone 11'] })
 
   it('After subcategorizeOne, the caret should be on the new thought', async () => {
     const importText = `
