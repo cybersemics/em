@@ -171,9 +171,35 @@ const himalayaToBlock = (nodes: HimalayaNode[]): Block | Block[] => {
 
   if (Array.isArray(blocks[0])) return blocks.flat()
 
-  // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block), else return blocks as is.
+  // retrieve first chunk, if the first element is Block and the second is Block[], join children (Block[]) with parent (Block).
   const [first, rest] = blocks
-  const result = !Array.isArray(first) && Array.isArray(rest) ? joinChildren(blocks) : (blocks as Block[])
+  const result =
+    !Array.isArray(first) && Array.isArray(rest)
+      ? joinChildren(blocks)
+      : /* It is still possible for blocks to contain nested arrays, so we must flatten them into Block[].
+           This occurs when a child comes after a <br> tag, such as in the following example.
+
+        e.g.
+          - a
+          - b
+          - c<br><span class="note">This is c!</span>
+
+          This should be import as:
+
+          - a
+          - b
+          - c
+            - =note
+              - This is c!
+      */
+        blocks.map(blockOrArray =>
+          Array.isArray(blockOrArray)
+            ? {
+                scope: blockOrArray[0].scope,
+                children: blockOrArray.slice(1),
+              }
+            : blockOrArray,
+        )
 
   return result
 }

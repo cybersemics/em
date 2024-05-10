@@ -1,8 +1,8 @@
+import DOMPurify from 'dompurify'
 import _ from 'lodash'
-import sanitize from 'sanitize-html'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
-import { ALLOWED_ATTRIBUTES, ALLOWED_TAGS } from '../constants'
+import { ALLOWED_ATTR, ALLOWED_TAGS } from '../constants'
 import strip from '../util/strip'
 
 const REGEX_CONTAINS_META_TAG = /^<(!doctype|meta)\s*.*?>/i
@@ -70,10 +70,9 @@ const isCopiedFromApp = (htmlText: string) => REGEX_CONTAINS_META_TAG.test(htmlT
 const blocksToHtml = (parsedBlocks: Block[]): string =>
   parsedBlocks
     .map(block => {
-      const value = sanitize(block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim(), {
-        allowedTags: ALLOWED_TAGS,
-        allowedAttributes: ALLOWED_ATTRIBUTES,
-        disallowedTagsMode: 'recursiveEscape',
+      const value = DOMPurify.sanitize(block.scope.replace(REGEX_PLAINTEXT_BULLET, '').trim(), {
+        ALLOWED_TAGS,
+        ALLOWED_ATTR,
       })
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
       return value || childrenHtml ? `<li>${value}${childrenHtml}</li>` : ''

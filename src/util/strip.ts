@@ -1,8 +1,8 @@
+import DOMPurify from 'dompurify'
 import { HimalayaNode, parse } from 'himalaya'
 import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
-import sanitize from 'sanitize-html'
-import { ALLOWED_ATTRIBUTES, ALLOWED_FORMATTING_TAGS } from '../constants'
+import { ALLOWED_ATTR, ALLOWED_FORMATTING_TAGS } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
 
@@ -23,15 +23,16 @@ const strip = (
     .replace(/<\/p><p/g, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
     .replace(REGEX_BR_TAG, '\n') // Some text editors add <br> instead of \n
     .replace(REGEX_SPAN_TAG_ONLY_CONTAINS_WHITESPACES, '$1') // Replace span tags contain whitespaces
-    .replace(REGEX_NBSP, ' ')
     .replace(REGEX_DECIMAL_SPACE, ' ') // Some text editors use decimal code for space character
     .replace(REGEX_EMPTY_FORMATTING_TAGS, '') // Remove empty formatting tags
 
   const sanitizedHtml = unescapeHtml(
-    sanitize(replacedHtml, {
-      allowedTags: preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
-      allowedAttributes: ALLOWED_ATTRIBUTES,
-    }),
+    DOMPurify.sanitize(replacedHtml, {
+      ALLOWED_TAGS: preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
+      ALLOWED_ATTR,
+    })
+      // DOMPurify replaces spaces with &nbsp;, so we need to replace them after sanitizing rather than in the replacedHtml replacements above
+      .replace(REGEX_NBSP, ' '),
   )
 
   let finalHtml = sanitizedHtml
