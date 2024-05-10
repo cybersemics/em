@@ -5715,10 +5715,10 @@ formdata-node@^4.3.2:
     node-domexception "1.0.0"
     web-streams-polyfill "4.0.0-beta.3"
 
-fp-and-or@^0.1.3:
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/fp-and-or/-/fp-and-or-0.1.4.tgz#0268c800c359ede259cdcbc352654e698b7ea299"
-  integrity sha512-+yRYRhpnFPWXSly/6V4Lw9IfOV26uu30kynGJ03PW+MnjOEQe45RZ141QcS0aJehYBYA50GfCDnsRbFJdhssRw==
+fp-and-or@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/fp-and-or/-/fp-and-or-1.0.2.tgz#e3901922c7cead5f7cf8eb449a4a91c98b718fab"
+  integrity sha512-jRuhDpN/8LaE2ghHYKuj11SqUcfus38Rhsd+m9EReVes4KQdLErmHoP5FAWUBg+kci56ucryVryKda7cCyHT6A==
 
 from@~0:
   version "0.1.7"
