@@ -167,8 +167,7 @@ describe('normal view', () => {
     - a2`)
   })
 
-  // TODO
-  it.skip('cursor should move to next sibling if there is no prev sibling', () => {
+  it('cursor should move to next sibling if there is no prev sibling', () => {
     const steps = [
       newThought('a'),
       newSubthought(''),
