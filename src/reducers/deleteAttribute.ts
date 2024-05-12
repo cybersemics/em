@@ -2,6 +2,7 @@ import { deleteThought } from '.'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -41,5 +42,11 @@ const deleteAttribute = (
     ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
     : stateNew
 }
+
+/** Action-creator for deleteAttribute. */
+export const deleteAttributeActionCreator =
+  (payload: Parameters<typeof deleteAttribute>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'deleteAttribute', ...payload })
 
 export default _.curryRight(deleteAttribute)
