@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import Dispatch from '../@types/Dispatch'
 import Index from '../@types/IndexType'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
@@ -6,13 +7,17 @@ import * as selection from '../device/selection'
 import globals from '../globals'
 import { alertActionCreator as alert } from '../reducers/alert'
 import { DragInProgressPayload } from '../reducers/dragInProgress'
-import store from '../stores/app'
 import head from '../util/head'
 import expandHoverDown from './expandHoverDown'
 import expandHoverUp from './expandHoverUp'
 
-/** A utility that shakes if hit too much. Call shaker.hit with a id representing the source of the hit. If the number of unique ids exceeds the SHAKE_THRESHOLD within DEBOUNCE_SHAKING, trigger a shake. */
-const Shaker = (onShake: () => unknown) => {
+/** A utility that shakes if hit too much. Returns a hit function that takes an id representing the source of the hit. If the number of unique ids exceeds the SHAKE_THRESHOLD within DEBOUNCE_SHAKING, trigger onShake. */
+const Shaker = <T>(
+  onShake: (
+    /** Extra data that is passed to onShake from the last call to hit. This is used to pass dispatch from the dragInProgressActionCreator since importing the app store causes a circular import. */
+    data: T,
+  ) => void,
+) => {
   // track the different draggingThoughts values that are dispatched within a period of time
   const DEBOUNCE_SHAKING = 100
 
@@ -31,7 +36,7 @@ const Shaker = (onShake: () => unknown) => {
   /* Reset counters when shaking stops. */
   const shaking = _.debounce(reset, DEBOUNCE_SHAKING)
 
-  return (id?: string) => {
+  return (data: T, id?: string) => {
     // count repeated ids
     if (id) {
       repeatedIds[id] = (repeatedIds[id] || 0) + 1
@@ -40,7 +45,7 @@ const Shaker = (onShake: () => unknown) => {
 
     // check if we reached the shake threshold
     if (repeatedMax >= SHAKE_THRESHOLD) {
-      onShake()
+      onShake(data)
       reset()
     }
 
@@ -50,11 +55,11 @@ const Shaker = (onShake: () => unknown) => {
 }
 
 // abort drag-and-drop on shake
-const shaker = Shaker(() => {
+const shaker = Shaker((dispatch: Dispatch) => {
   // force drag to abort
   // we need to make all drop targets, visible drag behavior, and drop handlers short circuit when the drag has been aborted
   // react-dnd does not allow programmatic cancellation of drag
-  store.dispatch([
+  dispatch([
     {
       type: 'dragInProgress',
       value: false,
@@ -86,7 +91,7 @@ const dragInProgress =
 
     // abort drag-and-drop on shake
     // must go after dispatching dragInProgress, otherwise aborted dragInProgress: false will get overwritten by the payload
-    shaker(hoveringPath ? head(hoveringPath) : undefined)
+    shaker(dispatch, hoveringPath ? head(hoveringPath) : undefined)
 
     // when at the top of the viewport, bump the scroll bar to prevent gitching in Safari mobile
     // TODO: It still glitches out if you scroll back to the top during a drag
