@@ -1,8 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import editThoughtActionCreator from '../action-creators/editThought'
-import editThought from '../reducers/editThought'
+import editThought, { editThoughtActionCreator } from '../reducers/editThought'
 import contextToPath from '../selectors/contextToPath'
 import head from '../util/head'
 

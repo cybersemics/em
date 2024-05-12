@@ -5,6 +5,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/yjs'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
@@ -189,5 +190,11 @@ const editThought = (state: State, { force, oldValue, newValue, path, rankInCont
     // recentlyEdited,
   })
 }
+
+/** Action-creator for editThought. */
+export const editThoughtActionCreator =
+  (payload: Parameters<typeof editThought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'editThought', ...payload })
 
 export default _.curryRight(editThought)

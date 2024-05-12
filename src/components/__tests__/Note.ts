@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/dom'
 import SimplePath from '../../@types/SimplePath'
-import editThought from '../../action-creators/editThought'
 import importText from '../../action-creators/importText'
+import { editThoughtActionCreator as editThought } from '../../reducers/editThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
