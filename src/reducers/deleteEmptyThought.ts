@@ -1,6 +1,5 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import error from '../action-creators/error'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import deleteThought from '../reducers/deleteThought'
 import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
@@ -26,6 +25,7 @@ import parentOf from '../util/parentOf'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import archiveThought from './archiveThought'
+import { errorActionCreator as error } from './error'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
 const deleteEmptyThought = (state: State): State => {

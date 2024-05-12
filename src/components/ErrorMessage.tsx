@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import error from '../action-creators/error'
+import { errorActionCreator as error } from '../reducers/error'
 import fastClick from '../util/fastClick'
 
 /** An error message that can be dismissed with a close button. */
