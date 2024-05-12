@@ -2,6 +2,7 @@ import { applyPatch } from 'fast-json-patch'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN } from '../constants'
 import cursorBack from '../reducers/cursorBack'
 import deleteThought from '../reducers/deleteThought'
@@ -172,4 +173,10 @@ const deleteThoughtWithCursor = (state: State, payload: { path?: Path }) => {
   ])(state)
 }
 
-export default _.curryRight(deleteThoughtWithCursor)
+/** Action-creator for deleteThoughtWithCursor. */
+export const deleteThoughtWithCursorActionCreator =
+  (payload: Parameters<typeof deleteThoughtWithCursor>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'deleteThoughtWithCursor', ...payload })
+
+export default _.curryRight(deleteThoughtWithCursor) /** Action-creator for deleteThoughtWithCursor. */
