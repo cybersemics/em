@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import setCursor from '../reducers/setCursor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -31,5 +32,8 @@ const cursorUp = (state: State) => {
   // noop if there is no previous path, i.e. the cursor is on the very first thought
   return prevPath ? setCursor(state, { path: prevPath }) : state
 }
+
+/** Action-creator for cursorUp. */
+export const cursorUpActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorUp' })
 
 export default cursorUp
