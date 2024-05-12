@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import setCursor from '../reducers/setCursor'
 import nextThought from '../selectors/nextThought'
 
@@ -16,3 +17,6 @@ const cursorDown = (state: State) => {
 }
 
 export default cursorDown
+
+/** Action-creator for cursorDown. */
+export const cursorDownActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorDown' })
