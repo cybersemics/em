@@ -3,9 +3,9 @@ import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import dragHold from '../action-creators/dragHold'
-import dragInProgress from '../action-creators/dragInProgress'
 import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
+import { dragInProgressActionCreator as dragInProgress } from '../reducers/dragInProgress'
 import Favorites from './Favorites'
 
 // extend SwipeableDrawer with classes prop
