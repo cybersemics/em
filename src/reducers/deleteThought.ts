@@ -6,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import updateThoughts from '../reducers/updateThoughts'
@@ -260,5 +261,11 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
     }),
   ])(state)
 }
+
+/** Action-creator for deleteThought. */
+export const deleteThoughtActionCreator =
+  (payload: Parameters<typeof deleteThought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'deleteThought', ...payload })
 
 export default _.curryRight(deleteThought)
