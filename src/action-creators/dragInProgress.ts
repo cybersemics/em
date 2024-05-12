@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Dispatch from '../@types/Dispatch'
-import Index from '../@types/IndexType'
 import Thunk from '../@types/Thunk'
 import { isSafari } from '../browser'
 import * as selection from '../device/selection'
@@ -25,12 +24,12 @@ const Shaker = <T>(
   const SHAKE_THRESHOLD = 6
 
   let repeatedMax = 0
-  let repeatedIds: Index<number> = {}
+  const repeatedIds: Map<string, number> = new Map()
 
   /** Resets the repeat counts. */
   const reset = () => {
     repeatedMax = 0
-    repeatedIds = {}
+    repeatedIds.clear()
   }
 
   /* Reset counters when shaking stops. */
@@ -39,8 +38,9 @@ const Shaker = <T>(
   return (data: T, id?: string) => {
     // count repeated ids
     if (id) {
-      repeatedIds[id] = (repeatedIds[id] || 0) + 1
-      repeatedMax = Math.max(repeatedMax, repeatedIds[id])
+      const count = (repeatedIds.get(id) || 0) + 1
+      repeatedIds.set(id, count)
+      repeatedMax = Math.max(repeatedMax, count)
     }
 
     // check if we reached the shake threshold
