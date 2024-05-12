@@ -1,24 +1,29 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import error from '../action-creators/error'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import deleteThought from '../reducers/deleteThought'
 import deleteThoughtWithCursor from '../reducers/deleteThoughtWithCursor'
 import editThought from '../reducers/editThought'
 import moveThought from '../reducers/moveThought'
 import setCursor from '../reducers/setCursor'
+import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
+import getThoughtBefore from '../selectors/getThoughtBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
+import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
+import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
 import archiveThought from './archiveThought'
 
@@ -129,6 +134,23 @@ const deleteEmptyThought = (state: State): State => {
 }
 
 /** Action-creator for deleteEmptyThought. */
-export const deleteEmptyThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'deleteEmptyThought' })
+export const deleteEmptyThoughtActionCreator: Thunk = (dispatch, getState) => {
+  const state = getState()
+  const { cursor } = state
+  if (!cursor) return
+
+  const simplePath = simplifyPath(state, cursor)
+  const prevThought = getThoughtBefore(state, simplePath)
+  // Determine if thought at cursor is uneditable
+  const contextOfCursor = pathToContext(state, cursor)
+  const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
+
+  if (prevThought && uneditable) {
+    dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
+    return
+  }
+
+  dispatch({ type: 'deleteEmptyThought' })
+}
 
 export default deleteEmptyThought

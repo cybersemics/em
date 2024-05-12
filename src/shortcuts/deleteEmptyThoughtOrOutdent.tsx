@@ -2,22 +2,17 @@ import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import State from '../@types/State'
-import Thunk from '../@types/Thunk'
-import error from '../action-creators/error'
 import outdent from '../action-creators/outdent'
 import * as selection from '../device/selection'
-import { deleteEmptyThoughtActionCreator } from '../reducers/deleteEmptyThought'
-import findDescendant from '../selectors/findDescendant'
+import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../reducers/deleteEmptyThought'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtBefore from '../selectors/getThoughtBefore'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-import pathToContext from '../util/pathToContext'
 
 /** Returns true if the cursor is on an empty though or divider that can be deleted. */
 const canExecuteDeleteEmptyThought = (state: State) => {
@@ -41,26 +36,6 @@ const canExecuteDeleteEmptyThought = (state: State) => {
   // delete if the browser selection as at the start of the thought (either deleting or merging if it has children)
   // do not merge if previous thought is a divider
   return !hasChildrenAndPrevDivider
-}
-
-/** A thunk that dispatches deleteEmptyThought. */
-const deleteEmptyThought: Thunk = (dispatch, getState) => {
-  const state = getState()
-  const { cursor } = state
-  if (!cursor) return
-
-  const simplePath = simplifyPath(state, cursor)
-  const prevThought = getThoughtBefore(state, simplePath)
-  // Determine if thought at cursor is uneditable
-  const contextOfCursor = pathToContext(state, cursor)
-  const uneditable = contextOfCursor && findDescendant(state, head(cursor), '=uneditable')
-
-  if (prevThought && uneditable) {
-    dispatch(error({ value: `'${ellipsize(headValue(state, cursor))}' is uneditable and cannot be merged.` }))
-    return
-  }
-
-  dispatch(deleteEmptyThoughtActionCreator())
 }
 
 /** A selector that returns true if the cursor is on an only child that can be outdented by the delete command. */
