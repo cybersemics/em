@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import editing from '../action-creators/editing'
 import { isTouch } from '../browser'
 import { noop } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
+import { editingActionCreator as editing } from '../reducers/editing'
 
 // number of pixels of scrolling to allow before abandoning the long tap
 const SCROLL_THRESHOLD = 10
