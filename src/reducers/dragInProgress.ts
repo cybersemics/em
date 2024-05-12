@@ -6,7 +6,6 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import expandHoverDown from '../action-creators/expandHoverDown'
 import expandHoverUp from '../action-creators/expandHoverUp'
 import { isSafari } from '../browser'
 import { AlertText, AlertType } from '../constants'
@@ -14,6 +13,7 @@ import * as selection from '../device/selection'
 import globals from '../globals'
 import head from '../util/head'
 import alert, { alertActionCreator } from './alert'
+import { expandHoverDownActionCreator as expandHoverDown } from './expandHoverDown'
 
 interface DragInProgressPayload {
   value: boolean
