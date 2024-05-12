@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
-import cursorCleared from '../action-creators/cursorCleared'
 import * as selection from '../device/selection'
+import { cursorClearedActionCreator as cursorCleared } from '../reducers/cursorCleared'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const clearThoughtShortcut: Shortcut = {
