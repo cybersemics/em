@@ -1,5 +1,6 @@
 import { last } from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { HOME_PATH } from '../constants'
 import setCursor from '../reducers/setCursor'
 import { firstVisibleChild } from '../selectors/getChildren'
@@ -36,5 +37,8 @@ const cursorForward = (state: State) => {
 
   return cursorNew ? setCursor(state, { path: cursorNew, cursorHistoryPop: isValidChild }) : state
 }
+
+/** Action-creator for cursorForward. */
+export const cursorForwardActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorForward' })
 
 export default cursorForward
