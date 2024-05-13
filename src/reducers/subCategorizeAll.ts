@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { HOME_PATH } from '../constants'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
@@ -109,5 +110,8 @@ const subCategorizeAll = (state: State) => {
 
   return reducerFlow(reducers)(state)
 }
+
+/** A Thunk that dispatches a 'subCategorizeAll` action. */
+export const subCategorizeAllActionCreator = (): Thunk => dispatch => dispatch({ type: 'subCategorizeAll' })
 
 export default subCategorizeAll
