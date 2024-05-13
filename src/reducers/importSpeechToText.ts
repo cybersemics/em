@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
@@ -53,5 +54,11 @@ const importSpeechToText = _.curryRight(
     ])(state)
   },
 )
+
+/** Action-creator for importSpeechToText. */
+export const importSpeechToTextActionCreator =
+  (payload: Parameters<typeof importSpeechToText>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'importSpeechToText', ...payload })
 
 export default importSpeechToText
