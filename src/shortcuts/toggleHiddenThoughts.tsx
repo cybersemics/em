@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import toggleHiddenThoughts from '../action-creators/toggleHiddenThoughts'
+import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../reducers/toggleHiddenThoughts'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (
