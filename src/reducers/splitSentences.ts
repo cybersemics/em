@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
@@ -40,5 +41,8 @@ const splitSentences = (state: State) => {
 
   return reducerFlow(reducers)(state)
 }
+
+/** Action-creator for splitSentences. */
+export const splitSentencesActionCreator = (): Thunk => dispatch => dispatch({ type: 'splitSentences' })
 
 export default _.curryRight(splitSentences)
