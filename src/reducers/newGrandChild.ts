@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { TUTORIAL_STEP_START } from '../constants'
 import newThought from '../reducers/newThought'
 import { firstVisibleChild } from '../selectors/getChildren'
@@ -25,5 +26,8 @@ const newGrandChild = (state: State) => {
 
   return newThought(state, { insertNewSubthought: true, at: appendToPath(cursor, firstChild.id) })
 }
+
+/** Action-creator for newGrandChild. */
+export const newGrandChildActionCreator = (): Thunk => dispatch => dispatch({ type: 'newGrandChild' })
 
 export default newGrandChild

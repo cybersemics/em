@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import newGrandChild from '../action-creators/newGrandChild'
+import { newGrandChildActionCreator as newGrandChild } from '../reducers/newGrandChild'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const newGrandChildShortcut: Shortcut = {
