@@ -4,6 +4,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/yjs'
 import mergeThoughts from '../reducers/mergeThoughts'
 import rerank from '../reducers/rerank'
@@ -202,5 +203,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
       : null,
   ])(state)
 }
+
+/** Action-creator for moveThought. */
+export const moveThoughtActionCreator =
+  (payload: Parameters<typeof moveThought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'moveThought', ...payload })
 
 export default _.curryRight(moveThought, 2)
