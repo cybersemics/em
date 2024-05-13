@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
-import tutorialPrev from '../../action-creators/tutorialPrev'
 import { TUTORIAL_STEP_START } from '../../constants'
+import { tutorialPrevActionCreator as tutorialPrev } from '../../reducers/tutorialPrev'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
