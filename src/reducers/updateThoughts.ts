@@ -6,6 +6,7 @@ import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, MAX_JUMPS } from '../constants'
 import { editThoughtPayload } from '../reducers/editThought'
 import expandThoughts from '../selectors/expandThoughts'
@@ -314,5 +315,11 @@ const updateThoughts = (
     },
   ])(state)
 }
+
+/** Action-creator for updateThoughts. */
+export const updateThoughtsActionCreator =
+  (payload: Parameters<typeof updateThoughts>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'updateThoughts', ...payload })
 
 export default _.curryRight(updateThoughts)
