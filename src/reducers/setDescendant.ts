@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import createThought from '../reducers/createThought'
 import setFirstSubthought from '../reducers/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
@@ -46,5 +47,11 @@ const setDescendant = (
     values: _values.slice(1),
   })
 }
+
+/** Action-creator for setDescendant. */
+export const setDescendantActionCreator =
+  (payload: Parameters<typeof setDescendant>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'setDescendant', ...payload })
 
 export default _.curryRight(setDescendant)
