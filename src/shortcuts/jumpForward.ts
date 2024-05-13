@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import jump from '../action-creators/jump'
+import { jumpActionCreator as jump } from '../reducers/jump'
 
 const jumpForwardShortcut: Shortcut = {
   id: 'jumpForward',

@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -36,5 +37,11 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
     jumpIndex: state.jumpIndex - steps,
   }
 }
+
+/** Action-creator for jump. */
+export const jumpActionCreator =
+  (steps = -1): Thunk =>
+  dispatch =>
+    dispatch({ type: 'jump', steps })
 
 export default jump
