@@ -1,7 +1,7 @@
 import { act } from '@testing-library/react'
-import importText from '../../action-creators/importText'
 import newThought from '../../action-creators/newThought'
 import { HOME_TOKEN } from '../../constants'
+import { importTextActionCreator as importText } from '../../reducers/importText'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'

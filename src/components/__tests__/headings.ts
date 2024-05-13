@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react'
-import importText from '../../action-creators/importText'
+import { importTextActionCreator as importText } from '../../reducers/importText'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findThoughtByText } from '../../test-helpers/queries'

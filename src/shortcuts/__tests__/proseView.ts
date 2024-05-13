@@ -1,4 +1,4 @@
-import importText from '../../action-creators/importText'
+import { importTextActionCreator as importText } from '../../reducers/importText'
 import attributeByContext from '../../test-helpers/attributeByContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'

@@ -1,4 +1,4 @@
-import importText from '../../action-creators/importText'
+import { importTextActionCreator as importText } from '../../reducers/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 

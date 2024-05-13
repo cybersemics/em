@@ -1,4 +1,3 @@
-import importText from '../../action-creators/importText'
 import indent from '../../action-creators/indent'
 import moveThoughtDown from '../../action-creators/moveThoughtDown'
 import newThought from '../../action-creators/newThought'
@@ -9,6 +8,7 @@ import { archiveThoughtActionCreator as archiveThought } from '../../reducers/ar
 import { clearActionCreator as clear } from '../../reducers/clear'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../reducers/cursorDown'
+import { importTextActionCreator as importText } from '../../reducers/importText'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'

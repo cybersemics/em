@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import Timestamp from '../@types/Timestamp'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/yjs'
@@ -247,5 +248,11 @@ const importText = (
     ])(stateWithDummy)
   }
 }
+
+/** A Thunk that dispatches an 'importText` action. */
+export const importTextActionCreator =
+  (payload: Parameters<typeof importText>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'importText', ...payload })
 
 export default _.curryRight(importText)
