@@ -160,7 +160,7 @@
     "@types/react-transition-group": "^4.4.1",
     "@types/redux-mock-store": "^1.0.2",
     "@types/sanitize-html": "^2.3.1",
-    "@types/sinonjs__fake-timers": "^6.0.2",
+    "@types/sinonjs__fake-timers": "^8.1.5",
     "@types/yallist": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
