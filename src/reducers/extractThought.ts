@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -47,5 +48,8 @@ const extractThought = (state: State) => {
 
   return reducerFlow(reducers)(state)
 }
+
+/** Action-creator for extractThought. */
+export const extractThoughtActionCreator = (): Thunk => dispatch => dispatch({ type: 'extractThought' })
 
 export default _.curryRight(extractThought)

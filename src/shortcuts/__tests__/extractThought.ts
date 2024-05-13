@@ -1,6 +1,6 @@
 import { findAllByPlaceholderText, screen } from '@testing-library/react'
-import extractThought from '../../action-creators/extractThought'
 import newThought from '../../action-creators/newThought'
+import { extractThoughtActionCreator as extractThought } from '../../reducers/extractThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
