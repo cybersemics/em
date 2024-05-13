@@ -1,13 +1,13 @@
-import DoublyLinkedList from 'yallist'
+import { Node, Yallist } from 'yallist'
 import nonNull from './nonNull'
 
 /** A very simple LIFO cache that maintains a unique list of keys, removing keys on add that have exceeded max size. */
 const lifoCache = <T>(max: number) => {
   // keep a time-ordered doubly linked list
-  const list = new DoublyLinkedList<T>()
+  const list = new Yallist<T>()
 
   // map keys to nodes in the list
-  const map = new Map<T, DoublyLinkedList.Node<T>>()
+  const map = new Map<T, Node<T>>()
 
   /** Adds a new key to the cache, or updates it if it exists. */
   const add = (key: T) => {
