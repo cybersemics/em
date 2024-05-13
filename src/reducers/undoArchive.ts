@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import alert from '../reducers/alert'
 import deleteThought from '../reducers/deleteThought'
 import moveThought from '../reducers/moveThought'
@@ -49,5 +50,11 @@ const undoArchive = (
     alert({ value: null }),
   ])(state)
 }
+
+/** Action-creator for undoArchive. */
+export const undoArchiveActionCreator =
+  (payload: Parameters<typeof undoArchive>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'undoArchive', ...payload })
 
 export default _.curryRight(undoArchive)
