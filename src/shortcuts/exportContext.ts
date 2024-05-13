@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
-import showModal from '../action-creators/showModal'
 import ShareIcon from '../components/icons/ShareIcon'
 import { HOME_TOKEN } from '../constants'
+import { showModalActionCreator as showModal } from '../reducers/showModal'
 import { getAllChildren } from '../selectors/getChildren'
 
 const shortcut: Shortcut = {

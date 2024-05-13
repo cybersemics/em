@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom'
-import showModal from '../../action-creators/showModal'
 import { importTextActionCreator as importText } from '../../reducers/importText'
+import { showModalActionCreator as showModal } from '../../reducers/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'

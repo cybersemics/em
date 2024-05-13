@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux'
-import showModal from '../../action-creators/showModal'
 import { isTouch } from '../../browser'
+import { showModalActionCreator as showModal } from '../../reducers/showModal'
 import fastClick from '../../util/fastClick'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

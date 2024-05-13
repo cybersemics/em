@@ -1,6 +1,6 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import showModal from '../action-creators/showModal'
+import { showModalActionCreator as showModal } from '../reducers/showModal'
 import fastClick from '../util/fastClick'
 import FeedbackIcon from './icons/FeedbackIcon'
 
