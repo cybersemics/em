@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import getChildPath from '../selectors/getChildPath'
 import { getAllChildren, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
@@ -59,5 +60,8 @@ const join = (state: State) => {
 
   return reducerFlow([...reducers, updateThoughtReducer, ...removalReducers])(state)
 }
+
+/** Action-creator for join. */
+export const joinActionCreator = (): Thunk => dispatch => dispatch({ type: 'join' })
 
 export default _.curryRight(join)
