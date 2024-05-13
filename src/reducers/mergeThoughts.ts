@@ -4,6 +4,7 @@ import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import Thunk from '../@types/Thunk'
 import { HOME_TOKEN } from '../constants'
 import { clientId } from '../data-providers/yjs'
 import { getLexeme } from '../selectors/getLexeme'
@@ -165,5 +166,11 @@ const mergeThoughts = (
     preventExpandThoughts: true,
   })
 }
+
+/** Action-creator for mergeThoughts. */
+export const mergeThoughtsActionCreator =
+  (payload: Parameters<typeof mergeThoughts>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'mergeThoughts', ...payload })
 
 export default _.curry(mergeThoughts)
