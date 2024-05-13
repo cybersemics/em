@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import deleteAttribute from '../reducers/deleteAttribute'
 import setDescendant from '../reducers/setDescendant'
 import setNoteFocus from '../reducers/setNoteFocus'
@@ -28,5 +29,8 @@ const toggleNote = (state: State) => {
     setNoteFocus({ value: !state.noteFocus }),
   ])(state)
 }
+
+/** Action-creator for toggleNote. */
+export const toggleNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleNote' })
 
 export default toggleNote
