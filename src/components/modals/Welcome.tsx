@@ -1,10 +1,10 @@
 /* eslint-disable no-unmodified-loop-condition */
 import { useDispatch, useSelector } from 'react-redux'
-import tutorial from '../../action-creators/tutorial'
 import tutorialStep from '../../action-creators/tutorialStep'
 import { HOME_TOKEN } from '../../constants'
 import { clearActionCreator as clear } from '../../reducers/clear'
 import { closeModalActionCreator as closeModal } from '../../reducers/closeModal'
+import { tutorialActionCreator as tutorial } from '../../reducers/tutorial'
 import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
