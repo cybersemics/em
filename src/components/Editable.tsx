@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
-import tutorialNext from '../action-creators/tutorialNext'
 import { isIOS, isSafari, isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
@@ -31,6 +30,7 @@ import { setInvalidStateActionCreator as setInvalidState } from '../reducers/inv
 import { newThoughtActionCreator as newThought } from '../reducers/newThought'
 import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../reducers/toggleColorPicker'
+import { tutorialNextActionCreator as tutorialNext } from '../reducers/tutorialNext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'

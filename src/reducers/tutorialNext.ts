@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { TUTORIAL2_STEP_SUCCESS, TUTORIAL_STEP_SUCCESS } from '../constants'
 import tutorial from '../reducers/tutorial'
 import tutorialStepReducer from '../reducers/tutorialStep'
@@ -19,5 +20,11 @@ const tutorialNext = (state: State, { hint }: { hint?: boolean }) => {
         value: !hint ? Math.floor(tutorialStep) + 1 : tutorialStep + 0.1,
       })
 }
+
+/** Action-creator for tutorialNext. */
+export const tutorialNextActionCreator =
+  (payload: Parameters<typeof tutorialNext>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'tutorialNext', ...payload })
 
 export default _.curryRight(tutorialNext)
