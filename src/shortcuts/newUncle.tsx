@@ -1,7 +1,7 @@
 import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import newThought from '../action-creators/newThought'
+import { newThoughtActionCreator as newThought } from '../reducers/newThought'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 

@@ -1,6 +1,6 @@
-import newThought from '../../action-creators/newThought'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../reducers/deleteThoughtWithCursor'
+import { newThoughtActionCreator as newThought } from '../../reducers/newThought'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'

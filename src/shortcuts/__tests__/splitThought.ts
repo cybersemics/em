@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom'
 import { act } from '@testing-library/react'
-import newThought from '../../action-creators/newThought'
+import { newThoughtActionCreator as newThought } from '../../reducers/newThought'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 
