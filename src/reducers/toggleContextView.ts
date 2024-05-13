@@ -1,5 +1,6 @@
 import * as immer from 'immer'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
 import globals from '../globals'
 import settings from '../reducers/settings'
@@ -49,5 +50,8 @@ const toggleContextView = (state: State) => {
     },
   ])(state)
 }
+
+/** Action-creator for toggleContextView. */
+export const toggleContextViewActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleContextView' })
 
 export default toggleContextView

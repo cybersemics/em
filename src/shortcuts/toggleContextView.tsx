@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import toggleContextView from '../action-creators/toggleContextView'
+import { toggleContextViewActionCreator as toggleContextView } from '../reducers/toggleContextView'
 import isContextViewActive from '../selectors/isContextViewActive'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

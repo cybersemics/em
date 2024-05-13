@@ -1,7 +1,7 @@
 import { findAllByLabelText, findByLabelText, queryByLabelText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
-import toggleContextView from '../../action-creators/toggleContextView'
 import { importTextActionCreator as importText } from '../../reducers/importText'
+import { toggleContextViewActionCreator as toggleContextView } from '../../reducers/toggleContextView'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import { findAllThoughtsByText } from '../../test-helpers/queries/findAllThoughtsByText'
