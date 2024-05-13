@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
-import toggleThought from '../action-creators/toggleThought'
 import Icon from '../components/icons/Check'
+import { toggleThoughtActionCreator as toggleThought } from '../reducers/toggleThought'
 import findDescendant from '../selectors/findDescendant'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
