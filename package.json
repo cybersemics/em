@@ -126,7 +126,7 @@
     "use-onclickoutside": "^0.4.1",
     "xhtml-purifier": "^0.4.1",
     "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
-    "yallist": "^4.0.0",
+    "yallist": "^5.0.0",
     "yjs": "^13.6.7"
   },
   "devDependencies": {
