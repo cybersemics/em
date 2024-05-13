@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import deleteThought from '../reducers/deleteThought'
 import setDescendant from '../reducers/setDescendant'
 import { filterAllChildren } from '../selectors/getChildren'
@@ -25,5 +26,11 @@ const heading = (state: State, { level }: { level: HeadingLevel }): State => {
     level > 0 ? setDescendant({ path, values: [`=heading${level}`] }) : null,
   ])(state)
 }
+
+/** Action-creator for heading. */
+export const headingActionCreator =
+  (payload: Parameters<typeof heading>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'heading', ...payload })
 
 export default heading
