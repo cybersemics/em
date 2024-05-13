@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import editThought from '../reducers/editThought'
 import editableRender from '../reducers/editableRender'
 import moveThought from '../reducers/moveThought'
@@ -76,5 +77,11 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
     editableRender,
   ])(state)
 }
+
+/** Action-creator for splitThought. */
+export const splitThoughtActionCreator =
+  (payload: Parameters<typeof splitThought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'splitThought', ...payload })
 
 export default _.curryRight(splitThought)
