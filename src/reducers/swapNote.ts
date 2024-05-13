@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
 import findDescendant from '../selectors/findDescendant'
@@ -123,5 +124,8 @@ const swapNote = (state: State) => {
         ],
   )(state)
 }
+
+/** Action-creator for swapNote. */
+export const swapNoteActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapNote' })
 
 export default swapNote
