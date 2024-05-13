@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import Thunk from '../@types/Thunk'
 import newThought from '../reducers/newThought'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
@@ -59,5 +60,11 @@ const prependRevision = (state: State, { path, cid }: { path: Path; cid: string 
     }),
   ])(state)
 }
+
+/** Action-creator for prependRevision. */
+export const prependRevisionActionCreator =
+  (payload: Parameters<typeof prependRevision>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'prependRevision', ...payload })
 
 export default _.curryRight(prependRevision)
