@@ -1,7 +1,7 @@
 import Thunk from '../@types/Thunk'
-import setCursor from '../action-creators/setCursor'
 import { HOME_PATH } from '../constants'
 import { importTextActionCreator as importText } from '../reducers/importText'
+import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { getAllChildren } from '../selectors/getChildren'
 import head from '../util/head'

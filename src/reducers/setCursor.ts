@@ -3,6 +3,7 @@ import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import TutorialChoice from '../@types/TutorialChoice'
 import {
   HOME_PATH,
@@ -151,5 +152,11 @@ const setCursor = (
 
   return stateNew
 }
+
+/** Action-creator for setCursor. */
+export const setCursorActionCreator =
+  (payload: Parameters<typeof setCursor>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'setCursor', ...payload })
 
 export default _.curryRight(setCursor)

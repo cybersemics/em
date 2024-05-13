@@ -1,6 +1,6 @@
 import Thunk from '../@types/Thunk'
-import setCursor from '../action-creators/setCursor'
 import globals from '../globals'
+import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 
 let timer: ReturnType<typeof setTimeout>
 

@@ -1,7 +1,7 @@
 import Thunk from '../@types/Thunk'
-import setCursor from '../action-creators/setCursor'
 import suppressExpansion from '../action-creators/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
+import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
