@@ -2,10 +2,10 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDr
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import toggleSidebarActionCreator from '../action-creators/toggleSidebar'
 import { isTouch } from '../browser'
 import { dragHoldActionCreator as dragHold } from '../reducers/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../reducers/dragInProgress'
+import { toggleSidebarActionCreator } from '../reducers/toggleSidebar'
 import Favorites from './Favorites'
 
 // extend SwipeableDrawer with classes prop

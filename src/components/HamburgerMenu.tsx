@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
-import toggleSidebar from '../action-creators/toggleSidebar'
+import { toggleSidebarActionCreator as toggleSidebar } from '../reducers/toggleSidebar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
 
