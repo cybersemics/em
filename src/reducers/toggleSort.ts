@@ -2,6 +2,7 @@ import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
@@ -155,5 +156,11 @@ const toggleSort = (
         ]),
   ])(state)
 }
+
+/** Action-creator for toggleSort. */
+export const toggleSortActionCreator =
+  (payload: Parameters<typeof toggleSort>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'toggleSort', ...payload })
 
 export default _.curryRight(toggleSort, 2)
