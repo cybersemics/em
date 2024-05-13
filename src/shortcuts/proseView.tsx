@@ -1,7 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import toggleAttribute from '../action-creators/toggleAttribute'
 import { HOME_PATH } from '../constants'
+import { toggleAttributeActionCreator as toggleAttribute } from '../reducers/toggleAttribute'
 import attributeEquals from '../selectors/attributeEquals'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'

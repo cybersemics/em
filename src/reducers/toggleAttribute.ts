@@ -2,6 +2,7 @@ import { deleteThought } from '.'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import createThought from '../reducers/createThought'
 import setFirstSubthought from '../reducers/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
@@ -62,5 +63,11 @@ const toggleAttribute = (
     ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
     : stateNew
 }
+
+/** Action-creator for toggleAttribute. */
+export const toggleAttributeActionCreator =
+  (payload: Parameters<typeof toggleAttribute>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'toggleAttribute', ...payload })
 
 export default _.curryRight(toggleAttribute)

@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import toggleAttribute from '../action-creators/toggleAttribute'
+import { toggleAttributeActionCreator as toggleAttribute } from '../reducers/toggleAttribute'
 import isContextViewActive from '../selectors/isContextViewActive'
 import lastThoughtsFromContextChain from '../selectors/lastThoughtsFromContextChain'
 import rootedParentOf from '../selectors/rootedParentOf'
