@@ -1,6 +1,7 @@
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import Thunk from '../@types/Thunk'
 import {
   ABSOLUTE_TOKEN,
   EM_TOKEN,
@@ -103,5 +104,8 @@ const freeThoughts = (state: State) => {
 
   return stateNew
 }
+
+/** Action-creator for freeThoughts. */
+export const freeThoughtsActionCreator = (): Thunk => dispatch => dispatch({ type: 'freeThoughts' })
 
 export default freeThoughts
