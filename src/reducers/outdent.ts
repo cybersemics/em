@@ -1,5 +1,6 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
@@ -63,5 +64,8 @@ const outdent = (state: State) => {
     newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
   })
 }
+
+/** Action-creator for outdent. */
+export const outdentActionCreator = (): Thunk => dispatch => dispatch({ type: 'outdent' })
 
 export default outdent
