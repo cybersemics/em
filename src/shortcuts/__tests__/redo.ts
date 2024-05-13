@@ -1,4 +1,3 @@
-import indent from '../../action-creators/indent'
 import redo from '../../action-creators/redo'
 import undo from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
@@ -6,6 +5,7 @@ import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack
 import { cursorDownActionCreator as cursorDown } from '../../reducers/cursorDown'
 import { cursorUpActionCreator as cursorUp } from '../../reducers/cursorUp'
 import { importTextActionCreator as importText } from '../../reducers/importText'
+import { indentActionCreator as indent } from '../../reducers/indent'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'

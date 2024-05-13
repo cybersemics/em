@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
@@ -61,5 +62,8 @@ const indent = (state: State) => {
     newRank: getNextRank(state, prev.id),
   })
 }
+
+/** Action-creator for indent. */
+export const indentActionCreator = (): Thunk => dispatch => dispatch({ type: 'indent' })
 
 export default indent

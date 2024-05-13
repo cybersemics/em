@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import indent from '../action-creators/indent'
+import { indentActionCreator as indent } from '../reducers/indent'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
