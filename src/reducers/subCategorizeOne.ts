@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import alert from '../reducers/alert'
 import createThought from '../reducers/createThought'
 import moveThought from '../reducers/moveThought'
@@ -76,5 +77,8 @@ const subCategorizeOne = (state: State) => {
     }),
   ])(state)
 }
+
+/** A Thunk that dispatches a 'subCategorizeOne` action. */
+export const subCategorizeOneActionCreator = (): Thunk => dispatch => dispatch({ type: 'subCategorizeOne' })
 
 export default subCategorizeOne
