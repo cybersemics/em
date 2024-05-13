@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import toggleAbsoluteContext from '../action-creators/toggleAbsoluteContext'
+import { toggleAbsoluteContextActionCreator as toggleAbsoluteContext } from '../reducers/toggleAbsoluteContext'
 import fastClick from '../util/fastClick'
 import isAbsolute from '../util/isAbsolute'
 import AddIcon from './AddIcon'
