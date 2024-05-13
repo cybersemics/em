@@ -1,4 +1,3 @@
-import moveThoughtDown from '../../action-creators/moveThoughtDown'
 import newThought from '../../action-creators/newThought'
 import undo from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
@@ -9,6 +8,7 @@ import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack
 import { cursorDownActionCreator as cursorDown } from '../../reducers/cursorDown'
 import { importTextActionCreator as importText } from '../../reducers/importText'
 import { indentActionCreator as indent } from '../../reducers/indent'
+import { moveThoughtDownActionCreator as moveThoughtDown } from '../../reducers/moveThoughtDown'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'

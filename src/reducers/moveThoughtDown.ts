@@ -1,5 +1,6 @@
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import alert from '../reducers/alert'
 import moveThought from '../reducers/moveThought'
@@ -68,5 +69,8 @@ const moveThoughtDown = (state: State) => {
     newRank: rankNew,
   })
 }
+
+/** Action-creator for moveThoughtDown. */
+export const moveThoughtDownActionCreator = (): Thunk => dispatch => dispatch({ type: 'moveThoughtDown' })
 
 export default moveThoughtDown
