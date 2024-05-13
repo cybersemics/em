@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import setDescendant from '../reducers/setDescendant'
 import themeColors from '../selectors/themeColors'
 import reducerFlow from '../util/reducerFlow'
@@ -36,5 +37,11 @@ const textColor = (
       : deleteAttribute({ path, values: ['=styleAnnotation', 'backgroundColor'] }),
   ])(state)
 }
+
+/** Action-creator for textColor. */
+export const textColorActionCreator =
+  (payload: Parameters<typeof textColor>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'textColor', ...payload })
 
 export default _.curryRight(textColor)
