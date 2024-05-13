@@ -1,10 +1,10 @@
 import Thunk from '../@types/Thunk'
 import restoreCursorBeforeSearch from '../action-creators/restoreCursorBeforeSearch'
-import search from '../action-creators/search'
 import searchContexts from '../action-creators/searchContexts'
 import setCursor from '../action-creators/setCursor'
 import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
+import { searchActionCreator as search } from '../reducers/search'
 
 /** Navigates home and resets the scroll position. */
 const home = (): Thunk => (dispatch, getState) => {
