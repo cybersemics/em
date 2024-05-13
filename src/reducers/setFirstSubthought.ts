@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thunk from '../@types/Thunk'
 import createThought from '../reducers/createThought'
 import editThought from '../reducers/editThought'
 import { anyChild } from '../selectors/getChildren'
@@ -9,13 +10,13 @@ import getPrevRank from '../selectors/getPrevRank'
 import head from '../util/head'
 
 /** Sets the value of the first subthought in the given context. */
-const setFirstSubthoughts = (state: State, { path, value }: { path: Path; value: string }) => {
+const setFirstSubthought = (state: State, { path, value }: { path: Path; value: string }) => {
   const id = head(path)
   const firstThoughtOld = anyChild(state, id)
 
   if (!path) {
-    console.info({ context, value })
-    throw new Error('Cannot setFirstSubthoughts on non-existent Path')
+    console.info({ path, value })
+    throw new Error('Cannot setFirstSubthought on non-existent Path')
   }
 
   return firstThoughtOld
@@ -34,4 +35,10 @@ const setFirstSubthoughts = (state: State, { path, value }: { path: Path; value:
       })
 }
 
-export default _.curryRight(setFirstSubthoughts)
+/** Action-creator for setFirstSubthought. */
+export const setFirstSubthoughtActionCreator =
+  (payload: Parameters<typeof setFirstSubthought>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'setFirstSubthought', ...payload })
+
+export default _.curryRight(setFirstSubthought)
