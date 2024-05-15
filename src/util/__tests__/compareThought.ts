@@ -3,6 +3,7 @@ import { HOME_TOKEN } from '../../constants'
 import {
   compare,
   compareDateStrings,
+  compareFormatting,
   compareLowercase,
   compareNumberAndOther,
   compareNumbers,
@@ -106,6 +107,20 @@ it('comparePunctuationAndOther', () => {
   expect(comparePunctuationAndOther('a', 'b')).toBe(0)
   expect(comparePunctuationAndOther(1, 'b')).toBe(0)
   expect(comparePunctuationAndOther(1, 2)).toBe(0)
+})
+
+it('compareFormatting', () => {
+  expect(compareFormatting(':', '<b>B</b>')).toBe(1)
+  expect(compareFormatting('<b', '<b>B</b>')).toBe(1)
+  expect(compareFormatting('<p>a</p>', '<b>B</b>')).toBe(1)
+  expect(compareFormatting('<p>a</p>', '<strike>B</strike>')).toBe(1)
+  expect(compareFormatting('<i>a</i>', '<a>B</a>')).toBe(-1)
+  expect(compareFormatting('<u>a</u>', 'B')).toBe(-1)
+  expect(compareFormatting('<strike>a</strike>', 'B')).toBe(-1)
+  expect(compareFormatting('<b>A</b>', '<b>B</b>')).toBe(0)
+  expect(compareFormatting('<i>A</i>', '<i>B</i>')).toBe(0)
+  expect(compareFormatting('<u>A</u>', '<u>B</u>')).toBe(0)
+  expect(compareFormatting('<b>A</b>', '<strike>B</strike>')).toBe(0)
 })
 
 it('compareDateStrings', () => {

@@ -14,6 +14,7 @@ const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_SHORT_DATE_WITH_DASH = /\d{1,2}-\d{1,2}/
 const REGEX_SHORT_DATE_WITH_SLASH = /\d{1,2}\/\d{1,2}/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
+const REGEX_FORMATTING = /^<([b|i|u]|strike)[^>]*>(.*?)<\s*\/\s*([b|i|u]|strike)>/
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -114,6 +115,13 @@ export const comparePunctuationAndOther = <T, U>(a: T, b: U): ComparatorValue =>
   return aIsPunctuation && !bIsPunctuation ? -1 : bIsPunctuation && !aIsPunctuation ? 1 : 0
 }
 
+/** A comparator function that sorts strings that contain HTML formatting above others. */
+export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
+  const aIsHtml = typeof a === 'string' && REGEX_FORMATTING.test(a)
+  const bIsHtml = typeof b === 'string' && REGEX_FORMATTING.test(b)
+  return aIsHtml && !bIsHtml ? -1 : bIsHtml && !aIsHtml ? 1 : 0
+}
+
 /** A comparison function that sorts date strings. */
 export const compareDateStrings: ComparatorFunction<string> = (a: string, b: string) =>
   compare(parseDate(a), parseDate(b))
@@ -161,6 +169,7 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
 export const compareReasonable: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareEmpty,
   comparePunctuationAndOther,
+  compareFormatting,
   compareStringsWithMetaAttributes,
   compareStringsWithEmoji,
   (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
