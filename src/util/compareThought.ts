@@ -14,7 +14,7 @@ const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_SHORT_DATE_WITH_DASH = /\d{1,2}-\d{1,2}/
 const REGEX_SHORT_DATE_WITH_SLASH = /\d{1,2}\/\d{1,2}/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
-const REGEX_FORMATTING = /^<([b|i|u])[^>]*>(.*?)<\s*\/\s*([b|i|u])>/
+const REGEX_FORMATTING = /^<([b|i|u]|strike)[^>]*>(.*?)<\s*\/\s*([b|i|u]|strike)>/
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
