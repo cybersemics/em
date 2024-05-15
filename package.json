@@ -97,7 +97,7 @@
     "moize": "^6.0.3",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^3.1.30",
-    "openai": "^4.24.1",
+    "openai": "^4.47.1",
     "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^3.1.0",
