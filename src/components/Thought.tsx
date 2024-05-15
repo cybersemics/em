@@ -44,7 +44,7 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DragAndDropThought, { DraggableThoughtContainerProps } from './DragAndDropThought'
-import DropThought from './DropThought'
+import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
 
@@ -422,7 +422,7 @@ const ThoughtContainer = ({
             />
           )}
 
-          <DropThought isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
+          <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
           <StaticThought
             allowSingleContext={allowSingleContext}

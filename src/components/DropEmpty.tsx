@@ -28,7 +28,7 @@ interface DropEmptyProps {
   simplePath: SimplePath
 }
 
-/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. Only renders if there is a valid dropTarget and a drag is in progress. */
+/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropHover. Only renders if there is a valid dropTarget and a drag is in progress. */
 const DropEmptyContainer = ({ depth, dropTarget, isHovering, last, path, simplePath }: DropEmptyProps) => {
   if (!dropTarget) return null
   return (

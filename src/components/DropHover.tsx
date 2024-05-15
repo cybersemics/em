@@ -13,8 +13,8 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-/** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
-const DropThought = ({
+/** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropHover. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
+const DropHover = ({
   isHovering,
   prevChildId,
   simplePath,
@@ -82,7 +82,7 @@ const DropThought = ({
   )
 }
 
-const DropThoughtMemo = React.memo(DropThought)
-DropThoughtMemo.displayName = 'DropThought'
+const DropHoverMemo = React.memo(DropHover)
+DropHoverMemo.displayName = 'DropHover'
 
-export default DropThoughtMemo
+export default DropHoverMemo

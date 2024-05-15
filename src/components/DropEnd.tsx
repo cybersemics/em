@@ -23,7 +23,7 @@ import DragOnly from './DragOnly'
 /** An identify function that returns the value passed to it. */
 const identity = <T,>(x: T): T => x
 
-/** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropThought. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
+/** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropHover. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
 const DropEnd = ({
   depth,
   distance,
@@ -60,7 +60,7 @@ const DropEnd = ({
     if (isHovering && !isParentSorted) return true
 
     // If sorted and hovering, only show the drop-hover if the thought would be dropped to the end of the list.
-    // Otherwise, asssume the DropThought component will be rendered at the place of insertion.
+    // Otherwise, asssume the DropHover component will be rendered at the place of insertion.
     if (!isParentSorted) return false
 
     // only render drop-hover during drag-and-drop
