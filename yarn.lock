@@ -8714,10 +8714,10 @@ puppeteer-core@13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.2.3"
 
-puppeteer-core@22.8.0:
-  version "22.8.0"
-  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.8.0.tgz#82c0e7ebf62ba5f34404394034e313b82014de5f"
-  integrity sha512-S5bWx3g/fNuyFxjZX9TkZMN07CEH47+9Zm6IiTl1QfqI9pnVaShbwrD9kRe5vmz/XPp/jLGhhxRUj1sY4wObnA==
+puppeteer-core@22.8.2:
+  version "22.8.2"
+  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.8.2.tgz#ef40d7de4f17b28b2c34144170d2bf02a520aaff"
+  integrity sha512-Gg9jUdJeF+UDbYPhwD602ky1LeS+AXDksl6sludrti1b7Sv/U4ZGY1LFyejarkIBCSHiPWL9SngXKCNcdZWBgQ==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
     chromium-bidi "0.5.19"
@@ -8743,15 +8743,15 @@ puppeteer-core@^13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.5.0"
 
-puppeteer@^22.8.0:
-  version "22.8.0"
-  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.8.0.tgz#58556b4388a9047658f0704afa37b8eea71b84ba"
-  integrity sha512-Z616wyTr0d7KpxmfcBG22rAkzuo/xzHJ3ycpu4KiJ3dZNHn/C1CpqcCwPlpiIIsmPojTAfWjo6EMR7M+AaC0Ww==
+puppeteer@^22.8.2:
+  version "22.8.2"
+  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.8.2.tgz#1b7d34b1e428bb83d7d723908381f8a99d215d49"
+  integrity sha512-yNZmKZHhCtBAjwuzonMyzgXLYxnvR+tbpatuyMffK+zmag84xyqE2EvPEWV1FvDXwW3m+/PT4Zp4KLerWWydQQ==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
     cosmiconfig "9.0.0"
     devtools-protocol "0.0.1273771"
-    puppeteer-core "22.8.0"
+    puppeteer-core "22.8.2"
 
 qrcode.react@^3.1.0:
   version "3.1.0"
