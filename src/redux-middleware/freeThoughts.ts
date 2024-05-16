@@ -2,8 +2,8 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
+import { freeThoughtsActionCreator as freeThoughts } from '../actions/freeThoughts'
 import { FREE_THOUGHTS_THRESHOLD, FREE_THOUGHTS_THROTTLE } from '../constants'
-import { freeThoughtsActionCreator as freeThoughts } from '../reducers/freeThoughts'
 
 /** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees memory in the thoughtIndex, lexemeIndex, and YJS providers. */
 const checkThreshold: Thunk = (dispatch, getState): void => {

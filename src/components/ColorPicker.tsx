@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-import { textColorActionCreator as textColor } from '../reducers/textColor'
 import getStyle from '../selectors/getStyle'
 import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'

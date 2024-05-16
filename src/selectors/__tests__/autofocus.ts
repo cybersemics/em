@@ -1,7 +1,7 @@
 import State from '../../@types/State'
 import ThoughtId from '../../@types/ThoughtId'
+import { importText } from '../../actions'
 import { ROOT_PARENT_ID } from '../../constants'
-import { importText } from '../../reducers'
 import prettyPath from '../../test-helpers/prettyPath'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'

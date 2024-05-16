@@ -1,5 +1,9 @@
 import classNames from 'classnames'
 import { useDispatch } from 'react-redux'
+import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
+import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
+import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
+import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import {
   TUTORIAL2_STEP_CHOOSE,
   TUTORIAL2_STEP_START,
@@ -10,10 +14,6 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
-import { tutorialActionCreator as tutorial } from '../../reducers/tutorial'
-import { tutorialChoiceActionCreator as tutorialChoice } from '../../reducers/tutorialChoice'
-import { tutorialNextActionCreator as tutorialNext } from '../../reducers/tutorialNext'
-import { tutorialStepActionCreator as setTutorialStep } from '../../reducers/tutorialStep'
 import fastClick from '../../util/fastClick'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'

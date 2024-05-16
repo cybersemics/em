@@ -1,6 +1,6 @@
+import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
-import { importTextActionCreator as importText } from '../../reducers/importText'
-import { newThoughtActionCreator as newThought } from '../../reducers/newThought'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import click from '../../test-helpers/click'

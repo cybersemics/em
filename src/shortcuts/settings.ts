@@ -1,6 +1,6 @@
 import Shortcut from '../@types/Shortcut'
+import { showModalActionCreator as showModal } from '../actions/showModal'
 import SettingsIcon from '../components/icons/SettingsIcon'
-import { showModalActionCreator as showModal } from '../reducers/showModal'
 
 const shortcut: Shortcut = {
   id: 'settings',

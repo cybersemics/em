@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import { extractThoughtActionCreator as extract } from '../reducers/extractThought'
+import { extractThoughtActionCreator as extract } from '../actions/extractThought'
 
 const extractThought: Shortcut = {
   id: 'extractThought',

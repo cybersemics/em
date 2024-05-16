@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react'
-import { importTextActionCreator as importText } from '../../reducers/importText'
+import { importTextActionCreator as importText } from '../../actions/importText'
 import bumpThoughtDown from '../../shortcuts/bumpThoughtDown'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'

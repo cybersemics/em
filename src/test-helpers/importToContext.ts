@@ -1,6 +1,6 @@
 import Thunk from '../@types/Thunk'
+import { importTextActionCreator as importText } from '../actions/importText'
 import { HOME_TOKEN } from '../constants'
-import { importTextActionCreator as importText } from '../reducers/importText'
 import contextToPath from '../selectors/contextToPath'
 
 function importToContext(text: string): Thunk

@@ -1,10 +1,10 @@
+import { importTextActionCreator as importText } from '../actions/importText'
 import {
   EM_TOKEN,
   INITIAL_SETTINGS,
   SCHEMA_HASHKEYS as SCHEMA_FROM,
   SCHEMA_META_SETTINGS as SCHEMA_TO,
 } from '../constants'
-import { importTextActionCreator as importText } from '../reducers/importText'
 import store from '../stores/app'
 import push from '../util/push'
 import storage from '../util/storage'

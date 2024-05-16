@@ -1,6 +1,6 @@
+import newSubthought from '../../actions/newSubthought'
+import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
-import newSubthought from '../../reducers/newSubthought'
-import newThought from '../../reducers/newThought'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'

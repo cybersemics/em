@@ -26,7 +26,7 @@ interface State {
   cursor: Path | null
   // set to true when clearThought is activated
   // temporarily renders the cursor thought as an empty string for quickly changing the entire value
-  // see: /reducers/cursorCleared
+  // see: /actions/cursorCleared
   cursorCleared: boolean
   cursorBeforeQuickAdd: Path | null
   cursorBeforeSearch: Path | null

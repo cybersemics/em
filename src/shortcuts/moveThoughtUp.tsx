@@ -1,7 +1,7 @@
 import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { moveThoughtUpActionCreator as moveThoughtUp } from '../reducers/moveThoughtUp'
+import { moveThoughtUpActionCreator as moveThoughtUp } from '../actions/moveThoughtUp'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

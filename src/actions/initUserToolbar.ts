@@ -1,8 +1,8 @@
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
+import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { importTextActionCreator as importText } from '../actions/importText'
 import { EM_TOKEN, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { deleteThoughtActionCreator as deleteThought } from '../reducers/deleteThought'
-import { importTextActionCreator as importText } from '../reducers/importText'
 import findDescendant from '../selectors/findDescendant'
 
 /** Action-creator to initialize the user toolbar at /EM/Settings/Toolbar on demand. Does nothing if user toolbar has already been created. */

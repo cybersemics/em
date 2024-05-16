@@ -1,6 +1,6 @@
 import Thunk from '../@types/Thunk'
-import { alertActionCreator as alert } from '../reducers/alert'
-import { statusActionCreator as status } from '../reducers/status'
+import { alertActionCreator as alert } from '../actions/alert'
+import { statusActionCreator as status } from '../actions/status'
 import storage from '../util/storage'
 
 /** Redirects the user to the login page. */

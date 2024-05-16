@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { outdentActionCreator as outdent } from '../reducers/outdent'
+import { outdentActionCreator as outdent } from '../actions/outdent'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorBackward from './moveCursorBackward'
 

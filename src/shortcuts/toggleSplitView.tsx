@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { toggleSplitViewActionCreator as toggleSplitView } from '../reducers/toggleSplitView'
+import { toggleSplitViewActionCreator as toggleSplitView } from '../actions/toggleSplitView'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill, size = 20, style }: IconType) => (

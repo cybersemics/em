@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { tutorialStepActionCreator as setTutorialStep } from '../../reducers/tutorialStep'
+import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import State from '../@types/State'
-import newThought, { NewThoughtPayload } from '../reducers/newThought'
+import newThought, { NewThoughtPayload } from '../actions/newThought'
 import contextToPath from '../selectors/contextToPath'
 
 /**

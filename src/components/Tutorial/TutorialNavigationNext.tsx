@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
@@ -15,7 +16,6 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { tutorialNextActionCreator as tutorialNext } from '../../reducers/tutorialNext'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import headValue from '../../util/headValue'

@@ -1,5 +1,5 @@
 import { useDispatch } from 'react-redux'
-import { showModalActionCreator as showModal } from '../reducers/showModal'
+import { showModalActionCreator as showModal } from '../actions/showModal'
 import fastClick from '../util/fastClick'
 import InvitesIcon from './icons/InvitesIcon'
 

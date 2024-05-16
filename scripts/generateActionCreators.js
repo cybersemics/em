@@ -76,7 +76,7 @@ const actionCreators = [
 ]
 
 actionCreators.forEach(name => {
-  const text = `import ${name} from '../reducers/${name}'
+  const text = `import ${name} from '../actions/${name}'
 import Thunk from '../@types/Thunk'
 
 /** Action-creator for ${name}. */

@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
+import { bumpThoughtDownActionCreator as bumpThoughtDown } from '../actions/bumpThoughtDown'
 import asyncFocus from '../device/asyncFocus'
 import * as selection from '../device/selection'
-import { bumpThoughtDownActionCreator as bumpThoughtDown } from '../reducers/bumpThoughtDown'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const bumpThoughtDownShortcut: Shortcut = {

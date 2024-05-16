@@ -1,8 +1,8 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
+import { alertActionCreator as alert } from '../actions/alert'
 import { undoActionCreator as undo } from '../actions/undo'
 import UndoIcon from '../components/UndoIcon'
-import { alertActionCreator as alert } from '../reducers/alert'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 

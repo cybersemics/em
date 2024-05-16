@@ -7,8 +7,8 @@ import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import * as reducers from '../reducers'
-import updateThoughts from '../reducers/updateThoughts'
+import * as reducers from '../actions'
+import updateThoughts from '../actions/updateThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
@@ -296,7 +296,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const actionType = action.type
 
       // Handle undo and redo.
-      // They are defined in the redux enhancer rather than in /reducers.
+      // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {
         const undoOrRedoState =
           actionType === 'undo'

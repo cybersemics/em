@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/dom'
-import { importTextActionCreator as importText } from '../../reducers/importText'
-import { toggleHiddenThoughtsActionCreator } from '../../reducers/toggleHiddenThoughts'
+import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleHiddenThoughtsActionCreator } from '../../actions/toggleHiddenThoughts'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 

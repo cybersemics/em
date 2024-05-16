@@ -1,7 +1,7 @@
 import { Store, applyMiddleware, compose, createStore } from 'redux'
 import thunk from 'redux-thunk'
 import State from '../@types/State'
-import appReducer from '../reducers/app'
+import appReducer from '../actions/app'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import multi from '../redux-middleware/multi'
 

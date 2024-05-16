@@ -1,5 +1,5 @@
+import importText from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
-import importText from '../../reducers/importText'
 import someDescendants from '../../selectors/someDescendants'
 import initialState from '../../util/initialState'
 

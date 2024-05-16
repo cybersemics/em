@@ -6,6 +6,16 @@ import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
+import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
+import { editingActionCreator as editingAction } from '../actions/editing'
+import { errorActionCreator as error } from '../actions/error'
+import { importSpeechToTextActionCreator as importSpeechToText } from '../actions/importSpeechToText'
+import { setInvalidStateActionCreator as setInvalidState } from '../actions/invalidState'
+import { newThoughtActionCreator as newThought } from '../actions/newThought'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
+import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isIOS, isSafari, isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
@@ -21,16 +31,6 @@ import {
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
-import { cursorClearedActionCreator as cursorCleared } from '../reducers/cursorCleared'
-import { editThoughtActionCreator as editThought } from '../reducers/editThought'
-import { editingActionCreator as editingAction } from '../reducers/editing'
-import { errorActionCreator as error } from '../reducers/error'
-import { importSpeechToTextActionCreator as importSpeechToText } from '../reducers/importSpeechToText'
-import { setInvalidStateActionCreator as setInvalidState } from '../reducers/invalidState'
-import { newThoughtActionCreator as newThought } from '../reducers/newThought'
-import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
-import { toggleColorPickerActionCreator as toggleColorPicker } from '../reducers/toggleColorPicker'
-import { tutorialNextActionCreator as tutorialNext } from '../reducers/tutorialNext'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -574,7 +574,7 @@ const Editable = ({
         value === EM_TOKEN
           ? '<b>em</b>'
           : // render as empty string during temporary clear state
-            // see: /reducers/cursorCleared
+            // see: /actions/cursorCleared
             isCursorCleared
             ? ''
             : isEditing

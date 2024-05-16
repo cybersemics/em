@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { subCategorizeAllActionCreator as subCategorizeAll } from '../reducers/subCategorizeAll'
+import { subCategorizeAllActionCreator as subCategorizeAll } from '../actions/subCategorizeAll'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 // eslint-disable-next-line jsdoc/require-jsdoc

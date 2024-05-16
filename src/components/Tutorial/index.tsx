@@ -4,6 +4,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
+import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { isTouch } from '../../browser'
 import {
   HOME_TOKEN,
@@ -23,7 +24,6 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
-import { tutorialActionCreator as tutorial } from '../../reducers/tutorial'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'

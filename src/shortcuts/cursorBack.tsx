@@ -1,7 +1,7 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import * as selection from '../device/selection'
-import { cursorBackActionCreator as cursorBack } from '../reducers/cursorBack'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 

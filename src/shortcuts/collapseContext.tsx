@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { collapseContextActionCreator as collapseContext } from '../reducers/collapseContext'
+import { collapseContextActionCreator as collapseContext } from '../actions/collapseContext'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ size = 20 }: IconType) => (

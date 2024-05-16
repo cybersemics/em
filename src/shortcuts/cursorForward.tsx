@@ -1,6 +1,6 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { cursorForwardActionCreator as cursorForward } from '../reducers/cursorForward'
+import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (

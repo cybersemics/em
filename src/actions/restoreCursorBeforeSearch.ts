@@ -1,5 +1,5 @@
 import Thunk from '../@types/Thunk'
-import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 
 /** Restores cursor to its position before search. */
 export const restoreCursorBeforeSearch = (): Thunk => (dispatch, getState) => {

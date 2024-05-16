@@ -1,7 +1,7 @@
 import Shortcut from '../@types/Shortcut'
+import { swapNoteActionCreator } from '../actions/swapNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import asyncFocus from '../device/asyncFocus'
-import { swapNoteActionCreator } from '../reducers/swapNote'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const swapNote: Shortcut = {

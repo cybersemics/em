@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import { headingActionCreator as heading } from '../reducers/heading'
+import { headingActionCreator as heading } from '../actions/heading'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {

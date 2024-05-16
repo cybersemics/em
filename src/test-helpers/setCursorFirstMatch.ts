@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import setCursor, { setCursorActionCreator as setCursorThunk } from '../reducers/setCursor'
+import setCursor, { setCursorActionCreator as setCursorThunk } from '../actions/setCursor'
 import contextToPath from '../selectors/contextToPath'
 
 /** A reducer that sets the cursor to the given unranked path. Uses contextToPath. */

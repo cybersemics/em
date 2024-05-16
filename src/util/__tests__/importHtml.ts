@@ -1,6 +1,6 @@
 import Path from '../../@types/Path'
+import importText from '../../actions/importText'
 import { EMPTY_SPACE, HOME_PATH, HOME_TOKEN } from '../../constants'
-import importText from '../../reducers/importText'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initialState from '../../util/initialState'

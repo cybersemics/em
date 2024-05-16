@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { alertActionCreator } from '../reducers/alert'
+import { alertActionCreator } from '../actions/alert'
 import alertStore from '../stores/alert'
 import Popup from './Popup'
 

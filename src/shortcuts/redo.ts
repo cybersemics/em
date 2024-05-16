@@ -1,8 +1,8 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
+import { alertActionCreator as alert } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
-import { alertActionCreator as alert } from '../reducers/alert'
 import getLatestActionType from '../util/getLastActionType'
 
 const redoShortcut: Shortcut = {

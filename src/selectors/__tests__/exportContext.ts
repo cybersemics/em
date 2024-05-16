@@ -1,6 +1,6 @@
+import importText from '../../actions/importText'
+import newThought from '../../actions/newThought'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
-import importText from '../../reducers/importText'
-import newThought from '../../reducers/newThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'

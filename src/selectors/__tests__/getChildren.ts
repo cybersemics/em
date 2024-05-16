@@ -1,6 +1,6 @@
+import newThought from '../../actions/newThought'
+import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
-import newThought from '../../reducers/newThought'
-import toggleHiddenThoughts from '../../reducers/toggleHiddenThoughts'
 import { getChildren } from '../../selectors/getChildren'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
