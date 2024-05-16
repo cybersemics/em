@@ -167,7 +167,7 @@ const pullDuplicateDescendants =
   }
 
 /** Action-creator for importFiles. */
-const importFilesActionCreator =
+export const importFilesActionCreator =
   ({
     files,
     insertBefore,
@@ -418,5 +418,3 @@ const importFilesActionCreator =
 
     dispatch(alertWithMinistore(null, { alertType: AlertType.ImportFile }))
   }
-
-export default importFilesActionCreator
