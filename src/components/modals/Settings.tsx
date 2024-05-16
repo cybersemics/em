@@ -19,6 +19,7 @@ const Setting: FC<{
   invert?: boolean
   settingsKey: Settings
   title: string
+  children?: React.ReactNode
 }> = ({ children, dependee, dependsOn, invert, settingsKey, title }) => {
   const value = useSelector(getUserSetting(settingsKey))
   const disabled = useSelector(state => dependsOn && getUserSetting(state, dependsOn))

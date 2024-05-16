@@ -67,7 +67,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 }
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
-const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>) =>
+const DropToRemoveFromToolbar = ((component: FC<React.PropsWithChildren<ReturnType<typeof dropCollect>>>) =>
   DropTarget('toolbar-button', { drop }, dropCollect)(component))(
   ({ dropTarget, isHovering, children, sourceZone }) => {
     const dispatch = useDispatch()

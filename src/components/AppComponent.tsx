@@ -124,7 +124,7 @@ const shouldCancelGesture = () =>
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
-const MultiGestureIfTouch: FC = ({ children }) => {
+const MultiGestureIfTouch: FC = ({ children }: { children?: React.ReactNode }) => {
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
   return isTouch ? (
     <MultiGesture

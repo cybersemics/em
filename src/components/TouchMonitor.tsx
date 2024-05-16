@@ -10,7 +10,7 @@ const onStateChange = ({ oldState, newState }: { oldState: string; newState: str
 }
 
 /** A higher-order component that monitors whether the user is touching the screen or not. */
-const TouchMonitor: FC = ({ children }) => {
+const TouchMonitor: FC = ({ children }: { children?: React.ReactNode }) => {
   // turn off touching when app becomes hidden
   useEffect(() => {
     lifecycle.addEventListener('statechange', onStateChange)

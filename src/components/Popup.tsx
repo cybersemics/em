@@ -18,6 +18,7 @@ const Popup: FC<{
   onClose?: () => void
   textAlign?: 'center' | 'left' | 'right'
   value?: string | null
+  children?: React.ReactNode
 }> = ({ children, importFileId, isInline, onClose, textAlign = 'center' }) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)

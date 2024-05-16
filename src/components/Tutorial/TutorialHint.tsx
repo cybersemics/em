@@ -5,7 +5,7 @@ import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
-const TutorialHint: FC = ({ children }) => {
+const TutorialHint: FC = ({ children }: { children?: React.ReactNode }) => {
   // fractional steps are hints
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
   const dispatch = useDispatch()

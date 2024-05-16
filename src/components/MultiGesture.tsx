@@ -50,6 +50,7 @@ interface MultiGestureProps {
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   shouldCancelGesture?: () => boolean
+  children?: React.ReactNode
 }
 
 const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
