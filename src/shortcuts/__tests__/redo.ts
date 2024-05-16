@@ -1,5 +1,5 @@
 import redo from '../../action-creators/redo'
-import undo from '../../action-creators/undo'
+import { undoActionCreator as undo } from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../reducers/cursorDown'
