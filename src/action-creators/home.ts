@@ -7,7 +7,7 @@ import { searchContextsActionCreator as searchContexts } from '../reducers/searc
 import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 
 /** Navigates home and resets the scroll position. */
-const home = (): Thunk => (dispatch, getState) => {
+export const homeActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
 
   if (state.search != null) {
@@ -21,5 +21,3 @@ const home = (): Thunk => (dispatch, getState) => {
 
   scrollTo('top')
 }
-
-export default home
