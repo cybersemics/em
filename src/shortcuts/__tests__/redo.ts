@@ -1,4 +1,4 @@
-import redo from '../../action-creators/redo'
+import { redoActionCreator as redo } from '../../action-creators/redo'
 import { undoActionCreator as undo } from '../../action-creators/undo'
 import { HOME_TOKEN } from '../../constants'
 import { cursorBackActionCreator as cursorBack } from '../../reducers/cursorBack'
