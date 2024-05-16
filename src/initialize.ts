@@ -11,7 +11,7 @@ import { importFilesActionCreator as importFiles } from './action-creators/impor
 import { loadFromUrlActionCreator as loadFromUrl } from './action-creators/loadFromUrl'
 import { preloadSourcesActionCreator as preloadSources } from './action-creators/preloadSources'
 import { pullActionCreator as pull } from './action-creators/pull'
-import repairThoughtActionCreator from './action-creators/repairThought'
+import { repairThoughtActionCreator } from './action-creators/repairThought'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
