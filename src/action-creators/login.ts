@@ -4,7 +4,7 @@ import { statusActionCreator as status } from '../reducers/status'
 import storage from '../util/storage'
 
 /** Redirects the user to the login page. */
-const login = (): Thunk => dispatch => {
+export const loginActionCreator = (): Thunk => dispatch => {
   throw new Error('Not implemented')
   dispatch(status({ value: 'connecting' }))
   storage.setItem('modal-to-show', 'welcome')
@@ -14,5 +14,3 @@ const login = (): Thunk => dispatch => {
     dispatch(alert('Redirecting to login...'))
   })
 }
-
-export default login
