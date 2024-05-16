@@ -4,7 +4,7 @@ import { clearActionCreator as clear } from '../reducers/clear'
 import storage from '../util/storage'
 
 /** Logs the user out and clears the state. */
-const logout = (): Thunk => (dispatch, getState) => {
+export const logoutActionCreator = (): Thunk => (dispatch, getState) => {
   // clear local db
   // clearAll().catch(err => {
   //   localStorage.removeItem(INITIAL_SETTING_KEY)
@@ -23,5 +23,3 @@ const logout = (): Thunk => (dispatch, getState) => {
   // scroll to top
   scrollTo('top')
 }
-
-export default logout
