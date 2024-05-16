@@ -6,7 +6,7 @@ import { importTextActionCreator as importText } from '../reducers/importText'
 import findDescendant from '../selectors/findDescendant'
 
 /** Action-creator to initialize the user toolbar at /EM/Settings/Toolbar on demand. Does nothing if user toolbar has already been created. */
-const initUserToolbarActionCreator =
+export const initUserToolbarActionCreator =
   ({
     force,
   }: {
@@ -34,5 +34,3 @@ ${TOOLBAR_DEFAULT_SHORTCUTS.map(shortcutId => '              - ' + shortcutId).j
         : null,
     ])
   }
-
-export default initUserToolbarActionCreator

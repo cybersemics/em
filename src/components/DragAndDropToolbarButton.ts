@@ -9,7 +9,7 @@ import {
 } from 'react-dnd'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
-import initUserToolbar from '../action-creators/initUserToolbar'
+import { initUserToolbarActionCreator as initUserToolbar } from '../action-creators/initUserToolbar'
 import { EM_TOKEN, noop } from '../constants'
 import { dragShortcutActionCreator as dragShortcut } from '../reducers/dragShortcut'
 import { moveThoughtActionCreator as moveThought } from '../reducers/moveThought'
