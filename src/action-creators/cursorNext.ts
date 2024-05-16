@@ -14,7 +14,7 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /** Moves the cursor to the next sibling, ignoring descendants. */
-const cursorNext = (): Thunk => (dispatch, getState) => {
+export const cursorNextActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
 
@@ -44,5 +44,3 @@ const cursorNext = (): Thunk => (dispatch, getState) => {
 
   dispatch(setCursor({ path }))
 }
-
-export default cursorNext
