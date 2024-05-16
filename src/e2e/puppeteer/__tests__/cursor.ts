@@ -38,10 +38,13 @@ it('set the cursor on a subthought on load', async () => {
   await waitForEditable('b')
   await clickThought('b')
   await waitForEditable('z')
+  // getting intermittent test failures so try waiting before clicking
+  await sleep(LAYOUT_NODE_ANIMATION_DURATION)
   await clickThought('z')
 
   // wait for browser selection to update
-  await sleep(100)
+  // getting intermittent test failures so try longer sleep
+  await sleep(200)
 
   await refresh()
 
@@ -50,7 +53,8 @@ it('set the cursor on a subthought on load', async () => {
   // wait for a re-render in case the lexeme was loaded after the parent
   // getEditingText will return undefined if we don't wait
   // we don't currently have a way to tell if a lexeme is missing or just loading
-  await sleep(100)
+  // getting intermittent test failures so try longer sleep
+  await sleep(200)
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('z')
