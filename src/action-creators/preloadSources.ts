@@ -1,5 +1,5 @@
 import Thunk from '../@types/Thunk'
-import loadResource from '../action-creators/loadResource'
+import { loadResourceActionCreator as loadResource } from '../action-creators/loadResource'
 import contextToPath from '../selectors/contextToPath'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'

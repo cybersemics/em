@@ -11,7 +11,7 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 
 /** Checks =src in the given path. If it exists, load the url and import it into the given context. Set a loading status in state.resourceCache to prevent prevent redundant fetches. */
-const loadResource =
+export const loadResourceActionCreator =
   (path: Path): Thunk =>
   (dispatch, getState) => {
     const state = getState()
@@ -53,5 +53,3 @@ const loadResource =
       setResourceCache(true)
     }
   }
-
-export default loadResource
