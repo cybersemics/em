@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import pull from '../action-creators/pull'
+import { pullActionCreator as pull } from '../action-creators/pull'
 import { AlertType } from '../constants'
 import copy from '../device/copy'
 import * as selection from '../device/selection'

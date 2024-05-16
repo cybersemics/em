@@ -59,7 +59,7 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * Fetch, reconciles, and updates descendants of any number of contexts up to a given depth.
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
-const pull =
+export const pullActionCreator =
   (thoughtIds: ThoughtId[], { cancelRef, force, maxDepth }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
@@ -135,5 +135,3 @@ const pull =
 
     return pendingThoughts
   }
-
-export default pull
