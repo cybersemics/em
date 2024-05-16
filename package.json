@@ -187,7 +187,7 @@
     "happy-dom": "^14.11.0",
     "it-all": "^3.0.6",
     "jest": "^27.5.1",
-    "jest-environment-node": "^27.0.3",
+    "jest-environment-node": "^29.7.0",
     "jest-extended": "^4.0.2",
     "jest-image-snapshot": "^5.2.0",
     "lockfile-lint": "^4.9.6",
