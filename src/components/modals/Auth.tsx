@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Index from '../../@types/IndexType'
-import { loginActionCreator as login } from '../../action-creators/login'
+import { loginActionCreator as login } from '../../actions/login'
 import { alertActionCreator as alert } from '../../reducers/alert'
 import fastClick from '../../util/fastClick'
 import storage from '../../util/storage'

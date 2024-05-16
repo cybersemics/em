@@ -10,6 +10,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
+import { pullActionCreator as pull } from '../actions/pull'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import globals from '../globals'
 import { alertWithMinistore } from '../reducers/alert'
@@ -43,7 +44,6 @@ import series from '../util/series'
 import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
-import { pullActionCreator as pull } from './pull'
 
 /** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
 interface VirtualFile {

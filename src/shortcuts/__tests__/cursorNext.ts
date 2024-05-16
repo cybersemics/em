@@ -1,4 +1,4 @@
-import { cursorNextActionCreator as cursorNext } from '../../action-creators/cursorNext'
+import { cursorNextActionCreator as cursorNext } from '../../actions/cursorNext'
 import globals from '../../globals'
 import { importTextActionCreator as importText } from '../../reducers/importText'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../reducers/toggleAttribute'

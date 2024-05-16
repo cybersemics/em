@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import { importFilesActionCreator as importFiles } from '../../action-creators/importFiles'
+import { importFilesActionCreator as importFiles } from '../../actions/importFiles'
 import * as selection from '../../device/selection'
 import { importTextActionCreator as importText } from '../../reducers/importText'
 import { newThoughtActionCreator as newThought } from '../../reducers/newThought'

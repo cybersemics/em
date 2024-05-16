@@ -1,7 +1,7 @@
 import { Key } from 'ts-key-enum'
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
-import { cursorNextActionCreator as cursorNext } from '../action-creators/cursorNext'
+import { cursorNextActionCreator as cursorNext } from '../actions/cursorNext'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 

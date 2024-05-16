@@ -1,6 +1,6 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import home from '../action-creators/home'
+import { homeActionCreator as home } from '../actions/home'
 import fastClick from '../util/fastClick'
 import HomeIcon from './icons/HomeIcon'
 

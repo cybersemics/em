@@ -1,4 +1,4 @@
-import { cursorPrevActionCreator as cursorPrev } from '../../action-creators/cursorPrev'
+import { cursorPrevActionCreator as cursorPrev } from '../../actions/cursorPrev'
 import globals from '../../globals'
 import { importTextActionCreator as importText } from '../../reducers/importText'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../reducers/toggleAttribute'

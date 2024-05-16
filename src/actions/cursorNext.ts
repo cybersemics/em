@@ -1,5 +1,5 @@
 import Thunk from '../@types/Thunk'
-import { suppressExpansionActionCreator as suppressExpansion } from '../action-creators/suppressExpansion'
+import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import { setCursorActionCreator as setCursor } from '../reducers/setCursor'
 import attributeEquals from '../selectors/attributeEquals'

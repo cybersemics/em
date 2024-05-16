@@ -9,7 +9,7 @@
  * @param path - The path to the file
  */
 module.exports = (explicit, implicit, path) => {
-  // make index.js files root modules (e.g. action-creators.index.js => action-creators)
+  // make index.js files root modules (e.g. actions.index.js => actions)
   if (path.includes('index.js') || path.includes('index.ts')) return implicit
 
   // check for files which are placed in subdirectories of src
@@ -17,7 +17,7 @@ module.exports = (explicit, implicit, path) => {
     const matches = path.match(RegExp(`${implicit}/.*`))
     if (!matches) return
     const endIndex = matches[0].lastIndexOf('.')
-    // return directoryName.fileName (e.g. "action-creators.alert")
+    // return directoryName.fileName (e.g. "actions.alert")
     return matches[0].slice(0, endIndex).replace(/\//g, '.')
   } else {
     const matches = path.match(/src\/.*\./)[0]

@@ -1,5 +1,5 @@
 import Thunk from '../@types/Thunk'
-import { restoreCursorBeforeSearch } from '../action-creators/restoreCursorBeforeSearch'
+import { restoreCursorBeforeSearch } from '../actions/restoreCursorBeforeSearch'
 import scrollTo from '../device/scrollTo'
 import * as selection from '../device/selection'
 import { searchActionCreator as search } from '../reducers/search'

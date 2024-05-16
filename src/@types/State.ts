@@ -111,7 +111,7 @@ interface State {
   showHiddenThoughts: boolean
   // The currently shown modal dialog box.
   // Initialized to the welcome modal, unless already completed.
-  // See: /src/action-creators/closeModal.ts
+  // See: /src/actions/closeModal.ts
   showModal?: Modal | null
   showSidebar: boolean
   showSplitView: boolean

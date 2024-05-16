@@ -88,5 +88,5 @@ const ${name}ActionCreator =
 export default ${name}ActionCreator
 `
 
-  fs.writeFileSync(`/Users/raine/projects/em/src/action-creators/${name}.ts`, text)
+  fs.writeFileSync(`/Users/raine/projects/em/src/actions/${name}.ts`, text)
 })

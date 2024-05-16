@@ -1,6 +1,6 @@
 import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
-import { loadFromUrlActionCreator as loadFromUrl } from '../action-creators/loadFromUrl'
+import { loadFromUrlActionCreator as loadFromUrl } from '../actions/loadFromUrl'
 import { errorActionCreator as error } from '../reducers/error'
 import { newThoughtActionCreator as newThought } from '../reducers/newThought'
 import { setResourceCacheActionCreator } from '../reducers/setResourceCache'

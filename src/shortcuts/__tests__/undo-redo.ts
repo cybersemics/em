@@ -1,4 +1,4 @@
-import { undoActionCreator as undo } from '../../action-creators/undo'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import { archiveThoughtActionCreator as archiveThought } from '../../reducers/archiveThought'

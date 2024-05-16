@@ -1,6 +1,6 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { deleteResumableFile } from '../action-creators/importFiles'
+import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import { alertActionCreator as alert } from '../reducers/alert'
