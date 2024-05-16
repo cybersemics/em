@@ -16,7 +16,7 @@ interface Options {
  *
  * @param skipRoot    See importHtml.
  */
-const loadFromUrl =
+export const loadFromUrlActionCreator =
   (url: string, path = HOME_PATH, { skipRoot }: Options = {}): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     const urlWithProtocol = /^http|localhost/.test(url) ? url : 'https://' + url
@@ -41,5 +41,3 @@ const loadFromUrl =
       )
     }
   }
-
-export default loadFromUrl
