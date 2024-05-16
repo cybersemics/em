@@ -1,5 +1,5 @@
 import Shortcut from '../@types/Shortcut'
-import formatSelection from '../action-creators/formatSelection'
+import { formatSelectionActionCreator as formatSelection } from '../action-creators/formatSelection'
 import Icon from '../components/icons/ItalicTextIcon'
 import getThoughtById from '../selectors/getThoughtById'
 import head from '../util/head'
