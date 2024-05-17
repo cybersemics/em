@@ -165,7 +165,7 @@
     "@typescript-eslint/parser": "^7.9.0",
     "@vitejs/plugin-react": "^4.2.1",
     "browserstack-local": "^1.4.8",
-    "chalk": "^4.1.1",
+    "chalk": "^5.3.0",
     "dotenv": "16.4.5",
     "em-typedoc-theme": "^0.3.0",
     "eslint": "^8.57.0",
