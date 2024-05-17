@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteResumableFile } from '../actions/importFiles'
@@ -10,16 +10,19 @@ import fastClick from '../util/fastClick'
 import strip from '../util/strip'
 
 /** A popup component that can be dismissed. */
-const Popup: FC<{
-  // used to cancel imports
-  importFileId?: string
-  isInline?: boolean
-  /** If defined, will show a small x in the upper right corner. */
-  onClose?: () => void
-  textAlign?: 'center' | 'left' | 'right'
-  value?: string | null
-  children?: React.ReactNode
-}> = ({ children, importFileId, isInline, onClose, textAlign = 'center' }) => {
+const Popup = React.forwardRef<
+  HTMLDivElement,
+  {
+    // used to cancel imports
+    importFileId?: string
+    isInline?: boolean
+    /** If defined, will show a small x in the upper right corner. */
+    onClose?: () => void
+    textAlign?: 'center' | 'left' | 'right'
+    value?: string | null
+    children?: React.ReactNode
+  }
+>(({ children, importFileId, isInline, onClose, textAlign = 'center' }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
@@ -33,6 +36,7 @@ const Popup: FC<{
 
   return (
     <div
+      ref={ref}
       className='popup z-index-popup'
       {...(isTouch ? useSwipeToDismissProps : null)}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
@@ -84,6 +88,8 @@ const Popup: FC<{
       ) : null}
     </div>
   )
-}
+})
+
+Popup.displayName = 'Popup'
 
 export default Popup

@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React from 'react'
+import React, { useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
@@ -68,6 +68,8 @@ const NavBar = ({ position }: { position: string }) => {
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
 
+  const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
+
   return (
     <div
       className='z-index-navbar'
@@ -99,8 +101,14 @@ const NavBar = ({ position }: { position: string }) => {
                 <>
                   {/* The entire bottom nav is scaled by font size using the Scale component, so we can use a fixed size here. */}
                   {showHomeLink ? <HomeLink size={24} /> : null}
-                  <CSSTransition in={!distractionFreeTyping} timeout={200} classNames='fade' unmountOnExit>
-                    <div style={{ flexGrow: 1 }}>
+                  <CSSTransition
+                    nodeRef={cursorBreadcrumbsWrapperRef}
+                    in={!distractionFreeTyping}
+                    timeout={200}
+                    classNames='fade'
+                    unmountOnExit
+                  >
+                    <div ref={cursorBreadcrumbsWrapperRef} style={{ flexGrow: 1 }}>
                       <CursorBreadcrumbs />
                     </div>
                   </CSSTransition>

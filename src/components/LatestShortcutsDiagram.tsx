@@ -16,6 +16,7 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
   const latestShortcuts = useSelector(state => state.latestShortcuts)
 
   const latestShortcutsRef = useRef(latestShortcuts)
+  const latestShortcutsElRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     latestShortcutsRef.current = latestShortcuts
@@ -27,12 +28,14 @@ const LatestShortcutsDiagram: FC<LatestShortcutsDiagramProps> = ({ position = 'm
   return (
     <div className='latest-shortcuts-wrapper'>
       <CSSTransition
+        nodeRef={latestShortcutsElRef}
         in={latestShortcuts.length > 0}
         classNames={'latest-shortcuts-transition'}
         timeout={400}
         unmountOnExit
       >
         <div
+          ref={latestShortcutsElRef}
           className={classNames({
             'latest-shortcuts': true,
             [position]: true,

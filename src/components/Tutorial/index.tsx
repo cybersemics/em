@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import GesturePath from '../../@types/GesturePath'
@@ -37,11 +37,13 @@ import TutorialStepComponentMap from './TutorialStepComponentMap'
 const NO_CHILDREN: Thought[] = []
 
 /** Wrap a component in a slide CSS transition. */
-const withCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
+const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props: string]: any }) => {
+  const nodeRef = useRef(null)
+
   const Component = component
   return (
-    <CSSTransition in={true} key={Math.floor(props.step)} timeout={400} classNames='slide'>
-      <div>
+    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.step)} timeout={400} classNames='slide'>
+      <div ref={nodeRef}>
         <Component {...props} />
       </div>
     </CSSTransition>
@@ -119,7 +121,7 @@ const Tutorial: FC = () => {
           <div className='tutorial-text'>
             <TransitionGroup>
               {tutorialStepComponent ? (
-                withCSSTransition({ component: tutorialStepComponent, ...tutorialStepProps })
+                <WithCSSTransition component={tutorialStepComponent} {...tutorialStepProps} />
               ) : (
                 <p>
                   Oops! I am supposed to continue the tutorial, but I do not recognize tutorial step {tutorialStep}.
