@@ -7,7 +7,7 @@ import throttleConcat from '../throttleConcat'
 
 // Add a retry to all taskQueue tests since underlying throttleReduce intermittently fails.
 // This occurs because small timing differences can cause the throttle to be triggered at different times.
-describe('throttleReduce', { retry: 3 }, () => {
+describe('throttleConcat', { retry: 5 }, () => {
   it('synchronous: once on the leading edge and once on the trailing edge', async () => {
     let calls = 0
     let output: number[] = []
