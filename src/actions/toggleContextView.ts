@@ -1,4 +1,4 @@
-import * as immer from 'immer'
+import { produce } from 'immer'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
@@ -19,7 +19,7 @@ const toggleContextView = (state: State) => {
     // update contextViews
     state => ({
       ...state,
-      contextViews: immer.produce(state.contextViews, draft => {
+      contextViews: produce(state.contextViews, draft => {
         const key = hashPath(state.cursor)
         if (key in state.contextViews) {
           delete draft[key]
