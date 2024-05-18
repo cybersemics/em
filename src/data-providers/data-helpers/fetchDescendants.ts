@@ -102,6 +102,9 @@ async function* fetchDescendants(
   const thoughtIdQueue = queue(typeof thoughtIdOrIds === 'string' ? [thoughtIdOrIds] : thoughtIdOrIds)
   const depth = counter()
 
+  /** A set of pending cursor ids that have already been fetched as part of prioritized cursor fetching (see below). This is needed to prevent an infinite loop if a thought is permanently pending. While this is not supposed to happen, there is a concurrency issue that can cause it. Best to prevent any possibility of an infinite loop here since it is fatal. */
+  const cursorPendingIds = new Set<ThoughtId>()
+
   // thoughtIndex and lexemeIndex that are kept up-to-date with yielded thoughts
   const accumulatedThoughts = { ...getState().thoughts }
   while (thoughtIdQueue.size() > 0) {
@@ -116,9 +119,12 @@ async function* fetchDescendants(
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
     const cursorThought = cursor ? (getThoughtById(getState(), head(cursor)) as Thought | null) : null
-    const pendingCursorId = cursor && (!cursorThought || cursorThought?.pending) ? ([head(cursor)] as [ThoughtId]) : []
+    const isCursorPending = cursor && (!cursorThought || cursorThought?.pending) && !cursorPendingIds.has(head(cursor))
+    if (isCursorPending) {
+      cursorPendingIds.add(head(cursor!))
+    }
 
-    const ids: ThoughtId[] = [...pendingCursorId, ...thoughtIdQueue.next()]
+    const ids: ThoughtId[] = [...(isCursorPending ? [head(cursor)] : []), ...thoughtIdQueue.next()]
 
     // get thoughts from the database
     const providerThoughtsRaw = await provider.getThoughtsByIds(ids)
@@ -192,8 +198,9 @@ async function* fetchDescendants(
         if (isPending) {
           // enqueue =pin even if the thought is buffered
           // when =pin/true is loaded, then this thought will be marked as expanded and its children can be loaded
-          if (thought.childrenMap?.['=pin']) {
-            thoughtIdQueue.add([thought.childrenMap?.['=pin']])
+          const pinId = thought.childrenMap?.['=pin']
+          if (pinId) {
+            thoughtIdQueue.add([pinId])
           }
           return {
             ...thought,
