@@ -56,6 +56,11 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const sourceThought = getThoughtById(state, sourceThoughtId)
 
+  if (!sourceThought) {
+    console.error({ oldPath, newPath, offset, skipRerank, newRank })
+    throw new Error(`moveThought: sourceThought ${sourceThoughtId} not found`)
+  }
+
   // use parentid from oldPath until parentId data integrity issue is fixed
   const sourceParentId = head(rootedParentOf(state, oldPath))
   if (sourceThought.parentId !== sourceParentId) {
