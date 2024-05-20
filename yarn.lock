@@ -1864,19 +1864,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.12.3":
-  version "2.12.3"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.12.3.tgz#9b10b317ab2f7ae42660792dfec774959c469f97"
-  integrity sha512-F1eu6OyNS05pESjPcWbqDf8i8Bw/JDfE02cmv9B9eFihp2fgzyhRxWz00OVnFK2zYf57J4fvCYfbfrgP37/cvw==
+"@hocuspocus/common@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.0.tgz#5569c839e03595c19186524d7dfc6204bc28ba6e"
+  integrity sha512-gyuUZ/7Jlht/cokGSTYWmG2+ZR1amBkV7gZgY6Bw8ko0OkUbEFsRdzWaB6RVcYNv+ZvYcsbkM8JU6rPsNykMrg==
   dependencies:
     lib0 "^0.2.87"
 
-"@hocuspocus/provider@^2.12.3":
-  version "2.12.3"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.12.3.tgz#fd36b7c790891622ea83f3bae4e57871cfb80255"
-  integrity sha512-jKGRUx9/3qy+yizQPs/O1ZNbFonOYoMG7u/Mh8n8zRebI+LDCVPSNVs5unzQZICb17iVWueppgMnSgc3CkuB4Q==
+"@hocuspocus/provider@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.0.tgz#b8d4d9e5be5e879d8d79c233c113555f0a1c532a"
+  integrity sha512-xWRcyjW3koQajBCTEK3X2PrwaadUpaABsbYGKMWlr6I86pfknLJR8QIjEw1xgump9EbXjwtoXP6V6wuBkN4wkQ==
   dependencies:
-    "@hocuspocus/common" "^2.12.3"
+    "@hocuspocus/common" "^2.13.0"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.87"
     ws "^8.14.2"
@@ -12131,7 +12131,7 @@ write-file-atomic@^4.0.2:
     imurmurhash "^0.1.4"
     signal-exit "^3.0.7"
 
-ws@8.17.0, ws@^8.16.0:
+ws@8.17.0, ws@^8.14.2, ws@^8.16.0:
   version "8.17.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.17.0.tgz#d145d18eca2ed25aaf791a183903f7be5e295fea"
   integrity sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==
@@ -12157,11 +12157,6 @@ ws@^7, ws@^7.5.1:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
-
-ws@^8.14.2:
-  version "8.16.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.16.0.tgz#d1cd774f36fbc07165066a60e40323eab6446fd4"
-  integrity sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==
 
 xhtml-purifier@^0.4.1:
   version "0.4.1"
