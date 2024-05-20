@@ -155,7 +155,7 @@
     "@types/murmurhash3js": "^3.0.7",
     "@types/node": "^20.12.12",
     "@types/pluralize": "0.0.33",
-    "@types/puppeteer": "^5.4.7",
+    "@types/puppeteer": "^7.0.4",
     "@types/react": "17.0.80",
     "@types/react-dnd-multi-backend": "^6.0.6",
     "@types/react-dom": "17.0.25",
