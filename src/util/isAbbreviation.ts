@@ -72,7 +72,7 @@ function isAbbrMidSplitter(str1: string, s: string) {
  *
  * @param str1 The sentence before the first spliter and the first spliter.
  * @param s The sentence after the first spliter.
- * @returns A bolean value that says whether it is an abbreviation that has double dots, such as M.S., R.N. .
+ * @returns A bolean value that says whether it is an abbreviation that has double dots, such as "M.S.", "R.N.".
  */
 function isAbbrDoubleSplitter(str1: string, s: string) {
   if (str1[str1.length - 1] !== '.') return false

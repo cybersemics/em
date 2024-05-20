@@ -56,7 +56,7 @@ interface VirtualFile {
 /** Meta information for a file import that is stored in IDB and automatically resumed on initialize. */
 interface ResumeImport {
   /** Unique id for the import.
-      importing the same file a second time will generate a new ResumeImport with a new id. */
+      Importing the same file a second time will generate a new ResumeImport with a new id. */
   id: string
   /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
   insertBefore?: boolean
