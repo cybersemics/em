@@ -6,13 +6,13 @@ import normalizeThought from './normalizeThought'
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /**
- * Generate a hash of a thought with the following transformations:
+ * Generate a hash of a thought with the following transformations.
  *
- * - case-insensitive
- * - ignore punctuation & whitespace (when there is other text)
- * - ignore emojis (when there is other text)
- * - singularize
- * - murmurhash
+ * - case-insensitive.
+ * - ignore punctuation & whitespace (when there is other text).
+ * - ignore emojis (when there is other text).
+ * - singularize.
+ * - murmurhash.
  *
  * Stored keys MUST match the current hashing algorithm.
  * Use schemaVersion to manage migrations.

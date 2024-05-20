@@ -147,9 +147,9 @@ export const makeOrderedComparator =
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that sorts basic text.
- * 1. numbers (8, 9, 10; #8, #9, #10)
- * 2. dates (9/1, 10/1, 11/1)
- * 3. lexicographic (default)
+ * 1. Numbers (8, 9, 10; #8, #9, #10).
+ * 2. Dates (9/1, 10/1, 11/1).
+ * 3. Lexicographic (default).
  */
 const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareNumberAndOther,
@@ -161,10 +161,10 @@ const compareReadableText: ComparatorFunction<string> = makeOrderedComparator<st
 
 // eslint-disable-next-line jsdoc/require-description-complete-sentence
 /** A comparator that compares by reasonable, human-readable value:
- * 1. empty
- * 2. punctuation (=, +, #hi, =test)
- * 3. emoji
- * 4. compareReadableText on text without emoji
+ * 1. Empty.
+ * 2. Punctuation (=, +, #hi, =test).
+ * 3. Emoji.
+ * 4. CompareReadableText on text without emoji.
  */
 export const compareReasonable: ComparatorFunction<string> = makeOrderedComparator<string>([
   compareEmpty,
