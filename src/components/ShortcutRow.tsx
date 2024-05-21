@@ -16,6 +16,7 @@ import GestureDiagram from './GestureDiagram'
 interface ShortcutRowProps {
   customize?: boolean
   indexInToolbar?: number | null
+  onSelect?: (shortcut: Shortcut | null) => void
   selected?: boolean
   shortcut: Shortcut | null
 }
@@ -64,6 +65,7 @@ const ShortcutRow: FC<DraggableShortcutRowProps> = ({
   customize,
   dragSource,
   isDragging,
+  onSelect,
   selected,
   shortcut,
   indexInToolbar,
@@ -79,14 +81,16 @@ const ShortcutRow: FC<DraggableShortcutRowProps> = ({
     dragSource(
       <tr
         key={shortcut.id}
-        style={
-          isDragging || selected
+        onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
+        style={{
+          ...(customize ? { cursor: 'pointer' } : null),
+          ...(isDragging || selected
             ? {
                 color: colors.highlight,
                 WebkitTextStrokeWidth: '0.05em',
               }
-            : undefined
-        }
+            : undefined),
+        }}
       >
         <th>
           {customize && indexInToolbar && (

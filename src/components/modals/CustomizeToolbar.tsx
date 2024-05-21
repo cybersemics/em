@@ -202,7 +202,7 @@ const ModalCustomizeToolbar: FC = () => {
       </CSSTransition>
 
       <DropToRemoveFromToolbar>
-        <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} />
+        <ShortcutTable customize selectedShortcut={selectedShortcut ?? undefined} onSelect={setSelectedShortcut} />
       </DropToRemoveFromToolbar>
 
       <p style={{ marginTop: '2em', marginBottom: '2em' }}>
