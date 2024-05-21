@@ -580,6 +580,7 @@ const CommandPalette: FC = () => {
 const CommandPaletteWithTransition: FC = () => {
   const [isDismissed, setDismiss] = useState(false)
   const dispatch = useDispatch()
+  const popupRef = useRef<HTMLDivElement>(null)
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -595,8 +596,9 @@ const CommandPaletteWithTransition: FC = () => {
       childFactory={(child: ReactElement) => (!isDismissed ? child : React.cloneElement(child, { timeout: 0 }))}
     >
       {showCommandPalette ? (
-        <CSSTransition key={0} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
+        <CSSTransition key={0} nodeRef={popupRef} timeout={200} classNames='fade' onEntering={() => setDismiss(false)}>
           <Popup
+            ref={popupRef}
             // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}

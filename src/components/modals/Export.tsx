@@ -107,7 +107,7 @@ const useExportedState = () => useContext(ExportedStateContext)
 /**
  * Context to handle pull status and number of descendants.
  */
-const PullProvider: FC<{ simplePath: SimplePath }> = ({ children, simplePath }) => {
+const PullProvider: FC<{ simplePath: SimplePath; children?: React.ReactNode }> = ({ children, simplePath }) => {
   const isMounted = useRef(false)
   const [isPulling, setIsPulling] = useState<boolean>(true)
   const [exportedState, setExportedState] = useState<State | null>(null)

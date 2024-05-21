@@ -37,6 +37,8 @@ const getNextDeviceName = (permissions: Index<Share>, start?: number): string =>
 /** Modal for Sharing and Device Management. */
 const ModalDevices = () => {
   const permissions = usePermissions()
+  const shareDetailRef = useRef<HTMLDivElement>(null)
+  const shareListRef = useRef<HTMLDivElement>(null)
 
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
@@ -57,8 +59,16 @@ const ModalDevices = () => {
       <div className='modal-wrapper'>
         <TransitionGroup>
           {selected && permissions[selected] ? (
-            <CSSTransition key='share-detail' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
+            <CSSTransition
+              key='share-detail'
+              nodeRef={shareDetailRef}
+              classNames='fade-400'
+              exit={false}
+              timeout={400}
+              unmountOnExit
+            >
               <ShareDetail
+                ref={shareDetailRef}
                 accessToken={selected}
                 isLastDevice={Object.keys(permissions).length === 1}
                 onBack={onBack}
@@ -66,8 +76,15 @@ const ModalDevices = () => {
               />
             </CSSTransition>
           ) : (
-            <CSSTransition key='share-list' classNames='fade-400' exit={false} timeout={400} unmountOnExit>
-              <ShareList onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
+            <CSSTransition
+              key='share-list'
+              nodeRef={shareListRef}
+              classNames='fade-400'
+              exit={false}
+              timeout={400}
+              unmountOnExit
+            >
+              <ShareList ref={shareListRef} onAdd={setSelected} onSelect={setSelected} permissions={permissions} />
             </CSSTransition>
           )}
         </TransitionGroup>
@@ -77,15 +94,14 @@ const ModalDevices = () => {
 }
 
 /** The list of device shares for the thoughtspace. */
-const ShareList = ({
-  onAdd,
-  onSelect,
-  permissions,
-}: {
-  onAdd?: (accessToken: string) => void
-  onSelect?: (accessToken: string) => void
-  permissions: Index<Share>
-}) => {
+const ShareList = React.forwardRef<
+  HTMLDivElement,
+  {
+    onAdd?: (accessToken: string) => void
+    onSelect?: (accessToken: string) => void
+    permissions: Index<Share>
+  }
+>(({ onAdd, onSelect, permissions }, ref) => {
   const status = useStatus()
   const dispatch = useDispatch()
   const store = useStore()
@@ -123,7 +139,7 @@ const ShareList = ({
   )
 
   return (
-    <>
+    <div ref={ref}>
       <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
 
       {status === 'connected' ? (
@@ -194,9 +210,11 @@ const ShareList = ({
           <p>Please connect to the Internet to manage sharing.</p>
         </div>
       )}
-    </>
+    </div>
   )
-}
+})
+
+ShareList.displayName = 'ShareList'
 
 /** Permissions role label. */
 const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
@@ -366,196 +384,204 @@ EditableName.displayName = 'EditableName'
 
 /** Detail view of a share that includes the QR code, url, edit name, and delete. */
 const ShareDetail = React.memo(
-  ({
-    accessToken,
-    // provides a warning about removing the last device
-    isLastDevice,
-    onBack,
-    share,
-  }: {
-    accessToken: string
-    isLastDevice?: boolean
-    onBack: () => void
-    share: Share
-  }) => {
-    const shareUrlInputRef = useRef<HTMLInputElement>(null)
-    const dispatch = useDispatch()
-    const fontSize = useSelector(state => state.fontSize)
-    const colors = useSelector(themeColors)
-    // limits sharing and tells the user that they should create a new device share
-    const isCurrent = accessToken === accessTokenCurrent
+  React.forwardRef<
+    HTMLDivElement,
+    {
+      accessToken: string
+      isLastDevice?: boolean
+      onBack: () => void
+      share: Share
+    }
+  >(
+    (
+      {
+        accessToken,
+        // provides a warning about removing the last device
+        isLastDevice,
+        onBack,
+        share,
+      },
+      ref,
+    ) => {
+      const shareUrlInputRef = useRef<HTMLInputElement>(null)
+      const dispatch = useDispatch()
+      const fontSize = useSelector(state => state.fontSize)
+      const colors = useSelector(themeColors)
+      // limits sharing and tells the user that they should create a new device share
+      const isCurrent = accessToken === accessTokenCurrent
 
-    const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
+      const url = `${window.location.origin}/~/?share=${tsid}&auth=${accessToken}`
 
-    /** Copy the share link to the clipboard. */
-    const copyShareUrl = useCallback(
-      () => {
-        // flash the share url input without re-rendering the whole component
-        const color = shareUrlInputRef.current?.style.color || ''
-        const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
-        if (shareUrlInputRef.current) {
-          shareUrlInputRef.current.style.color = colors.highlight
-          shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
-        }
-        setTimeout(() => {
+      /** Copy the share link to the clipboard. */
+      const copyShareUrl = useCallback(
+        () => {
+          // flash the share url input without re-rendering the whole component
+          const color = shareUrlInputRef.current?.style.color || ''
+          const textStrokeWidth = shareUrlInputRef.current?.style['WebkitTextStrokeWidth' as any] || ''
           if (shareUrlInputRef.current) {
-            shareUrlInputRef.current.style.color = color
-            shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+            shareUrlInputRef.current.style.color = colors.highlight
+            shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = 'medium'
           }
-        }, 200)
+          setTimeout(() => {
+            if (shareUrlInputRef.current) {
+              shareUrlInputRef.current.style.color = color
+              shareUrlInputRef.current.style['WebkitTextStrokeWidth' as any] = textStrokeWidth
+            }
+          }, 200)
 
-        navigator.clipboard.writeText(url)
-        dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
-      },
+          navigator.clipboard.writeText(url)
+          dispatch(alert('Share URL copied to clipboard', { clearDelay: 2000 }))
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [url],
+      )
+
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [url],
-    )
+      const onChangeName = useCallback(
+        _.debounce((e: ContentEditableEvent) => {
+          permissionsModel.update(accessToken, { ...share, name: e.target.value.trim() })
+        }, 500),
+        [],
+      )
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const onChangeName = useCallback(
-      _.debounce((e: ContentEditableEvent) => {
-        permissionsModel.update(accessToken, { ...share, name: e.target.value.trim() })
-      }, 500),
-      [],
-    )
+      /** Copy the share url on Cmd/Ctrl + C. */
+      const onKeyDown = useCallback(
+        (e: KeyboardEvent) => {
+          if (
+            e.key === 'c' &&
+            (isMac ? e.metaKey : e.ctrlKey) &&
+            // do not override copy shortcut if user has text selected
+            selection.isCollapsed() !== false &&
+            // input selection is not reflected in window.getSelection()
+            shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd
+          ) {
+            e.stopPropagation()
+            copyShareUrl()
+          }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+      )
 
-    /** Copy the share url on Cmd/Ctrl + C. */
-    const onKeyDown = useCallback(
-      (e: KeyboardEvent) => {
-        if (
-          e.key === 'c' &&
-          (isMac ? e.metaKey : e.ctrlKey) &&
-          // do not override copy shortcut if user has text selected
-          selection.isCollapsed() !== false &&
-          // input selection is not reflected in window.getSelection()
-          shareUrlInputRef.current?.selectionStart === shareUrlInputRef.current?.selectionEnd
-        ) {
-          e.stopPropagation()
-          copyShareUrl()
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [],
-    )
+      useEffect(
+        () => {
+          window.addEventListener('keydown', onKeyDown)
+          return () => {
+            window.removeEventListener('keydown', onKeyDown)
+          }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+      )
 
-    useEffect(
-      () => {
-        window.addEventListener('keydown', onKeyDown)
-        return () => {
-          window.removeEventListener('keydown', onKeyDown)
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [],
-    )
-
-    return (
-      <div>
-        <div style={{ marginBottom: '0.5em' }}>
-          <EditableName onChange={onChangeName} value={share?.name || 'Untitled'} />
-        </div>
-
-        {!isCurrent ? (
-          <QRCodeSVG
-            value={url}
-            style={{
-              width: '100%',
-              height: '100%',
-              minWidth: '200px',
-              minHeight: '200px',
-              // keep visible by sizing it to the shortest screen dimension, leaving room for the top margin and share url input
-              maxWidth: 'calc(min(100vw, 100vh - 270px))',
-              maxHeight: 'calc(min(100vw, 100vh - 270px))',
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              fontSize,
-              margin: '3em 0 4em',
-            }}
-          >
-            <p>This is the current device.</p>
+      return (
+        <div ref={ref}>
+          <div style={{ marginBottom: '0.5em' }}>
+            <EditableName onChange={onChangeName} value={share?.name || 'Untitled'} />
           </div>
-        )}
 
-        {!isCurrent && (
-          <div style={{ position: 'relative' }}>
-            <span>
-              <input
-                ref={shareUrlInputRef}
-                type='text'
-                value={url}
-                readOnly
-                style={{
-                  margin: '10px',
-                  padding: '0.75em 3em 0.75em 1em',
-                  minWidth: 0,
-                  width: '75%',
-                }}
-              />
-            </span>
-            <span
-              {...fastClick(copyShareUrl)}
+          {!isCurrent ? (
+            <QRCodeSVG
+              value={url}
               style={{
-                position: 'absolute',
-                top: '0.75em',
-                right: '1.25em',
-                cursor: 'pointer',
+                width: '100%',
+                height: '100%',
+                minWidth: '200px',
+                minHeight: '200px',
+                // keep visible by sizing it to the shortest screen dimension, leaving room for the top margin and share url input
+                maxWidth: 'calc(min(100vw, 100vh - 270px))',
+                maxHeight: 'calc(min(100vw, 100vh - 270px))',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                fontSize,
+                margin: '3em 0 4em',
               }}
             >
-              <CopyClipboard size={22} />
-            </span>
-          </div>
-        )}
+              <p>This is the current device.</p>
+            </div>
+          )}
 
-        <p style={{ color: colors.gray }}>
-          Created: {new Date(share.created).toLocaleString()}
-          <br />
-          Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
-        </p>
+          {!isCurrent && (
+            <div style={{ position: 'relative' }}>
+              <span>
+                <input
+                  ref={shareUrlInputRef}
+                  type='text'
+                  value={url}
+                  readOnly
+                  style={{
+                    margin: '10px',
+                    padding: '0.75em 3em 0.75em 1em',
+                    minWidth: 0,
+                    width: '75%',
+                  }}
+                />
+              </span>
+              <span
+                {...fastClick(copyShareUrl)}
+                style={{
+                  position: 'absolute',
+                  top: '0.75em',
+                  right: '1.25em',
+                  cursor: 'pointer',
+                }}
+              >
+                <CopyClipboard size={22} />
+              </span>
+            </div>
+          )}
 
-        {onBack && (
-          <a
-            {...fastClick(onBack)}
-            className={classNames({
-              button: true,
-              'action-button': true,
-              'extend-tap': true,
-            })}
-            style={{
-              color: colors.bg,
-              fontSize,
-              marginBottom: '1.5em',
-            }}
-          >
-            Back
-          </a>
-        )}
-
-        <div style={{ marginTop: '4em' }}>
-          <p style={{ color: colors.gray, marginTop: '0.5em' }}>
-            {isLastDevice
-              ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
-              : isCurrent
-                ? 'When removed, you will lose access to the thoughtspace on this device.'
-                : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
-          were saved for offline use.`}
+          <p style={{ color: colors.gray }}>
+            Created: {new Date(share.created).toLocaleString()}
+            <br />
+            Last Accessed: {share.accessed ? new Date(share.accessed).toLocaleString() : 'never'}
           </p>
-          <a
-            onClick={() => {
-              permissionsModel.delete(accessToken, share)
-              onBack()
-            }}
-            className='extend-tap'
-            style={{ color: colors.red }}
-          >
-            {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
-          </a>
+
+          {onBack && (
+            <a
+              {...fastClick(onBack)}
+              className={classNames({
+                button: true,
+                'action-button': true,
+                'extend-tap': true,
+              })}
+              style={{
+                color: colors.bg,
+                fontSize,
+                marginBottom: '1.5em',
+              }}
+            >
+              Back
+            </a>
+          )}
+
+          <div style={{ marginTop: '4em' }}>
+            <p style={{ color: colors.gray, marginTop: '0.5em' }}>
+              {isLastDevice
+                ? 'This is the last device with access to this thoughtspace. If you clear the thoughtspace, all thoughts will be permanently deleted.'
+                : isCurrent
+                  ? 'When removed, you will lose access to the thoughtspace on this device.'
+                  : `When removed, the link and QR code will no longer work, though the device may retain a cache of thoughts that
+          were saved for offline use.`}
+            </p>
+            <a
+              onClick={() => {
+                permissionsModel.delete(accessToken, share)
+                onBack()
+              }}
+              className='extend-tap'
+              style={{ color: colors.red }}
+            >
+              {isLastDevice ? 'Delete all thoughts' : 'Remove device'}
+            </a>
+          </div>
         </div>
-      </div>
-    )
-  },
+      )
+    },
+  ),
 )
 ShareDetail.displayName = 'ShareDetail'
 

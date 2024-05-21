@@ -20,7 +20,7 @@ const options = {
 }
 
 /** Drag and Drop Provider HOC. */
-export const DragAndDropContext: React.FC = ({ children }) => (
+export const DragAndDropContext: React.FC = ({ children }: { children?: React.ReactNode }) => (
   <DndProvider backend={MultiBackend as any} options={options}>
     {children}
   </DndProvider>

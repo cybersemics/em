@@ -26,6 +26,7 @@ const Checkbox: FC<{
   parent?: boolean
   onChange: (e: React.MouseEvent | React.TouchEvent | React.ChangeEvent) => void
   title?: string
+  children?: React.ReactNode
 }> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
     <label

@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import IconType from '../../@types/Icon'
@@ -7,11 +8,21 @@ import TextColorIcon from './TextColor'
 /** Text Color Icon Component with popup ColorPicker. */
 const Icon = ({ size = 20, style }: IconType) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
+  const toolbarPopupRef = useRef<HTMLDivElement>(null)
+
   return (
     <div>
       <TextColorIcon size={size} style={style} />
-      <CSSTransition in={showColorPicker} timeout={200} classNames='fade' exit={false} unmountOnExit>
+      <CSSTransition
+        nodeRef={toolbarPopupRef}
+        in={showColorPicker}
+        timeout={200}
+        classNames='fade'
+        exit={false}
+        unmountOnExit
+      >
         <div
+          ref={toolbarPopupRef}
           className='z-index-stack toolbar-popup'
           style={{
             position: 'relative',

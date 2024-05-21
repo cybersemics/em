@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React from 'react'
+import React, { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Index from '../@types/IndexType'
@@ -54,13 +54,21 @@ const HamburgerMenu = () => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const dispatch = useDispatch()
   const fontSize = useSelector<State, number>((state: State) => state.fontSize)
+  const hamburgerMenuRef = useRef<HTMLDivElement>(null)
 
   const width = fontSize * 1.3
   const paddingTop = 15 + fontSize * 0.1
 
   return (
-    <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
+    <CSSTransition
+      nodeRef={hamburgerMenuRef}
+      in={!distractionFreeTyping}
+      timeout={600}
+      classNames='fade-600'
+      unmountOnExit
+    >
       <div
+        ref={hamburgerMenuRef}
         aria-label='menu'
         className={classNames({
           'hamburger-menu': true,

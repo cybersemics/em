@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
@@ -67,7 +67,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 }
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
-const DropToRemoveFromToolbar = ((component: FC<ReturnType<typeof dropCollect>>) =>
+const DropToRemoveFromToolbar = ((component: FC<React.PropsWithChildren<ReturnType<typeof dropCollect>>>) =>
   DropTarget('toolbar-button', { drop }, dropCollect)(component))(
   ({ dropTarget, isHovering, children, sourceZone }) => {
     const dispatch = useDispatch()
@@ -137,6 +137,7 @@ const ModalCustomizeToolbar: FC = () => {
 
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
+  const shortcutsContainerRef = useRef<HTMLDivElement>(null)
 
   return (
     <ModalComponent
@@ -157,8 +158,16 @@ const ModalCustomizeToolbar: FC = () => {
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* fade-in only */}
-        <CSSTransition in={!!selectedShortcut} classNames='fade' timeout={200} exit={false} unmountOnExit>
+        <CSSTransition
+          nodeRef={shortcutsContainerRef}
+          in={!!selectedShortcut}
+          classNames='fade'
+          timeout={200}
+          exit={false}
+          unmountOnExit
+        >
           <div
+            ref={shortcutsContainerRef}
             style={{
               backgroundColor: colors.bg,
               // add bottom drop-shadow

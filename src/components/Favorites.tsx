@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import { FC, useState } from 'react'
+import { FC, useRef, useState } from 'react'
 import {
   DragSource,
   DragSourceConnector,
@@ -244,6 +244,7 @@ const FavoritesOptions = ({
 }) => {
   const dispatch = useDispatch()
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
+  const formRef = useRef<HTMLFormElement>(null)
 
   return (
     <div style={{ marginBottom: '0.5em' }}>
@@ -269,8 +270,9 @@ const FavoritesOptions = ({
       </div>
 
       <div style={{ overflow: 'hidden' }}>
-        <CSSTransition in={showOptions} timeout={150} classNames='slidedown' unmountOnExit>
+        <CSSTransition in={showOptions} nodeRef={formRef} timeout={150} classNames='slidedown' unmountOnExit>
           <form
+            ref={formRef}
             className='text-small'
             style={{
               backgroundColor: '#3e3e3e',

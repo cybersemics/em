@@ -34,6 +34,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
+  const toolbarContainerRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
   const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
@@ -117,8 +118,15 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <CSSTransition in={!distractionFreeTyping} timeout={600} classNames='fade-600' unmountOnExit>
+    <CSSTransition
+      nodeRef={toolbarContainerRef}
+      in={!distractionFreeTyping}
+      timeout={600}
+      classNames='fade-600'
+      unmountOnExit
+    >
       <div
+        ref={toolbarContainerRef}
         aria-label='toolbar'
         className={classNames({
           'toolbar-container': true,

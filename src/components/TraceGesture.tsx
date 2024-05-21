@@ -70,6 +70,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const signaturePadRef = useRef<{ minHeight: number; signaturePad: SignaturePad['signaturePad'] } | null>(null)
   const fadeTimer = useRef(0)
+  const fadeBothEnterElRef = useRef<HTMLDivElement>(null)
 
   // Clear the signature pad when the stroke starts.
   // This is easier than clearing when the stroke ends where we would have to account for the fade timeout.
@@ -136,8 +137,9 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
         pointerEvents: eventNodeRef ? 'none' : undefined,
       }}
     >
-      <CSSTransition in={show} timeout={400} classNames='fade-both'>
+      <CSSTransition nodeRef={fadeBothEnterElRef} in={show} timeout={400} classNames='fade-both'>
         <div
+          ref={fadeBothEnterElRef}
           // use fade-both-enter to start the opacity at 0, otherwise clicking will render small dots
           className='fade-both-enter'
           // WebKitUserSelect needed in addition to userSelect in order to disable long-tap-to-select

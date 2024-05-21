@@ -67,7 +67,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
 )
 
 /** A higher-order component that catches errors of all descendant components. When an error is caught, a fallback component will be rendered. */
-const ErrorBoundaryContainer: FC = ({ children }) => (
+const ErrorBoundaryContainer: FC = ({ children }: { children?: React.ReactNode }) => (
   <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
 )
 
