@@ -157,7 +157,7 @@ const ModalCustomizeToolbar: FC = () => {
       <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
-        {/* fade-in only */}
+        {/* selected toolbar button details */}
         <CSSTransition
           nodeRef={shortcutsContainerRef}
           in={!!selectedShortcut}

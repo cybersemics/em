@@ -1,6 +1,9 @@
+import { shallowEqual, useSelector } from 'react-redux'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import getUserToolbar from '../selectors/getUserToolbar'
 import { globalShortcuts, shortcutById } from '../shortcuts'
 import conjunction from '../util/conjunction'
 import keyValueBy from '../util/keyValueBy'
@@ -100,6 +103,13 @@ if (shortcutsUngrouped.length > 0) {
 
 /** Renders a table of shortcuts. */
 const ShortcutTable = ({ customize }: { customize?: boolean }) => {
+  // custom user toolbar
+  // fall back to defaults if user does not have Settings defined
+  const shortcutIds = useSelector(state => {
+    const userShortcutIds = getUserToolbar(state)
+    return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
+  }, shallowEqual)
+
   return (
     <div style={{ textAlign: 'left' }}>
       {groups.map(group => {
@@ -115,9 +125,17 @@ const ShortcutTable = ({ customize }: { customize?: boolean }) => {
             <h2 className='modal-subtitle'>{group.title}</h2>
             <table className='shortcuts'>
               <tbody>
-                {shortcuts.map(shortcut => (
-                  <ShortcutRow customize={customize} key={shortcut.id} shortcut={shortcut} />
-                ))}
+                {shortcuts.map(shortcut => {
+                  const indexInToolbar = shortcutIds.findIndex(id => id === shortcut.id)
+                  return (
+                    <ShortcutRow
+                      customize={customize}
+                      key={shortcut.id}
+                      indexInToolbar={indexInToolbar !== -1 ? indexInToolbar + 1 : null}
+                      shortcut={shortcut}
+                    />
+                  )
+                })}
               </tbody>
             </table>
           </div>

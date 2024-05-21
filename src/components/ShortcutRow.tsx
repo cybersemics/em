@@ -15,10 +15,23 @@ import GestureDiagram from './GestureDiagram'
 
 interface ShortcutRowProps {
   customize?: boolean
+  indexInToolbar?: number | null
   shortcut: Shortcut | null
 }
 
 type DraggableShortcutRowProps = ShortcutRowProps & ReturnType<typeof dragCollect>
+
+/** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
+const ordinal = (n: number) => {
+  const s = n.toString()
+  return s.endsWith('1') && n !== 11
+    ? s + 'st'
+    : s.endsWith('2') && n !== 12
+      ? s + 'nd'
+      : s.endsWith('3') && n !== 13
+        ? s + 'rd'
+        : s + 'th'
+}
 
 /** Returns true if the toolbar-button can be dragged. */
 const canDrag = (props: ShortcutRowProps) => !!props.shortcut && !!props.customize
@@ -46,7 +59,13 @@ const endDrag = () => {
 }
 
 /** Renders all of a shortcut's details as a table row. */
-const ShortcutRow: FC<DraggableShortcutRowProps> = ({ customize, dragSource, isDragging, shortcut }) => {
+const ShortcutRow: FC<DraggableShortcutRowProps> = ({
+  customize,
+  dragSource,
+  isDragging,
+  shortcut,
+  indexInToolbar,
+}) => {
   const colors = useSelector(themeColors)
   const description = useSelector(state => {
     if (!shortcut) return ''
@@ -68,6 +87,11 @@ const ShortcutRow: FC<DraggableShortcutRowProps> = ({ customize, dragSource, isD
         }
       >
         <th>
+          {customize && indexInToolbar && (
+            <span className='dim' title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}>
+              {indexInToolbar}.{' '}
+            </span>
+          )}
           <b>{shortcut.label}</b>
           <p>{description}</p>
         </th>
