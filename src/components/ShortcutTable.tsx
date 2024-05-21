@@ -102,7 +102,7 @@ if (shortcutsUngrouped.length > 0) {
 }
 
 /** Renders a table of shortcuts. */
-const ShortcutTable = ({ customize }: { customize?: boolean }) => {
+const ShortcutTable = ({ customize, selectedShortcut }: { customize?: boolean; selectedShortcut?: Shortcut }) => {
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
   const shortcutIds = useSelector(state => {
@@ -132,6 +132,7 @@ const ShortcutTable = ({ customize }: { customize?: boolean }) => {
                       customize={customize}
                       key={shortcut.id}
                       indexInToolbar={indexInToolbar !== -1 ? indexInToolbar + 1 : null}
+                      selected={shortcut.id === selectedShortcut?.id}
                       shortcut={shortcut}
                     />
                   )
