@@ -97,7 +97,7 @@ const ContextBreadcrumbs = ({
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
-  const breadCrumbsRef = useRef<HTMLSpanElement>(null)
+  const breadCrumbsRefs = useRef<{ current: HTMLSpanElement | null }[]>([])
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   const factoryManager = (child: React.ReactElement) => {
@@ -151,9 +151,9 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition key={i} nodeRef={breadCrumbsRef} timeout={600} classNames='fade-600'>
+              <CSSTransition key={i} nodeRef={breadCrumbsRefs.current[i]} timeout={600} classNames='fade-600'>
                 <BreadCrumb
-                  ref={breadCrumbsRef}
+                  ref={el => (breadCrumbsRefs.current[i] = { current: el })}
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
