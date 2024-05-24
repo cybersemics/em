@@ -109,6 +109,9 @@ const ContextBreadcrumbs = ({
     return React.cloneElement(child, { ...child.props }, updatedGrandChild)
   }
 
+  /** Returns the ref for the i-th breadcrumb. */
+  const getBreadCrumbsRef = (i: number) => breadCrumbsRefs.current[i] || { current: null }
+
   const ancestors = useMemo(() => {
     return path.map((id, i) => path.slice(0, i + 1) as Path)
   }, [path])
@@ -151,7 +154,7 @@ const ContextBreadcrumbs = ({
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition key={i} nodeRef={breadCrumbsRefs.current[i]} timeout={600} classNames='fade-600'>
+              <CSSTransition key={i} nodeRef={getBreadCrumbsRef(i)} timeout={600} classNames='fade-600'>
                 <BreadCrumb
                   ref={el => (breadCrumbsRefs.current[i] = { current: el })}
                   isOverflow={isOverflow}
