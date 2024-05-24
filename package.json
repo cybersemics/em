@@ -135,7 +135,7 @@
     "yjs": "^13.6.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.5",
+    "@babel/core": "^7.24.6",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^4.8.2",
     "@sinonjs/fake-timers": "^11.2.2",
