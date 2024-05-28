@@ -11,7 +11,6 @@ import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
-import isRoot from '../../util/isRoot'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
@@ -210,12 +209,7 @@ async function* fetchDescendants(
           }
         } else {
           thoughtIdQueue.add(childrenIds)
-          return {
-            ...thought,
-            // Always mark parents as pending.
-            // updateThoughts will clear pending once all children are loaded.
-            pending: !isRoot([thought.id]) && hasChildren,
-          }
+          return thought
         }
       })
       .filter(nonNull)
