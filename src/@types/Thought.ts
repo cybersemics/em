@@ -5,20 +5,19 @@ import Timestamp from './Timestamp'
 /** An single thought in local state that contains a map of children ThoughtIds. A different type, ThoughtDb is persisted to storage. */
 interface Thought {
   archived?: Timestamp
-  // meta attributes keyed by value, otherwise keyed by ThoughtId
+  /** Meta attributes keyed by value, otherwise keyed by ThoughtId. */
   childrenMap: Index<ThoughtId>
   created: Timestamp
-  // persisted properties (See: ThoughtDb)
+  /** Persisted properties (See: ThoughtDb). */
   id: ThoughtId
   lastUpdated: Timestamp
   parentId: ThoughtId
-  // non-persisted properties (local state only)
+  /** Still loading from the database. */
   pending?: boolean
   rank: number
-  // takes precedence over value for sorting purposes
-  // used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point
+  /** Takes precedence over value for sorting purposes. Used to preserve the sort order of thoughts that are edited to empty instead of moving them back to their insertion point. */
   sortValue?: string
-  // used to track if a space is required when merging two siblings/thoughts
+  /** Used to track if a space is required when merging two siblings/thoughts. */
   splitSource?: ThoughtId
   /** The public key of the user defined by a hash of their private access token. See: clientId (yjs/index.ts). */
   updatedBy: string
