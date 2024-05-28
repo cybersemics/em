@@ -174,7 +174,7 @@ const Bullet = ({
     // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
     // (Another approach would be to pre-load the context children as soon as the context view is activated.)
     const showContextsParent = isContextViewActive(state, parentOf(path))
-    return isContextPending || (!showContextsParent && thought?.pending)
+    return isContextPending || (!showContextsParent && (thought?.pending || thought?.generating))
   })
 
   /** Returns true if the thought or its Lexeme is missing. */

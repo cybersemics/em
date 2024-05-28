@@ -135,6 +135,7 @@ const editThought = (state: State, { force, oldValue, newValue, path, rankInCont
 
   const thoughtNew: Thought = {
     ...editedThought,
+    generating: false,
     rank:
       newValue !== '' && getSortPreference(state, editedThought.parentId).type === 'Alphabetical'
         ? getSortedRank(state, editedThought.parentId, newValue)

@@ -59,7 +59,7 @@ const generateThought: Shortcut = {
           [thought.id]: {
             ...thought,
             value: valuePending,
-            pending: true,
+            generating: true,
           },
         },
         lexemeIndexUpdates: {},
@@ -86,6 +86,7 @@ const generateThought: Shortcut = {
 
     // must reset cursorCleared before thought is updated for some reason, otherwise it is not updated in the DOM
     dispatch([
+      // editThought automatically sets Thought.generating to false
       editThought({
         force: true,
         oldValue: valuePending,
