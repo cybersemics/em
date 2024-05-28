@@ -1,6 +1,7 @@
 /* Visual regression tests
  * Snapshot Directory: ./__image_snapshots__
- * In jest watch, Press i to update failing snapshots interactively.
+ * Run `jest -u` to update failed snapshots.
+ * Press i in jest watch to update failing snapshots interactively.
  * See: https://github.com/americanexpress/jest-image-snapshot
  */
 import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
@@ -8,10 +9,16 @@ import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
 const toMatchImageSnapshot = configureToMatchImageSnapshot({
+  /** Apply a Gaussian Blur on compared images (radius in pixels). Used to normalize small rendering differences between platforms. */
+  // blur of 1.25 and threshold of 0.2 has false negatives
+  // blur of 2 and threshold of 0.1 has false negatives
+  // blur of 2.5 and threshold of 0.1 has false negatives
+  // blur of 1.5 and threshold of 0.175 has NO false negatives (false positives untested)
+  blur: 1.5,
   customDiffConfig: {
     // per-pixel failure threshold (percent)
     // puppeteer anti-aliasing (?) commonly creates small differences in text and svg rendering at different font sizes, so increase the threshold
-    threshold: 0.1,
+    threshold: 0.2,
   },
   // Full picture failure threshold (pixels)
   // 4 pixels definitely has false positives.
