@@ -20,7 +20,7 @@ it('apply =style attribute to a thought', async () => {
     }),
   ])
 
-  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+  const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
   expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
   const thoughtNuzzle = await findThoughtByText('Nuzzle')

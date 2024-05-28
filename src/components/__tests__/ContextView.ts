@@ -47,7 +47,7 @@ describe.skip('render', () => {
     ])
 
     const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
 
     const thoughtsA = await findAllThoughtsByText('a', thoughtContainerM)
     expect(thoughtsA).toHaveLength(1)
@@ -73,7 +73,7 @@ describe.skip('render', () => {
     ])
 
     const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
 
     const thoughtX = await queryThoughtByText('x', thoughtContainerM)
     expect(thoughtX).toBeNull()
@@ -101,7 +101,7 @@ describe.skip('render', () => {
     ])
 
     const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
 
     const thoughtX = await findThoughtByText('x', thoughtContainerM)
     expect(thoughtX).toBeTruthy()
@@ -129,7 +129,7 @@ describe.skip('render', () => {
     ])
 
     const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'thought-container')
+    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
 
     const thoughtX = await queryThoughtByText('x', thoughtContainerM)
     expect(thoughtX).toBeNull()

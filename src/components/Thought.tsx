@@ -342,7 +342,7 @@ const ThoughtContainer = ({
     dragSource(
       <div
         {...dragHoldResult.props}
-        aria-label='thought-container'
+        aria-label='child'
         style={{
           // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
           position: 'relative',

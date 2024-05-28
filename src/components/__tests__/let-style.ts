@@ -24,7 +24,7 @@ describe.skip('let-style', () => {
       }),
     ])
 
-    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
     expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
     const thoughtNuzzle = await findThoughtByText('Nuzzle')
@@ -47,7 +47,7 @@ describe.skip('let-style', () => {
       }),
     ])
 
-    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
     expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
     const thoughtNuzzle = await findThoughtByText('Roo')
@@ -111,7 +111,7 @@ describe.skip('let-style', () => {
     const thoughtShoozle = await findThoughtByText('Shoozle')
     expect(thoughtShoozle).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
-    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
     expect(thoughtRazzle).toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 
     const thoughtNuzzle = await findThoughtByText('Nuzzle')
@@ -139,7 +139,7 @@ describe.skip('let-style', () => {
       setCursor(['Razzle']),
     ])
 
-    const thoughtRazzleContainer = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+    const thoughtRazzleContainer = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
     expect(thoughtRazzleContainer).toHaveStyle({
       color: 'rgba(255, 192, 203, 1)',
     })
@@ -172,7 +172,7 @@ describe.skip('let-style', () => {
       setCursor(['Shoozle']),
     ])
 
-    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="thought-container"]')
+    const thoughtRazzle = (await findThoughtByText('Razzle'))?.closest('[aria-label="child"]')
     expect(thoughtRazzle).toHaveStyle({ color: 'rgba(100, 100, 100, 1)' })
   })
 })
