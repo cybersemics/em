@@ -25,7 +25,7 @@ const Popup = React.forwardRef<
 >(({ children, importFileId, isInline, onClose, textAlign = 'center' }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
-  const fontSize = useSelector(state => state.fontSize)
+  const padding = useSelector(state => state.fontSize / 2 + 2)
   const useSwipeToDismissProps = useSwipeToDismiss({
     ...(isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
@@ -45,7 +45,7 @@ const Popup = React.forwardRef<
         top: 0,
         width: '100%',
         // scale with font size to stay vertically centered over toolbar
-        padding: `${fontSize / 2 + 2}px 0 1em`,
+        padding: `${padding}px 0 ${padding}px`,
         color: colors.gray50,
         overflowX: 'hidden',
         overflowY: 'auto',
