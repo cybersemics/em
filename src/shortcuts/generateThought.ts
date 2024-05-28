@@ -1,10 +1,10 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
-import { editThoughtActionCreator } from '../actions/editThought'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
-import { setCursorActionCreator } from '../actions/setCursor'
-import { updateThoughtsActionCreator } from '../actions/updateThoughts'
+import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
@@ -54,7 +54,7 @@ const generateThought: Shortcut = {
 
     // set to pending while thought is being generated
     dispatch([
-      updateThoughtsActionCreator({
+      updateThoughts({
         thoughtIndexUpdates: {
           [thought.id]: {
             ...thought,
@@ -86,13 +86,13 @@ const generateThought: Shortcut = {
 
     // must reset cursorCleared before thought is updated for some reason, otherwise it is not updated in the DOM
     dispatch([
-      editThoughtActionCreator({
+      editThought({
         force: true,
         oldValue: valuePending,
         newValue: valueNew,
         path: simplePath,
       }),
-      setCursorActionCreator({ path: state.cursor, offset: valueNew.length }),
+      setCursor({ path: state.cursor, offset: valueNew.length }),
       cursorCleared({ value: false }),
     ])
   },
