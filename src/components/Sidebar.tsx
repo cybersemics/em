@@ -6,45 +6,24 @@ import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
 import { isTouch } from '../browser'
+import themeColors from '../selectors/themeColors'
+import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
+import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
 const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.ComponentType<
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 
-/** Displays recently edited thoughts with a header. */
-// const RecentlyEdited = () => {
-//   const recentlyEditedTree = useSelector(state => state.recentlyEdited)
-//   const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
-
-//   const store = useStore()
-
-//   const recentlyEdited = _.reverse(
-//     _.sortBy(
-//       findTreeDescendants(store.getState(), recentlyEditedTree, { startingPath: [], showHiddenThoughts }),
-//       'lastUpdated',
-//     ),
-//   )
-
-//   return (
-//     <div className='sidebar'>
-//       <div className='header'>Recently Edited Thoughts</div>
-//       <div style={{ padding: '0 2em' }}>
-//         {recentlyEdited.map((recentlyEditedThought, i) => (
-//           <ThoughtLink key={hashPath(recentlyEditedThought.path)} path={recentlyEditedThought.path} />
-//         ))}
-//       </div>
-//     </div>
-//   )
-// }
-
-/** The Recently Edited sidebar component. */
+/** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const ref = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
+  const colors = useSelector(themeColors)
   const dispatch = useDispatch()
+  const [section, setSection] = useState<'favorites' | 'recent'>('favorites')
 
   /** Toggle the sidebar. */
   const toggleSidebar = (value: boolean) => {
@@ -108,7 +87,47 @@ const Sidebar = () => {
           height: '100%',
         }}
       >
-        <Favorites disableDragAndDrop={isSwiping} />
+        <div
+          className='favorites sidebar'
+          style={{
+            userSelect: 'none',
+            // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
+            position: 'relative',
+            padding: '0 1em',
+            minWidth: '60vw',
+          }}
+        >
+          <div style={{ marginLeft: '0.5em' }}>
+            <a
+              {...fastClick(() => setSection('favorites'))}
+              style={{
+                color: section === 'favorites' ? colors.fg : colors.gray50,
+                display: 'inline-block',
+                fontSize: '1.2em',
+                fontWeight: 600,
+                margin: '1em 1em 0 0',
+                textDecoration: 'none',
+              }}
+            >
+              Favorites
+            </a>
+            <a
+              {...fastClick(() => setSection('recent'))}
+              style={{
+                color: section === 'recent' ? colors.fg : colors.gray50,
+                display: 'inline-block',
+                fontSize: '1.2em',
+                fontWeight: 600,
+                margin: '1em 1em 0 0',
+                textDecoration: 'none',
+              }}
+            >
+              Recently Edited
+            </a>
+          </div>
+
+          {section === 'favorites' ? <Favorites disableDragAndDrop={isSwiping} /> : <RecentlyEdited />}
+        </div>
       </div>
     </SwipeableDrawerWithClasses>
   )

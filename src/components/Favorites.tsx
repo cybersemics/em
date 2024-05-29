@@ -247,9 +247,9 @@ const FavoritesOptions = ({
   const formRef = useRef<HTMLFormElement>(null)
 
   return (
-    <div style={{ marginBottom: '0.5em' }}>
+    <div style={{ marginBottom: '0.5em', marginLeft: 2 }}>
       {/* Show Options toggle */}
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ marginLeft: '1em' }}>
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           style={{ color: '#444', cursor: 'pointer', fontSize: '0.7em', fontWeight: 'bold', position: 'relative' }}
@@ -297,7 +297,6 @@ const FavoritesOptions = ({
 /** Favorites list. */
 const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const [showOptions, setShowOptions] = useState(false)
-  const colors = useSelector(themeColors)
 
   const simplePaths = useSelector(state => {
     return (getLexeme(state, '=favorite')?.contexts || [])
@@ -313,36 +312,26 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
-    <div
-      className='favorites sidebar'
-      style={{
-        userSelect: 'none',
-        // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
-        position: 'relative',
-        padding: '0 1em',
-        minWidth: '60vw',
-      }}
-    >
-      <div className='header' style={{ color: colors.fg, fontSize: '1.2em', fontWeight: 600, marginBottom: 0 }}>
-        Favorites
-      </div>
-
-      <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
-
+    <div>
       <div>
         {simplePaths.length > 0 ? (
-          simplePaths.map((simplePath, i) => (
-            <DragAndDropFavorite
-              key={head(simplePath)}
-              simplePath={simplePath}
-              disableDragAndDrop={disableDragAndDrop}
-              hideContext={hideContexts}
-            />
-          ))
+          <div>
+            <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
+            <div style={{ marginTop: '1em' }}>
+              {simplePaths.map((simplePath, i) => (
+                <DragAndDropFavorite
+                  key={head(simplePath)}
+                  simplePath={simplePath}
+                  disableDragAndDrop={disableDragAndDrop}
+                  hideContext={hideContexts}
+                />
+              ))}
+            </div>
+          </div>
         ) : (
-          <div style={{ margin: '1em 0.5em', maxWidth: 450 }}>
-            Set the cursor on a thought and tap <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar to
-            add the thought to your favorites list.
+          <div style={{ marginTop: '1em', maxWidth: 450 }}>
+            To add a thought to your favorites list, set the cursor on a thought and tap{' '}
+            <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar.
           </div>
         )}
         <DropEnd />

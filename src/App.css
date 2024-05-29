@@ -2358,14 +2358,6 @@ code,
   display: none;
 }
 
-.sidebar .header {
-  color: #666;
-  font-weight: 300;
-  display: flex;
-  justify-content: center;
-  margin: 1em;
-}
-
 .thoughts-tab {
   transition: all 0.4s linear;
 }
