@@ -22,7 +22,12 @@
     "paths": {
       // Typecheck React based on installed types, otherwise JSX components are not recognized for some reason.
       // https://stackoverflow.com/a/75093164/480608
-      "react": ["./node_modules/@types/react"]
+      "react": ["./node_modules/@types/react"],
+      // Remap react-redux path to define global useSelector and useDispatch types.
+      // DefaultRootState was removed in v8 and thus cannot be augmented anymore.
+      // https://stackoverflow.com/a/78550104/480608
+      "react-redux-default": ["./node_modules/react-redux"],
+      "react-redux": ["./src/@types/react-redux.d.ts"]
     },
     "types": ["vitest/globals"]
   }
