@@ -19,7 +19,7 @@ const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
   }
 }
 
-/** Recently visited thoughts. */
+/** Recently edited thoughts. */
 const RecentlyEdited = () => {
   const dispatch = useDispatch()
 
