@@ -178,7 +178,7 @@
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-export-default-identifier": "0.3.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jsdoc": "^48.2.6",
+    "eslint-plugin-jsdoc": "^48.2.7",
     "eslint-plugin-jsx-a11y": "^6.8.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.1.3",
