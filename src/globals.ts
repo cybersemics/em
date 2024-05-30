@@ -31,13 +31,6 @@ let suppressExpansion = false // eslint-disable-line prefer-const
 
 /** These aren's so bad. They're for debugging. */
 
-// show all drop-hover elements for debugging
-// as if hovering over all elements at once
-const simulateDrag = false
-
-// show all drop targets with color blocking for debugging
-const simulateDrop = false
-
 // disable the tutorial for debugging
 const disableTutorial = false
 
@@ -63,8 +56,6 @@ const globals = {
   preserveSet,
   longpressing,
   rendered,
-  simulateDrag,
-  simulateDrop,
   suppressExpansion,
   touched,
   touching,

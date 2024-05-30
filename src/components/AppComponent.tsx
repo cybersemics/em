@@ -10,6 +10,7 @@ import { updateSplitPositionActionCreator as updateSplitPosition } from '../acti
 import { isAndroid, isSafari, isTouch } from '../browser'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
+import testFlags from '../e2e/testFlags'
 import globals from '../globals'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -170,10 +171,10 @@ const AppComponent: FC = () => {
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
-    if (globals.simulateDrag) {
+    if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }
-    if (globals.simulateDrop) {
+    if (testFlags.simulateDrop) {
       document.body.classList.add('debug-simulate-drop')
     }
 

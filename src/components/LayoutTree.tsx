@@ -10,7 +10,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
 import { HOME_PATH, LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
-import globals from '../globals'
+import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import getChildren, { childrenFilterPredicate, getChildrenRanked, hasChildren } from '../selectors/getChildren'
@@ -372,7 +372,7 @@ const LayoutTree = () => {
   // cursor depth, taking into account that a leaf cursor has the same autofocus depth as its parent
   const autofocusDepth = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return 0
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return 0
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
@@ -380,7 +380,7 @@ const LayoutTree = () => {
   // first uncle of the cursor used for DropBefore
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
-    if ((!state.dragInProgress && !globals.simulateDrag && !globals.simulateDrop) || !state.cursor) return null
+    if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
     const isCursorLeaf = !hasChildren(state, head(state.cursor))
     const cursorParentId = state.cursor[state.cursor.length - (isCursorLeaf ? 3 : 2)] as ThoughtId | null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
@@ -679,7 +679,7 @@ const LayoutTree = () => {
                 }}
               >
                 <VirtualThought
-                  debugIndex={globals.simulateDrop ? indexChild : undefined}
+                  debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
                   dropBefore={thought.id === cursorUncleId}
                   env={env}

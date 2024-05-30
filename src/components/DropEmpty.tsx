@@ -6,7 +6,7 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import globals from '../globals'
+import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import { hasChildren } from '../selectors/getChildren'
@@ -98,7 +98,7 @@ const DropEmpty = ({
             last,
           })}
           style={{
-            backgroundColor: globals.simulateDrop ? '#32305f' : undefined, // purple-eggplant
+            backgroundColor: testFlags.simulateDrop ? '#32305f' : undefined, // purple-eggplant
             // shift the drop target to the right
             marginLeft: isTouch ? '33%' : 'calc(2.9em - 2px)',
             opacity: 0.9,
@@ -106,7 +106,7 @@ const DropEmpty = ({
             paddingBottom: '1em',
           }}
         >
-          {globals.simulateDrop && (
+          {testFlags.simulateDrop && (
             <span
               style={{
                 paddingLeft: 5,
@@ -121,7 +121,7 @@ const DropEmpty = ({
               {isHovering ? '*' : ''}
             </span>
           )}
-          {(globals.simulateDrag || isHovering) && (
+          {(testFlags.simulateDrag || isHovering) && (
             <span
               className='drop-hover'
               style={{

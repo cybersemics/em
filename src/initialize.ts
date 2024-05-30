@@ -21,6 +21,7 @@ import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
 import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
+import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
 import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './selectors/getChildren'
@@ -266,6 +267,7 @@ const windowEm = {
   offlineStatusStore,
   syncStatusStore,
   // helper functions that will be used by puppeteer tests
+  testFlags,
   testHelpers,
   thoughtToContext: withState(thoughtToContext),
 }

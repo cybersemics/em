@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
-import globals from '../globals'
+import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
@@ -35,7 +35,7 @@ const DropHover = ({
       state.draggingThought &&
       equalPath(rootedParentOf(state, state.draggingThought), rootedParentOf(state, simplePath))
     const isParentSorted = getSortPreference(state, parentId).type === 'Alphabetical'
-    if (!isParentSorted || sameContext) return globals.simulateDrag || isHovering
+    if (!isParentSorted || sameContext) return testFlags.simulateDrag || isHovering
     else if (!state.dragInProgress) return false
 
     const draggingThoughtValue = state.draggingThought

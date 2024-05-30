@@ -11,6 +11,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
 import { isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
+import testFlags from '../e2e/testFlags'
 import globals from '../globals'
 import useDragHold from '../hooks/useDragHold'
 import useHideBullet from '../hooks/useHideBullet'
@@ -56,7 +57,7 @@ export interface ThoughtContainerProps {
   allowSingleContext?: boolean
   childrenForced?: ThoughtId[]
   cursor?: Path | null
-  // used by globals.simulateDrop
+  // used by testFlags.simulateDrop
   debugIndex?: number
   depth?: number
   env?: LazyEnv
@@ -354,7 +355,7 @@ const ThoughtContainer = ({
           // extend the click area to the left (except if table column 2)
           marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
           paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
-          ...(globals.simulateDrop
+          ...(testFlags.simulateDrop
             ? {
                 backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
               }

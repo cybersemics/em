@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
-import globals from '../globals'
+import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -53,7 +53,7 @@ const DropEnd = ({
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
   const showDropHover = useSelector(state => {
-    if (globals.simulateDrag) return true
+    if (testFlags.simulateDrag) return true
 
     // if hovering, and the parent is not sorted, show the drop-hover
     const isParentSorted = getSortPreference(state, thoughtId).type === 'Alphabetical'
@@ -96,7 +96,7 @@ const DropEnd = ({
       })}
       style={{
         display: 'list-item',
-        backgroundColor: globals.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
+        backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : '1.9em',
         marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
         // offset marginLeft, minus 1em for bullet
@@ -104,7 +104,7 @@ const DropEnd = ({
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
       }}
     >
-      {globals.simulateDrop && (
+      {testFlags.simulateDrop && (
         <span
           style={{
             position: 'absolute',
@@ -119,7 +119,7 @@ const DropEnd = ({
           {strip(value)}
         </span>
       )}
-      {(showDropHover || globals.simulateDrag) && (
+      {(showDropHover || testFlags.simulateDrag) && (
         <span
           className='drop-hover'
           style={{

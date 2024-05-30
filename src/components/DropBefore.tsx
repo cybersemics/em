@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import globals from '../globals'
+import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import getThoughtById from '../selectors/getThoughtById'
@@ -28,7 +28,9 @@ const DropBefore = ({
   simplePath: SimplePath
 }) => {
   const dropHoverColor = useDropHoverColor(depth || 0)
-  const value = useSelector(state => (globals.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : ''))
+  const value = useSelector(state =>
+    testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
+  )
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   if (!dropTarget) return null
@@ -39,12 +41,12 @@ const DropBefore = ({
         'drop-end': true,
       })}
       style={{
-        backgroundColor: globals.simulateDrop ? '#52305f' : undefined, // eggplant
+        backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
         height: '1.9em',
         opacity: 0.9,
       }}
     >
-      {globals.simulateDrop && (
+      {testFlags.simulateDrop && (
         <span
           style={{
             paddingLeft: 5,
@@ -59,7 +61,7 @@ const DropBefore = ({
           {isHovering ? '*' : ''}
         </span>
       )}
-      {(globals.simulateDrag || isHovering) && (
+      {(testFlags.simulateDrag || isHovering) && (
         <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
       )}
     </span>,
