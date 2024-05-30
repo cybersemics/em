@@ -111,7 +111,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     expandHoverDownPaths: {},
     invalidState: false,
     isLoading: true,
-    jumpHistory: [],
+    jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
     latestShortcuts: [],
     manualSortMap: {},

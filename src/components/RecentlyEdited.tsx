@@ -1,12 +1,28 @@
 import _ from 'lodash'
-import { useSelector } from 'react-redux'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import Thunk from '../@types/Thunk'
+import { pullActionCreator as pull } from '../actions/pull'
 import pathToThought from '../selectors/pathToThought'
 import hashPath from '../util/hashPath'
 import ThoughtLink from './ThoughtLink'
 
+/** Pulls all paths in the jump history. */
+const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
+  const state = getState()
+  for (const path of state.jumpHistory) {
+    if (!path) continue
+    for (const id of path) {
+      await dispatch(pull([id], { force: true, maxDepth: 0 }))
+    }
+  }
+}
+
 /** Recently visited thoughts. */
 const RecentlyEdited = () => {
+  const dispatch = useDispatch()
+
   const jumpHistory = useSelector(
     state => state.jumpHistory.filter(path => path && pathToThought(state, path)) as Path[],
     _.isEqual,
@@ -14,6 +30,10 @@ const RecentlyEdited = () => {
 
   // remove duplicates
   const paths = _.uniqBy(jumpHistory, hashPath)
+
+  useEffect(() => {
+    dispatch(pullJumpHistory())
+  }, [dispatch])
 
   return (
     <div style={{ marginTop: '1.5em' }}>

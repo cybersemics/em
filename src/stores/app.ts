@@ -15,6 +15,7 @@ import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
+import updateJumpHistory from '../redux-middleware/updateJumpHistory'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
 // composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
@@ -33,6 +34,7 @@ const middlewareEnhancer = applyMiddleware(
   thunk,
   pullQueue,
   scrollCursorIntoView,
+  updateJumpHistory,
   updateUrlHistory,
   freeThoughts,
 )

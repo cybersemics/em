@@ -12,6 +12,11 @@ const storageModel = storage.model({
     default: 18,
     decode: (s: string | null) => (s ? +s : undefined),
   },
+  jumpHistory: {
+    default: [] as (Path | null)[],
+    decode: (s: string | null): Path[] => (s ? JSON.parse(s) : []),
+    encode: value => JSON.stringify(value),
+  },
   // recent commands executed from the command palette
   recentCommands: {
     default: [] as ShortcutId[],
