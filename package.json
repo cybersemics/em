@@ -152,7 +152,7 @@
     "@types/jest-image-snapshot": "^6.4.0",
     "@types/lodash": "^4.17.4",
     "@types/murmurhash3js": "^3.0.7",
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.12.13",
     "@types/pluralize": "0.0.33",
     "@types/react": "^18.3.3",
     "@types/react-dnd-multi-backend": "^6.0.6",
