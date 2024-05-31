@@ -24,6 +24,8 @@ import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
+import { ThoughtDocument } from '../rxdb/schemas/thought'
+import { rxDB } from '../rxdb/thoughtspace'
 import {
   encodeDocLogBlockDocumentName,
   encodeDocLogDocumentName,
@@ -213,6 +215,12 @@ const thoughtToDb = (thought: Thought): ThoughtDb => ({
 /**********************************************************************
  * Module variables
  **********************************************************************/
+
+/* TODO: remove this when we fully migrate to RxDB */
+const USE_RXDB = false
+
+// Map of all Rx thought documents loaded into memory.
+const thoughtDocsX: Map<string, ThoughtDocument> = new Map()
 
 // Map of all YJS thought Docs loaded into memory.
 // Keyed by docKey (See docKeys below).
@@ -450,6 +458,39 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     'TODO_RXDB: thoughtspace.updateThought - A thought has been updated in the Redux state and the change needs to be synced to the persistence layer and other clients.',
     { id, thought },
   )
+
+  if (USE_RXDB) {
+    const { thoughts: thoughtCollection } = rxDB.collections
+
+    if (docKey) {
+      // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
+      // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
+      if (docKey !== thought.parentId) {
+        // TODO - handle this case
+      }
+    } else {
+      docKey = thought.parentId
+      docKeys.set(id, docKey)
+      Object.values(thought.childrenMap).forEach(childId => {
+        docKeys.set(childId, id)
+      })
+    }
+
+    await thoughtCollection.upsert({
+      id,
+      childrenMap: thought.childrenMap,
+      created: thought.created,
+      lastUpdated: thought.lastUpdated,
+      parentId: thought.parentId,
+      rank: thought.rank,
+      updatedBy: thought.updatedBy,
+      value: thought.value,
+      archived: thought.archived,
+      docKey,
+    })
+    return
+  }
+
   if (docKey) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
@@ -772,6 +813,63 @@ export const replicateChildren = async (
   }
   const { accessToken, isThoughtLoaded, onError, onThoughtIDBSynced, onThoughtReplicated, tsid, websocket } =
     configCache
+
+  if (USE_RXDB) {
+    const { thoughts: thoughtCollection } = rxDB
+
+    const thoughtDoc = thoughtDocsX.get(docKey) || (await thoughtCollection.findOne(docKey).exec())
+
+    if (!thoughtDoc?.isInstanceOfRxDocument) {
+      console.error(`replicateChildren: Missing RxDocument for thought ${docKey}`)
+      return undefined
+    }
+
+    if (thoughtDocsX.get(docKey)) {
+      const children = await getChildrenX(thoughtDoc)
+
+      // TODO: There may be a bug in freeThought, because we should not have to recreate the docKeys if the doc is already cached.
+      // Without this, a missing docKey error will occur if a thought is re-loaded after being deallocated.
+      children?.forEach(child => {
+        docKeys.set(child.id, docKey)
+        Object.values(child.childrenMap).forEach(grandchildId => {
+          docKeys.set(grandchildId, child.id)
+        })
+      })
+
+      return children
+    }
+
+    thoughtDocsX.set(docKey, thoughtDoc)
+
+    const children = await getChildrenX(thoughtDoc)
+    // if idb is empty, then we have to wait for websocketSynced before we can get the docKey
+    const parentDocKey =
+      docKey === ROOT_PARENT_ID
+        ? null
+        : docKey === HOME_TOKEN || docKey === EM_TOKEN
+          ? ROOT_PARENT_ID
+          : thoughtDoc.get('docKey')
+
+    if (parentDocKey) {
+      docKeys.set(docKey as ThoughtId, parentDocKey)
+    }
+
+    // update docKeys of children and grandchildren
+    children?.forEach(child => {
+      docKeys.set(child.id, docKey)
+      Object.values(child.childrenMap).forEach(grandchildId => {
+        docKeys.set(grandchildId, child.id)
+      })
+    })
+
+    children?.forEach(child => {
+      // TODO - remove, we are just simulating the idb sync
+      onThoughtIDBSynced?.(child, { background: !!background })
+    })
+
+    return children
+  }
+
   const documentName = encodeThoughtDocumentName(tsid, docKey)
   const doc = thoughtDocs.get(docKey) || new Y.Doc({ guid: documentName })
   onDoc?.(doc)
@@ -1109,6 +1207,21 @@ const getChildren = (thoughtDoc: Y.Doc | undefined): Thought[] | undefined => {
   return [...(yChildren.keys() as IterableIterator<ThoughtId>)].map(id => getThought(thoughtDoc, id)).filter(nonNull)
 }
 
+/** Gets all children from a thought RxDocument. Returns undefined if the doc does not exist. */
+const getChildrenX = async (thoughtDoc: ThoughtDocument | undefined): Promise<Thought[] | undefined> => {
+  if (!thoughtDoc?.isInstanceOfRxDocument) return undefined
+
+  const { thoughts: thoughtCollection } = rxDB.collections
+  const thought = thoughtDoc.toJSON()
+
+  if (!thought.docKey) return undefined
+
+  const childrenIds = Object.keys(thought.childrenMap || {})
+  const thoughtsMap = await thoughtCollection.findByIds(childrenIds).exec()
+  const thoughts = Array.from(thoughtsMap.values()).map(thought => thought.toJSON())
+  return thoughts as Thought[]
+}
+
 /** Gets a Thought from a thought Y.Doc. */
 const getThought = (thoughtDoc: Y.Doc | undefined, id: ThoughtId): Thought | undefined => {
   if (!thoughtDoc) return
@@ -1238,6 +1351,25 @@ const deleteThought = async (docKey: string): Promise<void> => {
     'TODO_RXDB: thoughtspace.deleteThought - The thought has been permanently deleted, which should be synced to the persistence layer and other clients.',
     { id: docKey },
   )
+  if (USE_RXDB) {
+    const { thoughts: thoughtCollection } = rxDB.collections
+
+    // delete children docKeys here since freeThought will no longer have access to the deleted children
+    docKeys.delete(docKey as ThoughtId)
+    const children = await getChildrenX(thoughtDocsX.get(docKey))
+    children?.forEach(child => {
+      docKeys.delete(child.id)
+    })
+
+    thoughtDocsX.delete(docKey)
+
+    const thoughtDoc = await thoughtCollection.findOne(docKey).exec()
+
+    if (thoughtDoc?.isInstanceOfRxDocument) {
+      await thoughtDoc?.remove()
+    }
+    return
+  }
   // freeThought and deleteThought are the only places where we use the id as the docKey directly.
   // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
 
@@ -1433,6 +1565,13 @@ export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]>
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
   await replicateThought(id)
+
+  if (USE_RXDB) {
+    const doc = thoughtDocsX.get(id)
+    if (!doc?.isInstanceOfRxDocument) return undefined
+    return doc.toJSON() as Thought
+  }
+
   const docKey = docKeys.get(id)
   return getThought(thoughtDocs.get(docKey!), id)
 }
