@@ -139,8 +139,8 @@ const UNDOABLE_ACTIONS: ActionFlags = {
 /** Returns if an action is undoable. */
 const isUndoable = (actionType: string) => UNDOABLE_ACTIONS[actionType as keyof typeof UNDOABLE_ACTIONS]
 
-/** These properties are ignored when generating state patches. */
-const statePropertiesToOmit = ['alert', 'pushQueue', 'user']
+/** Properties that are ignored when generating state patches. */
+const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'pushQueue']
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
@@ -219,6 +219,7 @@ const undoOneReducer = (state: State) => {
     ...newState,
     redoPatches: [...redoPatches, correspondingRedoPatch],
     undoPatches: undoPatches.slice(0, -1),
+    cursorCleared: false,
   }
 }
 
@@ -235,6 +236,7 @@ const redoOneReducer = (state: State) => {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
     undoPatches: [...undoPatches, correspondingUndoPatch],
+    cursorCleared: false,
   }
 }
 
