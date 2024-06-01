@@ -88,16 +88,14 @@ const shortcutsGroupedMap = keyValueBy(
 )
 const shortcutsUngrouped = globalShortcuts.filter(
   shortcut =>
-    !shortcutsGroupedMap[shortcut.id] &&
-    !shortcut.hideFromInstructions &&
-    (isTouch ? shortcut.gesture : shortcut.keyboard),
+    !shortcutsGroupedMap[shortcut.id] && !shortcut.hideFromHelp && (isTouch ? shortcut.gesture : shortcut.keyboard),
 )
 
 if (shortcutsUngrouped.length > 0) {
   throw new Error(
     `ShortcutTable groups are missing shortcut(s). Please add ${conjunction(
       shortcutsUngrouped.map(shortcut => shortcut.id),
-    )} to the appropriate group, or add hideFromInstructions: true to the Shortcut.`,
+    )} to the appropriate group, or add hideFromHelp: true to the Shortcut.`,
   )
 }
 

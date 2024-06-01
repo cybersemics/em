@@ -195,7 +195,7 @@ export const inputHandlers = (store: Store<State, any>) => ({
     // Get the shortcut from the shortcut gesture index.
     // When the command palette  is displayed, disable gesture aliases (i.e. gestures hidden from instructions). This is because the gesture hints are meant only as an aid when entering gestures quickly.
     const shortcut =
-      !state.showCommandPalette || !shortcutGestureIndex[sequence as string]?.hideFromInstructions
+      !state.showCommandPalette || !shortcutGestureIndex[sequence as string]?.hideFromHelp
         ? shortcutGestureIndex[sequence as string]
         : null
 

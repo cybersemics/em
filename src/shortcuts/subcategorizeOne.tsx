@@ -35,7 +35,7 @@ const subCategorizeOneShortcut: Shortcut = {
 export const subCategorizeOneShortcutAlias: Shortcut = {
   id: 'subcategorizeOneAlias',
   label: 'Subcategorize',
-  hideFromInstructions: true,
+  hideFromHelp: true,
   keyboard: { key: ']', meta: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

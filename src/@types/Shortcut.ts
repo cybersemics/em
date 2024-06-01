@@ -43,7 +43,7 @@ interface Shortcut {
   hideFromCommandPalette?: boolean
 
   /** Hide the shortcut in the Help modal and CommandPalette. */
-  hideFromInstructions?: boolean
+  hideFromHelp?: boolean
 
   /** A readable, internal unique id. */
   id: ShortcutId

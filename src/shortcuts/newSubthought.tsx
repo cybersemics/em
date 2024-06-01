@@ -41,7 +41,7 @@ const newSubthoughtShortcut: Shortcut = {
 export const newSubthoughtAliases: Shortcut = {
   id: 'newSubthoughtAliases',
   label: 'New Subthought',
-  hideFromInstructions: true,
+  hideFromHelp: true,
   gesture: [
     'rdldr',
     'rdldlr',

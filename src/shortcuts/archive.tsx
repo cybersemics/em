@@ -88,7 +88,7 @@ const archiveShortcut: Shortcut = {
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
   label: 'Archive',
-  hideFromInstructions: true,
+  hideFromHelp: true,
   gesture: [
     'ldlr',
     'lrdl',

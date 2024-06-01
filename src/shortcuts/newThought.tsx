@@ -52,7 +52,7 @@ const newThoughtShortcut: Shortcut = {
 export const newThoughtAliases: Shortcut = {
   id: 'newThoughtAliases',
   label: 'New Thought',
-  hideFromInstructions: true,
+  hideFromHelp: true,
   gesture: ['rdld', 'rdldl', 'rdldld', 'rldl', 'rldld', 'rldldl'],
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   // smuggle it in with the aliases

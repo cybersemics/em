@@ -35,9 +35,7 @@ const MAX_RECENT_COMMANDS = 5
 
 const commandPaletteShortcut = shortcutById('commandPalette')
 
-const visibleShortcuts = globalShortcuts.filter(
-  shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromInstructions,
-)
+const visibleShortcuts = globalShortcuts.filter(shortcut => !shortcut.hideFromCommandPalette && !shortcut.hideFromHelp)
 
 /**********************************************************************
  * Helper Functions

@@ -55,9 +55,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     // CommandPaletteGesture
     else if (state.showCommandPalette) {
       // when the command palette is activated, the alert value is co-opted to store the gesture that is in progress
-      return !globalShortcuts.some(
-        shortcut => !shortcut.hideFromInstructions && gestureString(shortcut) === alert.value,
-      )
+      return !globalShortcuts.some(shortcut => !shortcut.hideFromHelp && gestureString(shortcut) === alert.value)
     }
 
     return false
