@@ -521,10 +521,8 @@ const LayoutTree = () => {
               ? -(tableCol1Widths.get(node.path[node.path.length - 3]) || 0) + fontSize * 3
               : // table col2 child: if the child is a leaf, shift right by the width of table col1 again since col1 is still visible
                 // otherwise, shift by 3 em since col1 is now hidden, but we don't want too much of a jump
-                node.isTableCol2Child
-                ? node.leaf
-                  ? -(tableCol1Widths.get(node.path[node.path.length - 4]) || 0) + fontSize * 4
-                  : -fontSize * 3
+                node.isTableCol2Child && node.leaf
+                ? -(tableCol1Widths.get(node.path[node.path.length - 4]) || 0) + fontSize * 4
                 : 0)
       }
 
