@@ -208,6 +208,7 @@
     "typedoc-plugin-rename-named-parameters": "^1.0.6",
     "typescript": "^5.4.5",
     "vite": "^5.2.12",
+    "vite-plugin-pwa": "^0.20.0",
     "vitest": "^1.6.0",
     "webdriverio": "^7.36.0"
   }
