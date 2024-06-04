@@ -16,7 +16,7 @@ type EmRxDB = RxDatabase<{
 /* rxDB database */
 export let rxDB: EmRxDB
 
-/** Initialize the thoughtspace with event handlers and selectors to call back to the UI. */
+/** Initialize the thoughtspace. */
 export const init = async () => {
   rxDB = await createRxDatabase({
     name: DATABASE_NAME,
