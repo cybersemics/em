@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { createRef } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -10,6 +11,7 @@ import strip from '../util/strip'
 type OverflowChild = {
   id: ThoughtId
   value: string
+  nodeRef: React.RefObject<HTMLElement>
   label?: string
   isOverflow?: boolean
 }
@@ -47,6 +49,7 @@ const useEllipsizedThoughts = (
       // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
       value: value ?? '',
       id,
+      nodeRef: createRef(),
       // add ellipsized label
       ...(!disabled && value != null
         ? {

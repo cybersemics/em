@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import { unescape as decodeCharacterEntities } from 'lodash'
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
@@ -97,7 +97,6 @@ const ContextBreadcrumbs = ({
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
-  const breadCrumbsRef = useRef<HTMLSpanElement>(null)
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   const factoryManager = (child: React.ReactElement) => {
@@ -146,14 +145,14 @@ const ContextBreadcrumbs = ({
         ) : null
       ) : (
         <TransitionGroup childFactory={factoryManager}>
-          {ellipsizedThoughts.map(({ isOverflow, id, label }, i) => {
+          {ellipsizedThoughts.map(({ isOverflow, id, label, nodeRef }, i) => {
             // Use index as key because we actually want all segments to the right to re-render.
             // Otherwise also it incorrectly animates a changed segment when moving the cursor to a sibling, which doesn't look as good as a direct replacement.
             // This way it will only animate when the length of the cursor changes.
             return (
-              <CSSTransition key={i} nodeRef={breadCrumbsRef} timeout={600} classNames='fade-600'>
+              <CSSTransition key={i} nodeRef={nodeRef} timeout={600} classNames='fade-600'>
                 <BreadCrumb
-                  ref={breadCrumbsRef}
+                  ref={nodeRef}
                   isOverflow={isOverflow}
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
