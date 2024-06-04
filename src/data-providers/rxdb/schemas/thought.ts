@@ -14,6 +14,9 @@ const schemaLiteral = {
     },
     childrenMap: {
       type: 'object',
+      additionalProperties: {
+        type: 'string',
+      },
     },
     created: {
       type: 'integer',
@@ -22,7 +25,7 @@ const schemaLiteral = {
       type: 'integer',
     },
     parentId: {
-      type: 'string',
+      type: ['string', 'null'],
     },
     rank: {
       type: 'integer',
