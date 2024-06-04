@@ -100,12 +100,6 @@ const pushQueue: StoreEnhancer<any> =
       }
 
       // free up memory of thoughts that have been deleted
-      Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {
-        if (!thoughtUpdate) {
-          db.freeThought?.(id as ThoughtId)
-        }
-      })
-
       Object.entries(freeBatch.lexemeIndexUpdates).forEach(([id, lexemeUpdate]) => {
         if (!lexemeUpdate) {
           db.freeLexeme?.(id)
