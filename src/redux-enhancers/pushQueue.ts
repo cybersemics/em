@@ -63,18 +63,13 @@ const pushQueue: StoreEnhancer<any> =
 
       // separate out updates for the database from state-only updates
       // state-only updates are only used to free up memory
-      const { dbQueue, freeQueue } = _.groupBy(stateNew.pushQueue, batch =>
+      const { dbQueue } = _.groupBy(stateNew.pushQueue, batch =>
         batch.local || batch.remote ? 'dbQueue' : 'freeQueue',
       ) as { dbQueue?: PushBatch[]; freeQueue?: PushBatch[] }
 
       // merge batches
       // last write wins
       const dbBatch = (dbQueue || []).reduce(mergeBatch, {
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {},
-        lexemeIndexUpdatesOld: {},
-      })
-      const freeBatch = (freeQueue || []).reduce(mergeBatch, {
         thoughtIndexUpdates: {},
         lexemeIndexUpdates: {},
         lexemeIndexUpdatesOld: {},
@@ -98,13 +93,6 @@ const pushQueue: StoreEnhancer<any> =
           schemaVersion: dbBatch.updates?.schemaVersion,
         }).then(dbBatch.idbSynced)
       }
-
-      // free up memory of thoughts that have been deleted
-      Object.entries(freeBatch.lexemeIndexUpdates).forEach(([id, lexemeUpdate]) => {
-        if (!lexemeUpdate) {
-          db.freeLexeme?.(id)
-        }
-      })
 
       // clear push queue
       return { ...stateNew, pushQueue: [] }

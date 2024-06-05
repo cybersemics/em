@@ -1,7 +1,7 @@
 import { clientId } from '.'
 import { HocuspocusProvider, HocuspocusProviderWebsocket } from '@hocuspocus/provider'
 import { nanoid } from 'nanoid'
-import { IndexeddbPersistence, clearDocument } from 'y-indexeddb'
+import { IndexeddbPersistence } from 'y-indexeddb'
 import * as Y from 'yjs'
 import DocLogAction from '../../@types/DocLogAction'
 import Index from '../../@types/IndexType'
@@ -12,8 +12,6 @@ import ReplicationCursor from '../../@types/ReplicationCursor'
 import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
-import Timestamp from '../../@types/Timestamp'
-import ValueOf from '../../@types/ValueOf'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID } from '../../constants'
 import groupObjectBy from '../../util/groupObjectBy'
@@ -22,48 +20,16 @@ import mergeBatch from '../../util/mergeBatch'
 import taskQueue, { TaskQueue } from '../../util/taskQueue'
 import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
-import when from '../../util/when'
 import { DataProvider } from '../DataProvider'
+import { LexemeDocument } from '../rxdb/schemas/lexeme'
 import { ThoughtDocument } from '../rxdb/schemas/thought'
 import { rxDB } from '../rxdb/thoughtspace'
-import {
-  encodeDocLogBlockDocumentName,
-  encodeDocLogDocumentName,
-  encodeLexemeDocumentName,
-  parseDocumentName,
-} from './documentNameEncoder'
+import { encodeDocLogBlockDocumentName, encodeDocLogDocumentName } from './documentNameEncoder'
 import replicationController from './replicationController'
 
 /**********************************************************************
  * Types
  **********************************************************************/
-
-/** A Lexeme database type that defines contexts as separate keys. */
-type LexemeDb = {
-  // created
-  c: Timestamp
-  // lastUpdated
-  l: Timestamp
-  // updatedBy
-  u: string
-  // contexts
-  x: Index<true>
-} & {
-  // mapped to docKey to allow co-location of children in db
-  [key in `cx-${string}`]: string | null
-}
-
-// YMap takes a generic type representing the union of values
-// Individual values must be explicitly type cast, e.g. thoughtMap.get('m') as Y.Map<ThoughtId>
-type LexemeYjs = ValueOf<Omit<LexemeDb, 'x'>> | ThoughtId
-
-/** A partial YMapEvent that can be more easily constructed than a complete YMapEvent. */
-interface SimpleYMapEvent<T> {
-  target: Y.Map<T>
-  transaction: {
-    origin: any
-  }
-}
 
 /** Creates a promise that is resolved with promise.resolve and rejected with promise.reject. */
 interface ResolvablePromise<T, E = any> extends Promise<T> {
@@ -100,9 +66,6 @@ type ThoughtspaceConfig = ThoughtspaceOptions & {
  * Constants
  **********************************************************************/
 
-/** Number of milliseconds after which to retry a failed IndexeddbPersistence sync. */
-const IDB_ERROR_RETRY = 1000
-
 /** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
 const UPDATE_THOUGHTS_THROTTLE = 100
 
@@ -116,22 +79,6 @@ const UPDATE_THOUGHTS_THROTTLE = 100
 //   v: 'value',
 //   a: 'archived',
 // } as const
-
-/** Maps Lexeme keys to LexemeDb keys. */
-const lexemeKeyToDb = {
-  created: 'c',
-  lastUpdated: 'l',
-  contexts: 'x',
-  updatedBy: 'u',
-} as const
-
-/** Maps LexemeDb keys to Lexeme keys. */
-const lexemeKeyFromDb = {
-  c: 'created',
-  l: 'lastUpdated',
-  x: 'contexts',
-  u: 'updatedBy',
-} as const
 
 /**********************************************************************
  * Helper Functions
@@ -170,16 +117,6 @@ const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBa
 /**********************************************************************
  * Module variables
  **********************************************************************/
-
-// Map of all YJS thought Docs loaded into memory.
-// Keyed by docKey (See docKeys below).
-const lexemeDocs: Map<string, Y.Doc> = new Map()
-const lexemePersistence: Map<string, IndexeddbPersistence> = new Map()
-// Lexemes retained until freeLexeme is called. These are lexemes that are replicated in the foreground and kept in Redux State.
-const lexemeRetained: Set<string> = new Set()
-const lexemeWebsocketProvider: Map<string, HocuspocusProvider> = new Map()
-const lexemeIDBSynced: Map<string, Promise<unknown>> = new Map()
-const lexemeWebsocketSynced: Map<string, Promise<unknown>> = new Map()
 
 /** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
 const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
@@ -315,7 +252,7 @@ export const init = async (options: ThoughtspaceOptions) => {
       type,
     }) => {
       if (action === DocLogAction.Update) {
-        await (type === 'thought' ? replicateChildren(id as ThoughtId) : replicateLexeme(id, { background: true }))
+        await (type === 'thought' ? replicateChildren(id as ThoughtId) : replicateLexeme(id))
       } else if (action === DocLogAction.Delete) {
         updateThoughtsThrottled({
           thoughtIndexUpdates: {},
@@ -396,14 +333,15 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     { id, thought },
   )
 
-  const { thoughts: thoughtCollection } = rxDB.collections
+  const { thoughts: thoughtCollection, lexemes: lexemeCollection } = rxDB
 
   if (docKey) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
     if (docKey !== thought.parentId) {
       const lexemeKey = hashThought(thought.value)
-      const lexemeDoc = lexemeDocs.get(lexemeKey)
+      const lexemeDoc = await lexemeCollection.findOne(lexemeKey).exec()
+      const lexeme = getLexeme(lexemeDoc)
       if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
         // TODO: Why does throwing an error get suppressed?
         console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
@@ -424,11 +362,11 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
       }
 
       // update Lexeme context docKey
-      if (lexemeDoc) {
-        lexemeDoc.transact(() => {
-          const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
-          lexemeMap.set(`cx-${id}`, thought.parentId)
-        }, lexemeDoc.clientID)
+      if (lexeme && !lexeme.contexts.includes(id)) {
+        updateLexeme(lexemeKey, {
+          ...lexeme,
+          contexts: [...(lexeme.contexts || []), id],
+        })
       }
     }
   } else {
@@ -466,117 +404,17 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   }
 }
 
-/** Updates a yjs lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
+/** Updates a rxdb lexeme doc. Converts contexts to a nested Y.Map for proper context merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Keys are added to the lexeme log in updateLexemes for efficiency. If updateLexeme is ever called outside of updateLexemes, we will need to push individual keys here.
-export const updateLexeme = async (
-  key: string,
-  lexemeNew: Lexeme,
-  /** The old Lexeme to determine context deletions. Should be undefined only if Lexeme is completely new. */
-  // TODO: Pass the diffed contexts all the way through from updateThoughts.
-  // The YJS Lexeme should be the same as the old Lexeme in State, since they are synced.
-  // If the Lexeme has not yet been loaded from YJS, then we can ignore deletions, as a Lexeme normally cannot be deleted before it has been loaded. Unless the user creates and deletes the Lexeme so quickly that IDB is still loading (?).
-  // In light of all that, it would be better to get the deletions directly from the reducer.
-  lexemeOld: Lexeme | undefined,
-): Promise<void> => {
-  if (!lexemeDocs.has(key)) {
-    // TODO: Why is replication awaited here, but not in updateThought?
-    await replicateLexeme(key)
-  }
-  const lexemeDoc = lexemeDocs.get(key)
-  const lexemeReplicated = getLexeme(lexemeDoc)
-  const contextsOld = new Set(lexemeOld?.contexts)
+export const updateLexeme = async (key: string, lexemeNew: Lexeme): Promise<void> => {
+  const { lexemes: lexemeCollection } = rxDB
 
-  // The Lexeme may be deleted if the user creates and deletes a thought very quickly
-  if (!lexemeDoc) return
-
-  // subscribe to lexemePersistence directly since lexemeIDBSynced can await websocketSynced on new devices
-  const idbSynced = lexemePersistence.get(key)?.whenSynced.catch(e => {
-    // AbortError happens if the app is closed during replication.
-    // Not sure if the timeout will be preserved, but at least we can retry.
-    if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
-      setTimeout(() => {
-        updateLexeme(key, lexemeNew, lexemeOld)
-      }, IDB_ERROR_RETRY)
-      return
-    }
-    config.then(({ onError }) => {
-      const message = `Error saving lexeme: ${e.message}`
-      console.error(message, lexemeNew)
-      onError?.(message, e)
-    })
-  })
-
-  lexemeDoc.transact(() => {
-    const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
-    ;(Object.keys(lexemeNew) as (keyof Lexeme)[]).forEach(key => {
-      if (key === 'contexts') {
-        const value = lexemeNew[key]
-        const contextsNew = new Set(value)
-
-        // add contexts to YJS that have been added to state
-        lexemeNew.contexts.forEach(cxid => {
-          if (!contextsOld.has(cxid)) {
-            const docKey = docKeys.get(cxid)
-            if (!docKey) {
-              const message = `updateLexeme: Missing docKey for context ${cxid} in Lexeme.`
-              console.error(message, lexemeNew)
-              throw new Error(message)
-            }
-            lexemeMap.set(`cx-${cxid}`, docKey)
-          }
-        })
-
-        // delete contexts that have been deleted, i.e. exist in lexemeOld but not lexemeNew
-        lexemeOld?.contexts.forEach(cxid => {
-          if (!contextsNew.has(cxid)) {
-            lexemeMap.delete(`cx-${cxid}`)
-          }
-        })
-      }
-      // other keys
-      else {
-        const value = lexemeNew[key]
-        // Only set a value if it has changed.
-        // Otherwise YJS adds another update.
-        if (value !== lexemeMap.get(key)) {
-          lexemeMap.set(lexemeKeyToDb[key], value)
-        }
-      }
-    })
-
-    // If the Lexeme was pending, we need to update state with the new Lexeme with merged cxids.
-    // Otherwise, Redux state can become out of sync with YJS, and additional edits can result in missing Lexeme cxids.
-    // (It is not entirely clear how this occurs, as the delete case does not seem to be triggered.)
-    if (!lexemeOld && lexemeReplicated) {
-      onLexemeChange({
-        target: lexemeDoc.getMap<LexemeYjs>(),
-        transaction: {
-          origin: lexemePersistence.get(key),
-        },
-      })
-    }
-  }, lexemeDoc.clientID)
-
-  await idbSynced
-}
-
-/** Handles the Lexeme observe event. Ignores events from self. */
-const onLexemeChange = (e: SimpleYMapEvent<LexemeYjs>) => {
-  const lexemeDoc = e.target.doc!
-  if (e.transaction.origin === lexemeDoc.clientID) return
-
-  const lexeme = getLexeme(lexemeDoc)
-  if (!lexeme) return
-
-  // we can assume id is defined since lexeme doc guids are always in the format `${tsid}/lexeme/${id}`
-  const { id: key } = parseDocumentName(lexemeDoc.guid) as { id: string }
-
-  updateThoughtsThrottled({
-    thoughtIndexUpdates: {},
-    lexemeIndexUpdates: {
-      [key]: lexeme,
-    },
-    lexemeIndexUpdatesOld: {},
+  await lexemeCollection.incrementalUpsert({
+    id: key,
+    created: lexemeNew.created || timestamp(),
+    lastUpdated: lexemeNew.lastUpdated || timestamp(),
+    updatedBy: lexemeNew.updatedBy || clientId,
+    contexts: lexemeNew.contexts || [],
   })
 }
 
@@ -669,132 +507,26 @@ export const replicateChildren = async (
 }
 
 /** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
-export const replicateLexeme = async (
-  key: string,
-  {
-    background,
-  }: {
-    /**
-     * Do not store thought doc in memory.
-     * Do not update thoughtIndex.
-     * Destroy IndexedDBPersistence after sync.
-     * Destroy HocuspocusProvider after sync.
-     */
-    background?: boolean
-  } = {},
-): Promise<Lexeme | undefined> => {
+export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> => {
   // special contexts do not have Lexemes
   // Redux state will store dummy Lexemes with empty contexts, but there is no reason to try to replicate them
   if (key === HOME_TOKEN || key === EM_TOKEN || key === ABSOLUTE_TOKEN) return undefined
 
-  // Do not await config if it is already cached. Otherwise the initial call to replicateLexeme will not set thoughtDocs synchronously and concurrent calls to replicateLexeme will not be idempotent.
-  if (!configCache) {
-    await config
-  }
-  const { accessToken, isLexemeLoaded, onError, tsid, websocket } = configCache
-  const documentName = encodeLexemeDocumentName(tsid, key)
-  const doc = lexemeDocs.get(key) || new Y.Doc({ guid: documentName })
-  const lexemeMap = doc.getMap<LexemeYjs>()
+  const { lexemes: lexemeCollection } = rxDB
 
-  // Foreground replication retains the lexeme in the cache even when replication completes.
-  // The lexeme will only be removed after freeLexeme is called.
-  if (!background) {
-    lexemeRetained.add(key)
-  }
+  let lexemeDoc: LexemeDocument | null = await lexemeCollection.findOne(key).exec()
 
-  // If the doc is cached, return as soon as the appropriate providers are synced.
-  // Disable IDB during tests because of TransactionInactiveError in fake-indexeddb.
-  // Disable websocket during tests because of infinite loop in sinon runAllAsync.
-  if (lexemeDocs.get(key) || import.meta.env.MODE === 'test') {
-    if (background) {
-      await lexemeWebsocketSynced.get(key)
-    } else {
-      await lexemeIDBSynced.get(key)
-    }
-
-    return getLexeme(doc)
+  if (!lexemeDoc) {
+    lexemeDoc = await lexemeCollection.insert({
+      id: key,
+      created: timestamp(),
+      lastUpdated: timestamp(),
+      updatedBy: clientId,
+      contexts: [],
+    })
   }
 
-  // set up idb and websocket persistence and subscribe to changes
-  const persistence = new IndexeddbPersistence(documentName, doc)
-
-  // if replicating in the background, destroy the IndexeddbProvider once synced
-  const idbSynced = persistence.whenSynced.catch(e => {
-    // AbortError happens if the app is closed during replication.
-    // Not sure if the timeout will be preserved, but we can at least try to re-replicate.
-    if (e.name === 'AbortError' || e.message.includes('[AbortError]')) {
-      freeLexeme(key)
-      setTimeout(() => {
-        replicateLexeme(key, { background })
-      }, IDB_ERROR_RETRY)
-      return
-    }
-    onError?.(`Error loading lexeme ${key}: ${e.message}`, e)
-  }) as Promise<void>
-
-  const websocketProvider = new HocuspocusProvider({
-    // disable awareness for performance
-    // doclog doc has awareness enabled to keep the websocket open
-    awareness: null,
-    websocketProvider: websocket,
-    name: documentName,
-    document: doc,
-    token: accessToken,
-  })
-  const websocketSynced = when(websocketProvider, 'synced')
-
-  // Cache docs, promises, and providers
-  // Must be done synchronously, before waiting for idbSynced or websocketSynced, so that the cached objects are available immediately for concurrent calls to replicateChildren.
-  lexemeDocs.set(key, doc)
-  lexemeIDBSynced.set(key, idbSynced)
-  lexemePersistence.set(key, persistence)
-  lexemeWebsocketSynced.set(key, websocketSynced)
-  lexemeWebsocketProvider.set(key, websocketProvider)
-
-  // always wait for IDB to sync
-  await idbSynced
-
-  // foreground
-  if (!background) {
-    // subscribe to changes after idbSynced since foreground replicated lexemes are already updated through pull
-    lexemeMap.observe(onLexemeChange)
-  }
-  // background
-  else {
-    await websocketSynced
-
-    const loaded = await isLexemeLoaded(key, getLexeme(doc))
-
-    // After the initial replication, if the lexeme or any of its contexts are already loaded, cache the thought Doc and update Redux state, even in background mode.
-    // Otherwise remote changes will not be rendered.
-    if (loaded) {
-      lexemeRetained.add(key)
-      lexemeMap.observe(onLexemeChange)
-      onLexemeChange({
-        target: doc.getMap<LexemeYjs>(),
-        transaction: {
-          origin: websocketProvider,
-        },
-      })
-    }
-  }
-
-  // get the Lexeme before we destroy the Doc
-  const lexeme = getLexeme(doc)
-  const lexemeRaw = lexemeMap.toJSON() as Index<LexemeYjs>
-
-  // set docKey from Lexeme context to allow tangential contexts to be loaded
-  ;(Object.keys(lexemeRaw) as (keyof LexemeDb | `cx-${string}`)[]).forEach(key => {
-    const cxid = key.split('cx-')[1] as ThoughtId | undefined
-
-    if (cxid) {
-      const docKey = lexemeRaw[key as `cx-${string}`] as ThoughtId
-      docKeys.set(cxid, docKey)
-    }
-  })
-
-  // If the lexeme is not retained by foreground replication, deallocate it.
-  tryDeallocateLexeme(key)
+  const lexeme = getLexeme(lexemeDoc)
 
   return lexeme
 }
@@ -809,41 +541,6 @@ const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | und
   const thoughtsMap = await thoughtCollection.findByIds(childrenIds).exec()
   const thoughts = Array.from(thoughtsMap.values()).map(thought => thought.toJSON())
   return thoughts as Thought[]
-}
-
-/** Gets a Lexeme from a lexeme Y.Doc. */
-// SIDE EFFECT: Sets docKeys for contexts.
-const getLexeme = (lexemeDoc: Y.Doc | undefined): Lexeme | undefined => {
-  if (!lexemeDoc) return
-  const lexemeMap = lexemeDoc.getMap<LexemeYjs>()
-  if (lexemeMap.size === 0) return
-  const lexemeRaw = lexemeMap.toJSON() as Index<LexemeYjs>
-
-  // convert LexemeDb to Lexeme
-  // Lexeme is bult up one key at a time, so accum is a Partial<Lexeme> while the final value is assumed to be a complete Lexeme
-  const lexeme = (Object.keys(lexemeRaw) as (keyof LexemeDb | `cx-${string}`)[]).reduce<Partial<Lexeme>>(
-    (acc, key) => {
-      const cxid = key.split('cx-')[1] as ThoughtId | undefined
-
-      // Set docKey from Lexeme context to allow tangential contexts to be loaded.
-      if (cxid) {
-        return {
-          ...acc,
-          contexts: [...(acc.contexts || []), cxid],
-        }
-      } else {
-        const keyNonContext = key as Exclude<keyof LexemeDb, `cx-${string}`>
-        const value = lexemeRaw[keyNonContext]
-        return {
-          ...acc,
-          [lexemeKeyFromDb[keyNonContext]]: value,
-        }
-      }
-    },
-    { contexts: [] },
-  ) as Lexeme
-
-  return lexeme
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
@@ -870,61 +567,24 @@ const deleteThought = async (docKey: string): Promise<void> => {
 
 /** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
 export const freeLexeme = async (key: string): Promise<void> => {
-  lexemeRetained.delete(key)
-  await lexemeIDBSynced.get(key)
-
-  // TODO: See freeThought for problems with awaiting websocketSynced.
-  // await lexemeWebsocketSynced.get(key)
-
-  // if the lexeme is retained again, it means it has been replicated in the foreground, and tryDeallocateLexeme will be a noop.
   await tryDeallocateLexeme(key)
 }
 
 /** Deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). If the lexeme is retained, noop. Call freeLexeme to both safely unretain the lexeme and trigger deallocation when replication completes. */
-const tryDeallocateLexeme = async (key: string): Promise<void> => {
-  if (lexemeRetained.has(key)) return
-
-  // Destroying the doc does not remove top level shared type observers, so we need to unobserve onLexemeChange.
-  // YJS logs an error if the event handler does not exist, which can occur when rapidly deleting thoughts.
-  // Unfortunately there is no way to catch this, since YJS logs it directly to the console, so we have to override the YJS internals.
-  // https://github.com/yjs/yjs/blob/5db1eed181b70cb6a6d7eab66c7e6d752f70141a/src/utils/EventHandler.js#L58
-  const lexemeMap: Y.Map<LexemeYjs> | undefined = lexemeDocs.get(key)?.getMap<LexemeYjs>()
-  const listeners = lexemeMap?._eH.l.slice(0) || []
-  if (listeners.some(l => l === onLexemeChange)) {
-    lexemeMap?.unobserve(onLexemeChange)
-  }
-
-  // IndeeddbPersistence is automatically destroyed when the Doc is destroyed, but HocuspocusProvider is not
-  lexemeDocs.get(key)?.destroy()
-  lexemeWebsocketProvider.get(key)?.destroy()
-  lexemeDocs.delete(key)
-  lexemePersistence.delete(key)
-  lexemeIDBSynced.delete(key)
-  lexemeWebsocketProvider.delete(key)
-  lexemeWebsocketSynced.delete(key)
-}
+const tryDeallocateLexeme = async (key: string): Promise<void> => {}
 
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
 const deleteLexeme = async (key: string): Promise<void> => {
-  const { tsid } = await config
-  const persistence = lexemePersistence.get(key)
+  const { lexemes: lexemeCollection } = rxDB
 
-  // When deleting a Lexeme, clear out the contexts first to ensure that if a new Lexeme with the same key gets created, it doesn't accidentally pull the old contexts.
-  const lexemeOld = getLexeme(lexemeDocs.get(key) || persistence?.doc || lexemeWebsocketProvider.get(key)?.document)
-  if (lexemeOld) {
-    await updateLexeme(key, { ...lexemeOld, contexts: [] }, lexemeOld)
-  }
+  const lexemeDocOld = await lexemeCollection.findOne(key).exec()
+  const lexemeOld = getLexeme(lexemeDocOld)
 
-  try {
-    // if there is no persistence in memory (e.g. because the thought has not been loaded or has been deallocated by freeThought), then we need to manually delete it from the db
-    const deleted = persistence ? persistence.clearData() : clearDocument(encodeLexemeDocumentName(tsid, key))
-    await freeLexeme(key)
-    await deleted
-  } catch (e: any) {
-    // See: deleteThought NotFoundError handler
-    if (e.name !== 'NotFoundError') {
-      throw e
-    }
+  if (lexemeDocOld && lexemeOld) {
+    // When deleting a Lexeme, clear out the contexts first to ensure that if a new Lexeme with the same key gets created, it doesn't accidentally pull the old contexts.
+    await updateLexeme(key, { ...lexemeOld, contexts: [] })
+
+    await lexemeDocOld.remove()
   }
 }
 
@@ -968,7 +628,7 @@ export const updateThoughts = async ({
     ...Object.entries(lexemeUpdates || {}).map(
       ([key, lexeme]) =>
         () =>
-          updateLexeme(key, lexeme, lexemeIndexUpdatesOld[key]),
+          updateLexeme(key, lexeme),
     ),
   ])
 
@@ -996,19 +656,23 @@ export const updateThoughts = async ({
   return Promise.all([updatePromise, deletePromise])
 }
 
+/** Gets a Lexeme from a lexeme RxDocument. */
+const getLexeme = (lexemeDoc: LexemeDocument | undefined | null): Lexeme | undefined => {
+  if (!lexemeDoc) return
+  // TODO - check type conversion to Lexeme
+  const lexeme = lexemeDoc.toJSON() as unknown as Lexeme
+  return lexeme
+}
+
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  const deleteLexemePromises = Array.from(lexemeDocs, ([key, doc]) => deleteLexeme(key))
-
-  await Promise.all([...deleteLexemePromises])
-
+  console.info('TODO_RXDB: thoughtspace.clear.')
   // TODO: reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
   // const state = initialState()
   // const thoughtIndexUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => ({
   //   [id]: thoughtToDb(thought),
   // }))
   // const lexemeIndexUpdates = state.thoughts.lexemeIndex
-
   // await updateThoughts({
   //   thoughtIndexUpdates,
   //   lexemeIndexUpdates,
