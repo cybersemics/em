@@ -2227,10 +2227,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@capacitor/android@^4.8.2":
-  version "4.8.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-4.8.2.tgz#c6b27a149e022c59ab693841e1576f23f4588dc7"
-  integrity sha512-sWMlHJq9F/+TP6BZHoI0ztvt1kon64lu5IiJnqn80g1U/dSJdvYKhPzphwtFWmvzywQcwf25nRnaTAI/coUY+g==
+"@capacitor/android@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-6.0.0.tgz#eb24c64a5c6821fbbb8db48eedf50eca18876318"
+  integrity sha512-NwL87VO9F1WY/EgvJZN9pIhjejq688k2fRW6XWNLVe3cgGE6nUb9J34KI68fhx3139cf2LVGPUYs+mwZC8esiQ==
 
 "@capacitor/cli@^4.8.2":
   version "4.8.2"
@@ -2255,32 +2255,32 @@
     tslib "^2.4.0"
     xml2js "^0.5.0"
 
-"@capacitor/clipboard@^4.1.0":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@capacitor/clipboard/-/clipboard-4.1.0.tgz#02995a33d4b3a5bc0ffb05457e0b2cd748de5e7f"
-  integrity sha512-lfUwDqZces3mQcBOyfxpBCsRWWSfLuPzekA1N3RaMgYVhD6/rdzFnzfRiksj1hm4It+lnULK0y+N5nxVnTt+0Q==
+"@capacitor/clipboard@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/clipboard/-/clipboard-6.0.0.tgz#783d6759dda471eef7e30d6a49c7a80bf81ad053"
+  integrity sha512-NjcGr2jncSZy9NM9grePo8zz0hhBYYBYZV71xXjLvJhVY4PSdZD/Sj+4jm0pvlOKSK8vAXYyF6VcWT4/Kh/xmw==
 
-"@capacitor/core@^4.8.2":
-  version "4.8.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-4.8.2.tgz#1f44eeed4c8c2d54d22810fb02170dd245df8fdf"
-  integrity sha512-lrDvHyQu3LWWWXkCkHATY8D3GCBIWyqnmQUiGxlTJfu9BEdmfflq+OZuDKIy4H+KYChaXM1QnymNIuWrDFXgXw==
+"@capacitor/core@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/core/-/core-6.0.0.tgz#abfaf1013cec686cf9743cf4fdc445d10e2f13ea"
+  integrity sha512-NvxIQsJcMiIV+Le1DilR2GGyQQbDInfXK1UywGROQ5mycdFlW5XoAPZ+MKnFGB123RoEgE3uhDGgwTXUmSlX9A==
   dependencies:
     tslib "^2.1.0"
 
-"@capacitor/ios@^4.8.2":
-  version "4.8.2"
-  resolved "https://registry.yarnpkg.com/@capacitor/ios/-/ios-4.8.2.tgz#da2e108c905598dbe8aed281f471a77dd783549b"
-  integrity sha512-NBcXs6uDWcLYr9RedkhtyQckLVCPrteC9kFDSnKx3I1qQWXj7RK5g0oULCSWzQ92yxp5RsPFAfs5YdNn1JuFrQ==
+"@capacitor/ios@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/ios/-/ios-6.0.0.tgz#b04ce2967d732c73ebf29ec38b4b585255930e43"
+  integrity sha512-7mAs3gjWiE5DPM4AGPduqFSDGXCPwwqQRMzbohVway7/cTWnHomHV8mIojMZE4GILeWO2fILbyu3C8q9pHg2vg==
 
-"@capacitor/keyboard@^4.1.1":
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-4.1.1.tgz#36e33d0e6a82ff2a67c17f67fd7cbb756c69706a"
-  integrity sha512-fdC7u2TeG4BqwC0LnPnhOdya31C4QKdhk/8pc5lxI9X5jyYAetMCN1kEkKa7KREw4DdzXotJt27B9BXxAza6og==
+"@capacitor/keyboard@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/keyboard/-/keyboard-6.0.0.tgz#9a09244f0c9cadaf5339b61040cb81e1ceccdfbb"
+  integrity sha512-pPX/PQWWjw5ce47kHEYv6IWlHzuhAxgXihqEAAAGLdwK3u3srgGWCljXrYS9juVBPi/lA1uK7UaUzYI0XrgxVQ==
 
-"@capacitor/status-bar@^4.1.1":
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/@capacitor/status-bar/-/status-bar-4.1.1.tgz#5b9a1acbe5efb30158e35be7a5ef7ffaaadaf804"
-  integrity sha512-3wosxMD1XuIFz88+c2GdVEHSJV6u7suOeKQjyWf3zf9eFr622Sg+udZqDbC0dtTWXw97BWyCjv3r1EYJw7XnIA==
+"@capacitor/status-bar@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@capacitor/status-bar/-/status-bar-6.0.0.tgz#dd487b1e5fc7c5717de85f2ec8fcdfe1c9a6962c"
+  integrity sha512-Wo0ILugYlmENegKDgTzVCPjbvP8h1ObgHslLdgeVG643ViMS/diausHIq8e104WIKCXtKIELmQeYVp9mX7932g==
 
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
