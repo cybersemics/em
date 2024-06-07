@@ -7,7 +7,7 @@ import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_CONTEXTS, ROOT_PARENT_ID } from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import timestamp from '../../util/timestamp'
@@ -69,13 +69,6 @@ const resolvable = <T, E = any>() => {
  * Module variables
  **********************************************************************/
 
-/** Map all known thought ids to document keys. This allows us to co-locate children in a single Doc without changing the DataProvider API. Currently the thought's parentId is used, and a special ROOT_PARENT_ID value for the root and em contexts. */
-const docKeys: Map<ThoughtId, string> = new Map([...ROOT_CONTEXTS, EM_TOKEN].map(id => [id, ROOT_PARENT_ID]))
-
-/**********************************************************************
- * Module variables
- **********************************************************************/
-
 /** The thoughtspace config that is resolved after init is called. Used to pass objects and callbacks into the thoughtspace from the UI. After they are initialized, they can be accessed synchronously on the module-level config variable. This avoids timing issues with concurrent replicateChildren calls that need conflict to check if the doc already exists. */
 const config = resolvable<ThoughtspaceConfig>()
 
@@ -108,11 +101,6 @@ export const init = async (options: ThoughtspaceOptions) => {
     { accessToken, tsid },
   )
 
-  // generate docKeys for cursor, otherwise replicateThought will fail
-  if (cursor) {
-    cursor.forEach((id, i) => docKeys.set(id, cursor[i - 1] ?? HOME_TOKEN))
-  }
-
   configCache = {
     accessToken,
     cursor,
@@ -141,7 +129,6 @@ export const init = async (options: ThoughtspaceOptions) => {
 /** Updates a yjs thought doc. Converts childrenMap to a nested Y.Map for proper children merging. Resolves when transaction is committed and IDB is synced (not when websocket is synced). */
 // NOTE: Ids are added to the thought log in updateThoughts for efficiency. If updateThought is ever called outside of updateThoughts, we will need to push individual thought ids here.
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
-  let docKey = docKeys.get(id)
   console.info(
     'TODO_RXDB: thoughtspace.updateThought - A thought has been updated in the Redux state and the change needs to be synced to the persistence layer and other clients.',
     { id, thought },
@@ -149,46 +136,38 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
 
   const { thoughts: thoughtCollection, lexemes: lexemeCollection } = rxDB
 
-  if (docKey) {
+  const thoughtOld = await getThoughtById(id)
+  const thoughtParentIdOld = thoughtOld?.parentId
+
+  if (thoughtParentIdOld && thoughtParentIdOld !== thought.parentId) {
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
-    if (docKey !== thought.parentId) {
-      const lexemeKey = hashThought(thought.value)
-      const lexemeDoc = await lexemeCollection.findOne(lexemeKey).exec()
-      const lexeme = getLexeme(lexemeDoc)
-      if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
-        // TODO: Why does throwing an error get suppressed?
-        console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
-        return
-      }
-      // delete from old parent
-      const thoughtDocOld = await thoughtCollection.findOne(docKey).exec()
-
-      if (thoughtDocOld?.isInstanceOfRxDocument) {
-        const { [id]: prevThought, ...newChildrenMap } = thoughtDocOld.toJSON().childrenMap
-
-        await thoughtDocOld?.incrementalPatch({
-          childrenMap: newChildrenMap,
-        })
-
-        docKey = thought.parentId
-        docKeys.set(id, docKey)
-      }
-
-      // update Lexeme context docKey
-      if (lexeme && !lexeme.contexts.includes(id)) {
-        updateLexeme(lexemeKey, {
-          ...lexeme,
-          contexts: [...(lexeme.contexts || []), id],
-        })
-      }
+    const lexemeKey = hashThought(thought.value)
+    const lexemeDoc = await lexemeCollection.findOne(lexemeKey).exec()
+    const lexeme = getLexeme(lexemeDoc)
+    if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
+      // TODO: Why does throwing an error get suppressed?
+      console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
+      return
     }
-  } else {
-    docKey = thought.parentId
-    docKeys.set(id, docKey)
-    Object.values(thought.childrenMap).forEach(childId => {
-      docKeys.set(childId, id)
-    })
+    // delete from old parent
+    const parentThoughtDocOld = await thoughtCollection.findOne(thoughtParentIdOld).exec()
+
+    if (parentThoughtDocOld) {
+      const { [id]: prevThought, ...newChildrenMap } = parentThoughtDocOld.toJSON().childrenMap
+
+      await parentThoughtDocOld?.incrementalPatch({
+        childrenMap: newChildrenMap,
+      })
+    }
+
+    // update Lexeme context docKey
+    if (lexeme && !lexeme.contexts.includes(id)) {
+      updateLexeme(lexemeKey, {
+        ...lexeme,
+        contexts: [...(lexeme.contexts || []), id],
+      })
+    }
   }
 
   // Insert or Update current thought
@@ -202,13 +181,12 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     updatedBy: thought.updatedBy,
     value: thought.value,
     archived: thought.archived,
-    docKey,
   })
 
   // Update parent thought
-  const parentThoughtDoc = await thoughtCollection.findOne(docKey).exec()
+  const parentThoughtDoc = await thoughtCollection.findOne(thought.parentId).exec()
 
-  if (parentThoughtDoc?.isInstanceOfRxDocument) {
+  if (parentThoughtDoc) {
     await parentThoughtDoc.incrementalPatch({
       childrenMap: {
         ...(parentThoughtDoc.toJSON().childrenMap! || {}),
@@ -254,13 +232,15 @@ export const replicateThought = async (
     If background is true, this function should resolve as soon as the thought is loaded from the local db, but not wait until it is synced with the server.
     If background is false, this function should only resolve when the thought is fully synced with the server.
   */
-  const docKey = docKeys.get(id)
-  if (!docKey) {
-    throw new Error(`replicateThought: Missing docKey for thought ${id}`)
+  console.info('TODO_RXDB: thoughtspace.replicateThought', { id })
+  const thoughtDoc = await getThoughtById(id)
+
+  if (!thoughtDoc) {
+    throw new Error(`replicateThought: Missing thoughtDoc for thought ${id}`)
   }
-  const children = await replicateChildren(docKey, { onDoc })
+
+  const children = await replicateChildren(thoughtDoc.parentId, { onDoc })
   const child = children?.find(child => child.id === id)
-  console.info('TODO_RXDB: thoughtspace.replicateThought', { id, children, child })
   return child
 }
 
@@ -270,7 +250,7 @@ export const replicateThought = async (
  * @see replicateThought
  */
 export const replicateChildren = async (
-  docKey: string,
+  id: ThoughtId,
   {
     onDoc,
   }: {
@@ -279,44 +259,28 @@ export const replicateChildren = async (
 ): Promise<Thought[] | undefined> => {
   const { thoughts: thoughtCollection } = rxDB
 
-  let thoughtDoc: ThoughtDocument | null = await thoughtCollection.findOne(docKey).exec()
+  let thoughtDoc: ThoughtDocument | null = await thoughtCollection.findOne(id).exec()
 
-  if (!thoughtDoc?.isInstanceOfRxDocument) {
+  if (!thoughtDoc && [ROOT_PARENT_ID, EM_TOKEN, HOME_TOKEN].includes(id)) {
     thoughtDoc = await thoughtCollection.insert({
-      id: docKey,
+      id,
       childrenMap: {},
       created: timestamp(),
       lastUpdated: timestamp(),
-      parentId: docKey === ROOT_PARENT_ID ? null : ROOT_PARENT_ID,
+      parentId: id === ROOT_PARENT_ID ? null : ROOT_PARENT_ID,
       rank: 0,
       updatedBy: clientId,
-      value: docKey,
+      value: id,
     })
+  }
+
+  if (!thoughtDoc) {
+    return undefined
   }
 
   onDoc?.(thoughtDoc)
 
   const children = await getChildren(thoughtDoc)
-  // if idb is empty, then we have to wait for websocketSynced before we can get the docKey
-  const parentDocKey =
-    docKey === ROOT_PARENT_ID
-      ? null
-      : docKey === HOME_TOKEN || docKey === EM_TOKEN
-        ? ROOT_PARENT_ID
-        : thoughtDoc.get('docKey')
-
-  if (parentDocKey) {
-    docKeys.set(docKey as ThoughtId, parentDocKey)
-  }
-
-  // update docKeys of children and grandchildren
-  children?.forEach(child => {
-    docKeys.set(child.id, docKey)
-    Object.values(child.childrenMap).forEach(grandchildId => {
-      docKeys.set(grandchildId, child.id)
-    })
-  })
-
   return children
 }
 
@@ -347,7 +311,7 @@ export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> 
 
 /** Gets all children from a thought RxDocument. Returns undefined if the doc does not exist. */
 const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | undefined> => {
-  if (!thoughtDoc?.isInstanceOfRxDocument) return undefined
+  if (!thoughtDoc) return undefined
 
   const { thoughts: thoughtCollection } = rxDB.collections
   const thought = thoughtDoc.toJSON()
@@ -358,23 +322,16 @@ const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | und
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteThought = async (docKey: string): Promise<void> => {
+const deleteThought = async (id: ThoughtId): Promise<void> => {
   console.info(
     'TODO_RXDB: thoughtspace.deleteThought - The thought has been permanently deleted, which should be synced to the persistence layer and other clients.',
-    { id: docKey },
+    { id },
   )
   const { thoughts: thoughtCollection } = rxDB.collections
 
-  const thoughtDoc = await thoughtCollection.findOne(docKey).exec()
+  const thoughtDoc = await thoughtCollection.findOne(id).exec()
 
-  docKeys.delete(docKey as ThoughtId)
-
-  if (thoughtDoc?.isInstanceOfRxDocument) {
-    const children = await getChildren(thoughtDoc)
-    children?.forEach(child => {
-      docKeys.delete(child.id)
-    })
-
+  if (thoughtDoc) {
     await thoughtDoc?.remove()
   }
 }
@@ -473,21 +430,49 @@ export const clear = async () => {
 export const getLexemeById = (key: string) => replicateLexeme(key)
 
 /** Gets multiple thoughts from the lexemeIndex by key. */
-export const getLexemesByIds = (keys: string[]): Promise<(Lexeme | undefined)[]> => Promise.all(keys.map(getLexemeById))
+export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> => {
+  // return Promise.all(keys.map(getLexemeById))
+
+  const { lexemes: lexemeCollection } = rxDB.collections
+
+  const foundLexemeDocs = await lexemeCollection.findByIds(keys).exec()
+
+  return keys.map(key => {
+    const foundLexemeDoc = foundLexemeDocs.get(key)
+    if (!foundLexemeDoc) return undefined
+
+    return getLexeme(foundLexemeDoc)
+  })
+}
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  await replicateThought(id)
+  // await replicateThought(id)
 
   const { thoughts: thoughtCollection } = rxDB.collections
-  const doc = await thoughtCollection.findOne(id).exec()
-  if (!doc?.isInstanceOfRxDocument) return undefined
-  return doc.toJSON() as Thought
+
+  const thoughtDoc = (await thoughtCollection.findOne(id).exec()) as ThoughtDocument
+  if (!thoughtDoc) return undefined
+
+  return thoughtDoc.toJSON() as Thought
 }
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
-export const getThoughtsByIds = (ids: ThoughtId[]): Promise<(Thought | undefined)[]> =>
-  Promise.all(ids.map(getThoughtById))
+export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
+  // return Promise.all(ids.map(getThoughtById))
+
+  const { thoughts: thoughtCollection } = rxDB.collections
+
+  const foundThoughtDocs = await thoughtCollection.findByIds(ids).exec()
+
+  return ids.map(thoughtId => {
+    const foundThoughtDoc = foundThoughtDocs.get(thoughtId)
+
+    if (!foundThoughtDoc) return undefined
+
+    return foundThoughtDoc.toJSON() as Thought
+  })
+}
 
 /** Pauses replication for higher priority network activity, such as push or pull. */
 export const pauseReplication = async () => {
