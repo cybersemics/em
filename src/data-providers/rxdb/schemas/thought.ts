@@ -7,7 +7,7 @@ const schemaLiteral = {
   properties: {
     id: {
       type: 'string',
-      maxLength: 100,
+      maxLength: 13,
     },
     archived: {
       type: 'integer',
@@ -25,7 +25,7 @@ const schemaLiteral = {
       type: 'integer',
     },
     parentId: {
-      type: ['string', 'null'],
+      type: 'string',
     },
     rank: {
       type: 'integer',
@@ -36,11 +36,8 @@ const schemaLiteral = {
     value: {
       type: 'string',
     },
-    docKey: {
-      type: 'string',
-    },
   },
-  required: ['id', 'childrenMap', 'created', 'lastUpdated', 'parentId', 'rank', 'updatedBy', 'value'],
+  required: ['id', 'childrenMap', 'created', 'lastUpdated', 'rank', 'updatedBy', 'value'],
 } as const
 
 const schemaTyped = toTypedRxJsonSchema(schemaLiteral)

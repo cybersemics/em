@@ -267,7 +267,7 @@ export const replicateChildren = async (
       childrenMap: {},
       created: timestamp(),
       lastUpdated: timestamp(),
-      parentId: id === ROOT_PARENT_ID ? null : ROOT_PARENT_ID,
+      ...(id === ROOT_PARENT_ID ? {} : { parentId: ROOT_PARENT_ID }),
       rank: 0,
       updatedBy: clientId,
       value: id,
