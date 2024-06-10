@@ -150,7 +150,7 @@
     "@types/html-escaper": "^3.0.2",
     "@types/jest": "^29.5.12",
     "@types/jest-image-snapshot": "^6.4.0",
-    "@types/lodash": "^4.17.4",
+    "@types/lodash": "^4.17.5",
     "@types/murmurhash3js": "^3.0.7",
     "@types/node": "^20.14.2",
     "@types/pluralize": "0.0.33",
