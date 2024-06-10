@@ -11040,12 +11040,12 @@ react-shallow-renderer@^16.15.0:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0 || ^18.0.0"
 
-react-signature-pad-wrapper@^3.4.0:
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/react-signature-pad-wrapper/-/react-signature-pad-wrapper-3.4.0.tgz#5f59b04d8c19cc498c49c09ab91ab0247e6694e5"
-  integrity sha512-fJpcRGWu6STHVFl+boZGXABHLVUEucqaRliJIoSrmPl895Gwz9KnYrhHgIRr5Och5u7M4zssQBChjpRGmIpZ0A==
+react-signature-pad-wrapper@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/react-signature-pad-wrapper/-/react-signature-pad-wrapper-4.0.0.tgz#ec596dbe88a46e1c6b0f780be298e6a1e7eccefa"
+  integrity sha512-MMSRuk5dAidAKP/0Zkpdf8vvg/ASy8YN2TYiIj6OQv+pfS55/OCdEGbvAwLFAdQgQLWMM8Hxrvv5+GJrjLdvhw==
   dependencies:
-    signature_pad "^4.0.0"
+    signature_pad "^5.0.1"
     throttle-debounce "^5.0.0"
 
 react-split-pane@^0.1.92:
@@ -11688,10 +11688,10 @@ signal-exit@^4.1.0:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-4.1.0.tgz#952188c1cbd546070e2dd20d0f41c0ae0530cb04"
   integrity sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==
 
-signature_pad@^4.0.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-4.2.0.tgz#7513cee8cb8afd6594d871c61cf4d61420601422"
-  integrity sha512-YLWysmaUBaC5wosAKkgbX7XI+LBv2w5L0QUcI6Jc4moHYzv9BUBJtAyNLpWzHjtjKTeWOH6bfP4a4pzf0UinfQ==
+signature_pad@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/signature_pad/-/signature_pad-5.0.1.tgz#57e2bd5a9048ef6d4baa872dbdf72142ccdaacc2"
+  integrity sha512-cecM+btTU3iwG21Er6IbXaqfEHcB+0u1BWe989QeBQm4fan4+xdps/zvBgbig8R811h8vkg5p3rqEV5anv62pg==
 
 signed-varint@^2.0.1:
   version "2.0.1"
