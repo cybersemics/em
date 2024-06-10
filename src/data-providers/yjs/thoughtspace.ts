@@ -7,7 +7,7 @@ import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../../constants'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import timestamp from '../../util/timestamp'
@@ -259,20 +259,7 @@ export const replicateChildren = async (
 ): Promise<Thought[] | undefined> => {
   const { thoughts: thoughtCollection } = rxDB
 
-  let thoughtDoc: ThoughtDocument | null = await thoughtCollection.findOne(id).exec()
-
-  if (!thoughtDoc && [ROOT_PARENT_ID, EM_TOKEN, HOME_TOKEN].includes(id)) {
-    thoughtDoc = await thoughtCollection.insert({
-      id,
-      childrenMap: {},
-      created: timestamp(),
-      lastUpdated: timestamp(),
-      ...(id === ROOT_PARENT_ID ? {} : { parentId: ROOT_PARENT_ID }),
-      rank: 0,
-      updatedBy: clientId,
-      value: id,
-    })
-  }
+  const thoughtDoc = await thoughtCollection.findOne(id).exec()
 
   if (!thoughtDoc) {
     return undefined
@@ -292,16 +279,10 @@ export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> 
 
   const { lexemes: lexemeCollection } = rxDB
 
-  let lexemeDoc: LexemeDocument | null = await lexemeCollection.findOne(key).exec()
+  const lexemeDoc = await lexemeCollection.findOne(key).exec()
 
   if (!lexemeDoc) {
-    lexemeDoc = await lexemeCollection.insert({
-      id: key,
-      created: timestamp(),
-      lastUpdated: timestamp(),
-      updatedBy: clientId,
-      contexts: [],
-    })
+    return undefined
   }
 
   const lexeme = getLexeme(lexemeDoc)
@@ -314,11 +295,13 @@ const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | und
   if (!thoughtDoc) return undefined
 
   const { thoughts: thoughtCollection } = rxDB.collections
+
   const thought = thoughtDoc.toJSON()
   const childrenIds = Object.keys(thought.childrenMap || {})
-  const thoughtsMap = await thoughtCollection.findByIds(childrenIds).exec()
-  const thoughts = Array.from(thoughtsMap.values()).map(thought => thought.toJSON())
-  return thoughts as Thought[]
+  const childrenMap = await thoughtCollection.findByIds(childrenIds).exec()
+  const children = Array.from(childrenMap.values()).map(thought => thought.toJSON())
+
+  return children as Thought[]
 }
 
 /** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
