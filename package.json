@@ -132,7 +132,7 @@
     "xhtml-purifier": "^0.4.1",
     "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
     "yallist": "^5.0.0",
-    "yjs": "^13.6.15"
+    "yjs": "^13.6.16"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
