@@ -2,6 +2,7 @@ import { RxCollection, RxDatabase, addRxPlugin, createRxDatabase } from 'rxdb'
 import { getRxStorageIndexedDB } from 'rxdb-premium/plugins/storage-indexeddb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { LexemeDocType, lexemeSchema } from './schemas/lexeme'
+import { PermissionDocType, permissionSchema } from './schemas/permission'
 import { ThoughtDocType, thoughtSchema } from './schemas/thought'
 
 if (import.meta.env.MODE !== 'production') {
@@ -13,6 +14,7 @@ const DATABASE_NAME = 'em'
 type EmRxDB = RxDatabase<{
   thoughts: RxCollection<ThoughtDocType>
   lexemes: RxCollection<LexemeDocType>
+  permissions: RxCollection<PermissionDocType>
 }>
 
 /* rxDB database */
@@ -31,6 +33,9 @@ export const init = async () => {
     },
     lexemes: {
       schema: lexemeSchema,
+    },
+    permissions: {
+      schema: permissionSchema,
     },
   })
 }
