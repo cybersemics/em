@@ -77,7 +77,6 @@
     "@capacitor/status-bar": "^4.1.1",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@hocuspocus/provider": "^2.13.5",
     "@mui/material": "^5.15.20",
     "algoliasearch": "^4.24.0",
     "axios": "^1.7.2",
@@ -133,9 +132,7 @@
     "workbox-routing": "^7.1.0",
     "workbox-strategies": "^7.1.0",
     "xhtml-purifier": "^0.4.1",
-    "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
-    "yallist": "^5.0.0",
-    "yjs": "^13.6.17"
+    "yallist": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
