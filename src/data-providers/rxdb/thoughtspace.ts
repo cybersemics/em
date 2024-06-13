@@ -5,7 +5,7 @@ import { LexemeDocType, lexemeSchema } from './schemas/lexeme'
 import { PermissionDocType, permissionSchema } from './schemas/permission'
 import { ThoughtDocType, thoughtSchema } from './schemas/thought'
 
-if (import.meta.env.MODE !== 'production') {
+if (import.meta.env.MODE === 'development') {
   addRxPlugin(RxDBDevModePlugin)
 }
 
@@ -25,6 +25,7 @@ export const init = async () => {
   rxDB = await createRxDatabase({
     name: DATABASE_NAME,
     storage: getRxStorageIndexedDB(),
+    ignoreDuplicate: import.meta.env.MODE === 'test',
   })
 
   await rxDB.addCollections({
