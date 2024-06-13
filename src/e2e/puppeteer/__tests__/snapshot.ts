@@ -5,8 +5,12 @@
  * See: https://github.com/americanexpress/jest-image-snapshot
  */
 import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
+import os from 'os'
+import path from 'path'
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
+
+const snapshotDirectory = os.platform() === 'darwin' ? 'macos' : 'ubuntu'
 
 const toMatchImageSnapshot = configureToMatchImageSnapshot({
   /** Apply a Gaussian Blur on compared images (radius in pixels). Used to normalize small rendering differences between platforms. */
@@ -25,6 +29,8 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
   // 14 px definitely has false negatives.
   // Hopefully 8 is the sweet spot.
   failureThreshold: 8,
+  // Setting snapshot directory to __image_snapshots__/{platform} to avoid conflicts between platforms.
+  customSnapshotsDir: path.join(__dirname, '__image_snapshots__', snapshotDirectory),
 })
 expect.extend({ toMatchImageSnapshot })
 
