@@ -27,7 +27,7 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
-import themeColors from '../selectors/themeColors'
+// import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import equalPath from '../util/equalPath'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -183,7 +183,7 @@ const ThoughtContainer = ({
 
   const hideBullet = useHideBullet({ children, env, hideBulletProp, isEditing, simplePath, thoughtId })
   const style = useThoughtStyle({ children, env, styleProp, thoughtId })
-  const colors = useSelector(themeColors)
+  // const colors = useSelector(themeColors)
   const styleAnnotation = useSelector(
     state =>
       safeRefMerge(
@@ -268,13 +268,14 @@ const ThoughtContainer = ({
   // See: https://stackoverflow.com/a/46452396/480608
   const styleThought = useMemo(
     (): React.CSSProperties => ({
-      ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
+      ...(isChildHovering
+        ? { color: isChildHovering ? '#538392' : '#FFFFFF', transition: 'color 1s', WebkitTextStrokeWidth: '0.05em' }
+        : null),
       // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
       textDecoration: style?.textDecoration,
     }),
-    [colors.highlight, isChildHovering, style?.textDecoration],
+    [isChildHovering, style?.textDecoration],
   )
-
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {
   //   allowSingleContext,
   //   childrenForced,
