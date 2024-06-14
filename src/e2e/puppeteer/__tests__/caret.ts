@@ -1,7 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import helpers from '../helpers'
 
-vi.setConfig({ testTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('all platforms', () => {
   const {
