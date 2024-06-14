@@ -7,13 +7,13 @@ const schemaLiteral = {
   properties: {
     id: {
       type: 'string',
-      maxLength: 100,
+      maxLength: 32,
     },
     contexts: {
       type: 'array',
       items: {
         type: 'string',
-        maxLength: 100,
+        maxLength: 13,
       },
     },
     created: {
