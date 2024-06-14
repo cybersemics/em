@@ -18,6 +18,8 @@ import remove from './remove'
 import screenshot from './screenshot'
 import scroll from './scroll'
 import setup from './setup'
+import simulateDragAndDrop from './simulateDragAndDrop'
+import snapshotSimulation from './snapshotSimulation'
 import type from './type'
 import waitForContextHasChildWithValue from './waitForContextHasChildWithValue'
 import waitForEditable from './waitForEditable'
@@ -57,6 +59,8 @@ const helpers = {
   waitForHiddenEditable,
   waitForState,
   waitForThoughtExistInDb,
+  snapshotSimulation,
+  simulateDragAndDrop,
 }
 
 /** Setup up the Page instance for all helpers and returns an index of test helpers with the Page instance partially applied. Passes arguments to the setup function. */
