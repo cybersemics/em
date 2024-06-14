@@ -1,6 +1,6 @@
 import { RxCollection, RxDatabase, addRxPlugin, createRxDatabase } from 'rxdb'
-import { getRxStorageIndexedDB } from 'rxdb-premium/plugins/storage-indexeddb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
+import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
 import { LexemeDocType, lexemeSchema } from './schemas/lexeme'
 import { PermissionDocType, permissionSchema } from './schemas/permission'
 import { ThoughtDocType, thoughtSchema } from './schemas/thought'
@@ -24,7 +24,7 @@ export let rxDB: EmRxDB
 export const init = async () => {
   rxDB = await createRxDatabase({
     name: DATABASE_NAME,
-    storage: getRxStorageIndexedDB(),
+    storage: getRxStorageDexie(),
     ignoreDuplicate: import.meta.env.MODE === 'test',
   })
 
