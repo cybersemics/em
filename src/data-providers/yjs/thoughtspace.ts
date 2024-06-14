@@ -156,7 +156,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     if (parentThoughtDocOld) {
       const { [id]: prevThought, ...newChildrenMap } = parentThoughtDocOld.toJSON().childrenMap
 
-      await parentThoughtDocOld?.incrementalPatch({
+      parentThoughtDocOld?.incrementalPatch({
         childrenMap: newChildrenMap,
       })
     }
@@ -171,7 +171,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   }
 
   // Insert or Update current thought
-  await thoughtCollection.incrementalUpsert({
+  thoughtCollection.incrementalUpsert({
     id,
     childrenMap: thought.childrenMap,
     created: thought.created,
@@ -187,7 +187,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   const parentThoughtDoc = await thoughtCollection.findOne(thought.parentId).exec()
 
   if (parentThoughtDoc) {
-    await parentThoughtDoc.incrementalPatch({
+    parentThoughtDoc.incrementalPatch({
       childrenMap: {
         ...(parentThoughtDoc.toJSON().childrenMap! || {}),
         [id]: id,
