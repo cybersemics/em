@@ -18,6 +18,7 @@ export interface DataProvider<T extends any[] = any> {
     lexemeIndexUpdatesOld: Index<Lexeme | undefined>
     schemaVersion: number
   }) => Promise<unknown>
+  freeThought: (id: ThoughtId) => Promise<void>
   freeLexeme: (key: string) => Promise<void>
 
   /****************************************
