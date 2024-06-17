@@ -31,8 +31,8 @@ const schemaLiteral = {
 
 const schemaTyped = toTypedRxJsonSchema(schemaLiteral)
 
-export type LexemeDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
+export type RxLexeme = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
 
-export type LexemeDocument = RxDocument<LexemeDocType>
+export type RxLexemeDocument = RxDocument<RxLexeme>
 
-export const lexemeSchema: RxJsonSchema<LexemeDocType> = schemaLiteral
+export const lexemeSchema: RxJsonSchema<RxLexeme> = schemaLiteral

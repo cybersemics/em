@@ -7,7 +7,7 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Share from '../../@types/Share'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { isMac } from '../../browser'
-import { PermissionDocType } from '../../data-providers/rxdb/schemas/permission'
+import { RxPermission } from '../../data-providers/rxdb/schemas/permission'
 import { rxDB } from '../../data-providers/rxdb/thoughtspace'
 import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
 import permissionsModel from '../../data-providers/yjs/permissionsModel'
@@ -24,10 +24,10 @@ import PencilIcon from './../icons/PencilIcon'
 import ModalComponent from './ModalComponent'
 
 /** A hook that subscribes to the permissionsClientDoc. */
-const usePermissions = (): PermissionDocType[] => useObserveCol<PermissionDocType>(rxDB.permissions)
+const usePermissions = (): RxPermission[] => useObserveCol<RxPermission>(rxDB.permissions)
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
-const getNextDeviceName = (permissions: PermissionDocType[], start?: number): string => {
+const getNextDeviceName = (permissions: RxPermission[], start?: number): string => {
   const nextDeviceNumber = start ?? permissions.length + 1
   return permissions.some(share => share.name === `Device ${nextDeviceNumber}`)
     ? getNextDeviceName(permissions, nextDeviceNumber + 1)
@@ -101,7 +101,7 @@ const ShareList = React.forwardRef<
   {
     onAdd?: (accessToken: string) => void
     onSelect?: (accessToken: string) => void
-    permissions: PermissionDocType[]
+    permissions: RxPermission[]
   }
 >(({ onAdd, onSelect, permissions }, ref) => {
   const status = useStatus()
@@ -218,7 +218,7 @@ const ShareList = React.forwardRef<
 ShareList.displayName = 'ShareList'
 
 /** Permissions role label. */
-const RoleLabel = ({ role }: { role: PermissionDocType['role'] }) => <>{role === 'owner' ? 'Full Access' : role}</>
+const RoleLabel = ({ role }: { role: RxPermission['role'] }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
 /** Renders a single device share. */
 const ShareRow = React.memo(
@@ -230,8 +230,8 @@ const ShareRow = React.memo(
   }: {
     accessToken: string
     isCurrent?: boolean
-    share: PermissionDocType
-    role: PermissionDocType['role']
+    share: RxPermission
+    role: RxPermission['role']
   }) => {
     return (
       <div
@@ -401,7 +401,7 @@ const ShareDetail = React.memo(
       accessToken: string
       isLastDevice?: boolean
       onBack: () => void
-      share: PermissionDocType
+      share: RxPermission
     }
   >(
     (
