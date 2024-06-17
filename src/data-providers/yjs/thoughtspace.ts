@@ -1,9 +1,6 @@
 import { clientId } from '.'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
-import Path from '../../@types/Path'
-import ReplicationCursor from '../../@types/ReplicationCursor'
-import Storage from '../../@types/Storage'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
@@ -27,9 +24,6 @@ interface ResolvablePromise<T, E = any> extends Promise<T> {
 }
 
 export interface ThoughtspaceOptions {
-  accessToken: string
-  /** Used to seed docKeys, otherwise replicateThought triggered from initializeCursor will fail. */
-  cursor: Path | null
   isLexemeLoaded: (key: string, lexeme: Lexeme | undefined) => Promise<boolean>
   isThoughtLoaded: (thought: Thought | undefined) => Promise<boolean>
   onThoughtIDBSynced: (thought: Thought | undefined, options: { background: boolean }) => void
@@ -38,11 +32,6 @@ export interface ThoughtspaceOptions {
   onThoughtChange: (thought: Thought) => void
   onThoughtReplicated: (id: ThoughtId, thought: Thought | undefined) => void
   onUpdateThoughts: (args: UpdateThoughtsOptions) => void
-  getItem: Storage<Index<ReplicationCursor>>['getItem']
-  setItem: Storage<Index<ReplicationCursor>>['setItem']
-  tsid: string
-  tsidShared: string | null
-  websocketUrl: string
 }
 
 type ThoughtspaceConfig = ThoughtspaceOptions
@@ -80,8 +69,6 @@ export const init = async (options: ThoughtspaceOptions) => {
   const {
     isLexemeLoaded,
     isThoughtLoaded,
-    getItem,
-    setItem,
     onError,
     onProgress,
     onThoughtChange,
@@ -90,20 +77,7 @@ export const init = async (options: ThoughtspaceOptions) => {
     onUpdateThoughts,
   } = options
 
-  const accessToken = await options.accessToken
-  const tsid = await options.tsid
-  const tsidShared = await options.tsidShared
-  const websocketUrl = await options.websocketUrl
-  const cursor = await options.cursor
-
-  console.info(
-    'TODO_RXDB: thoughtspace.init - The thoughtspace has been initialized and has received the thoughtspace id (tsid), secret access token (accessToken) and various callbacks from the UI.',
-    { accessToken, tsid },
-  )
-
   configCache = {
-    accessToken,
-    cursor,
     isLexemeLoaded,
     isThoughtLoaded,
     onError,
@@ -112,11 +86,6 @@ export const init = async (options: ThoughtspaceOptions) => {
     onThoughtIDBSynced,
     onThoughtReplicated,
     onUpdateThoughts,
-    getItem,
-    setItem,
-    tsid,
-    tsidShared,
-    websocketUrl,
   }
 
   config.resolve(configCache)
