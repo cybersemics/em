@@ -279,6 +279,22 @@ const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
   await thoughtCollection.bulkRemove(ids)
 }
 
+/** Waits until the thought finishes replicating, then deallocates the cached thought and associated providers (without permanently deleting the persisted data). */
+// Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
+// This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
+export const freeThought = async (docKey: string): Promise<void> => {
+  console.info(
+    'TODO_RXDB: thoughtspace.freeThought - The thought is no longer visible and should be removed from memory. Realtime changes to this thought from other clients no longer need to be subscribed to.',
+    { id: docKey },
+  )
+
+  // if the thought is retained again, it means it has been replicated in the foreground, and tryDeallocateThought will be a noop.
+  await tryDeallocateThought(docKey)
+}
+
+/** Deallocates the cached thought and associated providers (without permanently deleting the persisted data). If the thought is retained, noop. Call freeThought to both safely unretain the thought and trigger deallocation when replication completes. */
+const tryDeallocateThought = async (docKey: string): Promise<void> => {}
+
 /** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
 export const freeLexeme = async (key: string): Promise<void> => {
   await tryDeallocateLexeme(key)
@@ -437,6 +453,7 @@ export const startReplication = async () => {
 const db: DataProvider = {
   clear,
   freeLexeme,
+  freeThought,
   getLexemeById,
   getLexemesByIds,
   getThoughtById,
