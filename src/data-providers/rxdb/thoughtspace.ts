@@ -1,9 +1,9 @@
 import { RxCollection, RxDatabase, addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { LexemeDocType, lexemeSchema } from './schemas/lexeme'
-import { PermissionDocType, permissionSchema } from './schemas/permission'
-import { ThoughtDocType, thoughtSchema } from './schemas/thought'
+import { RxLexeme, lexemeSchema } from './schemas/lexeme'
+import { RxPermission, permissionSchema } from './schemas/permission'
+import { RxThought, thoughtSchema } from './schemas/thought'
 
 if (import.meta.env.MODE === 'development') {
   addRxPlugin(RxDBDevModePlugin)
@@ -12,9 +12,9 @@ if (import.meta.env.MODE === 'development') {
 const DATABASE_NAME = 'em'
 
 type EmRxDB = RxDatabase<{
-  thoughts: RxCollection<ThoughtDocType>
-  lexemes: RxCollection<LexemeDocType>
-  permissions: RxCollection<PermissionDocType>
+  thoughts: RxCollection<RxThought>
+  lexemes: RxCollection<RxLexeme>
+  permissions: RxCollection<RxPermission>
 }>
 
 /* rxDB database */

@@ -42,8 +42,8 @@ const schemaLiteral = {
 
 const schemaTyped = toTypedRxJsonSchema(schemaLiteral)
 
-export type ThoughtDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
+export type RxThought = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
 
-export type ThoughtDocument = RxDocument<ThoughtDocType>
+export type RxThoughtDocument = RxDocument<RxThought>
 
-export const thoughtSchema: RxJsonSchema<ThoughtDocType> = schemaLiteral
+export const thoughtSchema: RxJsonSchema<RxThought> = schemaLiteral

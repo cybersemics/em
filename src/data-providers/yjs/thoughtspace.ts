@@ -9,8 +9,8 @@ import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import timestamp from '../../util/timestamp'
 import { DataProvider } from '../DataProvider'
-import { LexemeDocument } from '../rxdb/schemas/lexeme'
-import { ThoughtDocument } from '../rxdb/schemas/thought'
+import { RxLexemeDocument } from '../rxdb/schemas/lexeme'
+import { RxThoughtDocument } from '../rxdb/schemas/thought'
 import { rxDB } from '../rxdb/thoughtspace'
 
 /**********************************************************************
@@ -192,7 +192,7 @@ export const replicateThought = async (
     onDoc,
   }: {
     /** Callback with the doc as soon as it has been instantiated. */
-    onDoc?: (doc: ThoughtDocument) => void
+    onDoc?: (doc: RxThoughtDocument) => void
   } = {},
 ): Promise<Thought | undefined> => {
   /* 
@@ -223,7 +223,7 @@ export const replicateChildren = async (
   {
     onDoc,
   }: {
-    onDoc?: (doc: ThoughtDocument) => void
+    onDoc?: (doc: RxThoughtDocument) => void
   } = {},
 ): Promise<Thought[] | undefined> => {
   const { thoughts: thoughtCollection } = rxDB
@@ -260,7 +260,7 @@ export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> 
 }
 
 /** Gets all children from a thought RxDocument. Returns undefined if the doc does not exist. */
-const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | undefined> => {
+const getChildren = async (thoughtDoc: RxThoughtDocument): Promise<Thought[] | undefined> => {
   if (!thoughtDoc) return undefined
 
   const { thoughts: thoughtCollection } = rxDB.collections
@@ -345,7 +345,7 @@ export const updateThoughts = async ({
 }
 
 /** Gets a Lexeme from a lexeme RxDocument. */
-const getLexeme = (lexemeDoc: LexemeDocument | undefined | null): Lexeme | undefined => {
+const getLexeme = (lexemeDoc: RxLexemeDocument | undefined | null): Lexeme | undefined => {
   if (!lexemeDoc) return
   // TODO - check type conversion to Lexeme
   const lexeme = lexemeDoc.toJSON() as unknown as Lexeme
@@ -394,7 +394,7 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 
   const { thoughts: thoughtCollection } = rxDB.collections
 
-  const thoughtDoc = (await thoughtCollection.findOne(id).exec()) as ThoughtDocument
+  const thoughtDoc = (await thoughtCollection.findOne(id).exec()) as RxThoughtDocument
   if (!thoughtDoc) return undefined
 
   return thoughtDoc.toJSON() as Thought

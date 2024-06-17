@@ -4,7 +4,7 @@ import { DeepReadonly, RxCollection, RxDocument } from 'rxdb'
 type Document<T> = DeepReadonly<RxDocument<T>>
 
 /**
- * Subscribes to a rxdb collection, e.g. RxCollection<PermissionDocType>.
+ * Subscribes to a rxdb collection, e.g. RxCollection<RxPermission>.
  */
 const useObserveCol = <T>(rxCol: RxCollection<T>): Document<T>[] => {
   const [state, setState] = useState<Document<T>[]>([])

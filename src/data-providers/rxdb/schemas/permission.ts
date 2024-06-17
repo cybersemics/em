@@ -27,8 +27,8 @@ const schemaLiteral = {
 
 const schemaTyped = toTypedRxJsonSchema(schemaLiteral)
 
-export type PermissionDocType = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
+export type RxPermission = ExtractDocumentTypeFromTypedRxJsonSchema<typeof schemaTyped>
 
-export type PermissionDocument = RxDocument<PermissionDocType>
+export type RxPermissionDocument = RxDocument<RxPermission>
 
-export const permissionSchema: RxJsonSchema<PermissionDocType> = schemaLiteral
+export const permissionSchema: RxJsonSchema<RxPermission> = schemaLiteral
