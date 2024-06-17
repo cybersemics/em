@@ -69,12 +69,12 @@
     "@typescript-eslint/parser": "^7.7.0"
   },
   "dependencies": {
-    "@capacitor/android": "^4.8.2",
-    "@capacitor/clipboard": "^4.1.0",
-    "@capacitor/core": "^4.8.2",
-    "@capacitor/ios": "^4.8.2",
-    "@capacitor/keyboard": "^4.1.1",
-    "@capacitor/status-bar": "^4.1.1",
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/clipboard": "^6.0.0",
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/ios": "^6.1.0",
+    "@capacitor/keyboard": "^6.0.1",
+    "@capacitor/status-bar": "^6.0.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@hocuspocus/provider": "^2.13.2",
