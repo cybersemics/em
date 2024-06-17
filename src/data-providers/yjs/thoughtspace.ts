@@ -273,19 +273,10 @@ const getChildren = async (thoughtDoc: ThoughtDocument): Promise<Thought[] | und
   return children as Thought[]
 }
 
-/** Deletes a thought and clears the doc from IndexedDB. Resolves when local database is deleted. */
-const deleteThought = async (id: ThoughtId): Promise<void> => {
-  console.info(
-    'TODO_RXDB: thoughtspace.deleteThought - The thought has been permanently deleted, which should be synced to the persistence layer and other clients.',
-    { id },
-  )
+/** Deletes thoughts and clears the doc from IndexedDB. Resolves when local database is deleted. */
+const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
   const { thoughts: thoughtCollection } = rxDB.collections
-
-  const thoughtDoc = await thoughtCollection.findOne(id).exec()
-
-  if (thoughtDoc) {
-    await thoughtDoc?.remove()
-  }
+  await thoughtCollection.bulkRemove(ids)
 }
 
 /** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
@@ -346,7 +337,7 @@ export const updateThoughts = async ({
   ]
 
   const deletePromise = [
-    ...(Object.keys(thoughtDeletes || {}) as ThoughtId[]).map(id => deleteThought(id)),
+    deleteThoughts(Object.keys(thoughtDeletes || {}) as ThoughtId[]),
     ...Object.keys(lexemeDeletes || {}).map(key => deleteLexeme(key)),
   ]
 
