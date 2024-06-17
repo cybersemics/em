@@ -19,7 +19,7 @@ import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { HOME_TOKEN } from './constants'
 import getLexemeHelper from './data-providers/data-helpers/getLexeme'
 import { init as initRxThoughtspace } from './data-providers/rxdb/thoughtspace'
-import { accessToken, clientIdReady, tsid, tsidShared, websocket, websocketUrl } from './data-providers/yjs'
+import { clientIdReady, websocket } from './data-providers/yjs'
 import db, { init as initThoughtspace, pauseReplication, startReplication } from './data-providers/yjs/thoughtspace'
 import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
@@ -40,7 +40,6 @@ import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import mergeBatch from './util/mergeBatch'
 import owner from './util/owner'
-import storage from './util/storage'
 import throttleConcat from './util/throttleConcat'
 import urlDataSource from './util/urlDataSource'
 
@@ -89,8 +88,6 @@ export const initialize = async () => {
   await initRxThoughtspace()
 
   await initThoughtspace({
-    cursor: decodeThoughtsUrl(store.getState()).path,
-    accessToken,
     /** Returns true if the Thought or its parent is in State. */
     isThoughtLoaded: async (thought: Thought | undefined): Promise<boolean> => {
       const state = store.getState()
@@ -146,11 +143,6 @@ export const initialize = async () => {
     onUpdateThoughts: options => {
       store.dispatch(updateThoughtsActionCreator(options))
     },
-    getItem: (key: string) => JSON.parse(storage.getItem(key) || '{}'),
-    setItem: (key: string, value: any) => storage.setItem(key, JSON.stringify(value)),
-    tsid,
-    tsidShared,
-    websocketUrl,
   })
 
   // pause replication during pushing and pulling
