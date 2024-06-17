@@ -40,7 +40,7 @@
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
-    "postinstall": "scripts/install-hooks",
+    "postinstall": "scripts/install-hooks.sh",
     "servebuild": "npx serve -s build -l 3000",
     "test": "vitest --project unit",
     "test:ios": "jest ./src/e2e/iOS --verbose",
