@@ -11,7 +11,7 @@ import timestamp from '../../util/timestamp'
 import { DataProvider } from '../DataProvider'
 import { RxLexemeDocument } from '../rxdb/schemas/lexeme'
 import { RxThoughtDocument } from '../rxdb/schemas/thought'
-import { destroyRxDB, rxDB } from '../rxdb/thoughtspace'
+import { rxDB } from '../rxdb/thoughtspace'
 
 /**********************************************************************
  * Types
@@ -366,7 +366,9 @@ const getLexeme = (lexemeDoc: RxLexemeDocument | undefined | null): Lexeme | und
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
   console.info('TODO_RXDB: thoughtspace.clear.')
-  await destroyRxDB()
+
+  await rxDB.thoughts.find().remove()
+  await rxDB.lexemes.find().remove()
 
   // TODO: reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
   // const state = initialState()
