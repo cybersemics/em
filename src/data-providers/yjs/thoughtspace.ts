@@ -11,7 +11,7 @@ import timestamp from '../../util/timestamp'
 import { DataProvider } from '../DataProvider'
 import { RxLexemeDocument } from '../rxdb/schemas/lexeme'
 import { RxThoughtDocument } from '../rxdb/schemas/thought'
-import { rxDB } from '../rxdb/thoughtspace'
+import { destroyRxDB, rxDB } from '../rxdb/thoughtspace'
 
 /**********************************************************************
  * Types
@@ -100,11 +100,10 @@ export const init = async (options: ThoughtspaceOptions) => {
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
   console.info(
     'TODO_RXDB: thoughtspace.updateThought - A thought has been updated in the Redux state and the change needs to be synced to the persistence layer and other clients.',
-    { id, thought },
+    { id },
   )
 
   const { thoughts: thoughtCollection, lexemes: lexemeCollection } = rxDB
-
   const thoughtOld = await getThoughtById(id)
   const thoughtParentIdOld = thoughtOld?.parentId
 
@@ -227,7 +226,6 @@ export const replicateChildren = async (
   } = {},
 ): Promise<Thought[] | undefined> => {
   const { thoughts: thoughtCollection } = rxDB
-
   const thoughtDoc = await thoughtCollection.findOne(id).exec()
 
   if (!thoughtDoc) {
@@ -247,7 +245,6 @@ export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> 
   if (key === HOME_TOKEN || key === EM_TOKEN || key === ABSOLUTE_TOKEN) return undefined
 
   const { lexemes: lexemeCollection } = rxDB
-
   const lexemeDoc = await lexemeCollection.findOne(key).exec()
 
   if (!lexemeDoc) {
@@ -264,7 +261,6 @@ const getChildren = async (thoughtDoc: RxThoughtDocument): Promise<Thought[] | u
   if (!thoughtDoc) return undefined
 
   const { thoughts: thoughtCollection } = rxDB.collections
-
   const thought = thoughtDoc.toJSON()
   const childrenIds = Object.keys(thought.childrenMap || {})
   const childrenMap = await thoughtCollection.findByIds(childrenIds).exec()
@@ -306,7 +302,6 @@ const tryDeallocateLexeme = async (key: string): Promise<void> => {}
 /** Deletes a Lexeme and clears the doc from IndexedDB. The server-side doc will eventually get deleted by the doclog replicationController. Resolves when the local database is deleted. */
 const deleteLexeme = async (key: string): Promise<void> => {
   const { lexemes: lexemeCollection } = rxDB
-
   const lexemeDocOld = await lexemeCollection.findOne(key).exec()
   const lexemeOld = getLexeme(lexemeDocOld)
 
@@ -371,6 +366,8 @@ const getLexeme = (lexemeDoc: RxLexemeDocument | undefined | null): Lexeme | und
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
   console.info('TODO_RXDB: thoughtspace.clear.')
+  await destroyRxDB()
+
   // TODO: reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
   // const state = initialState()
   // const thoughtIndexUpdates = keyValueBy(state.thoughts.thoughtIndex, (id, thought) => ({
@@ -390,10 +387,9 @@ export const getLexemeById = (key: string) => replicateLexeme(key)
 
 /** Gets multiple thoughts from the lexemeIndex by key. */
 export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> => {
-  // return Promise.all(keys.map(getLexemeById))
+  if (!rxDB) return []
 
-  const { lexemes: lexemeCollection } = rxDB.collections
-
+  const { lexemes: lexemeCollection } = rxDB
   const foundLexemeDocs = await lexemeCollection.findByIds(keys).exec()
 
   return keys.map(key => {
@@ -418,10 +414,9 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 
 /** Gets multiple contexts from the thoughtIndex by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
-  // return Promise.all(ids.map(getThoughtById))
+  if (!rxDB) return []
 
-  const { thoughts: thoughtCollection } = rxDB.collections
-
+  const { thoughts: thoughtCollection } = rxDB
   const foundThoughtDocs = await thoughtCollection.findByIds(ids).exec()
 
   return ids.map(thoughtId => {
