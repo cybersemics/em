@@ -21,16 +21,6 @@ type EmRxDB = RxDatabase<{
 /* rxDB database */
 export let rxDB: EmRxDB
 
-/** Destroy the rxDB database. */
-export const destroyRxDB = async () => {
-  if (!rxDB) return
-
-  rxDB.destroy()
-
-  // TODO - fix this rxDB type issue, we should work on it when refactoring this file.
-  rxDB = undefined as unknown as EmRxDB
-}
-
 /** Initialize the thoughtspace. */
 export const init = async () => {
   const isTestEnv = import.meta.env.MODE === 'test'
