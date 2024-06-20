@@ -266,10 +266,24 @@ const ThoughtContainer = ({
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
   // Use -webkit-text-stroke-width instead of font-weight:bold, as bold changes the width of the text and can cause the thought to become multiline during a drag. This can even create an oscillation effect as the increased Thought height triggers a different hoveringPath ad infinitum (often resulting in a Shaker cancel false positive).
   // See: https://stackoverflow.com/a/46452396/480608
+  // const styleThought = useMemo(
+  //   (): React.CSSProperties => ({
+  //     ...(isChildHovering
+  //       ? { color: isChildHovering ? '#538392' : '#FFFFFF', transition: 'color 1s', WebkitTextStrokeWidth: '0.05em' }
+  //       : null),
+  //     // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
+  //     textDecoration: style?.textDecoration,
+  //   }),
+  //   [isChildHovering, style?.textDecoration],
+  // )
+
   const styleThought = useMemo(
     (): React.CSSProperties => ({
       ...(isChildHovering
-        ? { color: isChildHovering ? '#538392' : '#FFFFFF', transition: 'color 1s', WebkitTextStrokeWidth: '0.05em' }
+        ? {
+            WebkitTextStrokeWidth: '0.05em',
+            animation: 'animateHoverColor 2s linear infinite',
+          }
         : null),
       // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
       textDecoration: style?.textDecoration,

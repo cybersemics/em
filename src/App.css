@@ -2891,3 +2891,15 @@ a.advance-setting-link {
 a {
   user-select: none;
 }
+
+@keyframes animateHoverColor {
+  0%{
+    color: rgb(173, 216, 230);
+  }
+  50%{
+    color: rgb(9, 82, 106);
+  }
+  100%{
+    color: rgb(173, 216, 230);
+  }
+}
