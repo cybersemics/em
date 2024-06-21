@@ -1,8 +1,13 @@
 import { Page } from 'puppeteer'
+import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
 
-/** PErforms Drag and Drop functionality on a hought in Puppeteer browser. */
-const dragAndDropThought = async (page: Page, sourceValue: string, destValue: string) => {
+interface DragAndDropOptions {
+  position?: 'after' | 'before' | 'child'
+}
+
+/** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
+const dragAndDropThought = async (page: Page, sourceValue: string, destValue: string, options: DragAndDropOptions) => {
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
 
@@ -10,7 +15,7 @@ const dragAndDropThought = async (page: Page, sourceValue: string, destValue: st
   const dragEnd = await destElement.boundingBox()
 
   if (!dragStart || !dragEnd) {
-    return
+    throw new Error('No initlal drag or drop point found')
   }
 
   const yOffset = 20 // Adding offset to drop destination y position so it is dragged exactly on top of it. Right now it fall short just above the drop target
@@ -30,6 +35,8 @@ const dragAndDropThought = async (page: Page, sourceValue: string, destValue: st
   await page.mouse.down()
   await page.mouse.move(dropPosition.x, dropPosition.y, { steps: 10 })
   await page.mouse.up()
+
+  await sleep(500)
 }
 
 export default dragAndDropThought

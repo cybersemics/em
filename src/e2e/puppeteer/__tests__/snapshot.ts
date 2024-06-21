@@ -285,15 +285,20 @@ describe('Font Size: 22', () => {
     await sleep(400)
   })
 
-  // // run the snapshot tests at font size 22
+  // run the snapshot tests at font size 22
   testSuite()
 })
 
-describe('Drag and Drop simalation tests', () => {
+describe('Drag and Drop simulation tests', () => {
   beforeEach(removeHUD)
 
   it('Check simulateDrag and simulateDrop effect on DOM', async () => {
-    await simulateDragAndDrop(true, true)
+    const dragAndDropOptions = {
+      drag: true,
+      drop: true,
+    }
+
+    await simulateDragAndDrop(dragAndDropOptions)
 
     await paste(`
       - a
@@ -302,13 +307,9 @@ describe('Drag and Drop simalation tests', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd')
-
-    await sleep(1500)
+    await dragAndDropThought('a', 'd', { position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
-
-    await simulateDragAndDrop(false, false)
   })
 })
