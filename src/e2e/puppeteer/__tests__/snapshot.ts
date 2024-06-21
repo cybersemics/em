@@ -42,7 +42,7 @@ From jest-image-snapshot README:
 */
 // jest.retryTimes(3)
 
-const { click, paste, press, remove, screenshot, scroll, type, snapshotSimulation, simulateDragAndDrop } = helpers()
+const { click, paste, press, remove, screenshot, scroll, type, dragAndDropThought, simulateDragAndDrop } = helpers()
 
 /** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
 const removeHUD = async () => {
@@ -285,7 +285,7 @@ describe('Font Size: 22', () => {
     await sleep(400)
   })
 
-  // run the snapshot tests at font size 22
+  // // run the snapshot tests at font size 22
   testSuite()
 })
 
@@ -293,7 +293,7 @@ describe('Drag and Drop simalation tests', () => {
   beforeEach(removeHUD)
 
   it('Check simulateDrag and simulateDrop effect on DOM', async () => {
-    await snapshotSimulation()
+    await simulateDragAndDrop(true, true)
 
     await paste(`
       - a
@@ -302,11 +302,13 @@ describe('Drag and Drop simalation tests', () => {
       - d
     `)
 
-    await simulateDragAndDrop('[aria-label="bullet"]')
+    await dragAndDropThought('a', 'd')
 
-    await sleep(2000)
+    await sleep(1500)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+
+    await simulateDragAndDrop(false, false)
   })
 })
