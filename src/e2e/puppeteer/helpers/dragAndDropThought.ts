@@ -42,8 +42,8 @@ const dragAndDropThought = async (
 
   // Calculate center positions of the elements
   const dragPosition = {
-    x: dragStart.x,
-    y: dragStart.y,
+    x: dragStart.x + 1,
+    y: dragStart.y + 1,
   }
   const dropPosition = {
     x: dragEnd.x + dragEnd.width / 2,
