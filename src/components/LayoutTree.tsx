@@ -377,7 +377,7 @@ const LayoutTree = () => {
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
 
-  // first uncle of the cursor used for DropBefore
+  // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null

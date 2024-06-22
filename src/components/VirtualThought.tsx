@@ -25,8 +25,8 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import noteValue from '../util/noteValue'
 import once from '../util/once'
-import DropBefore from './DropBefore'
 import DropChild from './DropChild'
+import DropUncle from './DropUncle'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
@@ -202,7 +202,7 @@ const VirtualThought = ({
     >
       {
         /* Since no drop target is rendered when thoughts are hidden/shimmed, we need to create a drop target after a hidden parent.
-           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DrepBefore when e would not be rendered.
+           e.g. Below, a is hidden and all of b's siblings are hidden, but we still want to be able to drop before e. Therefore we must insert DropUncle when e would not be rendered.
              - a
               - b
                 - c [cursor]
@@ -210,7 +210,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropBefore && <DropBefore depth={depth} simplePath={simplePath} />
+        !isVisible && dropBefore && <DropUncle depth={depth} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
