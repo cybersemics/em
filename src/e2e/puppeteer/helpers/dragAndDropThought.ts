@@ -3,22 +3,42 @@ import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
 
 interface DragAndDropOptions {
-  position?: 'after' | 'before' | 'child'
+  /** Determines where the destination thought is dropped, relative to the source thought.
+    - after: drop the source thought as a sibling after the destination thought.
+    - before: drop the source thought as a sibling before the destination thought.
+    - child: drop the source thought as a child of the destination thought.
+   */
+  position: 'after' | 'before' | 'child'
 }
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
-const dragAndDropThought = async (page: Page, sourceValue: string, destValue: string, options: DragAndDropOptions) => {
+const dragAndDropThought = async (
+  page: Page,
+  sourceValue: string,
+  destValue: string,
+  { position }: DragAndDropOptions,
+) => {
+  if (position === 'before') {
+    throw new Error('Not implemented')
+  } else if (position === 'child') {
+    throw new Error('Not implemented')
+  }
+
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
 
   const dragStart = await sourceElement.boundingBox()
   const dragEnd = await destElement.boundingBox()
 
-  if (!dragStart || !dragEnd) {
-    throw new Error('No initlal drag or drop point found')
+  if (!dragStart) {
+    throw new Error('Drag source element not found')
+  } else if (!dragEnd) {
+    throw new Error('Drag destination element not found')
   }
 
-  const yOffset = 20 // Adding offset to drop destination y position so it is dragged exactly on top of it. Right now it fall short just above the drop target
+  // Offset to add to drop destination y position so it is dragged exactly on top of the drop traget.
+  // Otherwise it falls short, just above the drop target.
+  const yOffset = 20
 
   // Calculate center positions of the elements
   const dragPosition = {
