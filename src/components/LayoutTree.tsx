@@ -662,8 +662,8 @@ const LayoutTree = () => {
                 key={key}
                 style={{
                   position: 'absolute',
-                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
-                  // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
+                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
+                  // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
                   left: x,
                   top: y,
                   transition: `left ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out,top ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out`,

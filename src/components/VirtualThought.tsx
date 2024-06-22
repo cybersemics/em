@@ -26,7 +26,7 @@ import isDescendantPath from '../util/isDescendantPath'
 import noteValue from '../util/noteValue'
 import once from '../util/once'
 import DropBefore from './DropBefore'
-import DropEmpty from './DropEmpty'
+import DropChild from './DropChild'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
@@ -196,7 +196,7 @@ const VirtualThought = ({
       ref={ref}
       style={{
         // Fix the height of the container to the last measured height to ensure that there is no layout shift when the Thought is removed from the DOM.
-        // Must include DropEmpty, or it will shift when the cursor moves.
+        // Must include DropChild, or it will shift when the cursor moves.
         height: shimHiddenThought && height != null ? height : undefined,
       }}
     >
@@ -234,7 +234,7 @@ const VirtualThought = ({
       )}
 
       {isVisible && (
-        <DropEmpty
+        <DropChild
           depth={depth}
           indexDescendant={indexDescendant}
           leaf={leaf}
@@ -357,7 +357,7 @@ const Subthought = ({
         style={{
           // Start opacity at 0 and set to actual opacity in useEffect.
           // Do not fade in empty thoughts. An instant snap in feels better here.
-          // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropEmpty. Otherwise subsequent DropEmpty will be obscured.
+          // opacity creates a new stacking context, so it must only be applied to Thought, not to the outer VirtualThought which contains DropChild. Otherwise subsequent DropChild will be obscured.
           opacity: thought.value === '' ? opacity : '0',
           transition: opacityTransition,
           pointerEvents: !isVisible ? 'none' : undefined,

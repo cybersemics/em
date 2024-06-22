@@ -19,7 +19,7 @@ import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import DragOnly from './DragOnly'
 
-interface DropEmptyProps {
+interface DropChildProps {
   depth?: number
   dropTarget?: ConnectDropTarget
   isHovering?: boolean
@@ -28,12 +28,12 @@ interface DropEmptyProps {
   simplePath: SimplePath
 }
 
-/** A drop target when there are no children or the thought is collapsed. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropHover. Only renders if there is a valid dropTarget and a drag is in progress. */
-const DropEmptyContainer = ({ depth, dropTarget, isHovering, last, path, simplePath }: DropEmptyProps) => {
+/** Renders the DropChildInnerContainer component if the user is dragging and the dropTarget exists. This component is an optimization to avoid calculating DropChildIfCollapsed and DropChild hooks when unnecessary. */
+const DropChildIfDragging = ({ depth, dropTarget, isHovering, last, path, simplePath }: DropChildProps) => {
   if (!dropTarget) return null
   return (
     <DragOnly>
-      <DropEmptyInnerContainer
+      <DropChildIfCollapsed
         depth={depth}
         dropTarget={dropTarget}
         isHovering={isHovering}
@@ -45,26 +45,26 @@ const DropEmptyContainer = ({ depth, dropTarget, isHovering, last, path, simpleP
   )
 }
 
-/** Only render the DropEmpty component if not expanded. */
-const DropEmptyInnerContainer = ({
+/** Render the DropChild component if the thought is collapsed, and does not match the dragging thought. This component is an optimization to avoid calculating DropChild hooks when unnecessary. */
+const DropChildIfCollapsed = ({
   depth,
   dropTarget,
   isHovering,
   last,
   path,
   simplePath,
-}: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
+}: DropChildProps & { dropTarget: ConnectDropTarget }) => {
   const isExpanded = useSelector(
     state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
   )
   const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 
-  // Do not render DropEmpty on expanded thoughts or on the dragging thought.
+  // Do not render DropChild on expanded thoughts or on the dragging thought.
   // Even though canDrop will prevent a thought from being dropped on itself, we still should prevent rendering the drop target at all, otherwise it will obscure valid drop targets.
   if (isExpanded || equalPath(draggingThought, simplePath)) return null
 
   return (
-    <DropEmpty
+    <DropChild
       depth={depth}
       dropTarget={dropTarget}
       isHovering={isHovering}
@@ -75,15 +75,15 @@ const DropEmptyInnerContainer = ({
   )
 }
 
-/** The actual DropEmpty component. */
-const DropEmpty = ({
+/** A drop target that allows dropping as a child of a thought. It is only shown when a thought has no children or is collapsed. Only renders if there is a valid dropTarget and a drag is in progress. */
+const DropChild = ({
   depth,
   dropTarget,
   isHovering,
   last,
   path,
   simplePath,
-}: DropEmptyProps & { dropTarget: ConnectDropTarget }) => {
+}: DropChildProps & { dropTarget: ConnectDropTarget }) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const dropHoverColor = useDropHoverColor(depth || 0)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
@@ -139,9 +139,10 @@ const DropEmpty = ({
   )
 }
 
-const DragAndDropDropEmpty = DragAndDropSubthoughts(DropEmptyContainer)
+/** DropChild wired up with react-dnd HOC. */
+const DragAndDropDropChild = DragAndDropSubthoughts(DropChildIfDragging)
 
-const DropEmptyMemo = React.memo(DragAndDropDropEmpty)
-DropEmptyMemo.displayName = 'DropEmpty'
+const DropChildMemo = React.memo(DragAndDropDropChild)
+DropChildMemo.displayName = 'DropChild'
 
-export default DropEmptyMemo
+export default DropChildMemo
