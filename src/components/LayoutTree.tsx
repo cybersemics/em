@@ -679,7 +679,7 @@ const LayoutTree = () => {
                 <VirtualThought
                   debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
-                  dropBefore={thought.id === cursorUncleId}
+                  dropUncle={thought.id === cursorUncleId}
                   env={env}
                   indexDescendant={indexDescendant}
                   // isMultiColumnTable={isMultiColumnTable}

@@ -61,7 +61,7 @@ const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId;
 const VirtualThought = ({
   debugIndex,
   depth,
-  dropBefore,
+  dropUncle,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -79,7 +79,7 @@ const VirtualThought = ({
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
-  dropBefore?: boolean
+  dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
@@ -210,7 +210,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropBefore && <DropUncle depth={depth} simplePath={simplePath} />
+        !isVisible && dropUncle && <DropUncle depth={depth} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
@@ -218,7 +218,7 @@ const VirtualThought = ({
           autofocus={autofocus}
           debugIndex={debugIndex}
           depth={depth + 1}
-          dropBefore={dropBefore}
+          dropUncle={dropUncle}
           env={env}
           indexDescendant={indexDescendant}
           isMultiColumnTable={isMultiColumnTable}
@@ -259,7 +259,7 @@ const Subthought = ({
   autofocus,
   debugIndex,
   depth,
-  dropBefore,
+  dropUncle,
   env,
   indexDescendant,
   isMultiColumnTable,
@@ -275,7 +275,7 @@ const Subthought = ({
   autofocus: Autofocus
   debugIndex?: number
   depth: number
-  dropBefore?: boolean
+  dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
   isMultiColumnTable?: boolean
