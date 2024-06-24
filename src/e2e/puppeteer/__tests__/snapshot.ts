@@ -293,12 +293,7 @@ describe('Drag and Drop simulation tests', () => {
   beforeEach(removeHUD)
 
   it('Check simulateDrag and simulateDrop effect on DOM', async () => {
-    const dragAndDropOptions = {
-      drag: true,
-      drop: true,
-    }
-
-    await simulateDragAndDrop(dragAndDropOptions)
+    await simulateDragAndDrop({ drag: true, drop: true })
 
     await paste(`
       - a
