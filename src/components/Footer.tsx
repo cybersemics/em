@@ -89,6 +89,7 @@ const Footer = () => {
   // })
 
   const firstUpdate = useRef(true)
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
   // alert when font size changes
   useEffect(() => {
@@ -99,7 +100,20 @@ const Footer = () => {
     } else {
       firstUpdate.current = false
     }
-  }, [dispatch, fontSize])
+  }, [dispatch, fontSize]);
+
+    useEffect(() => {
+    // Handle scroll position
+    const handleScroll = () => {
+      const bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
+      setIsScrolledToBottom(bottom);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
@@ -107,7 +121,9 @@ const Footer = () => {
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return (
-    <ul aria-label='footer' className='footer list-none'>
+    <ul aria-label='footer' className='footer list-none'  style={{
+        marginBottom: isScrolledToBottom ? 0 : 'env(safe-area-inset-bottom)',
+      }}>
       <li>
         <div style={{ float: 'left', lineHeight: 1 }}>
           <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(scaleFontUp()))}>
