@@ -2587,19 +2587,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.13.1":
-  version "2.13.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.1.tgz#8bc5b7629c4810befcf9ecd0d2ae5ac02dec48b3"
-  integrity sha512-LN5h8+zaU+JlohCYHfKQmi500FyS76A7VtytacQ7iK6J+BKuTX2UhoKUCiWNkiIxv+fEsETQfdOjOmALSYFJPw==
+"@hocuspocus/common@^2.13.2":
+  version "2.13.2"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.2.tgz#1d382d32e20af7eba385aa406fae1e44b27e4ae1"
+  integrity sha512-NMsXx/Dl9xu1KlhNbGzLYLOjKtUOVmU+zA/br+EA4DhNDEtGWvHAmqY5r9SBTr2mGtGJagt+GEqZydSzBUFj4g==
   dependencies:
     lib0 "^0.2.87"
 
-"@hocuspocus/provider@^2.13.1":
-  version "2.13.1"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.1.tgz#d577ee98ad94f2969f97697bc9d611ee7817f76d"
-  integrity sha512-g0GRhFPcjlZ0ThELpGRT/V4feRfK9RKOxai7g14hpbhRGclqMXDtBe2HnRWYh9Xusch4kqZeYjTB6yCzIMlIIw==
+"@hocuspocus/provider@^2.13.2":
+  version "2.13.2"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.2.tgz#872bcd75f6b409d8f987e5fa91c23caf0fb5689b"
+  integrity sha512-Pi+b8gcXHomSDRzohbmVW4dwo5OIqEBoLVrsuEG/pCCS13gBAeUCKCxfrl0q5XCNhK1nu3/j6UW9lxuExqiY+g==
   dependencies:
-    "@hocuspocus/common" "^2.13.1"
+    "@hocuspocus/common" "^2.13.2"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.87"
     ws "^8.14.2"
@@ -5372,10 +5372,10 @@ chrome-launcher@^0.15.0, chrome-launcher@^0.15.2:
     is-wsl "^2.2.0"
     lighthouse-logger "^1.0.0"
 
-chromium-bidi@0.5.23:
-  version "0.5.23"
-  resolved "https://registry.yarnpkg.com/chromium-bidi/-/chromium-bidi-0.5.23.tgz#0fbebc8b0c908d33f870b961d04fca3e2d4fa0ba"
-  integrity sha512-1o/gLU9wDqbN5nL2MtfjykjOuighGXc3/hnWueO1haiEoFgX8h5vbvcA4tgdQfjw1mkZ1OEF4x/+HVeqEX6NoA==
+chromium-bidi@0.5.24:
+  version "0.5.24"
+  resolved "https://registry.yarnpkg.com/chromium-bidi/-/chromium-bidi-0.5.24.tgz#0fe672fa30b1e6bcc63ae818442b21c41849c435"
+  integrity sha512-5xQNN2SVBdZv4TxeMLaI+PelrnZsHDhn8h2JtyriLr+0qHcZS8BMuo93qN6J1VmtmrgYP+rmcLHcbpnA8QJh+w==
   dependencies:
     mitt "3.0.1"
     urlpattern-polyfill "10.0.0"
@@ -7474,10 +7474,10 @@ handlebars@^4.7.2, handlebars@^4.7.6:
   optionalDependencies:
     uglify-js "^3.1.4"
 
-happy-dom@^14.12.0:
-  version "14.12.0"
-  resolved "https://registry.yarnpkg.com/happy-dom/-/happy-dom-14.12.0.tgz#40c748578c6ebfb707e6ae69179d6c541d8f63b3"
-  integrity sha512-dHcnlGFY2o2CdxfuYpqwSrBrpj/Kuzv4u4f3TU5yHW1GL24dKij4pv1BRjXnXc3uWo8qsCbToF9weaDsm/He8A==
+happy-dom@^14.12.3:
+  version "14.12.3"
+  resolved "https://registry.yarnpkg.com/happy-dom/-/happy-dom-14.12.3.tgz#1b5892c670461fd1db041bee690981c22d3d521f"
+  integrity sha512-vsYlEs3E9gLwA1Hp+w3qzu+RUDFf4VTT8cyKqVICoZ2k7WM++Qyd2LwzyTi5bqMJFiIC/vNpTDYuxdreENRK/g==
   dependencies:
     entities "^4.5.0"
     webidl-conversions "^7.0.0"
@@ -10704,16 +10704,16 @@ puppeteer-core@13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.2.3"
 
-puppeteer-core@22.11.0:
-  version "22.11.0"
-  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.11.0.tgz#82b77f306c3665d65a1ad0115402c98ee404baee"
-  integrity sha512-57YUjhRoSpZWg9lCssWsgzM1/X/1jQnkKbbspbeW0bhZTt3TD4WdNXEYI7KrFFnSvx21tyHhfWW0zlxzbwYSAA==
+puppeteer-core@22.12.0:
+  version "22.12.0"
+  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.12.0.tgz#2022b1f05cdf7ee7bb201c890f07628a4979de4e"
+  integrity sha512-9gY+JwBW/Fp3/x9+cOGK7ZcwqjvtvY2xjqRqsAA0B3ZFMzBauVTSZ26iWTmvOQX2sk78TN/rd5rnetxVxmK5CQ==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
-    chromium-bidi "0.5.23"
+    chromium-bidi "0.5.24"
     debug "4.3.5"
     devtools-protocol "0.0.1299070"
-    ws "8.17.0"
+    ws "8.17.1"
 
 puppeteer-core@^13.1.3:
   version "13.7.0"
@@ -10733,15 +10733,15 @@ puppeteer-core@^13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.5.0"
 
-puppeteer@^22.11.0:
-  version "22.11.0"
-  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.11.0.tgz#290eeff6e993d8258c59333d2454079aad75c2ff"
-  integrity sha512-U5U0Dx5Tsd/ec39BmflhcSFIK9UnZxGQfyUzvQVHivt6gIi6RgJqYL9MJaU90OG6tTz65XqzN4wF0ZyDyY0NuA==
+puppeteer@^22.11.1:
+  version "22.12.0"
+  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.12.0.tgz#6bc8910daba39bc2fccb7980a2c57696b87329e9"
+  integrity sha512-kyUYI12SyJIjf9UGTnHfhNMYv4oVK321Jb9QZDBiGVNx5453SplvbdKI7UrF+S//3RtCneuUFCyHxnvQXQjpxg==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
     cosmiconfig "9.0.0"
     devtools-protocol "0.0.1299070"
-    puppeteer-core "22.11.0"
+    puppeteer-core "22.12.0"
 
 pure-rand@^6.0.0:
   version "6.1.0"
@@ -13258,10 +13258,10 @@ write-file-atomic@^4.0.2:
     imurmurhash "^0.1.4"
     signal-exit "^3.0.7"
 
-ws@8.17.0, ws@^8.14.2, ws@^8.17.0:
-  version "8.17.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.17.0.tgz#d145d18eca2ed25aaf791a183903f7be5e295fea"
-  integrity sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==
+ws@8.17.1:
+  version "8.17.1"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.17.1.tgz#9293da530bb548febc95371d90f9c878727d919b"
+  integrity sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==
 
 ws@8.2.3:
   version "8.2.3"
@@ -13284,6 +13284,11 @@ ws@^7, ws@^7.5.1:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+
+ws@^8.14.2, ws@^8.17.0:
+  version "8.17.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.17.0.tgz#d145d18eca2ed25aaf791a183903f7be5e295fea"
+  integrity sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==
 
 xhtml-purifier@^0.4.1:
   version "0.4.1"
@@ -13415,10 +13420,10 @@ yauzl@^2.10.0:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-yjs@^13.6.16:
-  version "13.6.16"
-  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.16.tgz#4ac8a1393495af390dcfa0631e3d24cfc50fc9a3"
-  integrity sha512-uEq+n/dFIecBElEdeQea8nDnltScBfuhCSyAxDw4CosveP9Ag0eW6iZi2mdpW7EgxSFT7VXK2MJl3tKaLTmhAQ==
+yjs@^13.6.17:
+  version "13.6.18"
+  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.18.tgz#d1575203478bc99ad1b89c098e7d4bacb7f91c3b"
+  integrity sha512-GBTjO4QCmv2HFKFkYIJl7U77hIB1o22vSCSQD1Ge8ZxWbIbn8AltI4gyXbtL+g5/GJep67HCMq3Y5AmNwDSyEg==
   dependencies:
     lib0 "^0.2.86"
 
