@@ -77,10 +77,11 @@ const StaticThought = ({
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
-
+  // check to trigger height recalculation
+  const showCurrentContext = useSelector(state => isContextViewActive(state, state.cursor))
   useEffect(() => {
     updateSize?.()
-  }, [multiline, updateSize])
+  }, [multiline, updateSize, showCurrentContext])
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load
