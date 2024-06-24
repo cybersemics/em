@@ -41,11 +41,31 @@ export const init = async () => {
   })
 
   /** Get RxDB development/production database. */
-  function getDatabase(): Promise<EmRxDB> {
+  async function getDatabase(): Promise<EmRxDB> {
     return createRxDatabase({
       name: DATABASE_NAME,
-      storage: getRxStorageDexie(),
+      storage: await getRxStorage(),
     })
+
+    /** Get RxDB storage. */
+    async function getRxStorage(): Promise<RxDatabase['storage']> {
+      if (import.meta.env.VITE_USE_RXDB_PREMIUM === 'true') {
+        try {
+          /*
+            We need to import the plugin using an alias because the plugig will be installed
+            only in production and when the environment variable is set to true.
+            Vite will throw an error if we try to import a non-existent module.
+           */
+          // @ts-expect-error supress warning about types for rxdb-indexeddb
+          const { getRxStorageIndexedDB } = await import('rxdb-indexeddb')
+          return getRxStorageIndexedDB()
+        } catch (e) {
+          console.error('RxDB Premium not installed.')
+        }
+      }
+
+      return getRxStorageDexie()
+    }
   }
 
   /** Get RxDB test database. */

@@ -28,6 +28,7 @@
     "cap:sync:prod": "npm run build && NODE_ENV=production cap sync",
     "start": "vite --host --port 3000",
     "build": "vite build",
+    "build-premium": "node scripts/rxdb-premium.js",
     "clean": "rm -rf ./node_modules/.cache",
     "docs": "typedoc --options typedoc.json",
     "deploy:major": "npm run lint && npm version major && npm run build && firebase deploy --only hosting",
