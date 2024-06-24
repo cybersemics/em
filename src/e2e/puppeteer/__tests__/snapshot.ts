@@ -34,9 +34,7 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
 })
 expect.extend({ toMatchImageSnapshot })
 
-vi.setConfig({ testTimeout: 60000 })
-
-/*
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 }) /*
 From jest-image-snapshot README:
 
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
@@ -44,7 +42,7 @@ From jest-image-snapshot README:
 */
 // jest.retryTimes(3)
 
-const { click, paste, press, remove, screenshot, scroll, type } = helpers()
+const { click, paste, press, remove, screenshot, scroll, type, dragAndDropThought, simulateDragAndDrop } = helpers()
 
 /** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
 const removeHUD = async () => {
@@ -289,4 +287,24 @@ describe('Font Size: 22', () => {
 
   // run the snapshot tests at font size 22
   testSuite()
+})
+
+describe('Drag and Drop simulation tests', () => {
+  beforeEach(removeHUD)
+
+  it('Check simulateDrag and simulateDrop effect on DOM', async () => {
+    await simulateDragAndDrop({ drag: true, drop: true })
+
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+    await dragAndDropThought('a', 'd', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })

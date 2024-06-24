@@ -2587,19 +2587,19 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
-"@hocuspocus/common@^2.13.2":
-  version "2.13.2"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.2.tgz#1d382d32e20af7eba385aa406fae1e44b27e4ae1"
-  integrity sha512-NMsXx/Dl9xu1KlhNbGzLYLOjKtUOVmU+zA/br+EA4DhNDEtGWvHAmqY5r9SBTr2mGtGJagt+GEqZydSzBUFj4g==
+"@hocuspocus/common@^2.13.1":
+  version "2.13.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-2.13.1.tgz#8bc5b7629c4810befcf9ecd0d2ae5ac02dec48b3"
+  integrity sha512-LN5h8+zaU+JlohCYHfKQmi500FyS76A7VtytacQ7iK6J+BKuTX2UhoKUCiWNkiIxv+fEsETQfdOjOmALSYFJPw==
   dependencies:
     lib0 "^0.2.87"
 
-"@hocuspocus/provider@^2.13.2":
-  version "2.13.2"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.2.tgz#872bcd75f6b409d8f987e5fa91c23caf0fb5689b"
-  integrity sha512-Pi+b8gcXHomSDRzohbmVW4dwo5OIqEBoLVrsuEG/pCCS13gBAeUCKCxfrl0q5XCNhK1nu3/j6UW9lxuExqiY+g==
+"@hocuspocus/provider@^2.13.1":
+  version "2.13.1"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/provider/-/provider-2.13.1.tgz#d577ee98ad94f2969f97697bc9d611ee7817f76d"
+  integrity sha512-g0GRhFPcjlZ0ThELpGRT/V4feRfK9RKOxai7g14hpbhRGclqMXDtBe2HnRWYh9Xusch4kqZeYjTB6yCzIMlIIw==
   dependencies:
-    "@hocuspocus/common" "^2.13.2"
+    "@hocuspocus/common" "^2.13.1"
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.87"
     ws "^8.14.2"
@@ -10704,10 +10704,10 @@ puppeteer-core@13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.2.3"
 
-puppeteer-core@22.11.1:
-  version "22.11.1"
-  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.11.1.tgz#623f12a751455f4d2bdde2acaea131012c7fe3ac"
-  integrity sha512-lIMQrpbMlQ5GqXzD7fo/j74PhceRma+DrVFX+vAx3cwURsfDKyYx7fksTo1nUfLmKyXRyCDSa2peASa/DQ0R9Q==
+puppeteer-core@22.11.0:
+  version "22.11.0"
+  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-22.11.0.tgz#82b77f306c3665d65a1ad0115402c98ee404baee"
+  integrity sha512-57YUjhRoSpZWg9lCssWsgzM1/X/1jQnkKbbspbeW0bhZTt3TD4WdNXEYI7KrFFnSvx21tyHhfWW0zlxzbwYSAA==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
     chromium-bidi "0.5.23"
@@ -10733,15 +10733,15 @@ puppeteer-core@^13.1.3:
     unbzip2-stream "1.4.3"
     ws "8.5.0"
 
-puppeteer@^22.11.1:
-  version "22.11.1"
-  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.11.1.tgz#06acc384350382143046eb6feea208c8bc4ec41b"
-  integrity sha512-NhpLQC2NMXcNvCquRCeFWxu12ywfBeZ8wK9TyupOnSyaX2czeuqZdBVOQ33mBzmG8qTnM7DsStY8Z+TOgshMdA==
+puppeteer@^22.11.0:
+  version "22.11.0"
+  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-22.11.0.tgz#290eeff6e993d8258c59333d2454079aad75c2ff"
+  integrity sha512-U5U0Dx5Tsd/ec39BmflhcSFIK9UnZxGQfyUzvQVHivt6gIi6RgJqYL9MJaU90OG6tTz65XqzN4wF0ZyDyY0NuA==
   dependencies:
     "@puppeteer/browsers" "2.2.3"
     cosmiconfig "9.0.0"
     devtools-protocol "0.0.1299070"
-    puppeteer-core "22.11.1"
+    puppeteer-core "22.11.0"
 
 pure-rand@^6.0.0:
   version "6.1.0"
@@ -13415,10 +13415,10 @@ yauzl@^2.10.0:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-yjs@^13.6.17:
-  version "13.6.17"
-  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.17.tgz#ed40a6a3a3c5fc4903e2c3e4fae9c174bab616e4"
-  integrity sha512-ERnKXYZrZqgGO81Yqt3D69detaRUwaqhsQTZRKi9CDMgteDMund+KcLChfwpjQbva9YwfRgh7S914Pa6qPVVCA==
+yjs@^13.6.16:
+  version "13.6.16"
+  resolved "https://registry.yarnpkg.com/yjs/-/yjs-13.6.16.tgz#4ac8a1393495af390dcfa0631e3d24cfc50fc9a3"
+  integrity sha512-uEq+n/dFIecBElEdeQea8nDnltScBfuhCSyAxDw4CosveP9Ag0eW6iZi2mdpW7EgxSFT7VXK2MJl3tKaLTmhAQ==
   dependencies:
     lib0 "^0.2.86"
 

@@ -2,7 +2,7 @@ import { LAYOUT_NODE_ANIMATION_DURATION } from '../../../constants'
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
-vi.setConfig({ testTimeout: 20000 })
+vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 const { paste, getEditingText, refresh, waitForEditable, clickThought, press } = helpers()
 
