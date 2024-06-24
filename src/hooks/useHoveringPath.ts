@@ -9,7 +9,7 @@ import { dragInProgressActionCreator as dragInProgress } from '../actions/dragIn
 const useHoveringPath = (path: Path, isHovering: boolean, hoverZone: DropThoughtZone) => {
   const dispatch = useDispatch()
 
-  // When DropEmpty is hovered over during drag, update the hoveringPath.
+  // When DropChild is hovered over during drag, update the hoveringPath.
   useEffect(
     () => {
       if (isHovering) {

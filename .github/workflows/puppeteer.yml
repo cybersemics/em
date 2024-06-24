@@ -13,11 +13,13 @@ env:
 
 jobs:
   run:
-    name: Puppeteer
-    # Run on Mac since Puppeteer snapshots were generated on a Mac.
-    # Otherwise snapshot tests will fail.
-    # https://github.com/cybersemics/em/pull/1836
-    runs-on: macos-latest
+    name: Puppeteer on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Clone repository
@@ -39,3 +41,11 @@ jobs:
 
       - name: Test
         run: yarn test:puppeteer
+
+      - name: Upload snapshot diff artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: __diff_output__
+          path: src/e2e/puppeteer/__tests__/__image_snapshots__/*/__diff_output__/
+          if-no-files-found: ignore
