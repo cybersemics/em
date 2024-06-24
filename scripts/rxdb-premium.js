@@ -72,6 +72,15 @@ async function addRxDBAccessToken(packageJson) {
   log('Access token added to package.json')
 }
 
+function isRxDBPremiumInstalled() {
+  try {
+    fs.accessSync('node_modules/rxdb-premium', fs.constants.F_OK)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
 async function installRxDBPremiumLibrary(packageJson) {
   const rxdbVersion = packageJson.dependencies.rxdb
   if (!rxdbVersion) {
@@ -79,8 +88,10 @@ async function installRxDBPremiumLibrary(packageJson) {
     close()
   }
 
-  const shouldInstallRxdbPremium = !packageJson.dependencies['rxdb-premium']
-  if (!shouldInstallRxdbPremium) return
+  if (isRxDBPremiumInstalled()) {
+    log('using existing rxdb-premium installation')
+    return
+  }
 
   const installCommand = `yarn add rxdb-premium@${rxdbVersion}`
 
