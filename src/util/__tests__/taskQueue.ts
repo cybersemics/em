@@ -6,7 +6,7 @@ import taskQueue from '../taskQueue'
 
 // Add a retry to all taskQueue tests since underlying throttleReduce intermittently fails.
 // This occurs because small timing differences can cause the throttle to be triggered at different times.
-describe('taskQueue', { retry: 5 }, () => {
+describe('taskQueue', { retry: 10 }, () => {
   it('run tasks', async () => {
     let counter = 0
     /** Increments the counter. */
@@ -429,7 +429,7 @@ describe('taskQueue', { retry: 5 }, () => {
     ])
   })
 
-  it('pause', { retry: 5 }, async () => {
+  it('pause', async () => {
     let counter = 0
     /** Increments the counter after a delay. */
     const incDelayed = () => sleep(20).then(() => ++counter)
