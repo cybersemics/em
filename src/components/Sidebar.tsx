@@ -40,18 +40,8 @@ const Sidebar = () => {
      */
     <SwipeableDrawerWithClasses
       classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
-      disableSwipeToOpen={!isTouch}
+      disableSwipeToOpen={false}
       ref={ref}
-      SwipeAreaProps={{
-        style: {
-          // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
-          width: 8,
-          // Override default zIndex of 1199 to so that the Sidebar is below the Toolbar and Footer.
-          // Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Hamburger menu or Home icon.
-          // Cannot set class name on SwipeArea without overriding the entire SwipeableDrawer classes prop.
-          zIndex: 1,
-        },
-      }}
       anchor='left'
       onOpen={() => toggleSidebar(true)}
       onClose={() => toggleSidebar(false)}
