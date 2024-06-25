@@ -17,6 +17,7 @@ const dragAndDropThought = async (
   sourceValue: string,
   destValue: string,
   { position }: DragAndDropOptions,
+  mouseUp: boolean,
 ) => {
   if (position === 'before') {
     throw new Error('Not implemented')
@@ -54,7 +55,7 @@ const dragAndDropThought = async (
   await page.mouse.move(dragPosition.x, dragPosition.y)
   await page.mouse.down()
   await page.mouse.move(dropPosition.x, dropPosition.y, { steps: 10 })
-  await page.mouse.up()
+  if (mouseUp) await page.mouse.up()
 
   await sleep(500)
 }
