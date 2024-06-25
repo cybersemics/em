@@ -303,7 +303,61 @@ describe('Drag and Drop simulation tests', () => {
       - d
     `)
 
-    await dragAndDropThought('a', 'd', { position: 'after' })
+    await dragAndDropThought('a', 'd', { position: 'after' }, true)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop hover tests', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+    await dragAndDropThought('a', 'd', { position: 'after' }, false)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop target tests, covering DragAndDropThought and DropChild', async () => {
+    await simulateDragAndDrop({ drag: false, drop: true })
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop target tests, covering DropEnd', async () => {
+    await simulateDragAndDrop({ drag: false, drop: true })
+    await paste(`
+      - a
+        - b
+          - c
+    `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop target tests, covering DropUncle', async () => {
+    await simulateDragAndDrop({ drag: false, drop: true })
+    await paste(`
+      - a
+        - b
+          - c
+            - x
+          - d
+        - e
+    `)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
