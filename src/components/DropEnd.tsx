@@ -23,7 +23,7 @@ import DragOnly from './DragOnly'
 /** An identify function that returns the value passed to it. */
 const identity = <T,>(x: T): T => x
 
-/** The drop target at the end of the Subthoughts. The drop-hover components are DropBefore, DropEmpty, DropEnd, and DropHover. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
+/** The drop target at the end of the Subthoughts. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
 const DropEnd = ({
   depth,
   distance,

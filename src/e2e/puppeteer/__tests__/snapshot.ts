@@ -357,6 +357,8 @@ describe('Drag and Drop simulation tests', () => {
           - d
         - e
     `)
+    
+    await dragAndDropThought('a', 'd', { position: 'after' })
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

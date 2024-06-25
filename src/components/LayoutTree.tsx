@@ -377,7 +377,7 @@ const LayoutTree = () => {
     return state.cursor.length + (isCursorLeaf ? -1 : 0)
   })
 
-  // first uncle of the cursor used for DropBefore
+  // first uncle of the cursor used for DropUncle
   const cursorUncleId = useSelector(state => {
     // only set during drag-and-drop to avoid re-renders
     if ((!state.dragInProgress && !testFlags.simulateDrag && !testFlags.simulateDrop) || !state.cursor) return null
@@ -662,8 +662,8 @@ const LayoutTree = () => {
                 key={key}
                 style={{
                   position: 'absolute',
-                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropEmpty to be covered by previous siblings'.
-                  // Unfortunately left causes layout recalculation, so we may want to hoist DropEmpty into a parent and manually control the position.
+                  // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
+                  // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
                   left: x,
                   top: y,
                   transition: `left ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out,top ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out`,
@@ -679,7 +679,7 @@ const LayoutTree = () => {
                 <VirtualThought
                   debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
-                  dropBefore={thought.id === cursorUncleId}
+                  dropUncle={thought.id === cursorUncleId}
                   env={env}
                   indexDescendant={indexDescendant}
                   // isMultiColumnTable={isMultiColumnTable}

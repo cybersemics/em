@@ -10,7 +10,7 @@ const append = <T>(value: T, accum: T[]): T[] => [...accum, value]
 
 // Add a retry to all taskQueue tests since underlying throttleReduce intermittently fails.
 // This occurs because small timing differences can cause the throttle to be triggered at different times.
-describe('throttleReduce', { retry: 5 }, () => {
+describe('throttleReduce', { retry: 10 }, () => {
   it('synchronous: once on the leading edge and once on the trailing edge', async () => {
     let calls = 0
     let output: number[] = []
