@@ -45,6 +45,7 @@
     "test": "vitest --project unit",
     "test:ios": "jest ./src/e2e/iOS --verbose",
     "test:puppeteer": "vitest --project puppeteer-e2e",
+    "test:puppeteer:docker": "EM_VITE_SERVER_URL=http://localhost:13000 vitest --project puppeteer-e2e",
     "websocket-server": "cd server && npm run build && npm start"
   },
   "lockfile-lint": {
