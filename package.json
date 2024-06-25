@@ -27,6 +27,7 @@
     "cap:sync": "NODE_ENV=development && cap sync",
     "cap:sync:prod": "npm run build && NODE_ENV=production cap sync",
     "start": "vite --host --port 3000",
+    "start:docker": "docker compose up",
     "build": "vite build",
     "clean": "rm -rf ./node_modules/.cache",
     "docs": "typedoc --options typedoc.json",
