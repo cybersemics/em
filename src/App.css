@@ -1885,6 +1885,9 @@ h1 .num-contexts {
 
 @keyframes pulse {
   from {
+    opacity: 1;
+  }
+  to {
     opacity: 0.25;
   }
 }

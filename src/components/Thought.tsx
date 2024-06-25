@@ -268,7 +268,13 @@ const ThoughtContainer = ({
   // See: https://stackoverflow.com/a/46452396/480608
   const styleThought = useMemo(
     (): React.CSSProperties => ({
-      ...(isChildHovering ? { color: colors.highlight, WebkitTextStrokeWidth: '0.05em' } : null),
+      ...(isChildHovering
+        ? {
+            WebkitTextStrokeWidth: '0.05em',
+            animation: 'pulse 0.5s linear infinite alternate',
+            color: colors.highlight,
+          }
+        : null),
       // textDecoration does not inherit from inline-block elements, so we apply it here instead of .child
       textDecoration: style?.textDecoration,
     }),
