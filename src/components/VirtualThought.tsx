@@ -12,6 +12,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -37,6 +38,10 @@ export type OnResize = (args: {
 
 /** Selects the cursor. */
 const selectCursor = (state: State) => state.cursor
+
+/** Selects whether the context view is active for this thought. */
+const selectShowContexts = (path: SimplePath) => (state: State) =>
+  equalPath(state.cursor, path) && isContextViewActive(state, path)
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
 export const findFirstEnvContextWithZoom = (
@@ -155,6 +160,12 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, path, thought.id])
 
+  // Delayed version of updateSize, used to wait for layout changes in children.
+  const updateSizeAfterLayout = useCallback(() => {
+    // Allow layout changes in children to complete before measuring the height of the DOM element.
+    requestAnimationFrame(updateSize)
+  }, [updateSize])
+
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, shallowEqual)
@@ -162,6 +173,9 @@ const VirtualThought = ({
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
   useEffect(updateSize, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateSize])
+
+  // Recalculate height when a context view is toggled. Uses delayed version of updateSize to account for NoOtherContexts to render before measuring.
+  useSelectorEffect(updateSizeAfterLayout, selectShowContexts(simplePath), shallowEqual)
 
   // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
