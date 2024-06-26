@@ -5,8 +5,9 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: sh -c "echo ***Vite is running in Docker, use port 13000 on the host*** && npm start"
+    command: sh -c "npm start"
     ports:
-      - "13000:3000"
+      - "${VITE_PORT:-3000}:${VITE_PORT:-3000}"
     environment:
       - NODE_ENV=development
+      - VITE_PORT=${VITE_PORT:-3000}
