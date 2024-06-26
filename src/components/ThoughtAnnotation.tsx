@@ -16,7 +16,6 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import editingValueStore from '../stores/editingValue'
-import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
@@ -235,7 +234,7 @@ const ThoughtAnnotation = React.memo(
     const textMarkup = useSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
       const labelChild = anyChild(state, labelId || undefined)
-      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : ellipsizeUrl(value)
+      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : value
     })
 
     return (
@@ -247,17 +246,13 @@ const ThoughtAnnotation = React.memo(
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
-          style={{
-            ...styleAnnotation,
-            // Extend background color to the right to match .editable padding-left.
-            // Match .editable-annotation-text padding-left.
-            // Add 0.5em to account for the superscript.
-            // TODO: Add space for dynamic superscript. This is currently only correct for single digit superscript.
-            marginRight: showSuperscript ? '-0.833em' : '-0.333em',
-            paddingRight: showSuperscript ? '0.833em' : '0.333em',
-          }}
+          style={styleAnnotation}
         >
-          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
+          <span
+            className={classNames('editable-annotation-text', { 'single-line': !isEditing && isURL(value) })}
+            style={style}
+            dangerouslySetInnerHTML={{ __html: textMarkup }}
+          />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
