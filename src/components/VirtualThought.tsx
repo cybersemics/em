@@ -21,6 +21,8 @@ import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
 import Subthought from './Subthought'
+import isContextViewActive from '../selectors/isContextViewActive'
+import getContexts from '../selectors/getContexts'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
 export type OnResize = (args: {
@@ -99,6 +101,9 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
+  const noOtherContexts = useSelector(
+    state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+  )
 
   /***************************
    * VirtualThought properties
@@ -153,7 +158,7 @@ const VirtualThought = ({
       isVisible: isVisibleNew,
       key: crossContextualKey,
     })
-  }, [crossContextualKey, onResize, path, thought.id])
+  }, [crossContextualKey, onResize, path, thought.id, noOtherContexts])
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
