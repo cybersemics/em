@@ -12,6 +12,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -21,8 +22,6 @@ import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
 import Subthought from './Subthought'
-import isContextViewActive from '../selectors/isContextViewActive'
-import getContexts from '../selectors/getContexts'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
 export type OnResize = (args: {
@@ -101,9 +100,7 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
-  const noOtherContexts = useSelector(
-    state => isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
-  )
+  const noOtherContexts = useSelector(state => isContextViewActive(state, simplePath))
 
   /***************************
    * VirtualThought properties
@@ -158,7 +155,7 @@ const VirtualThought = ({
       isVisible: isVisibleNew,
       key: crossContextualKey,
     })
-  }, [crossContextualKey, onResize, path, thought.id, noOtherContexts])
+  }, [crossContextualKey, onResize, path, thought.id])
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
@@ -166,7 +163,18 @@ const VirtualThought = ({
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useEffect(updateSize, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateSize])
+  useEffect(updateSize, [
+    cursorDepth,
+    cursorLeaf,
+    fontSize,
+    isVisible,
+    leaf,
+    note,
+    simplePath,
+    style,
+    noOtherContexts,
+    updateSize,
+  ])
 
   // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
