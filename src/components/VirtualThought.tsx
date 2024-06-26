@@ -95,12 +95,12 @@ const VirtualThought = ({
   const [height, setHeight] = useState<number | null>(singleLineHeight)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
+  const contextViewActive = useSelector(state => isContextViewActive(state, simplePath))
   const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
-  const noOtherContexts = useSelector(state => isContextViewActive(state, simplePath))
 
   /***************************
    * VirtualThought properties
@@ -172,7 +172,7 @@ const VirtualThought = ({
     note,
     simplePath,
     style,
-    noOtherContexts,
+    contextViewActive,
     updateSize,
   ])
 
