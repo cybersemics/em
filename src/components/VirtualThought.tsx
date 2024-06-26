@@ -12,6 +12,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -94,6 +95,7 @@ const VirtualThought = ({
   const [height, setHeight] = useState<number | null>(singleLineHeight)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
+  const contextViewActive = useSelector(state => isContextViewActive(state, simplePath))
   const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
@@ -161,7 +163,18 @@ const VirtualThought = ({
 
   // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
   // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useEffect(updateSize, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateSize])
+  useEffect(updateSize, [
+    cursorDepth,
+    cursorLeaf,
+    fontSize,
+    isVisible,
+    leaf,
+    note,
+    simplePath,
+    style,
+    contextViewActive,
+    updateSize,
+  ])
 
   // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
   useEffect(() => {
