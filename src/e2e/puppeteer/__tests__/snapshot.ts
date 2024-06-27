@@ -104,7 +104,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    // TODO: intermitettently only renders up to a/b
+    // TODO: intermittently only renders up to a/b
     it.skip('deeply nested', async () => {
       await paste(`
         - a
@@ -227,6 +227,47 @@ const testSuite = () => {
     })
   })
 }
+
+describe('Layout Tree: Table View', () => {
+  beforeEach(removeHUD)
+
+  it('col1 narrow, no wrap', async () => {
+    await paste(`
+      - X
+        - =view
+          - Table
+        - A
+          - Atlanta, Georgia
+        - B
+          - Boston, Massachusetts
+        - C
+          - Cincinnati, Ohio
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  // TODO: Col1 is incorrectly wrapping under some render conditions. This snapshot should be updated when #1795 is fixed.
+  it('col2 narrow, no wrap', async () => {
+    await paste(`
+      - X
+        - =view
+          - Table
+        - All of Us Strangers
+          - 4/5
+        - Eileen
+          - 2/5
+        - May December
+          - 2/5
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+})
 
 describe('Font Size: 18 (default)', () => {
   // run the snapshot tests at font size 18 (default)
