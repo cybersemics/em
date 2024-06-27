@@ -181,16 +181,6 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    it('url', async () => {
-      await paste('https://thinkwithem.com')
-
-      // wait for render animation to complete
-      await sleep(1000)
-
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
     it('superscript', async () => {
       await paste(`
         - a
@@ -459,6 +449,26 @@ it('GestureDiagram', async () => {
 
   // wait for modal to fade in
   await sleep(400)
+
+  const image = await screenshot()
+  expect(image).toMatchImageSnapshot()
+})
+
+// Tests the following cases:
+// 1. Single line url
+// 2. Multiline url (ellipsized)
+// 3. Placeholder with url child
+it('url', async () => {
+  await removeHUD()
+
+  await paste(`
+    - https://test.com/single-line
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
+  `)
+
+  // wait for render animation to complete
+  await sleep(1000)
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
