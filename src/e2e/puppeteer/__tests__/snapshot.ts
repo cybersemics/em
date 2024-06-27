@@ -209,47 +209,47 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
   })
-
-  describe('Layout Tree: Table View', () => {
-    beforeEach(removeHUD)
-
-    it('when col1 is narrow, col2 should not wrap', async () => {
-      await paste(`
-        - X
-          - =view
-            - Table
-          - A
-            - Atlanta, Georgia
-          - B
-            - Boston, Massachusetts
-          - C
-            - Cincinnati, Ohio
-      `)
-
-      await sleep(1000)
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-
-    it('when col2 is narrow, col1 should not wrap', async () => {
-      await paste(`
-        - X
-          - =view
-            - Table
-          - All of Us Strangers
-            - 4/5
-          - Eileen
-            - 2/5
-          - May December
-            - 2/5
-      `)
-
-      await sleep(1000)
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
-  })
 }
+
+describe('Layout Tree: Table View', () => {
+  beforeEach(removeHUD)
+
+  it('when col1 is narrow, col2 should not wrap', async () => {
+    await paste(`
+      - X
+        - =view
+          - Table
+        - A
+          - Atlanta, Georgia
+        - B
+          - Boston, Massachusetts
+        - C
+          - Cincinnati, Ohio
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('when col2 is narrow, col1 should not wrap', async () => {
+    await paste(`
+      - X
+        - =view
+          - Table
+        - All of Us Strangers
+          - 4/5
+        - Eileen
+          - 2/5
+        - May December
+          - 2/5
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+})
 
 describe('Font Size: 18 (default)', () => {
   // run the snapshot tests at font size 18 (default)
