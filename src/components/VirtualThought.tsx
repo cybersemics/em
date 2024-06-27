@@ -160,7 +160,7 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, path, thought.id])
 
-  // Delayed version of updateSize, used to wait for layout changes in children.
+  /** Delayed version of updateSize, used to wait for layout changes in children. */
   const updateSizeAfterLayout = useCallback(() => {
     // Allow layout changes in children to complete before measuring the height of the DOM element.
     requestAnimationFrame(updateSize)
