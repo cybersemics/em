@@ -105,8 +105,10 @@ const Footer = () => {
     useEffect(() => {
     // Handle scroll position
     const handleScroll = () => {
-      const bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight;
-      setIsScrolledToBottom(bottom);
+      const distance = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      setIsScrolledToBottom(distance);
+      document.documentElement.style.setProperty('--dynamic-bottom-margin', `${Math.min(distance, 20)}px`);
+
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -121,9 +123,7 @@ const Footer = () => {
   if (isTutorialOn && tutorialStep !== TUTORIAL2_STEP_SUCCESS) return null
 
   return (
-    <ul aria-label='footer' className='footer list-none'  style={{
-        marginBottom: isScrolledToBottom ? 0 : 'env(safe-area-inset-bottom)',
-      }}>
+    <ul aria-label='footer' className='footer list-none'>
       <li>
         <div style={{ float: 'left', lineHeight: 1 }}>
           <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(scaleFontUp()))}>
