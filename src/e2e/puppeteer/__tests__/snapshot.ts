@@ -174,6 +174,22 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
+    it('multiline url', async () => {
+      await paste(`
+        - https://github.com/cybersemics/em/non-ellipsized
+        - https://thinkwithem.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
+        - 
+          - https://github.com/cybersemics/em
+        - https://thinkwithem.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
+      `)
+
+      // wait for render animation to complete
+      await sleep(1000)
+
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
     it('superscript', async () => {
       await paste(`
         - a
