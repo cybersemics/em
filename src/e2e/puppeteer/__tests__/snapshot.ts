@@ -87,7 +87,7 @@ const testSuite = () => {
       expect(image).toMatchImageSnapshot()
     })
 
-    // TODO: intermitettently only renders up to a/b
+    // TODO: intermittently only renders up to a/b
     it.skip('deeply nested', async () => {
       await paste(`
         - a
@@ -205,6 +205,46 @@ const testSuite = () => {
       // wait for render animation to complete
       await sleep(1000)
 
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+  })
+
+  describe('Layout Tree: Table View', () => {
+    beforeEach(removeHUD)
+
+    it('when col1 is narrow, col2 should not wrap', async () => {
+      await paste(`
+        - X
+          - =view
+            - Table
+          - A
+            - Atlanta, Georgia
+          - B
+            - Boston, Massachusetts
+          - C
+            - Cincinnati, Ohio
+      `)
+
+      await sleep(1000)
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
+    it('when col2 is narrow, col1 should not wrap', async () => {
+      await paste(`
+        - X
+          - =view
+            - Table
+          - All of Us Strangers
+            - 4/5
+          - Eileen
+            - 2/5
+          - May December
+            - 2/5
+      `)
+
+      await sleep(1000)
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
