@@ -214,7 +214,7 @@ const testSuite = () => {
 describe('Layout Tree: Table View', () => {
   beforeEach(removeHUD)
 
-  it('when col1 is narrow, col2 should not wrap', async () => {
+  it('col1 narrow, no wrap', async () => {
     await paste(`
       - X
         - =view
@@ -232,7 +232,8 @@ describe('Layout Tree: Table View', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('when col2 is narrow, col1 should not wrap', async () => {
+  // TODO: Col1 is incorrectly wrapping under some render conditions. This snapshot should be updated when #1795 is fixed.
+  it('col2 narrow, no wrap', async () => {
     await paste(`
       - X
         - =view
