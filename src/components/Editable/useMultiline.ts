@@ -1,16 +1,23 @@
 import { useCallback, useLayoutEffect, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import State from '../../@types/State'
-import useSelectorEffect from '../../hooks/useSelectorEffect'
-import editingValueStore from '../../stores/editingValue'
+import equalPath from '../../util/equalPath'
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
+const useMultiline = (
+  contentRef: React.RefObject<HTMLElement>,
+  simplePath: SimplePath,
+  value: string,
+  isEditing?: boolean,
+) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
   const splitPosition = useSelector(state => state.splitPosition)
+
+  // Check if the cursor is active.
+  // NOTE: We don't want to select the entire cursor path to skip invoking the layout effect too often.
+  const cursorActive = useSelector(state => equalPath(state.cursor, simplePath))
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
@@ -26,20 +33,11 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     setMultiline(height - paddingTop > singleLineHeight * 1.5)
   }, [contentRef, fontSize])
 
-  // Recalculate multiline when the cursor changes.
-  // This is necessary because the width of thoughts change as the autofocus indent changes.
-  // (do not re-render component unless multiline changes)
-  const selectCursor = useCallback((state: State) => state.cursor, [])
-  useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
-
-  // Recalculate multiline on mount, when the font size changes, edit, and split view resize.
+  // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
+  // cursor changes to or from the element.
   useLayoutEffect(() => {
     updateMultiline()
-    if (isEditing) {
-      // return the unsubscribe function
-      return editingValueStore.subscribe(updateMultiline)
-    }
-  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, updateMultiline])
+  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, value, cursorActive, updateMultiline])
 
   return multiline
 }

@@ -76,7 +76,7 @@ const StaticThought = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(editableRef, simplePath, isEditing)
+  const multiline = useMultiline(editableRef, simplePath, value, isEditing)
 
   useEffect(() => {
     updateSize?.()
