@@ -4,7 +4,7 @@ import Lexeme from '../../@types/Lexeme'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import groupObjectBy from '../../util/groupObjectBy'
 import hashThought from '../../util/hashThought'
 import timestamp from '../../util/timestamp'
@@ -179,88 +179,45 @@ export const updateLexeme = async (key: string, lexemeNew: Lexeme): Promise<void
 }
 
 /**
+ * @deprecated Use getThoughtById instead.
+ *
  * Replicates a thought from the persistence layers to state, IDB, and the Websocket server. If already replicating or replicated, resolves as soon as data is available (depends on background/remote params). The Doc can be updated concurrently while replicating.
  *
  * Precondition: docKey of id must be cached.
  *
  * Warning: It is not recommended to run replicateThought in background mode. The Doc is not cached in background mode, so calling replicateThought on multiple siblings will result in multiple replications of the parent.
  */
-export const replicateThought = async (
-  id: ThoughtId,
-  {
-    onDoc,
-  }: {
-    /** Callback with the doc as soon as it has been instantiated. */
-    onDoc?: (doc: RxThoughtDocument) => void
-  } = {},
-): Promise<Thought | undefined> => {
-  /* 
-    A thought has been created or made visible in the Redux state and needs to be synced from the persistence layer.
-    It should stay in memory and we should be subscribed to realtime changes from other clients until freeThought is called.
-    If background is true, this function should resolve as soon as the thought is loaded from the local db, but not wait until it is synced with the server.
-    If background is false, this function should only resolve when the thought is fully synced with the server.
-  */
-  console.info('TODO_RXDB: thoughtspace.replicateThought', { id })
-  const thoughtDoc = await getThoughtById(id)
-
-  if (!thoughtDoc) {
-    throw new Error(`replicateThought: Missing thoughtDoc for thought ${id}`)
-  }
-
-  const children = await replicateChildren(thoughtDoc.parentId, { onDoc })
-  const child = children?.find(child => child.id === id)
-  return child
+export const replicateThought = async (id: ThoughtId): Promise<Thought | undefined> => {
+  return getThoughtById(id)
 }
 
 /**
+ * @deprecated Use getChildren instead.
+ *
  * Replicates all thoughts contained within a Thought doc.
  *
  * @see replicateThought
  */
-export const replicateChildren = async (
-  id: ThoughtId,
-  {
-    onDoc,
-  }: {
-    onDoc?: (doc: RxThoughtDocument) => void
-  } = {},
-): Promise<Thought[] | undefined> => {
-  const { thoughts: thoughtCollection } = rxDB
-  const thoughtDoc = await thoughtCollection.findOne(id).exec()
-
-  if (!thoughtDoc) {
-    return undefined
-  }
-
-  onDoc?.(thoughtDoc)
-
-  const children = await getChildren(thoughtDoc)
-  return children
+export const replicateChildren = async (id: ThoughtId): Promise<Thought[] | undefined> => {
+  return getChildren(id)
 }
 
-/** Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing. */
+/**
+ * @deprecated Use getLexemeById instead.
+ *
+ * Replicates a Lexeme from the persistence layers to state, IDB, and the Websocket server. Does nothing if the Lexeme is already replicated, or is being replicated. Otherwise creates a new, empty YDoc that can be updated concurrently while syncing.
+ */
 export const replicateLexeme = async (key: string): Promise<Lexeme | undefined> => {
-  // special contexts do not have Lexemes
-  // Redux state will store dummy Lexemes with empty contexts, but there is no reason to try to replicate them
-  if (key === HOME_TOKEN || key === EM_TOKEN || key === ABSOLUTE_TOKEN) return undefined
-
-  const { lexemes: lexemeCollection } = rxDB
-  const lexemeDoc = await lexemeCollection.findOne(key).exec()
-
-  if (!lexemeDoc) {
-    return undefined
-  }
-
-  const lexeme = getLexeme(lexemeDoc)
-
-  return lexeme
+  return getLexemeById(key)
 }
 
 /** Gets all children from a thought RxDocument. Returns undefined if the doc does not exist. */
-const getChildren = async (thoughtDoc: RxThoughtDocument): Promise<Thought[] | undefined> => {
+const getChildren = async (id: ThoughtId): Promise<Thought[] | undefined> => {
+  const { thoughts: thoughtCollection } = rxDB
+
+  const thoughtDoc = await thoughtCollection.findOne(id).exec()
   if (!thoughtDoc) return undefined
 
-  const { thoughts: thoughtCollection } = rxDB.collections
   const thought = thoughtDoc.toJSON()
   const childrenIds = Object.keys(thought.childrenMap || {})
   const childrenMap = await thoughtCollection.findByIds(childrenIds).exec()
@@ -385,7 +342,14 @@ export const clear = async () => {
 }
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
-export const getLexemeById = (key: string) => replicateLexeme(key)
+export const getLexemeById = async (key: string) => {
+  const { lexemes: lexemeCollection } = rxDB
+  const lexemeDoc = await lexemeCollection.findOne(key).exec()
+
+  if (!lexemeDoc) return undefined
+
+  return getLexeme(lexemeDoc)
+}
 
 /** Gets multiple thoughts from the lexemeIndex by key. */
 export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefined)[]> => {
@@ -404,8 +368,6 @@ export const getLexemesByIds = async (keys: string[]): Promise<(Lexeme | undefin
 
 /** Gets a thought from the thoughtIndex. Replicates the thought if not already done. */
 export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined> => {
-  // await replicateThought(id)
-
   const { thoughts: thoughtCollection } = rxDB.collections
 
   const thoughtDoc = (await thoughtCollection.findOne(id).exec()) as RxThoughtDocument
