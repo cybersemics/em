@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { useEffect } from 'react'
+import React, { useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -76,9 +76,9 @@ const StaticThought = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
-  const multiline = useMultiline(editableRef, simplePath, value, isEditing)
+  const multiline = useMultiline(editableRef, simplePath, isEditing)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updateSize?.()
   }, [multiline, updateSize])
 

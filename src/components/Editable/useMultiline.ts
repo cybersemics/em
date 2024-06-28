@@ -1,23 +1,18 @@
 import { useCallback, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
-import equalPath from '../../util/equalPath'
+import editingValueStore from '../../stores/editingValue'
 
 /** Returns true if the element has more than one line of text. */
-const useMultiline = (
-  contentRef: React.RefObject<HTMLElement>,
-  simplePath: SimplePath,
-  value: string,
-  isEditing?: boolean,
-) => {
+const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
   const splitPosition = useSelector(state => state.splitPosition)
+  const cursor = useSelector(state => state.cursor)
 
-  // Check if the cursor is active.
-  // NOTE: We don't want to select the entire cursor path to skip invoking the layout effect too often.
-  const cursorActive = useSelector(state => equalPath(state.cursor, simplePath))
+  // While editing, watch the current Value and trigger the layout effect
+  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
@@ -37,7 +32,7 @@ const useMultiline = (
   // cursor changes to or from the element.
   useLayoutEffect(() => {
     updateMultiline()
-  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, value, cursorActive, updateMultiline])
+  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, editingValue, cursor, updateMultiline])
 
   return multiline
 }
