@@ -103,7 +103,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     { id },
   )
 
-  const { thoughts: thoughtCollection, lexemes: lexemeCollection } = rxDB
+  const { thoughts: thoughtCollection } = rxDB
   const thoughtOld = await getThoughtById(id)
   const thoughtParentIdOld = thoughtOld?.parentId
 
@@ -111,27 +111,25 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
     // When a thought changes parents, we need to delete it from the old parent Doc and update the docKey.
     // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
     const lexemeKey = hashThought(thought.value)
-    const lexemeDoc = await lexemeCollection.findOne(lexemeKey).exec()
-    const lexeme = getLexeme(lexemeDoc)
-    if (!lexemeDoc && id !== HOME_TOKEN && id !== EM_TOKEN) {
+    const lexeme = await getLexemeById(lexemeKey)
+    if (!lexeme && id !== HOME_TOKEN && id !== EM_TOKEN) {
       // TODO: Why does throwing an error get suppressed?
       console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
       return
     }
     // delete from old parent
     const parentThoughtDocOld = await thoughtCollection.findOne(thoughtParentIdOld).exec()
-
     if (parentThoughtDocOld) {
       const { [id]: prevThought, ...newChildrenMap } = parentThoughtDocOld.toJSON().childrenMap
 
-      parentThoughtDocOld?.incrementalPatch({
+      await parentThoughtDocOld?.incrementalPatch({
         childrenMap: newChildrenMap,
       })
     }
 
     // update Lexeme context docKey
     if (lexeme && !lexeme.contexts.includes(id)) {
-      updateLexeme(lexemeKey, {
+      await updateLexeme(lexemeKey, {
         ...lexeme,
         contexts: [...(lexeme.contexts || []), id],
       })
@@ -139,7 +137,7 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
   }
 
   // Insert or Update current thought
-  thoughtCollection.incrementalUpsert({
+  await thoughtCollection.incrementalUpsert({
     id,
     childrenMap: thought.childrenMap,
     created: thought.created,
@@ -153,9 +151,8 @@ export const updateThought = async (id: ThoughtId, thought: Thought): Promise<vo
 
   // Update parent thought
   const parentThoughtDoc = await thoughtCollection.findOne(thought.parentId).exec()
-
   if (parentThoughtDoc) {
-    parentThoughtDoc.incrementalPatch({
+    await parentThoughtDoc.incrementalPatch({
       childrenMap: {
         ...(parentThoughtDoc.toJSON().childrenMap! || {}),
         [id]: id,
