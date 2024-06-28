@@ -558,6 +558,11 @@ a.text-link {
   white-space: pre-wrap;
 }
 
+.table-col .thought,
+.table-col .thought-annotation {
+  max-width: 100%;
+}
+
 .thought-annotation {
   position: absolute;
   pointer-events: none;

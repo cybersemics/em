@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -660,6 +661,7 @@ const LayoutTree = () => {
                 // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
+                className={classNames({ 'table-col': isTableCol1 })}
                 style={{
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
