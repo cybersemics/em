@@ -558,8 +558,8 @@ a.text-link {
   white-space: pre-wrap;
 }
 
-.table-col .thought,
-.table-col .thought-annotation {
+.table-col1 .thought,
+.table-col1 .thought-annotation {
   max-width: 100%;
 }
 
