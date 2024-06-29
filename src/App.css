@@ -569,8 +569,7 @@ a.text-link {
 .editable-annotation {
   display: inline-block;
   width: 100%;
-  /* Apply the same padding on .editable_annotation instead of .editable-annotation-text */
-  padding: 0 1em 0 0.333em;
+  padding: 0 0.333em;
   box-sizing: border-box;
 }
 
@@ -1819,6 +1818,11 @@ h1 .num-contexts {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  max-width: 100%;
+}
+
+.editable-annotation .single-line {
+  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
   max-width: calc(100% - 1em);
 }
 
