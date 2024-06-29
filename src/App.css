@@ -570,7 +570,7 @@ a.text-link {
   display: inline-block;
   width: 100%;
   /* Apply the same padding on .editable_annotation instead of .editable-annotation-text */
-  padding: 0 0.2em 0 0.2em;
+  padding: 0 1em 0 0.333em;
   box-sizing: border-box;
 }
 
@@ -612,7 +612,7 @@ a.text-link {
   /* Add some padding-left otherwise caret is invisible on empty elements. */
   /* Cannot use padding-top on editable, as clicking it causes the selection to go to the beginning. */
   /* Cannot use padding-bottom on editable, as clicking it causes the selection to go to the end. */
-  padding: 0 0.2em 0 0.2em;
+  padding: 0 1em 0 0.333em;
   box-sizing: border-box;
 }
 
@@ -1819,12 +1819,12 @@ h1 .num-contexts {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  max-width: calc(100% - 5rem);
+  max-width: calc(100% - 1em);
 }
 
 /* Fix a tag position after overflow:hidden applined on span tag. */
 .single-line + a {
-  top: -12px;
+  position: absolute;
 }
 
 @media screen and (min-width: 480px) {
