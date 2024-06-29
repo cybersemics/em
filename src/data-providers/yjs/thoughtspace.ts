@@ -301,8 +301,8 @@ export const updateThoughts = async ({
 
 /** Clears all thoughts and lexemes from the db. */
 export const clear = async () => {
-  await rxDB.thoughts.find().remove()
-  await rxDB.lexemes.find().remove()
+  await rxDB.thoughts?.find()?.incrementalRemove()
+  await rxDB.lexemes?.find()?.incrementalRemove()
 
   // TODO: reset to initialState, otherwise a missing ROOT error will occur when thought observe is triggered
   // const state = initialState()
@@ -326,7 +326,8 @@ export const getLexemeById = async (id: string): Promise<Lexeme | undefined> => 
 
 /** Gets multiple lexemes from the db by id. */
 export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefined)[]> => {
-  if (!rxDB) return []
+  // TODO - Check why this validation is necessary for tests to pass.
+  if (!rxDB?.lexemes) return []
 
   const { lexemes: lexemeCollection } = rxDB
   const foundLexemeDocs = await lexemeCollection.findByIds(ids).exec()
@@ -346,7 +347,8 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 
 /** Gets multiple thoughts from the db by ids. O(n). */
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
-  if (!rxDB) return []
+  // TODO - Check why this validation is necessary for tests to pass.
+  if (!rxDB?.thoughts) return []
 
   const { thoughts: thoughtCollection } = rxDB
   const foundThoughtDocs = await thoughtCollection.findByIds(ids).exec()
