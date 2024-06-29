@@ -558,6 +558,8 @@ a.text-link {
   white-space: pre-wrap;
 }
 
+/* Need to override max-width for table cols since they are rendered within the calculated width, instead of a whole line.
+This prevents table cols being rendered as multiline content, which causes inaacurate initial render */
 .table-col1 .thought,
 .table-col1 .thought-annotation {
   max-width: 100%;
