@@ -262,8 +262,9 @@ a.button:active {
   background-color: #111;
 }
 
-.button-small {
+a.button-small {
   padding: 2px 0;
+  font-size: 90%;
 }
 
 a.button-less-padding {
