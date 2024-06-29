@@ -1,7 +1,6 @@
 import { RxCollection, RxDatabase, addRxPlugin, createRxDatabase } from 'rxdb'
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode'
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie'
-import { getRxStorageMemory } from 'rxdb/plugins/storage-memory'
 import { RxLexeme, lexemeSchema } from './schemas/lexeme'
 import { RxPermission, permissionSchema } from './schemas/permission'
 import { RxThought, thoughtSchema } from './schemas/thought'
@@ -24,7 +23,7 @@ export let rxDB: EmRxDB
 /** Initialize the thoughtspace. */
 export const init = async () => {
   const isTestEnv = import.meta.env.MODE === 'test'
-  const database = isTestEnv ? getTestDatabase() : getDatabase()
+  const database = getDatabase()
 
   rxDB = await database
 
@@ -42,9 +41,11 @@ export const init = async () => {
 
   /** Get RxDB development/production database. */
   async function getDatabase(): Promise<EmRxDB> {
+    const testPrefix = isTestEnv ? `-test-${Date.now()}` : ''
     return createRxDatabase({
-      name: DATABASE_NAME,
+      name: `${DATABASE_NAME}${testPrefix}`,
       storage: await getRxStorage(),
+      ignoreDuplicate: isTestEnv,
     })
 
     /** Get RxDB storage. */
@@ -66,14 +67,5 @@ export const init = async () => {
 
       return getRxStorageDexie()
     }
-  }
-
-  /** Get RxDB test database. */
-  function getTestDatabase(): Promise<EmRxDB> {
-    return createRxDatabase({
-      name: `${DATABASE_NAME}-test-${Date.now()}`,
-      storage: getRxStorageMemory(),
-      ignoreDuplicate: true,
-    })
   }
 }
