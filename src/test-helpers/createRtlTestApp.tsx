@@ -31,8 +31,6 @@ let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
 /** Set up testing and mock document and window functions. */
 const createTestApp = async () => {
   await act(async () => {
-    vi.useFakeTimers()
-
     // calls initEvents, which must be manually cleaned up
     const init = await initialize()
     cleanup = init.cleanup
@@ -52,8 +50,6 @@ const createTestApp = async () => {
       // close welcome modal
       { type: 'closeModal' },
     ])
-
-    vi.runOnlyPendingTimers()
 
     // make DND ref available for drag and drop tests.
     document.DND = dndRef.current
@@ -78,8 +74,6 @@ export const cleanupTestApp = async () => {
 
     // set url back to home
     window.history.pushState({}, '', '/')
-
-    vi.runOnlyPendingTimers()
   })
 }
 
