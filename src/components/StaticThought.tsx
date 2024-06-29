@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
@@ -8,6 +9,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
+import theme from '../selectors/theme'
 import thoughtToPath from '../selectors/thoughtToPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -51,6 +53,34 @@ export interface ThoughtProps {
   view?: string | null
 }
 
+/** Returns true if a color is white, in rgb, rgba, hex, or color name. */
+const isWhite = (color: string | undefined) => {
+  switch (color) {
+    case 'rgb(255, 255, 255)':
+    case 'rgba(255, 255, 255, 1)':
+    case '#fff':
+    case '#ffffff':
+    case 'white':
+      return true
+    default:
+      return false
+  }
+}
+
+/** Returns true if a color is black, in rgb, rgba, hex, or color name. */
+const isBlack = (color: string | undefined) => {
+  switch (color) {
+    case 'rgb(0, 0, 0)':
+    case 'rgba(0, 0, 0, 1)':
+    case '#000':
+    case '#000000':
+    case 'black':
+      return true
+    default:
+      return false
+  }
+}
+
 /** A static thought element with overlay bullet, context breadcrumbs, editable, and superscript. */
 const StaticThought = ({
   allowSingleContext,
@@ -72,6 +102,7 @@ const StaticThought = ({
 }: ThoughtProps) => {
   const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
+  const dark = useSelector(state => theme(state) !== 'Light')
   const homeContext = showContexts && isRoot(simplePath) && !isContextPending
   const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
@@ -126,7 +157,12 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
-        className='thought'
+        className={classNames({
+          thought: true,
+          // invert placeholder color if the color is inverted (such as when a background color is applied)
+          inverse:
+            (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)) ? 'inverse' : null,
+        })}
         style={{
           // do not set a min-width on table column 1 since there is no room for additional click area
           minWidth: !isTableCol1 ? '3em' : undefined,
