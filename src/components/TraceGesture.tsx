@@ -2,7 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import SignaturePad from 'react-signature-pad-wrapper'
 import { CSSTransition } from 'react-transition-group'
-import { AlertType, GESTURE_CANCEL_ALERT_TEXT, Settings, noop } from '../constants'
+import {
+  AlertType,
+  GESTURE_CANCEL_ALERT_TEXT,
+  GESTURE_GLOW_BLUR,
+  GESTURE_GLOW_COLOR,
+  Settings,
+  noop,
+} from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import { gestureString, globalShortcuts } from '../shortcuts'
@@ -79,10 +86,10 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.clear()
 
     // add glow
-    signaturePad._ctx.shadowColor = colors.gray
+    signaturePad._ctx.shadowColor = colors[GESTURE_GLOW_COLOR]
     signaturePad._ctx.shadowOffsetX = 0
     signaturePad._ctx.shadowOffsetY = 0
-    signaturePad._ctx.shadowBlur = 15
+    signaturePad._ctx.shadowBlur = GESTURE_GLOW_BLUR
   }, [colors])
 
   useEffect(() => {
