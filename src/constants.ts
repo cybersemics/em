@@ -25,7 +25,7 @@ export const MODAL_NEWCHILD_DELAY = 1200
 // export const MODAL_SUPERSCRIPT_DELAY = 800
 
 // divider plus px from max width of list items
-export const DIVIDER_PLUS_PX = 30
+export const DIVIDER_PLUS_PX = 20
 export const DIVIDER_MIN_WIDTH = 85
 
 export const LATEST_SHORTCUT_DIAGRAM_DURATION = 800
