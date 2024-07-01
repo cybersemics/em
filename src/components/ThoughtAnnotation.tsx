@@ -248,11 +248,7 @@ const ThoughtAnnotation = React.memo(
           })}
           style={styleAnnotation}
         >
-          <span
-            className={classNames('editable-annotation-text', { 'single-line': !isEditing && isURL(value) })}
-            style={style}
-            dangerouslySetInnerHTML={{ __html: textMarkup }}
-          />
+          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />

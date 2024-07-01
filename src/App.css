@@ -550,7 +550,7 @@ a.text-link {
 
 .thought,
 .thought-annotation {
-  max-width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
+  max-width: 100%; /* expand click area. offset content padding to prevent line break */
   /* do not set font-weight or it will override =heading style. */
   margin-top: 0;
   display: inline-block;
@@ -1813,7 +1813,8 @@ h1 .num-contexts {
   margin-bottom: 0.5em;
 }
 
-.single-line {
+.single-line .thought .editable,
+.single-line .thought-annotation .editable-annotation-text {
   display: inline-block;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -1821,13 +1822,18 @@ h1 .num-contexts {
   max-width: 100%;
 }
 
-.editable-annotation .single-line {
-  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+.single-line .thought {
   max-width: calc(100% - 1em);
 }
 
+.single-line .thought-annotation {
+  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+  max-width: calc(100% - 2em);
+}
+
+
 /* Fix a tag position after overflow:hidden applined on span tag. */
-.single-line + a {
+.single-line .thought-annotation .editable-annotation-text + a {
   position: absolute;
 }
 
