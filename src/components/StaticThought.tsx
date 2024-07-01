@@ -19,6 +19,7 @@ import parentOf from '../util/parentOf'
 import Divider from './Divider'
 import Editable from './Editable'
 import useMultiline from './Editable/useMultiline'
+import usePlaceholder from './Editable/usePlaceholder'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -108,6 +109,7 @@ const StaticThought = ({
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
+  const placeholder = usePlaceholder({ isEditing, simplePath })
 
   useLayoutEffect(() => {
     updateSize?.()
@@ -149,6 +151,7 @@ const StaticThought = ({
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
+        placeholder={placeholder}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
         simplePath={showContexts ? parentOf(simplePath) : simplePath}
@@ -179,6 +182,7 @@ const StaticThought = ({
           <Editable
             editableRef={editableRef}
             multiline={multiline}
+            placeholder={placeholder}
             path={path}
             disabled={!isDocumentEditable()}
             isEditing={isEditing}

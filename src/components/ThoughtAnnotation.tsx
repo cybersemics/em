@@ -26,7 +26,6 @@ import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
-import usePlaceholder from './Editable/usePlaceholder'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -85,6 +84,7 @@ const ThoughtAnnotationContainer = React.memo(
     simplePath,
     minContexts = 2,
     multiline,
+    placeholder,
     invalidState,
     style,
     // only applied to the .subthought container
@@ -96,6 +96,7 @@ const ThoughtAnnotationContainer = React.memo(
     minContexts?: number
     multiline?: boolean
     path: Path
+    placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
     style?: React.CSSProperties
@@ -185,6 +186,7 @@ const ThoughtAnnotationContainer = React.memo(
           style,
           styleAnnotation,
           email,
+          placeholder,
           url,
           value,
         }}
@@ -206,6 +208,7 @@ const ThoughtAnnotation = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
     url,
+    placeholder,
     value,
   }: {
     email?: string
@@ -217,6 +220,7 @@ const ThoughtAnnotation = React.memo(
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
+    placeholder?: string
     value: string
   }) => {
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
@@ -231,8 +235,6 @@ const ThoughtAnnotation = React.memo(
      * It will re-render only when respective Lexeme is changed.
      * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
      */
-
-    const placeholder = usePlaceholder({ isEditing, simplePath })
 
     const textMarkup = useSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
@@ -262,7 +264,7 @@ const ThoughtAnnotation = React.memo(
           <span
             className={classNames({ 'editable-annotation-text': true, url: !isEditing && url })}
             style={style}
-            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder }}
+            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
           />
 
           {/* We use this combination of inline-block, absolute positioning and zero height to not mess with the parent's line height calculations. */}
