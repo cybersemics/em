@@ -54,7 +54,6 @@ import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useOnPaste from './Editable/useOnPaste'
-import usePlaceholder from './Editable/usePlaceholder'
 
 /** Stops propagation of an event. */
 const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
@@ -66,6 +65,7 @@ interface EditableProps {
   isEditing?: boolean
   isVisible?: boolean
   multiline?: boolean
+  placeholder?: string
   rank?: number
   style?: React.CSSProperties
   simplePath: SimplePath
@@ -95,6 +95,7 @@ const Editable = ({
   isEditing,
   isVisible,
   multiline,
+  placeholder,
   onEdit,
   path,
   simplePath,
@@ -117,7 +118,6 @@ const Editable = ({
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  const placeholder = usePlaceholder({ isEditing, simplePath })
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
 

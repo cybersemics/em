@@ -84,6 +84,7 @@ const ThoughtAnnotationContainer = React.memo(
     simplePath,
     minContexts = 2,
     multiline,
+    placeholder,
     invalidState,
     style,
     // only applied to the .subthought container
@@ -95,6 +96,7 @@ const ThoughtAnnotationContainer = React.memo(
     minContexts?: number
     multiline?: boolean
     path: Path
+    placeholder?: string
     showContextBreadcrumbs?: boolean
     simplePath: SimplePath
     style?: React.CSSProperties
@@ -184,6 +186,7 @@ const ThoughtAnnotationContainer = React.memo(
           style,
           styleAnnotation,
           email,
+          placeholder,
           url,
           value,
         }}
@@ -205,6 +208,7 @@ const ThoughtAnnotation = React.memo(
     // only applied to the .subthought container
     styleAnnotation,
     url,
+    placeholder,
     value,
   }: {
     email?: string
@@ -216,6 +220,7 @@ const ThoughtAnnotation = React.memo(
     style?: React.CSSProperties
     styleAnnotation?: React.CSSProperties
     url?: string | null
+    placeholder?: string
     value: string
   }) => {
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
@@ -248,7 +253,11 @@ const ThoughtAnnotation = React.memo(
           })}
           style={styleAnnotation}
         >
-          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
+          <span
+            className='editable-annotation-text'
+            style={style}
+            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
+          />
           {
             // do not render url icon on root thoughts in publish mode
             url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />

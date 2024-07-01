@@ -16,8 +16,6 @@ const EMPTY_THOUGHT_TIMEOUT = 5 * 1000
 const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefined; simplePath: SimplePath }) =>
   useSelector(state => {
     const isCursorCleared = isEditing && state.cursorCleared
-    const parentId = head(rootedParentOf(state, simplePath))
-    const lastUpdated = getThoughtById(state, head(simplePath)).lastUpdated
     const value = getThoughtById(state, head(simplePath)).value
     if (!isCursorCleared && value) return value
 
@@ -26,6 +24,8 @@ const usePlaceholder = ({ isEditing, simplePath }: { isEditing: boolean | undefi
 
     if (valueStripped) return valueStripped
 
+    const parentId = head(rootedParentOf(state, simplePath))
+    const lastUpdated = getThoughtById(state, head(simplePath)).lastUpdated
     const isTableColumn1 = attributeEquals(state, parentId, '=view', 'Table')
     const experienceMode = getUserSetting(state, Settings.experienceMode)
     const emptyValue =

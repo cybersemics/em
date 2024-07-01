@@ -456,13 +456,16 @@ it('GestureDiagram', async () => {
 
 // Tests the following cases:
 // 1. Single line url
-// 2. Multiline url (ellipsized)
-// 3. Placeholder with url child
+// 2. Placeholder with url child
+// 3. Multiline url (ellipsized)
+// 4. Multiline url (with cursor)
 it('url', async () => {
   await removeHUD()
 
   await paste(`
     - https://test.com/single-line
+    - 
+      - https://github.com/cybersemics/em
     - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
   `)
