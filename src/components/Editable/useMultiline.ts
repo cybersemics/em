@@ -1,7 +1,12 @@
 import { useCallback, useLayoutEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
+import State from '../../@types/State'
+import useSelectorEffect from '../../hooks/useSelectorEffect'
 import editingValueStore from '../../stores/editingValue'
+
+/** Selects the cursor from the state. */
+const selectCursor = (state: State) => state.cursor
 
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
@@ -9,7 +14,6 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
   const splitPosition = useSelector(state => state.splitPosition)
-  const cursor = useSelector(state => state.cursor)
 
   // While editing, watch the current Value and trigger the layout effect
   const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
@@ -32,7 +36,12 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // cursor changes to or from the element.
   useLayoutEffect(() => {
     updateMultiline()
-  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, editingValue, cursor, updateMultiline])
+  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, editingValue, updateMultiline])
+
+  // Recalculate multiline when the cursor changes.
+  // This is necessary because the width of thoughts change as the autofocus indent changes.
+  // (do not re-render component unless multiline changes)
+  useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
 
   return multiline
 }
