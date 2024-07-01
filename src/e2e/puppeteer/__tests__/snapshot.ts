@@ -42,7 +42,8 @@ From jest-image-snapshot README:
 */
 // jest.retryTimes(3)
 
-const { click, paste, press, remove, screenshot, scroll, type, dragAndDropThought, simulateDragAndDrop } = helpers()
+const { click, openModal, paste, press, remove, screenshot, scroll, type, dragAndDropThought, simulateDragAndDrop } =
+  helpers()
 
 /** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
 const removeHUD = async () => {
@@ -307,4 +308,14 @@ describe('Drag and Drop simulation tests', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+})
+
+it('GestureDiagram', async () => {
+  await openModal('testGestureDiagram')
+
+  // wait for modal to fade in
+  await sleep(400)
+
+  const image = await screenshot()
+  expect(image).toMatchImageSnapshot()
 })

@@ -13,6 +13,7 @@ import getEditable from './getEditable'
 import getEditingText from './getEditingText'
 import getSelection from './getSelection'
 import newThought from './newThought'
+import openModal from './openModal'
 import paste from './paste'
 import press from './press'
 import refresh from './refresh'
@@ -47,6 +48,7 @@ const helpers = {
   getEditingText,
   getSelection,
   newThought,
+  openModal,
   paste,
   press,
   remove,
