@@ -558,6 +558,12 @@ a.text-link {
   white-space: pre-wrap;
 }
 
+/* Required for initial width calculation of table cells to prevent false line breaks. */
+.table-col1 .thought,
+.table-col1 .thought-annotation {
+  max-width: 100%;
+}
+
 .thought-annotation {
   position: absolute;
   pointer-events: none;
