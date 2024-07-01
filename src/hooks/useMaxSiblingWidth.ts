@@ -1,11 +1,11 @@
-import { useEffect, useState, RefObject } from 'react'
+import { RefObject, useEffect, useState } from 'react'
 
-// Helper function to collect consecutive siblings at a specific depth
+/** Helper function to collect consecutive siblings at a specific depth. */
 const collectConsecutiveSiblings = (
   siblings: HTMLElement[],
   currentIndex: number,
   targetDepth: string,
-  direction: -1 | 1
+  direction: -1 | 1,
 ): HTMLElement[] => {
   const collectedSiblings: HTMLElement[] = []
   let i = currentIndex + direction
@@ -28,15 +28,16 @@ const collectConsecutiveSiblings = (
   return direction === -1 ? collectedSiblings.reverse() : collectedSiblings
 }
 
-// Helper function to collect siblings at target depth and one level up
+/** Helper function to collect siblings at target depth and one level up. */
 const collectSiblingsOneLevelUp = (
   siblings: HTMLElement[],
   currentIndex: number,
-  targetDepth: string
+  targetDepth: string,
 ): HTMLElement[] => {
   const allowedDepth = String(parseInt(targetDepth, 10) - 1)
   const collectedSiblings: HTMLElement[] = []
 
+  /** Collect siblings while moving in provided direction. */
   const collect = (i: number, direction: -1 | 1) => {
     while (i >= 0 && i < siblings.length) {
       const sibling = siblings[i]
@@ -47,10 +48,7 @@ const collectSiblingsOneLevelUp = (
         siblingDepth &&
         (siblingDepth === targetDepth || siblingDepth === allowedDepth)
       ) {
-        if (
-          !sibling.querySelector('.divider') &&
-          siblingDepth === targetDepth
-        ) {
+        if (!sibling.querySelector('.divider') && siblingDepth === targetDepth) {
           collectedSiblings.push(sibling)
         }
       } else {
@@ -67,7 +65,7 @@ const collectSiblingsOneLevelUp = (
   return collectedSiblings
 }
 
-// Helper function to calculate maximum width among '.thought' elements
+/** Helper function to calculate maximum width among '.thought' elements. */
 const calculateMaxWidth = (elements: HTMLElement[]): number => {
   const widths = elements.map(el => {
     const thought = el.querySelector<HTMLElement>('.thought')
@@ -77,7 +75,7 @@ const calculateMaxWidth = (elements: HTMLElement[]): number => {
   return widths.length > 0 ? Math.max(...widths) : 0
 }
 
-/* Hook to calculate the width of a divider, equal to the max width of a sibling at a particular depth */
+/** Hook to calculate the width of a divider, equal to the max width of a sibling at a particular depth. */
 const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
   const [maxWidth, setMaxWidth] = useState(0)
 
@@ -100,7 +98,7 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
     // Collect consecutive siblings at the same depth
     let consecutiveSiblings = [
       ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, -1),
-      ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1)
+      ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1),
     ]
 
     // If it is the only-child in column 2 of a table, a divider should be the max-width of all of the column 2 thoughts,
@@ -109,7 +107,7 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
       consecutiveSiblings = collectSiblingsOneLevelUp(siblings, currentIndex, targetDepth)
     }
 
-    // Calculate the maximum width among these '.tree-node .thought' elements
+    /** Calculate the maximum width among these '.tree-node .thought' elements. */
     const updateMaxWidth = () => {
       setMaxWidth(calculateMaxWidth(consecutiveSiblings))
     }
@@ -120,7 +118,7 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
     const observer = new MutationObserver(() => {
       consecutiveSiblings = [
         ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, -1),
-        ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1)
+        ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1),
       ]
 
       if (consecutiveSiblings.length === 0) {
@@ -133,7 +131,7 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
     observer.observe(parentTreeNode.parentNode!, {
       childList: true,
       subtree: true,
-      attributes: true
+      attributes: true,
     })
 
     // Clean up

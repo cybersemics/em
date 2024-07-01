@@ -250,6 +250,32 @@ describe('Layout Tree: Table View', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('divider should be as wide as the widest sibling', async () => {
+    await paste(`
+      - Repositories
+      - Roadmap
+        - =view
+          - Table
+        - Meta
+          - Keyword Search with tools
+        - Adult Development
+          - ---
+        - Hypertext
+          - Future of Text
+          - Rheingold
+          - ---
+          - Landow
+          - HT Best Of
+          - HT '18
+        - Semiotics
+          - ---
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('Font Size: 18 (default)', () => {
