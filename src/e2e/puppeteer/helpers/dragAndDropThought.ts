@@ -9,6 +9,10 @@ interface DragAndDropOptions {
     - child: drop the source thought as a child of the destination thought.
    */
   position: 'after' | 'before' | 'child'
+  // If true, the mouse button is released after the drop.
+  mouseUp?: boolean
+  // If true, the source thought is dropped as a sibling to the hidden uncle
+  dropUncle?: boolean
 }
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
@@ -16,14 +20,9 @@ const dragAndDropThought = async (
   page: Page,
   sourceValue: string,
   destValue: string,
-  { position }: DragAndDropOptions,
+  { position, mouseUp, dropUncle }: DragAndDropOptions,
 ) => {
-  if (position === 'before') {
-    throw new Error('Not implemented')
-  } else if (position === 'child') {
-    throw new Error('Not implemented')
-  }
-
+  const OFFSET = 20
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
 
@@ -36,25 +35,32 @@ const dragAndDropThought = async (
     throw new Error('Drag destination element not found')
   }
 
-  // Offset to add to drop destination y position so it is dragged exactly on top of the drop traget.
-  // Otherwise it falls short, just above the drop target.
-  const yOffset = 20
+  // If the position is 'before', the yOffset is 0
+  // because the drop target will be just above the thought otherwise it will be 20 so it is dragged after the thought
+  const yOffset = position === 'before' ? 0 : OFFSET
+
+  // If the position is 'child', we need to give an xOffset
+  // because the drop child is few pixels towards the right from the thought
+  const xOffset = position === 'child' ? OFFSET : 0
 
   // Calculate center positions of the elements
   const dragPosition = {
-    x: dragStart.x + 1,
+    // -5 to avoid the caret to be on the thought
+    // because otherwise it will be selected and any expanded thought will collapse
+    x: dragStart.x + 1 - 5,
     y: dragStart.y + 1,
   }
   const dropPosition = {
-    x: dragEnd.x + dragEnd.width / 2,
-    y: yOffset + dragEnd.y + dragEnd.height / 2,
+    x: dragEnd.x + dragEnd.width / 2 + xOffset,
+    // if we are dropping to the hidden uncle, we need to move to the bottom of the thought to trigger DropUncle instead of normal middle height
+    y: dropUncle ? dragEnd.y + dragEnd.height : dragEnd.y + dragEnd.height / 2 + yOffset,
   }
 
   // Move the mouse to the drag target, then press, move to the drop target, and release
   await page.mouse.move(dragPosition.x, dragPosition.y)
   await page.mouse.down()
   await page.mouse.move(dropPosition.x, dropPosition.y, { steps: 10 })
-  await page.mouse.up()
+  if (mouseUp) await page.mouse.up()
 
   await sleep(500)
 }

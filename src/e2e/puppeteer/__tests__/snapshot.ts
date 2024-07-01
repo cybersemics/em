@@ -29,6 +29,10 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
   // 14 px definitely has false negatives.
   // Hopefully 8 is the sweet spot.
   failureThreshold: 8,
+  // custom identifier for snapshots based on the title of the test
+  customSnapshotIdentifier: ({ defaultIdentifier }) => {
+    return `${defaultIdentifier.replace('snapshot-ts-src-e-2-e-puppeteer-tests-snapshot-ts-', '').toLocaleLowerCase()}-snap`
+  },
   // Setting snapshot directory to __image_snapshots__/{platform} to avoid conflicts between platforms.
   customSnapshotsDir: path.join(__dirname, '__image_snapshots__', snapshotDirectory),
 })
@@ -42,8 +46,19 @@ From jest-image-snapshot README:
 */
 // jest.retryTimes(3)
 
-const { click, openModal, paste, press, remove, screenshot, scroll, type, dragAndDropThought, simulateDragAndDrop } =
-  helpers()
+const {
+  click,
+  openModal,
+  paste,
+  press,
+  remove,
+  screenshot,
+  scroll,
+  type,
+  dragAndDropThought,
+  simulateDragAndDrop,
+  clickThought,
+} = helpers()
 
 /** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
 const removeHUD = async () => {
@@ -303,7 +318,137 @@ describe('Drag and Drop simulation tests', () => {
       - d
     `)
 
+    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+})
+
+describe('drag', () => {
+  beforeEach(removeHUD)
+
+  it('Check drag hover tests', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
     await dragAndDropThought('a', 'd', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drag hover tests, covering DropChild', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+    await dragAndDropThought('a', 'b', { position: 'child' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drag hover tests, covering DropEnd', async () => {
+    await paste(`
+      - x
+      - a
+        - b
+        - c
+    `)
+
+    await clickThought('a')
+
+    await dragAndDropThought('x', 'c', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drag hover tests, covering DropUncle', async () => {
+    await paste(`
+      - a
+        - b
+          - c
+            - x
+          - d
+        - e
+    `)
+
+    await clickThought('b')
+
+    // wait for b to expand
+    await sleep(100)
+
+    await clickThought('c')
+
+    // wait for c to expand and e to fade out
+    await sleep(200)
+
+    await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+})
+
+describe('drop', () => {
+  beforeEach(removeHUD)
+
+  it('Check drop target tests, covering DragAndDropThought and DropChild', async () => {
+    await simulateDragAndDrop({ drop: true })
+    await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop target tests, covering DropEnd', async () => {
+    await simulateDragAndDrop({ drop: true })
+    await paste(`
+      - a
+        - b
+          - c
+    `)
+
+    await dragAndDropThought('c', 'c', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Check drop target tests, covering DropUncle', async () => {
+    await simulateDragAndDrop({ drop: true })
+    await paste(`
+      - a
+        - b
+          - c
+            - x
+          - d
+        - e
+    `)
+
+    await clickThought('b')
+
+    // wait for b to expand
+    await sleep(100)
+
+    await clickThought('c')
+
+    // wait for c to expand and e to fade out
+    await sleep(300)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
