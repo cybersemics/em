@@ -6,6 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useSelectorEffect from '../hooks/useSelectorEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
@@ -37,6 +38,9 @@ export type OnResize = (args: {
 
 /** Selects whether the context view is active for this thought. */
 const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
+
+/** Selects the cursor. */
+const selectCursor = (state: State) => state.cursor
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
 export const findFirstEnvContextWithZoom = (
@@ -172,6 +176,10 @@ const VirtualThought = ({
     editingValue,
     updateSize,
   ])
+
+  // Read the element's height from the DOM on cursor change and re-render with new height
+  // shimHiddenThought will re-render as needed.
+  useSelectorEffect(updateSize, selectCursor, shallowEqual)
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
