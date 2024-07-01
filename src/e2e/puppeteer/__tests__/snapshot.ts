@@ -383,8 +383,13 @@ describe('drag', () => {
     `)
 
     await clickThought('b')
+
+    // wait for b to expand
+    await sleep(100)
+
     await clickThought('c')
 
+    // wait for c to expand and e to fade out
     await sleep(200)
 
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
@@ -436,8 +441,13 @@ describe('drop', () => {
     `)
 
     await clickThought('b')
+
+    // wait for b to expand
+    await sleep(100)
+
     await clickThought('c')
 
+    // wait for c to expand and e to fade out
     await sleep(300)
 
     const image = await screenshot()
