@@ -4,8 +4,8 @@ import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
-import fastClick from '../util/fastClick'
 import useMaxSiblingWidth from '../hooks/useMaxSiblingWidth'
+import fastClick from '../util/fastClick'
 import head from '../util/head'
 
 /** A custom horizontal rule. */
@@ -26,7 +26,7 @@ const Divider = ({ path }: { path: Path }) => {
     if (dividerSetWidth.current) {
       setWidth(maxSiblingWidth > DIVIDER_MIN_WIDTH ? maxSiblingWidth + DIVIDER_PLUS_PX : DIVIDER_MIN_WIDTH)
     }
-  }, [maxSiblingWidth])
+  }, [dividerSetWidth, maxSiblingWidth])
 
   return (
     <div
