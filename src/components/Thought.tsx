@@ -38,6 +38,7 @@ import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
+import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import safeRefMerge from '../util/safeRefMerge'
@@ -409,7 +410,10 @@ const ThoughtContainer = ({
         ) : null}
 
         <div
-          className='thought-container'
+          className={classNames({
+            'thought-container': true,
+            'single-line': !isEditing && isURL(value),
+          })}
           style={{
             // ensure that ThoughtAnnotation is positioned correctly
             position: 'relative',

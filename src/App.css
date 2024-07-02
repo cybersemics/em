@@ -546,7 +546,7 @@ a.text-link {
 
 .thought,
 .thought-annotation {
-  max-width: calc(100% - 1em); /* expand click area. offset content padding to prevent line break */
+  max-width: 100%;
   /* do not set font-weight or it will override =heading style. */
   margin-top: 0;
   display: inline-block;
@@ -571,6 +571,9 @@ This prevents table cols being rendered as multiline content, which causes inaac
 
 .editable-annotation {
   display: inline-block;
+  width: 100%;
+  padding: 0 0.333em;
+  box-sizing: border-box;
 }
 
 .thought-annotation a {
@@ -581,7 +584,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
 .editable-annotation-text,
 .thought-annotation .breadcrumbs {
   visibility: hidden;
-  /*color: tomato;*/
+  /* color: tomato; */
 }
 
 .subthought-highlight {
@@ -606,15 +609,19 @@ This prevents table cols being rendered as multiline content, which causes inaac
   top: 0.3em;
 }
 
-.child .editable,
-.editable-annotation-text {
+.child .editable {
   /* Add some padding-right for increased click area. */
   /* Add some padding-left otherwise caret is invisible on empty elements. */
   /* Cannot use padding-top on editable, as clicking it causes the selection to go to the beginning. */
   /* Cannot use padding-bottom on editable, as clicking it causes the selection to go to the end. */
   padding: 0 1em 0 0.333em;
+  box-sizing: border-box;
+}
+
+.child .editable,
+.editable-annotation-text {
   /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-  margin: -0.5px -1em 0 calc(1em - 18px);
+  margin: -0.5px 0 0 calc(1em - 18px);
   /* create stacking order to position above thought-annotation so that function background color does not mask thought */
   position: relative;
   /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
@@ -649,11 +656,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
   padding-bottom: 0.5em;
   padding-top: 0.33em;
   /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
-}
-
-/* padding-top */
-.editable-annotation.multiline.multiline.multiline.multiline {
-  margin-top: calc(-0.12em + 0.33em);
 }
 
 .safari .multiline.multiline.multiline.multiline {
@@ -1813,6 +1815,38 @@ h1 .num-contexts {
 .popup .modal-actions.modal-actions-stack a.button {
   margin-bottom: 0.5em;
 }
+
+.single-line .thought .editable,
+.single-line .thought-annotation .editable-annotation-text {
+  display: inline-block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.single-line .thought {
+  max-width: calc(100% - 1em);
+}
+
+.single-line .thought-annotation {
+  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
+  max-width: calc(100% - 2em);
+}
+
+/* Fix a tag position after overflow:hidden applined on span tag. */
+.single-line .thought-annotation .editable-annotation-text + a {
+  position: absolute;
+}
+.single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
+  position: absolute;
+  right: -22px;
+}
+
+.multiline.multiline.multiline.multiline.editable-annotation {
+  padding-right: 1em;
+}
+
 @media screen and (min-width: 480px) {
   .popup .modal-actions.modal-actions-stack {
     display: flex;
