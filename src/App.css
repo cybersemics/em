@@ -622,7 +622,7 @@ a.text-link {
   /* create stacking order to position above thought-annotation so that function background color does not mask thought */
   position: relative;
   /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
-  clip-path: inset(0.001px 0 0.1em 0);
+  /* clip-path: inset(0.001px 0 0.1em 0); */
   /* Use minimum height to the cover the gap left by clip-path */
   min-height: 1.9em;
 }
@@ -1835,6 +1835,14 @@ h1 .num-contexts {
 /* Fix a tag position after overflow:hidden applined on span tag. */
 .single-line .thought-annotation .editable-annotation-text + a {
   position: absolute;
+}
+.single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
+  position: absolute;
+  right: -22px;
+}
+
+.multiline.multiline.multiline.multiline.editable-annotation {
+  padding-right: 1em;
 }
 
 @media screen and (min-width: 480px) {
