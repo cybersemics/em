@@ -5,12 +5,18 @@ import State from '../../@types/State'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import editingValueStore from '../../stores/editingValue'
 
+/** Selects the cursor from the state. */
+const selectCursor = (state: State) => state.cursor
+
 /** Returns true if the element has more than one line of text. */
 const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: SimplePath, isEditing?: boolean) => {
   const [multiline, setMultiline] = useState(false)
   const fontSize = useSelector(state => state.fontSize)
   const showSplitView = useSelector(state => state.showSplitView)
   const splitPosition = useSelector(state => state.splitPosition)
+
+  // While editing, watch the current Value and trigger the layout effect
+  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
 
   const updateMultiline = useCallback(() => {
     if (!contentRef.current) return
@@ -26,20 +32,23 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
     setMultiline(height - paddingTop > singleLineHeight * 1.5)
   }, [contentRef, fontSize])
 
+  // Recalculate multiline on mount, when the font size changes, edit, split view resize, value changes, and when the
+  // cursor changes to or from the element.
+  useLayoutEffect(updateMultiline, [
+    contentRef,
+    fontSize,
+    isEditing,
+    showSplitView,
+    simplePath,
+    splitPosition,
+    editingValue,
+    updateMultiline,
+  ])
+
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
-  const selectCursor = useCallback((state: State) => state.cursor, [])
   useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
-
-  // Recalculate multiline on mount, when the font size changes, edit, and split view resize.
-  useLayoutEffect(() => {
-    updateMultiline()
-    if (isEditing) {
-      // return the unsubscribe function
-      return editingValueStore.subscribe(updateMultiline)
-    }
-  }, [contentRef, fontSize, isEditing, showSplitView, simplePath, splitPosition, updateMultiline])
 
   return multiline
 }
