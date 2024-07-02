@@ -355,7 +355,7 @@ const ThoughtContainer = ({
           // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
           position: 'relative',
           // match Editable padding
-          marginTop: '0.501em',
+          // marginTop: '0.501em',
           transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
           ...style,
           ...styleContainer,
@@ -453,7 +453,6 @@ const ThoughtContainer = ({
             updateSize={updateSize}
             view={view}
           />
-
           <Note path={simplePath} />
         </div>
 
