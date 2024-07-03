@@ -41,9 +41,9 @@ export const init = async () => {
 
   /** Get RxDB development/production database. */
   async function getDatabase(): Promise<EmRxDB> {
-    const testPrefix = isTestEnv ? `-test-${Date.now()}` : ''
+    const testPrefix = isTestEnv ? `-test-${Date.now()}-${Math.floor(Math.random() * 1000)}` : ''
     return createRxDatabase({
-      name: `${DATABASE_NAME}${testPrefix}`,
+      name: `${testPrefix}${DATABASE_NAME}`,
       storage: await getRxStorage(),
       ignoreDuplicate: isTestEnv,
     })
