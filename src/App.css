@@ -686,11 +686,15 @@ a.text-link {
 /* Ellipsize urls when not actively editing. */
 .editable.url:not(.active),
 .editable-annotation-text.url:not(.active) {
-  display: inline-block;
   max-width: calc(100% - 2em);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Allow the URL icon to not affect box size when not actively editing. */
+.editable-annotation-text.url:not(.active) {
+  display: inline-block;
 }
 
 /* When actively editing, account for URL icon space. */
