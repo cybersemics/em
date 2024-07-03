@@ -90,8 +90,8 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
     const targetDepth = parentTreeNode.getAttribute('data-depth')
     if (!targetDepth) return
 
+    /* Get all siblings and calculate max width */
     const updateSiblingsAndMaxWidth = () => {
-
       // Get all siblings of the identified parent node
       const siblings = Array.from(parentTreeNode.parentNode?.children || []) as HTMLElement[]
 
