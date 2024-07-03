@@ -390,7 +390,7 @@ describe('drag', () => {
     await clickThought('c')
 
     // wait for c to expand and e to fade out
-    await sleep(200)
+    await sleep(400)
 
     await dragAndDropThought('c', 'e', { position: 'before', dropUncle: true })
 
@@ -448,7 +448,7 @@ describe('drop', () => {
     await clickThought('c')
 
     // wait for c to expand and e to fade out
-    await sleep(300)
+    await sleep(400)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
