@@ -690,8 +690,12 @@ a.text-link {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Align icon at the top */
-  vertical-align: top;
+}
+
+/* Adjust multiline icon alignment */
+.editable-annotation.multiline svg {
+  /* This rule requires !important to override the applied margin in the inline styles. */
+  margin-top: -0.08em !important;
 }
 
 .mobile .child .editable {
