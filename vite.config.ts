@@ -20,7 +20,6 @@ export default defineConfig(({ mode }) => {
       VitePWA({ injectRegister: null, strategies: 'injectManifest', srcDir: 'src', filename: 'service-worker.ts' }),
     ],
     server: {
-      host: env.VITE_HOST || '0.0.0.0',
       port: parseInt(env.VITE_PORT || '3000'),
     },
   }
