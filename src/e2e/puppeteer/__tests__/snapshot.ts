@@ -31,15 +31,16 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
   failureThreshold: 8,
   // custom identifier for snapshots based on the title of the test
   customSnapshotIdentifier: ({ defaultIdentifier }) => {
-    return `${defaultIdentifier.replace('snapshot-ts-src-e-2-e-puppeteer-tests-snapshot-ts-', '').toLocaleLowerCase()}-snap`
+    return `${defaultIdentifier.replace('snapshot-ts-src-e-2-e-puppeteer-tests-snapshot-ts-', '').toLocaleLowerCase()}`
   },
   // Setting snapshot directory to __image_snapshots__/{platform} to avoid conflicts between platforms.
   customSnapshotsDir: path.join(__dirname, '__image_snapshots__', snapshotDirectory),
 })
 expect.extend({ toMatchImageSnapshot })
 
-vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 }) /*
-From jest-image-snapshot README:
+vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
+
+/* From jest-image-snapshot README:
 
   Jest supports automatic retries on test failures. This can be useful for browser screenshot tests which tend to have more frequent false positives. Note that when using jest.retryTimes you'll have to use a unique customSnapshotIdentifier as that's the only way to reliably identify snapshots.
 
