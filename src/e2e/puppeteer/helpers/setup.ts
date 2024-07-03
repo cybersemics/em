@@ -12,8 +12,8 @@ export interface InitPageOptions {
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
-  puppeteerBrowser = browser as any,
-  url = 'http://localhost:3000',
+  puppeteerBrowser = (globalThis as any).browser,
+  url = `http://localhost:${process.env.VITE_PORT || 3000}`,
   emulatedDevice,
   skipTutorial = true,
 }: InitPageOptions = {}): Promise<Page> => {

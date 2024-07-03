@@ -1,0 +1,13 @@
+services:
+  app:
+    image: node:20
+    container_name: em
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm start"
+    ports:
+      - "${VITE_PORT:-3000}:${VITE_PORT:-3000}"
+    environment:
+      - NODE_ENV=development
+      - VITE_PORT=${VITE_PORT:-3000}
