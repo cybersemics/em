@@ -659,11 +659,6 @@ a.text-link {
   /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
 }
 
-/* padding-top */
-.editable-annotation.multiline.multiline.multiline.multiline {
-  margin-top: calc(-0.12em + 0.33em);
-}
-
 .safari .multiline.multiline.multiline.multiline {
   padding-top: 0.3em;
 }
