@@ -90,42 +90,34 @@ const useMaxSiblingWidth = (elRef: RefObject<HTMLElement>): number => {
     const targetDepth = parentTreeNode.getAttribute('data-depth')
     if (!targetDepth) return
 
-    // Get all siblings of the identified parent node
-    const siblings = Array.from(parentTreeNode.parentNode?.children || []) as HTMLElement[]
+    const updateSiblingsAndMaxWidth = () => {
 
-    const currentIndex = siblings.indexOf(parentTreeNode)
+      // Get all siblings of the identified parent node
+      const siblings = Array.from(parentTreeNode.parentNode?.children || []) as HTMLElement[]
 
-    // Collect consecutive siblings at the same depth
-    let consecutiveSiblings = [
-      ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, -1),
-      ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1),
-    ]
+      const currentIndex = siblings.indexOf(parentTreeNode)
 
-    // If it is the only-child in column 2 of a table, a divider should be the max-width of all of the column 2 thoughts,
-    // Collect siblings upto one level up
-    if (consecutiveSiblings.length === 0) {
-      consecutiveSiblings = collectSiblingsOneLevelUp(siblings, currentIndex, targetDepth)
-    }
-
-    /** Calculate the maximum width among these '.tree-node .thought' elements. */
-    const updateMaxWidth = () => {
-      setMaxWidth(calculateMaxWidth(consecutiveSiblings))
-    }
-
-    updateMaxWidth()
-
-    // Set up MutationObserver to watch for changes in the siblings
-    const observer = new MutationObserver(() => {
-      consecutiveSiblings = [
+      // Collect consecutive siblings at the same depth
+      let consecutiveSiblings = [
         ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, -1),
         ...collectConsecutiveSiblings(siblings, currentIndex, targetDepth, 1),
       ]
 
+      // If it is the only-child in column 2 of a table, a divider should be the max-width of all of the column 2 thoughts,
+      // Collect siblings upto one level up
       if (consecutiveSiblings.length === 0) {
         consecutiveSiblings = collectSiblingsOneLevelUp(siblings, currentIndex, targetDepth)
       }
 
-      updateMaxWidth()
+      /** Calculate the maximum width among these '.tree-node .thought' elements. */
+      setMaxWidth(calculateMaxWidth(consecutiveSiblings))
+    }
+
+    updateSiblingsAndMaxWidth()
+
+    // Set up MutationObserver to watch for changes in the siblings
+    const observer = new MutationObserver(() => {
+      updateSiblingsAndMaxWidth()
     })
 
     observer.observe(parentTreeNode.parentNode!, {

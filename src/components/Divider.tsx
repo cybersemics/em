@@ -38,6 +38,7 @@ const Divider = ({ path }: { path: Path }) => {
         padding: '10px 4px 16px',
         position: 'relative',
         width,
+        transition: 'width 0.3s ease-in-out',
       }}
       className='divider-container z-index-stack'
       {...fastClick(setCursorToDivider)}
