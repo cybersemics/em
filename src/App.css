@@ -676,20 +676,27 @@ a.text-link {
   word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
 }
 
-/* Make sure the parent containers of URLs fill the full width to prevent ellipsizing single-line URLs. */
-.thought:has(.url),
-.thought-annotation:has(.url),
-.editable-annotation:has(.url) {
+/* Make sure the parent containers of URLs fill the full width to prevent ellipsizing single-line URLs when not actively editing. */
+.thought:has(.url:not(.active)),
+.thought-annotation:has(.url:not(.active)),
+.editable-annotation:has(.url:not(.active)) {
   width: 100%;
 }
 
-.editable.url,
-.editable-annotation-text.url {
+/* Ellipsize urls when not actively editing. */
+.editable.url:not(.active),
+.editable-annotation-text.url:not(.active) {
   display: inline-block;
   max-width: calc(100% - 2em);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* When actively editing, account for URL icon space. */
+.thought:has(.url.active),
+.thought-annotation:has(.url.active) {
+  width: calc(100% - 2.34em);
 }
 
 /* Adjust multiline icon alignment */

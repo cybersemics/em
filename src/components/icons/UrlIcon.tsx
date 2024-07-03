@@ -11,7 +11,7 @@ const UrlIcon = () => {
       viewBox='0 0 30 30'
       style={{
         display: 'inline-block',
-        margin: 'calc(-0.167em + 0.34em) -0.167em -0.167em calc(-0.167em + 0.056em + 2px)',
+        margin: 'calc(-0.167em + 0.36em) -0.167em -0.167em calc(-0.167em + 0.056em + 2px)',
         padding: '0.167em',
         cursor: 'pointer',
         pointerEvents: 'all',
