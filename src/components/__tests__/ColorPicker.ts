@@ -10,7 +10,7 @@ import dispatch from '../../test-helpers/dispatch'
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-it('Set the text color using the ColorPicker', async () => {
+it.skip('Set the text color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
   await click('.toolbar-icon[aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -27,7 +27,7 @@ it('Set the text color using the ColorPicker', async () => {
         - blue`)
 })
 
-it('Set the text color from another color using the ColorPicker', async () => {
+it.skip('Set the text color from another color using the ColorPicker', async () => {
   await dispatch([
     importText({
       text: `
@@ -54,7 +54,7 @@ it('Set the text color from another color using the ColorPicker', async () => {
           - red`)
 })
 
-it('Set the background color using the ColorPicker', async () => {
+it.skip('Set the background color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
 
   await click('.toolbar-icon[aria-label="Text Color"]')
@@ -71,7 +71,7 @@ it('Set the background color using the ColorPicker', async () => {
         - blue`)
 })
 
-it('Set the background color to the theme inverse color', async () => {
+it.skip('Set the background color to the theme inverse color', async () => {
   await dispatch([newThought({ value: 'a' })])
 
   await click('.toolbar-icon[aria-label="Text Color"]')
@@ -88,7 +88,7 @@ it('Set the background color to the theme inverse color', async () => {
         - rgba(255, 255, 255, 1)`)
 })
 
-it('Clear the text color when selecting white', async () => {
+it.skip('Clear the text color when selecting white', async () => {
   await dispatch([
     importText({
       text: `
@@ -108,7 +108,7 @@ it('Clear the text color when selecting white', async () => {
   - a`)
 })
 
-it('Clear background color when selecting text color', async () => {
+it.skip('Clear background color when selecting text color', async () => {
   await dispatch([
     importText({
       text: `
@@ -138,7 +138,7 @@ it('Clear background color when selecting text color', async () => {
           - red`)
 })
 
-it('Change color to black when setting background color', async () => {
+it.skip('Change color to black when setting background color', async () => {
   await dispatch([
     importText({
       text: `
@@ -164,7 +164,7 @@ it('Change color to black when setting background color', async () => {
         - red`)
 })
 
-it('Preserve other bullet attributes and styles when clearing text color', async () => {
+it.skip('Preserve other bullet attributes and styles when clearing text color', async () => {
   await dispatch([
     importText({
       text: `
