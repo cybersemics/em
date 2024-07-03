@@ -305,30 +305,10 @@ describe('Font Size: 22', () => {
   testSuite()
 })
 
-describe('Drag and Drop simulation tests', () => {
-  beforeEach(removeHUD)
-
-  it('Check simulateDrag and simulateDrop effect on DOM', async () => {
-    await simulateDragAndDrop({ drag: true, drop: true })
-
-    await paste(`
-      - a
-      - b
-      - c
-      - d
-    `)
-
-    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
-})
-
 describe('drag', () => {
   beforeEach(removeHUD)
 
-  it('Check drag hover tests', async () => {
+  it('DragAndDropThought', async () => {
     await paste(`
       - a
       - b
@@ -342,7 +322,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('Check drag hover tests, covering DropChild', async () => {
+  it('DropChild', async () => {
     await paste(`
       - a
       - b
@@ -356,7 +336,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('Check drag hover tests, covering DropEnd', async () => {
+  it('DropEnd', async () => {
     await paste(`
       - x
       - a
@@ -372,7 +352,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('Check drag hover tests, covering DropUncle', async () => {
+  it('DropUncle', async () => {
     await paste(`
       - a
         - b
@@ -402,8 +382,9 @@ describe('drag', () => {
 describe('drop', () => {
   beforeEach(removeHUD)
 
-  it('Check drop target tests, covering DragAndDropThought and DropChild', async () => {
-    await simulateDragAndDrop({ drop: true })
+  it('DragAndDropThought', async () => {
+    await simulateDragAndDrop({ drag: true, drop: true })
+
     await paste(`
       - a
       - b
@@ -411,27 +392,43 @@ describe('drop', () => {
       - d
     `)
 
+    await dragAndDropThought('a', 'd', { position: 'after', mouseUp: true })
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
 
-  it('Check drop target tests, covering DropEnd', async () => {
-    await simulateDragAndDrop({ drop: true })
-    await paste(`
+  describe('drop targets', () => {
+    it('DragAndDropThought and DropChild', async () => {
+      await simulateDragAndDrop({ drop: true })
+      await paste(`
+      - a
+      - b
+      - c
+      - d
+    `)
+
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
+    it('DropEnd', async () => {
+      await simulateDragAndDrop({ drop: true })
+      await paste(`
       - a
         - b
           - c
     `)
 
-    await dragAndDropThought('c', 'c', { position: 'after' })
+      await dragAndDropThought('c', 'c', { position: 'after' })
 
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
 
-  it('Check drop target tests, covering DropUncle', async () => {
-    await simulateDragAndDrop({ drop: true })
-    await paste(`
+    it('DropUncle', async () => {
+      await simulateDragAndDrop({ drop: true })
+      await paste(`
       - a
         - b
           - c
@@ -440,18 +437,19 @@ describe('drop', () => {
         - e
     `)
 
-    await clickThought('b')
+      await clickThought('b')
 
-    // wait for b to expand
-    await sleep(100)
+      // wait for b to expand
+      await sleep(100)
 
-    await clickThought('c')
+      await clickThought('c')
 
-    // wait for c to expand and e to fade out
-    await sleep(400)
+      // wait for c to expand and e to fade out
+      await sleep(400)
 
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
   })
 })
 
