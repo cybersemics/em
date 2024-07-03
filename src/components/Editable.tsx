@@ -44,7 +44,6 @@ import storageModel from '../stores/storageModel'
 import suppressFocusStore from '../stores/suppressFocus'
 import addEmojiSpace from '../util/addEmojiSpace'
 import ellipsize from '../util/ellipsize'
-import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
@@ -569,6 +568,7 @@ const Editable = ({
         editable: true,
         ['editable-' + head(path)]: true,
         empty: value.length === 0,
+        url: !isEditing && isURL(value),
       })}
       html={
         value === EM_TOKEN
@@ -581,7 +581,7 @@ const Editable = ({
               ? value
               : childrenLabel
                 ? childrenLabel.value
-                : ellipsizeUrl(value)
+                : value
       }
       placeholder={placeholder}
       // stop propagation to prevent default content onClick (which removes the cursor)

@@ -676,6 +676,24 @@ a.text-link {
   word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
 }
 
+/* Make sure the parent containers of URLs fill the full width to prevent ellipsizing single-line URLs. */
+.thought:has(.url),
+.thought-annotation:has(.url),
+.editable-annotation:has(.url) {
+  width: 100%;
+}
+
+.editable.url,
+.editable-annotation-text.url {
+  display: inline-block;
+  max-width: calc(100% - 2em);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Align icon at the top */
+  vertical-align: top;
+}
+
 .mobile .child .editable {
   padding-bottom: 0;
 }

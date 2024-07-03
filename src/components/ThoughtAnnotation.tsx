@@ -16,7 +16,6 @@ import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import editingValueStore from '../stores/editingValue'
-import ellipsizeUrl from '../util/ellipsizeUrl'
 import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
@@ -27,6 +26,7 @@ import isVisibleContext from '../util/isVisibleContext'
 import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
+import usePlaceholder from './Editable/usePlaceholder'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -232,10 +232,12 @@ const ThoughtAnnotation = React.memo(
      * Changed as part of fix for issue 1419 (https://github.com/cybersemics/em/issues/1419).
      */
 
+    const placeholder = usePlaceholder({ isEditing, simplePath })
+
     const textMarkup = useSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
       const labelChild = anyChild(state, labelId || undefined)
-      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : ellipsizeUrl(value)
+      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : value
     })
 
     return (
@@ -257,16 +259,24 @@ const ThoughtAnnotation = React.memo(
             paddingRight: showSuperscript ? '0.833em' : '0.333em',
           }}
         >
-          <span className='editable-annotation-text' style={style} dangerouslySetInnerHTML={{ __html: textMarkup }} />
-          {
-            // do not render url icon on root thoughts in publish mode
-            url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
-          }
-          {email && <EmailIconLink email={email} />}
-          {
-            // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
-            showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
-          }
+          <span
+            className={classNames({ 'editable-annotation-text': true, url: !isEditing && url })}
+            style={style}
+            dangerouslySetInnerHTML={{ __html: textMarkup || placeholder }}
+          />
+
+          {/* We use this combination of inline-block, absolute positioning and zero height to not mess with the parent's line height calculations. */}
+          <span style={{ display: 'inline-block', height: 0, position: 'absolute' }}>
+            {
+              // do not render url icon on root thoughts in publish mode
+              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+            }
+            {email && <EmailIconLink email={email} />}
+            {
+              // with real time context update we increase context length by 1 // with the default minContexts of 2, do not count the whole thought
+              showSuperscript ? <StaticSuperscript n={numContexts} style={style} /> : null
+            }
+          </span>
         </div>
       </div>
     )
