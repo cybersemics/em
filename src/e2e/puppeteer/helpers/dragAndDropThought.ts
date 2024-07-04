@@ -9,9 +9,9 @@ interface DragAndDropOptions {
     - child: drop the source thought as a child of the destination thought.
    */
   position: 'after' | 'before' | 'child'
-  // If true, the mouse button is released after the drop.
+  /** If true, the mouse button is released after the drop. */
   mouseUp?: boolean
-  // If true, the source thought is dropped as a sibling to the hidden uncle
+  /** If true, the source thought is dropped as a sibling to the hidden uncle. */
   dropUncle?: boolean
 }
 
