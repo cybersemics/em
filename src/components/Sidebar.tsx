@@ -94,7 +94,6 @@ const Sidebar = () => {
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
             position: 'relative',
             padding: '0 1em',
-            minWidth: '60vw',
           }}
         >
           <div style={{ marginLeft: '0.5em' }}>

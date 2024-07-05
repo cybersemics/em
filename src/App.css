@@ -2324,11 +2324,11 @@ code,
 
 /* material drawer container css override */
 .drawer-container-mobile {
-  max-width: 90%;
+  width: 90%;
 }
 
 .drawer-container-desktop {
-  max-width: 90%;
+  width: 400px;
 }
 
 /* hamburger menu div */
