@@ -8,7 +8,7 @@ import { deleteAttributeActionCreator as deleteAttribute } from '../actions/dele
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
-import testFlags from '../e2e/testFlags'
+// import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts, getChildren } from '../selectors/getChildren'
@@ -34,8 +34,8 @@ interface BulletProps {
   simplePath: SimplePath
   path: Path
   thoughtId: ThoughtId
-  depth?: number
-  debugIndex?: number
+  // depth?: number
+  // debugIndex?: number
 }
 
 const isIOSSafari = isTouch && isiPhone && isSafari()
@@ -155,8 +155,8 @@ const Bullet = ({
   publish,
   simplePath,
   thoughtId,
-  depth,
-  debugIndex,
+  // depth,
+  // debugIndex,
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
   const dispatch = useDispatch()
@@ -261,23 +261,18 @@ const Bullet = ({
         'invalid-option': invalid,
       })}
       style={{
-        marginTop: testFlags.simulateDrop ? '0px' : -extendClickHeight,
+        marginTop: -extendClickHeight,
         // calculate position of thought for different font sizes
         // Table column 1 needs more space between the bullet and thought for some reason
         marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0),
-        marginBottom: testFlags.simulateDrop ? '0px' : -extendClickHeight - 2,
+        marginBottom: extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
-        paddingBottom: testFlags.simulateDrop ? '0px' : extendClickHeight + 2,
+        paddingBottom: extendClickHeight + 2,
         position: 'absolute',
         verticalAlign: 'top',
         width: 7, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
-        ...(testFlags.simulateDrop
-          ? {
-              backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
-            }
-          : null),
       }}
       onClick={clickHandler}
     >
@@ -290,7 +285,7 @@ const Bullet = ({
           marginLeft: -lineHeight,
           // required to make the distance between bullet and thought scale properly at all font sizes.
           left: lineHeight * 0.317,
-          marginBottom: testFlags.simulateDrop ? '0px' : bulletBottomMargin,
+          marginBottom: bulletBottomMargin,
           ...(isHighlighted
             ? {
                 fillOpacity: 1,

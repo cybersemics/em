@@ -428,8 +428,8 @@ const ThoughtContainer = ({
               publish={publish}
               simplePath={simplePath}
               thoughtId={thoughtId}
-              debugIndex={debugIndex}
-              depth={depth}
+              // debugIndex={debugIndex}
+              // depth={depth}
             />
           )}
 
