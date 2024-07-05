@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import themeColors from '../../selectors/themeColors'
 
 /** Url icon. */
-const UrlIcon = () => {
+const UrlIcon = ({ multiline }: { multiline?: boolean }) => {
   const colors = useSelector(themeColors)
   return (
     <svg
@@ -11,7 +11,11 @@ const UrlIcon = () => {
       viewBox='0 0 30 30'
       style={{
         display: 'inline-block',
-        margin: 'calc(-0.167em + 0.36em) -0.167em -0.167em calc(-0.167em + 0.056em + 2px)',
+        // margin: 'calc(-0.167em + 0.36em) -0.167em -0.167em calc(-0.167em + 0.056em + 2px)',
+        marginTop: multiline ? '-0.08em' : 'calc(-0.167em + 0.3em)',
+        marginRight: '-0.167em',
+        marginLeft: 'calc(-0.167em + 0.056em + 2px)',
+        marginBottom: '-0.167em',
         padding: '0.167em',
         cursor: 'pointer',
         pointerEvents: 'all',

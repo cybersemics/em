@@ -703,12 +703,6 @@ a.text-link {
   width: calc(100% - 2.34em);
 }
 
-/* Adjust multiline icon alignment */
-.editable-annotation.multiline svg {
-  /* This rule requires !important to override the applied margin in the inline styles. */
-  margin-top: -0.08em !important;
-}
-
 .mobile .child .editable {
   padding-bottom: 0;
 }

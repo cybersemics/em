@@ -40,7 +40,7 @@ const addMissingProtocol = (url: string) =>
   (!url.startsWith('http:') && !url.startsWith('https:') && !url.startsWith('localhost:') ? 'https://' : '') + url
 
 /** A Url icon that links to the url. */
-const UrlIconLink = React.memo(({ url }: { url: string }) => {
+const UrlIconLink = React.memo(({ url, multiline }: { url: string; multiline?: boolean }) => {
   const dispatch = useDispatch()
   return (
     <a
@@ -62,7 +62,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
         }
       })}
     >
-      <UrlIcon />
+      <UrlIcon multiline={multiline} />
     </a>
   )
 })
@@ -271,7 +271,7 @@ const ThoughtAnnotation = React.memo(
           <span style={{ display: 'inline-block', height: 0, position: 'absolute' }}>
             {
               // do not render url icon on root thoughts in publish mode
-              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} />
+              url && !(publishMode() && simplePath.length === 1) && <UrlIconLink url={url} multiline={multiline} />
             }
             {email && <EmailIconLink email={email} />}
             {
