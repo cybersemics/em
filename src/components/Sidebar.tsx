@@ -2,6 +2,7 @@ import SwipeableDrawer, { SwipeableDrawerProps } from '@mui/material/SwipeableDr
 import _ from 'lodash'
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { CSSTransition } from 'react-transition-group'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleSidebarActionCreator } from '../actions/toggleSidebar'
@@ -19,7 +20,8 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
 /** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
-  const ref = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLInputElement>(null)
+  const sidebarMenuRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
@@ -42,7 +44,7 @@ const Sidebar = () => {
     <SwipeableDrawerWithClasses
       classes={{ root: 'z-index-sidebar', paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
       disableSwipeToOpen={!isTouch}
-      ref={ref}
+      ref={containerRef}
       SwipeAreaProps={{
         style: {
           // Set width here since setting style with SwipeAreaProps will override the swipeAreaWidth prop.
@@ -68,7 +70,7 @@ const Sidebar = () => {
         onTouchMove={_.throttle(
           () => {
             if (isSwiping) return
-            const drawer = ref.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
+            const drawer = containerRef.current?.querySelector('.MuiDrawer-paper') as HTMLElement | null
             if (!drawer) return
             const translateX = parseInt(drawer.style.transform.slice(10))
             // set isSwiping if translateX is not parseable (NaN) or explicitly set to 0
@@ -97,39 +99,42 @@ const Sidebar = () => {
             padding: '0 1em',
           }}
         >
-          <div
-            style={{
-              // match HamburgerMenu width + padding
-              marginLeft: fontSize * 1.3 + 30,
-            }}
-          >
-            <a
-              {...fastClick(() => setSection('favorites'))}
+          <CSSTransition in={showSidebar} nodeRef={sidebarMenuRef} timeout={200} classNames='fade'>
+            <div
+              ref={sidebarMenuRef}
               style={{
-                color: section === 'favorites' ? colors.fg : colors.gray50,
-                display: 'inline-block',
-                fontSize: '1.2em',
-                fontWeight: 600,
-                margin: '0.5em 1em 0 0',
-                textDecoration: 'none',
+                // match HamburgerMenu width + padding
+                marginLeft: fontSize * 1.3 + 30,
               }}
             >
-              Favorites
-            </a>
-            <a
-              {...fastClick(() => setSection('recent'))}
-              style={{
-                color: section === 'recent' ? colors.fg : colors.gray50,
-                display: 'inline-block',
-                fontSize: '1.2em',
-                fontWeight: 600,
-                margin: '0.5em 1em 0 0',
-                textDecoration: 'none',
-              }}
-            >
-              Recently Edited
-            </a>
-          </div>
+              <a
+                {...fastClick(() => setSection('favorites'))}
+                style={{
+                  color: section === 'favorites' ? colors.fg : colors.gray50,
+                  display: 'inline-block',
+                  fontSize: '1.2em',
+                  fontWeight: 600,
+                  margin: '0.5em 1em 0 0',
+                  textDecoration: 'none',
+                }}
+              >
+                Favorites
+              </a>
+              <a
+                {...fastClick(() => setSection('recent'))}
+                style={{
+                  color: section === 'recent' ? colors.fg : colors.gray50,
+                  display: 'inline-block',
+                  fontSize: '1.2em',
+                  fontWeight: 600,
+                  margin: '0.5em 1em 0 0',
+                  textDecoration: 'none',
+                }}
+              >
+                Recently Edited
+              </a>
+            </div>
+          </CSSTransition>
 
           {section === 'favorites' ? <Favorites disableDragAndDrop={isSwiping} /> : <RecentlyEdited />}
         </div>
