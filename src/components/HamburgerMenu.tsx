@@ -78,7 +78,9 @@ const HamburgerMenu = () => {
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
-          top: 0,
+          // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).
+          // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
+          top: 1,
         }}
         {...fastClick(() => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
