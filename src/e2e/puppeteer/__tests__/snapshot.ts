@@ -251,7 +251,28 @@ describe('Layout Tree: Table View', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('divider should be as wide as the widest sibling', async () => {
+  it('Normal View: divider should be as wide as the widest sibling', async () => {
+    await paste(`
+      - a
+      - =children
+        - =pin
+          - true
+      - b
+        - b1
+        - ---
+        - b2
+      - c
+        - This is a longer thought
+        - ---
+        - c2
+    `)
+
+    await sleep(1000)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('Table View: divider should be as wide as the widest sibling', async () => {
     await paste(`
       - Repositories
       - Roadmap
