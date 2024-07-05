@@ -312,7 +312,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
-    <div>
+    <div className='favorites'>
       <div>
         {simplePaths.length > 0 ? (
           <div>

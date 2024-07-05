@@ -91,7 +91,7 @@ const Sidebar = () => {
         }}
       >
         <div
-          className='favorites sidebar'
+          className='sidebar'
           style={{
             userSelect: 'none',
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
