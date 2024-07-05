@@ -78,7 +78,8 @@ const HamburgerMenu = () => {
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
-          top: 0,
+          // TODO: top 1 because at 0 on tab change onmouseup event fires for whatever reason
+          top: 1,
         }}
         {...fastClick(() => {
           // TODO: Why does the sidebar not open with fastClick or onTouchEnd without a setTimeout?
