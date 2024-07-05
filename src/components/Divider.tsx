@@ -25,6 +25,7 @@ const Divider = ({ path }: { path: Path }) => {
   const setStyle = () => {
     if (dividerRef.current) {
       const parentNode = dividerRef.current.closest('div.tree-node')
+      if (!parentNode) throw new Error('Parent node not found')
 
       /** Get the depth of this thought's node. */
       const parentDepth = parentNode ? parseInt(parentNode.getAttribute('data-depth') || '0') : 0
