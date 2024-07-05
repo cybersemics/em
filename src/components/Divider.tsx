@@ -33,12 +33,10 @@ const Divider = ({ path }: { path: Path }) => {
 
       /** Find the largest child node and set the width of the divider to its width plus DIVIDER_PLUS_PX. */
       const maxWidth = Math.max(
-        ...siblingNodes
-          .filter(node => !node.querySelector('.divider'))
-          .map(node => {
-            const subthought = node.querySelector('.thought') as HTMLElement
-            return subthought ? subthought.offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
-          }),
+        ...siblingNodes.map(node => {
+          const subthought = node.querySelector('.thought:not(.thought-divider)') as HTMLElement
+          return subthought ? subthought.offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
+        }),
       )
 
       setWidth(maxWidth)
