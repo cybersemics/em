@@ -7,12 +7,14 @@ import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
 import useMaxSiblingWidth from '../hooks/useMaxSiblingWidth'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
   const dividerSetWidth = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
+  const parentPath = parentOf(path)
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -20,7 +22,7 @@ const Divider = ({ path }: { path: Path }) => {
     dispatch(setCursor({ path }))
   }
 
-  const maxSiblingWidth = useMaxSiblingWidth(dividerSetWidth)
+  const maxSiblingWidth = useMaxSiblingWidth(parentPath)
 
   useEffect(() => {
     if (dividerSetWidth.current) {

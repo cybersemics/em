@@ -654,11 +654,14 @@ const LayoutTree = () => {
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
+            const parentPath = parentOf(path)
+            const grandParentPath = parentOf(parentOf(path))
+
             return (
               <div
                 aria-label='tree-node'
-                className='tree-node'
-                data-depth={depth}
+                data-parent-path={parentPath}
+                data-grand-parent-path={grandParentPath}
                 // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
