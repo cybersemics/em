@@ -7,6 +7,7 @@
   --z-index-command-palette: 45;
   --z-index-modal: 40;
   --z-index-hamburger-menu: 30;
+  --z-index-sidebar: 25;
   --z-index-toolbar-container: 20;
   --z-index-toolbar-overlay: 15;
   --z-index-toolbar-arrow: 15;
@@ -65,6 +66,11 @@
 }
 .z-index-scroll-zone {
   z-index: var(--z-index-scroll-zone);
+}
+
+/* Increase precedence over .css-1u2w381-MuiModal-root-MuiDrawer-root. */
+div.z-index-sidebar {
+  z-index: var(--z-index-sidebar);
 }
 
 /* fixed debug box in bottom right */

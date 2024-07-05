@@ -22,6 +22,7 @@ const Sidebar = () => {
   const ref = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
   const colors = useSelector(themeColors)
+  const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
   const [section, setSection] = useState<'favorites' | 'recent'>('favorites')
 
@@ -39,7 +40,7 @@ const Sidebar = () => {
      * we are providing different classname to drawer based on isTouch property.
      */
     <SwipeableDrawerWithClasses
-      classes={{ paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
+      classes={{ root: 'z-index-sidebar', paper: isTouch ? 'drawer-container-mobile' : 'drawer-container-desktop' }}
       disableSwipeToOpen={!isTouch}
       ref={ref}
       SwipeAreaProps={{
@@ -96,7 +97,12 @@ const Sidebar = () => {
             padding: '0 1em',
           }}
         >
-          <div style={{ marginLeft: '0.5em' }}>
+          <div
+            style={{
+              // match HamburgerMenu width + padding
+              marginLeft: fontSize * 1.3 + 30,
+            }}
+          >
             <a
               {...fastClick(() => setSection('favorites'))}
               style={{
@@ -104,7 +110,7 @@ const Sidebar = () => {
                 display: 'inline-block',
                 fontSize: '1.2em',
                 fontWeight: 600,
-                margin: '1em 1em 0 0',
+                margin: '0.5em 1em 0 0',
                 textDecoration: 'none',
               }}
             >
@@ -117,7 +123,7 @@ const Sidebar = () => {
                 display: 'inline-block',
                 fontSize: '1.2em',
                 fontWeight: 600,
-                margin: '1em 1em 0 0',
+                margin: '0.5em 1em 0 0',
                 textDecoration: 'none',
               }}
             >
