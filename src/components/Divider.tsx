@@ -36,8 +36,8 @@ const Divider = ({ path }: { path: Path }) => {
         ...siblingNodes
           .filter(node => !node.querySelector('.divider'))
           .map(node => {
-            const subs = node.querySelector('.thought') as HTMLElement
-            return subs ? subs.offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
+            const subthought = node.querySelector('.thought') as HTMLElement
+            return subthought ? subthought.offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
           }),
       )
 
