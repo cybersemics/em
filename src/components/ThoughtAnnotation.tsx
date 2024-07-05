@@ -262,7 +262,7 @@ const ThoughtAnnotation = React.memo(
           }}
         >
           <span
-            className={classNames({ 'editable-annotation-text': true, url: url, active: isEditing })}
+            className={classNames({ 'editable-annotation-text': true, url: url })}
             style={style}
             dangerouslySetInnerHTML={{ __html: textMarkup || placeholder || '' }}
           />

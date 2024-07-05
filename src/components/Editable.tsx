@@ -569,7 +569,6 @@ const Editable = ({
         ['editable-' + head(path)]: true,
         empty: value.length === 0,
         url: isURL(value),
-        active: isEditing,
       })}
       html={
         value === EM_TOKEN
