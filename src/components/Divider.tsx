@@ -3,9 +3,11 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { DIVIDER_MIN_WIDTH, DIVIDER_PLUS_PX } from '../constants'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
+
+const DIVIDER_PLUS_PX = 20
+const DIVIDER_MIN_WIDTH = 85
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
