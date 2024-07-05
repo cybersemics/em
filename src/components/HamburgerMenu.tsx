@@ -3,7 +3,6 @@ import React, { useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Index from '../@types/IndexType'
-import State from '../@types/State'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import fastClick from '../util/fastClick'
@@ -53,7 +52,7 @@ function Menu(props: { className?: string; width?: number; height?: number; stro
 const HamburgerMenu = () => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const dispatch = useDispatch()
-  const fontSize = useSelector<State, number>((state: State) => state.fontSize)
+  const fontSize = useSelector(state => state.fontSize)
   const hamburgerMenuRef = useRef<HTMLDivElement>(null)
 
   const width = fontSize * 1.3
