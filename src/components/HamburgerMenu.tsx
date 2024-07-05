@@ -78,7 +78,8 @@ const HamburgerMenu = () => {
           padding: `${paddingTop}px 15px 10px 15px`,
           position: 'fixed',
           cursor: 'pointer',
-          // TODO: top 1 because at 0 on tab change onmouseup event fires for whatever reason
+          // On macOS, if the user cancels a drag and then switches tabs, upon returning mouseup will fire at coordinates (0,0), triggering fastClick on any element located at (0,0).
+          // Therefore, position the HamburgerMenu at top: 1px so that the sidebar is not accidentally opened on tab change.
           top: 1,
         }}
         {...fastClick(() => {
