@@ -64,8 +64,9 @@ const Divider = ({ path }: { path: Path }) => {
     }
   }
 
-  useEffect(setStyle, [dividerRef, state, path])
-  editingValueStore.subscribe(setStyle)
+  useEffect(setStyle, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const unsubscribe = editingValueStore.subscribe(setStyle)
+  useEffect(() => () => unsubscribe(), [unsubscribe])
 
   return (
     <div
