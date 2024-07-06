@@ -36,9 +36,7 @@ const Divider = ({ path }: { path: Path }) => {
       const thoughtPath = treeNode.dataset.path?.split(',')
       if (!thoughtPath) throw new Error('Divider path not found on tree node')
 
-      let elements = document.querySelectorAll(
-        `.tree-node[data-path^="${parentPath}"]:not(.thought-divider)`,
-      ) as NodeListOf<HTMLElement>
+      let elements = document.querySelectorAll(`.tree-node[data-path^="${parentPath}"]:not(.thought-divider)`)
 
       if (elements.length === 1) {
         /** If this divider is an only child in a table, find the widest col2. */
@@ -47,7 +45,7 @@ const Divider = ({ path }: { path: Path }) => {
 
         elements = document.querySelectorAll(
           `.tree-node.table-col2[data-path^="${grandparentPath}"]:not(.thought-divider)`,
-        ) as NodeListOf<HTMLElement>
+        )
       } else if (!elements.length) {
         /** This is a top-level divider, use its siblings instead. */
         elements = document.querySelectorAll('.tree-node.top-level:not(.thought-divider)')
