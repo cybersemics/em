@@ -1,8 +1,11 @@
 import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import rootedParentOf from '../selectors/rootedParentOf'
+import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 
@@ -13,6 +16,7 @@ const DIVIDER_MIN_WIDTH = 85
 const Divider = ({ path }: { path: Path }) => {
   const dividerRef = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
+  const state = useSelector((state: State) => state)
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
 
   /** Sets the cursor to the divider. */
@@ -21,29 +25,47 @@ const Divider = ({ path }: { path: Path }) => {
     dispatch(setCursor({ path }))
   }
 
-  /** Get the max width of nearby for divider list child elements, add DIVIDER_PLUS_PX and set this width for divider. */
+  /** Get the max width of nearby elements, add DIVIDER_PLUS_PX and set this width for divider. */
   const setStyle = () => {
     if (dividerRef.current) {
-      const parentNode = dividerRef.current.closest('div.tree-node')
-      if (!parentNode) throw new Error('Parent node not found')
+      const parentPath = rootedParentOf(state, path)
 
-      /** Get the depth of this thought's node. */
-      const parentDepth = parentNode ? parseInt(parentNode.getAttribute('data-depth') || '0') : 0
-      const siblingNodes = Array.from(document.querySelectorAll(`.tree-node[data-depth="${parentDepth}"]`))
+      const treeNode = dividerRef.current.closest('div.tree-node') as HTMLElement
+      if (!treeNode) throw new Error('Divider tree node not found')
 
-      /** Find the largest child node and set the width of the divider to its width plus DIVIDER_PLUS_PX. */
+      const thoughtPath = treeNode.dataset.path?.split(',')
+      if (!thoughtPath) throw new Error('Divider path not found on tree node')
+
+      let elements = document.querySelectorAll(
+        `.tree-node[data-path^="${parentPath}"]:not(.thought-divider)`,
+      ) as NodeListOf<HTMLElement>
+
+      if (elements.length === 1) {
+        /** If this divider is an only child in a table, find the widest col2. */
+        const grandparentPath = rootedParentOf(state, parentPath)
+        if (!grandparentPath) throw new Error('Divider grandparent not found')
+
+        elements = document.querySelectorAll(
+          `.tree-node.table-col2[data-path^="${grandparentPath}"]:not(.thought-divider)`,
+        ) as NodeListOf<HTMLElement>
+      } else if (!elements.length) {
+        /** This is a top-level divider, use its siblings instead. */
+        elements = document.querySelectorAll('.tree-node.top-level:not(.thought-divider)')
+      }
+
+      /** Find and set the max width of our selected elements. */
       const maxWidth = Math.max(
-        ...siblingNodes.map(node => {
-          const subthought = node.querySelector('.thought:not(.thought-divider)') as HTMLElement
-          return subthought ? subthought.offsetWidth + DIVIDER_PLUS_PX : DIVIDER_PLUS_PX
-        }),
+        ...Array.from(elements).map(
+          element => (element.querySelector('.thought') as HTMLElement).offsetWidth + DIVIDER_PLUS_PX,
+        ),
       )
 
       setWidth(maxWidth)
     }
   }
 
-  useEffect(setStyle)
+  useEffect(setStyle, [dividerRef, state, path])
+  editingValueStore.subscribe(setStyle)
 
   return (
     <div
