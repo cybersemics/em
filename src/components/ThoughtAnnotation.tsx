@@ -258,7 +258,7 @@ const ThoughtAnnotation = React.memo(
             // Add 0.5em to account for the superscript.
             // TODO: Add space for dynamic superscript. This is currently only correct for single digit superscript.
             marginRight: showSuperscript ? '-0.833em' : 0,
-            paddingRight: showSuperscript ? '0.833em' : 0,
+            paddingRight: showSuperscript ? '0.833em' : "2em",
           }}
         >
           <span

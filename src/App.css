@@ -677,10 +677,14 @@ a.text-link {
 }
 
 /* Make sure the parent containers of URLs fill the full width to prevent ellipsizing single-line URLs when not actively editing. */
-.child:not(.editing) .thought:has(.url),
-.child:not(.editing) .thought-annotation:has(.url),
-.child:not(.editing) .editable-annotation:has(.url) {
+.thought:has(.url),
+.thought-annotation:has(.url),
+.editable-annotation:has(.url) {
   width: 100%;
+}
+
+.editable-annotation.multiline:has(.url) {
+  width: calc(100% - 0.55em);
 }
 
 /* Ellipsize urls when not actively editing. */
@@ -697,10 +701,12 @@ a.text-link {
   display: inline-block;
 }
 
-/* When actively editing, account for URL icon space. */
-.child.editing .thought:has(.url),
-.child.editing .thought-annotation:has(.url) {
-  width: calc(100% - 2.34em);
+/* Add virtual space for the URL icon when editing. */
+.child.editing .thought .editable.multiline.url::after,
+.child.editing .multiline .editable-annotation-text.url::after {
+  content: ' ';
+  display: inline-block;
+  width: calc(1em + 3px);
 }
 
 .mobile .child .editable {
