@@ -19,7 +19,7 @@ import store from '../stores/app'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
-import { updateHeight, updateScrollTop } from '../stores/viewport'
+import { updateScrollTop, updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import equalPath from './equalPath'
@@ -326,7 +326,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('drop', drop)
 
   const resizeHost = window.visualViewport || window
-  resizeHost.addEventListener('resize', updateHeight)
+  resizeHost.addEventListener('resize', updateSize)
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -347,7 +347,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
-    resizeHost.removeEventListener('resize', updateHeight)
+    resizeHost.removeEventListener('resize', updateSize)
   }
 
   // return input handlers as another way to remove them on cleanup

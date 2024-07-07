@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react'
+import makeSelectorEffect from '../hooks/makeSelectorEffect'
 import ministore from './ministore'
 
 /** Enhances a ministore with React hooks. */
@@ -23,6 +24,7 @@ const reactMinistore = <T>(initialState: T) => {
     ...store,
     useEffect: useChangeEffect,
     useSelector,
+    useSelectorEffect: makeSelectorEffect(store),
     useState: useSelector as () => T,
   }
 }
