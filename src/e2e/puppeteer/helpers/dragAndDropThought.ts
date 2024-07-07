@@ -22,7 +22,6 @@ const dragAndDropThought = async (
   destValue: string,
   { position, mouseUp, dropUncle }: DragAndDropOptions,
 ) => {
-  const OFFSET = 20
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
 
@@ -37,11 +36,12 @@ const dragAndDropThought = async (
 
   // If the position is 'before', the yOffset is 0
   // because the drop target will be just above the thought otherwise it will be 20 so it is dragged after the thought
-  const yOffset = position === 'before' ? 0 : OFFSET
+  const yOffset = position === 'before' ? 0 : 20
 
-  // If the position is 'child', we need to give an xOffset
-  // because the drop child is few pixels towards the right from the thought
-  const xOffset = position === 'child' ? OFFSET : 0
+  // If the position is 'child', make the initial click to the right so that it lands on the DropChild drop target.
+  // Must exceed the DropChild's drop-end margin-left.
+  const fontSize = 18 // TODO: Get the font size from the CSS
+  const xOffset = position === 'child' ? fontSize * 2.9 - 2 : 0
 
   // Calculate center positions of the elements
   const dragPosition = {
@@ -51,7 +51,7 @@ const dragAndDropThought = async (
     y: dragStart.y + 1,
   }
   const dropPosition = {
-    x: dragEnd.x + dragEnd.width / 2 + xOffset,
+    x: dragEnd.x + xOffset,
     // if we are dropping to the hidden uncle, we need to move to the bottom of the thought to trigger DropUncle instead of normal middle height
     y: dropUncle ? dragEnd.y + dragEnd.height : dragEnd.y + dragEnd.height / 2 + yOffset,
   }
