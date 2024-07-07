@@ -1,14 +1,11 @@
 import { useEffect, useRef } from 'react'
-
-interface Store<T> {
-  getState: () => T
-  subscribe: (cb: () => void) => any
-}
+import Store from '../@types/Store'
 
 /** Creates a useEffect hook that invokes a callback when a slice of a given store's state changes. Unlike useSelector, triggers the callback without re-rendering the component. Useful when a DOM calculation needs to be performed after a state change, but does not always require a re-render. */
-const makeSelectorEffect =
-  <S>(store: Store<S>) =>
-  <T>(effect: () => void, select: (state: S) => T, equalityFn?: (a: T, b: T) => boolean) => {
+const makeSelectorEffect = <U extends Store<any>>(store: U) => {
+  type S = U extends Store<infer V> ? V : never
+
+  return <T>(effect: () => void, select: (state: S) => T, equalityFn?: (a: T, b: T) => boolean) => {
     const prev = useRef<T>(select(store.getState()))
     useEffect(
       () =>
@@ -23,5 +20,6 @@ const makeSelectorEffect =
       [effect, equalityFn, select],
     )
   }
+}
 
 export default makeSelectorEffect
