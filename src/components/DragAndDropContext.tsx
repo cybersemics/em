@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC, PropsWithChildren } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import MultiBackend, { TouchTransition } from 'react-dnd-multi-backend'
@@ -20,7 +20,7 @@ const options = {
 }
 
 /** Drag and Drop Provider HOC. */
-export const DragAndDropContext: React.FC = ({ children }: { children?: React.ReactNode }) => (
+export const DragAndDropContext: FC<PropsWithChildren> = ({ children }) => (
   <DndProvider backend={MultiBackend as any} options={options}>
     {children}
   </DndProvider>

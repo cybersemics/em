@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { FC, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FC, PropsWithChildren, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
@@ -125,7 +125,7 @@ const shouldCancelGesture = () =>
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
-const MultiGestureIfTouch: FC = ({ children }: { children?: React.ReactNode }) => {
+const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
   return isTouch ? (
     <MultiGesture

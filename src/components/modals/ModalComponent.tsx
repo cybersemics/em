@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
@@ -10,10 +10,9 @@ interface ModalActionHelpers {
   close: (duration?: number) => void
 }
 
-export interface ModalProps {
+export type ModalProps = PropsWithChildren<{
   arrow?: string
   center?: boolean
-  children?: React.ReactNode
   className?: string
   hideClose?: boolean
   hideModalActions?: boolean
@@ -26,7 +25,7 @@ export interface ModalProps {
   title?: string
   top?: number
   preventCloseOnEscape?: boolean
-}
+}>
 
 /** A generic modal component. */
 class ModalComponent extends React.Component<ModalProps> {

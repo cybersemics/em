@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, View } from 'react-native'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
@@ -23,7 +23,7 @@ interface GestureState {
 }
 
 // See: defaultProps for defaults
-interface MultiGestureProps {
+type MultiGestureProps = PropsWithChildren<{
   // moves the scroll zone to the left side of the screen and the gesture zone to the right
   leftHanded?: boolean
   // fired when a new gesture is added to the sequence
@@ -50,8 +50,7 @@ interface MultiGestureProps {
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
   shouldCancelGesture?: () => boolean
-  children?: React.ReactNode
-}
+}>
 
 const SCROLL_ZONE_WIDTH = Math.min(window.innerWidth, window.innerHeight) * 0.39
 const TOOLBAR_HEIGHT = 50

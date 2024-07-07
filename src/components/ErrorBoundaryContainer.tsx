@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, PropsWithChildren, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useSelector } from 'react-redux'
 import themeColors from '../selectors/themeColors'
@@ -67,7 +67,7 @@ const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStac
 )
 
 /** A higher-order component that catches errors of all descendant components. When an error is caught, a fallback component will be rendered. */
-const ErrorBoundaryContainer: FC = ({ children }: { children?: React.ReactNode }) => (
+const ErrorBoundaryContainer: FC<PropsWithChildren> = ({ children }) => (
   <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
 )
 

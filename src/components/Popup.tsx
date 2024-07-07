@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteResumableFile } from '../actions/importFiles'
@@ -12,7 +12,7 @@ import strip from '../util/strip'
 /** A popup component that can be dismissed. */
 const Popup = React.forwardRef<
   HTMLDivElement,
-  {
+  PropsWithChildren<{
     // used to cancel imports
     importFileId?: string
     isInline?: boolean
@@ -20,8 +20,7 @@ const Popup = React.forwardRef<
     onClose?: () => void
     textAlign?: 'center' | 'left' | 'right'
     value?: string | null
-    children?: React.ReactNode
-  }
+  }>
 >(({ children, importFileId, isInline, onClose, textAlign = 'center' }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)

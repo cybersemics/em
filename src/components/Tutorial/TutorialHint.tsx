@@ -1,11 +1,11 @@
-import { FC } from 'react'
+import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import getSetting from '../../selectors/getSetting'
 import fastClick from '../../util/fastClick'
 
 /** Renders a hint button that will advance the tutorial by a fractional step and show a hint. */
-const TutorialHint: FC = ({ children }: { children?: React.ReactNode }) => {
+const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
   // fractional steps are hints
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
   const dispatch = useDispatch()

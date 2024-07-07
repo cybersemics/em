@@ -1,4 +1,4 @@
-import React, { FC } from 'react'
+import React, { FC, PropsWithChildren } from 'react'
 import fastClick from '../util/fastClick'
 
 /** A static checkbox component with em styling. */
@@ -19,15 +19,16 @@ const CheckboxInput = ({ checked }: { checked?: boolean }) => {
 }
 
 /** A checkbox item with a title and description. */
-const Checkbox: FC<{
-  checked?: boolean
-  disabled?: boolean
-  child?: boolean
-  parent?: boolean
-  onChange: (e: React.MouseEvent | React.TouchEvent | React.ChangeEvent) => void
-  title?: string
-  children?: React.ReactNode
-}> = ({ checked, children, disabled, child, onChange, parent, title }) => {
+const Checkbox: FC<
+  PropsWithChildren<{
+    checked?: boolean
+    disabled?: boolean
+    child?: boolean
+    parent?: boolean
+    onChange: (e: React.MouseEvent | React.TouchEvent | React.ChangeEvent) => void
+    title?: string
+  }>
+> = ({ checked, children, disabled, child, onChange, parent, title }) => {
   return (
     <label
       className='checkbox-container'

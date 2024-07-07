@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import Modal from '../@types/Modal'
@@ -59,7 +59,7 @@ const Status = () => {
 const LinkDivider = () => <span className='footer-divider'> | </span>
 
 /** A link that opens a modal. */
-const ModalLink = ({ id, children }: { id: Modal; children: React.ReactNode }) => {
+const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
   const dispatch = useDispatch()
   return (
     <a

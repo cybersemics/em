@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
@@ -10,17 +10,18 @@ import Checkbox from './../Checkbox'
 import ModalComponent from './ModalComponent'
 
 /** A boolean setting checkbox, title, and description. */
-const Setting: FC<{
-  // Toggles the dependee off whenever this setting is toggled off. Use in combination with dependsOn on the dependee setting.
-  dependee?: Settings
-  // Disables this setting whenever the dependsOn setting is off. Use in combination with dependee on the dependsOn setting.
-  dependsOn?: Settings
-  // if true, checks the checkbox if the key is false
-  invert?: boolean
-  settingsKey: Settings
-  title: string
-  children?: React.ReactNode
-}> = ({ children, dependee, dependsOn, invert, settingsKey, title }) => {
+const Setting: FC<
+  PropsWithChildren<{
+    // Toggles the dependee off whenever this setting is toggled off. Use in combination with dependsOn on the dependee setting.
+    dependee?: Settings
+    // Disables this setting whenever the dependsOn setting is off. Use in combination with dependee on the dependsOn setting.
+    dependsOn?: Settings
+    // if true, checks the checkbox if the key is false
+    invert?: boolean
+    settingsKey: Settings
+    title: string
+  }>
+> = ({ children, dependee, dependsOn, invert, settingsKey, title }) => {
   const value = useSelector(getUserSetting(settingsKey))
   const disabled = useSelector(state => dependsOn && getUserSetting(state, dependsOn))
   const dispatch = useDispatch()

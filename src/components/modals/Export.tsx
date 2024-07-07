@@ -1,5 +1,15 @@
 import ClipboardJS from 'clipboard'
-import React, { FC, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+  FC,
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
 import ExportOption from '../../@types/ExportOption'
@@ -107,7 +117,7 @@ const useExportedState = () => useContext(ExportedStateContext)
 /**
  * Context to handle pull status and number of descendants.
  */
-const PullProvider: FC<{ simplePath: SimplePath; children?: React.ReactNode }> = ({ children, simplePath }) => {
+const PullProvider: FC<PropsWithChildren<{ simplePath: SimplePath }>> = ({ children, simplePath }) => {
   const isMounted = useRef(false)
   const [isPulling, setIsPulling] = useState<boolean>(true)
   const [exportedState, setExportedState] = useState<State | null>(null)

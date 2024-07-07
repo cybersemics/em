@@ -1,5 +1,5 @@
 import lifecycle from 'page-lifecycle'
-import { FC, useEffect } from 'react'
+import { FC, PropsWithChildren, useEffect } from 'react'
 import globals from '../globals'
 
 /** Turns off touching when app becomes hidden. */
@@ -10,7 +10,7 @@ const onStateChange = ({ oldState, newState }: { oldState: string; newState: str
 }
 
 /** A higher-order component that monitors whether the user is touching the screen or not. */
-const TouchMonitor: FC = ({ children }: { children?: React.ReactNode }) => {
+const TouchMonitor: FC<PropsWithChildren> = ({ children }) => {
   // turn off touching when app becomes hidden
   useEffect(() => {
     lifecycle.addEventListener('statechange', onStateChange)

@@ -1,15 +1,14 @@
-import { FC } from 'react'
+import { FC, PropsWithChildren } from 'react'
 import publishMode from '../util/publishMode'
 
 interface ScaleProps {
   amount: number
   origin?: string
   scaleWidth?: boolean
-  children?: React.ReactNode
 }
 
 /** A container that scales its children by the given amount. */
-const Scale: FC<ScaleProps> = ({ amount, origin = '0 0', scaleWidth = true, children }) => (
+const Scale: FC<PropsWithChildren<ScaleProps>> = ({ amount, origin = '0 0', scaleWidth = true, children }) => (
   // temporarily disable scale in publish mode until #536 is fixed
   <div
     style={{
