@@ -23,6 +23,8 @@ import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
+import reactMinistore from '../stores/react-ministore'
+import scrollTopStore from '../stores/scrollTop'
 import viewportStore from '../stores/viewport'
 import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
@@ -83,6 +85,12 @@ const SIZE_REMOVAL_DEBOUNCE = 1000
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
 const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
+
+/** A computed store that tracks the bottom of the viewport. */
+const viewportBottomStore = reactMinistore.compose(
+  (viewport, scrollTop) => scrollTop + viewport.innerHeight,
+  [viewportStore, scrollTopStore],
+)
 
 /** Generates a VirtualThought key that is unique across context views. */
 // include the head of each context view in the path in the key, otherwise there will be duplicate keys when the same thought is visible in normal view and context view
@@ -418,12 +426,12 @@ const LayoutTree = () => {
   )
 
   // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
-  const viewportBottom = viewportStore.useSelector(
+  const viewportBottom = viewportBottomStore.useSelector(
     useCallback(
-      viewport => {
+      viewportBottomState => {
         // the number of additional thoughts below the bottom of the screen that are rendered
         const overshoot = singleLineHeight * 5
-        return viewport.scrollTop + viewport.innerHeight + spaceAbove + overshoot
+        return viewportBottomState + spaceAbove + overshoot
       },
       [singleLineHeight, spaceAbove],
     ),

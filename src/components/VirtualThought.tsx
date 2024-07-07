@@ -6,7 +6,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
-import useReduxSelectorEffect from '../hooks/useReduxSelectorEffect'
+import useSelectorEffect from '../hooks/useSelectorEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
@@ -179,7 +179,7 @@ const VirtualThought = ({
 
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
-  useReduxSelectorEffect(updateSize, selectCursor, shallowEqual)
+  useSelectorEffect(updateSize, selectCursor, shallowEqual)
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(

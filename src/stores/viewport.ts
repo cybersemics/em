@@ -6,9 +6,8 @@ import reactMinistore from './react-ministore'
 let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
 let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
 
-/** A store that tracks the viewport dimensions, including the nontrival virtual keyboard height. */
+/** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
 const viewportStore = reactMinistore({
-  scrollTop: document.documentElement.scrollTop,
   innerWidth: window.innerWidth,
   /** Height of the viewport, not including the virtual keyboard. */
   innerHeight: window.innerHeight,
@@ -46,18 +45,6 @@ export const updateSize = _.throttle(
           : isPortrait
             ? virtualKeyboardHeightPortrait
             : virtualKeyboardHeightLandscape,
-    })
-  },
-  // lock to 60 fps
-  16.666,
-  { leading: true },
-)
-
-/** Throttled update of scrollTop. Invoked on window scroll. */
-export const updateScrollTop = _.throttle(
-  () => {
-    viewportStore.update({
-      scrollTop: document.documentElement.scrollTop,
     })
   },
   // lock to 60 fps

@@ -64,19 +64,14 @@ const ministore = <T>(initialState: T): Ministore<T> => {
 
   /**
    * Subscribes to a single update. Optionally takes a predicate that can be used to wait until a specific condition is met before resolving.
-   *
-   * @returns Unsubscribe function.
    */
   const once = (predicate?: (state: T) => boolean): CancellablePromise<T> => {
-    let onChange: any
+    let onChange: (stateNew: T) => void
 
     /** Unsubscribes from the emitter. */
     const unsubscribe = () => emitter.off('change', onChange)
 
     const promise = new Promise<T>(resolve => {
-      /** We need to wrap the callback in act when the tests are running.
-       * Do this here rather than in every test. */
-      // TODO: Move this to a stubbing function.
       onChange = (stateNew: T) => {
         if (predicate && !predicate(stateNew)) return
         unsubscribe()
@@ -96,5 +91,36 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     update,
   }
 }
+
+/** Create a read-only computed ministore that derives its state from one or more ministores. */
+function compose<T, S extends any[]>(
+  compute: (...states: S) => T,
+  // accept the same number of Ministores as states, with corresponding generic types, by using a mapped type generated from the states array
+  stores: { [K in keyof S]: Ministore<S[K]> },
+) {
+  /** Gets the computed state from the stores. */
+  const computeFromStores = () => compute(...(stores.map(store => store.getState()) as S))
+
+  const store = ministore(computeFromStores())
+
+  /** Update the composite store with the computed state. */
+  const updateCompositeState = () => {
+    store.update(computeFromStores())
+  }
+
+  const unsubscribes = stores.map(store => store.subscribe(updateCompositeState))
+
+  const { update, ...readonlyStore } = store
+
+  return {
+    ...readonlyStore,
+    /** Destroys the composite store. */
+    destroy: () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe())
+    },
+  }
+}
+
+ministore.compose = compose
 
 export default ministore
