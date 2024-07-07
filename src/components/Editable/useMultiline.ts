@@ -2,8 +2,9 @@ import { useCallback, useLayoutEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
-import useSelectorEffect from '../../hooks/useSelectorEffect'
+import useReduxSelectorEffect from '../../hooks/useReduxSelectorEffect'
 import editingValueStore from '../../stores/editingValue'
+import viewportStore from '../../stores/viewport'
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
@@ -48,7 +49,13 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // Recalculate multiline when the cursor changes.
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
-  useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
+  useReduxSelectorEffect(updateMultiline, selectCursor, shallowEqual)
+
+  viewportStore.useSelectorEffect(
+    updateMultiline,
+    ({ innerWidth, innerHeight }) => ({ innerWidth, innerHeight }),
+    shallowEqual,
+  )
 
   return multiline
 }
