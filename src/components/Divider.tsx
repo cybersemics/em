@@ -1,10 +1,10 @@
 import classNames from 'classnames'
 import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import rootedParentOf from '../selectors/rootedParentOf'
+import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -16,7 +16,6 @@ const DIVIDER_MIN_WIDTH = 85
 const Divider = ({ path }: { path: Path }) => {
   const dividerRef = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
-  const state = useSelector((state: State) => state)
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
 
   /** Sets the cursor to the divider. */
@@ -28,6 +27,7 @@ const Divider = ({ path }: { path: Path }) => {
   /** Get the max width of nearby elements, add DIVIDER_PLUS_PX and set this width for divider. */
   const setStyle = () => {
     if (dividerRef.current) {
+      const state = store.getState()
       const parentPath = rootedParentOf(state, path)
 
       const treeNode = dividerRef.current.closest('div.tree-node') as HTMLElement
