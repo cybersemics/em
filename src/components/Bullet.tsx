@@ -213,10 +213,12 @@ const Bullet = ({
   const isRoot = simplePath.length === 1
   const isRootChildLeaf = simplePath.length === 2 && leaf
   // Bottom margin for bullet to align with thought text
-  const bulletBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
+  const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
 
-  const bulletPositionAdjustment = (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0)
-  const bulletWidth = -bulletPositionAdjustment - extendClickWidth
+  // calculate position of bullet for different font sizes
+  // Table column 1 needs more space between the bullet and thought for some reason
+  const width = 11 - (fontSize - 9) * 0.5 + (isTableCol1 ? fontSize / 4 : 0)
+  const marginLeft = -width
 
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
@@ -265,16 +267,14 @@ const Bullet = ({
       })}
       style={{
         marginTop: -extendClickHeight,
-        // calculate position of thought for different font sizes
-        // Table column 1 needs more space between the bullet and thought for some reason
-        marginLeft: bulletPositionAdjustment,
+        marginLeft: -extendClickWidth + marginLeft,
         marginBottom: -extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
         position: 'absolute',
         verticalAlign: 'top',
-        width: bulletWidth,
+        width,
         cursor: 'pointer',
       }}
       onClick={clickHandler}
@@ -288,7 +288,7 @@ const Bullet = ({
           marginLeft: -lineHeight,
           // required to make the distance between bullet and thought scale properly at all font sizes.
           left: lineHeight * 0.317,
-          marginBottom: bulletBottomMargin,
+          marginBottom: glyphBottomMargin,
           ...(isHighlighted
             ? {
                 fillOpacity: 1,
