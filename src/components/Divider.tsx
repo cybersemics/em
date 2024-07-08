@@ -7,6 +7,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 
 const DIVIDER_PLUS_PX = 20
@@ -33,10 +34,10 @@ const Divider = ({ path }: { path: Path }) => {
       const treeNode = dividerRef.current.closest('div.tree-node') as HTMLElement
       if (!treeNode) throw new Error('Divider tree node not found')
 
-      const thoughtPath = treeNode.dataset.path?.split(',')
-      if (!thoughtPath) throw new Error('Divider path not found on tree node')
+      const thoughtPath = treeNode.dataset.path
+      if (!thoughtPath || thoughtPath === '') throw new Error('Divider path not found on tree node')
 
-      let elements = document.querySelectorAll(`.tree-node[data-path^="${parentPath}"]:not(.thought-divider)`)
+      let elements = document.querySelectorAll(`.tree-node[data-path^="${hashPath(parentPath)}"]:not(.thought-divider)`)
 
       if (elements.length === 1) {
         /** If this divider is an only child in a table, find the widest col2. */
@@ -44,7 +45,7 @@ const Divider = ({ path }: { path: Path }) => {
         if (!grandparentPath) throw new Error('Divider grandparent not found')
 
         elements = document.querySelectorAll(
-          `.tree-node.table-col2[data-path^="${grandparentPath}"]:not(.thought-divider)`,
+          `.tree-node.table-col2[data-path^="${hashPath(grandparentPath)}"]:not(.thought-divider)`,
         )
       } else if (!elements.length) {
         /** This is a top-level divider, use its siblings instead. */
