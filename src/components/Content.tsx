@@ -88,7 +88,6 @@ const Content: FC = () => {
         id='content'
         ref={contentRef}
         className={contentClassNames}
-        style={{ marginTop: rootThoughtsLength > 0 ? '0.501em' : '0px' }}
         {...fastClick(() => dispatch(clickOnEmptySpace))}
         onMouseDown={() => setIsPressed(true)}
       >

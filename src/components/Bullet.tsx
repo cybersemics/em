@@ -265,13 +265,13 @@ const Bullet = ({
         // calculate position of thought for different font sizes
         // Table column 1 needs more space between the bullet and thought for some reason
         marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0),
-        marginBottom: extendClickHeight - 2,
+        marginBottom: -extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
         position: 'absolute',
         verticalAlign: 'top',
-        width: 7, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
+        width: -((fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0)) - extendClickWidth, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
         cursor: 'pointer',
       }}
       onClick={clickHandler}
