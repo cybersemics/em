@@ -613,6 +613,7 @@ const LayoutTree = () => {
       style={{
         // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
         transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
+        marginTop: '0.501em',
       }}
     >
       <div
