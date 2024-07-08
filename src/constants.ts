@@ -3,6 +3,7 @@ import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { emojiRegex } from './emojiRegex'
+import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
@@ -261,7 +262,7 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
-export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike']
+export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code']
 
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
@@ -497,3 +498,6 @@ export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 
 /** The animation duration of a node in the LayoutTree component. */
 export const LAYOUT_NODE_ANIMATION_DURATION = 150
+
+export const GESTURE_GLOW_BLUR = 10
+export const GESTURE_GLOW_COLOR: keyof typeof colors.dark = 'gray'

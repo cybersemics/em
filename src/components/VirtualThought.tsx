@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -12,6 +12,7 @@ import calculateAutofocus from '../selectors/calculateAutofocus'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
@@ -34,6 +35,9 @@ export type OnResize = (args: {
   /** A key that uniquely identifies the thought across context views. */
   key: string
 }) => void
+
+/** Selects whether the context view is active for this thought. */
+const selectShowContexts = (path: SimplePath) => (state: State) => isContextViewActive(state, path)
 
 /** Selects the cursor. */
 const selectCursor = (state: State) => state.cursor
@@ -94,6 +98,8 @@ const VirtualThought = ({
   const [height, setHeight] = useState<number | null>(singleLineHeight)
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   const isEditing = useSelector(state => equalPath(state.cursor, simplePath))
+  const editingValue = editingValueStore.useSelector(state => (isEditing ? state : null))
+  const isContextViewActive = useSelector(selectShowContexts(simplePath))
   const cursorLeaf = useSelector(state => !!state.cursor && !hasChildren(state, head(state.cursor)))
   const cursorDepth = useSelector(state => (state.cursor ? state.cursor.length : 0))
   const fontSize = useSelector(state => state.fontSize)
@@ -155,21 +161,25 @@ const VirtualThought = ({
     })
   }, [crossContextualKey, onResize, path, thought.id])
 
+  // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
+  // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
+  useLayoutEffect(updateSize, [
+    cursorDepth,
+    cursorLeaf,
+    fontSize,
+    isVisible,
+    leaf,
+    note,
+    simplePath,
+    style,
+    isContextViewActive,
+    editingValue,
+    updateSize,
+  ])
+
   // Read the element's height from the DOM on cursor change and re-render with new height
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, shallowEqual)
-
-  // Recalculate height when anything changes that could indirectly affect the height of the thought. (Height observers are slow.)
-  // Autofocus changes when the cursor changes depth or moves between a leaf and non-leaf. This changes the left margin and can cause thoughts to wrap or unwrap.
-  useEffect(updateSize, [cursorDepth, cursorLeaf, fontSize, isVisible, leaf, note, simplePath, style, updateSize])
-
-  // Recalculate height immediately as the editing value changes, otherwise there will be a delay between the text wrapping and the LayoutTree moving everything below the thought down.
-  useEffect(() => {
-    if (isEditing) {
-      // update height when editingValue changes and return the unsubscribe function
-      return editingValueStore.subscribe(updateSize)
-    }
-  }, [isEditing, updateSize])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(

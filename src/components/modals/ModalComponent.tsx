@@ -23,7 +23,7 @@ export interface ModalProps {
   opaque?: boolean
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
-  title: string
+  title?: string
   top?: number
   preventCloseOnEscape?: boolean
 }

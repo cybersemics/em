@@ -2,7 +2,7 @@ import _ from 'lodash'
 import ComparatorFunction from '../@types/ComparatorFunction'
 import ComparatorValue from '../@types/ComparatorValue'
 import Thought from '../@types/Thought'
-import { EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
+import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import isAttribute from './isAttribute'
 import lower from './lower'
 
@@ -14,7 +14,9 @@ const REGEX_PUNCTUATION = /^[!@#$%^&*()\-_=+[\]{};:'"<>.,?\\/].*/
 const REGEX_SHORT_DATE_WITH_DASH = /\d{1,2}-\d{1,2}/
 const REGEX_SHORT_DATE_WITH_SLASH = /\d{1,2}\/\d{1,2}/
 const REGEX_IGNORED_PREFIXES = new RegExp(`^(${IGNORED_PREFIXES.join('|')})(.*)`, 'gmi')
-const REGEX_FORMATTING = /^<([b|i|u]|strike)[^>]*>(.*?)<\s*\/\s*([b|i|u]|strike)>/
+const REGEX_FORMATTING = new RegExp(
+  `^<(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>(.*?)<\\s*/\\s*(${ALLOWED_FORMATTING_TAGS.join('|')})>`,
+)
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here

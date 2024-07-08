@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
+import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import themeColors from '../selectors/themeColors'
 import createId from '../util/createId'
 
@@ -69,6 +70,8 @@ const GestureDiagram = ({
 }: GestureDiagramProps) => {
   const [id] = useState(createId())
   const colors = useSelector(themeColors)
+  // match signaturePad shadow in TraceGesture component
+  const dropShadow = `drop-shadow(0 0 ${(GESTURE_GLOW_BLUR * 2) / 3}px ${colors[GESTURE_GLOW_COLOR]})`
 
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
@@ -159,6 +162,7 @@ const GestureDiagram = ({
             d='M 0 0 L 10 5 L 0 10 z'
             fill={highlight != null && highlight >= path.length ? colors.vividHighlight : color || colors.fg}
             stroke='none'
+            style={{ filter: dropShadow }}
           />
         </marker>
       </defs>
@@ -178,6 +182,7 @@ const GestureDiagram = ({
             strokeLinejoin='round'
             fill='none'
             markerEnd={i === pathSegments.length - 1 ? `url(#${id})` : undefined}
+            style={{ filter: dropShadow }}
           />
         )
       })}

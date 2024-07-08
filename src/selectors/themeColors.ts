@@ -1,7 +1,7 @@
 import State from '../@types/State'
 import theme from './theme'
 
-const colors = {
+export const colors = {
   dark: {
     // Background colors in capacitor app needs to be in hexadecimal codes
     bg: '#000000',

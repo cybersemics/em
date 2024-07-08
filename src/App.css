@@ -262,8 +262,9 @@ a.button:active {
   background-color: #111;
 }
 
-.button-small {
+a.button-small {
   padding: 2px 0;
+  font-size: 90%;
 }
 
 a.button-less-padding {
@@ -1230,6 +1231,19 @@ h1 .num-contexts {
 .dark .placeholder,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* The placeholder color should be inversed when a light background color is applied. */
+/* See: StaticThought */
+.text-note.inverse,
+.placeholder.inverse,
+.thought.inverse [placeholder]:empty::before {
+  color: rgba(255, 255, 255, 0.5);
+}
+.dark .text-note.inverse,
+.dark .placeholder.inverse,
+.dark .thought.inverse [placeholder]:empty::before {
+  color: rgba(7, 7, 7, 0.5);
 }
 
 .bullet {

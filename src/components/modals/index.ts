@@ -8,3 +8,6 @@ export { default as help } from './Help'
 export { default as settings } from './Settings'
 export { default as signup } from './Signup'
 export { default as welcome } from './Welcome'
+
+// used in snapshot tests
+export { default as testGestureDiagram } from './TestGestureDiagram'
