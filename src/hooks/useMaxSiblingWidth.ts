@@ -46,7 +46,6 @@ const calculateMaxWidth = (elements: HTMLElement[]): number => {
  */
 const useMaxSiblingWidth = (parentPath: Path): number => {
   const [maxWidth, setMaxWidth] = useState(0)
-
   const path = useMemo(() => parentPath, [parentPath])
 
   const updateMaxWidth = useCallback(() => {
