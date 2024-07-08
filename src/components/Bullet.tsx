@@ -215,6 +215,9 @@ const Bullet = ({
   // Bottom margin for bullet to align with thought text
   const bulletBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
 
+  const bulletPositionAdjustment = (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0)
+  const bulletWidth = -bulletPositionAdjustment - extendClickWidth
+
   // expand or collapse on click
   // has some additional logic to make it work intuitively with pin true/false
   const clickHandler = useCallback(
@@ -264,14 +267,14 @@ const Bullet = ({
         marginTop: -extendClickHeight,
         // calculate position of thought for different font sizes
         // Table column 1 needs more space between the bullet and thought for some reason
-        marginLeft: (fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0),
+        marginLeft: bulletPositionAdjustment,
         marginBottom: -extendClickHeight - 2,
         paddingTop: extendClickHeight,
         paddingLeft: extendClickWidth,
         paddingBottom: extendClickHeight + 2,
         position: 'absolute',
         verticalAlign: 'top',
-        width: -((fontSize - 9) * 0.5 - 11 - extendClickWidth - (isTableCol1 ? fontSize / 4 : 0)) - extendClickWidth, // make the bullet wide enough to be clicked, but not enough to encroach on the editable
+        width: bulletWidth,
         cursor: 'pointer',
       }}
       onClick={clickHandler}
