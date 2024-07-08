@@ -1,4 +1,4 @@
-import classNames from 'classnames'
+import classnames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -663,7 +663,7 @@ const LayoutTree = () => {
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
                 data-path={hashPath(path)}
-                className={classNames({
+                className={classnames({
                   'tree-node': true,
                   'top-level': simplePath.length === 1,
                   'table-col1': isTableCol1,
