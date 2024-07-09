@@ -7,10 +7,10 @@ import { EM_TOKEN, EXPAND_THOUGHT_CHAR, ROOT_PARENT_ID } from '../../constants'
 import { getAncestorBy } from '../../selectors/getAncestorByValue'
 import getThoughtById from '../../selectors/getThoughtById'
 import thoughtToPath from '../../selectors/thoughtToPath'
-import hashPath from '../../util/hashPath'
 import hashThought from '../../util/hashThought'
 import head from '../../util/head'
 import isAttribute from '../../util/isAttribute'
+import isThoughtExpanded from '../../util/isThoughtExpanded'
 import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
@@ -68,10 +68,6 @@ const isUnarchivedAttribute = (thought: Thought) => isAttribute(thought.value) &
 /** Returns true if a Thought is a meta attribute or is a descendant of a meta attribute. Ignores =archive. */
 const isMetaDescendant = (state: State, thought: Thought) =>
   isUnarchivedAttribute(thought) || getAncestorBy(state, thought.id, isUnarchivedAttribute)
-
-/** Returns true if a thought is expanded. O(depth) because expanded is keyed by Path. */
-const isThoughtExpanded = (state: State, thoughtId: ThoughtId) =>
-  !!state.expanded[hashPath(thoughtToPath(state, thoughtId))]
 
 /**
  * Returns buffered lexemeIndex and thoughtIndex for all descendants using async iterables.

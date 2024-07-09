@@ -30,6 +30,7 @@ import isDivider from '../util/isDivider'
 import isDraggedFile from '../util/isDraggedFile'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import isThoughtExpanded from '../util/isThoughtExpanded'
 
 interface DroppableSubthoughts {
   path: Path
@@ -104,7 +105,9 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
   const parentIdTo = head(rootedParentOf(state, pathTo))
   const sameContext = parentIdFrom === parentIdTo
-  const dropTop = attributeEquals(state, parentIdTo, '=drop', 'top')
+  const isExpanded = isThoughtExpanded(state, parentIdTo)
+
+  const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, props.simplePath)) return
