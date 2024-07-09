@@ -17,6 +17,7 @@ interface VirtualThoughtProps {
   nextChildId?: ThoughtId
   simplePath: SimplePath
   showContexts?: boolean
+  isTableCol2?: boolean
 }
 
 export default VirtualThoughtProps

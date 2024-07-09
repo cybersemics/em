@@ -737,6 +737,7 @@ const LayoutTree = () => {
                             indexDescendant={indexDescendant}
                             leaf={false}
                             path={pathEnd}
+                            isTableCol2={isTableCol2}
                             // not used, just provided since DropEnd props shares the ThoughtProps type
                             simplePath={simplePathEnd}
                             // Extend the click area of the drop target when there is nothing below.
