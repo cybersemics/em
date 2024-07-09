@@ -1,22 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import { findAnyChild } from '../selectors/getChildren'
 import editingValueStore from '../stores/editingValue'
 import hashPath from '../util/hashPath'
+import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /**
  * Helper function to collect nodes with the specified `data-parent-path`.
  * If no thought node is found, it continues searching with `data-grandparent-path`.
  */
-const collectNodes = (path: Path): HTMLElement[] => {
+const collectNodes = (path: Path, hasNonDividerSiblings: boolean): HTMLElement[] => {
+  let collectedNodes: HTMLElement[] = []
   /** Collect nodes by provided attribute and value. */
   const collectByAttribute = (attribute: string, value: string): HTMLElement[] =>
     Array.from(document.querySelectorAll<HTMLElement>(`.tree-node[data-${attribute}='${value}']:not(.divider-thought)`))
 
-  let collectedNodes = collectByAttribute('parent-path', hashPath(path))
-
-  // If no nodes found, fallback to data-grandparent-path
-  if (!collectedNodes.length) {
+  if (hasNonDividerSiblings) {
+    collectedNodes = collectByAttribute('parent-path', hashPath(path))
+  } else {
     const grandparentPathArray = parentOf(path)
     // Ensure grandParentPathArray is a non-empty array
     if (Array.isArray(grandparentPathArray) && grandparentPathArray.length) {
@@ -32,12 +35,11 @@ const collectNodes = (path: Path): HTMLElement[] => {
  * Helper function to calculate maximum width among '.thought' elements.
  */
 const calculateMaxWidth = (elements: HTMLElement[]): number => {
-  const widths = elements.map(el => {
+  return elements.reduce((maxWidth, el) => {
     const thought = el.querySelector<HTMLElement>('.thought')
-    return thought ? thought.offsetWidth : 0
-  })
-
-  return widths.length > 0 ? Math.max(...widths) : 0
+    const width = thought ? thought.offsetWidth : 0
+    return Math.max(maxWidth, width)
+  }, 0)
 }
 
 /**
@@ -46,16 +48,18 @@ const calculateMaxWidth = (elements: HTMLElement[]): number => {
  */
 const useMaxSiblingWidth = (parentPath: Path): number => {
   const [maxWidth, setMaxWidth] = useState(0)
-  const path = useMemo(() => parentPath, [parentPath])
+  const hasNonDividerSiblings = useSelector(state =>
+    findAnyChild(state, head(parentPath), child => child.value !== '---'),
+  )
 
   const updateMaxWidth = useCallback(() => {
-    const nodes = collectNodes(path)
+    const nodes = collectNodes(parentPath, !!hasNonDividerSiblings)
     setMaxWidth(calculateMaxWidth(nodes))
-  }, [path])
+  }, [parentPath, hasNonDividerSiblings])
 
   editingValueStore.useEffect(updateMaxWidth)
 
-  useEffect(updateMaxWidth, [updateMaxWidth, path])
+  useEffect(updateMaxWidth, [updateMaxWidth, parentPath])
 
   return maxWidth
 }

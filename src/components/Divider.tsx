@@ -12,7 +12,7 @@ import parentOf from '../util/parentOf'
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
   const dispatch = useDispatch()
-  const parentPath = parentOf(path)
+  const parentPath = useMemo(() => parentOf(path), [path])
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {

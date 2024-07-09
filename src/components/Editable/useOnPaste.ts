@@ -7,7 +7,6 @@ import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import * as selection from '../../device/selection'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import store from '../../stores/app'
-import editingValueStore from '../../stores/editingValue'
 import equalPath from '../../util/equalPath'
 import isHTML from '../../util/isHTML'
 import strip from '../../util/strip'
@@ -65,7 +64,6 @@ const useOnPaste = ({
         }
 
         const text = isHTML(plainText) ? plainText : htmlText || plainText
-        editingValueStore.update(text)
 
         // Is this an adequate check if the thought is multiline, or do we need to use textToHtml like in importText?
         const multiline = plainText.trim().includes('\n') || htmlText?.match(/<(li|p|br)[\s>]/)

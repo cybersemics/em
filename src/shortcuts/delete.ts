@@ -10,7 +10,6 @@ import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import simplifyPath from '../selectors/simplifyPath'
-import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isEM from '../util/isEM'
@@ -32,7 +31,6 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
   } else if (findDescendant(state, head(cursor), '=readonly')) {
     dispatch(error({ value: `"${ellipsize(value)}" is read-only and cannot be deleted.` }))
   } else {
-    editingValueStore.update(null)
     dispatch(deleteThoughtWithCursor({ path: cursor }))
 
     // Alert which thought was deleted.
