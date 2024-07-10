@@ -1816,6 +1816,11 @@ h1 .num-contexts {
   margin-bottom: 0.5em;
 }
 
+/** Assign annotation height on single line truncated url */
+.single-line .thought {
+  height: 1.9em;
+}
+
 .single-line .thought .editable,
 .single-line .thought-annotation .editable-annotation-text {
   display: inline-block;
