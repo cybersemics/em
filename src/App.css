@@ -630,6 +630,15 @@ This prevents table cols being rendered as multiline content, which causes inaac
   min-height: 1.9em;
 }
 
+/** Assign annotation height on single line truncated url */
+.single-line .thought {
+  /**
+    .singl-line element has display: inline-block property, it affects the height calculation of the .thougt div so we need to set the height manually.
+    This height 1.9em is the same value as the min-height above: line: 630
+  */
+  height: 1.9em;
+}
+
 /* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
    Add padding-top to shift the caret down.
    This bumps the placeholder text off, so we need to shift the placeholder text up by the same amount.
@@ -1814,11 +1823,6 @@ h1 .num-contexts {
 /** Use .modal-actions-stack for buttons that switch to vertical layout on small screen sizes. */
 .popup .modal-actions.modal-actions-stack a.button {
   margin-bottom: 0.5em;
-}
-
-/** Assign annotation height on single line truncated url */
-.single-line .thought {
-  height: 1.9em;
 }
 
 .single-line .thought .editable,
