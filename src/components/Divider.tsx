@@ -52,12 +52,10 @@ const Divider = ({ path }: { path: Path }) => {
 
       /** Find and set the max width of our selected elements. */
       const maxWidth = Math.max(
-        ...Array.from(elements).map(
-          element => (element.querySelector('.thought') as HTMLElement).offsetWidth + DIVIDER_PLUS_PX,
-        ),
+        ...Array.from(elements).map(element => (element.querySelector('.thought') as HTMLElement).offsetWidth),
       )
 
-      setWidth(maxWidth)
+      setWidth(maxWidth + DIVIDER_PLUS_PX)
     }
   }
 
