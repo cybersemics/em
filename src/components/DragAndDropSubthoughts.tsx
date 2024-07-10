@@ -5,6 +5,7 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import VirtualThoughtProps from '../@types/VirtualThoughtProps'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
@@ -23,6 +24,7 @@ import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isDescendantPath from '../util/isDescendantPath'
@@ -36,6 +38,11 @@ interface DroppableSubthoughts {
   simplePath: SimplePath
   showContexts?: boolean
 }
+
+/**
+ * Returns true if the path is expanded.
+ */
+const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(path)]
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
@@ -104,7 +111,9 @@ const drop = (props: VirtualThoughtProps, monitor: DropTargetMonitor) => {
   const parentIdFrom = head(rootedParentOf(state, thoughtsFrom))
   const parentIdTo = head(rootedParentOf(state, pathTo))
   const sameContext = parentIdFrom === parentIdTo
-  const dropTop = attributeEquals(state, parentIdTo, '=drop', 'top')
+  const isExpanded = isPathExpanded(state, rootedParentOf(state, pathTo))
+
+  const dropTop = !isExpanded && attributeEquals(state, parentIdTo, '=drop', 'top')
 
   // cannot drop on itself
   if (equalPath(thoughtsFrom, props.simplePath)) return
