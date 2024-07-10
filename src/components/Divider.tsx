@@ -3,12 +3,11 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import rootedParentOf from '../selectors/rootedParentOf'
-import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import parentOf from '../util/parentOf'
 
 const DIVIDER_PLUS_PX = 20
 const DIVIDER_MIN_WIDTH = 85
@@ -28,8 +27,7 @@ const Divider = ({ path }: { path: Path }) => {
   /** Get the max width of nearby elements, add DIVIDER_PLUS_PX and set this width for divider. */
   const setStyle = () => {
     if (dividerRef.current) {
-      const state = store.getState()
-      const parentPath = rootedParentOf(state, path)
+      const parentPath = parentOf(path)
 
       const treeNode = dividerRef.current.closest('div.tree-node') as HTMLElement
       if (!treeNode) throw new Error('Divider tree node not found')
@@ -41,7 +39,7 @@ const Divider = ({ path }: { path: Path }) => {
 
       if (elements.length === 1) {
         /** If this divider is an only child in a table, find the widest col2. */
-        const grandparentPath = rootedParentOf(state, parentPath)
+        const grandparentPath = parentOf(parentPath)
         if (!grandparentPath) throw new Error('Divider grandparent not found')
 
         elements = document.querySelectorAll(
