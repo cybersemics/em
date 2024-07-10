@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import { findAnyChild } from '../selectors/getChildren'
@@ -57,8 +57,9 @@ const useMaxSiblingWidth = (parentPath: Path): number => {
     setMaxWidth(calculateMaxWidth(nodes))
   }, [parentPath, hasNonDividerSiblings])
 
-  editingValueStore.useEffect(updateMaxWidth)
+  const editingVal = editingValueStore.useSelector()
 
+  useLayoutEffect(updateMaxWidth, [updateMaxWidth, editingVal])
   useEffect(updateMaxWidth, [updateMaxWidth, parentPath])
 
   return maxWidth
