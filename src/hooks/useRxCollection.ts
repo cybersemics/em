@@ -6,7 +6,7 @@ type Document<T> = DeepReadonly<RxDocument<T>>
 /**
  * Subscribes to a rxdb collection, e.g. RxCollection<RxPermission>.
  */
-const useObserveCol = <T>(rxCol: RxCollection<T>): Document<T>[] => {
+const useRxCollection = <T>(rxCol: RxCollection<T>): Document<T>[] => {
   const [state, setState] = useState<Document<T>[]>([])
 
   const updateState = useCallback(async (docs: RxDocument<T>[]) => {
@@ -25,4 +25,4 @@ const useObserveCol = <T>(rxCol: RxCollection<T>): Document<T>[] => {
   return state
 }
 
-export default useObserveCol
+export default useRxCollection
