@@ -358,6 +358,8 @@ const LayoutTree = () => {
       : 0,
   )
 
+  const tableCol1WidthRef = useRef(0)
+
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
   // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
@@ -566,6 +568,10 @@ const LayoutTree = () => {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
       }
 
+      if (node.isTableCol1) {
+        tableCol1WidthRef.current = Number(tableCol1Widths.get(head(parentOf(node.path)))) / fontSize || 0
+      }
+
       return {
         ...node,
         cliff,
@@ -721,6 +727,10 @@ const LayoutTree = () => {
                       const simplePathEnd =
                         -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
+
+                      const isRootPath = isRoot(pathEnd)
+                      const marginLeftOffset =
+                        isRootPath && (isTableCol1 || isTableCol2) ? Math.round(tableCol1WidthRef.current) : 0
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
@@ -728,7 +738,7 @@ const LayoutTree = () => {
                           style={{
                             position: 'relative',
                             top: '-0.2em',
-                            left: `calc(${cliffDepth - depth}em + ${isTouch ? -1 : 1}px)`,
+                            left: `calc(${cliffDepth - depth - marginLeftOffset}em + ${isTouch ? -1 : 1}px)`,
                             transition: 'left 0.15s ease-out',
                           }}
                         >

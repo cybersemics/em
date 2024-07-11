@@ -215,6 +215,28 @@ const testSuite = () => {
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
+
+    it('drop hover after table', async () => {
+      await paste(`
+        - x
+        - a
+          - =view
+            - Table
+          - =pin
+            - true
+          - b
+            - c
+          - d
+            - e
+      `)
+
+      await clickThought('x')
+      await dragAndDropThought('x', 'd', { position: 'after', mouseUp: true })
+
+      await sleep(300)
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
   })
 }
 
