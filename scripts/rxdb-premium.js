@@ -3,6 +3,21 @@ import dotenv from 'dotenv'
 import fs from 'node:fs'
 import path from 'node:path'
 
+/* 
+  This script is used to build the application with the premium version of RxDB.
+  It does the following:
+  1. Adds the VITE_USE_RXDB_PREMIUM environment variable to the process.
+     This is used in the vite.config.ts file to setup the alias for the premium version of RxDB.
+  2. Reads the access token from the .env.production.local file
+  3. Adds the access token to the package.json file
+  4. Installs the rxdb-premium library
+  5. Builds the application
+  6. Resets the package.json and yarn.lock files to their original state
+
+  NOTE: After it finished, the rxdb-premium library will not be removed from the node_modules folder.
+  This is to avoid having to reinstall it every time you want to build the application.
+*/
+
 dotenv.config({ path: path.resolve(process.cwd(), '.env.production.local') })
 
 const SHOW_OUTPUT = false
