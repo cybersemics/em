@@ -12,7 +12,7 @@ import { rxDB } from '../../data-providers/rxdb/thoughtspace'
 import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
 import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
-import useObserveCol from '../../hooks/useObserveCol'
+import useRxCollection from '../../hooks/useRxCollection'
 import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
@@ -24,7 +24,7 @@ import PencilIcon from './../icons/PencilIcon'
 import ModalComponent from './ModalComponent'
 
 /** A hook that subscribes to the permissionsClientDoc. */
-const usePermissions = (): RxPermission[] => useObserveCol<RxPermission>(rxDB.permissions)
+const usePermissions = (): RxPermission[] => useRxCollection<RxPermission>(rxDB.permissions)
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
 const getNextDeviceName = (permissions: RxPermission[], start?: number): string => {
