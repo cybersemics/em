@@ -10,6 +10,11 @@ import dispatch from '../../test-helpers/dispatch'
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
+/* 
+  All tests are skipped because of conflicts with the RxDB IndexedDB adapter.
+  It may be related to the fact that we stopped using fake timers for the same reason.
+*/
+
 it.skip('Set the text color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
   await click('.toolbar-icon[aria-label="Text Color"]')
