@@ -223,11 +223,6 @@ const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
 // Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
 // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
 export const freeThought = async (docKey: string): Promise<void> => {
-  console.info(
-    'TODO_RXDB: thoughtspace.freeThought - The thought is no longer visible and should be removed from memory. Realtime changes to this thought from other clients no longer need to be subscribed to.',
-    { id: docKey },
-  )
-
   // if the thought is retained again, it means it has been replicated in the foreground, and tryDeallocateThought will be a noop.
   await tryDeallocateThought(docKey)
 }
@@ -364,16 +359,12 @@ export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | und
 
 /** Pauses replication for higher priority network activity, such as push or pull. */
 export const pauseReplication = async () => {
-  console.info(
-    'TODO_RXDB: thoughtspace.pauseReplication - Background replication should be paused, e.g. to give priority to loading visible thoughts or syncing realtime edits.',
-  )
   // const { replication } = await config
   // replication.pause()
 }
 
 /** Starts or resumes replication after being paused for higher priority network actvity such as push or pull. */
 export const startReplication = async () => {
-  console.info('TODO_RXDB: thoughtspace.startReplication - Background replication can be resumed.')
   // Disable replication controller as part of winding down YJS
   // const { replication } = await config
   // replication.start()
