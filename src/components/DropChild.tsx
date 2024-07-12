@@ -54,9 +54,7 @@ const DropChildIfCollapsed = ({
   path,
   simplePath,
 }: DropChildProps & { dropTarget: ConnectDropTarget }) => {
-  const isExpanded = useSelector(
-    state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(simplePath)],
-  )
+  const isExpanded = useSelector(state => hasChildren(state, head(simplePath)) && !!state.expanded[hashPath(path)])
   const draggingThought = useSelector(state => state.draggingThought, shallowEqual)
 
   // Do not render DropChild on expanded thoughts or on the dragging thought.
