@@ -618,6 +618,10 @@ This prevents table cols being rendered as multiline content, which causes inaac
   box-sizing: border-box;
 }
 
+.thought {
+  --min-thought-height: 1.9em;
+}
+
 .child .editable,
 .editable-annotation-text {
   /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
@@ -627,7 +631,15 @@ This prevents table cols being rendered as multiline content, which causes inaac
   /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
   clip-path: inset(0.001px 0 0.1em 0);
   /* Use minimum height to the cover the gap left by clip-path */
-  min-height: 1.9em;
+  min-height: var(--min-thought-height);
+}
+
+/** Assign annotation height on single line truncated url */
+.single-line .thought {
+  /**
+    .single-line element has display: inline-block property, it affects the height calculation of the .thought div so we need to set the height manually.
+  */
+  height: var(--min-thought-height);
 }
 
 /* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
