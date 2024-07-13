@@ -75,6 +75,29 @@ const ModalLink: FC<PropsWithChildren<{ id: Modal }>> = ({ id, children }) => {
   )
 }
 
+/** A button that opens the Help modal. */
+const HelpButton: React.FC = () => {
+  const dispatch = useDispatch()
+  return (
+    <div
+      {...fastClick(() => dispatch(showModal({ id: 'help' })))}
+      title='Help'
+      style={{
+        cursor: 'pointer',
+        display: 'inline-flex',
+        fontWeight: 'bold',
+        // extend tap area
+        // margin-right less than -10 causes content to scroll horizontally on swipe
+        padding: 10,
+        margin: '-10px -10px -10px 10px',
+        userSelect: 'none',
+      }}
+    >
+      ?
+    </div>
+  )
+}
+
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
@@ -125,8 +148,7 @@ const Footer = () => {
           <ModalLink id='devices'>Devices</ModalLink>
           <LinkDivider />
           <ModalLink id='settings'>Settings</ModalLink>
-          <LinkDivider />
-          <ModalLink id='help'>Help</ModalLink>
+          <HelpButton />
         </div>
       </li>
       <br />

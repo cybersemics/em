@@ -1,15 +1,13 @@
 import classNames from 'classnames'
-import React, { useRef } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { useRef } from 'react'
+import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import Path from '../@types/Path'
-import { showModalActionCreator as showModal } from '../actions/showModal'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import fastClick from '../util/fastClick'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -30,29 +28,6 @@ const CursorBreadcrumbs = () => {
   )
 
   return <ContextBreadcrumbs path={breadcrumbSimplePath} classNamesObject={navBreadcrumbsClass} />
-}
-
-/** A link that opens the Help modal. */
-const HelpButton: React.FC = () => {
-  const dispatch = useDispatch()
-  return (
-    <div
-      {...fastClick(() => dispatch(showModal({ id: 'help' })))}
-      title='Help'
-      style={{
-        cursor: 'pointer',
-        display: 'inline-flex',
-        fontWeight: 'bold',
-        // extend tap area
-        // margin-right less than -10 causes content to scroll horizontally on swipe
-        padding: '10px 10px 10px 20px',
-        margin: -10,
-        userSelect: 'none',
-      }}
-    >
-      ?
-    </div>
-  )
 }
 
 /** A navigation bar that contains a link to home and breadcrumbs. */
@@ -115,7 +90,6 @@ const NavBar = ({ position }: { position: string }) => {
 
                   <div className='nav-right-button-group'>
                     <>
-                      <HelpButton />
                       {authenticated && <InvitesButton />}
                       {/* <FeedbackButton /> */}
                       {/* <QuickAddButton /> */}
