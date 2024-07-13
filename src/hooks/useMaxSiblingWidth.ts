@@ -5,6 +5,7 @@ import { findAnyChild } from '../selectors/getChildren'
 import editingValueStore from '../stores/editingValue'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
 /**
@@ -22,7 +23,7 @@ const collectNodes = (path: Path, hasNonDividerSiblings: boolean): HTMLElement[]
   } else {
     const grandparentPathArray = parentOf(path)
     // Ensure grandParentPathArray is a non-empty array
-    if (Array.isArray(grandparentPathArray) && grandparentPathArray.length) {
+    if (grandparentPathArray.length) {
       const grandparentPath = hashPath(grandparentPathArray)
       collectedNodes = collectByAttribute('grandparent-path', grandparentPath)
     }
@@ -48,12 +49,12 @@ const calculateMaxWidth = (elements: HTMLElement[]): number => {
  */
 const useMaxSiblingWidth = (parentPath: Path): number => {
   const [maxWidth, setMaxWidth] = useState(0)
-  const hasNonDividerSiblings = useSelector(state =>
-    findAnyChild(state, head(parentPath), child => child.value !== '---'),
+  const hasNonDividerSiblings = !!useSelector(state =>
+    findAnyChild(state, head(parentPath), child => !isDivider(child.value)),
   )
 
   const updateMaxWidth = useCallback(() => {
-    const nodes = collectNodes(parentPath, !!hasNonDividerSiblings)
+    const nodes = collectNodes(parentPath, hasNonDividerSiblings)
     setMaxWidth(calculateMaxWidth(nodes))
   }, [parentPath, hasNonDividerSiblings])
 
