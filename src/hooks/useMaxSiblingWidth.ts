@@ -49,8 +49,8 @@ const calculateMaxWidth = (elements: HTMLElement[]): number => {
  */
 const useMaxSiblingWidth = (parentPath: Path): number => {
   const [maxWidth, setMaxWidth] = useState(0)
-  const hasNonDividerSiblings = !!useSelector(state =>
-    !!findAnyChild(state, head(parentPath), child => !isDivider(child.value)),
+  const hasNonDividerSiblings = !!useSelector(
+    state => !!findAnyChild(state, head(parentPath), child => !isDivider(child.value)),
   )
 
   const updateMaxWidth = useCallback(() => {
