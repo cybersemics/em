@@ -71,6 +71,14 @@ const collapseContext = (state: State, { at }: Options) => {
   const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
   const sortId = findDescendant(state, head(simplePath), ['=sort'])
 
+  // Find attributes to delete
+  const pinAttributeId = findDescendant(state, head(simplePath), '=pin')
+  const childrenAttributeId = findDescendant(state, head(simplePath), '=children')
+  const childrenPinAttributeId = childrenAttributeId ? findDescendant(state, childrenAttributeId, '=pin') : null
+  const shouldDeleteChildrenAttribute =
+    childrenAttributeId &&
+    getChildren(state, childrenAttributeId).filter(thought => thought.value !== '=pin').length === 0
+
   return reducerFlow([
     // first edit the collapsing thought to a unique value
     // otherwise, it could get merged when children are outdented in the next step
@@ -107,6 +115,26 @@ const collapseContext = (state: State, { at }: Options) => {
             : rankStart + rankIncrement * i,
       })
     }),
+
+    // delete =pin
+    pinAttributeId &&
+      deleteThought({
+        pathParent: parentOf(simplePath),
+        thoughtId: pinAttributeId,
+      }),
+    // delete =children/=pin
+    childrenPinAttributeId &&
+      deleteThought({
+        pathParent: parentOf(simplePath),
+        thoughtId: childrenPinAttributeId,
+      }),
+    // delete =children if it has no remaining children after collapsing
+    childrenAttributeId && shouldDeleteChildrenAttribute
+      ? deleteThought({
+          pathParent: parentOf(simplePath),
+          thoughtId: childrenAttributeId,
+        })
+      : null,
 
     // delete the original cursor
     deleteThought({

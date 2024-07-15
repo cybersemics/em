@@ -5,6 +5,7 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
+import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -380,5 +381,127 @@ describe('context view', () => {
   - b
     - m
       - z`)
+  })
+})
+
+describe('collapsing contexts with special attributes', () => {
+  it('should delete =pin when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =pin
+                - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      toggleHiddenThoughts,
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should delete =children/=pin when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =children
+                - =pin
+                  - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      toggleHiddenThoughts,
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should delete =children if it has no remaining children after collapsing', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =children
+                - =pin
+                  - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      toggleHiddenThoughts,
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should keep =children if it has remaining children after collapsing', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =children
+                - =pin
+                  - true
+                - =test
+                  - value
+              - c
+            - d
+          - e
+        `,
+      }),
+      toggleHiddenThoughts,
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =children
+      - =test
+        - value
+    - c
+    - d
+  - e`)
   })
 })
