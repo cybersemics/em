@@ -9,12 +9,12 @@ import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
-import sort from '../actions/sort'
 import subCategorizeOne from '../actions/subCategorizeOne'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankBefore from '../selectors/getRankBefore'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -63,17 +63,10 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       // the context of the new empty thought
       return createThought(state, {
         path: simplePath as Path,
-        rank: getPrevRank(state, head(simplePath!)),
+        // If there is a sort preference, use it. Otherwise, insert at the top.
+        rank: sortId ? getSortedRank(state, head(simplePath), value) : getPrevRank(state, head(simplePath)),
         value,
       })
-    },
-
-    state => {
-      // sort the new thought if there is a sort preference
-      if (sortId) return sort(state, head(simplePath))
-
-      // otherwise, return the state
-      return state
     },
 
     // clear text
