@@ -230,6 +230,34 @@ describe('normal view', () => {
     const ranks = new Set([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank])
     expect(ranks.size).toEqual(6)
   })
+
+  it('should resort parent context when collapsing a thought with sort attribute', () => {
+    const steps = [
+      importText({
+        text: `
+          - c
+          - b
+            - =sort
+              - Alphabetical
+                - Asc
+            - a
+        `,
+      }),
+      setCursor(['b']),
+      collapseContext({}),
+      setCursor(null),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - c`)
+  })
 })
 
 describe('context view', () => {

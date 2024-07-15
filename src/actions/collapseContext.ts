@@ -5,6 +5,7 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
+import findDescendant from '../selectors/findDescendant'
 import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
@@ -18,6 +19,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import editThought from './editThought'
+import sort from './sort'
 
 interface Options {
   at?: Path | null
@@ -61,6 +63,10 @@ const collapseContext = (state: State, { at }: Options) => {
   const rankStart = getRankBefore(state, simplePath)
   const rankIncrement = (thought.rank - rankStart) / children.length
 
+  // Find the sort preference, if any
+  const parentId = head(rootedParentOf(state, simplePath))
+  const sortId = findDescendant(state, head(simplePath), ['=sort'])
+
   return reducerFlow([
     // first edit the collapsing thought to a unique value
     // otherwise, it could get merged when children are outdented in the next step
@@ -89,6 +95,12 @@ const collapseContext = (state: State, { at }: Options) => {
         editing: state.editing,
         offset: 0,
       }),
+    // sort the parent context if there is a sort preference
+    state => {
+      if (sortId) return sort(state, parentId)
+
+      return state
+    },
   ])(state)
 }
 
