@@ -17,6 +17,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
@@ -62,8 +63,38 @@ const collapseContext = (state: State, { at }: Options) => {
   }
 
   const thought = getThoughtById(state, head(simplePath))
+
+  // Determine whether the collapsed context can be inserted continuously after the meta attributes
+  // or whether we need to split them and insert separetely.
+  // We need to calculate this upfront since we can't rely on `getRankBefore` and `getRankAfter`
+  // without applying changes to state incrementally.
+  // Conditions where we can insert continously:
+  // - No sibling before the collapsed context
+  // - We're immediately adjacent to the last sibling meta attribute
+  const siblings = getChildrenRanked(state, head(rootedParentOf(state, simplePath)))
+  const currentIndex = siblings.findIndex(sibling => sibling.id === head(simplePath))
+  const canInsertContinuously = currentIndex <= 0 || isAttribute(siblings[currentIndex - 1].value)
+
+  const metaSiblings = siblings.filter(thought => isAttribute(thought.value))
+
+  // We treat attributes and thoughts separately and insert meta attributes adjacent to existing meta attributes
+  const metaChildren = children.filter(thought => isAttribute(thought.value))
+  const nonMetaChildren = children.filter(thought => !isAttribute(thought.value))
+
+  // Calculate rank increment and start for non-meta children
   const rankStart = getRankBefore(state, simplePath)
-  const rankIncrement = (thought.rank - rankStart) / children.length
+  const rankIncrement = canInsertContinuously
+    ? (thought.rank - rankStart) / Math.max(children.length + 1, 1)
+    : (thought.rank - rankStart) / Math.max(nonMetaChildren.length, 1)
+
+  const metaRankStart = canInsertContinuously
+    ? rankStart
+    : metaSiblings.length
+      ? metaSiblings[metaSiblings.length - 1].rank
+      : getThoughtById(state, head(rootedParentOf(state, simplePath))).rank
+  const metaRankIncrement = canInsertContinuously
+    ? rankIncrement
+    : (rankStart - metaRankStart) / Math.max(metaChildren.length + 1, 1)
 
   // Find the sort preference, if any
   const parentId = head(rootedParentOf(state, simplePath))
@@ -115,6 +146,26 @@ const collapseContext = (state: State, { at }: Options) => {
             : rankStart + rankIncrement * i,
       })
     }),
+
+    // // outdent each child
+    // ...metaChildren.map((child, i) => {
+    //   const newRank = metaRankStart + metaRankIncrement * i
+    //   return moveThought({
+    //     oldPath: appendToPath(simplePath, child.id),
+    //     newPath: appendToPath(parentOf(simplePath), child.id),
+    //     newRank,
+    //   })
+    // }),
+    // ...nonMetaChildren.map((child, i) => {
+    //   const newRank = canInsertContinuously
+    //     ? rankStart + rankIncrement * (i + metaChildren.length)
+    //     : rankStart + rankIncrement * (i + 1)
+    //   return moveThought({
+    //     oldPath: appendToPath(simplePath, child.id),
+    //     newPath: appendToPath(parentOf(simplePath), child.id),
+    //     newRank,
+    //   })
+    // }),
 
     // delete =pin
     pinAttributeId &&

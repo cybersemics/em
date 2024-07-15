@@ -504,4 +504,31 @@ describe('collapsing contexts with special attributes', () => {
     - d
   - e`)
   })
+
+  it('should move meta attributes to the top when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - =x
+          - a
+          - b
+            - =y
+            - c
+        `,
+      }),
+      toggleHiddenThoughts,
+      setCursor(['b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =x
+  - =y
+  - a
+  - c`)
+  })
 })
