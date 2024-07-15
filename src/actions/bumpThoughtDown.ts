@@ -9,7 +9,9 @@ import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
+import sort from '../actions/sort'
 import subCategorizeOne from '../actions/subCategorizeOne'
+import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankBefore from '../selectors/getRankBefore'
@@ -40,6 +42,9 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // Need to store the full simplePath of each simplePath segment in the simplePath
   const parentPath = parentOf(simplePath)
 
+  // Find the sort preference, if any
+  const sortId = findDescendant(state, head(simplePath), ['=sort'])
+
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
   const simplePathWithNewRank: SimplePath = appendToPath(parentPath, head(simplePath))
@@ -61,6 +66,14 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
         rank: getPrevRank(state, head(simplePath!)),
         value,
       })
+    },
+
+    state => {
+      // sort the new thought if there is a sort preference
+      if (sortId) return sort(state, head(simplePath))
+
+      // otherwise, return the state
+      return state
     },
 
     // clear text
