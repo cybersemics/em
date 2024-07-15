@@ -559,42 +559,47 @@ const Editable = ({
   )
 
   return (
-    <ContentEditable
-      disabled={disabled}
-      innerRef={contentRef}
-      className={classNames({
-        multiline,
-        preventAutoscroll: true,
-        editable: true,
-        ['editable-' + head(path)]: true,
-        empty: value.length === 0,
-      })}
-      html={
-        value === EM_TOKEN
-          ? '<b>em</b>'
-          : // render as empty string during temporary clear state
-            // see: /actions/cursorCleared
-            isCursorCleared
-            ? ''
-            : isEditing
-              ? value
-              : childrenLabel
-                ? childrenLabel.value
-                : value
-      }
-      placeholder={placeholder}
-      // stop propagation to prevent default content onClick (which removes the cursor)
-      onClick={stopPropagation}
-      onTouchEnd={onTap}
-      // must call onMouseDown on mobile since onTap cannot preventDefault
-      // otherwise gestures and scrolling can trigger cursorBack (#1054)
-      onMouseDown={onTap}
-      onFocus={onFocus}
-      onBlur={onBlur}
-      onChange={onChangeHandler}
-      onPaste={onPaste}
-      style={style}
-    />
+    <>
+      <ContentEditable
+        disabled={disabled}
+        innerRef={contentRef}
+        className={classNames({
+          multiline,
+          preventAutoscroll: true,
+          editable: true,
+          ['editable-' + head(path)]: true,
+          empty: value.length === 0,
+        })}
+        html={
+          value === EM_TOKEN
+            ? '<b>em</b>'
+            : // render as empty string during temporary clear state
+              // see: /actions/cursorCleared
+              isCursorCleared
+              ? ''
+              : isEditing
+                ? value
+                : childrenLabel
+                  ? childrenLabel.value
+                  : value
+        }
+        placeholder={placeholder}
+        // stop propagation to prevent default content onClick (which removes the cursor)
+        onClick={stopPropagation}
+        onTouchEnd={onTap}
+        // must call onMouseDown on mobile since onTap cannot preventDefault
+        // otherwise gestures and scrolling can trigger cursorBack (#1054)
+        onMouseDown={onTap}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onChange={onChangeHandler}
+        onPaste={onPaste}
+        style={style}
+      />
+
+      {/** Additional placeholder to match link icon in annotation. */}
+      {isURL(value) && <span>&nbsp;&nbsp;&nbsp;</span>}
+    </>
   )
 }
 
