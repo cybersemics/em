@@ -64,38 +64,6 @@ const collapseContext = (state: State, { at }: Options) => {
 
   const thought = getThoughtById(state, head(simplePath))
 
-  // Determine whether the collapsed context can be inserted continuously after the meta attributes
-  // or whether we need to split them and insert separetely.
-  // We need to calculate this upfront since we can't rely on `getRankBefore` and `getRankAfter`
-  // without applying changes to state incrementally.
-  // Conditions where we can insert continously:
-  // - No sibling before the collapsed context
-  // - We're immediately adjacent to the last sibling meta attribute
-  const siblings = getChildrenRanked(state, head(rootedParentOf(state, simplePath)))
-  const currentIndex = siblings.findIndex(sibling => sibling.id === head(simplePath))
-  const canInsertContinuously = currentIndex <= 0 || isAttribute(siblings[currentIndex - 1].value)
-
-  const metaSiblings = siblings.filter(thought => isAttribute(thought.value))
-
-  // We treat attributes and thoughts separately and insert meta attributes adjacent to existing meta attributes
-  const metaChildren = children.filter(thought => isAttribute(thought.value))
-  const nonMetaChildren = children.filter(thought => !isAttribute(thought.value))
-
-  // Calculate rank increment and start for non-meta children
-  const rankStart = getRankBefore(state, simplePath)
-  const rankIncrement = canInsertContinuously
-    ? (thought.rank - rankStart) / Math.max(children.length + 1, 1)
-    : (thought.rank - rankStart) / Math.max(nonMetaChildren.length, 1)
-
-  const metaRankStart = canInsertContinuously
-    ? rankStart
-    : metaSiblings.length
-      ? metaSiblings[metaSiblings.length - 1].rank
-      : getThoughtById(state, head(rootedParentOf(state, simplePath))).rank
-  const metaRankIncrement = canInsertContinuously
-    ? rankIncrement
-    : (rankStart - metaRankStart) / Math.max(metaChildren.length + 1, 1)
-
   // Find the sort preference, if any
   const parentId = head(rootedParentOf(state, simplePath))
   const contextHasSortPreference = getSortPreference(state, head(simplePath)).type !== 'None'
@@ -136,35 +104,26 @@ const collapseContext = (state: State, { at }: Options) => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
+      // If we're inserting into a sorted context, short-circuit and use the sorted rank
+      if (contextHasSortPreference || parentHasSortPreference)
+        return moveThought(state, {
+          oldPath: appendToPath(simplePath, child.id),
+          newPath: appendToPath(parentOf(simplePath), child.id),
+          newRank: getSortedRank(state, parentId, child.value),
+        })
+
+      const isMetaAttribute = isAttribute(child.value)
+      const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
+      const insertMetaBeforePath = firstNonMetaChild
+        ? appendToPath(parentOf(simplePath), firstNonMetaChild.id)
+        : simplePath
+
       return moveThought(state, {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank:
-          contextHasSortPreference || parentHasSortPreference
-            ? getSortedRank(state, parentId, child.value)
-            : rankStart + rankIncrement * i,
+        newRank: isMetaAttribute ? getRankBefore(state, insertMetaBeforePath) : getRankBefore(state, simplePath),
       })
     }),
-
-    // // outdent each child
-    // ...metaChildren.map((child, i) => {
-    //   const newRank = metaRankStart + metaRankIncrement * i
-    //   return moveThought({
-    //     oldPath: appendToPath(simplePath, child.id),
-    //     newPath: appendToPath(parentOf(simplePath), child.id),
-    //     newRank,
-    //   })
-    // }),
-    // ...nonMetaChildren.map((child, i) => {
-    //   const newRank = canInsertContinuously
-    //     ? rankStart + rankIncrement * (i + metaChildren.length)
-    //     : rankStart + rankIncrement * (i + 1)
-    //   return moveThought({
-    //     oldPath: appendToPath(simplePath, child.id),
-    //     newPath: appendToPath(parentOf(simplePath), child.id),
-    //     newRank,
-    //   })
-    // }),
 
     // delete =pin
     pinAttributeId &&

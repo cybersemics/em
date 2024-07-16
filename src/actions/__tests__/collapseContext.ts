@@ -279,11 +279,10 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-    // TODO: =sort should be above all non-meta attributes.
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - c
   - =sort
     - None
+  - c
   - a`)
   })
 
@@ -384,7 +383,7 @@ describe('context view', () => {
   })
 })
 
-describe('collapsing contexts with special attributes', () => {
+describe('collapsing contexts with meta attributes', () => {
   it('should delete =pin when collapsing a context', () => {
     const steps = [
       importText({
