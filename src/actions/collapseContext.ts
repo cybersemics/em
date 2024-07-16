@@ -8,6 +8,7 @@ import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -75,13 +76,16 @@ const collapseContext = (state: State, { at }: Options) => {
       newValue: createId(), // unique value
       path: simplePath,
     }),
+    // Sort parent context if sort preference exists
+    sortId ? sort(parentId) : null,
     // outdent each child
-    ...children.map((child, i) =>
-      moveThought({
-        oldPath: appendToPath(simplePath, child.id),
-        newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank: rankStart + rankIncrement * i,
-      }),
+    ...children.map(
+      (child, i) => (state: State) =>
+        moveThought(state, {
+          oldPath: appendToPath(simplePath, child.id),
+          newPath: appendToPath(parentOf(simplePath), child.id),
+          newRank: sortId ? getSortedRank(state, parentId, child.value) : rankStart + rankIncrement * i,
+        }),
     ),
     // delete the original cursor
     deleteThought({
@@ -95,12 +99,6 @@ const collapseContext = (state: State, { at }: Options) => {
         editing: state.editing,
         offset: 0,
       }),
-    // sort the parent context if there is a sort preference
-    state => {
-      if (sortId) return sort(state, parentId)
-
-      return state
-    },
   ])(state)
 }
 
