@@ -399,6 +399,9 @@ describe('drop', () => {
       - d
     `)
 
+      // wait for .child fade animation
+      await sleep(750)
+
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
