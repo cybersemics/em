@@ -6,7 +6,7 @@ import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
-import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
+import { findAnyChild, getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -107,8 +107,7 @@ const collapseContext = (state: State, { at }: Options) => {
   const childrenAttributeId = findDescendant(state, head(simplePath), '=children')
   const childrenPinAttributeId = childrenAttributeId ? findDescendant(state, childrenAttributeId, '=pin') : null
   const shouldDeleteChildrenAttribute =
-    childrenAttributeId &&
-    getChildren(state, childrenAttributeId).filter(thought => thought.value !== '=pin').length === 0
+    childrenAttributeId && !findAnyChild(state, childrenAttributeId, thought => thought.value !== '=pin')
 
   return reducerFlow([
     // first edit the collapsing thought to a unique value
