@@ -5,7 +5,6 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
-import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -397,7 +396,6 @@ describe('collapsing contexts with meta attributes', () => {
           - e
         `,
       }),
-      toggleHiddenThoughts,
       setCursor(['a', 'b']),
       collapseContext({}),
     ]
@@ -426,7 +424,6 @@ describe('collapsing contexts with meta attributes', () => {
           - e
         `,
       }),
-      toggleHiddenThoughts,
       setCursor(['a', 'b']),
       collapseContext({}),
     ]
@@ -455,7 +452,6 @@ describe('collapsing contexts with meta attributes', () => {
           - e
         `,
       }),
-      toggleHiddenThoughts,
       setCursor(['a', 'b']),
       collapseContext({}),
     ]
@@ -486,7 +482,6 @@ describe('collapsing contexts with meta attributes', () => {
           - e
         `,
       }),
-      toggleHiddenThoughts,
       setCursor(['a', 'b']),
       collapseContext({}),
     ]
@@ -515,7 +510,6 @@ describe('collapsing contexts with meta attributes', () => {
             - c
         `,
       }),
-      toggleHiddenThoughts,
       setCursor(['b']),
       collapseContext({}),
     ]
