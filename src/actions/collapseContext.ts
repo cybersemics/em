@@ -121,12 +121,6 @@ const collapseContext = (state: State, { at }: Options) => {
         editing: state.editing,
         offset: 0,
       }),
-    // sort the parent context if there is a sort preference
-    state => {
-      if (sortId) return sort(state, parentId)
-
-      return state
-    },
   ])(state)
 }
 
