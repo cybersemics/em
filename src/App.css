@@ -628,8 +628,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
   clip-path: inset(0.001px 0 0.1em 0);
   /* Use minimum height to the cover the gap left by clip-path */
   min-height: var(--min-thought-height);
-  /* use inline-block style to make sure it alignes in one line with next elements */
-  display: inline-block;
 }
 
 /** Assign annotation height on single line truncated url */
