@@ -10,9 +10,11 @@ import editableRender from '../actions/editableRender'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import subCategorizeOne from '../actions/subCategorizeOne'
+import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getRankBefore from '../selectors/getRankBefore'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -40,6 +42,9 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
   // Need to store the full simplePath of each simplePath segment in the simplePath
   const parentPath = parentOf(simplePath)
 
+  // Find the sort preference, if any
+  const sortId = findDescendant(state, head(simplePath), ['=sort'])
+
   // modify the rank to get the thought to re-render (via the Subthoughts child key)
   // this should be fixed
   const simplePathWithNewRank: SimplePath = appendToPath(parentPath, head(simplePath))
@@ -58,7 +63,8 @@ const bumpThoughtDown = (state: State, { simplePath }: { simplePath?: SimplePath
       // the context of the new empty thought
       return createThought(state, {
         path: simplePath as Path,
-        rank: getPrevRank(state, head(simplePath!)),
+        // If there is a sort preference, use it. Otherwise, insert at the top.
+        rank: sortId ? getSortedRank(state, head(simplePath), value) : getPrevRank(state, head(simplePath)),
         value,
       })
     },
