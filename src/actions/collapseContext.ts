@@ -80,7 +80,8 @@ const collapseContext = (state: State, { at }: Options) => {
       path: simplePath,
     }),
 
-    // Move context sort up and sort parent context if sort preference exists and parent does not have a sort preference
+    // Sort parent context if sort preference exists and parent does not have a sort preference
+    // Sort preference must be moved up before sort to prevent conversion to manual sort.
     contextHasSortPreference && !parentHasSortPreference
       ? reducerFlow([
           moveThought({
@@ -94,7 +95,7 @@ const collapseContext = (state: State, { at }: Options) => {
 
     // outdent each child
     ...children.map((child, i) => (state: State) => {
-      // Skip sort since it has already been moved to the parent, if necessary
+      // Skip =sort since it has already been moved to the parent.
       if (child.value === '=sort') return state
 
       return moveThought(state, {
