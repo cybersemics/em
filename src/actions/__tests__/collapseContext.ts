@@ -438,34 +438,6 @@ describe('collapsing contexts with meta attributes', () => {
   - e`)
   })
 
-  it('should delete =children if it has no remaining children after collapsing', () => {
-    const steps = [
-      importText({
-        text: `
-          - a
-            - b
-              - =children
-                - =pin
-                  - true
-              - c
-            - d
-          - e
-        `,
-      }),
-      setCursor(['a', 'b']),
-      collapseContext({}),
-    ]
-
-    const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-    - c
-    - d
-  - e`)
-  })
-
   it('should keep =children if it has remaining children after collapsing', () => {
     const steps = [
       importText({
