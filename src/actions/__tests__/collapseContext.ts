@@ -278,11 +278,10 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-    // TODO: =sort should be above all non-meta attributes.
     expect(exported).toBe(`- ${HOME_TOKEN}
-  - c
   - =sort
     - None
+  - c
   - a`)
   })
 
@@ -380,5 +379,121 @@ describe('context view', () => {
   - b
     - m
       - z`)
+  })
+})
+
+describe('collapsing contexts with meta attributes', () => {
+  it('should delete =pin when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =pin
+                - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should delete =children/=pin when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =children
+                - =pin
+                  - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should keep =children if it has remaining children after collapsing', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =children
+                - =pin
+                  - true
+                - =test
+                  - value
+              - c
+            - d
+          - e
+        `,
+      }),
+      setCursor(['a', 'b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =children
+      - =test
+        - value
+    - c
+    - d
+  - e`)
+  })
+
+  it('should move meta attributes to the top when collapsing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - =x
+          - a
+          - b
+            - =y
+            - c
+        `,
+      }),
+      setCursor(['b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =x
+  - =y
+  - a
+  - c`)
   })
 })

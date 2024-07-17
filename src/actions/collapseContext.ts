@@ -1,12 +1,13 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
-import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
+import { findAnyChild, getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -17,6 +18,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
@@ -62,14 +64,38 @@ const collapseContext = (state: State, { at }: Options) => {
   }
 
   const thought = getThoughtById(state, head(simplePath))
-  const rankStart = getRankBefore(state, simplePath)
-  const rankIncrement = (thought.rank - rankStart) / children.length
 
   // Find the sort preference, if any
   const parentId = head(rootedParentOf(state, simplePath))
-  const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
-  const contextSortId = findDescendant(state, head(simplePath), ['=sort'])
   const contextHasSortPreference = getSortPreference(state, head(simplePath)).type !== 'None'
+  const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
+  const sortId = findDescendant(state, head(simplePath), ['=sort'])
+
+  // Find attributes to delete
+  const pinAttributeId = findDescendant(state, head(simplePath), '=pin')
+  const childrenAttributeId = findDescendant(state, head(simplePath), '=children')
+  const childrenPinAttributeId = childrenAttributeId ? findDescendant(state, childrenAttributeId, '=pin') : null
+  const shouldDeleteChildrenAttribute =
+    childrenAttributeId && !findAnyChild(state, childrenAttributeId, thought => thought.value !== '=pin')
+
+  /** Calculates the new rank for a child when moved to the parent. */
+  const getNewRank = (state: State, child: Thought) => {
+    // If we're inserting into a sorted context, short-circuit and use the sorted rank
+    if (contextHasSortPreference || parentHasSortPreference) return getSortedRank(state, parentId, child.value)
+
+    // If we're moving a meta attribute, insert it before the first non-meta child
+    if (isAttribute(child.value)) {
+      const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
+      const insertMetaBeforePath = firstNonMetaChild
+        ? appendToPath(parentOf(simplePath), firstNonMetaChild.id)
+        : simplePath
+
+      return getRankBefore(state, insertMetaBeforePath)
+    }
+
+    // Otherwise, insert it before the collapsed context
+    return getRankBefore(state, simplePath)
+  }
 
   return reducerFlow([
     // first edit the collapsing thought to a unique value
@@ -85,9 +111,8 @@ const collapseContext = (state: State, { at }: Options) => {
     contextHasSortPreference && !parentHasSortPreference
       ? reducerFlow([
           moveThought({
-            // contextSortId must exist since contextHasSortPreference is true
-            oldPath: appendToPath(simplePath, contextSortId!),
-            newPath: appendToPath(parentOf(simplePath), contextSortId!),
+            oldPath: appendToPath(simplePath, sortId!),
+            newPath: appendToPath(parentOf(simplePath), sortId!),
             newRank: getRankBefore(state, simplePath),
           }),
           sort(parentId),
@@ -102,12 +127,29 @@ const collapseContext = (state: State, { at }: Options) => {
       return moveThought(state, {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank:
-          contextHasSortPreference || parentHasSortPreference
-            ? getSortedRank(state, parentId, child.value)
-            : rankStart + rankIncrement * i,
+        newRank: getNewRank(state, child),
       })
     }),
+
+    // delete =pin
+    pinAttributeId &&
+      deleteThought({
+        pathParent: parentOf(simplePath),
+        thoughtId: pinAttributeId,
+      }),
+    // delete =children/=pin
+    childrenPinAttributeId &&
+      deleteThought({
+        pathParent: parentOf(simplePath),
+        thoughtId: childrenPinAttributeId,
+      }),
+    // delete =children if it has no remaining children after collapsing
+    childrenAttributeId && shouldDeleteChildrenAttribute
+      ? deleteThought({
+          pathParent: parentOf(simplePath),
+          thoughtId: childrenAttributeId,
+        })
+      : null,
 
     // delete the original cursor
     deleteThought({
