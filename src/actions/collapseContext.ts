@@ -85,7 +85,6 @@ const collapseContext = (state: State, { at }: Options) => {
     contextHasSortPreference && !parentHasSortPreference
       ? reducerFlow([
           moveThought({
-            // sortId must exist since contextHasSortPreference is true
             oldPath: appendToPath(simplePath, sortId!),
             newPath: appendToPath(parentOf(simplePath), sortId!),
             newRank: getRankBefore(state, simplePath),
