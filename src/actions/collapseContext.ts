@@ -8,6 +8,7 @@ import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
+import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -66,7 +67,9 @@ const collapseContext = (state: State, { at }: Options) => {
 
   // Find the sort preference, if any
   const parentId = head(rootedParentOf(state, simplePath))
-  const sortId = findDescendant(state, head(simplePath), ['=sort'])
+  const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
+  const contextSortId = findDescendant(state, head(simplePath), ['=sort'])
+  const contextHasSortPreference = !!contextSortId
 
   return reducerFlow([
     // first edit the collapsing thought to a unique value
@@ -76,17 +79,34 @@ const collapseContext = (state: State, { at }: Options) => {
       newValue: createId(), // unique value
       path: simplePath,
     }),
-    // Sort parent context if sort preference exists
-    sortId ? sort(parentId) : null,
+
+    // Move context sort up and sort parent context if sort preference exists and parent does not have a sort preference
+    contextHasSortPreference && !parentHasSortPreference
+      ? reducerFlow([
+          moveThought({
+            oldPath: appendToPath(simplePath, contextSortId),
+            newPath: appendToPath(parentOf(simplePath), contextSortId),
+            newRank: getRankBefore(state, simplePath),
+          }),
+          sort(parentId),
+        ])
+      : null,
+
     // outdent each child
-    ...children.map(
-      (child, i) => (state: State) =>
-        moveThought(state, {
-          oldPath: appendToPath(simplePath, child.id),
-          newPath: appendToPath(parentOf(simplePath), child.id),
-          newRank: sortId ? getSortedRank(state, parentId, child.value) : rankStart + rankIncrement * i,
-        }),
-    ),
+    ...children.map((child, i) => (state: State) => {
+      // Skip sort since it has already been moved to the parent, if necessary
+      if (child.value === '=sort') return state
+
+      return moveThought(state, {
+        oldPath: appendToPath(simplePath, child.id),
+        newPath: appendToPath(parentOf(simplePath), child.id),
+        newRank:
+          contextHasSortPreference || parentHasSortPreference
+            ? getSortedRank(state, parentId, child.value)
+            : rankStart + rankIncrement * i,
+      })
+    }),
+
     // delete the original cursor
     deleteThought({
       pathParent: parentOf(simplePath),

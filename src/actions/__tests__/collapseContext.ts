@@ -258,6 +258,41 @@ describe('normal view', () => {
   - a
   - c`)
   })
+
+  it('prevents switching to manual sort order when collapsing', () => {
+    const steps = [
+      importText({
+        text: `
+        - d
+        - c
+        - b
+          - =sort
+            - Alphabetical
+              - Asc
+          - a
+          - e
+          - g
+        - f
+        `,
+      }),
+      setCursor(['b']),
+      collapseContext({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Asc
+  - a
+  - c
+  - d
+  - e
+  - f
+  - g`)
+  })
 })
 
 describe('context view', () => {
