@@ -231,7 +231,7 @@ describe('normal view', () => {
     expect(ranks.size).toEqual(6)
   })
 
-  it('should resort parent context when collapsing a thought with sort attribute', () => {
+  it('should re-sort parent context when collapsing a thought with sort attribute', () => {
     const steps = [
       importText({
         text: `
@@ -257,6 +257,33 @@ describe('normal view', () => {
       - Asc
   - a
   - c`)
+  })
+
+  it('should not re-sort parent context when collapsing a thought with sort set to None', () => {
+    const steps = [
+      importText({
+        text: `
+          - c
+          - b
+            - =sort
+              - None
+            - a
+        `,
+      }),
+      setCursor(['b']),
+      collapseContext({}),
+      setCursor(null),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    // TODO: =sort should be above all non-meta attributes.
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - c
+  - =sort
+    - None
+  - a`)
   })
 
   it('prevents switching to manual sort order when collapsing', () => {

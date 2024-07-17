@@ -69,7 +69,7 @@ const collapseContext = (state: State, { at }: Options) => {
   const parentId = head(rootedParentOf(state, simplePath))
   const parentHasSortPreference = getSortPreference(state, parentId).type !== 'None'
   const contextSortId = findDescendant(state, head(simplePath), ['=sort'])
-  const contextHasSortPreference = !!contextSortId
+  const contextHasSortPreference = getSortPreference(state, head(simplePath)).type !== 'None'
 
   return reducerFlow([
     // first edit the collapsing thought to a unique value
@@ -85,8 +85,9 @@ const collapseContext = (state: State, { at }: Options) => {
     contextHasSortPreference && !parentHasSortPreference
       ? reducerFlow([
           moveThought({
-            oldPath: appendToPath(simplePath, contextSortId),
-            newPath: appendToPath(parentOf(simplePath), contextSortId),
+            // contextSortId must exist since contextHasSortPreference is true
+            oldPath: appendToPath(simplePath, contextSortId!),
+            newPath: appendToPath(parentOf(simplePath), contextSortId!),
             newRank: getRankBefore(state, simplePath),
           }),
           sort(parentId),
@@ -96,7 +97,7 @@ const collapseContext = (state: State, { at }: Options) => {
     // outdent each child
     ...children.map((child, i) => (state: State) => {
       // Skip =sort since it has already been moved to the parent.
-      if (child.value === '=sort') return state
+      if (contextHasSortPreference && child.value === '=sort') return state
 
       return moveThought(state, {
         oldPath: appendToPath(simplePath, child.id),
