@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
@@ -77,6 +78,25 @@ const collapseContext = (state: State, { at }: Options) => {
   const shouldDeleteChildrenAttribute =
     childrenAttributeId && !findAnyChild(state, childrenAttributeId, thought => thought.value !== '=pin')
 
+  /** Calculates the new rank for a child when moved to the parent. */
+  const getNewRank = (state: State, child: Thought) => {
+    // If we're inserting into a sorted context, short-circuit and use the sorted rank
+    if (contextHasSortPreference || parentHasSortPreference) return getSortedRank(state, parentId, child.value)
+
+    // If we're moving a meta attribute, insert it before the first non-meta child
+    if (isAttribute(child.value)) {
+      const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
+      const insertMetaBeforePath = firstNonMetaChild
+        ? appendToPath(parentOf(simplePath), firstNonMetaChild.id)
+        : simplePath
+
+      return getRankBefore(state, insertMetaBeforePath)
+    }
+
+    // Otherwise, insert it before the collapsed context
+    return getRankBefore(state, simplePath)
+  }
+
   return reducerFlow([
     // first edit the collapsing thought to a unique value
     // otherwise, it could get merged when children are outdented in the next step
@@ -104,24 +124,10 @@ const collapseContext = (state: State, { at }: Options) => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
-      // If we're inserting into a sorted context, short-circuit and use the sorted rank
-      if (contextHasSortPreference || parentHasSortPreference)
-        return moveThought(state, {
-          oldPath: appendToPath(simplePath, child.id),
-          newPath: appendToPath(parentOf(simplePath), child.id),
-          newRank: getSortedRank(state, parentId, child.value),
-        })
-
-      const isMetaAttribute = isAttribute(child.value)
-      const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
-      const insertMetaBeforePath = firstNonMetaChild
-        ? appendToPath(parentOf(simplePath), firstNonMetaChild.id)
-        : simplePath
-
       return moveThought(state, {
         oldPath: appendToPath(simplePath, child.id),
         newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank: isMetaAttribute ? getRankBefore(state, insertMetaBeforePath) : getRankBefore(state, simplePath),
+        newRank: getNewRank(state, child),
       })
     }),
 
