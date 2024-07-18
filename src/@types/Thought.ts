@@ -21,7 +21,7 @@ interface Thought {
   sortValue?: string
   /** Used to track if a space is required when merging two siblings/thoughts. */
   splitSource?: ThoughtId
-  /** The public key of the user defined by a hash of their private access token. See: clientId (yjs/index.ts). */
+  /** The public key of the user defined by a hash of their private access token. See: clientId (db/index.ts). */
   updatedBy: string
   value: string
 }

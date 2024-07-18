@@ -1,7 +1,7 @@
 import Lexeme from '../@types/Lexeme'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../db/index'
 import timestamp from './timestamp'
 
 /** Creates a new Lexeme with a single context. Use addContext to add a context to an existing Lexeme. */

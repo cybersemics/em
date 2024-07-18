@@ -4,7 +4,7 @@
 // import editThought from '../../actions/editThought'
 // import importText from '../../actions/importText'
 // import { HOME_PATH, HOME_TOKEN } from '../../constants'
-// import db from '../../data-providers/yjs'
+// import db from '../../db/index'
 // import contextToPath from '../../selectors/contextToPath'
 // import store from '../../stores/app'
 // import contextToThought from '../../test-helpers/contextToThought'

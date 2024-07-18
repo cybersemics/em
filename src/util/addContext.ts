@@ -1,7 +1,7 @@
 import Lexeme from '../@types/Lexeme'
 import ThoughtId from '../@types/ThoughtId'
 import Timestamp from '../@types/Timestamp'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../db/index'
 import timestamp from './timestamp'
 
 /** Returns a new thought plus the given context. Does not add duplicates. */

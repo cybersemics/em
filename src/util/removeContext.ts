@@ -1,7 +1,7 @@
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../db/index'
 import notNull from './notNull'
 import timestamp from './timestamp'
 

@@ -1,12 +1,12 @@
 import { nanoid } from 'nanoid'
-import Share from '../../@types/Share'
-import { alertActionCreator as alert } from '../../actions/alert'
-import { clearActionCreator } from '../../actions/clear'
-import { accessTokenLocal } from '../../data-providers/yjs/index'
-import { clear } from '../../data-providers/yjs/thoughtspace'
-import store from '../../stores/app'
-import storage from '../../util/storage'
-import timestamp from '../../util/timestamp'
+import Share from '../@types/Share'
+import { alertActionCreator as alert } from '../actions/alert'
+import { clearActionCreator } from '../actions/clear'
+import store from '../stores/app'
+import storage from '../util/storage'
+import timestamp from '../util/timestamp'
+import { accessTokenLocal } from './index'
+import { clear } from './thoughtspace'
 
 /** Interface between DB and permissionsModel. */
 const permissionsAdapter = (() => {

@@ -1,10 +1,10 @@
-import Index from '../../@types/IndexType'
-import Lexeme from '../../@types/Lexeme'
-import Thought from '../../@types/Thought'
-import ThoughtId from '../../@types/ThoughtId'
-import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
-import groupObjectBy from '../../util/groupObjectBy'
-import { DataProvider } from '../DataProvider'
+import Index from '../@types/IndexType'
+import Lexeme from '../@types/Lexeme'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
+import { UpdateThoughtsOptions } from '../actions/updateThoughts'
+import groupObjectBy from '../util/groupObjectBy'
+import { DataProvider } from './DataProvider'
 
 /**********************************************************************
  * Types

@@ -15,7 +15,7 @@ import keyValueBy from '../../util/keyValueBy'
 import never from '../../util/never'
 import nonNull from '../../util/nonNull'
 import { DataProvider } from '../DataProvider'
-import { clientId } from '../yjs'
+import { clientId } from '../index'
 
 // default maxDepth before thoughts become pending
 const MAX_DEPTH = 100

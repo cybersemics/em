@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
-import WebsocketStatus from '../../@types/WebsocketStatus'
-import storage from '../../util/storage'
+import WebsocketStatus from '../@types/WebsocketStatus'
+import storage from '../util/storage'
 
 const host = import.meta.env.VITE_WEBSOCKET_HOST || 'localhost'
 const port = import.meta.env.VITE_WEBSOCKET_PORT || (host === 'localhost' ? 3001 : '')

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import WebsocketStatus from '../@types/WebsocketStatus'
-import { websocket } from '../data-providers/yjs'
+import { websocket } from '../db/index'
 
 /** A hook that subscribes to the permissions WebsocketProvider's connection status. Uses the permissions instead of thoughtspace provider since the thoughtspace provider is only connected if the thoughtspace is shared with more than one device. */
 export const useStatus = () => {

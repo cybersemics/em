@@ -1,6 +1,6 @@
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../db/index'
 import getThoughtById from '../selectors/getThoughtById'
 import concatOne from '../util/concatOne'
 import timestamp from '../util/timestamp'
