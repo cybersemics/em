@@ -1,18 +1,17 @@
 import classNames from 'classnames'
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import Index from '../../@types/IndexType'
+import Role from '../../@types/Role'
 import Share from '../../@types/Share'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { isMac } from '../../browser'
-import { RxPermission } from '../../data-providers/rxdb/schemas/permission'
-import { rxDB } from '../../data-providers/rxdb/thoughtspace'
 import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yjs'
 import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
-import useRxCollection from '../../hooks/useRxCollection'
 import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
@@ -23,27 +22,22 @@ import CopyClipboard from './../icons/CopyClipboard'
 import PencilIcon from './../icons/PencilIcon'
 import ModalComponent from './ModalComponent'
 
-/** A hook that subscribes to the permissionsClientDoc. */
-const usePermissions = (): RxPermission[] => useRxCollection<RxPermission>(rxDB.permissions)
-
 /** Gets the next available device name for a new device. Autoincrements by 1. */
-const getNextDeviceName = (permissions: RxPermission[], start?: number): string => {
-  const nextDeviceNumber = start ?? permissions.length + 1
-  return permissions.some(share => share.name === `Device ${nextDeviceNumber}`)
+const getNextDeviceName = (permissions: Index<Share>, start?: number): string => {
+  const nextDeviceNumber = start ?? Object.keys(permissions).length + 1
+  return Object.values(permissions).some(share => share.name === `Device ${nextDeviceNumber}`)
     ? getNextDeviceName(permissions, nextDeviceNumber + 1)
     : `Device ${nextDeviceNumber}`
 }
 
 /** Modal for Sharing and Device Management. */
 const ModalDevices = () => {
-  const permissions = usePermissions()
+  const permissions = permissionsModel.usePermissions()
   const shareDetailRef = useRef<HTMLDivElement>(null)
   const shareListRef = useRef<HTMLDivElement>(null)
 
   // selected accessToken
   const [selected, setSelected] = useState<string | null>(null)
-
-  const selectedPermission = useMemo(() => permissions.find(share => share.id === selected), [permissions, selected])
 
   const onBack = useCallback(() => setSelected(null), [])
 
@@ -60,7 +54,7 @@ const ModalDevices = () => {
     >
       <div className='modal-wrapper'>
         <TransitionGroup>
-          {selected && selectedPermission ? (
+          {selected && permissions[selected] ? (
             <CSSTransition
               key='share-detail'
               nodeRef={shareDetailRef}
@@ -72,9 +66,9 @@ const ModalDevices = () => {
               <ShareDetail
                 ref={shareDetailRef}
                 accessToken={selected}
-                isLastDevice={permissions.length === 1}
+                isLastDevice={Object.keys(permissions).length === 1}
                 onBack={onBack}
-                share={selectedPermission}
+                share={permissions[selected]}
               />
             </CSSTransition>
           ) : (
@@ -101,7 +95,7 @@ const ShareList = React.forwardRef<
   {
     onAdd?: (accessToken: string) => void
     onSelect?: (accessToken: string) => void
-    permissions: RxPermission[]
+    permissions: Index<Share>
   }
 >(({ onAdd, onSelect, permissions }, ref) => {
   const status = useStatus()
@@ -112,8 +106,8 @@ const ShareList = React.forwardRef<
 
   // sort the owner to the top, then sort by name
   const permissionsSorted = _.sortBy(
-    permissions,
-    share => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
+    Object.entries(permissions),
+    ([accessToken, share]) => `${share.name?.toLowerCase() === 'owner' ? 0 : 1}${share.name}`,
   )
 
   /** Keyboad shortcuts. */
@@ -148,11 +142,11 @@ const ShareList = React.forwardRef<
         <>
           {/* Device list */}
           <div style={{ marginBottom: '2em' }}>
-            {permissionsSorted.map(share => {
-              const isCurrent = share.id === accessTokenCurrent
+            {permissionsSorted.map(([accessToken, share]) => {
+              const isCurrent = accessToken === accessTokenCurrent
               return (
-                <div key={share.id} {...fastClick(() => onSelect?.(share.id))} style={{ cursor: 'pointer' }}>
-                  <ShareRow accessToken={share.id} isCurrent={isCurrent} share={share} role={share.role} />
+                <div key={accessToken} {...fastClick(() => onSelect?.(accessToken))} style={{ cursor: 'pointer' }}>
+                  <ShareRow accessToken={accessToken} isCurrent={isCurrent} share={share} role={share.role} />
                 </div>
               )
             })}
@@ -167,11 +161,12 @@ const ShareList = React.forwardRef<
                   <div>
                     <AddDeviceForm
                       onCancel={() => setShowDeviceForm(false)}
-                      onSubmit={async ({ name, role }: Pick<Share, 'name' | 'role'>) => {
-                        const result: { accessToken?: string; error?: string } = await permissionsModel.add({
+                      onSubmit={({ name, role }: Pick<Share, 'name' | 'role'>) => {
+                        const result: { accessToken?: string; error?: string } = permissionsModel.add({
                           role,
                           name: strip(name || ''),
                         })
+                        // TODO: permissionsModel.add does not yet return { error }
                         if (!result.error) {
                           setShowDeviceForm(false)
                           onAdd?.(result.accessToken!)
@@ -218,21 +213,11 @@ const ShareList = React.forwardRef<
 ShareList.displayName = 'ShareList'
 
 /** Permissions role label. */
-const RoleLabel = ({ role }: { role: RxPermission['role'] }) => <>{role === 'owner' ? 'Full Access' : role}</>
+const RoleLabel = ({ role }: { role: Role }) => <>{role === 'owner' ? 'Full Access' : role}</>
 
 /** Renders a single device share. */
 const ShareRow = React.memo(
-  ({
-    accessToken,
-    isCurrent,
-    role,
-    share,
-  }: {
-    accessToken: string
-    isCurrent?: boolean
-    share: RxPermission
-    role: RxPermission['role']
-  }) => {
+  ({ accessToken, isCurrent, role, share }: { accessToken: string; isCurrent?: boolean; share: Share; role: Role }) => {
     return (
       <div
         style={{
@@ -401,7 +386,7 @@ const ShareDetail = React.memo(
       accessToken: string
       isLastDevice?: boolean
       onBack: () => void
-      share: RxPermission
+      share: Share
     }
   >(
     (

@@ -10,12 +10,7 @@ import dispatch from '../../test-helpers/dispatch'
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-/* 
-  All tests are skipped because of conflicts with the RxDB IndexedDB adapter.
-  It may be related to the fact that we stopped using fake timers for the same reason.
-*/
-
-it.skip('Set the text color using the ColorPicker', async () => {
+it('Set the text color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
   await click('.toolbar-icon[aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -32,7 +27,7 @@ it.skip('Set the text color using the ColorPicker', async () => {
         - blue`)
 })
 
-it.skip('Set the text color from another color using the ColorPicker', async () => {
+it('Set the text color from another color using the ColorPicker', async () => {
   await dispatch([
     importText({
       text: `
@@ -59,7 +54,7 @@ it.skip('Set the text color from another color using the ColorPicker', async () 
           - red`)
 })
 
-it.skip('Set the background color using the ColorPicker', async () => {
+it('Set the background color using the ColorPicker', async () => {
   await dispatch([newThought({ value: 'a' })])
 
   await click('.toolbar-icon[aria-label="Text Color"]')
@@ -76,7 +71,7 @@ it.skip('Set the background color using the ColorPicker', async () => {
         - blue`)
 })
 
-it.skip('Set the background color to the theme inverse color', async () => {
+it('Set the background color to the theme inverse color', async () => {
   await dispatch([newThought({ value: 'a' })])
 
   await click('.toolbar-icon[aria-label="Text Color"]')
@@ -93,7 +88,7 @@ it.skip('Set the background color to the theme inverse color', async () => {
         - rgba(255, 255, 255, 1)`)
 })
 
-it.skip('Clear the text color when selecting white', async () => {
+it('Clear the text color when selecting white', async () => {
   await dispatch([
     importText({
       text: `
@@ -113,7 +108,7 @@ it.skip('Clear the text color when selecting white', async () => {
   - a`)
 })
 
-it.skip('Clear background color when selecting text color', async () => {
+it('Clear background color when selecting text color', async () => {
   await dispatch([
     importText({
       text: `
@@ -143,7 +138,7 @@ it.skip('Clear background color when selecting text color', async () => {
           - red`)
 })
 
-it.skip('Change color to black when setting background color', async () => {
+it('Change color to black when setting background color', async () => {
   await dispatch([
     importText({
       text: `
@@ -169,7 +164,7 @@ it.skip('Change color to black when setting background color', async () => {
         - red`)
 })
 
-it.skip('Preserve other bullet attributes and styles when clearing text color', async () => {
+it('Preserve other bullet attributes and styles when clearing text color', async () => {
   await dispatch([
     importText({
       text: `

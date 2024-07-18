@@ -1,5 +1,4 @@
 import { nanoid } from 'nanoid'
-import Routes from '../../@types/Routes'
 import Share from '../../@types/Share'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { clearActionCreator } from '../../actions/clear'
@@ -8,35 +7,58 @@ import { clear } from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import storage from '../../util/storage'
 import timestamp from '../../util/timestamp'
-import { rxDB } from '../rxdb/thoughtspace'
 
-// permissions model that waps permissionsClientDoc
-const permissionsModel: { [key in keyof Routes['share']]: any } = {
-  add: async ({ name, role }: Pick<Share, 'name' | 'role'>) => {
-    try {
-      const accessToken = nanoid()
-      await rxDB.collections.permissions.insert({
-        id: accessToken,
-        created: timestamp(),
-        name: name || '',
-        role,
+/** Interface between DB and permissionsModel. */
+const permissionsAdapter = (() => {
+  /** Gets all permissions from the db. Simple localStorage demo only; obviously you would not fetch the entire db like this in practice. */
+  const getAll = () => JSON.parse(localStorage.permissions || '{}') as { [key: string]: Share }
+
+  return {
+    delete: (key: string) => {
+      const permissions = getAll()
+      delete permissions[key]
+      localStorage.permissions = JSON.stringify(permissions)
+    },
+    update: (key: string, value: Share) => {
+      const permissions = getAll()
+      localStorage.permissions = JSON.stringify({
+        ...permissions,
+        [key]: value,
       })
-      store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
-      return { accessToken }
-    } catch (error) {
-      return { error }
-    }
+    },
+    size: () => {
+      const permissions = getAll()
+      return Object.keys(permissions).length
+    },
+    get: (key: string) => {
+      const permissions = getAll()
+      return permissions[key]
+    },
+    getAll,
+  }
+})()
+
+/** Interface between permissionsModel and app. */
+const permissionsModel = {
+  add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
+    const accessToken = nanoid()
+    permissionsAdapter.update(accessToken, {
+      created: timestamp(),
+      name: name || '',
+      role,
+    })
+    store.dispatch(alert(`Added ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
+    return { accessToken }
   },
-  delete: async (accessToken: string, { name }: { name?: string } = {}) => {
-    const permissionDoc = await rxDB.collections.permissions.findOne(accessToken).exec()
-    permissionDoc?.remove()
+  delete: (accessToken: string, { name }: { name?: string } = {}) => {
+    permissionsAdapter.delete(accessToken)
 
     // removed other device
     if (accessToken !== accessTokenLocal) {
       store.dispatch(alert(`Removed ${name ? `"${name}"` : 'device'}`, { clearDelay: 2000 }))
     }
     // removed current device when there are others
-    else if ((await rxDB.collections.permissions.count().exec()) > 1) {
+    else if (permissionsAdapter.size() > 1) {
       store.dispatch([clearActionCreator(), alert(`Removed this device from the thoughtspace`, { clearDelay: 2000 })])
     }
     // remove last device
@@ -49,18 +71,17 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
       window.location.reload()
     }
   },
-  update: async (accessToken: string, { name, role }: Share) => {
-    const permissionDoc = await rxDB.collections.permissions.findOne(accessToken).exec()
-
-    permissionDoc?.incrementalModify(permission => {
-      if (name) permission.name = name
-      if (role) permission.role = role
-      permission.created = timestamp()
-      return permission
+  update: (accessToken: string, { name, role }: Share) => {
+    const permission = permissionsAdapter.get(accessToken)!
+    permissionsAdapter.update(accessToken, {
+      ...(permission || null),
+      created: timestamp(),
+      ...(name ? { name } : null),
+      ...(role ? { role } : null),
     })
-
     store.dispatch(alert(`${name ? ` "${name}"` : 'Device '} updated`, { clearDelay: 2000 }))
   },
+  usePermissions: () => permissionsAdapter.getAll(),
 }
 
 export default permissionsModel

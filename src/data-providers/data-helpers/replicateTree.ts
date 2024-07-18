@@ -2,7 +2,7 @@ import Index from '../../@types/IndexType'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import taskQueue from '../../util/taskQueue'
-import { replicateChildren, replicateThought } from '../yjs/thoughtspace'
+import { getChildren, getThoughtById } from '../yjs/thoughtspace'
 
 /** Replicates an entire subtree, starting at a given thought. Replicates in the background (not populating the Redux state). Does not wait for Websocket to sync. */
 const replicateTree = (
@@ -31,7 +31,7 @@ const replicateTree = (
   /** Creates a task to replicate all children of the given id and add them to the thoughtIndex. Queues up grandchildren replication. */
   const replicateDescendantsRecursive = async (id: ThoughtId) => {
     if (abort) return
-    const children = await replicateChildren(id, { background: true, remote })
+    const children = await getChildren(id)
     if (abort) return
 
     children?.forEach(child => {
@@ -52,7 +52,7 @@ const replicateTree = (
       // replicate the starting thought individually (should already be cached)
       {
         function: async () => {
-          const startThought = await replicateThought(id, { background: true, remote })
+          const startThought = await getThoughtById(id)
 
           if (!startThought) {
             throw new Error(`Thought ${id} not replicated. Either replication is broken or this is a timing issue.`)
