@@ -59,7 +59,7 @@ const dragAndDropThought = async (
   // Move the mouse to the drag target, then press, move to the drop target, and release
   await page.mouse.move(dragPosition.x, dragPosition.y)
   await page.mouse.down()
-  await page.mouse.move(dropPosition.x, dropPosition.y, { steps: 10 })
+  await page.mouse.move(dropPosition.x, dropPosition.y)
   if (mouseUp) await page.mouse.up()
 
   await sleep(500)
