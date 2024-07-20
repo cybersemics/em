@@ -569,7 +569,7 @@ const LayoutTree = () => {
       }
 
       if (node.isTableCol1) {
-        tableCol1WidthRef.current = Number(tableCol1Widths.get(head(parentOf(node.path)))) / fontSize || 0
+        tableCol1WidthRef.current = Number(tableCol1Widths.get(head(parentOf(node.path)))) || 0
       }
 
       return {
@@ -728,9 +728,7 @@ const LayoutTree = () => {
                         -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
 
-                      const isRootPath = isRoot(pathEnd)
-                      const marginLeftOffset =
-                        isRootPath && (isTableCol1 || isTableCol2) ? Math.round(tableCol1WidthRef.current) : 0
+                      const marginLeftOffset = isTableCol1 || isTableCol2 ? tableCol1WidthRef.current : 0
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
@@ -738,7 +736,7 @@ const LayoutTree = () => {
                           style={{
                             position: 'relative',
                             top: '-0.2em',
-                            left: `calc(${cliffDepth - depth - marginLeftOffset}em + ${isTouch ? -1 : 1}px)`,
+                            left: `calc(${cliffDepth - depth}em - ${marginLeftOffset}px + ${isTouch ? -1 : 1}px)`,
                             transition: 'left 0.15s ease-out',
                           }}
                         >

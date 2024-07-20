@@ -390,6 +390,28 @@ describe('drag', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('drop hover after table', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'a', { position: 'after', childrenCount: 2 })
+
+    await sleep(300)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('drop', () => {
@@ -489,7 +511,7 @@ it('url', async () => {
 
   await paste(`
     - https://test.com/single-line
-    - 
+    -
       - https://github.com/cybersemics/em
     - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized

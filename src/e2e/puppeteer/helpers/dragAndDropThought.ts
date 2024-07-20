@@ -14,6 +14,8 @@ interface DragAndDropOptions {
   mouseUp?: boolean
   /** If true, the source thought is dropped as a sibling to the hidden uncle. */
   dropUncle?: boolean
+  /** Number of expanded children, for dragging after a thought that is expanded. */
+  childrenCount?: number
 }
 
 /** Performs Drag and Drop functionality on a thought in Puppeteer browser. */
@@ -21,7 +23,7 @@ const dragAndDropThought = async (
   page: Page,
   sourceValue: string,
   destValue: string,
-  { position, mouseUp, dropUncle }: DragAndDropOptions,
+  { position, mouseUp, dropUncle, childrenCount = 0 }: DragAndDropOptions,
 ) => {
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
@@ -37,9 +39,21 @@ const dragAndDropThought = async (
     throw new Error('Drag destination element not found')
   }
 
-  // If the position is 'before', the yOffset is 0
-  // because the drop target will be just above the thought otherwise it will be 20 so it is dragged after the thought
-  const yOffset = position === 'before' ? 0 : 20
+  let yOffset = 0
+  if (position === 'after') {
+    yOffset = 20
+    // Calculate the yOffset based on the number of expanded children.
+    // Multiple height by the number of children, and add it to the yOffset.
+    if (childrenCount > 0) {
+      yOffset += dragEnd.height * childrenCount
+    }
+  } else if (position === 'before') {
+    // If the position is 'before', the yOffset is 0
+    // because the drop target will be just above the thought otherwise it will be 20 so it is dragged after the thought
+    yOffset = 0
+  } else {
+    yOffset = 20
+  }
 
   // If the position is 'child', make the initial click to the right so that it lands on the DropChild drop target.
   // Must exceed the DropChild's drop-end margin-left.
