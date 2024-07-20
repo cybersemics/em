@@ -46,37 +46,13 @@ async function showMousePointer(page: Page) {
     box.appendChild(container)
     document.body.appendChild(box)
     document.addEventListener(
-      'mousedown',
-      event => {
-        updateButtons(event.buttons)
-        box.classList.add('button-' + event.button)
-      },
-      true,
-    )
-    document.addEventListener(
-      'mouseup',
-      event => {
-        updateButtons(event.buttons)
-        box.classList.remove('button-' + event.button)
-      },
-      true,
-    )
-    document.addEventListener(
       'mousemove',
       event => {
         box.style.left = event.pageX + 'px'
         box.style.top = event.pageY + 'px'
-
-        updateButtons(event.buttons)
       },
       true,
     )
-    /**
-     *
-     */
-    function updateButtons(buttons: number) {
-      for (let i = 0; i < 5; i++) box.classList.toggle('button-' + i, buttons & (1 << i))
-    }
   }, false)
 }
 
