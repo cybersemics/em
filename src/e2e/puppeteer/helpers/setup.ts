@@ -2,14 +2,12 @@ import chalk from 'chalk'
 import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
-import mousePointerHelper from './mousePointerHelper'
 
 export interface InitPageOptions {
   puppeteerBrowser?: Browser
   url?: string
   skipTutorial?: boolean
   emulatedDevice?: Device
-  installMouseHelper?: boolean
 }
 
 /** Opens em in a new incognito window in Puppeteer. */
@@ -18,7 +16,6 @@ const setup = async ({
   url = 'http://localhost:3000',
   emulatedDevice,
   skipTutorial = true,
-  installMouseHelper = true,
 }: InitPageOptions = {}): Promise<Page> => {
   const context = await puppeteerBrowser.createBrowserContext()
   const page: Page = await context.newPage()
@@ -26,8 +23,6 @@ const setup = async ({
   if (emulatedDevice) {
     await page.emulate(emulatedDevice)
   }
-
-  if (installMouseHelper) await mousePointerHelper(page)
 
   page.on('dialog', async dialog => dialog.accept())
 

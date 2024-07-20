@@ -12,7 +12,6 @@ import getComputedColor from './getComputedColor'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
 import getSelection from './getSelection'
-import mousePointerHelper from './mousePointerHelper'
 import newThought from './newThought'
 import openModal from './openModal'
 import paste from './paste'
@@ -66,7 +65,6 @@ const helpers = {
   simulateDragAndDrop,
   dragAndDropThought,
   dragAndDrop,
-  mousePointerHelper,
 }
 
 /** Setup up the Page instance for all helpers and returns an index of test helpers with the Page instance partially applied. Passes arguments to the setup function. */
@@ -75,12 +73,7 @@ const index = <T extends any[]>(...setupArgs: T) => {
   const index = partialWithRef(pageRef, helpers)
 
   beforeEach(async () => {
-    const regex = /\b(drag|drop)\b/i
-
-    // Check if the test name contains 'drag' and 'drop' to determine if the mouse helper should be installed.
-    // TODO: looking for more reliable solution as this forces the use of drag/drop words in the test name.
-    const isDragAndDropTest = regex.test(expect.getState().currentTestName || '')
-    pageRef.current = await setup({ ...setupArgs, installMouseHelper: isDragAndDropTest })
+    pageRef.current = await setup(...setupArgs)
   })
 
   afterEach(async () => {
