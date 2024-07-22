@@ -33,6 +33,7 @@ const DropEnd = ({
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
   path,
+  cliff,
 }: {
   depth: number
   distance?: number
@@ -40,6 +41,7 @@ const DropEnd = ({
   isHovering?: boolean
   last?: boolean
   path?: Path
+  cliff?: number
 }) => {
   if (!path) {
     throw new Error('path required')
@@ -124,6 +126,7 @@ const DropEnd = ({
           className='drop-hover'
           style={{
             backgroundColor: dropHoverColor,
+            marginLeft: !isRootPath && Number(cliff) < 0 ? 'calc(-0.9em - 13px)' : undefined,
           }}
         ></span>
       )}

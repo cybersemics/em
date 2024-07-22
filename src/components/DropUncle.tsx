@@ -44,6 +44,7 @@ const DropUncle = ({
         backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
         height: '1.9em',
         opacity: 0.9,
+        marginLeft: '-1em',
       }}
     >
       {testFlags.simulateDrop && (
@@ -62,7 +63,12 @@ const DropUncle = ({
         </span>
       )}
       {(testFlags.simulateDrag || isHovering) && (
-        <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
+        <span
+          className='drop-hover'
+          style={{
+            backgroundColor: dropHoverColor,
+          }}
+        />
       )}
     </span>,
   )
