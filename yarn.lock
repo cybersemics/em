@@ -2157,10 +2157,10 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
-"@babel/runtime@7.24.7":
-  version "7.24.7"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.24.7.tgz#f4f0d5530e8dbdf59b3451b9b3e594b6ba082e12"
-  integrity sha512-UwgBRMjJP+xv857DCngvqXI3Iq6J4v0wXmwc6sapg+zyhbwmQX67LUEFrkK5tbyJ30jGuG3ZvWpBiB9LCy1kWw==
+"@babel/runtime@7.24.8":
+  version "7.24.8"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.24.8.tgz#5d958c3827b13cc6d05e038c07fb2e5e3420d82e"
+  integrity sha512-5F7SDGs1T72ZczbRwbGO9lQi0NLjQxzl6i4lJxLxfW9U5UluCSyEJeniWvnhl3/euNiqQVbo8zruhsDfid0esA==
   dependencies:
     regenerator-runtime "^0.14.0"
 
@@ -5120,15 +5120,15 @@ agentkeepalive@^4.2.1:
   dependencies:
     humanize-ms "^1.2.1"
 
-ajv@8.16.0:
-  version "8.16.0"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.16.0.tgz#22e2a92b94f005f7e0f9c9d39652ef0b8f6f0cb4"
-  integrity sha512-F0twR8U1ZU67JIEtekUcLkXkoO5mMMmgGD8sK/xUFzJ805jxHQl92hImFAqqXMyMYjSPOyUPAwHYhB72g5sTXw==
+ajv@8.17.1:
+  version "8.17.1"
+  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.17.1.tgz#37d9a5c776af6bc92d7f4f9510eba4c0a60d11a6"
+  integrity sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
   dependencies:
     fast-deep-equal "^3.1.3"
+    fast-uri "^3.0.1"
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
-    uri-js "^4.4.1"
 
 ajv@^6.12.4:
   version "6.12.6"
@@ -6770,10 +6770,10 @@ devtools@7.35.0:
     ua-parser-js "^1.0.1"
     uuid "^9.0.0"
 
-dexie@4.0.7:
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/dexie/-/dexie-4.0.7.tgz#c92e5032245fc075de58c636238a82ee3ff9fedb"
-  integrity sha512-M+Lo6rk4pekIfrc2T0o2tvVJwL6EAAM/B78DNfb8aaxFVoI1f8/rz5KTxuAnApkwqTSuxx7T5t0RKH7qprapGg==
+dexie@4.0.8:
+  version "4.0.8"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-4.0.8.tgz#21fca70686bdaa1d86fad45b6b19316f6a084a1d"
+  integrity sha512-1G6cJevS17KMDK847V3OHvK2zei899GwpDiqfEXHP1ASvme6eWJmAp9AU4s1son2TeGkWmC0g3y8ezOBPnalgQ==
 
 diff-sequences@^29.6.3:
   version "29.6.3"
@@ -7716,6 +7716,11 @@ fast-loops@^1.1.3:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/fast-loops/-/fast-loops-1.1.3.tgz#ce96adb86d07e7bf9b4822ab9c6fac9964981f75"
   integrity sha512-8EZzEP0eKkEEVX+drtd9mtuQ+/QrlfW/5MlwcwK5Nds6EkZ/tRzEexkzUY2mIssnAyVLT+TKHuRXmFNNXYUd6g==
+
+fast-uri@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.0.1.tgz#cddd2eecfc83a71c1be2cc2ef2061331be8a7134"
+  integrity sha512-MWipKbbYiYI0UC7cl8m/i/IWTqfC8YXsqjzybjddLsFjStroQzsHXkc73JutMvBiXmOvapk+axIl79ig5t55Bw==
 
 fast-xml-parser@^4.0.12, fast-xml-parser@^4.2.4:
   version "4.3.6"
@@ -12378,24 +12383,24 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-rxdb@^15.28.0:
-  version "15.28.0"
-  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-15.28.0.tgz#25ae3fa42474e9dc40eb6c8829634fe93f0cf848"
-  integrity sha512-EVDfh32NVTUTFHM7HFFf5DjHr9pbLy/U09z43I837recSKLsggQHP+ZAHrcnLFZFFeL5cLGXrWP7pyQue6xPJw==
+rxdb@^15.28.1:
+  version "15.28.1"
+  resolved "https://registry.yarnpkg.com/rxdb/-/rxdb-15.28.1.tgz#28a953ba9a17940537fc58325802108cf759eb36"
+  integrity sha512-JaFK+xiG672I4gS/zLGSADnG2dPP7xTQtrYP5zmc+7w7ryaV73XqBQLOdgk8MePF2NfqOKLnvsnlJy9yfe7KHA==
   dependencies:
-    "@babel/runtime" "7.24.7"
+    "@babel/runtime" "7.24.8"
     "@types/clone" "2.1.4"
     "@types/cors" "2.8.17"
     "@types/express" "4.17.21"
     "@types/simple-peer" "9.11.8"
     "@types/ws" "8.5.10"
-    ajv "8.16.0"
+    ajv "8.17.1"
     array-push-at-sort-position "4.0.1"
     as-typed "1.3.2"
     broadcast-channel "7.0.0"
     crypto-js "4.2.0"
     custom-idle-queue "3.0.1"
-    dexie "4.0.7"
+    dexie "4.0.8"
     event-reduce-js "5.2.7"
     firebase "10.12.3"
     get-graphql-from-jsonschema "8.1.0"

@@ -4,9 +4,7 @@ import Lexeme from '../../@types/Lexeme'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
-import { EM_TOKEN, HOME_TOKEN } from '../../constants'
 import groupObjectBy from '../../util/groupObjectBy'
-import hashThought from '../../util/hashThought'
 import timestamp from '../../util/timestamp'
 import { DataProvider } from '../DataProvider'
 import { rxDB } from '../rxdb/thoughtspace'
@@ -95,74 +93,61 @@ export const init = async (options: ThoughtspaceOptions) => {
 
 /** Updates a thought in the db. */
 export const updateThought = async (id: ThoughtId, thought: Thought): Promise<void> => {
-  const { thoughts: thoughtCollection } = rxDB
-  const thoughtOld = await getThoughtById(id)
-  const thoughtParentIdOld = thoughtOld?.parentId
+  await bulkUpdateThoughts([thought])
+}
 
-  if (thoughtParentIdOld && thoughtParentIdOld !== thought.parentId) {
-    // Unfortunately, transactions on two different Documents are not atomic, so there is a possibility that one will fail and the other will succeed, resulting in an invalid tree.
-    const lexemeKey = hashThought(thought.value)
-    const lexeme = await getLexemeById(lexemeKey)
-    if (!lexeme && id !== HOME_TOKEN && id !== EM_TOKEN) {
-      // TODO: Why does throwing an error get suppressed?
-      console.error(`updateThought: Missing Lexeme doc for thought ${id}`)
-      return
-    }
+/** Bulk updates thoughts in the db. */
+const bulkUpdateThoughts = async (thoughts: Thought[]): Promise<void> => {
+  if (!thoughts.length) return
 
-    // When a thought changes parents, we need to delete it from the old parent childrenMap.
-    const parentThoughtDocOld = await thoughtCollection.findOne(thoughtParentIdOld).exec()
-    if (parentThoughtDocOld) {
-      const { [id]: prevThought, ...newChildrenMap } = parentThoughtDocOld.toJSON().childrenMap
+  try {
+    const { thoughts: thoughtCollection } = rxDB
 
-      await parentThoughtDocOld?.incrementalPatch({
-        childrenMap: newChildrenMap,
-      })
-    }
-
-    // update Lexeme context id
-    if (lexeme && !lexeme.contexts.includes(id)) {
-      await updateLexeme(lexemeKey, {
-        ...lexeme,
-        contexts: [...(lexeme.contexts || []), id],
-      })
-    }
-  }
-
-  // Insert or Update current thought
-  await thoughtCollection.incrementalUpsert({
-    id,
-    childrenMap: thought.childrenMap,
-    created: thought.created,
-    lastUpdated: thought.lastUpdated,
-    parentId: thought.parentId,
-    rank: thought.rank,
-    updatedBy: thought.updatedBy,
-    value: thought.value,
-    archived: thought.archived,
-  })
-
-  // Update parent thought childrenMap
-  const parentThoughtDoc = await thoughtCollection.findOne(thought.parentId).exec()
-  if (parentThoughtDoc) {
-    await parentThoughtDoc.incrementalPatch({
-      childrenMap: {
-        ...(parentThoughtDoc.toJSON().childrenMap! || {}),
-        [id]: id,
-      },
-    })
+    await thoughtCollection.bulkUpsert(
+      thoughts.map(thought => ({
+        id: thought.id,
+        childrenMap: thought.childrenMap,
+        created: thought.created,
+        lastUpdated: thought.lastUpdated,
+        parentId: thought.parentId,
+        rank: thought.rank,
+        updatedBy: thought.updatedBy,
+        value: thought.value,
+        archived: thought.archived,
+      })),
+    )
+  } catch (e) {
+    // TODO - check if we have conflicts errors and handle them
+    console.error('bulkUpdateThoughts:', e)
+    throw e
   }
 }
 
 /** Updates a lexeme in the db. */
 export const updateLexeme = async (id: string, lexemeNew: Lexeme): Promise<void> => {
-  const { lexemes: lexemeCollection } = rxDB
-  await lexemeCollection.incrementalUpsert({
-    id,
-    created: lexemeNew.created || timestamp(),
-    lastUpdated: lexemeNew.lastUpdated || timestamp(),
-    updatedBy: lexemeNew.updatedBy || clientId,
-    contexts: lexemeNew.contexts || [],
-  })
+  await bulkUpdateLexemes([[id, lexemeNew]])
+}
+
+/** Updates multiple lexemes in the db. */
+const bulkUpdateLexemes = async (lexemes: [string, Lexeme][]): Promise<void> => {
+  if (!lexemes.length) return
+
+  try {
+    const { lexemes: lexemeCollection } = rxDB
+
+    await lexemeCollection.bulkUpsert(
+      lexemes.map(([key, lexeme]) => ({
+        id: key,
+        created: lexeme.created || timestamp(),
+        lastUpdated: lexeme.lastUpdated || timestamp(),
+        updatedBy: lexeme.updatedBy || clientId,
+        contexts: lexeme.contexts || [],
+      })),
+    )
+  } catch (e) {
+    console.error('bulkUpdateLexemes error', e)
+    throw e
+  }
 }
 
 /**
@@ -215,8 +200,16 @@ const getChildren = async (id: ThoughtId): Promise<Thought[] | undefined> => {
 
 /** Deletes multiple thoughts from the db. */
 const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
+  if (!ids.length) return
+
   const { thoughts: thoughtCollection } = rxDB.collections
-  await thoughtCollection.bulkRemove(ids)
+
+  try {
+    await thoughtCollection.bulkRemove(ids)
+  } catch (e) {
+    console.error('deleteThoughts error', e)
+    throw e
+  }
 }
 
 /** Waits until the thought finishes replicating, then deallocates the cached thought and associated providers (without permanently deleting the persisted data). */
@@ -239,16 +232,21 @@ export const freeLexeme = async (key: string): Promise<void> => {
 const tryDeallocateLexeme = async (key: string): Promise<void> => {}
 
 /** Deletes a Lexeme from the db. */
-const deleteLexeme = async (id: string): Promise<void> => {
+const deleteLexemes = async (ids: string[]): Promise<void> => {
+  if (!ids.length) return
+
   const { lexemes: lexemeCollection } = rxDB
-  const lexemeDocOld = await lexemeCollection.findOne(id).exec()
-  const lexemeOld = lexemeDocOld?.toJSON() as unknown as Lexeme
 
-  if (lexemeDocOld && lexemeOld) {
+  try {
+    const lexemesToDelete = await getLexemesByIds(ids)
+
     // When deleting a Lexeme, clear out the contexts first to ensure that if a new Lexeme with the same id gets created, it doesn't accidentally pull the old contexts.
-    await updateLexeme(id, { ...lexemeOld, contexts: [] })
+    await bulkUpdateLexemes(ids.map((id, i) => [id, { ...lexemesToDelete[i]!, contexts: [] }]))
 
-    await lexemeDocOld?.incrementalRemove()
+    await lexemeCollection.bulkRemove(ids)
+  } catch (e) {
+    console.error('deleteLexemes error', e)
+    throw e
   }
 }
 
@@ -282,13 +280,13 @@ export const updateThoughts = async ({
   }
 
   const updatePromise = [
-    ...Object.entries(thoughtUpdates || {}).map(([id, thought]) => updateThought(id as ThoughtId, thought)),
-    ...Object.entries(lexemeUpdates || {}).map(([key, lexeme]) => updateLexeme(key, lexeme)),
+    bulkUpdateThoughts(Object.values(thoughtUpdates || {})),
+    bulkUpdateLexemes(Object.entries(lexemeUpdates || {})),
   ]
 
   const deletePromise = [
     deleteThoughts(Object.keys(thoughtDeletes || {}) as ThoughtId[]),
-    ...Object.keys(lexemeDeletes || {}).map(key => deleteLexeme(key)),
+    deleteLexemes(Object.keys(lexemeDeletes || {})),
   ]
 
   return Promise.all([...updatePromise, ...deletePromise])
