@@ -1,12 +1,18 @@
 import { clientId } from '.'
+import { Subscription } from 'rxjs'
 import Index from '../../@types/IndexType'
 import Lexeme from '../../@types/Lexeme'
+import PushBatch from '../../@types/PushBatch'
 import Thought from '../../@types/Thought'
 import ThoughtId from '../../@types/ThoughtId'
 import { UpdateThoughtsOptions } from '../../actions/updateThoughts'
 import groupObjectBy from '../../util/groupObjectBy'
+import mergeBatch from '../../util/mergeBatch'
+import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import { DataProvider } from '../DataProvider'
+import { RxLexemeDocument } from '../rxdb/schemas/lexeme'
+import { RxThoughtDocument } from '../rxdb/schemas/thought'
 import { rxDB } from '../rxdb/thoughtspace'
 
 /**********************************************************************
@@ -33,6 +39,13 @@ export interface ThoughtspaceOptions {
 type ThoughtspaceConfig = ThoughtspaceOptions
 
 /**********************************************************************
+ * Constants
+ **********************************************************************/
+
+/** Number of milliseconds to throttle dispatching updateThoughts on thought/lexeme change. */
+const UPDATE_THOUGHTS_THROTTLE = 100
+
+/**********************************************************************
  * Helper Functions
  **********************************************************************/
 
@@ -50,6 +63,22 @@ const resolvable = <T, E = any>() => {
   return promise as ResolvablePromise<T, E>
 }
 
+/** Dispatches updateThoughts with all updates in the throttle period. */
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
+  const merged = batches.reduce(mergeBatch, {
+    thoughtIndexUpdates: {},
+    lexemeIndexUpdates: {},
+    lexemeIndexUpdatesOld: {},
+  })
+
+  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+  setTimeout(() => {
+    config.then(({ onUpdateThoughts: updateThoughts }) =>
+      updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+    )
+  })
+}, UPDATE_THOUGHTS_THROTTLE)
+
 /**********************************************************************
  * Module variables
  **********************************************************************/
@@ -59,6 +88,15 @@ const config = resolvable<ThoughtspaceConfig>()
 
 /** Cache the config for synchronous access. This is needed by replicateChildren to set thoughtDocs synchronously, otherwise it will not be idempotent. */
 let configCache: ThoughtspaceConfig
+
+const observedRxThoughts: Map<
+  ThoughtId,
+  {
+    doc: RxThoughtDocument
+    subscription: Subscription
+  }
+> = new Map()
+const observedRxLexemes: Map<string, RxLexemeDocument> = new Map()
 
 /** Initialize the thoughtspace with event handlers and selectors to call back to the UI. */
 export const init = async (options: ThoughtspaceOptions) => {
@@ -83,6 +121,8 @@ export const init = async (options: ThoughtspaceOptions) => {
     onThoughtReplicated,
     onUpdateThoughts,
   }
+
+  observeRxInsertsDeletes()
 
   config.resolve(configCache)
 }
@@ -150,6 +190,72 @@ const bulkUpdateLexemes = async (lexemes: [string, Lexeme][]): Promise<void> => 
   }
 }
 
+/** Observes inserts and deletes to the db. */
+const observeRxInsertsDeletes = async () => {
+  const { thoughts: thoughtCollection, lexemes: lexemeCollection } = rxDB
+
+  thoughtCollection.insert$.subscribe(changeEvent => {
+    observeThoughts([changeEvent.documentData.id as ThoughtId])
+  })
+
+  lexemeCollection.insert$.subscribe(changeEvent => {
+    observeLexemes([changeEvent.documentData.id])
+  })
+
+  thoughtCollection.remove$.subscribe(changeEvent => {
+    const thoughtId = changeEvent.documentData.id as ThoughtId
+    deleteThoughts([thoughtId])
+  })
+}
+
+/** Observes thoughts by id. */
+const observeThoughts = async (ids: ThoughtId[]) => {
+  const { thoughts: thoughtCollection } = rxDB
+  const filteredIds = ids.filter(id => !observedRxThoughts.has(id))
+  if (!filteredIds.length) return
+  const docs = await thoughtCollection.findByIds(filteredIds).exec()
+
+  docs.forEach(doc => {
+    const thoughtId = doc.id as ThoughtId
+    if (!observedRxThoughts.has(thoughtId)) {
+      const subscription = doc.$.subscribe(updatedDoc => {
+        const thought = updatedDoc.toJSON() as Thought
+        config.then(({ onThoughtChange }) => onThoughtChange?.(thought))
+      })
+
+      observedRxThoughts.set(thoughtId, {
+        doc,
+        subscription,
+      })
+    }
+  })
+}
+
+/** Observes lexemes by id. */
+const observeLexemes = async (keys: string[]) => {
+  const { lexemes: lexemeCollection } = rxDB
+  const filteredKeys = keys.filter(key => !observedRxLexemes.has(key))
+  const docs = await lexemeCollection.findByIds(filteredKeys).exec()
+
+  docs.forEach(doc => {
+    const key = doc.id
+    if (!observedRxLexemes.has(key)) {
+      observedRxLexemes.set(key, doc)
+
+      doc.$.subscribe(updatedDoc => {
+        const lexeme = updatedDoc.toJSON() as unknown as Lexeme
+        updateThoughtsThrottled({
+          thoughtIndexUpdates: {},
+          lexemeIndexUpdates: {
+            [key]: lexeme,
+          },
+          lexemeIndexUpdatesOld: {},
+        })
+      })
+    }
+  })
+}
+
 /**
  * @deprecated Use getThoughtById instead.
  *
@@ -205,7 +311,9 @@ const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
   const { thoughts: thoughtCollection } = rxDB.collections
 
   try {
-    await thoughtCollection.bulkRemove(ids)
+    const deleted = thoughtCollection.bulkRemove(ids)
+    await Promise.all(ids.map(id => freeThought(id)))
+    await deleted
   } catch (e) {
     console.error('deleteThoughts error', e)
     throw e
@@ -215,13 +323,19 @@ const deleteThoughts = async (ids: ThoughtId[]): Promise<void> => {
 /** Waits until the thought finishes replicating, then deallocates the cached thought and associated providers (without permanently deleting the persisted data). */
 // Note: freeThought and deleteThought are the only places where we use the id as the docKey directly.
 // This is because we want to free all of the thought's children, not the thought's siblings, which are contained in the parent Doc accessed via docKeys.
-export const freeThought = async (docKey: string): Promise<void> => {
+export const freeThought = async (id: ThoughtId): Promise<void> => {
   // if the thought is retained again, it means it has been replicated in the foreground, and tryDeallocateThought will be a noop.
-  await tryDeallocateThought(docKey)
+  await tryDeallocateThought(id)
 }
 
 /** Deallocates the cached thought and associated providers (without permanently deleting the persisted data). If the thought is retained, noop. Call freeThought to both safely unretain the thought and trigger deallocation when replication completes. */
-const tryDeallocateThought = async (docKey: string): Promise<void> => {}
+const tryDeallocateThought = async (id: ThoughtId): Promise<void> => {
+  const observedThought = observedRxThoughts.get(id)
+  if (!observedThought) return
+
+  observedThought.subscription.unsubscribe()
+  observedRxThoughts.delete(id)
+}
 
 /** Waits until the lexeme finishes replicating, then deallocates the cached lexeme and associated providers (without permanently deleting the persisted data). */
 export const freeLexeme = async (key: string): Promise<void> => {
@@ -322,6 +436,8 @@ export const getLexemesByIds = async (ids: string[]): Promise<(Lexeme | undefine
   // TODO - Check why this validation is necessary for tests to pass.
   if (!rxDB?.lexemes) return []
 
+  observeLexemes(ids)
+
   const { lexemes: lexemeCollection } = rxDB
   const foundLexemeDocs = await lexemeCollection.findByIds(ids).exec()
 
@@ -342,6 +458,8 @@ export const getThoughtById = async (id: ThoughtId): Promise<Thought | undefined
 export const getThoughtsByIds = async (ids: ThoughtId[]): Promise<(Thought | undefined)[]> => {
   // TODO - Check why this validation is necessary for tests to pass.
   if (!rxDB?.thoughts) return []
+
+  observeThoughts(ids)
 
   const { thoughts: thoughtCollection } = rxDB
   const foundThoughtDocs = await thoughtCollection.findByIds(ids).exec()
