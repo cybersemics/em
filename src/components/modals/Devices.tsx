@@ -13,7 +13,6 @@ import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/yj
 import permissionsModel from '../../data-providers/yjs/permissionsModel'
 import * as selection from '../../device/selection'
 import useRxCollection from '../../hooks/useRxCollection'
-import useStatus from '../../hooks/useStatus'
 import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
 import strip from '../../util/strip'
@@ -104,11 +103,13 @@ const ShareList = React.forwardRef<
     permissions: RxPermission[]
   }
 >(({ onAdd, onSelect, permissions }, ref) => {
-  const status = useStatus()
   const dispatch = useDispatch()
   const store = useStore()
   const colors = useSelector(themeColors)
   const [showDeviceForm, setShowDeviceForm] = useState(false)
+
+  // we hardcode isConnected to true for now
+  const isConnected = true
 
   // sort the owner to the top, then sort by name
   const permissionsSorted = _.sortBy(
@@ -144,7 +145,7 @@ const ShareList = React.forwardRef<
     <div ref={ref}>
       <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
 
-      {status === 'connected' ? (
+      {isConnected ? (
         <>
           {/* Device list */}
           <div style={{ marginBottom: '2em' }}>
