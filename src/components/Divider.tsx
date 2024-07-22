@@ -1,7 +1,8 @@
 import classNames from 'classnames'
-import React, { useEffect, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import React, { createRef, useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
@@ -14,8 +15,9 @@ const DIVIDER_MIN_WIDTH = 85
 
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
-  const dividerRef = React.createRef<HTMLInputElement>()
   const dispatch = useDispatch()
+  const dividerRef = createRef<HTMLDivElement>()
+  const isCursor = useSelector((state: State) => hashPath(state.cursor) === hashPath(path))
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
 
   /** Sets the cursor to the divider. */
@@ -38,12 +40,12 @@ const Divider = ({ path }: { path: Path }) => {
       let elements = document.querySelectorAll(`.tree-node[data-path^="${hashPath(parentPath)}"]:not(.thought-divider)`)
 
       if (elements.length === 1) {
-        /** If this divider is an only child in a table, find the widest col2. */
+        /** If this divider is an only child, search further up the tree. */
         const grandparentPath = parentOf(parentPath)
         if (!grandparentPath) throw new Error('Divider grandparent not found')
 
         elements = document.querySelectorAll(
-          `.tree-node.table-col2[data-path^="${hashPath(grandparentPath)}"]:not(.thought-divider)`,
+          `.tree-node[data-path^="${hashPath(grandparentPath)}"]:not(.thought-divider)`,
         )
       } else if (!elements.length) {
         /** This is a top-level divider, use its siblings instead. */
@@ -61,6 +63,7 @@ const Divider = ({ path }: { path: Path }) => {
 
   useEffect(setStyle, []) // eslint-disable-line react-hooks/exhaustive-deps
   editingValueStore.useEffect(() => setTimeout(setStyle, 0))
+  if (isCursor) setTimeout(setStyle, 100)
 
   return (
     <div
