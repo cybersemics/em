@@ -74,6 +74,7 @@ type TreeThoughtPositioned = TreeThought & {
   width?: number
   x: number
   y: number
+  col1ThoughtWidth: number
 }
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
@@ -358,8 +359,6 @@ const LayoutTree = () => {
       : 0,
   )
 
-  const tableCol1WidthRef = useRef(0)
-
   // singleLineHeight is the measured height of a single line thought.
   // If no sizes have been measured yet, use the estimated height.
   // Cache the last measured value in a ref in case sizes no longer contains any single line thoughts.
@@ -465,6 +464,7 @@ const LayoutTree = () => {
     // (it is especially hard to determine how much x is decreased on cliffs when there are any number of tables in between)
     let yaccum = 0
     let indentCursorAncestorTables = 0
+    let col1ThoughtWidth = 0
 
     /** A stack of { depth, y } that stores the bottom y value of each col1 ancestor. */
     /* By default, yaccum is not advanced by the height of col1. This is what positions col2 at the same y value as col1. However, if the height of col1 exceeds the height of col2, then the next node needs to be positioned below col1, otherwise it will overlap. This stack stores the minimum y value of the next node (i.e. y + height). Depth is used to detect the next node after all of col1's descendants.
@@ -564,12 +564,10 @@ const LayoutTree = () => {
 
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
       // See: ycol1Ancestors
+      // Setting column one width to use as offset for drop hover over longer thoughts
       if (node.isTableCol1) {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
-      }
-
-      if (node.isTableCol1) {
-        tableCol1WidthRef.current = Number(tableCol1Widths.get(head(parentOf(node.path)))) || 0
+        col1ThoughtWidth = Number(tableCol1Widths.get(head(parentOf(node.path)))) || 0
       }
 
       return {
@@ -580,6 +578,7 @@ const LayoutTree = () => {
         width: tableCol1Widths.get(head(parentOf(node.path))),
         x,
         y,
+        col1ThoughtWidth,
       }
     })
 
@@ -660,6 +659,7 @@ const LayoutTree = () => {
               width,
               x,
               y,
+              col1ThoughtWidth,
             },
             i,
           ) => {
@@ -728,7 +728,7 @@ const LayoutTree = () => {
                         -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
 
-                      const marginLeftOffset = isTableCol1 || isTableCol2 ? tableCol1WidthRef.current : 0
+                      const marginLeftOffset = isTableCol1 || isTableCol2 ? col1ThoughtWidth : 0
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
