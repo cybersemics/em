@@ -1,6 +1,7 @@
 import { Page } from 'puppeteer'
 import sleep from '../../../util/sleep'
 import getEditable from './getEditable'
+import showMousePointer from './showMousePointer'
 
 interface DragAndDropOptions {
   /** Determines where the destination thought is dropped, relative to the source thought.
@@ -27,6 +28,8 @@ const dragAndDropThought = async (
 
   const dragStart = await sourceElement.boundingBox()
   const dragEnd = await destElement.boundingBox()
+
+  await showMousePointer(page)
 
   if (!dragStart) {
     throw new Error('Drag source element not found')
@@ -59,7 +62,7 @@ const dragAndDropThought = async (
   // Move the mouse to the drag target, then press, move to the drop target, and release
   await page.mouse.move(dragPosition.x, dragPosition.y)
   await page.mouse.down()
-  await page.mouse.move(dropPosition.x, dropPosition.y, { steps: 10 })
+  await page.mouse.move(dropPosition.x, dropPosition.y)
   if (mouseUp) await page.mouse.up()
 
   await sleep(500)
