@@ -19,3 +19,7 @@ local.log
 .env*.local
 # diff images output from failed Puppeteer snapshot tests
 __diff_output__
+
+## PandaCSS
+styled-system
+styled-system-studio
