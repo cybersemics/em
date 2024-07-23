@@ -471,7 +471,10 @@ it('url', async () => {
       - https://github.com/cybersemics/em
     - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
+    - This thought tests the line height of the above multiline url with cursor
   `)
+
+  await press('ArrowUp')
 
   // wait for render animation to complete
   await sleep(1000)
