@@ -1814,6 +1814,12 @@ h1 .num-contexts {
   overflow: hidden;
   white-space: nowrap;
   max-width: 100%;
+  /*
+    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+    Here is the reference to the reason.
+    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+   */
+  vertical-align: top;
 }
 
 .single-line .thought {
