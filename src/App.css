@@ -391,10 +391,6 @@ a.text-link {
   margin-right: 2px;
 }
 
-.context-breadcrumbs .depth-bar {
-  display: none;
-}
-
 /* required to avoid iPhone converting to emoji
  https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
  */
@@ -1136,12 +1132,12 @@ body.dark {
 
 .superscript-container sup {
   position: relative;
-  z-index: var(--z-index-stack); /* above depth-bar */
+  z-index: var(--z-index-stack);
 }
 
 .num-contexts {
   font-size: 60%;
-  white-space: nowrap; /* prevent long depth-bars from wrapping */
+  white-space: nowrap;
 }
 
 .num-contexts > sup {
@@ -1166,23 +1162,6 @@ h1 .num-contexts {
   display: inline-block;
   color: #ccc;
   position: relative;
-}
-
-.depth-bar {
-  position: absolute;
-  margin-left: 5px;
-  display: inline-block;
-  height: 2px;
-  background-color: #ddd;
-  transition: background-color 0.75s ease-out;
-  /*margin-top: 1em;*/
-  margin-top: 0.6em;
-  /*margin-left: 3px;*/
-}
-
-.num-contexts .depth-bar {
-  margin-top: 1em;
-  margin-left: 0px;
 }
 
 .has-other-contexts {
