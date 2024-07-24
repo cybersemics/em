@@ -100,7 +100,8 @@ const DropEnd = ({
         display: 'list-item',
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : '1.9em',
-        marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
+        // On mobile move drop-target towards right so user's finger does not obscure the drop-hover
+        marginLeft: isRootPath ? '-4em' : last ? '-2em' : isTouch ? '1.5em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
@@ -126,7 +127,8 @@ const DropEnd = ({
           className='drop-hover'
           style={{
             backgroundColor: dropHoverColor,
-            marginLeft: !isRootPath && Number(cliff) < 0 ? 'calc(-0.9em - 13px)' : undefined,
+            // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
+            marginLeft: isTouch && !isRootPath && Number(cliff) < 0 ? 'calc(-1.9em - 13px)' : undefined,
           }}
         ></span>
       )}

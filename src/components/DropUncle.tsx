@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -44,7 +45,8 @@ const DropUncle = ({
         backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
         height: '1.9em',
         opacity: 0.9,
-        marginLeft: '-1em',
+        // shift drop target towards right on mobile so users finger do not obscure the drop hover
+        marginLeft: isTouch ? '1.5em' : undefined,
       }}
     >
       {testFlags.simulateDrop && (
@@ -67,6 +69,8 @@ const DropUncle = ({
           className='drop-hover'
           style={{
             backgroundColor: dropHoverColor,
+            // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
+            marginLeft: isTouch ? 'calc(-1.9em - 13px)' : undefined,
           }}
         />
       )}
