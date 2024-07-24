@@ -5,6 +5,79 @@ import reducerFlow from '../../util/reducerFlow'
 import importMarkdown, { convertMarkdownToText } from '../importMarkdown'
 
 describe('convertMarkdownToText', () => {
+  it('should import paragraphs', () => {
+    const markdown = `
+p1
+
+p2
+
+p3
+`
+
+    expect(convertMarkdownToText(markdown)).toBe(`
+- p1
+- p2
+- p3
+`)
+  })
+
+  it('should import separate lines as separate thoughts', () => {
+    const markdown = `
+p1
+p2
+p3
+`
+
+    expect(convertMarkdownToText(markdown)).toBe(`
+- p1
+- p2
+- p3
+`)
+  })
+
+  it('should import mixed paragraphs and lists', () => {
+    const markdown = `
+p1
+
+p2
+
+- a
+  - b
+    - c
+
+p3
+`
+
+    expect(convertMarkdownToText(markdown)).toBe(`
+- p1
+- p2
+- a
+  - b
+    - c
+- p3
+`)
+  })
+
+  it('should import mixed text and lists', () => {
+    const markdown = `
+p1
+p2
+- a
+  - b
+    - c
+p3
+`
+
+    expect(convertMarkdownToText(markdown)).toBe(`
+- p1
+- p2
+- a
+  - b
+    - c
+- p3
+`)
+  })
+
   it('should import headings', () => {
     const markdown = `
 # H1
