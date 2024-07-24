@@ -57,7 +57,6 @@ const Popup = React.forwardRef<
       }}
     >
       <div
-        className='alert-text'
         style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}
         dangerouslySetInnerHTML={
           typeof children === 'string'
