@@ -1,7 +1,10 @@
 /*
-ncu config
+npm-check-updates config
+See: https://github.com/raineorshine/npm-check-updates
 
 Dependency notes:
+  - @emotion/react   Peer dependency of @mui/material
+  - @emotion/styled  Peer dependency of @mui/material
   - html-escaper     Replace 'he' with 'html-escaper' due to bundle size.
                      Other small HTML entity encoder/decoders: entities, html-entities
   - page-lifecycle   Use https://github.com/magic-akari/page-lifecycle/tree/feat/add-types
