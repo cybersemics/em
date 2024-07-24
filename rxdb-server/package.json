@@ -1,0 +1,27 @@
+{
+  "name": "rxdb-server",
+  "version": "1.0.0",
+  "main": "main",
+  "scripts": {
+    "build": "rm -rf build ; npx tsc",
+    "kill": "pm2 kill",
+    "start": "pm2 start pm2.config.js",
+    "logs": "pm2 logs",
+    "monit": "pm2 monit",
+    "restart": "pm2 restart pm2.config.js",
+    "status": "pm2 status pm2.config.js",
+    "stop": "pm2 stop pm2.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "pm2": "^5.4.2",
+    "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "rxdb": "15.27.0",
+    "ws": "^8.18.0"
+  }
+}

@@ -28,6 +28,7 @@
     "cap:sync:prod": "npm run build && NODE_ENV=production cap sync",
     "start": "vite --host --port 3000",
     "build": "vite build",
+    "build:premium": "node scripts/rxdb-premium.js",
     "clean": "rm -rf ./node_modules/.cache",
     "docs": "typedoc --options typedoc.json",
     "deploy:major": "npm run lint && npm version major && npm run build && firebase deploy --only hosting",
@@ -77,7 +78,6 @@
     "@capacitor/status-bar": "^4.1.1",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@hocuspocus/provider": "^2.13.5",
     "@mui/material": "^5.15.20",
     "algoliasearch": "^4.24.0",
     "axios": "^1.7.2",
@@ -120,6 +120,8 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.2",
     "reselect": "^5.1.1",
+    "rxdb": "^15.28.1",
+    "rxjs": "^7.8.1",
     "text-block-parser": "^1.1.1",
     "truncate-html": "^1.1.1",
     "ts-key-enum": "^2.0.12",
@@ -130,9 +132,7 @@
     "workbox-routing": "^7.1.0",
     "workbox-strategies": "^7.1.0",
     "xhtml-purifier": "^0.4.1",
-    "y-indexeddb": "https://github.com/raineorshine/y-indexeddb#y-indexeddb-multiplex",
-    "yallist": "^5.0.0",
-    "yjs": "^13.6.17"
+    "yallist": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",

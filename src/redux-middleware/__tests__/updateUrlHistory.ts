@@ -11,33 +11,35 @@ afterEach(cleanupTestApp)
 
 it('set url to cursor', async () => {
   await dispatch(newThought({ value: 'a' }))
-  vi.runOnlyPendingTimers()
 
   const thoughtA = contextToThought(store.getState(), ['a'])!
-  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+  await expectPathnameToBe(`/~/${thoughtA.id}`)
 
   await dispatch(newThought({ value: 'b', insertNewSubthought: true }))
-  vi.runOnlyPendingTimers()
 
   const thoughtB = contextToThought(store.getState(), ['a', 'b'])!
-  expect(window.location.pathname).toBe(`/~/${thoughtA.id}/${thoughtB.id}`)
+  await expectPathnameToBe(`/~/${thoughtA.id}/${thoughtB.id}`)
 
   await dispatch(cursorBack())
-  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+  await expectPathnameToBe(`/~/${thoughtA.id}`)
 
   await dispatch(cursorBack())
-  vi.runOnlyPendingTimers()
 
-  expect(window.location.pathname).toBe('/')
+  await expectPathnameToBe('/')
 })
 
 it('set url to home after deleting last empty thought', async () => {
   await dispatch(newThought({}))
-  vi.runOnlyPendingTimers()
 
   const thoughtA = contextToThought(store.getState(), [''])!
-  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+  expectPathnameToBe(`/~/${thoughtA.id}`)
 
   await dispatch(deleteThoughtWithCursor({}))
-  expect(window.location.pathname).toBe('/')
+  expectPathnameToBe('/')
 })
+
+/** Wait until the URL changes to the given path. */
+async function expectPathnameToBe(path: string) {
+  await vi.waitUntil(() => window.location.pathname === path, { timeout: 500 })
+  expect(window.location.pathname).toBe(path)
+}
