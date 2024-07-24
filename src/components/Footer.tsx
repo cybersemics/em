@@ -35,7 +35,7 @@ const Status = () => {
               ? colors.yellow
               : status === 'connected' || status === 'synced'
                 ? colors.lightgreen
-                : (new Error('test'), undefined),
+                : colors.red,
       }}
     >
       {savingPercentage < 100
