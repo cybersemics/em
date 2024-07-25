@@ -156,7 +156,7 @@ __bold__
 ~~strikethrough~~
 `
     expect(convertMarkdownToText(markdown)).toBe(`
-- <em>italic</em> <em>italic</em> <strong>bold</strong> <strong>bold</strong> <em><strong>bold italic</strong></em> <del>strikethrough</del>
+- <i>italic</i> <i>italic</i> <b>bold</b> <b>bold</b> <i><b>bold italic</b></i> <strike>strikethrough</strike>
 `)
   })
 

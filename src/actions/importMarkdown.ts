@@ -26,13 +26,13 @@ export const convertMarkdownToText = (markdown: string): string => {
           str += token.text.replace(/\n/g, '&#10;')
           break
         case 'em':
-          str += `<em>${processInlineTokens(token.tokens ?? token.text)}</em>`
+          str += `<i>${processInlineTokens(token.tokens ?? token.text)}</i>`
           break
         case 'strong':
-          str += `<strong>${processInlineTokens(token.tokens ?? token.text)}</strong>`
+          str += `<b>${processInlineTokens(token.tokens ?? token.text)}</b>`
           break
         case 'del':
-          str += `<del>${processInlineTokens(token.tokens ?? token.text)}</del>`
+          str += `<strike>${processInlineTokens(token.tokens ?? token.text)}</strike>`
           break
         case 'link':
           if (token.href === token.text) str += token.text
