@@ -215,28 +215,6 @@ const testSuite = () => {
       const image = await screenshot()
       expect(image).toMatchImageSnapshot()
     })
-
-    it('drop hover after table', async () => {
-      await paste(`
-        - x
-        - a
-          - =view
-            - Table
-          - =pin
-            - true
-          - b
-            - c
-          - d
-            - e
-      `)
-
-      await clickThought('x')
-      await dragAndDropThought('x', 'd', { position: 'after', mouseUp: true })
-
-      await sleep(300)
-      const image = await screenshot()
-      expect(image).toMatchImageSnapshot()
-    })
   })
 }
 
@@ -406,7 +384,51 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
-    await dragAndDropThought('x', 'a', { position: 'after', childrenCount: 2 })
+    await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
+
+    await sleep(300)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop hover after column two thought', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'c', { position: 'after' })
+
+    await sleep(300)
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop hover after table column one', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'd', { position: 'after' })
 
     await sleep(300)
     const image = await screenshot()
