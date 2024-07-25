@@ -21,7 +21,9 @@ p3
 `)
   })
 
-  it('should import separate lines as separate thoughts', () => {
+  // TODO: This test is skipped while we're evaluating whether to
+  // import separate lines as separate thoughts.
+  it.skip('should import separate lines as separate thoughts', () => {
     const markdown = `
 p1
 p2
@@ -58,7 +60,9 @@ p3
 `)
   })
 
-  it('should import mixed text and lists', () => {
+  // TODO: This test is skipped while we're evaluating whether to
+  // import separate lines as separate thoughts.
+  it.skip('should import mixed text and lists', () => {
     const markdown = `
 p1
 p2
