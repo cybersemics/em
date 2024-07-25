@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
-import { DROPEND_MARGINLEFT, DROPHOVER_MARGINLEFT } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -53,6 +52,9 @@ const DropEnd = ({
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+
+  const shiftDropHover = isTouch && !isRootPath && Number(cliff) < 0
+  const { marginLeftDropEnd, marginLeftDrophover } = calculateNewMargin({ isTouch, shiftDropHover })
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -103,13 +105,7 @@ const DropEnd = ({
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : '1.9em',
         // On mobile move drop-target towards right so user's finger does not obscure the drop-hover
-        marginLeft: isRootPath
-          ? '-4em'
-          : last
-            ? '-2em'
-            : isTouch
-              ? `${DROPEND_MARGINLEFT + calculateNewMargin()}em`
-              : `${DROPEND_MARGINLEFT}em`,
+        marginLeft: isRootPath ? '-4em' : last ? '-2em' : marginLeftDropEnd,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
@@ -136,10 +132,7 @@ const DropEnd = ({
           style={{
             backgroundColor: dropHoverColor,
             // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
-            marginLeft:
-              isTouch && !isRootPath && Number(cliff) < 0
-                ? `calc(${DROPHOVER_MARGINLEFT - calculateNewMargin()}em - 13px)`
-                : `calc(${DROPHOVER_MARGINLEFT}em - 13px)`,
+            marginLeft: marginLeftDrophover,
           }}
         ></span>
       )}

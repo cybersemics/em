@@ -1,22 +1,19 @@
-import { DROPEND_MARGINLEFT, MARGINLEFT_CHANGE } from '../constants'
+import { DROPEND_MARGINLEFT, DROPHOVER_FINGERSHIFT, DROPHOVER_MARGINLEFT } from '../constants'
 
 /**
- * Calculates the change in the margin-left of drop-end to compensate for the shift towards the right on mobile devices.
+ * Calculates the margin-left of drop-end and drop-hover.
  */
-function calculateNewMargin() {
-  // Define the initial value of drop-end marginLeft
-  const initialValue = -1
+function calculateMargin({ isTouch, shiftDropHover }: { isTouch: boolean; shiftDropHover: boolean }) {
+  // Calculate the marginLeft of drop-end and drop-hover
+  const marginLeftDropEnd = isTouch ? `${DROPEND_MARGINLEFT + DROPHOVER_FINGERSHIFT}em` : `${DROPEND_MARGINLEFT}em`
+  const marginLeftDrophover = shiftDropHover
+    ? `calc(${DROPHOVER_MARGINLEFT - DROPHOVER_FINGERSHIFT}em - 13px)`
+    : `calc(${DROPHOVER_MARGINLEFT}em - 13px)`
 
-  const dropEndValue = DROPEND_MARGINLEFT
-  const changeInValue = MARGINLEFT_CHANGE
-
-  // Calculate the change in drop-end marginLeft from its initial value
-  const dropEndChange = dropEndValue - initialValue
-
-  // Calculate the new changeInMarginLeft
-  const newChangeInMarginLeft = changeInValue + dropEndChange
-
-  return newChangeInMarginLeft
+  return {
+    marginLeftDropEnd,
+    marginLeftDrophover,
+  }
 }
 
-export default calculateNewMargin
+export default calculateMargin

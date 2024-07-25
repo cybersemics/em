@@ -6,7 +6,6 @@ import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isTouch } from '../browser'
-import { DROPEND_MARGINLEFT, DROPHOVER_MARGINLEFT } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -35,6 +34,7 @@ const DropUncle = ({
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  const { marginLeftDropEnd, marginLeftDrophover } = calculateNewMargin({ isTouch, shiftDropHover: isTouch })
 
   if (!dropTarget) return null
 
@@ -48,7 +48,7 @@ const DropUncle = ({
         height: '1.9em',
         opacity: 0.9,
         // shift drop target towards right on mobile so users finger do not obscure the drop hover
-        marginLeft: isTouch ? `${DROPEND_MARGINLEFT + calculateNewMargin()}em` : `${DROPEND_MARGINLEFT}em`,
+        marginLeft: marginLeftDropEnd,
       }}
     >
       {testFlags.simulateDrop && (
@@ -72,9 +72,7 @@ const DropUncle = ({
           style={{
             backgroundColor: dropHoverColor,
             // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
-            marginLeft: isTouch
-              ? `calc(${DROPHOVER_MARGINLEFT - calculateNewMargin()}em - 13px)`
-              : `calc(${DROPHOVER_MARGINLEFT}em - 13px)`,
+            marginLeft: marginLeftDrophover,
           }}
         />
       )}
