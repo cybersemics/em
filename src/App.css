@@ -573,7 +573,8 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 
 .thought-annotation a {
-  position: relative;
+  /* set position to absolute to make sure the a tag doesn't affect .thought annotation's line height */
+  position: absolute;
   z-index: var(--z-index-thought-annotation-link);
 }
 
