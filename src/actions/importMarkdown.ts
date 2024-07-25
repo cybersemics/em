@@ -60,7 +60,7 @@ export const convertMarkdownToText = (markdown: string): string => {
     const stack: number[] = []
 
     /** Helper function to get the indentation for a given depth. */
-    const getIndent = (depth: number) => '  '.repeat(depth + parentDepth)
+    const indent = (depth: number) => '  '.repeat(depth + parentDepth)
 
     for (const token of tokens) {
       switch (token.type) {
@@ -71,11 +71,11 @@ export const convertMarkdownToText = (markdown: string): string => {
           while (stack.length && stack[stack.length - 1] >= token.depth) {
             stack.pop()
           }
-          result += `${getIndent(stack.length)}- ${processInlineTokens(token.tokens ?? token.text)}\n`
+          result += `${indent(stack.length)}- ${processInlineTokens(token.tokens ?? token.text)}\n`
           stack.push(token.depth)
           break
         case 'text':
-          result += `${getIndent(stack.length)}- ${processInlineTokens(
+          result += `${indent(stack.length)}- ${processInlineTokens(
             'tokens' in token && token.tokens?.length ? token.tokens : token.text,
           )}\n`
           break
@@ -95,7 +95,7 @@ export const convertMarkdownToText = (markdown: string): string => {
             break
           }
 
-          result += `${getIndent(stack.length)}- ${processInlineTokens(
+          result += `${indent(stack.length)}- ${processInlineTokens(
             token.tokens
               // Replace single newlines with spaces
               ?.map(token => (token.type === 'text' && token.text === '\n' ? { ...token, text: ' ' } : token)) ??
@@ -103,14 +103,14 @@ export const convertMarkdownToText = (markdown: string): string => {
           )}\n`
           break
         case 'hr':
-          result += `${getIndent(stack.length)}- ---\n`
+          result += `${indent(stack.length)}- ---\n`
           break
         case 'list':
           processTokens(token.items, parentDepth + stack.length)
           break
         case 'list_item': {
           if (!token.tokens?.length) {
-            result += `${getIndent(stack.length)}- ${processInlineTokens(token.text)}\n`
+            result += `${indent(stack.length)}- ${processInlineTokens(token.text)}\n`
             break
           }
 
@@ -125,8 +125,8 @@ export const convertMarkdownToText = (markdown: string): string => {
         }
         case 'blockquote': {
           if (!token.tokens?.length) {
-            result += `${getIndent(stack.length)}- ${token.text}\n`
-            result += `${getIndent(stack.length + 1)}- =blockquote\n`
+            result += `${indent(stack.length)}- ${token.text}\n`
+            result += `${indent(stack.length + 1)}- =blockquote\n`
             break
           }
 
@@ -136,32 +136,32 @@ export const convertMarkdownToText = (markdown: string): string => {
           processTokens([first], parentDepth + stack.length)
 
           // Insert the blockquote meta attribute as first child
-          result += `${getIndent(stack.length + 1)}- =blockquote\n`
+          result += `${indent(stack.length + 1)}- =blockquote\n`
 
           // Process the rest with an increased depth
           processTokens(rest, parentDepth + stack.length + 1)
           break
         }
         case 'image':
-          result += `${getIndent(stack.length)}- =image\n`
-          result += `${getIndent(stack.length + 1)}- ${token.href}\n`
+          result += `${indent(stack.length)}- =image\n`
+          result += `${indent(stack.length + 1)}- ${token.href}\n`
           if (token.title?.length && token.title !== token.href)
-            result += `${getIndent(stack.length + 2)}- ${token.title}\n`
+            result += `${indent(stack.length + 2)}- ${token.title}\n`
           break
         case 'code':
-          result += `${getIndent(stack.length)}- ${token.text.replace(/\n/g, '&#10;')}\n`
-          result += `${getIndent(stack.length + 1)}- =code\n`
+          result += `${indent(stack.length)}- ${token.text.replace(/\n/g, '&#10;')}\n`
+          result += `${indent(stack.length + 1)}- =code\n`
           break
         case 'table': {
-          result += `${getIndent(stack.length)}- Table\n`
-          result += `${getIndent(stack.length + 1)}- =view\n`
-          result += `${getIndent(stack.length + 2)}- Table\n`
+          result += `${indent(stack.length)}- Table\n`
+          result += `${indent(stack.length + 1)}- =view\n`
+          result += `${indent(stack.length + 2)}- Table\n`
 
           // Handle 2-column tables separately
           if (token.header.length === 2) {
             for (const [left, right] of token.rows) {
-              result += `${getIndent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
-              result += `${getIndent(stack.length + 2)}- ${processInlineTokens(right.tokens)}\n`
+              result += `${indent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
+              result += `${indent(stack.length + 2)}- ${processInlineTokens(right.tokens)}\n`
             }
             break
           }
@@ -172,10 +172,10 @@ export const convertMarkdownToText = (markdown: string): string => {
             .map((header: Tokens.TableCell) => processInlineTokens(header.tokens ?? header.text))
 
           for (const [left, ...cells] of token.rows) {
-            result += `${getIndent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
+            result += `${indent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
             for (const [i, cell] of cells.entries()) {
-              result += `${getIndent(stack.length + 2)}- ${headers[i]}\n`
-              result += `${getIndent(stack.length + 3)}- ${processInlineTokens(cell.tokens)}\n`
+              result += `${indent(stack.length + 2)}- ${headers[i]}\n`
+              result += `${indent(stack.length + 3)}- ${processInlineTokens(cell.tokens)}\n`
             }
           }
 
