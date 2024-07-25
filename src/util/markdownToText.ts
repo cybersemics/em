@@ -1,14 +1,8 @@
-import _ from 'lodash'
 import { Token, Tokens, marked } from 'marked'
-import State from '../@types/State'
-import Thunk from '../@types/Thunk'
-import importText, { ImportTextPayload } from './importText'
-
-export interface ImportMarkdownPayload extends ImportTextPayload {}
 
 /** Converts markdown to text compatible with `importText`. */
-export const convertMarkdownToText = (markdown: string): string => {
-  const tokens = marked.lexer(markdown)
+export const markdownToText = (markdown: string): string => {
+  const tokens = marked.lexer(markdown.trim())
 
   // Accumulate the result
   let result = '\n'
@@ -193,17 +187,3 @@ export const convertMarkdownToText = (markdown: string): string => {
 
   return result
 }
-
-/** Imports thoughts from markdown. */
-const importMarkdown = (state: State, payload: ImportMarkdownPayload): State => {
-  const parsed = convertMarkdownToText(payload.text)
-  return importText(state, { ...payload, text: parsed })
-}
-
-/** Action creator for importing markdown. */
-export const importMarkdownActionCreator =
-  (payload: ImportTextPayload): Thunk =>
-  dispatch =>
-    dispatch({ type: 'importMarkdown', ...payload })
-
-export default _.curryRight(importMarkdown)

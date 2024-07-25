@@ -1,10 +1,6 @@
-import { HOME_TOKEN } from '../../constants'
-import exportContext from '../../selectors/exportContext'
-import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
-import importMarkdown, { convertMarkdownToText } from '../importMarkdown'
+import { markdownToText } from '../markdownToText'
 
-describe('convertMarkdownToText', () => {
+describe('markdownToText', () => {
   it('should import paragraphs', () => {
     const markdown = `
 p1
@@ -14,7 +10,7 @@ p2
 p3
 `
 
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - p1
 - p2
 - p3
@@ -30,7 +26,7 @@ p2
 p3
 `
 
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - p1
 - p2
 - p3
@@ -50,7 +46,7 @@ p2
 p3
 `
 
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - p1
 - p2
 - a
@@ -72,7 +68,7 @@ p2
 p3
 `
 
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - p1
 - p2
 - a
@@ -92,7 +88,7 @@ p3
 ###### H6
 `
 
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - H1
   - H2
     - H3
@@ -119,7 +115,7 @@ f
 ### Heading 3 again
 g
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Heading 1
   - a
   - Heading 2
@@ -143,7 +139,7 @@ g
 - ## List Item 2
 - List Item 3
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - List Item 1
 - List Item 2
 - List Item 3
@@ -159,7 +155,7 @@ __bold__
 ***bold italic***
 ~~strikethrough~~
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - <i>italic</i> <i>italic</i> <b>bold</b> <b>bold</b> <i><b>bold italic</b></i> <strike>strikethrough</strike>
 `)
   })
@@ -173,7 +169,7 @@ __bold__
 - Another unordered item
 + Yet another unordered item
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - First ordered item
 - Second ordered item
   - Unordered sub-list
@@ -192,7 +188,7 @@ __bold__
 
 [ref]: https://example.com
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - <a href="https://example.com">Inline link</a> <a href="https://example.com">Inline link with title</a>
 - <a href="https://example.com">Reference link</a>
 `)
@@ -204,7 +200,7 @@ __bold__
 
 ![Alt text with title](https://example.com/image.jpg "Image title")
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - =image
   - https://example.com/image.jpg
 - =image
@@ -217,7 +213,7 @@ __bold__
     const markdown = `
 Here's an inline image ![Alt text](https://example.com/image.jpg "Image").
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Here&#39;s an inline image <img src="https://example.com/image.jpg" alt="Alt text" title="Image" />.
 `)
   })
@@ -231,7 +227,7 @@ var s = "JavaScript";
 alert(s);
 \`\`\`
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Inline <code>code</code> has <code>back-ticks around</code> it.
 - var s = "JavaScript";&#10;alert(s);
   - =code
@@ -246,7 +242,7 @@ alert(s);
 | 1        | 2        |
 | apple    | orange   |
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Table
   - =view
     - Table
@@ -267,7 +263,7 @@ alert(s);
 | Banana   | Yellow | Tropical   |
 | Tangerine| Orange | Citrus     |
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Table
   - =view
     - Table
@@ -297,7 +293,7 @@ alert(s);
 > Nested blockquotes
 >> are also possible
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - This is a blockquote&#10;with multiple lines
   - =blockquote
 - Nested blockquotes
@@ -313,7 +309,7 @@ alert(s);
 ***
 ___
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - ---
 - ---
 - ---
@@ -349,7 +345,7 @@ ___
 
 * List item 4
 `
-    expect(convertMarkdownToText(markdown)).toBe(`
+    expect(markdownToText(markdown)).toBe(`
 - Main Topic
   - Subtopic 1
     - List item 1
@@ -376,53 +372,5 @@ ___
     - ---
     - List item 4
 `)
-  })
-})
-
-describe('importMarkdown', () => {
-  /**
-   * The bulk of the tests are in convertMarkdownToText.
-   * This test is just to ensure that the importMarkdown action
-   * works as expected.
-   */
-
-  it('should import markdown', () => {
-    const markdown = `
-# Heading 1
-a
-## Heading 2
-b
-### Heading 3
-c
-## Heading 2 again
-d
-#### Heading 4
-e
-# Heading 1 again
-f
-### Heading 3 again
-g
-`
-
-    const steps = [importMarkdown({ text: markdown })]
-
-    const stateNew = reducerFlow(steps)(initialState())
-    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toBe(`- ${HOME_TOKEN}
-  - Heading 1
-    - a
-    - Heading 2
-      - b
-      - Heading 3
-        - c
-    - Heading 2 again
-      - d
-      - Heading 4
-        - e
-  - Heading 1 again
-    - f
-    - Heading 3 again
-      - g`)
   })
 })
