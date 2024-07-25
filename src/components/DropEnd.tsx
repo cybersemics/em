@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
+import { DROPEND_MARGINLEFT, DROPHOVER_MARGINLEFT } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -12,6 +13,7 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import calculateNewMargin from '../util/calculateMargin'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -101,7 +103,13 @@ const DropEnd = ({
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : '1.9em',
         // On mobile move drop-target towards right so user's finger does not obscure the drop-hover
-        marginLeft: isRootPath ? '-4em' : last ? '-2em' : isTouch ? '1.5em' : undefined,
+        marginLeft: isRootPath
+          ? '-4em'
+          : last
+            ? '-2em'
+            : isTouch
+              ? `${DROPEND_MARGINLEFT + calculateNewMargin()}em`
+              : `${DROPEND_MARGINLEFT}em`,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
@@ -128,7 +136,10 @@ const DropEnd = ({
           style={{
             backgroundColor: dropHoverColor,
             // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
-            marginLeft: isTouch && !isRootPath && Number(cliff) < 0 ? 'calc(-1.9em - 13px)' : undefined,
+            marginLeft:
+              isTouch && !isRootPath && Number(cliff) < 0
+                ? `calc(${DROPHOVER_MARGINLEFT - calculateNewMargin()}em - 13px)`
+                : `calc(${DROPHOVER_MARGINLEFT}em - 13px)`,
           }}
         ></span>
       )}

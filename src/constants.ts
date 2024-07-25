@@ -501,3 +501,6 @@ export const LAYOUT_NODE_ANIMATION_DURATION = 150
 
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: keyof typeof colors.dark = 'gray'
+export const DROPEND_MARGINLEFT = -1
+export const DROPHOVER_MARGINLEFT = 0.6
+export const MARGINLEFT_CHANGE = 2.5
