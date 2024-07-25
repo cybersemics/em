@@ -229,8 +229,8 @@ alert(s);
 `
     expect(convertMarkdownToText(markdown)).toBe(`
 - Inline <code>code</code> has <code>back-ticks around</code> it.
-- =code
-  - var s = "JavaScript";&#10;alert(s);
+- var s = "JavaScript";&#10;alert(s);
+  - =code
 `)
   })
 
@@ -294,12 +294,12 @@ alert(s);
 >> are also possible
 `
     expect(convertMarkdownToText(markdown)).toBe(`
-- =blockquote
-  - This is a blockquote&#10;with multiple lines
-- =blockquote
-  - Nested blockquotes
+- This is a blockquote&#10;with multiple lines
   - =blockquote
-    - are also possible
+- Nested blockquotes
+  - =blockquote
+  - are also possible
+    - =blockquote
 `)
   })
 
@@ -352,8 +352,8 @@ ___
     - List item 2
       - Nested ordered item
       - Another nested item
-        - =code
-          - Code block inside list
+        - Code block inside list
+          - =code
   - Subtopic 2
     - Table
       - =view

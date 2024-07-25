@@ -123,10 +123,25 @@ export const convertMarkdownToText = (markdown: string): string => {
           processTokens(rest, parentDepth + stack.length + 1)
           break
         }
-        case 'blockquote':
-          result += `${getIndent(stack.length)}- =blockquote\n`
-          processTokens(token.tokens ?? token.text, parentDepth + stack.length + 1)
+        case 'blockquote': {
+          if (!token.tokens?.length) {
+            result += `${getIndent(stack.length)}- ${token.text}\n`
+            result += `${getIndent(stack.length + 1)}- =blockquote\n`
+            break
+          }
+
+          const [first, ...rest] = token.tokens
+
+          // Process the first token with the same depth as the list item
+          processTokens([first], parentDepth + stack.length)
+
+          // Insert the blockquote meta attribute as first child
+          result += `${getIndent(stack.length + 1)}- =blockquote\n`
+
+          // Process the rest with an increased depth
+          processTokens(rest, parentDepth + stack.length + 1)
           break
+        }
         case 'image':
           result += `${getIndent(stack.length)}- =image\n`
           result += `${getIndent(stack.length + 1)}- ${token.href}\n`
@@ -134,8 +149,8 @@ export const convertMarkdownToText = (markdown: string): string => {
             result += `${getIndent(stack.length + 2)}- ${token.title}\n`
           break
         case 'code':
-          result += `${getIndent(stack.length)}- =code\n`
-          result += `${getIndent(stack.length + 1)}- ${token.text.replace(/\n/g, '&#10;')}\n`
+          result += `${getIndent(stack.length)}- ${token.text.replace(/\n/g, '&#10;')}\n`
+          result += `${getIndent(stack.length + 1)}- =code\n`
           break
         case 'table': {
           result += `${getIndent(stack.length)}- Table\n`
