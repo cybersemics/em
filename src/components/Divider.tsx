@@ -17,7 +17,7 @@ const DIVIDER_MIN_WIDTH = 85
 const Divider = ({ path }: { path: Path }) => {
   const dispatch = useDispatch()
   const dividerRef = createRef<HTMLDivElement>()
-  const isCursor = useSelector((state: State) => hashPath(state.cursor) === hashPath(path))
+  const thoughtIndex = useSelector((state: State) => state.thoughts.thoughtIndex)
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
 
   /** Sets the cursor to the divider. */
@@ -61,9 +61,8 @@ const Divider = ({ path }: { path: Path }) => {
     }
   }
 
-  useEffect(setStyle, []) // eslint-disable-line react-hooks/exhaustive-deps
-  editingValueStore.useEffect(() => setTimeout(setStyle, 0))
-  if (isCursor) setTimeout(setStyle, 100)
+  useEffect(setStyle, [setStyle, thoughtIndex])
+  editingValueStore.useEffect(setStyle)
 
   return (
     <div
