@@ -74,7 +74,6 @@ type TreeThoughtPositioned = TreeThought & {
   width?: number
   x: number
   y: number
-  col1ThoughtWidth: number
 }
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
@@ -482,8 +481,6 @@ const LayoutTree = () => {
 
     */
     const ycol1Ancestors: { depth: number; y: number }[] = []
-    // Store width of thoughts on column one, set zero otherwise
-    let col1ThoughtWidth = 0
 
     // cache table column 1 widths so they are only calculated once and then assigned to each thought in the column
     // key thoughtId of thought with =table attribute
@@ -563,15 +560,10 @@ const LayoutTree = () => {
         yaccum += height
       }
 
-      // Check if the current node is the last node in column 2
-      const isLastInCol2 = next === undefined || (next.depth === node.depth && !next.isTableCol2)
-
       // if the current thought is in table col1, push its y and depth onto the stack so that the next node after it can be positioned below it instead of overlapping it
       // See: ycol1Ancestors
-      // Setting column one width to use as offset for drop-hover over longer thoughts
       if (node.isTableCol1) {
         ycol1Ancestors.push({ y: yaccum + height, depth: node.depth })
-        col1ThoughtWidth = Number(tableCol1Widths.get(head(parentOf(node.path)))) || 0
       }
 
       return {
@@ -582,7 +574,6 @@ const LayoutTree = () => {
         width: tableCol1Widths.get(head(parentOf(node.path))),
         x,
         y,
-        col1ThoughtWidth: node.isTableCol2 && isLastInCol2 ? col1ThoughtWidth : 0, // Only need the width on the last thought of column 2.
       }
     })
 
@@ -663,9 +654,8 @@ const LayoutTree = () => {
               width,
               x,
               y,
-              col1ThoughtWidth,
             },
-            i,
+            index,
           ) => {
             // List Virtualization
             // Do not render thoughts that are below the viewport.
@@ -732,8 +722,11 @@ const LayoutTree = () => {
                         -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
 
-                      // Apply margin-left to only drop-ends that are not at the end of column 2
-                      const dropEndMarginLeft = cliffDepth - depth < 0 ? col1ThoughtWidth : 0
+                      // After table col2, shift the DropEnd left by the width of col1.
+                      // This correctly positions the drop target for dropping after the table view.
+                      // Otherwise it would be too far to the right.
+                      const dropEndMarginLeft =
+                        isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
 
                       return (
                         <div
