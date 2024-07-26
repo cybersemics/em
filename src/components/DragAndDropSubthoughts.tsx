@@ -46,7 +46,7 @@ const isPathExpanded = (state: State, path: Path) => !!state.expanded[hashPath(p
 
 /** Returns true if a thought can be dropped in this context. Dropping at end of list requires different logic since the default drop moves the dragged thought before the drop target. */
 // Fires much less frequently than DragAndDropThought:canDrop
-export const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
+const canDrop = (props: DroppableSubthoughts, monitor: DropTargetMonitor): boolean => {
   const state = store.getState()
 
   // dragInProgress can be set to false to abort the drag (e.g. by shaking)

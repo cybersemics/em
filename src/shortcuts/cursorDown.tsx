@@ -11,7 +11,7 @@ import headValue from '../util/headValue'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
   <svg
     version='1.1'

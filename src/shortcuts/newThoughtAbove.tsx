@@ -5,7 +5,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { isTouch } from '../browser'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
   <svg
     version='1.1'

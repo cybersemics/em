@@ -16,7 +16,7 @@ import storage from '../util/storage'
 /**
  * Test App.
  */
-// eslint-disable-next-line
+// eslint-disable-next-line react/display-name, react-refresh/only-export-components
 export const App = React.forwardRef(() => (
   <Provider store={store}>
     <ErrorBoundaryContainer>
@@ -61,6 +61,7 @@ const createTestApp = async () => {
 }
 
 /** Clear store, localStorage, local db, and window event handlers. */
+// eslint-disable-next-line react-refresh/only-export-components
 export const cleanupTestApp = async () => {
   await act(async () => {
     // clear localStorage before dispatching clear action, since initialState reads from localStorage
@@ -84,6 +85,7 @@ export const cleanupTestApp = async () => {
 }
 
 /** Refresh the test app. */
+// eslint-disable-next-line react-refresh/only-export-components
 export const refreshTestApp = async () => {
   await act(async () => {
     await store.dispatch(clear())
@@ -91,4 +93,5 @@ export const refreshTestApp = async () => {
   })
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export default createTestApp

@@ -7,10 +7,10 @@ import { GLOBAL_STYLE_ENV } from '../constants'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
+import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
-import findFirstEnvContextWithZoom from '../util/findFirstEnvContextWithZoom'
 import head from '../util/head'
 
 /** Gets a globally defined bullet. */

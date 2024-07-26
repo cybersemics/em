@@ -115,7 +115,6 @@ const ShortcutRow: FC<DraggableShortcutRowProps> = ({
 }
 
 /** A draggable and droppable toolbar button. */
-const DragAndDropShortcutRow = (shortcutRow: FC<DraggableShortcutRowProps>) =>
-  DragSource('toolbar-button', { canDrag, beginDrag, endDrag }, dragCollect)(shortcutRow)
+const DragAndDropShortcutRow = DragSource('toolbar-button', { canDrag, beginDrag, endDrag }, dragCollect)(ShortcutRow)
 
-export default DragAndDropShortcutRow(ShortcutRow)
+export default DragAndDropShortcutRow

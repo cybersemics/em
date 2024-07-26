@@ -7,6 +7,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import useChangeRef from '../hooks/useChangeRef'
 import attributeEquals from '../selectors/attributeEquals'
+import findFirstEnvContextWithZoom from '../selectors/findFirstEnvContextWithZoom'
 import { findAnyChild } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getStyle from '../selectors/getStyle'
@@ -18,7 +19,6 @@ import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
-import { findFirstEnvContextWithZoom } from './VirtualThought'
 
 /** Renders a thought with style. */
 // TODO: These selectors can be optimized by calculating them once for all children, since they are the same among siblings. However siblings are not rendered contiguously (virtualTree), so they need to be calculated higher up.
