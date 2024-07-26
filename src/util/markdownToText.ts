@@ -1,5 +1,99 @@
 import { Token, Tokens, marked } from 'marked'
 
+/**
+ * Collapse sibling-less scoped thoughts to the respective parent.
+ *
+ * NOTE: This function should only be used within the scope of `markdownToText`
+ * in order to ensure that `=scope` is always the first child of thought.
+ * */
+const collapse = (text: string): string => {
+  /**
+   * This function takes in plain-text thoughts and collapses sibling-less scoped
+   * thoughts to the respective parent (if any exists).
+   *
+   * ```
+   * - Parent
+   *   - {" "}
+   *     - =scope
+   *     - Child
+   *     - Child2
+   * - Parent with multiple children that can't be collapsed
+   *   - ${" "}
+   *     - =scope
+   *     - Child
+   *     - Child2
+   *   - Another child
+   * ```
+   *
+   * becomes:
+   *
+   * ```
+   * - Parent
+   *   - =scope
+   *   - Child
+   *   - Child2
+   * - Parent with multiple children that can't be collapsed
+   *   - ${" "}
+   *     - =scope
+   *     - Child
+   *     - Child2
+   *   - Another child
+   * ```
+   */
+
+  // Split lines, will be mutated as we iterate over.
+  const lines = text.split('\n')
+
+  // Iterate over the lines while splicing collapsed thoughts.
+  // This is necessary to account for nested collapsing thoughts.
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const nextLine = lines[i + 1]
+    const previousLine = lines[i - 1]
+
+    /** Find the indentation of a line. */
+    const getIndent = (line: string) => line.search(/\S|$/) / 2
+
+    // Current line's indentation
+    const indent = getIndent(line)
+
+    if (
+      // Empty thought
+      line.trim() === '-' &&
+      // with a nested scope attribute
+      nextLine?.trimEnd() === `${'  '.repeat(indent + 1)}- =scope` &&
+      // as first child of the previous thought
+      previousLine &&
+      getIndent(previousLine) === indent - 1
+    ) {
+      // Accumulate all lines to outdent
+      const outdentedChildren = [nextLine.slice(2)]
+
+      // Iterate over the rest of the lines and outdent children until we either:
+      // - Find a sibling -> can't collapse; break
+      // - Find a next parent -> no sibling, commit all outdented children; break
+      // - Reach the end of the list -> commit all outdented children
+      for (let j = i + 2; j < lines.length; j++) {
+        const lineIndent = getIndent(lines[j])
+
+        if (lineIndent === indent) {
+          // We found a sibling and can't collapse
+          break
+        } else if (lineIndent < indent || j === lines.length - 1) {
+          // We've found the next parent or reached the end, commit all outdented lines
+          lines.splice(i, 1 + outdentedChildren.length, ...outdentedChildren)
+          break
+        } else {
+          // Outdent the child and add it to the accumulator
+          outdentedChildren.push(lines[j].slice(2))
+        }
+      }
+    }
+  }
+
+  return lines.join('\n')
+}
+
 /** Converts markdown to text compatible with `importText`. */
 export const markdownToText = (markdown: string): string => {
   const tokens = marked.lexer(markdown.trim())
@@ -100,7 +194,14 @@ export const markdownToText = (markdown: string): string => {
           result += `${indent(stack.length)}- ---\n`
           break
         case 'list':
-          processTokens(token.items, parentDepth + stack.length)
+          result += `${indent(stack.length)}- ${' '}\n`
+          result += `${indent(stack.length + 1)}- =scope\n`
+
+          if (token.ordered) {
+            result += `${indent(stack.length + 1)}- =numbered\n`
+          }
+
+          processTokens(token.items, parentDepth + stack.length + 1)
           break
         case 'list_item': {
           if (!token.tokens?.length) {
@@ -147,7 +248,8 @@ export const markdownToText = (markdown: string): string => {
           result += `${indent(stack.length + 1)}- =code\n`
           break
         case 'table': {
-          result += `${indent(stack.length)}- Table\n`
+          result += `${indent(stack.length)}- ${' '}\n`
+          result += `${indent(stack.length + 1)}- =scope\n`
           result += `${indent(stack.length + 1)}- =view\n`
           result += `${indent(stack.length + 2)}- Table\n`
 
@@ -185,5 +287,5 @@ export const markdownToText = (markdown: string): string => {
 
   processTokens(tokens)
 
-  return result
+  return collapse(result)
 }
