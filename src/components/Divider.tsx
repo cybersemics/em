@@ -61,7 +61,7 @@ const Divider = ({ path }: { path: Path }) => {
     }
   }
 
-  useEffect(setStyle, [setStyle, thoughtIndex])
+  useEffect(setStyle, [dividerRef, path, thoughtIndex])
   editingValueStore.useEffect(setStyle)
 
   return (
