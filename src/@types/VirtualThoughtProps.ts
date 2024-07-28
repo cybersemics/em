@@ -17,7 +17,6 @@ interface VirtualThoughtProps {
   nextChildId?: ThoughtId
   simplePath: SimplePath
   showContexts?: boolean
-  cliff?: number
 }
 
 export default VirtualThoughtProps

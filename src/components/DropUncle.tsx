@@ -5,12 +5,10 @@ import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
-import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import getThoughtById from '../selectors/getThoughtById'
-import calculateNewMargin from '../util/calculateMargin'
 import head from '../util/head'
 import strip from '../util/strip'
 import DragAndDropThought from './DragAndDropThought'
@@ -34,7 +32,6 @@ const DropUncle = ({
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
-  const { marginLeftDropEnd, marginLeftDrophover } = calculateNewMargin({ isTouch, shiftDropHover: isTouch })
 
   if (!dropTarget) return null
 
@@ -47,8 +44,6 @@ const DropUncle = ({
         backgroundColor: testFlags.simulateDrop ? '#52305f' : undefined, // eggplant
         height: '1.9em',
         opacity: 0.9,
-        // shift drop target towards right on mobile so users finger do not obscure the drop hover
-        marginLeft: marginLeftDropEnd,
       }}
     >
       {testFlags.simulateDrop && (
@@ -67,14 +62,7 @@ const DropUncle = ({
         </span>
       )}
       {(testFlags.simulateDrag || isHovering) && (
-        <span
-          className='drop-hover'
-          style={{
-            backgroundColor: dropHoverColor,
-            // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
-            marginLeft: marginLeftDrophover,
-          }}
-        />
+        <span className='drop-hover' style={{ backgroundColor: dropHoverColor }} />
       )}
     </span>,
   )

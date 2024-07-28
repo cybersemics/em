@@ -743,7 +743,6 @@ const LayoutTree = () => {
                             depth={pathEnd.length}
                             indexDescendant={indexDescendant}
                             leaf={false}
-                            cliff={cliff}
                             path={pathEnd}
                             // not used, just provided since DropEnd props shares the ThoughtProps type
                             simplePath={simplePathEnd}

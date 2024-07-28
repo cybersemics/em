@@ -12,7 +12,6 @@ import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
-import calculateNewMargin from '../util/calculateMargin'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -20,6 +19,9 @@ import isRoot from '../util/isRoot'
 import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import DragOnly from './DragOnly'
+
+/** The amount of space to shift the drop target to the right so the user's finger is not in the way on mobile (em). */
+const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
 
 /** An identify function that returns the value passed to it. */
 const identity = <T,>(x: T): T => x
@@ -34,7 +36,6 @@ const DropEnd = ({
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
   path,
-  cliff,
 }: {
   depth: number
   distance?: number
@@ -42,7 +43,6 @@ const DropEnd = ({
   isHovering?: boolean
   last?: boolean
   path?: Path
-  cliff?: number
 }) => {
   if (!path) {
     throw new Error('path required')
@@ -52,9 +52,6 @@ const DropEnd = ({
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
-
-  const shiftDropHover = isTouch && !isRootPath && Number(cliff) < 0
-  const { marginLeftDropEnd, marginLeftDrophover } = calculateNewMargin({ isTouch, shiftDropHover })
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
@@ -104,11 +101,12 @@ const DropEnd = ({
         display: 'list-item',
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
         height: isRootPath ? '8em' : '1.9em',
-        // On mobile move drop-target towards right so user's finger does not obscure the drop-hover
-        marginLeft: isRootPath ? '-4em' : last ? '-2em' : marginLeftDropEnd,
+        marginLeft: isRootPath ? '-4em' : last ? '-2em' : undefined,
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
+        // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
+        transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
     >
       {testFlags.simulateDrop && (
@@ -131,8 +129,8 @@ const DropEnd = ({
           className='drop-hover'
           style={{
             backgroundColor: dropHoverColor,
-            // move drop-hover to left relative to the shift towards right of drop-target on mobile devices
-            marginLeft: marginLeftDrophover,
+            // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
+            marginLeft: `-${DROPEND_FINGERSHIFT}em`,
           }}
         ></span>
       )}

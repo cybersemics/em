@@ -2118,6 +2118,8 @@ code,
 .drop-end {
   position: absolute;
   height: 0.5em;
+  /* margin to offset bullet width */
+  margin-left: -1em;
   /* Add additional click area to position the drop target more evenly between siblings (vertically).
      Unfortunately, due to the HTML hierarchy stacking order, multiple drop-ends at the same y position (e.g. after /a/b/c below) will always be obscured by their previous siblings descendants.
      This is still better than nothing.
@@ -2149,6 +2151,7 @@ code,
 
 /* Last drop-end in Subthoughts */
 .drop-end .drop-hover {
+  margin-left: calc(0.6em - 13px);
   width: calc(100% - 3em);
 }
 
