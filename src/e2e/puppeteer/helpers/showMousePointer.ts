@@ -20,12 +20,17 @@ async function showMousePointer(page: Page) {
     // the origin should not include the white contrast border, so nudge it up and left
     pointer.style.marginLeft = '-1px'
     pointer.style.marginTop = '-5px'
-
     document.body.appendChild(pointer)
-    document.addEventListener('mousemove', e => {
+
+    /** Updates the pointer position. */
+    const updatePosition = (e: MouseEvent) => {
       pointer.style.left = e.pageX + 'px'
       pointer.style.top = e.pageY + 'px'
-    })
+    }
+
+    // mousemove does not fire on drag, so add a separate drag handler
+    document.addEventListener('drag', updatePosition)
+    document.addEventListener('mousemove', updatePosition)
   })
 }
 

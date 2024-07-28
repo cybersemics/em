@@ -655,7 +655,7 @@ const LayoutTree = () => {
               x,
               y,
             },
-            i,
+            index,
           ) => {
             // List Virtualization
             // Do not render thoughts that are below the viewport.
@@ -721,6 +721,13 @@ const LayoutTree = () => {
                       const simplePathEnd =
                         -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
+
+                      // After table col2, shift the DropEnd left by the width of col1.
+                      // This correctly positions the drop target for dropping after the table view.
+                      // Otherwise it would be too far to the right.
+                      const dropEndMarginLeft =
+                        isTableCol2 && cliffDepth - depth < 0 ? treeThoughtsPositioned[index - 1].width || 0 : 0
+
                       return (
                         <div
                           key={'DropEnd-' + head(pathEnd)}
@@ -728,7 +735,7 @@ const LayoutTree = () => {
                           style={{
                             position: 'relative',
                             top: '-0.2em',
-                            left: `calc(${cliffDepth - depth}em + ${isTouch ? -1 : 1}px)`,
+                            left: `calc(${cliffDepth - depth}em - ${dropEndMarginLeft}px + ${isTouch ? -1 : 1}px)`,
                             transition: 'left 0.15s ease-out',
                           }}
                         >

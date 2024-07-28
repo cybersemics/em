@@ -368,6 +368,75 @@ describe('drag', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('drop hover after table', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop hover after column two thought', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+
+    // Add delay between drag, otherwise the pointer position is off.
+    // This is possibly because c is still animating into place, so it throws off the drag-and-drop coordinates.
+    // Try removing after animatoins are disabled during tests.
+    await sleep(400)
+
+    await dragAndDropThought('x', 'c', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('drop hover after table column one', async () => {
+    await paste(`
+      - x
+      - a
+        - =view
+          - Table
+        - =pin
+          - true
+        - b
+          - c
+        - d
+          - e
+    `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'd', { position: 'after' })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('drop', () => {
@@ -467,7 +536,7 @@ it('url', async () => {
 
   await paste(`
     - https://test.com/single-line
-    - 
+    -
       - https://github.com/cybersemics/em
     - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
