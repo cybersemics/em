@@ -386,7 +386,6 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after', dropUncle: true })
 
-    await sleep(300)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -406,9 +405,14 @@ describe('drag', () => {
     `)
 
     await clickThought('x')
+
+    // Add delay between drag, otherwise the pointer position is off.
+    // This is possibly because c is still animating into place, so it throws off the drag-and-drop coordinates.
+    // Try removing after animatoins are disabled during tests.
+    await sleep(400)
+
     await dragAndDropThought('x', 'c', { position: 'after' })
 
-    await sleep(300)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -430,7 +434,6 @@ describe('drag', () => {
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'after' })
 
-    await sleep(300)
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })

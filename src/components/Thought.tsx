@@ -90,6 +90,9 @@ export interface ThoughtContainerProps {
   updateSize?: () => void
 }
 
+/** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
+const CHILD_IS_HOVERING_ANIMATION = navigator.webdriver ? undefined : 'pulse 0.5s linear infinite alternate'
+
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
   a === b ||
@@ -272,7 +275,7 @@ const ThoughtContainer = ({
       ...(isChildHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: 'pulse 0.5s linear infinite alternate',
+            animation: CHILD_IS_HOVERING_ANIMATION,
             color: colors.highlight,
           }
         : null),
