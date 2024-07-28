@@ -42,7 +42,7 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
 
   const Component = component
   return (
-    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.step)} timeout={400} classNames='slide'>
+    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='slide'>
       <div ref={nodeRef}>
         <Component {...props} />
       </div>
@@ -79,7 +79,7 @@ const Tutorial: FC = () => {
     rootChildren,
     contextViews,
     dispatch,
-    key: Math.floor(tutorialStep),
+    transitionKey: Math.floor(tutorialStep),
   }
 
   const tutorialStepComponent =
@@ -104,6 +104,7 @@ const Tutorial: FC = () => {
   )
 
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
+
   return (
     <div className='tutorial'>
       <div className='tutorial-inner'>
