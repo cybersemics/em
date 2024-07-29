@@ -14,7 +14,6 @@ Dependency notes:
 
 module.exports = {
   reject: [
-    'typedoc',
     'react-dnd',
     'react-dnd-html5-backend',
     'react-dnd-multi-backend',

@@ -7,17 +7,14 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
 import useSelectorEffect from '../hooks/useSelectorEffect'
-import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
-import findDescendant from '../selectors/findDescendant'
-import { findAnyChild, hasChildren } from '../selectors/getChildren'
+import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
-import isAttribute from '../util/isAttribute'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
@@ -41,20 +38,6 @@ const selectShowContexts = (path: SimplePath) => (state: State) => isContextView
 
 /** Selects the cursor. */
 const selectCursor = (state: State) => state.cursor
-
-/** Finds the the first env entry with =focus/Zoom. O(children). */
-export const findFirstEnvContextWithZoom = (
-  state: State,
-  { id, env }: { id: ThoughtId; env?: LazyEnv },
-): ThoughtId | null => {
-  if (!env) return null
-  const child = findAnyChild(
-    state,
-    id,
-    child => isAttribute(child.value) && attributeEquals(state, env[child.value], '=focus', 'Zoom'),
-  )
-  return child ? findDescendant(state, env[child.value], ['=focus', 'Zoom']) : null
-}
 
 /** Renders a thought if it is not hidden by autofocus, otherwise renders a fixed height shim. */
 const VirtualThought = ({

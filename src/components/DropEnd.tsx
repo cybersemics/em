@@ -20,6 +20,9 @@ import strip from '../util/strip'
 import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import DragOnly from './DragOnly'
 
+/** The amount of space to shift the drop target to the right so the user's finger is not in the way on mobile (em). */
+const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
+
 /** An identify function that returns the value passed to it. */
 const identity = <T,>(x: T): T => x
 
@@ -102,6 +105,8 @@ const DropEnd = ({
         // offset marginLeft, minus 1em for bullet
         // otherwise drop-hover will be too far left
         paddingLeft: isRootPath ? '3em' : last ? (isTouch ? '6em' : '1em') : undefined,
+        // use transform to avoid conflicting with margin, which is currently spread out across multiple components and App.css
+        transform: `translateX(${DROPEND_FINGERSHIFT}em)`,
       }}
     >
       {testFlags.simulateDrop && (
@@ -124,6 +129,8 @@ const DropEnd = ({
           className='drop-hover'
           style={{
             backgroundColor: dropHoverColor,
+            // shift the drop-hover back into the proper place visually, even though drop-end has been shifted right for touch
+            marginLeft: `-${DROPEND_FINGERSHIFT}em`,
           }}
         ></span>
       )}

@@ -11,7 +11,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['export-default-identifier', 'jsdoc', 'react', 'prettier'],
+  plugins: ['export-default-identifier', 'jsdoc', 'react', 'react-refresh', 'prettier'],
   settings: {
     react: {
       version: 'detect',
@@ -119,6 +119,8 @@ module.exports = {
         '@typescript-eslint/array-type': 2,
         // jsx
         'jsx-quotes': [2, 'prefer-single'],
+        // react-refresh
+        'react-refresh/only-export-components': 2,
       },
       overrides: [
         {

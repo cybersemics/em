@@ -2,7 +2,7 @@ import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
 import { collapseContextActionCreator as collapseContext } from '../actions/collapseContext'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ size = 20 }: IconType) => (
   <svg
     version='1.1'

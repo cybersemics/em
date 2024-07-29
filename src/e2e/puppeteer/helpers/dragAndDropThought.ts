@@ -54,7 +54,8 @@ const dragAndDropThought = async (
     y: dragStart.y + 1,
   }
   const dropPosition = {
-    x: dragEnd.x + xOffset,
+    // In table view parent and column one are aligned, if we are dropping after column one, we need to move to the right
+    x: dropUncle ? dragEnd.x + xOffset : dragEnd.x + dragEnd.width / 1.25 + xOffset,
     // if we are dropping to the hidden uncle, we need to move to the bottom of the thought to trigger DropUncle instead of normal middle height
     y: dropUncle ? dragEnd.y + dragEnd.height : dragEnd.y + dragEnd.height / 2 + yOffset,
   }

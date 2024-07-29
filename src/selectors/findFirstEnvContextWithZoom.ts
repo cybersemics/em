@@ -4,10 +4,11 @@ import ThoughtId from '../@types/ThoughtId'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
-import isAttribute from './isAttribute'
+import isAttribute from '../util/isAttribute'
 
 /** Finds the the first env entry with =focus/Zoom. O(children). */
-const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env: LazyEnv }): ThoughtId | null => {
+const findFirstEnvContextWithZoom = (state: State, { id, env }: { id: ThoughtId; env?: LazyEnv }): ThoughtId | null => {
+  if (!env) return null
   const child = findAnyChild(
     state,
     id,

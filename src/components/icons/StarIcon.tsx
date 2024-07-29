@@ -2,7 +2,7 @@ import { useSelector } from 'react-redux'
 import IconType from '../../@types/Icon'
 import themeColors from '../../selectors/themeColors'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+// eslint-disable-next-line jsdoc/require-jsdoc, react-refresh/only-export-components
 const Icon = ({ fill, size = 20, style }: IconType) => {
   const colors = useSelector(themeColors)
   return (
