@@ -173,6 +173,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   onTapCancel={onTapCancel}
                   selected={selected === id}
                   shortcutId={id}
+                  setPressingToolbarId={setPressingToolbarId}
                 />
               )
             })}

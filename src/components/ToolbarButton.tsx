@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
+import React, { Dispatch, FC, MutableRefObject, SetStateAction, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -23,6 +23,7 @@ export interface ToolbarButtonProps {
   onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   selected?: boolean
   shortcutId: ShortcutId
+  setPressingToolbarId: Dispatch<SetStateAction<string | null>>
 }
 
 /** A single button in the Toolbar. */
@@ -41,6 +42,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   onTapUp,
   selected,
   shortcutId,
+  setPressingToolbarId,
 }) => {
   const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
@@ -174,6 +176,11 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
+        onMouseLeave={e => {
+          if (!customize) {
+            setPressingToolbarId(null)
+          }
+        }}
         {...fastClick(tapUp, tapDown, onTapCancel ? e => onTapCancel(shortcutId, e) : undefined, touchMove)}
       >
         {
