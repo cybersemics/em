@@ -1838,6 +1838,8 @@ h1 .num-contexts {
 /* Fix a tag position after overflow:hidden applined on span tag. */
 .single-line .thought-annotation .editable-annotation-text + a {
   position: absolute;
+  /* assign top value to avoid tag jumping when position changes to absolute. */
+  top: 3px;
 }
 .single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
   position: absolute;
