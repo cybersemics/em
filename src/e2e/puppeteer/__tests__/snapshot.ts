@@ -532,28 +532,67 @@ it('GestureDiagram', async () => {
   expect(image).toMatchImageSnapshot()
 })
 
-// Tests the following cases:
-// 1. Single line url
-// 2. Placeholder with url child
-// 3. Multiline url (ellipsized)
-// 4. Multiline url (with cursor)
-it('url', async () => {
-  await removeHUD()
+describe('url', async () => {
+  // Tests the following cases:
+  // - Single line url
+  // - Single line url with cursor
+  it('single line', async () => {
+    await removeHUD()
 
-  await paste(`
+    await paste(`
     - https://test.com/single-line
-    -
-      - https://github.com/cybersemics/em
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/long/url/that/should/definitely/be/ellipsized
-    - This thought tests the line height of the above multiline url with cursor
+    - https://test.com/single-line-with-cursor
+    - This thought tests the line height of the above thought
   `)
 
-  await press('ArrowUp')
+    await press('ArrowUp')
 
-  // wait for render animation to complete
-  await sleep(1000)
+    // wait for render animation to complete
+    await sleep(1000)
 
-  const image = await screenshot()
-  expect(image).toMatchImageSnapshot()
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  // Tests the following cases:
+  // - Placeholder with url child
+  // - Multiline url (ellipsized)
+  // - Multiline url (with cursor)
+  it('multiline', async () => {
+    await removeHUD()
+
+    await paste(`
+    - https://test.com/single-line
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
+    - This thought tests the line height of the above thought
+  `)
+
+    await press('ArrowUp')
+
+    // wait for render animation to complete
+    await sleep(1000)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('collapsed thought with url child', async () => {
+    await removeHUD()
+
+    await paste(`
+    - test
+      - https://github.com/cybersemics/em
+    - 
+      - https://github.com/cybersemics/em
+  `)
+
+    await press('Escape')
+
+    // wait for render animation to complete
+    await sleep(1000)
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
