@@ -28,7 +28,6 @@ interface BulletProps {
   isDragging?: boolean
   isEditing?: boolean
   leaf?: boolean
-  onClick?: (event: React.MouseEvent | React.TouchEvent) => void
   publish?: boolean
   showContexts?: boolean
   simplePath: SimplePath
@@ -150,7 +149,6 @@ const Bullet = ({
   isDragging,
   isEditing,
   leaf,
-  onClick,
   path,
   publish,
   simplePath,
@@ -251,10 +249,8 @@ const Bullet = ({
           setCursor({ path: shouldCollapse ? pathParent : path }),
         ])
       })
-      onClick?.(e)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dragHold],
+    [dispatch, dragHold, path, simplePath],
   )
 
   return (
