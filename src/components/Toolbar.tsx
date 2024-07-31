@@ -94,7 +94,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseU
     }
   }, [isDraggingAny, setPressingToolbarId])
 
-  // set is pressed to false when the drag is released outside of the toolbar. 
+  // set is pressed to false when the drag is released outside of the toolbar
   useEffect(() => {
     const handleMouseUp = (event) => {
       if (handleMouseUp) {
@@ -103,13 +103,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseU
     }
 
     // Add mouseup event listener to the document
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleMouseUp)
 
     // Cleanup mouseup event listener on component unmount
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [handleMouseUp]);
+  }, [handleMouseUp])
 
   /**********************************************************************
    * Render
