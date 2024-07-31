@@ -99,9 +99,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseU
      * Update isPressed when the drag is released outside of the toolbar.
      * */
     const handleMouseUp = event => {
-      if (handleMouseUp) {
-        setPressingToolbarId(null)
-      }
+      setPressingToolbarId(null)
     }
 
     // Add mouseup event listener to the document
