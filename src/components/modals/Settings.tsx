@@ -1,15 +1,16 @@
 import { FC, PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
-import { Settings } from '../../constants'
+import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import getUserSetting from '../../selectors/getUserSetting'
 import fastClick from '../../util/fastClick'
 import { ActionButton } from './../ActionButton'
 import Checkbox from './../Checkbox'
 import ModalComponent from './ModalComponent'
 
-/** A boolean setting checkbox, title, and description. */
+/** A boolean setting checkbox, title, and description that modifies a value in EM/Settings. */
 const Setting: FC<
   PropsWithChildren<{
     // Toggles the dependee off whenever this setting is toggled off. Use in combination with dependsOn on the dependee setting.
@@ -43,6 +44,50 @@ const Setting: FC<
   )
 }
 
+/** A font size control. */
+const FontSize = () => {
+  const dispatch = useDispatch()
+  const fontSize = useSelector(state => state.fontSize)
+  const label =
+    fontSize <= MIN_FONT_SIZE
+      ? 'minimum reached'
+      : fontSize >= MAX_FONT_SIZE
+        ? 'maximum reached'
+        : fontSize === DEFAULT_FONT_SIZE
+          ? 'default'
+          : null
+
+  return (
+    <div>
+      Font Size:{' '}
+      <input
+        type='number'
+        min={MIN_FONT_SIZE}
+        max={MAX_FONT_SIZE}
+        value={fontSize}
+        onChange={e => {
+          dispatch(fontSizeActionCreator(+e.target.value))
+        }}
+        style={{
+          fontSize,
+          padding: '0.5em',
+        }}
+      />
+      {fontSize !== DEFAULT_FONT_SIZE && (
+        <a
+          onClick={() => {
+            dispatch(fontSizeActionCreator(DEFAULT_FONT_SIZE))
+          }}
+          style={{ marginLeft: '0.5em' }}
+        >
+          reset
+        </a>
+      )}
+      {label ? <span className='dim'> ({label})</span> : null}
+    </div>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -64,6 +109,10 @@ const ModalSettings = () => {
           </a>{' '}
           &gt;
         </p>
+
+        <div style={{ marginBottom: '2em' }}>
+          <FontSize />
+        </div>
 
         <Setting settingsKey={Settings.experienceMode} title='Training Mode' invert>
           Shows a notification each time a gesture is executed on a touch screen device. This is helpful when you are
