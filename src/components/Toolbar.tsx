@@ -30,7 +30,7 @@ interface ToolbarProps {
 }
 
 /** Toolbar component. */
-const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
+const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseUp }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
@@ -93,6 +93,23 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setPressingToolbarId(null)
     }
   }, [isDraggingAny, setPressingToolbarId])
+
+  // set is pressed to false when the drag is released outside of the toolbar. 
+  useEffect(() => {
+    const handleMouseUp = (event) => {
+      if (handleMouseUp) {
+        setPressingToolbarId(null)
+      }
+    }
+
+    // Add mouseup event listener to the document
+    document.addEventListener('mouseup', handleMouseUp);
+
+    // Cleanup mouseup event listener on component unmount
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+  }, [handleMouseUp]);
 
   /**********************************************************************
    * Render
