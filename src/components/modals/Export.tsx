@@ -295,7 +295,7 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   const numDescendantsFinal = exportContent
     ? selected.type === 'text/plain'
       ? exportContent.split('\n').length - 1
-      : numDescendantsInState ?? 0
+      : (numDescendantsInState ?? 0)
     : null
 
   const exportThoughtsPhraseFinal = useSelector(state => exportPhrase(id, numDescendantsFinal, { value: title }))

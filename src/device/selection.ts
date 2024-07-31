@@ -286,7 +286,7 @@ export const set = (
   /** Returns end offset based on the type of node. */
   const getEndOffset = () => {
     const isTextNode = focusNode.nodeType === Node.TEXT_NODE
-    return isTextNode ? focusNode.textContent?.length ?? 0 : focusNode.childNodes.length
+    return isTextNode ? (focusNode.textContent?.length ?? 0) : focusNode.childNodes.length
   }
 
   const range = document.createRange()
@@ -304,7 +304,7 @@ export const set = (
   // this may still throw an error if the text node does no exist any longer
   if (focusNode !== null) {
     try {
-      range.setStart(focusNode, end ? getEndOffset() : nodeOffset?.offset ?? offset)
+      range.setStart(focusNode, end ? getEndOffset() : (nodeOffset?.offset ?? offset))
     } catch (e) {
       console.warn(e)
     }

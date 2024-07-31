@@ -7,6 +7,7 @@ interface DragThoughtItem {
   path: Path
   simplePath: SimplePath
   zone: DragThoughtZone
+  type: string
 }
 
 export default DragThoughtItem

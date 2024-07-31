@@ -224,7 +224,7 @@ const ThoughtAnnotation = React.memo(
     value: string
   }) => {
     const liveValueIfEditing = editingValueStore.useSelector((editingValue: string | null) =>
-      isEditing ? editingValue ?? value : null,
+      isEditing ? (editingValue ?? value) : null,
     )
 
     /**
@@ -239,7 +239,7 @@ const ThoughtAnnotation = React.memo(
     const textMarkup = useSelector(state => {
       const labelId = findDescendant(state, head(simplePath), '=label')
       const labelChild = anyChild(state, labelId || undefined)
-      return isEditing ? liveValueIfEditing ?? value : labelChild ? labelChild.value : value
+      return isEditing ? (liveValueIfEditing ?? value) : labelChild ? labelChild.value : value
     })
 
     return (

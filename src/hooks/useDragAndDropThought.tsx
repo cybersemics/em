@@ -1,13 +1,5 @@
 import moize from 'moize'
-import { FC } from 'react'
-import {
-  DragSource,
-  DragSourceConnector,
-  DragSourceMonitor,
-  DropTarget,
-  DropTargetConnector,
-  DropTargetMonitor,
-} from 'react-dnd'
+import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
@@ -21,7 +13,8 @@ import { errorActionCreator as error } from '../actions/error'
 import { importFilesActionCreator as importFiles } from '../actions/importFiles'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { isTouch } from '../browser'
-import { AlertType, noop } from '../constants'
+import { ThoughtContainerProps } from '../components/Thought'
+import { AlertType } from '../constants'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
@@ -45,11 +38,6 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
-import { ThoughtContainerProps } from './Thought'
-
-export type DraggableThoughtContainerProps = ThoughtContainerProps &
-  ReturnType<typeof dragCollect> &
-  ReturnType<typeof dropCollect>
 
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
@@ -205,27 +193,38 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 }
 
 /** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: noop,
+const dragCollect = (monitor: DragSourceMonitor) => ({
   isDragging: monitor.isDragging(),
 })
 
 /** Collects props from the DropTarget. */
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
+const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
   // is being hovered over current thought irrespective of whether the given item is droppable
   isBeingHoveredOver: monitor.isOver({ shallow: true }),
   isDeepHovering: monitor.isOver(),
 })
 
-/** A draggable and droppable Thought component. */
-const DragAndDropThought = (thoughtContainer: FC<DraggableThoughtContainerProps>) =>
-  DragSource(
-    'thought',
-    { canDrag, beginDrag, endDrag },
-    dragCollect,
-  )(DropTarget(['thought', NativeTypes.FILE], { canDrop, drop }, dropCollect)(thoughtContainer))
+/** A draggable and droppable Thought hook. */
+const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
+  const propsTypes = props as ThoughtContainerProps
 
-export default DragAndDropThought
+  const [{ isDragging }, drag, dragPreview] = useDrag({
+    item: { path: props.path, simplePath: props.simplePath, zone: DragThoughtZone.Thoughts, type: 'thought' },
+    begin: () => beginDrag(propsTypes),
+    canDrag: () => canDrag(propsTypes),
+    end: () => endDrag(),
+    collect: dragCollect,
+  })
+
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropRef] = useDrop({
+    accept: ['thought', NativeTypes.FILE],
+    canDrop: (item, monitor) => canDrop(propsTypes, monitor),
+    drop: (item, monitor) => drop(propsTypes, monitor),
+    collect: dropCollect,
+  })
+
+  return { isDragging, drag, dragPreview, isHovering, isBeingHoveredOver, isDeepHovering, drop: dropRef }
+}
+
+export default useDragAndDropThought
