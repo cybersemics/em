@@ -19,7 +19,6 @@ const DropUncle = ({
   simplePath,
 }: {
   depth?: number
-
   path: Path
   simplePath: SimplePath
 }) => {
