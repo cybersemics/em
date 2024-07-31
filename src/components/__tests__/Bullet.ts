@@ -143,9 +143,12 @@ describe.skip('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsA[0])
+    const thoughts = screen.getAllByLabelText('tree-node')
+
+    const subthoughtB = thoughts[1]
+    const bulletOfSubthoughtB = within(subthoughtB).getByLabelText('bullet')
+
+    userEvent.click(bulletOfSubthoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
