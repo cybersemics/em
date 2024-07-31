@@ -30,7 +30,7 @@ interface ToolbarProps {
 }
 
 /** Toolbar component. */
-const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseUp }) => {
+const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
@@ -109,7 +109,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseU
     return () => {
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [handleMouseUp])
+  }, [])
 
   /**********************************************************************
    * Render
