@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import Modal from '../@types/Modal'
 import { alertActionCreator as alert } from '../actions/alert'
-import { scaleFontDown, scaleFontUp } from '../actions/scaleSize'
+import fontSizeDown from '../actions/fontSizeDown'
+import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/yjs'
@@ -133,13 +134,10 @@ const Footer = () => {
     <ul aria-label='footer' className='footer list-none'>
       <li>
         <div style={{ float: 'left', lineHeight: 1 }}>
-          <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(scaleFontUp()))}>
+          <a className='increase-font expand-click-area-left no-select' {...fastClick(() => dispatch(fontSizeUp()))}>
             A
           </a>
-          <a
-            className='decrease-font expand-click-area-right no-select'
-            {...fastClick(() => dispatch(scaleFontDown()))}
-          >
+          <a className='decrease-font expand-click-area-right no-select' {...fastClick(() => dispatch(fontSizeDown()))}>
             A
           </a>
         </div>
