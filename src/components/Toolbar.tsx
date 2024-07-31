@@ -96,7 +96,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected, handleMouseU
 
   // set is pressed to false when the drag is released outside of the toolbar
   useEffect(() => {
-    const handleMouseUp = (event) => {
+    const handleMouseUp = event => {
       if (handleMouseUp) {
         setPressingToolbarId(null)
       }
