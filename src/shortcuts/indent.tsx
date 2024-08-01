@@ -14,7 +14,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
     height={size}
     fill={fill}
     style={style}
-    viewBox='0 0 64 64'
+    viewBox='0 -1 64 64'
     enableBackground='new 0 0 64 64'
   >
     <path d='m10 12h44c1.104 0 2-.896 2-2s-.896-2-2-2h-44c-1.104 0-2 .896-2 2s.896 2 2 2z' />

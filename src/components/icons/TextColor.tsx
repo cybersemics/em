@@ -10,7 +10,7 @@ const Icon = ({ size = 20, style }: IconType) => {
           border: `solid 1px ${style?.fill || style?.color}`,
           borderRadius: 5,
           display: 'inline-block',
-          marginTop: size / 10 - 1,
+          marginTop: size / 10 - 0.5,
           marginLeft: 2,
           marginRight: 2,
           color: style?.fill,
@@ -20,7 +20,7 @@ const Icon = ({ size = 20, style }: IconType) => {
           height: size * 0.8,
         }}
       >
-        <span style={{ fontSize: size * 0.65, verticalAlign: 'top', position: 'relative', top: 1 }}>A</span>
+        <span style={{ fontSize: size * 0.65, verticalAlign: 'top', position: 'relative', top: 0.5 }}>A</span>
       </span>
     </span>
   )

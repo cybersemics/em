@@ -6,7 +6,7 @@ import themeColors from '../../selectors/themeColors'
 const DeviceIcon = ({ fill, size = 20, style }: IconType) => {
   const colors = useSelector(themeColors)
   return (
-    <svg className='icon' width={size} height={size} fill={fill || colors.fg} style={style} viewBox='150 70 400 420'>
+    <svg className='icon' width={size} height={size} fill={fill || colors.fg} style={style} viewBox='150 50 400 450'>
       <g>
         <path d='m264.32 446.88c0 8.9688-7.2695 16.242-16.242 16.242-8.9688 0-16.238-7.2734-16.238-16.242s7.2695-16.238 16.238-16.238c8.9727 0 16.242 7.2695 16.242 16.238' />
         <path d='m421.12 409.92c0 8.9688-7.2734 16.238-16.242 16.238s-16.238-7.2695-16.238-16.238c0-8.9727 7.2695-16.242 16.238-16.242s16.242 7.2695 16.242 16.242' />

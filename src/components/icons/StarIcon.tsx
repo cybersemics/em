@@ -18,7 +18,7 @@ const Icon = ({ fill, size = 20, style }: IconType) => {
         ...style,
         fill: style?.fill === 'gray' ? 'none' : style?.fill,
       }}
-      viewBox='0 0 20 21'
+      viewBox='0 -1 20 21'
       enableBackground='new 0 0 19.481 19.481'
     >
       <g>

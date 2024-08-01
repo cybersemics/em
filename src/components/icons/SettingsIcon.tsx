@@ -11,7 +11,7 @@ const SettingsIcon: FC<IconType> = ({ fill, size = 20, style }) => {
       className='icon'
       x='0px'
       y='0px'
-      viewBox='100 0 600 600'
+      viewBox='100 -20 600 600'
       width={size}
       height={size}
       fill={fill || colors.fg}

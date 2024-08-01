@@ -16,7 +16,7 @@ const Icon = ({ fill = 'black', size = 20, style }: IconType) => (
     height={size}
     fill={fill}
     style={style}
-    viewBox='0 0 19.481 19.481'
+    viewBox='0 -1 19.481 19.481'
     enableBackground='new 0 0 19.481 19.481'
   >
     <g>
