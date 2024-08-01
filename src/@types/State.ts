@@ -1,5 +1,6 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Alert from './Alert'
+import Commands from './Commands'
 import Context from './Context'
 import DragShortcutZone from './DragShortcutZone'
 import Index from './IndexType'
@@ -22,6 +23,7 @@ interface State {
   authenticated: boolean
   autologin: boolean
   // key: hashPath(path)
+  commands: Commands
   contextViews: Index<boolean>
   cursor: Path | null
   // set to true when clearThought is activated

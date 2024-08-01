@@ -8,7 +8,6 @@ import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
-import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
 import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
@@ -57,11 +56,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
 
-  const isCommandActive = commandStateStore.useSelector(state => state[shortcutId])
   const isButtonActive = useSelector(state => {
-    if (isCommandActive) {
-      return true
-    }
     if (customize) {
       return selected
     }

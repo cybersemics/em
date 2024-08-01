@@ -1,8 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import Icon from '../components/icons/BoldTextIcon'
-import getThoughtById from '../selectors/getThoughtById'
-import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggles formatting of the current browser selection as bold. If there is no selection, formats the entire thought. */
@@ -17,8 +15,9 @@ const bold: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('bold'))
   },
-  isActive: () => {
-    return false
+  isActive: getState => {
+    const state = getState()
+    return state.commands.bold
   },
 }
 

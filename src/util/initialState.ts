@@ -93,6 +93,12 @@ const initialState = (created: Timestamp = timestamp()) => {
   const state: State = {
     authenticated: false,
     autologin: storage.getItem('autologin') === 'true',
+    commands: {
+      bold: false,
+      italic: false,
+      strikethrough: false,
+      underline: false,
+    },
     contextViews: {},
     cursor: null,
     cursorBeforeSearch: null,

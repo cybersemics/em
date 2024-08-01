@@ -1,8 +1,8 @@
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
-import { updateCommandState } from '../stores/commandStateStore'
 import suppressFocusStore from '../stores/suppressFocus'
+import { updateCommandsActionCreator as updateCommands } from './updateCommands'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
@@ -30,7 +30,7 @@ export const formatSelectionActionCreator =
       selection.restore(savedSelection)
     } else {
       document.execCommand(command)
-      updateCommandState()
+      dispatch(updateCommands())
     }
 
     suppressFocusStore.update(false)

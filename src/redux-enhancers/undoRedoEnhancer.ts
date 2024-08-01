@@ -132,6 +132,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   tutorialStep: false,
   undoArchive: false,
   unknownAction: false,
+  updateCommands: false,
   updateSplitPosition: false,
   updateThoughts: false,
 }

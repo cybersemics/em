@@ -9,6 +9,7 @@ import { commandPaletteActionCreator as commandPalette } from '../actions/comman
 import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import { updateCommandsActionCreator as updateCommands } from '../actions/updateCommands'
 import { isSafari, isTouch } from '../browser'
 import { AlertText, AlertType, THROTTLE_DISTRACTION_FREE_TYPING } from '../constants'
 import * as selection from '../device/selection'
@@ -16,7 +17,6 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
-import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
@@ -170,8 +170,8 @@ const initEvents = (store: Store<State, any>) => {
     // save selection offset to storage, throttled
     saveSelectionOffset()
 
-    // update command state store
-    updateCommandState()
+    // update commands state
+    store.dispatch(updateCommands())
   }
 
   /** MouseMove event listener. */

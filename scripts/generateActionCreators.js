@@ -72,6 +72,7 @@ const actionCreators = [
   'tutorialStep',
   'undoArchive',
   'unknownAction',
+  'updateCommands',
   'updateThoughts',
 ]
 
