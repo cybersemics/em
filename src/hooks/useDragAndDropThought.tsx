@@ -1,6 +1,7 @@
 import moize from 'moize'
 import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
@@ -69,7 +70,7 @@ const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Thoughts, type: 'thought' }
+  return { path, simplePath, zone: DragThoughtZone.Thoughts, type: DragAndDropType.Thought }
 }
 
 /** Handles drag end. */
@@ -215,7 +216,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
       path: props.path as Path,
       simplePath: props.simplePath as SimplePath,
       zone: DragThoughtZone.Thoughts,
-      type: 'thought',
+      type: DragAndDropType.Thought,
     },
     begin: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
@@ -224,7 +225,7 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   })
 
   const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
-    accept: ['thought', NativeTypes.FILE],
+    accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
