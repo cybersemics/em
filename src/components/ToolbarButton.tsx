@@ -126,11 +126,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   /** Handles the tapCancel. */
   const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
 
-  /** Handles the state of icon transitions, forcing completion of icon animation. **/
+  /**
+   *Handles the state of icon transitions, forcing completion of icon animation.
+   * **/
   useEffect(() => {
     /**
-     * Function to handle the transition end event.
-     *  **/
+     *Function to handle the transition end event.
+     **/
     const handleTransitionEnd = () => {
       setIsTransitioning(false)
     }
