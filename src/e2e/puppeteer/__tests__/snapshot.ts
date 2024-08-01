@@ -218,9 +218,78 @@ const testSuite = () => {
   })
 }
 
+/** Runs the url tests. */
+const urlTestSuite = () => {
+  describe('url', async () => {
+    // Tests the following cases:
+    // - Single line url
+    // - Single line url with cursor
+    it('single line', async () => {
+      await removeHUD()
+
+      await paste(`
+    - https://test.com/single-line
+    - https://test.com/single-line-with-cursor
+    - This thought tests the line height of the above thought
+  `)
+
+      await press('ArrowUp')
+
+      // wait for render animation to complete
+      await sleep(1000)
+
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
+    // Tests the following cases:
+    // - Placeholder with url child
+    // - Multiline url (ellipsized)
+    // - Multiline url (with cursor)
+    it('multiline', async () => {
+      await removeHUD()
+
+      await paste(`
+    - https://test.com/single-line
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
+    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
+    - This thought tests the line height of the above thought
+  `)
+
+      await press('ArrowUp')
+
+      // wait for render animation to complete
+      await sleep(1000)
+
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+
+    it('collapsed thought with url child', async () => {
+      await removeHUD()
+
+      await paste(`
+    - test
+      - https://github.com/cybersemics/em
+    - 
+      - https://github.com/cybersemics/em
+  `)
+
+      await press('Escape')
+
+      // wait for render animation to complete
+      await sleep(1000)
+
+      const image = await screenshot()
+      expect(image).toMatchImageSnapshot()
+    })
+  })
+}
+
 describe('Font Size: 18 (default)', () => {
   // run the snapshot tests at font size 18 (default)
   testSuite()
+  urlTestSuite()
 })
 
 describe('Font Size: 14', () => {
@@ -245,6 +314,9 @@ describe('Font Size: 14', () => {
 
   // run the snapshot tests at font size 14
   testSuite()
+
+  // url tests must be run at a smaller font size, as there are some line-wrapping regressions that do not occur at the default font size
+  urlTestSuite()
 })
 
 describe('Font Size: 13', () => {
@@ -530,69 +602,4 @@ it('GestureDiagram', async () => {
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
-})
-
-describe('url', async () => {
-  // Tests the following cases:
-  // - Single line url
-  // - Single line url with cursor
-  it('single line', async () => {
-    await removeHUD()
-
-    await paste(`
-    - https://test.com/single-line
-    - https://test.com/single-line-with-cursor
-    - This thought tests the line height of the above thought
-  `)
-
-    await press('ArrowUp')
-
-    // wait for render animation to complete
-    await sleep(1000)
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
-
-  // Tests the following cases:
-  // - Placeholder with url child
-  // - Multiline url (ellipsized)
-  // - Multiline url (with cursor)
-  it('multiline', async () => {
-    await removeHUD()
-
-    await paste(`
-    - https://test.com/single-line
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
-    - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
-    - This thought tests the line height of the above thought
-  `)
-
-    await press('ArrowUp')
-
-    // wait for render animation to complete
-    await sleep(1000)
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
-
-  it('collapsed thought with url child', async () => {
-    await removeHUD()
-
-    await paste(`
-    - test
-      - https://github.com/cybersemics/em
-    - 
-      - https://github.com/cybersemics/em
-  `)
-
-    await press('Escape')
-
-    // wait for render animation to complete
-    await sleep(1000)
-
-    const image = await screenshot()
-    expect(image).toMatchImageSnapshot()
-  })
 })
