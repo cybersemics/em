@@ -39,6 +39,10 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
 
+export interface DragThoughtItemType extends DragThoughtItem {
+  type: string
+}
+
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
   const state = store.getState()
@@ -58,7 +62,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
+const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItemType => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -209,7 +213,7 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   const propsTypes = props as ThoughtContainerProps
 
-  const [{ isDragging }, drag, dragPreview] = useDrag({
+  const [{ isDragging }, dragSource, dragPreview] = useDrag({
     item: { path: props.path, simplePath: props.simplePath, zone: DragThoughtZone.Thoughts, type: 'thought' },
     begin: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
@@ -217,14 +221,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     collect: dragCollect,
   })
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropRef] = useDrop({
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
     accept: ['thought', NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
   })
 
-  return { isDragging, drag, dragPreview, isHovering, isBeingHoveredOver, isDeepHovering, drop: dropRef }
+  return { isDragging, dragSource, dragPreview, isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropThought

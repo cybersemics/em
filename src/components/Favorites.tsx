@@ -49,7 +49,7 @@ const beginDrag = ({ path, simplePath, zone }: DragThoughtItem): DragThoughtItem
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Favorites, type: 'thought' }
+  return { path, simplePath, zone: DragThoughtZone.Favorites }
 }
 
 /** Handles drag end. */
