@@ -16,6 +16,7 @@ import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import { inputHandlers } from '../shortcuts'
 import store from '../stores/app'
+import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import { updateScrollTop } from '../stores/scrollTop'
 import storageModel from '../stores/storageModel'
@@ -152,8 +153,8 @@ const initEvents = (store: Store<State, any>) => {
     store.dispatch(setCursor({ path: cursor, replaceContextViews: contextViews }))
   }
 
-  /** Save selection offset to storage. */
-  const selectionChange = _.throttle(
+  /** Save selection offset to storage, throttled. */
+  const saveSelectionOffset = _.throttle(
     () => {
       storageModel.set('cursor', value => ({
         path: value?.path || store.getState().cursor,
@@ -163,6 +164,15 @@ const initEvents = (store: Store<State, any>) => {
     SELECTION_CHANGE_THROTTLE,
     { leading: false },
   )
+
+  /** Selection change event listener; save selection offset to storage, update command state store. */
+  const onSelectionChange = () => {
+    // save selection offset to storage, throttled
+    saveSelectionOffset()
+
+    // update command state store
+    updateCommandState()
+  }
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(() => distractionFreeTypingStore.update(false), THROTTLE_DISTRACTION_FREE_TYPING, {
@@ -312,7 +322,7 @@ const initEvents = (store: Store<State, any>) => {
   // prevent browser from restoring the scroll position so that we can do it manually
   window.history.scrollRestoration = 'manual'
 
-  document.addEventListener('selectionchange', selectionChange)
+  document.addEventListener('selectionchange', onSelectionChange)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -335,7 +345,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Remove window event handlers. */
   const cleanup = ({ keyDown, keyUp } = window.__inputHandlers || {}) => {
-    document.removeEventListener('selectionchange', selectionChange)
+    document.removeEventListener('selectionchange', onSelectionChange)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
