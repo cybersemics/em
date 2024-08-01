@@ -567,9 +567,16 @@ This prevents table cols being rendered as multiline content, which causes inaac
 
 .editable-annotation {
   display: inline-block;
-  width: 100%;
+  /* Use max width to make sure the .editable-annotation takes up exact same space as parent  */
+  max-width: 100%;
   padding: 0 0.333em;
   box-sizing: border-box;
+
+  /*
+    Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
+    To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
+   */
+  margin: -0.5px 0 0 calc(1em - 18px);
 }
 
 .thought-annotation a {
@@ -622,10 +629,13 @@ This prevents table cols being rendered as multiline content, which causes inaac
   --min-thought-height: 1.9em;
 }
 
+.child .editable {
+    /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
+    margin: -0.5px 0 0 calc(1em - 18px);
+}
+
 .child .editable,
 .editable-annotation-text {
-  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-  margin: -0.5px 0 0 calc(1em - 18px);
   /* create stacking order to position above thought-annotation so that function background color does not mask thought */
   position: relative;
   /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
@@ -633,6 +643,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   /* Use minimum height to the cover the gap left by clip-path */
   min-height: var(--min-thought-height);
 }
+
 
 /** Assign annotation height on single line truncated url */
 .single-line .thought {
@@ -1835,15 +1846,9 @@ h1 .num-contexts {
   max-width: calc(100% - 2em);
 }
 
-/* Fix a tag position after overflow:hidden applined on span tag. */
-.single-line .thought-annotation .editable-annotation-text + a {
-  position: absolute;
-  /* assign top value to avoid tag jumping when position changes to absolute. */
-  top: 3px;
-}
-.single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
-  position: absolute;
-  right: -22px;
+.single-line .thought-annotation .editable-annotation {
+  /* make url icon on the same line when singline is applied */
+  white-space: nowrap;
 }
 
 .multiline.multiline.multiline.multiline.editable-annotation {
