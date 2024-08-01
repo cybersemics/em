@@ -76,7 +76,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
-    async (e: React.MouseEvent | React.TouchEvent) => {
+    (e: React.MouseEvent | React.TouchEvent) => {
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
