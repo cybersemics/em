@@ -53,8 +53,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const [isTransitioning, setIsTransitioning] = useState(false)
-
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
   const isButtonActive = useSelector(state => (customize ? selected : !isActive || isActive(() => state)))
@@ -106,7 +104,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     (e: React.MouseEvent | React.TouchEvent) => {
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
-      setIsTransitioning(true)
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
@@ -125,33 +122,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the tapCancel. */
   const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
-
-  /**
-   *Handles the state of icon transitions, forcing completion of icon animation.
-   **/
-  useEffect(() => {
-    /**
-     *Function to handle the transition end event.
-     **/
-    const handleTransitionEnd = () => {
-      setIsTransitioning(false)
-    }
-
-    // Select all elements with the class 'toolbar-icon'
-    const icons = document.querySelectorAll('.toolbar-icon')
-
-    // Add the transitionend event listener to each icon
-    icons.forEach(icon => {
-      icon.addEventListener('transitionend', handleTransitionEnd)
-    })
-
-    // Clean up the event listeners on component unmount
-    return () => {
-      icons.forEach(icon => {
-        icon.removeEventListener('transitionend', handleTransitionEnd)
-      })
-    }
-  }, [])
 
   const style = useMemo(
     () => ({
@@ -194,7 +164,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           // marginBottom: isPressing ? -10 : 0,
           // top: isButtonExecutable && isPressing ? 10 : 0,
           transform: `translateY(${
-            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging && isTransitioning ? 0.25 : 0
+            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
