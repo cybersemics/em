@@ -1,4 +1,4 @@
-import { findAllByLabelText, screen } from '@testing-library/dom'
+import { findAllByLabelText, screen, within } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
@@ -168,9 +168,14 @@ describe.skip('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const subthoughts = await findSubthoughts('x')
-    const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsX[0])
+    // Select visable thoughts
+    const thoughtContainers = screen.queryAllByTestId(/^thought/)
+
+    const thoughtA = thoughtContainers[0]
+
+    const bulletofThoughtA = within(thoughtA).getByLabelText('bullet')
+
+    userEvent.click(bulletofThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
