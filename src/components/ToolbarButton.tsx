@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
