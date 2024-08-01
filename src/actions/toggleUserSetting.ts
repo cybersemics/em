@@ -16,7 +16,7 @@ const toggleUserSetting = (state: State, { key, value }: { key: Settings; value?
     : state
 }
 
-/** Action-creator for toggleThought. */
+/** An action-creator that toggles a user setting on/off. */
 export const toggleUserSettingActionCreator =
   (payload: Parameters<typeof toggleUserSetting>[1]): Thunk =>
   dispatch =>
