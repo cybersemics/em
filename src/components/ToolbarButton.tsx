@@ -54,11 +54,19 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const commandState = commandStateStore.useSelector(state => state[shortcutId])
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isButtonActive =
-    useSelector(state => (customize ? selected : !isActive || isActive(() => state))) || (!customize && commandState)
+
+  const isCommandActive = commandStateStore.useSelector(state => state[shortcutId])
+  const isButtonActive = useSelector(state => {
+    if (isCommandActive) {
+      return true
+    }
+    if (customize) {
+      return selected
+    }
+    return !isActive || isActive(() => state)
+  })
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
