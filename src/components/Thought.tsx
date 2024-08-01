@@ -46,7 +46,6 @@ import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import { DraggableThoughtContainerProps } from './DragAndDropThought'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
@@ -113,16 +112,9 @@ const ThoughtContainer = ({
   cursor,
   debugIndex,
   depth = 0,
-  // dragPreview,
-  // dragSource,
-  // dropTarget,
   env,
   hideBullet: hideBulletProp,
-  // isBeingHoveredOver,
-  // isDeepHovering,
-  // isDragging,
   isHeader,
-  // isHovering,
   isMultiColumnTable,
   isContextPending,
   isVisible,
@@ -135,7 +127,7 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
-}: DraggableThoughtContainerProps) => {
+}: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const children = useSelector(
@@ -176,7 +168,7 @@ const ThoughtContainer = ({
         equalPath(cursorParent, path)
   })
 
-  const { isDragging, drag, isHovering, isBeingHoveredOver, drop } = useDragAndDropThought({
+  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget } = useDragAndDropThought({
     path,
     simplePath,
     isVisible,
@@ -360,7 +352,7 @@ const ThoughtContainer = ({
   return (
     <div
       {...dragHoldResult.props}
-      ref={node => drag(drop(node))}
+      ref={node => dragSource(dropTarget(node))}
       aria-label='child'
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
@@ -498,8 +490,6 @@ const ThoughtContainer = ({
 }
 
 ThoughtContainer.displayName = 'ThoughtContainer'
-
-// const ThoughtComponent = DragAndDropThought(ThoughtContainer)
 const ThoughtComponentMemo = React.memo(ThoughtContainer)
 ThoughtComponentMemo.displayName = 'ThoughtComponent'
 
