@@ -13,15 +13,7 @@ import head from '../util/head'
 import strip from '../util/strip'
 
 /** A drop target for after the hidden parent at a cliff (before the next hidden uncle). This is needed because the Thought will be hidden/shimmed so DragAndDropThought will not be rendered. DropEnd does not work since it drops at the end of a context, whereas this needs to drop before the next hidden uncle. */
-const DropUncle = ({
-  depth,
-  path,
-  simplePath,
-}: {
-  depth?: number
-  path: Path
-  simplePath: SimplePath
-}) => {
+const DropUncle = ({ depth, path, simplePath }: { depth?: number; path: Path; simplePath: SimplePath }) => {
   const dropHoverColor = useDropHoverColor(depth || 0)
   const value = useSelector(state =>
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
