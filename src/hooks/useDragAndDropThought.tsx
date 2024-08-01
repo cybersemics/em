@@ -5,6 +5,7 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtOrFiles from '../@types/DragThoughtOrFiles'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
@@ -39,10 +40,6 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
 
-export interface DragThoughtItemType extends DragThoughtItem {
-  type: string
-}
-
 /** Returns true if the thought can be dragged. */
 const canDrag = (props: ThoughtContainerProps) => {
   const state = store.getState()
@@ -62,7 +59,7 @@ const canDrag = (props: ThoughtContainerProps) => {
 }
 
 /** Handles drag start. */
-const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItemType => {
+const beginDrag = ({ path, simplePath }: ThoughtContainerProps): DragThoughtItem => {
   const offset = selection.offset()
   store.dispatch(
     dragInProgress({
@@ -214,7 +211,12 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   const propsTypes = props as ThoughtContainerProps
 
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
-    item: { path: props.path, simplePath: props.simplePath, zone: DragThoughtZone.Thoughts, type: 'thought' },
+    item: {
+      path: props.path as Path,
+      simplePath: props.simplePath as SimplePath,
+      zone: DragThoughtZone.Thoughts,
+      type: 'thought',
+    },
     begin: () => beginDrag(propsTypes),
     canDrag: () => canDrag(propsTypes),
     end: () => endDrag(),
