@@ -128,7 +128,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the state of icon transitions, forcing completion of icon animation. **/
   useEffect(() => {
-    /** Function to handle the transition end event. **/
+    /**
+     * Function to handle the transition end event.
+     *  **/
     const handleTransitionEnd = () => {
       setIsTransitioning(false)
     }
