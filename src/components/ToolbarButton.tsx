@@ -57,15 +57,18 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
 
-  const isCommandActive = commandStateStore.useSelector(state => state[shortcutId])
+  const commandState = commandStateStore.useSelector(state => state)
   const isButtonActive = useSelector(state => {
-    if (isCommandActive) {
-      return true
-    }
     if (customize) {
       return selected
     }
-    return !isActive || isActive(() => state)
+    return (
+      !isActive ||
+      isActive(
+        () => state,
+        () => commandState,
+      )
+    )
   })
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
