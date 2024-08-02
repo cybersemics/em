@@ -49,12 +49,10 @@ p3
     expect(markdownToText(markdown)).toBe(`
 - p1
 - p2
-- ${' '}
+- ::
   - =scope
   - a
-    - =scope
     - b
-      - =scope
       - c
 - p3
 `)
@@ -144,11 +142,9 @@ g
 - List Item 3
 `
     expect(markdownToText(markdown)).toBe(`
-- ${' '}
-  - =scope
-  - List Item 1
-  - List Item 2
-  - List Item 3
+- List Item 1
+- List Item 2
+- List Item 3
 `)
   })
 
@@ -180,24 +176,16 @@ __bold__
 2. Second ordered item
 `
     expect(markdownToText(markdown)).toBe(`
-- ${' '}
+- ::
   - =scope
   - =numbered
   - First ordered item
   - Second ordered item
-    - =scope
     - Unordered sub-list that collapses
-- ${' '}
-  - =scope
-  - Unordered item
-- ${' '}
-  - =scope
-  - Another unordered item
-- ${' '}
-  - =scope
-  - Yet another unordered item
+- Unordered item
+- Another unordered item
+- Yet another unordered item
 - The next list will collapse to this heading
-  - =scope
   - =numbered
   - First ordered item
   - Second ordered item
@@ -276,7 +264,7 @@ alert(s);
 | apple    | orange   |
 `
     expect(markdownToText(markdown)).toBe(`
-- ${' '}
+- ::
   - =scope
   - =view
     - Table
@@ -287,7 +275,6 @@ alert(s);
   - apple
     - orange
 - The next table will collapse to this heading
-  - =scope
   - =view
     - Table
   - Left
@@ -316,7 +303,7 @@ alert(s);
 | Tangerine| Orange | Citrus     |
 `
     expect(markdownToText(markdown)).toBe(`
-- ${' '}
+- ::
   - =scope
   - =view
     - Table
@@ -336,7 +323,6 @@ alert(s);
     - Type
       - Citrus
 - The next table will collapse to this heading
-  - =scope
   - =view
     - Table
   - Apple
@@ -420,17 +406,15 @@ ___
     expect(markdownToText(markdown)).toBe(`
 - Main Topic
   - Subtopic 1
-    - =scope
     - List item 1
     - List item 2
-      - =scope
       - =numbered
       - Nested ordered item
       - Another nested item
         - Code block inside list
           - =code
   - Subtopic 2
-    - ${' '}
+    - ::
       - =scope
       - =view
         - Table
@@ -438,20 +422,15 @@ ___
         - Cell 2
       - Cell 3
         - Cell 4
-    - ${' '}
-      - =scope
-      - List item 3
-        - =scope
-        - Nested list item 1
-          - Heading inside list
-            - nested
-          - Heading inside list
-            - nested
-        - Nested list item 2
+    - List item 3
+      - Nested list item 1
+        - Heading inside list
+          - nested
+        - Heading inside list
+          - nested
+      - Nested list item 2
     - ---
-    - ${' '}
-      - =scope
-      - List item 4
+    - List item 4
 `)
   })
 })

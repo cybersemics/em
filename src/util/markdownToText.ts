@@ -1,99 +1,5 @@
 import { Token, Tokens, marked } from 'marked'
 
-/**
- * Collapse sibling-less scoped thoughts to the respective parent.
- *
- * NOTE: This function should only be used within the scope of `markdownToText`
- * in order to ensure that `=scope` is always the first child of thought.
- * */
-const collapse = (text: string): string => {
-  /**
-   * This function takes in plain-text thoughts and collapses sibling-less scoped
-   * thoughts to the respective parent (if any exists).
-   *
-   * ```
-   * - Parent
-   *   - {" "}
-   *     - =scope
-   *     - Child
-   *     - Child2
-   * - Parent with multiple children that can't be collapsed
-   *   - ${" "}
-   *     - =scope
-   *     - Child
-   *     - Child2
-   *   - Another child
-   * ```
-   *
-   * becomes:
-   *
-   * ```
-   * - Parent
-   *   - =scope
-   *   - Child
-   *   - Child2
-   * - Parent with multiple children that can't be collapsed
-   *   - ${" "}
-   *     - =scope
-   *     - Child
-   *     - Child2
-   *   - Another child
-   * ```
-   */
-
-  // Split lines, will be mutated as we iterate over.
-  const lines = text.split('\n')
-
-  // Iterate over the lines while splicing collapsed thoughts.
-  // This is necessary to account for nested collapsing thoughts.
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    const nextLine = lines[i + 1]
-    const previousLine = lines[i - 1]
-
-    /** Find the indentation of a line. */
-    const getIndent = (line: string) => line.search(/\S|$/) / 2
-
-    // Current line's indentation
-    const indent = getIndent(line)
-
-    if (
-      // Empty thought
-      line.trim() === '-' &&
-      // with a nested scope attribute
-      nextLine?.trimEnd() === `${'  '.repeat(indent + 1)}- =scope` &&
-      // as first child of the previous thought
-      previousLine &&
-      getIndent(previousLine) === indent - 1
-    ) {
-      // Accumulate all lines to outdent
-      const outdentedChildren = [nextLine.slice(2)]
-
-      // Iterate over the rest of the lines and outdent children until we either:
-      // - Find a sibling -> can't collapse; break
-      // - Find a next parent -> no sibling, commit all outdented children; break
-      // - Reach the end of the list -> commit all outdented children
-      for (let j = i + 2; j < lines.length; j++) {
-        const lineIndent = getIndent(lines[j])
-
-        if (lineIndent === indent) {
-          // We found a sibling and can't collapse
-          break
-        } else if (lineIndent < indent || j === lines.length - 1) {
-          // We've found the next parent or reached the end, commit all outdented lines
-          lines.splice(i, 1 + outdentedChildren.length, ...outdentedChildren)
-          break
-        } else {
-          // Outdent the child and add it to the accumulator
-          outdentedChildren.push(lines[j].slice(2))
-        }
-      }
-    }
-  }
-
-  return lines.join('\n')
-}
-
 /** Converts markdown to text compatible with `importText`. */
 export const markdownToText = (markdown: string): string => {
   const tokens = marked.lexer(markdown.trim())
@@ -150,7 +56,38 @@ export const markdownToText = (markdown: string): string => {
     /** Helper function to get the indentation for a given depth. */
     const indent = (depth: number) => '  '.repeat(depth + parentDepth)
 
-    for (const token of tokens) {
+    for (const [index, token] of tokens.entries()) {
+      /** Helper function to check if ::/=scope is needed. */
+      const shouldScope = () => {
+        const prevHeadingIndex = tokens
+          .slice(0, index)
+          .reverse()
+          .findIndex(t => t.type === 'heading')
+        const prevHeadingActualIndex = prevHeadingIndex === -1 ? -1 : index - 1 - prevHeadingIndex
+
+        const nextHeadingIndex = tokens.slice(index + 1).findIndex(t => t.type === 'heading')
+        const nextHeadingActualIndex = nextHeadingIndex === -1 ? -1 : index + 1 + nextHeadingIndex
+
+        // Siblings are only considered at the same stack depth
+        const siblings = tokens.slice(
+          prevHeadingActualIndex + 1,
+          nextHeadingActualIndex === -1 ? undefined : nextHeadingActualIndex,
+        )
+
+        if (token.type === 'list') {
+          // If the list is ordered, we always need a scope if there are any other siblings or if we're at the top level.
+          if (token.ordered) return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
+
+          // If the list is unordered, check if there are paragraph siblings
+          return siblings.some(t => t.type === 'paragraph')
+        } else if (token.type === 'table') {
+          // If the table is the only sibling or at the top level, we don't need a scope. Otherwise, we do.
+          return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
+        }
+
+        return false
+      }
+
       switch (token.type) {
         case 'space':
           // Ignore
@@ -193,16 +130,22 @@ export const markdownToText = (markdown: string): string => {
         case 'hr':
           result += `${indent(stack.length)}- ---\n`
           break
-        case 'list':
-          result += `${indent(stack.length)}- ${' '}\n`
-          result += `${indent(stack.length + 1)}- =scope\n`
+        case 'list': {
+          const scope = shouldScope()
+          const currentIndent = scope ? stack.length + 1 : stack.length
 
-          if (token.ordered) {
-            result += `${indent(stack.length + 1)}- =numbered\n`
+          if (scope) {
+            result += `${indent(stack.length)}- ::\n`
+            result += `${indent(stack.length + 1)}- =scope\n`
           }
 
-          processTokens(token.items, parentDepth + stack.length + 1)
+          if (token.ordered) {
+            result += `${indent(currentIndent)}- =numbered\n`
+          }
+
+          processTokens(token.items, scope ? parentDepth + currentIndent : parentDepth + currentIndent)
           break
+        }
         case 'list_item': {
           if (!token.tokens?.length) {
             result += `${indent(stack.length)}- ${processInlineTokens(token.text)}\n`
@@ -248,16 +191,22 @@ export const markdownToText = (markdown: string): string => {
           result += `${indent(stack.length + 1)}- =code\n`
           break
         case 'table': {
-          result += `${indent(stack.length)}- ${' '}\n`
-          result += `${indent(stack.length + 1)}- =scope\n`
-          result += `${indent(stack.length + 1)}- =view\n`
-          result += `${indent(stack.length + 2)}- Table\n`
+          const scope = shouldScope()
+          const currentIndent = scope ? stack.length + 1 : stack.length
+
+          if (scope) {
+            result += `${indent(stack.length)}- ::\n`
+            result += `${indent(stack.length + 1)}- =scope\n`
+          }
+
+          result += `${indent(currentIndent)}- =view\n`
+          result += `${indent(currentIndent + 1)}- Table\n`
 
           // Handle 2-column tables separately
           if (token.header.length === 2) {
             for (const [left, right] of token.rows) {
-              result += `${indent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
-              result += `${indent(stack.length + 2)}- ${processInlineTokens(right.tokens)}\n`
+              result += `${indent(currentIndent)}- ${processInlineTokens(left.tokens)}\n`
+              result += `${indent(currentIndent + 1)}- ${processInlineTokens(right.tokens)}\n`
             }
             break
           }
@@ -268,10 +217,10 @@ export const markdownToText = (markdown: string): string => {
             .map((header: Tokens.TableCell) => processInlineTokens(header.tokens ?? header.text))
 
           for (const [left, ...cells] of token.rows) {
-            result += `${indent(stack.length + 1)}- ${processInlineTokens(left.tokens)}\n`
+            result += `${indent(currentIndent)}- ${processInlineTokens(left.tokens)}\n`
             for (const [i, cell] of cells.entries()) {
-              result += `${indent(stack.length + 2)}- ${headers[i]}\n`
-              result += `${indent(stack.length + 3)}- ${processInlineTokens(cell.tokens)}\n`
+              result += `${indent(currentIndent + 1)}- ${headers[i]}\n`
+              result += `${indent(currentIndent + 2)}- ${processInlineTokens(cell.tokens)}\n`
             }
           }
 
@@ -287,5 +236,5 @@ export const markdownToText = (markdown: string): string => {
 
   processTokens(tokens)
 
-  return collapse(result)
+  return result
 }
