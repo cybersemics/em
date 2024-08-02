@@ -58,6 +58,27 @@ p3
 `)
   })
 
+  it('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
+    const markdown = `
+# Heading 1
+
+1. a
+2. b
+3. c
+
+# Heading 1 again
+`
+
+    expect(markdownToText(markdown)).toBe(`
+- Heading 1
+  - =numbered
+  - a
+  - b
+  - c
+- Heading 1 again
+`)
+  })
+
   // TODO: This test is skipped while we're evaluating whether to
   // import separate lines as separate thoughts.
   it.skip('should import mixed text and lists', () => {
