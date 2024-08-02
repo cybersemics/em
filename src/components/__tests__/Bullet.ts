@@ -126,6 +126,22 @@ describe('render', () => {
     const bullets = document.querySelectorAll('.bullet')
     expect(bullets.length).toBe(4)
   })
+
+  // when hidden thoughts are enabled, we render a parent bullet for thoughts with meta attribute children
+  it('renders a parent bullet when hidden thoughts are enabled', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - A
+          - =test
+      `,
+      }),
+      toggleHiddenThoughts(),
+    ])
+
+    const bullets = document.querySelectorAll('.triangle')
+    expect(bullets.length).toBe(1)
+  })
 })
 
 // TODO: findSubthoughts is broken after LayoutTree
