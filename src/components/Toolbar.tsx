@@ -22,6 +22,8 @@ import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
 
+const ANIMATION_MS = 80
+
 interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
   customize?: boolean
@@ -39,6 +41,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
   const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
+  const [latestPress, setLatestPress] = useState(0)
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
@@ -50,6 +53,21 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   /**********************************************************************
    * Methods
    **********************************************************************/
+
+  /** Deselects the toolbar button. */
+  const deselectPressingToolbarId = useCallback(() => {
+    const delay = Math.max(0, ANIMATION_MS - (Date.now() - latestPress))
+    setTimeout(() => {
+      setPressingToolbarId(null)
+      setLatestPress(0)
+    }, delay)
+  }, [latestPress])
+
+  /** Selects the toolbar button that is pressed. */
+  const selectPressingToolbarId = useCallback((id: string) => {
+    setPressingToolbarId(id)
+    setLatestPress(Date.now())
+  }, [])
 
   /** Shows or hides the toolbar scroll arrows depending on where the scroll bar is. */
   const updateArrows = useCallback(() => {
@@ -66,12 +84,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       const scrollDifference = e.target ? Math.abs(lastScrollLeft.current - (e.target as HTMLElement).scrollLeft) : 0
 
       if (scrollDifference >= 5) {
-        setPressingToolbarId(null)
+        deselectPressingToolbarId()
       }
 
       updateArrows()
     },
-    [updateArrows],
+    [updateArrows, deselectPressingToolbarId],
   )
 
   /**********************************************************************
@@ -90,9 +108,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   // disable pressing on drag
   useEffect(() => {
     if (isDraggingAny) {
-      setPressingToolbarId(null)
+      deselectPressingToolbarId()
     }
-  }, [isDraggingAny, setPressingToolbarId])
+  }, [isDraggingAny, deselectPressingToolbarId])
 
   /**********************************************************************
    * Render
@@ -106,15 +124,15 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, shallowEqual)
 
   const onTapCancel = useCallback(() => {
-    setPressingToolbarId(null)
-  }, [])
+    deselectPressingToolbarId()
+  }, [deselectPressingToolbarId])
 
   const onTapUp = useCallback(
     id => {
-      setPressingToolbarId(null)
+      deselectPressingToolbarId()
       onSelect?.(shortcutById(id))
     },
-    [onSelect],
+    [onSelect, deselectPressingToolbarId],
   )
 
   return (
@@ -168,7 +186,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   isPressing={pressingToolbarId === id}
                   key={id}
                   lastScrollLeft={lastScrollLeft}
-                  onTapDown={setPressingToolbarId}
+                  onTapDown={selectPressingToolbarId}
                   onTapUp={onTapUp}
                   onTapCancel={onTapCancel}
                   selected={selected === id}
