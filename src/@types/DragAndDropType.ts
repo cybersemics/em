@@ -1,7 +1,7 @@
 /** Describes the type of item being dragged. */
 enum DragAndDropType {
-  Thought = 'Thought',
-  ToolbarButton = 'ToolbarButton',
+  Thought = 'thought',
+  ToolbarButton = 'toolbarButton',
 }
 
 export default DragAndDropType
