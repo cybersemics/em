@@ -362,25 +362,23 @@ p
 | Tangerine| Orange | Citrus     |
 `
     expect(markdownToText(markdown)).toBe(`
-- ::
-  - =scope
-  - =view
-    - Table
-  - Apple
-    - Color
-      - Red
-    - Type
-      - Seed
-  - Banana
-    - Color
-      - Yellow
-    - Type
-      - Tropical
-  - Tangerine
-    - Color
-      - Orange
-    - Type
-      - Citrus
+- =view
+  - Table
+- Apple
+  - Color
+    - Red
+  - Type
+    - Seed
+- Banana
+  - Color
+    - Yellow
+  - Type
+    - Tropical
+- Tangerine
+  - Color
+    - Orange
+  - Type
+    - Citrus
 `)
   })
 

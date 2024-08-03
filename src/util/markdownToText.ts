@@ -74,8 +74,8 @@ export const markdownToText = (markdown: string): string => {
           .filter(t => t.type !== 'space')
 
         if ((token.type === 'list' && token.ordered) || token.type === 'table') {
-          // If we have a table or ordered list, we always need a scope if there are any other siblings or if we're at the top level.
-          return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
+          // If we have a table or ordered list, we always need a scope if there are any other siblings.
+          return siblings.length > 1
         } else if (token.type === 'list') {
           // If the list is unordered, check if there are paragraph siblings
           return siblings.some(t => t.type === 'paragraph')
