@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
+import React, { FC, MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -54,6 +54,8 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
   const commandState = commandStateStore.useSelector(state => state[shortcutId])
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
@@ -77,7 +79,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
+    async (e: React.MouseEvent | React.TouchEvent) => {
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
@@ -107,6 +109,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     (e: React.MouseEvent | React.TouchEvent) => {
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
+      setIsTransitioning(true)
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
@@ -125,6 +128,28 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the tapCancel. */
   const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
+
+  useEffect(() => {
+    // Function to handle the transition end event
+    const handleTransitionEnd = () => {
+      setIsTransitioning(false)
+    }
+
+    // Select all elements with the class 'toolbar-icon'
+    const icons = document.querySelectorAll('.toolbar-icon')
+
+    // Add the transitionend event listener to each icon
+    icons.forEach(icon => {
+      icon.addEventListener('transitionend', handleTransitionEnd)
+    })
+
+    // Clean up the event listeners on component unmount
+    return () => {
+      icons.forEach(icon => {
+        icon.removeEventListener('transitionend', handleTransitionEnd)
+      })
+    }
+  }, [])
 
   const style = useMemo(
     () => ({
@@ -167,7 +192,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           // marginBottom: isPressing ? -10 : 0,
           // top: isButtonExecutable && isPressing ? 10 : 0,
           transform: `translateY(${
-            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0
+            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging && isTransitioning ? 0.25 : 0
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
