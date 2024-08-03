@@ -60,8 +60,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const [isTransitioning, setIsTransitioning] = useState(false)
-
   const commandState = commandStateStore.useSelector(state => state[shortcutId])
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
@@ -87,6 +85,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       handleMousePress(false)
+      console.log('up')
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!

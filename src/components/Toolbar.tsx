@@ -78,12 +78,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     [updateArrows],
   )
 
-  /** Function to set the isTransitioning state **/
+  /** Function to set the isTransitioning state. **/
   const handleTransitionChange = transitioning => {
     setIsTransitioning(transitioning)
   }
 
-  /** Function to track mouse state **/
+  /** Function to track mouse state. **/
   const handleMousePress = pressed => {
     setIsMousePressed(pressed)
   }
@@ -142,6 +142,16 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [isMousePressed])
 
+  useEffect(() => {
+    // Add mouseup event listener to the document
+    document.addEventListener('mouseup', onTapUp)
+
+    // Cleanup mouseup event listener on component unmount
+    return () => {
+      document.removeEventListener('mouseup', onTapUp)
+    }
+  }, [])
+
   /**********************************************************************
    * Render
    **********************************************************************/
@@ -159,13 +169,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   const onTapUp = useCallback(
     id => {
-      //isTransitioning variable is not a great name
       if (!isTransitioningRef.current && !isMousePressed) {
         setPressingToolbarId(null)
       }
       onSelect?.(shortcutById(id))
     },
-    [onSelect, isMousePressed, isTransitioning],
+    [onSelect, isMousePressed],
   )
 
   return (
