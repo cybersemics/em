@@ -139,7 +139,7 @@ describe('render', () => {
       toggleHiddenThoughts(),
     ])
 
-    const bullets = document.querySelectorAll('.triangle')
+    const bullets = document.querySelectorAll('[data-bullet="parent"]')
     expect(bullets.length).toBe(1)
   })
 })
