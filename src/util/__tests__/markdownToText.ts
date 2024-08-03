@@ -290,7 +290,7 @@ alert(s);
 `)
   })
 
-  it("should import a scoped table", () => {
+  it('should import a scoped table', () => {
     const markdown = `
 p
 
@@ -315,7 +315,7 @@ p
 `)
   })
 
-  it("should import an unscoped table with a heading", () => {
+  it('should import an unscoped table with a heading', () => {
     const markdown = `
 p
 

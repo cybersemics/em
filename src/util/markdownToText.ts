@@ -73,15 +73,12 @@ export const markdownToText = (markdown: string): string => {
           .slice(prevHeadingActualIndex + 1, nextHeadingActualIndex === -1 ? undefined : nextHeadingActualIndex)
           .filter(t => t.type !== 'space')
 
-        if (token.type === 'list') {
-          // If the list is ordered, we always need a scope if there are any other siblings or if we're at the top level.
-          if (token.ordered) return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
-
+        if ((token.type === 'list' && token.ordered) || token.type === 'table') {
+          // If we have a table or ordered list, we always need a scope if there are any other siblings or if we're at the top level.
+          return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
+        } else if (token.type === 'list') {
           // If the list is unordered, check if there are paragraph siblings
           return siblings.some(t => t.type === 'paragraph')
-        } else if (token.type === 'table') {
-          // If the table is the only sibling or at the top level, we don't need a scope. Otherwise, we do.
-          return siblings.length > 1 || (parentDepth === 0 && prevHeadingActualIndex === -1)
         }
 
         return false
