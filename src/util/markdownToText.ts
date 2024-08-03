@@ -140,7 +140,7 @@ export const markdownToText = (markdown: string): string => {
           }
 
           if (token.ordered) {
-            result += `${indent(currentIndent)}- =numbered\n`
+            result += `${indent(currentIndent)}- =ordered\n`
           }
 
           processTokens(token.items, scope ? parentDepth + currentIndent : parentDepth + currentIndent)

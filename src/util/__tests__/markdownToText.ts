@@ -199,7 +199,7 @@ __bold__
     expect(markdownToText(markdown)).toBe(`
 - ::
   - =scope
-  - =numbered
+  - =ordered
   - First ordered item
   - Second ordered item
     - Unordered sub-list that collapses
@@ -207,7 +207,7 @@ __bold__
 - Another unordered item
 - Yet another unordered item
 - The next list will collapse to this heading
-  - =numbered
+  - =ordered
   - First ordered item
   - Second ordered item
 `)
@@ -429,7 +429,7 @@ ___
   - Subtopic 1
     - List item 1
     - List item 2
-      - =numbered
+      - =ordered
       - Nested ordered item
       - Another nested item
         - Code block inside list
