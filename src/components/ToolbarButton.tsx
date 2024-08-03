@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -85,7 +85,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   const tapUp = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       handleMousePress(false)
-      console.log('up')
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
@@ -112,7 +111,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      console.log('down')
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
       handleMousePress(true)
