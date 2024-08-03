@@ -1,239 +1,101 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import { FC, useRef, useState } from 'react'
-import {
-  DragSource,
-  DragSourceConnector,
-  DragSourceMonitor,
-  DropTarget,
-  DropTargetConnector,
-  DropTargetMonitor,
-} from 'react-dnd'
+import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
-import DragAndDropType from '../@types/DragAndDropType'
-import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
-import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
-import { alertActionCreator as alert } from '../actions/alert'
-import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
-import { dragInProgressActionCreator as dragInProgress } from '../actions/dragInProgress'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/toggleUserSetting'
-import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
-import { AlertType, Settings, noop } from '../constants'
-import * as selection from '../device/selection'
+import { Settings } from '../constants'
+import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import thoughtToPath from '../selectors/thoughtToPath'
-import store from '../stores/app'
 import fastClick from '../util/fastClick'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import nonNull from '../util/nonNull'
-import splice from '../util/splice'
 import Checkbox from './Checkbox'
 import ThoughtLink from './ThoughtLink'
 import StarIcon from './icons/StarIcon'
 
-/** Handles drag start. */
-const beginDrag = ({ path, simplePath, zone }: DragThoughtItem): DragThoughtItem => {
-  const offset = selection.offset()
-  store.dispatch(
-    dragInProgress({
-      value: true,
-      draggingThought: simplePath,
-      sourceZone: zone,
-      ...(offset != null ? { offset } : null),
-    }),
-  )
-  return { path, simplePath, zone: DragThoughtZone.Favorites, type: DragAndDropType.Thought }
-}
-
-/** Handles drag end. */
-const endDrag = () => {
-  store.dispatch([
-    dragInProgress({ value: false }),
-    dragHold({ value: false }),
-    (dispatch, getState) => {
-      if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-        dispatch(alert(null))
-      }
-    },
-  ])
-}
-
-/** Returns true if the Favorite can be dropped at the given DropTarget. */
-const canDrop = (props: { disableDragAndDrop: boolean; simplePath: SimplePath }, monitor: DropTargetMonitor) =>
-  !props.disableDragAndDrop
-
-/** Handles dropping a thought on a DropTarget. */
-const drop = (
-  {
-    simplePath,
-  }: {
-    // when simplePath is null, it means the thought was dropped on DropEnd at the end of the favorites list
-    simplePath: SimplePath | null
-  },
-  monitor: DropTargetMonitor,
-) => {
-  // no bubbling
-  if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
-
-  const { simplePath: thoughtsFrom, zone } = monitor.getItem() as DragThoughtItem
-  if (zone === DragThoughtZone.Thoughts) {
-    console.error('TODO: Add support for other thought drag sources', monitor.getItem())
-    return
-  }
-  const thoughtsTo = simplePath
-
-  const state = store.getState()
-
-  const lexemeFavorites = getLexeme(state, '=favorite')
-  if (!lexemeFavorites) {
-    throw new Error('=favorite lexeme missing')
-  }
-  // the index of thoughtsFrom id within the =favorite lexeme contexts
-  const indexFrom = lexemeFavorites.contexts.findIndex(cxid => {
-    const thought = getThoughtById(state, cxid)
-    return thought?.parentId === head(thoughtsFrom)
-  })
-  const fromId = lexemeFavorites.contexts[indexFrom]
-
-  // the index of the thoughtsTo id within the =favorite lexeme contexts
-  // -1 indicates end of the list
-  const indexTo = thoughtsTo
-    ? lexemeFavorites.contexts.findIndex(cxid => {
-        const thought = getThoughtById(state, cxid)
-        return thought?.parentId === head(thoughtsTo)
-      })
-    : lexemeFavorites.contexts.length
-
-  // do nothing if dropping in the same position (above or below the dropped thought)
-  if (indexFrom === indexTo || indexFrom === indexTo - 1) return
-
-  // first, remove the thought from the contexts array
-  const contextsTemp = splice(lexemeFavorites.contexts, indexFrom, 1)
-
-  // then insert the thought at the drop point
-  const contextsNew = splice(
-    contextsTemp,
-    // if dropping after indexFrom, we need to decrement the index by 1 to account for the adjusted indexes in contextsTemp after splicing the contexts
-    indexTo - (indexTo > indexFrom ? 1 : 0),
-    0,
-    fromId,
-  )
-
-  const lexemeNew: Lexeme = {
-    ...lexemeFavorites,
-    contexts: contextsNew,
-  }
-
-  store.dispatch(
-    updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates: {
-        [hashThought('=favorite')]: lexemeNew,
-      },
-    }),
-  )
-}
-
-/** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => ({
-  dragSource: connect.dragSource(),
-  dragPreview: noop,
-  isDragging: monitor.isDragging(),
-})
-
-/** Collects props from the DropTarget. */
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
-  isHovering: monitor.isOver({ shallow: true }) && monitor.canDrop(),
-})
-
-type DragAndDropFavoriteReturnType = ReturnType<typeof dragCollect> &
-  ReturnType<typeof dropCollect> & {
-    disableDragAndDrop?: boolean
-    simplePath: SimplePath
-  }
-/** A draggable and droppable thought. */
-const DragAndDropThought = (el: FC<DragAndDropFavoriteReturnType & { hideContext?: boolean }>) =>
-  DragSource('thought', { beginDrag, endDrag }, dragCollect)(DropTarget('thought', { canDrop, drop }, dropCollect)(el))
-
-const DragAndDropFavorite = DragAndDropThought(
-  ({
+/**
+ * Drag and Drop Favorites component.
+ */
+const DragAndDropFavorite = ({
+  disableDragAndDrop,
+  hideContext,
+  simplePath,
+}: {
+  hideContext?: boolean
+  disableDragAndDrop?: boolean
+  simplePath: SimplePath
+}) => {
+  const colors = useSelector(themeColors)
+  const { dragSource, dropTarget, isDragging, isHovering } = useDragAndDropFavorites({
     disableDragAndDrop,
-    dragSource,
-    dropTarget,
-    hideContext,
-    isDragging,
-    isHovering,
     simplePath,
-  }: DragAndDropFavoriteReturnType & { hideContext?: boolean }) => {
-    const colors = useSelector(themeColors)
-    const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
-    return dropTarget(
-      dragSource(
-        // Set overflow:auto so the drop target fully wraps its contents.
-        // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
-        <div {...dragHoldResult.props} style={{ overflow: 'auto' }}>
-          {!disableDragAndDrop && isHovering && (
-            <span
-              className={classNames({
-                'drop-hover': true,
-                pressed: !disableDragAndDrop && dragHoldResult.isPressed,
-              })}
-              style={{
-                backgroundColor: colors.highlight,
-                marginLeft: 0,
-                marginTop: '-0.4em',
-                width: 'calc(100% - 4em)',
-              }}
-            />
-          )}
-          <ThoughtLink
-            hideContext={hideContext}
-            path={simplePath}
-            styleLink={{
-              ...(!disableDragAndDrop &&
-                (isDragging || dragHoldResult.isPressed
-                  ? {
-                      color: colors.highlight,
-                      fontWeight: 'bold',
-                    }
-                  : undefined)),
-            }}
-          />
-        </div>,
-      ),
-    )
-  },
-)
+    path: simplePath,
+  })
+  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
+
+  return (
+    // Set overflow:auto so the drop target fully wraps its contents.
+    // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
+    <div {...dragHoldResult.props} style={{ overflow: 'auto' }} ref={node => dragSource(dropTarget(node))}>
+      {!disableDragAndDrop && isHovering && (
+        <span
+          className={classNames({
+            'drop-hover': true,
+            pressed: !disableDragAndDrop && dragHoldResult.isPressed,
+          })}
+          style={{
+            backgroundColor: colors.highlight,
+            marginLeft: 0,
+            marginTop: '-0.4em',
+            width: 'calc(100% - 4em)',
+          }}
+        />
+      )}
+      <ThoughtLink
+        hideContext={hideContext}
+        path={simplePath}
+        styleLink={{
+          ...(!disableDragAndDrop &&
+            (isDragging || dragHoldResult.isPressed
+              ? {
+                  color: colors.highlight,
+                  fontWeight: 'bold',
+                }
+              : undefined)),
+        }}
+      />
+    </div>
+  )
+}
 
 /** Drop target for end of the favorites list. */
-const DropEnd = DropTarget(
-  'thought',
-  { drop },
-  dropCollect,
-)(({ dropTarget, isHovering }: ReturnType<typeof dropCollect>) => {
-  if (!isHovering) return null
-  return dropTarget(
-    <div style={{ height: '4em' }}>
+const DropEnd = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
+  const { dropTarget, isHovering } = useDragAndDropFavorites({
+    disableDragAndDrop,
+  })
+
+  return (
+    <div style={{ height: '4em' }} ref={dropTarget}>
       <span
         className='drop-hover'
         style={{
           marginLeft: 0,
           marginTop: 0,
           width: 'calc(100% - 4em)',
+          background: isHovering ? 'rgba(155, 170, 220, 1)' : undefined,
         }}
       />
-    </div>,
+    </div>
   )
-})
+}
 
 /** Favorites Options toggle link and list of options. */
 const FavoritesOptions = ({
@@ -335,7 +197,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
             <StarIcon style={{ verticalAlign: 'text-bottom' }} /> in the toolbar.
           </div>
         )}
-        <DropEnd />
+        <DropEnd disableDragAndDrop={disableDragAndDrop} />
       </div>
     </div>
   )
