@@ -58,6 +58,20 @@ p3
 `)
   })
 
+  it('should import an unscoped ordered list in the root', () => {
+    const markdown = `
+1. First
+2. Second
+3. Third
+`
+    expect(markdownToText(markdown)).toBe(`
+- =ordered
+- First
+- Second
+- Third
+`)
+  })
+
   it('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
     const markdown = `
 # Heading 1
@@ -268,7 +282,7 @@ alert(s);
 `)
   })
 
-  it('should import a two-column table at the root', () => {
+  it('should import an unscoped two-column table at the root', () => {
     const markdown = `
 | Column 1 | Column 2 |
 |----------|:--------:|
@@ -277,16 +291,14 @@ alert(s);
 | apple    | orange   |
 `
     expect(markdownToText(markdown)).toBe(`
-- ::
-  - =scope
-  - =view
-    - Table
-  - Left
-    - Right
-  - 1
-    - 2
-  - apple
-    - orange
+- =view
+  - Table
+- Left
+  - Right
+- 1
+  - 2
+- apple
+  - orange
 `)
   })
 
