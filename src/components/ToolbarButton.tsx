@@ -24,6 +24,9 @@ export interface ToolbarButtonProps {
   onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   selected?: boolean
   shortcutId: ShortcutId
+  onTransition: (isTransitioning: boolean) => void
+  isTransitioning: boolean
+  handleMousePress: (isPressed: boolean) => void
 }
 
 /** A single button in the Toolbar. */
@@ -42,6 +45,9 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   onTapUp,
   selected,
   shortcutId,
+  onTransition,
+  isTransitioning,
+  handleMousePress,
 }) => {
   const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
@@ -79,7 +85,8 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the onMouseUp/onTouchEnd event. Makes sure that we are actually clicking and not scrolling the toolbar. */
   const tapUp = useCallback(
-    async (e: React.MouseEvent | React.TouchEvent) => {
+    (e: React.MouseEvent | React.TouchEvent) => {
+      handleMousePress(false)
       longPress.props[isTouch ? 'onTouchEnd' : 'onMouseUp'](e)
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
@@ -87,7 +94,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
       if (!customize && isButtonExecutable && !disabled && !scrolled) {
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
-
         // prevent Editable blur
         if (isTouch) {
           e.preventDefault()
@@ -107,9 +113,11 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
   const tapDown = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      console.log('down')
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
-      setIsTransitioning(true)
+      handleMousePress(true)
+      onTransition(true)
       longPressTapDown(e)
 
       lastScrollLeft.current = toolbarEl.scrollLeft
@@ -128,28 +136,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
 
   /** Handles the tapCancel. */
   const touchMove = useCallback(longPressTouchMove, [longPressTouchMove])
-
-  useEffect(() => {
-    // Function to handle the transition end event
-    const handleTransitionEnd = () => {
-      setIsTransitioning(false)
-    }
-
-    // Select all elements with the class 'toolbar-icon'
-    const icons = document.querySelectorAll('.toolbar-icon')
-
-    // Add the transitionend event listener to each icon
-    icons.forEach(icon => {
-      icon.addEventListener('transitionend', handleTransitionEnd)
-    })
-
-    // Clean up the event listeners on component unmount
-    return () => {
-      icons.forEach(icon => {
-        icon.removeEventListener('transitionend', handleTransitionEnd)
-      })
-    }
-  }, [])
 
   const style = useMemo(
     () => ({
@@ -192,7 +178,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           // marginBottom: isPressing ? -10 : 0,
           // top: isButtonExecutable && isPressing ? 10 : 0,
           transform: `translateY(${
-            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging && isTransitioning ? 0.25 : 0
+            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',

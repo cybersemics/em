@@ -44,6 +44,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
 
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isMousePressed, setIsMousePressed] = useState(false)
+  const isTransitioningRef = useRef(isTransitioning)
+
   // re-render only (why?)
   useSelector(state => state.showHiddenThoughts)
 
@@ -74,9 +78,23 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     [updateArrows],
   )
 
+  /** Function to set the isTransitioning state **/
+  const handleTransitionChange = transitioning => {
+    setIsTransitioning(transitioning)
+  }
+
+  /** Function to track mouse state **/
+  const handleMousePress = pressed => {
+    setIsMousePressed(pressed)
+  }
+
   /**********************************************************************
    * Effects
    **********************************************************************/
+
+  useEffect(() => {
+    isTransitioningRef.current = isTransitioning
+  }, [isTransitioning])
 
   useEffect(() => {
     window.addEventListener('resize', updateArrows)
@@ -93,6 +111,36 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setPressingToolbarId(null)
     }
   }, [isDraggingAny, setPressingToolbarId])
+
+  /**
+   *Handles the state of icon transitions, forcing completion of icon animation.
+   **/
+  useEffect(() => {
+    /**
+     *Function to handle the transition end event.
+     **/
+    const handleTransitionEnd = () => {
+      if (!isMousePressed) {
+        setPressingToolbarId(null)
+      }
+      setIsTransitioning(false)
+    }
+
+    // Select all elements with the class 'toolbar-icon'
+    const icons = document.querySelectorAll('.toolbar-icon')
+
+    // Add the transitionend event listener to each icon
+    icons.forEach(icon => {
+      icon.addEventListener('transitionend', handleTransitionEnd)
+    })
+
+    // Clean up the event listeners on component unmount
+    return () => {
+      icons.forEach(icon => {
+        icon.removeEventListener('transitionend', handleTransitionEnd)
+      })
+    }
+  }, [isMousePressed])
 
   /**********************************************************************
    * Render
@@ -111,10 +159,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   const onTapUp = useCallback(
     id => {
-      setPressingToolbarId(null)
+      //isTransitioning variable is not a great name
+      if (!isTransitioningRef.current && !isMousePressed) {
+        setPressingToolbarId(null)
+      }
       onSelect?.(shortcutById(id))
     },
-    [onSelect],
+    [onSelect, isMousePressed, isTransitioning],
   )
 
   return (
@@ -173,6 +224,9 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   onTapCancel={onTapCancel}
                   selected={selected === id}
                   shortcutId={id}
+                  isTransitioning={isTransitioning}
+                  onTransition={handleTransitionChange}
+                  handleMousePress={handleMousePress}
                 />
               )
             })}
