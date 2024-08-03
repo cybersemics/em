@@ -120,7 +120,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       setPressingToolbarId(null)
     }
   }, [isDraggingAny, setPressingToolbarId])
-
+  
   /**
    *Handles the state of icon transitions, forcing completion of icon animation.
    **/
