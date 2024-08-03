@@ -142,6 +142,16 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [isMousePressed])
 
+  const onTapUp = useCallback(
+    id => {
+      if (!isTransitioningRef.current && !isMousePressed) {
+        setPressingToolbarId(null)
+      }
+      onSelect?.(shortcutById(id))
+    },
+    [onSelect, isMousePressed],
+  )
+
   useEffect(() => {
     // Add mouseup event listener to the document
     document.addEventListener('mouseup', onTapUp)
@@ -150,7 +160,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', onTapUp)
     }
-  }, [])
+  }, [onTapUp])
 
   /**********************************************************************
    * Render
@@ -166,16 +176,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const onTapCancel = useCallback(() => {
     setPressingToolbarId(null)
   }, [])
-
-  const onTapUp = useCallback(
-    id => {
-      if (!isTransitioningRef.current && !isMousePressed) {
-        setPressingToolbarId(null)
-      }
-      onSelect?.(shortcutById(id))
-    },
-    [onSelect, isMousePressed],
-  )
 
   return (
     <CSSTransition
