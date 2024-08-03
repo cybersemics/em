@@ -127,8 +127,7 @@ describe('render', () => {
     expect(bullets.length).toBe(4)
   })
 
-  // when hidden thoughts are enabled, we render a parent bullet for thoughts with meta attribute children
-  it('renders a parent bullet when hidden thoughts are enabled', async () => {
+  it('renders a parent bullet on the parent of a visible meta attribute', async () => {
     await dispatch([
       importText({
         text: `
