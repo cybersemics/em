@@ -1453,3 +1453,37 @@ it('import plaintext with embedded <li> mixed with text', () => {
       - y
     - d`)
 })
+
+it('import markdown', () => {
+  const text = `
+# H1 
+a
+## H2
+b
+### H3
+c
+#### H4
+d
+##### H5
+e
+###### H6
+f
+  `
+
+  const stateNew = importText(initialState(), { text })
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - H1
+    - a
+    - H2
+      - b
+      - H3
+        - c
+        - H4
+          - d
+          - H5
+            - e
+            - H6
+              - f`)
+})
