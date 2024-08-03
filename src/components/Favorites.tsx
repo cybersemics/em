@@ -11,6 +11,7 @@ import {
 } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import CSSTransition from 'react-transition-group/CSSTransition'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import Lexeme from '../@types/Lexeme'
@@ -49,7 +50,7 @@ const beginDrag = ({ path, simplePath, zone }: DragThoughtItem): DragThoughtItem
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Favorites }
+  return { path, simplePath, zone: DragThoughtZone.Favorites, type: DragAndDropType.Thought }
 }
 
 /** Handles drag end. */

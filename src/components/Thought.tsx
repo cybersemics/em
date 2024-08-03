@@ -13,6 +13,7 @@ import { isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
+import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
 import useHideBullet from '../hooks/useHideBullet'
 import useHoveringPath from '../hooks/useHoveringPath'
@@ -45,7 +46,6 @@ import safeRefMerge from '../util/safeRefMerge'
 import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
-import DragAndDropThought, { DraggableThoughtContainerProps } from './DragAndDropThought'
 import DropHover from './DropHover'
 import Note from './Note'
 import StaticThought from './StaticThought'
@@ -112,16 +112,9 @@ const ThoughtContainer = ({
   cursor,
   debugIndex,
   depth = 0,
-  dragPreview,
-  dragSource,
-  dropTarget,
   env,
   hideBullet: hideBulletProp,
-  isBeingHoveredOver,
-  isDeepHovering,
-  isDragging,
   isHeader,
-  isHovering,
   isMultiColumnTable,
   isContextPending,
   isVisible,
@@ -134,7 +127,7 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
-}: DraggableThoughtContainerProps) => {
+}: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
   const children = useSelector(
@@ -142,7 +135,6 @@ const ThoughtContainer = ({
     // only compare id, value, and rank for re-renders
     equalChildren,
   )
-  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   // const contextBinding = useSelector(
   //   state => parseJsonSafe(attribute(state, head(simplePath), '=bindContext') ?? '') as SimplePath | undefined,
   // )
@@ -176,6 +168,14 @@ const ThoughtContainer = ({
         equalPath(cursorParent, path)
   })
 
+  const { isDragging, dragSource, isHovering, isBeingHoveredOver, dropTarget } = useDragAndDropThought({
+    path,
+    simplePath,
+    isVisible,
+    isCursorParent,
+  })
+
+  useHoveringPath(path, isBeingHoveredOver, DropThoughtZone.ThoughtDrop)
   // check if the cursor is editing a thought directly
   const isEditing = useSelector(state => equalPath(state.cursor, path))
 
@@ -349,157 +349,148 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
-  return dropTarget(
-    dragSource(
+  return (
+    <div
+      {...dragHoldResult.props}
+      ref={node => dragSource(dropTarget(node))}
+      aria-label='child'
+      style={{
+        // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
+        position: 'relative',
+        transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
+        ...style,
+        ...styleContainer,
+        // extend the click area to the left (except if table column 2)
+        marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
+        paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
+        ...(testFlags.simulateDrop
+          ? {
+              backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
+            }
+          : null),
+      }}
+      className={classNames({
+        child: true,
+        'child-divider': isDivider(value),
+        'cursor-parent': isCursorParent,
+        'cursor-grandparent': isCursorGrandparent,
+        // used so that the autofocus can properly highlight the immediate parent of the cursor
+        editing: isEditing,
+        expanded: isExpanded,
+        function: isAttribute(value), // eslint-disable-line quote-props
+        'has-only-child': children.length === 1,
+        'invalid-option': invalidOption,
+        'is-multi-column': isMultiColumnTable,
+        leaf: leaf || (isEditing && globals.suppressExpansion),
+        pressed: dragHoldResult.isPressed,
+        // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
+        prose: view === 'Prose',
+        'show-contexts': showContexts,
+        'show-contexts-no-breadcrumbs': simplePath.length === 2,
+        'table-view': isTable,
+      })}
+    >
+      {showContexts && simplePath.length > 1 ? (
+        <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+      ) : showContexts && simplePath.length > 2 ? (
+        <span className='ellipsis'>
+          <a
+            tabIndex={-1}
+            {...fastClick(() => {
+              dispatch(expandContextThought(path))
+            })}
+          >
+            ...{' '}
+          </a>
+        </span>
+      ) : null}
+
       <div
-        {...dragHoldResult.props}
-        aria-label='child'
-        style={{
-          // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
-          position: 'relative',
-          transition: 'transform 0.75s ease-out, opacity 0.75s ease-out',
-          ...style,
-          ...styleContainer,
-          // extend the click area to the left (except if table column 2)
-          marginLeft: `calc(${style?.marginLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
-          paddingLeft: `calc(${style?.paddingLeft || 0}${!isTableCol2 ? ' - 100px' : ''})`,
-          ...(testFlags.simulateDrop
-            ? {
-                backgroundColor: `hsl(150, 50%, ${20 + 5 * ((depth + (debugIndex || 0)) % 2)}%)`,
-              }
-            : null),
-        }}
         className={classNames({
-          child: true,
-          'child-divider': isDivider(value),
-          'cursor-parent': isCursorParent,
-          'cursor-grandparent': isCursorGrandparent,
-          // used so that the autofocus can properly highlight the immediate parent of the cursor
-          editing: isEditing,
-          expanded: isExpanded,
-          function: isAttribute(value), // eslint-disable-line quote-props
-          'has-only-child': children.length === 1,
-          'invalid-option': invalidOption,
-          'is-multi-column': isMultiColumnTable,
-          leaf: leaf || (isEditing && globals.suppressExpansion),
-          pressed: dragHoldResult.isPressed,
-          // prose view will automatically be enabled if there enough characters in at least one of the thoughts within a context
-          prose: view === 'Prose',
-          'show-contexts': showContexts,
-          'show-contexts-no-breadcrumbs': simplePath.length === 2,
-          'table-view': isTable,
+          'thought-container': true,
+          'single-line': !isEditing && isURL(value),
         })}
-        ref={el => {
-          if (el) {
-            dragPreview()
-          }
+        style={{
+          // ensure that ThoughtAnnotation is positioned correctly
+          position: 'relative',
+          ...(hideBullet ? { marginLeft: -12 } : null),
         }}
       >
-        {showContexts && simplePath.length > 1 ? (
-          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
-        ) : showContexts && simplePath.length > 2 ? (
-          <span className='ellipsis'>
-            <a
-              tabIndex={-1}
-              {...fastClick(() => {
-                dispatch(expandContextThought(path))
-              })}
-            >
-              ...{' '}
-            </a>
-          </span>
-        ) : null}
-
-        <div
-          className={classNames({
-            'thought-container': true,
-            'single-line': !isEditing && isURL(value),
-          })}
-          style={{
-            // ensure that ThoughtAnnotation is positioned correctly
-            position: 'relative',
-            ...(hideBullet ? { marginLeft: -12 } : null),
-          }}
-        >
-          {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
-            <Bullet
-              isContextPending={isContextPending}
-              isDragging={isDragging}
-              isEditing={isEditing}
-              leaf={leaf}
-              path={path}
-              publish={publish}
-              simplePath={simplePath}
-              thoughtId={thoughtId}
-              // debugIndex={debugIndex}
-              // depth={depth}
-            />
-          )}
-
-          <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
-
-          <StaticThought
-            allowSingleContext={allowSingleContext}
-            env={env}
+        {!(publish && simplePath.length === 0) && (!leaf || !isPublishChild) && !hideBullet && (
+          <Bullet
             isContextPending={isContextPending}
+            isDragging={isDragging}
             isEditing={isEditing}
-            isPublishChild={isPublishChild}
-            isVisible={isVisible}
-            onEdit={!isTouch ? onEdit : undefined}
+            leaf={leaf}
             path={path}
-            rank={rank}
-            showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
+            publish={publish}
             simplePath={simplePath}
-            style={styleThought}
-            styleAnnotation={styleAnnotation || undefined}
-            styleThought={styleThought}
-            updateSize={updateSize}
-            view={view}
+            thoughtId={thoughtId}
+            // debugIndex={debugIndex}
+            // depth={depth}
           />
-          <Note path={simplePath} />
-        </div>
+        )}
 
-        {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
+        <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
 
-        {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row.
-        {isMultiColumnTable ? (
-          children.map((child, i) => {
-            const childPath = appendToPath(path, child.id)
-            const childSimplePath = appendToPath(simplePath, child.id)
-            return (
-              <Subthoughts
-                key={child.id}
-                allowSingleContext={allowSingleContext}
-                env={env}
-                path={isHeader ? path : childPath}
-                depth={depth}
-                isHeader={isHeader}
-                showContexts={allowSingleContext}
-                simplePath={isHeader ? simplePath : childSimplePath}
-              />
-            )
-          })
-        ) : (
-          <Subthoughts
-            allowSingleContext={allowSingleContext}
-            childrenForced={childrenForced}
-            depth={depth}
-            env={env}
-            path={path}
-            showContexts={allowSingleContext}
-            simplePath={simplePath}
-          />
-        )} */}
-      </div>,
-    ),
+        <StaticThought
+          allowSingleContext={allowSingleContext}
+          env={env}
+          isContextPending={isContextPending}
+          isEditing={isEditing}
+          isPublishChild={isPublishChild}
+          isVisible={isVisible}
+          onEdit={!isTouch ? onEdit : undefined}
+          path={path}
+          rank={rank}
+          showContextBreadcrumbs={showContextBreadcrumbs && value !== '__PENDING__'}
+          simplePath={simplePath}
+          style={styleThought}
+          styleAnnotation={styleAnnotation || undefined}
+          styleThought={styleThought}
+          updateSize={updateSize}
+          view={view}
+        />
+        <Note path={simplePath} />
+      </div>
+
+      {publish && simplePath.length === 0 && <Byline id={head(parentOf(simplePath))} />}
+
+      {/* In a multi column view, a table's grandchildren are rendered as additional columns. Since the Subthoughts component is styled as a table-cell, we render a separate Subthoughts component for each column. We use childPath instead of path in order to skip the repeated grandchild which serves as the column name and rendered separately as a header row.
+      {isMultiColumnTable ? (
+        children.map((child, i) => {
+          const childPath = appendToPath(path, child.id)
+          const childSimplePath = appendToPath(simplePath, child.id)
+          return (
+            <Subthoughts
+              key={child.id}
+              allowSingleContext={allowSingleContext}
+              env={env}
+              path={isHeader ? path : childPath}
+              depth={depth}
+              isHeader={isHeader}
+              showContexts={allowSingleContext}
+              simplePath={isHeader ? simplePath : childSimplePath}
+            />
+          )
+        })
+      ) : (
+        <Subthoughts
+          allowSingleContext={allowSingleContext}
+          childrenForced={childrenForced}
+          depth={depth}
+          env={env}
+          path={path}
+          showContexts={allowSingleContext}
+          simplePath={simplePath}
+        />
+      )} */}
+    </div>
   )
 }
 
 ThoughtContainer.displayName = 'ThoughtContainer'
-
-// export drag and drop higher order thought component
-const ThoughtComponent = DragAndDropThought(ThoughtContainer)
-const ThoughtComponentMemo = React.memo(ThoughtComponent)
+const ThoughtComponentMemo = React.memo(ThoughtContainer)
 ThoughtComponentMemo.displayName = 'ThoughtComponent'
 
 export default ThoughtComponentMemo

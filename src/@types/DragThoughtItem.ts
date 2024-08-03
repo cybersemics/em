@@ -1,3 +1,4 @@
+import DragAndDropType from './DragAndDropType'
 import DragThoughtZone from './DragThoughtZone'
 import Path from './Path'
 import SimplePath from './SimplePath'
@@ -7,6 +8,7 @@ interface DragThoughtItem {
   path: Path
   simplePath: SimplePath
   zone: DragThoughtZone
+  type: DragAndDropType
 }
 
 export default DragThoughtItem

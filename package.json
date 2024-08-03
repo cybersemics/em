@@ -64,8 +64,8 @@
     "resetMocks": false
   },
   "resolutions": {
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
-    "@typescript-eslint/parser": "^7.7.0"
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0"
   },
   "dependencies": {
     "@capacitor/android": "^4.8.2",
