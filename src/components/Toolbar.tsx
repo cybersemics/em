@@ -88,6 +88,15 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     setIsMousePressed(pressed)
   }
 
+  const onTapUp = useCallback(
+    id => {
+      if (!isTransitioningRef.current && !isMousePressed) {
+        setPressingToolbarId(null)
+      }
+      onSelect?.(shortcutById(id))
+    },
+    [onSelect, isMousePressed],
+  )
   /**********************************************************************
    * Effects
    **********************************************************************/
@@ -142,16 +151,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [isMousePressed])
 
-  const onTapUp = useCallback(
-    id => {
-      if (!isTransitioningRef.current && !isMousePressed) {
-        setPressingToolbarId(null)
-      }
-      onSelect?.(shortcutById(id))
-    },
-    [onSelect, isMousePressed],
-  )
-
   useEffect(() => {
     // Add mouseup event listener to the document
     document.addEventListener('mouseup', onTapUp)
@@ -160,7 +159,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', onTapUp)
     }
-  }, [onTapUp])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /**********************************************************************
    * Render
