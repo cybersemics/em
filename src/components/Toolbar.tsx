@@ -78,14 +78,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     [updateArrows],
   )
 
-  /** Function to set the isTransitioning state.
-   * **/
+  /** Function to set the isTransitioning state.*/
   const handleTransitionChange = transitioning => {
     setIsTransitioning(transitioning)
   }
 
-  /** Function to track mouse state.
-   * **/
+  /** Function to track mouse state.*/
   const handleMousePress = pressed => {
     setIsMousePressed(pressed)
   }
