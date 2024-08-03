@@ -58,7 +58,7 @@ p3
 `)
   })
 
-  it.only('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
+  it('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
     const markdown = `
 # Heading 1
 
