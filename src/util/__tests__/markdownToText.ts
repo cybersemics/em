@@ -156,7 +156,7 @@ g
 `)
   })
 
-  it('should handle nested headings', () => {
+  it('should handle headings in lists', () => {
     const markdown = `
 - List Item 1
 - ## List Item 2
@@ -268,16 +268,8 @@ alert(s);
 `)
   })
 
-  it('should import two-column tables', () => {
+  it('should import a two-column table at the root', () => {
     const markdown = `
-| Column 1 | Column 2 |
-|----------|:--------:|
-| Left     | Right    |
-| 1        | 2        |
-| apple    | orange   |
-
-# The next table will collapse to this heading
-
 | Column 1 | Column 2 |
 |----------|:--------:|
 | Left     | Right    |
@@ -295,7 +287,49 @@ alert(s);
     - 2
   - apple
     - orange
-- The next table will collapse to this heading
+`)
+  })
+
+  it("should import a scoped table", () => {
+    const markdown = `
+p
+
+| Column 1 | Column 2 |
+|----------|:--------:|
+| Left     | Right    |
+| 1        | 2        |
+| apple    | orange   |
+`
+    expect(markdownToText(markdown)).toBe(`
+- p
+- ::
+  - =scope
+  - =view
+    - Table
+  - Left
+    - Right
+  - 1
+    - 2
+  - apple
+    - orange
+`)
+  })
+
+  it("should import an unscoped table with a heading", () => {
+    const markdown = `
+p
+
+# heading
+
+| Column 1 | Column 2 |
+|----------|:--------:|
+| Left     | Right    |
+| 1        | 2        |
+| apple    | orange   |
+`
+    expect(markdownToText(markdown)).toBe(`
+- p
+- heading
   - =view
     - Table
   - Left
@@ -314,36 +348,10 @@ alert(s);
 | Apple    | Red    | Seed       |
 | Banana   | Yellow | Tropical   |
 | Tangerine| Orange | Citrus     |
-
-# The next table will collapse to this heading
-
-|          | Color  |    Type    |
-|----------|:------:|-----------:|
-| Apple    | Red    | Seed       |
-| Banana   | Yellow | Tropical   |
-| Tangerine| Orange | Citrus     |
 `
     expect(markdownToText(markdown)).toBe(`
 - ::
   - =scope
-  - =view
-    - Table
-  - Apple
-    - Color
-      - Red
-    - Type
-      - Seed
-  - Banana
-    - Color
-      - Yellow
-    - Type
-      - Tropical
-  - Tangerine
-    - Color
-      - Orange
-    - Type
-      - Citrus
-- The next table will collapse to this heading
   - =view
     - Table
   - Apple
