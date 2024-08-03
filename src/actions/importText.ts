@@ -20,7 +20,9 @@ import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJSON from '../util/importJSON'
 import initialState from '../util/initialState'
+import { isMarkdown } from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
+import { markdownToText } from '../util/markdownToText'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks from '../util/roamJsonToBlocks'
@@ -91,7 +93,7 @@ const importText = (
 
   path = path || HOME_PATH
   const simplePath = simplifyPath(state, path)
-  const convertedText = isRoam ? text : textToHtml(text)
+  const convertedText = isRoam ? text : isMarkdown(text) ? textToHtml(markdownToText(text)) : textToHtml(text)
   const numLines = (convertedText.match(REGEX_LIST_ITEM) || []).length
   const thoughtId = head(path)
   const destThought = getThoughtById(state, thoughtId)
