@@ -57,7 +57,7 @@ export const markdownToText = (markdown: string): string => {
     const indent = (depth: number) => '  '.repeat(depth + parentDepth)
 
     for (const [index, token] of tokens.entries()) {
-      /** Helper function to check if ::/=scope is needed. */
+      /** Checks if the current token needs to be added to a special ::/=scope thought to separate it from its siblings. Needed for tables and ordered lists that are to be rendered at the same level with other siblings. */
       const shouldScope = () => {
         const prevHeadingIndex = tokens
           .slice(0, index)
