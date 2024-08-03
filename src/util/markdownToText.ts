@@ -69,10 +69,9 @@ export const markdownToText = (markdown: string): string => {
         const nextHeadingActualIndex = nextHeadingIndex === -1 ? -1 : index + 1 + nextHeadingIndex
 
         // Siblings are only considered at the same stack depth
-        const siblings = tokens.slice(
-          prevHeadingActualIndex + 1,
-          nextHeadingActualIndex === -1 ? undefined : nextHeadingActualIndex,
-        )
+        const siblings = tokens
+          .slice(prevHeadingActualIndex + 1, nextHeadingActualIndex === -1 ? undefined : nextHeadingActualIndex)
+          .filter(t => t.type !== 'space')
 
         if (token.type === 'list') {
           // If the list is ordered, we always need a scope if there are any other siblings or if we're at the top level.

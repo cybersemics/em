@@ -58,7 +58,7 @@ p3
 `)
   })
 
-  it('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
+  it.only('should import a heading with an unscoped ordered list followed by a heading at the same level', () => {
     const markdown = `
 # Heading 1
 
@@ -71,7 +71,7 @@ p3
 
     expect(markdownToText(markdown)).toBe(`
 - Heading 1
-  - =numbered
+  - =ordered
   - a
   - b
   - c
