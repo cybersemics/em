@@ -61,7 +61,10 @@ const Divider = ({ path }: { path: Path }) => {
     }
   }
 
-  useEffect(setStyle, [path, thoughtIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Suppress the exhaustive-deps linter rule so that we can ignore dividerRef. Refs do not work in useEffect dependencies, as mutations do not trigger a re-render.
+  // We could use a callback ref to trigger setStyle every time the DOM node changes, but subscribing to the thoughtIndex (which is included for other thought updates) seems to cover all cases.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(setStyle, [path, thoughtIndex])
   editingValueStore.useEffect(setStyle)
 
   return (
