@@ -30,6 +30,7 @@ import { appendToPathMemo } from '../util/appendToPath'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import parseLet from '../util/parseLet'
@@ -670,7 +671,14 @@ const LayoutTree = () => {
                 // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
-                className={classNames({ 'table-col1': isTableCol1 })}
+                data-path={hashPath(path)}
+                className={classNames({
+                  'tree-node': true,
+                  'top-level': simplePath.length === 1,
+                  'table-col1': isTableCol1,
+                  'table-col2': isTableCol2,
+                  'thought-divider': isDivider(thought.value),
+                })}
                 style={{
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
