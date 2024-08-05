@@ -39,7 +39,6 @@ it('re-render note when =note subthought value changes', async () => {
         editThought({
           oldValue: 'foo',
           newValue: 'bar',
-          context: ['a', '=note', 'foo'],
           path: getState().cursor as SimplePath,
         }),
       ),
@@ -65,7 +64,6 @@ it('render note when subthought is edited from non-attribute', async () => {
         editThought({
           oldValue: 'note',
           newValue: '=note',
-          context: ['a', 'note'],
           path: getState().cursor as SimplePath,
         }),
       ),
@@ -91,7 +89,6 @@ it('render note when subthought is edited from non-note attribute', async () => 
         editThought({
           oldValue: '=test',
           newValue: '=note',
-          context: ['a', '=test'],
           path: getState().cursor as SimplePath,
         }),
       ),
