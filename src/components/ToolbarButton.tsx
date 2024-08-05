@@ -80,8 +80,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
-
-      if (!customize && isButtonExecutable && !disabled && !scrolled) {
+      if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
 
         // prevent Editable blur
@@ -97,7 +96,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, onTapUp],
+    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
