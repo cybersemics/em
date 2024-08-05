@@ -119,7 +119,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [setPressTime])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /**********************************************************************
    * Render
