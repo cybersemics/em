@@ -102,7 +102,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   /** Handle all mouse up events. */
   useEffect(() => {
     /** Method to handle the release of the mouse. There is a timeout to ensure the animation of the button completes.
-     *  Addtional logic in the timeout to handle when the user long-presses the icon. */
+     * Addtional logic in the timeout to handle when the user long-presses the icon. */
     const handleMouseUp = event => {
       setTimeout(
         () => {
@@ -119,7 +119,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [pressTime, onSelect])
+  }, [setPressTime])
 
   /**********************************************************************
    * Render
