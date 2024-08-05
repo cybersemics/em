@@ -100,7 +100,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, onTapUp],
+    [longPressTapUp, customize, isButtonExecutable, disabled],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
