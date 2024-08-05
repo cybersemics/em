@@ -19,7 +19,6 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapCancel?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   selected?: boolean
@@ -37,7 +36,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   isHovering,
   isPressing,
   lastScrollLeft,
-  onTapCancel,
   onTapDown,
   onTapUp,
   selected,
@@ -99,7 +97,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled],
+    [longPressTapUp, customize, isButtonExecutable, disabled, onTapUp],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -171,13 +169,13 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'transform 200ms ease-out, max-width 200ms ease-out, margin-left 200ms ease-out',
+          transition: 'transform 80ms ease-out, max-width 80ms ease-out, margin-left 80ms ease-out',
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
-        {...fastClick(tapUp, tapDown, onTapCancel ? e => onTapCancel(shortcutId, e) : undefined, touchMove)}
+        {...fastClick(tapUp, tapDown, undefined, touchMove)}
       >
         {
           // selected top dash
