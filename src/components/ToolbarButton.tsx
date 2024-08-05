@@ -49,7 +49,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   if (!shortcut) {
     throw new Error('Missing shortcut: ' + shortcutId)
   }
-  const { svg, exec, isActive, canExecute } = shortcut
+  const { svg, exec, canExecute } = shortcut
 
   if (!svg) {
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
