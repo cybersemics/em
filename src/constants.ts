@@ -227,6 +227,9 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   // 'toggleSplitView',
 ]
 
+/** Speed for the animation in the toolbar. */
+export const TOOLBAR_ANIMATION_SPEED = 100
+
 // Throttle editThought when user is typing.
 // See: thoughtChangeHandler in Editable.tsx.
 export const EDIT_THROTTLE = 500
