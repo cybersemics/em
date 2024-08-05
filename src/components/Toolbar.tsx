@@ -120,7 +120,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [pressTime])
+  }, [pressTime, onSelect])
 
   /**********************************************************************
    * Render
