@@ -17,12 +17,6 @@ const underline: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('underline'))
   },
-  isActive: getState => {
-    const state = getState()
-    if (!state.cursor) return false
-    const thought = getThoughtById(state, head(state.cursor))
-    return thought.value.includes('<u>')
-  },
 }
 
 export default underline

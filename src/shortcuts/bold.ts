@@ -17,12 +17,6 @@ const bold: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('bold'))
   },
-  isActive: getState => {
-    const state = getState()
-    if (!state.cursor) return false
-    const thought = getThoughtById(state, head(state.cursor))
-    return thought.value.includes('<b>') || thought.value.includes('<strong>')
-  },
 }
 
 export default bold
