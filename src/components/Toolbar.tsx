@@ -106,19 +106,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [updateArrows])
 
-  // deselect button when moving the cursor out of the toolbar
-  useEffect(() => {
-    const toolbarContainer = toolbarContainerRef.current
-    if (toolbarContainer) {
-      /** Handler to deselect the button when the cursor leaves the toolbar. */
-      const onMouseLeave = () => {
-        setPressingToolbarId(null)
-      }
-      toolbarContainer.addEventListener('mouseleave', onMouseLeave)
-      return () => toolbarContainer.removeEventListener('mouseleave', onMouseLeave)
-    }
-  }, [toolbarContainerRef])
-
   // disable pressing on drag
   useEffect(() => {
     if (isDraggingAny) {
@@ -198,6 +185,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   lastScrollLeft={lastScrollLeft}
                   onTapDown={selectPressingToolbarId}
                   onTapUp={onTapUp}
+                  onMouseLeave={deselectPressingToolbarId}
                   selected={selected === id}
                   shortcutId={id}
                 />
