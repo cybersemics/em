@@ -14,8 +14,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
-import { TOOLBAR_ANIMATION_SPEED } from '../constants'
+import { TOOLBAR_ANIMATION_SPEED, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -103,6 +102,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   /** Handle all mouse up events. */
   useEffect(() => {
+    /** Method to handle the release of the mouse. */
     const handleMouseUp = event => {
       setTimeout(
         () => {
