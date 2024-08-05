@@ -4,6 +4,7 @@ import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import { TOOLBAR_ANIMATION_SPEED } from '../constants'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
@@ -99,7 +100,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled],
+    [longPressTapUp, customize, isButtonExecutable, disabled, onTapUp],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -171,7 +172,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           }em`,
           position: 'relative',
           cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'transform 200ms ease-out, max-width 200ms ease-out, margin-left 200ms ease-out',
+          transition: `transform ${TOOLBAR_ANIMATION_SPEED}ms ease-out, max-width ${TOOLBAR_ANIMATION_SPEED}ms ease-out, margin-left ${TOOLBAR_ANIMATION_SPEED}ms ease-out`,
           // extend drop area down, otherwise the drop hover is blocked by the user's finger
           // must match toolbar marginBottom
           paddingBottom: isDraggingAny ? '7em' : 0,

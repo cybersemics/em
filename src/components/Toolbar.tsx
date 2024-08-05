@@ -15,6 +15,7 @@ import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { TOOLBAR_ANIMATION_SPEED } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -39,6 +40,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const [leftArrowElementClassName, setLeftArrowElementClassName] = useState<string | undefined>('hidden')
   const [rightArrowElementClassName, setRightArrowElementClassName] = useState<string | undefined>('shown')
   const [pressingToolbarId, setPressingToolbarId] = useState<string | null>(null)
+  const [pressTime, setPressTime] = useState<number>(0)
   const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
@@ -74,6 +76,11 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     [updateArrows],
   )
 
+  const onTapDown = useCallback((id: string) => {
+    setPressTime(Date.now())
+    setPressingToolbarId(id)
+  }, [])
+
   /**********************************************************************
    * Effects
    **********************************************************************/
@@ -94,12 +101,16 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [isDraggingAny, setPressingToolbarId])
 
+  /** Handle all mouse up events. */
   useEffect(() => {
-    /**
-     * Update isPressed when the drag is released outside of the toolbar.
-     * */
     const handleMouseUp = event => {
-      setPressingToolbarId(null)
+      setTimeout(
+        () => {
+          setPressingToolbarId(null)
+          onSelect?.(shortcutById(id))
+        },
+        Date.now() > pressTime + TOOLBAR_ANIMATION_SPEED ? 0 : TOOLBAR_ANIMATION_SPEED,
+      )
     }
 
     // Add mouseup event listener to the document
@@ -109,7 +120,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return () => {
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [])
+  }, [pressTime])
 
   /**********************************************************************
    * Render
@@ -121,18 +132,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     const userShortcutIds = getUserToolbar(state)
     return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)
-
-  const onTapCancel = useCallback(() => {
-    setPressingToolbarId(null)
-  }, [])
-
-  const onTapUp = useCallback(
-    id => {
-      setPressingToolbarId(null)
-      onSelect?.(shortcutById(id))
-    },
-    [onSelect],
-  )
 
   return (
     <CSSTransition
@@ -185,9 +184,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   isPressing={pressingToolbarId === id}
                   key={id}
                   lastScrollLeft={lastScrollLeft}
-                  onTapDown={setPressingToolbarId}
-                  onTapUp={onTapUp}
-                  onTapCancel={onTapCancel}
+                  onTapDown={onTapDown}
                   selected={selected === id}
                   shortcutId={id}
                 />
