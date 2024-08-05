@@ -18,7 +18,6 @@ export interface ToolbarButtonProps {
   fontSize: number
   isPressing: boolean
   lastScrollLeft: MutableRefObject<number>
-  onTapCancel?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   selected?: boolean
@@ -36,7 +35,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   isHovering,
   isPressing,
   lastScrollLeft,
-  onTapCancel,
   onTapDown,
   onTapUp,
   selected,
@@ -174,7 +172,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
           paddingBottom: isDraggingAny ? '7em' : 0,
         }}
         className='toolbar-icon'
-        {...fastClick(tapUp, tapDown, onTapCancel ? e => onTapCancel(shortcutId, e) : undefined, touchMove)}
+        {...fastClick(tapUp, tapDown, undefined, touchMove)}
       >
         {
           // selected top dash

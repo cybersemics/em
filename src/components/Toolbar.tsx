@@ -124,10 +124,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)
 
-  const onTapCancel = useCallback(() => {
-    deselectPressingToolbarId()
-  }, [deselectPressingToolbarId])
-
   const onTapUp = useCallback(
     id => {
       deselectPressingToolbarId()
@@ -189,7 +185,6 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   lastScrollLeft={lastScrollLeft}
                   onTapDown={selectPressingToolbarId}
                   onTapUp={onTapUp}
-                  onTapCancel={onTapCancel}
                   selected={selected === id}
                   shortcutId={id}
                 />
