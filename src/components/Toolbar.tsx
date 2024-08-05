@@ -107,8 +107,8 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, [updateArrows])
 
   // deselect button when moving the cursor out of the toolbar
-  const toolbarContainer = toolbarContainerRef.current
   useEffect(() => {
+    const toolbarContainer = toolbarContainerRef.current
     if (toolbarContainer) {
       /** Handler to deselect the button when the cursor leaves the toolbar. */
       const onMouseLeave = () => {
@@ -117,7 +117,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       toolbarContainer.addEventListener('mouseleave', onMouseLeave)
       return () => toolbarContainer.removeEventListener('mouseleave', onMouseLeave)
     }
-  }, [toolbarContainer])
+  }, [toolbarContainerRef])
 
   // disable pressing on drag
   useEffect(() => {
