@@ -14,15 +14,13 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
-import { TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
+import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
 import TriangleRight from './TriangleRight'
-
-const ANIMATION_MS = 80
 
 interface ToolbarProps {
   // places the toolbar into customize mode where buttons can be dragged and dropped.
@@ -56,7 +54,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   /** Deselects the toolbar button. */
   const deselectPressingToolbarId = useCallback(() => {
-    const delay = Math.max(0, ANIMATION_MS - (Date.now() - latestPress))
+    const delay = Math.max(0, TOOLBAR_PRESS_ANIMATION_DURATION - (Date.now() - latestPress))
     setTimeout(() => {
       setPressingToolbarId(null)
       setLatestPress(0)
