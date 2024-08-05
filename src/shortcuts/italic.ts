@@ -15,9 +15,7 @@ const italic: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('italic'))
   },
-  isActive: () => {
-    return false
-  },
+  // the activation logic for commands is located in ToolbarButton (isCommandActive)
 }
 
 export default italic

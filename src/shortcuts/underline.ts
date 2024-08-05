@@ -15,9 +15,7 @@ const underline: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('underline'))
   },
-  isActive: () => {
-    return false
-  },
+  // the activation logic for commands is located in ToolbarButton (isCommandActive)
 }
 
 export default underline

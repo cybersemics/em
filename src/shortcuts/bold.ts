@@ -15,9 +15,7 @@ const bold: Shortcut = {
   exec: dispatch => {
     dispatch(formatSelection('bold'))
   },
-  isActive: () => {
-    return false
-  },
+  // the activation logic for commands is located in ToolbarButton (isCommandActive)
 }
 
 export default bold

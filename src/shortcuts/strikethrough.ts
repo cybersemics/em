@@ -16,9 +16,7 @@ const strikethrough: Shortcut = {
     e.preventDefault()
     dispatch(formatSelection('strikethrough'))
   },
-  isActive: () => {
-    return false
-  },
+  // the activation logic for commands is located in ToolbarButton (isCommandActive)
 }
 
 export default strikethrough
