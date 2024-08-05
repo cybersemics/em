@@ -54,7 +54,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   /** Deselects the toolbar button. */
   const deselectPressingToolbarId = useCallback(() => {
-    const delay = Math.max(0, TOOLBAR_PRESS_ANIMATION_DURATION - (Date.now() - latestPress))
+    const timeSinceLastPress = Date.now() - latestPress
+    const timeUntilAnimationEnd = TOOLBAR_PRESS_ANIMATION_DURATION - timeSinceLastPress
+    // ensure that the delay is not negative
+    const delay = Math.max(0, timeUntilAnimationEnd)
     setTimeout(() => {
       setPressingToolbarId(null)
       setLatestPress(0)
