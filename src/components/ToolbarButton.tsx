@@ -1,4 +1,4 @@
-import React, { FC, MutableRefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { FC, MutableRefObject, useCallback, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
@@ -43,7 +43,6 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
   selected,
   shortcutId,
 }) => {
-  const toolbarButtonRef = useRef<HTMLDivElement>(null)
   const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
@@ -145,20 +144,11 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     [buttonError, colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
   )
 
-  // deselect button when moving the cursor off the button
-  useEffect(() => {
-    const toolbarButton = toolbarButtonRef.current
-    if (toolbarButton && onMouseLeave) {
-      toolbarButton.addEventListener('mouseleave', onMouseLeave)
-      return () => toolbarButton.removeEventListener('mouseleave', onMouseLeave)
-    }
-  }, [toolbarButtonRef, onMouseLeave])
-
   return dropTarget(
     dragSource(
       <div
         {...longPress.props}
-        ref={toolbarButtonRef}
+        onMouseLeave={onMouseLeave}
         aria-label={shortcut.label}
         key={shortcutId}
         title={`${shortcut.label}${buttonError ? '\nError: ' + buttonError : ''}`}
