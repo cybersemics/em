@@ -54,7 +54,9 @@ const Divider = ({ path }: { path: Path }) => {
 
       /** Find and set the max width of our selected elements. */
       const maxWidth = Math.max(
-        ...Array.from(elements).map(element => (element.querySelector('.thought') as HTMLElement).offsetWidth),
+        ...Array.from(elements)
+          .filter(element => treeNode.classList.contains('table-col1') === element.classList.contains('table-col1'))
+          .map(element => (element.querySelector('.thought') as HTMLElement).offsetWidth),
       )
 
       setWidth(maxWidth + DIVIDER_PLUS_PX)
