@@ -71,12 +71,12 @@ const freeThoughts = (state: State) => {
         ...(showContexts
           ? getContexts(state, getThoughtById(state, head(path)).value).flatMap(cxid => thoughtToPath(state, cxid))
           : []),
-      ]
+      ] as ThoughtId[]
     }),
     // preserve EM context
     ...getDescendantThoughtIds(state, EM_TOKEN),
     // preserve favorites contexts and their ancestors
-    ...(getLexeme(state, '=favorite')?.contexts || []).flatMap(cxid => thoughtToPath(state, cxid)),
+    ...((getLexeme(state, '=favorite')?.contexts || []).flatMap(cxid => thoughtToPath(state, cxid)) as ThoughtId[]),
   ])
 
   // iterate over the entire thoughtIndex, deleting thoughts that are no longer visible
