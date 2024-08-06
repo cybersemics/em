@@ -16,6 +16,7 @@ import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { TOOLBAR_ANIMATION_SPEED, TOOLBAR_DEFAULT_SHORTCUTS } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
+import { shortcutById } from '../shortcuts'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
@@ -77,6 +78,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const onTapDown = useCallback((id: string) => {
     setPressTime(Date.now())
     setPressingToolbarId(id)
+    onSelect?.(shortcutById(id))
   }, [])
 
   /**********************************************************************
