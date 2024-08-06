@@ -63,7 +63,7 @@ const CommandSearch: FC<{
 
   /** Handle command palette shortuts. */
   const onKeyDown = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       if (
         e.key === 'Escape' ||
         // manually check if the commandPalette shortcut is entered since global shortcuts are disabled while the command palette is open
@@ -446,10 +446,13 @@ const CommandPalette: FC = () => {
   )
 
   /** Execute the selected shortcut. */
-  const onExecuteSelected = useCallback(e => onExecute(e, selectedShortcut), [onExecute, selectedShortcut])
+  const onExecuteSelected = useCallback(
+    (e: KeyboardEvent) => onExecute(e, selectedShortcut),
+    [onExecute, selectedShortcut],
+  )
 
   /** Select shortcuts on hover. */
-  const onHover = useCallback((e, shortcut) => setSelectedShortcut(shortcut), [])
+  const onHover = useCallback((e: MouseEvent, shortcut: Shortcut) => setSelectedShortcut(shortcut), [])
 
   // Select the first shortcut when the input changes.
   useEffect(() => {
@@ -467,7 +470,7 @@ const CommandPalette: FC = () => {
 
   /** Select the previous shortcut in the list. */
   const onSelectUp = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
       if (selectedShortcut !== possibleShortcutsSorted[0]) {
@@ -480,7 +483,7 @@ const CommandPalette: FC = () => {
 
   /** Select the next shortcut in the list. */
   const onSelectDown = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
       if (selectedShortcut !== possibleShortcutsSorted[possibleShortcutsSorted.length - 1]) {
@@ -493,7 +496,7 @@ const CommandPalette: FC = () => {
 
   /** Select the first shortcut in the list. */
   const onSelectTop = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
       setSelectedShortcut(possibleShortcutsSorted[0])
@@ -503,7 +506,7 @@ const CommandPalette: FC = () => {
 
   /* Select the last shortcut in the list. */
   const onSelectBottom = useCallback(
-    e => {
+    (e: KeyboardEvent) => {
       e.preventDefault()
       e.stopPropagation()
       setSelectedShortcut(possibleShortcutsSorted[possibleShortcutsSorted.length - 1])
