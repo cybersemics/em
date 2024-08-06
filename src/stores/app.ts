@@ -10,6 +10,7 @@ import cursorChanged from '../redux-enhancers/cursorChanged'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
@@ -27,6 +28,7 @@ if (!appReducer) {
 }
 
 const middlewareEnhancer = applyMiddleware(
+  debuggingMiddleware,
   // prevent accidentally passing a reducer to the dispatch function (dev and test only)
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
