@@ -29,9 +29,7 @@
       "react-redux-default": ["./node_modules/react-redux"],
       "react-redux": ["./src/@types/react-redux.d.ts"],
       // react-split-pane types are missing the children prop, so we need to augment the shipped types
-      "react-split-pane": ["./src/@types/react-split-pane.d.ts"],
-      // react-dnd types are missing the children prop, so we need to augment the shipped types
-      "react-dnd": ["./src/@types/react-dnd.d.ts"]
+      "react-split-pane": ["./src/@types/react-split-pane.d.ts"]
     },
     "types": ["vitest/globals"]
   }
