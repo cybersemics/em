@@ -127,7 +127,6 @@ describe('render', () => {
   })
 })
 
-// TODO: findSubthoughts is broken after LayoutTree
 describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
     await dispatch([
@@ -169,9 +168,7 @@ describe('expansion', () => {
 
     // Select visable thoughts
     const thoughtContainers = screen.queryAllByTestId(/^thought/)
-
     const thoughtA = thoughtContainers[0]
-
     const bulletofThoughtA = within(thoughtA).getByLabelText('bullet')
 
     userEvent.click(bulletofThoughtA)
@@ -213,10 +210,9 @@ describe('expansion', () => {
     ])
 
     const thoughtContainers = screen.queryAllByTestId(/^thought/)
-
     const thoughtB = thoughtContainers[1]
-
     const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+
     userEvent.click(bulletofThoughtB)
 
     const thoughtCursor = await findCursor()
@@ -239,10 +235,9 @@ describe('expansion', () => {
     ])
 
     const thoughtContainers = screen.queryAllByTestId(/^thought/)
-
     const thoughtB = thoughtContainers[1]
-
     const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+
     userEvent.click(bulletofThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -266,10 +261,9 @@ describe('expansion', () => {
     ])
 
     const thoughtContainers = screen.queryAllByTestId(/^thought/)
-
     const thoughtB = thoughtContainers[1]
-
     const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+
     userEvent.click(bulletofThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -298,10 +292,9 @@ describe('expansion', () => {
     ])
 
     const thoughtContainers = screen.queryAllByTestId(/^thought/)
-
     const thoughtB = thoughtContainers[1]
-
     const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+
     userEvent.click(bulletofThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
