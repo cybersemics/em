@@ -2,6 +2,7 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtIndices from '../@types/ThoughtIndices'
 import Thunk from '../@types/Thunk'
 import Timestamp from '../@types/Timestamp'
 import editThought from '../actions/editThought'
@@ -25,7 +26,7 @@ import isRoot from '../util/isRoot'
 import { markdownToText } from '../util/markdownToText'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
-import roamJsonToBlocks from '../util/roamJsonToBlocks'
+import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
@@ -111,7 +112,7 @@ const importText = (
   "thoughtIndex": {
     "__ROOT__": {`)
   ) {
-    const thoughts = JSON.parse(text)
+    const thoughts = JSON.parse(text) as ThoughtIndices
     const stateNew = initialState()
     return {
       ...stateNew,
@@ -155,7 +156,7 @@ const importText = (
         : null,
     ])(state)
   } else {
-    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText)) : htmlToJson(convertedText)
+    const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText) as RoamPage[]) : htmlToJson(convertedText)
 
     const destIsLeaf = !anyChild(state, head(simplePath))
 
