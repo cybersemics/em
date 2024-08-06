@@ -1,3 +1,4 @@
+import DragAndDropType from './DragAndDropType'
 import DragShortcutZone from './DragShortcutZone'
 import Shortcut from './Shortcut'
 
@@ -5,6 +6,7 @@ import Shortcut from './Shortcut'
 interface DragToolbarItem {
   shortcut: Shortcut
   zone: DragShortcutZone
+  type: DragAndDropType
 }
 
 export default DragToolbarItem
