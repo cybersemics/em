@@ -1,9 +1,13 @@
+import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Timestamp from '../@types/Timestamp'
 import { clientId } from '../data-providers/yjs'
-import notNull from './notNull'
 import timestamp from './timestamp'
+
+/** Returns a shallow copy of an object with all keys that do not have a value of null. */
+const nonNullValues = <T>(o: Index<T>) =>
+  Object.keys(o).reduce((acc, key) => (o[key] !== null ? { ...acc, [key]: o[key] } : acc), {} as Index<T>)
 
 /** Returns a new Lexeme without the given context. */
 const removeContext = (
@@ -13,7 +17,7 @@ const removeContext = (
   lastUpdated: Timestamp = timestamp(),
 ): Lexeme => ({
   ...lexeme,
-  ...notNull({
+  ...nonNullValues({
     contexts: lexeme.contexts ? lexeme.contexts.filter(id => id !== thoughtId) : [],
     created: lexeme.created || lastUpdated,
     lastUpdated: lastUpdated,
