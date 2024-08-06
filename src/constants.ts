@@ -168,6 +168,7 @@ export const MAX_EXPAND_DEPTH = 10
 export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'undo',
   'redo',
+  'newThought',
   'favorite',
   'outdent',
   'indent',
@@ -217,7 +218,6 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   // 'newSubthought',
   // 'newSubthoughtTop',
   // 'newThoughtAbove',
-  // 'newThought',
   // 'newUncle',
   // 'proseView',
   // 'search',
