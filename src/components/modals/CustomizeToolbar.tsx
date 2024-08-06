@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
@@ -68,7 +69,7 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
 const DropToRemoveFromToolbar = ((component: FC<React.PropsWithChildren<ReturnType<typeof dropCollect>>>) =>
-  DropTarget('toolbar-button', { drop }, dropCollect)(component))(
+  DropTarget(DragAndDropType.ToolbarButton, { drop }, dropCollect)(component))(
   ({ dropTarget, isHovering, children, sourceZone }) => {
     const dispatch = useDispatch()
     const dragShortcut = useSelector(state => state.dragShortcut)

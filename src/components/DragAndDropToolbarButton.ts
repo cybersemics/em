@@ -7,6 +7,7 @@ import {
   DropTargetConnector,
   DropTargetMonitor,
 } from 'react-dnd'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
@@ -125,9 +126,9 @@ const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) =
 /** A draggable and droppable toolbar button. */
 const DragAndDropToolbarButton = (toolbarButton: FC<DraggableToolbarButtonProps>) =>
   DragSource(
-    'toolbar-button',
+    DragAndDropType.ToolbarButton,
     { canDrag, beginDrag, endDrag },
     dragCollect,
-  )(DropTarget('toolbar-button', { drop }, dropCollect)(toolbarButton))
+  )(DropTarget(DragAndDropType.ToolbarButton, { drop }, dropCollect)(toolbarButton))
 
 export default DragAndDropToolbarButton
