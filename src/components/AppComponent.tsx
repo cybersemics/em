@@ -85,7 +85,7 @@ const StyleInjector = ({
 const GlobalStyles = React.memo(({ styles }: { styles: [string, React.CSSProperties][] }) => {
   const [globalStyle, setGlobalStyle] = useState<Index<string>>({})
   const appendGlobalStyle = useCallback(
-    i => (css: string) => setGlobalStyle(globalStyle => ({ ...globalStyle, [i]: css })),
+    (i: number) => (css: string) => setGlobalStyle(globalStyle => ({ ...globalStyle, [i]: css })),
     [],
   )
   return (
