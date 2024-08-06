@@ -48,6 +48,9 @@ interface Shortcut {
   /** A readable, internal unique id. */
   id: ShortcutId
 
+  /** A function that returns true if the shortcut should be highlighted in the Toolbar. */
+  isActive?: (getState: () => State) => boolean
+
   /** When true, a small open dropdown indicator will be rendered beneath the icon. */
   isDropdownOpen?: (getState: () => State) => boolean
 
