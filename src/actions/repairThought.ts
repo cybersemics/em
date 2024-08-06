@@ -33,7 +33,7 @@ export const repairThoughtActionCreator =
           updateThoughts({
             thoughtIndexUpdates: {},
             lexemeIndexUpdates: {
-              [hashThought(cursorValue!)]: removeContext(state, cursorLexeme, id),
+              [hashThought(cursorValue!)]: removeContext(cursorLexeme, id),
             },
           }),
         )
@@ -55,7 +55,7 @@ export const repairThoughtActionCreator =
                   updateThoughts({
                     thoughtIndexUpdates: {},
                     lexemeIndexUpdates: {
-                      [hashThought(cursorValue!)]: removeContext(getState(), cursorLexeme, id),
+                      [hashThought(cursorValue!)]: removeContext(cursorLexeme, id),
                     },
                   }),
                   // add the missing thought to its parent
