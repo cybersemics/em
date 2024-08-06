@@ -145,6 +145,7 @@
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^12.1.5",
     "@testing-library/user-event": "^13.5.0",
+    "@total-typescript/ts-reset": "^0.5.1",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/classnames": "^2.3.1",
     "@types/clipboard": "^2.0.7",
