@@ -1,13 +1,19 @@
+import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
+import DragAndDropType from '../@types/DragAndDropType'
+import DragShortcutZone from '../@types/DragShortcutZone'
+import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
 import Shortcut from '../@types/Shortcut'
+import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { isTouch } from '../browser'
-import useDragAndDropShortcutRow from '../hooks/useDragAndDropShortcutRow'
+import { noop } from '../constants'
 import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut } from '../shortcuts'
+import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 
-export interface ShortcutRowProps {
+interface ShortcutRowProps {
   customize?: boolean
   indexInToolbar?: number | null
   onSelect?: (shortcut: Shortcut | null) => void
@@ -30,7 +36,24 @@ const ordinal = (n: number) => {
 /** Renders all of a shortcut's details as a table row. */
 const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
   const colors = useSelector(themeColors)
-  const { isDragging, dragSource } = useDragAndDropShortcutRow({ customize, shortcut })
+  const [{ isDragging }, dragSource] = useDrag({
+    item: {
+      shortcut: shortcut,
+      zone: DragShortcutZone.Remove,
+      type: DragAndDropType.ToolbarButton,
+    },
+    begin: (): DragToolbarItem => {
+      store.dispatch(dragShortcut(shortcut?.id || null))
+      return { shortcut: shortcut!, zone: DragShortcutZone.Remove, type: DragAndDropType.ToolbarButton }
+    },
+    canDrag: () => !!shortcut && !!customize,
+    end: () => store.dispatch(dragShortcut(null)),
+    collect: (monitor: DragSourceMonitor) => ({
+      dragPreview: noop,
+      isDragging: monitor.isDragging(),
+      zone: monitor.getItem()?.zone,
+    }),
+  })
 
   const description = useSelector(state => {
     if (!shortcut) return ''
