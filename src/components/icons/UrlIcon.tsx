@@ -11,8 +11,8 @@ const UrlIcon = () => {
       viewBox='0 0 30 30'
       style={{
         marginLeft: '2px',
-        marginTop: '-0.056em',
-        padding: '0.167em 0.167em 0.167em 0.056em',
+        // Make sure the icon doesn't take up extra space.
+        padding: '0.05em 0.167em 0.167em 0',
         cursor: 'pointer',
         pointerEvents: 'all',
       }}
