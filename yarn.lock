@@ -2900,6 +2900,11 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/quickjs-emscripten/-/quickjs-emscripten-0.23.0.tgz#db4ecfd499a9765ab24002c3b696d02e6d32a12c"
   integrity sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==
 
+"@total-typescript/ts-reset@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@total-typescript/ts-reset/-/ts-reset-0.5.1.tgz#93b0535d00faa588518bcfb0db30182e63e4f7af"
+  integrity sha512-AqlrT8YA1o7Ff5wPfMOL0pvL+1X+sw60NN6CcOCqs658emD6RfiXhF7Gu9QcfKBH7ELY2nInLhKSCWVoNL70MQ==
+
 "@trivago/prettier-plugin-sort-imports@^4.3.0":
   version "4.3.0"
   resolved "https://registry.yarnpkg.com/@trivago/prettier-plugin-sort-imports/-/prettier-plugin-sort-imports-4.3.0.tgz#725f411646b3942193a37041c84e0b2116339789"
