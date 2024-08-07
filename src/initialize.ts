@@ -1,8 +1,10 @@
 import _ from 'lodash'
 import moize from 'moize'
 import Context from './@types/Context'
+import Index from './@types/IndexType'
 import Lexeme from './@types/Lexeme'
 import PushBatch from './@types/PushBatch'
+import ReplicationCursor from './@types/ReplicationCursor'
 import State from './@types/State'
 import Thought from './@types/Thought'
 import Thunk from './@types/Thunk'
@@ -143,7 +145,7 @@ export const initialize = async () => {
     onUpdateThoughts: options => {
       store.dispatch(updateThoughtsActionCreator(options))
     },
-    getItem: (key: string) => JSON.parse(storage.getItem(key) || '{}'),
+    getItem: (key: string) => JSON.parse(storage.getItem(key) || '{}') as Index<ReplicationCursor>,
     setItem: (key: string, value: any) => storage.setItem(key, JSON.stringify(value)),
     tsid,
     tsidShared,
