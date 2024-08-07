@@ -25,6 +25,7 @@ const thought = (value: string): Thought => ({
   childrenMap: {},
   lastUpdated: timestamp(),
   updatedBy: '',
+  created: timestamp(),
 })
 
 it('compareNumberAndOther', () => {
