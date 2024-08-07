@@ -1,7 +1,12 @@
+import Commands from '../@types/Commands'
+import * as selection from '../device/selection'
+import pathToThought from '../selectors/pathToThought'
+import getThoughtCommands from '../util/getThoughtCommands'
+import store from './app'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state. */
-const commandStateStore = reactMinistore<Record<string, boolean | undefined>>({
+const commandStateStore = reactMinistore<Commands>({
   bold: false,
   italic: false,
   underline: false,
@@ -20,12 +25,19 @@ export const resetCommandState = () => {
 
 /** Updates the command state to the current state of the document. */
 export const updateCommandState = () => {
-  commandStateStore.update({
-    bold: document.queryCommandState('bold'),
-    italic: document.queryCommandState('italic'),
-    underline: document.queryCommandState('underline'),
-    strikethrough: document.queryCommandState('strikethrough'),
-  })
+  const state = store.getState()
+  if (!state.cursor) return
+  const thought = pathToThought(state, state.cursor)
+  const isActive = selection.isActive()
+  const action = isActive
+    ? {
+        bold: document.queryCommandState('bold'),
+        italic: document.queryCommandState('italic'),
+        underline: document.queryCommandState('underline'),
+        strikethrough: document.queryCommandState('strikethrough'),
+      }
+    : getThoughtCommands(thought.value)
+  commandStateStore.update(action)
 }
 
 export default commandStateStore
