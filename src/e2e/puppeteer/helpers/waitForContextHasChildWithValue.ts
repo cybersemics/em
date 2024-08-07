@@ -8,7 +8,7 @@ import { WindowEm } from '../../../initialize'
  */
 const waitForContextHasChildWithValue = async (page: Page, context: Context, childValue: string) =>
   await page.waitForFunction(
-    (context: [], childValue: string) =>
+    (context: Context, childValue: string) =>
       (window.em as WindowEm)
         .getAllChildrenAsThoughts(context)
         .some((thought: Thought) => thought.value === childValue) && (window.em as WindowEm).getLexeme(childValue),
