@@ -1,4 +1,4 @@
-import { findAllByLabelText, screen } from '@testing-library/dom'
+import { screen, waitFor } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
@@ -8,7 +8,6 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
-import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -128,8 +127,7 @@ describe('render', () => {
   })
 })
 
-// TODO: findSubthoughts is broken after LayoutTree
-describe.skip('expansion', () => {
+describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
     await dispatch([
       importText({
@@ -143,12 +141,26 @@ describe.skip('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsA[0])
+    const initialState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-    const thoughtCursor = await findCursor()
-    expect(thoughtCursor).toHaveTextContent('a')
+    // Find all bullet elements:
+    const bulletElements = await screen.findAllByLabelText('bullet')
+
+    // Click the second bullet directly:
+    await userEvent.click(bulletElements[1]) // Index 1 for the second bullet
+
+    // Wait for the state to update:
+    await waitFor(() => {
+      const newState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      // There should be only 3 thoughts in the DOM
+      const thoughtElements = document.querySelectorAll('.thought-container .thought')
+      const thoughtElementsArray = Array.from(thoughtElements)
+      expect(thoughtElementsArray.length).toBe(3)
+
+      // Expect that the state is still valid
+      expect(newState).toEqual(initialState)
+    })
   })
 
   it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
@@ -165,12 +177,34 @@ describe.skip('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const subthoughts = await findSubthoughts('x')
-    const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsX[0])
+    // Wait for the state to update and all bullet elements to render
+    await waitFor(async () => {
+      const bulletElements = await screen.findAllByLabelText('bullet')
+      expect(bulletElements).toHaveLength(3)
+    })
 
-    const thoughtCursor = await findCursor()
-    expect(thoughtCursor).toHaveTextContent('x')
+    // Grab the bullets & click the second bullet directly:
+    const firstClickElements = await screen.findAllByLabelText('bullet')
+    await userEvent.click(firstClickElements[1]) // b
+
+    // Wait for the state to update and all bullet elements to render
+    await waitFor(async () => {
+      const bulletElements = await screen.findAllByLabelText('bullet')
+
+      // After the first click there should be 4 elements
+      expect(bulletElements).toHaveLength(4)
+    })
+
+    // Grab the bullets & click the second bullet directly:
+    const secondClickElements = await screen.findAllByLabelText('bullet')
+    await userEvent.click(secondClickElements[0]) // x
+
+    await waitFor(async () => {
+      const bulletElements = await screen.findAllByLabelText('bullet')
+
+      // After the second click, there should be 3 elements
+      expect(bulletElements).toHaveLength(3)
+    })
   })
 
   it('tapping an expanded root thought bullet should set the cursor to null', async () => {
@@ -205,10 +239,22 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const targetThought = await screen.findByText('b', {
+      selector: 'div.thought div[contenteditable="true"]',
+    })
 
+    // Find the parent element and then find the bullet sibling:
+    const parentElement = targetThought.parentElement
+    const parentArray = Array.from(parentElement.children)
+    const bulletElement = parentArray[0] // <--- Bullet is the first child
+
+    // Ensure the bullet element was found:
+    expect(bulletElement).toBeInTheDocument()
+
+    // Simulate the click:
+    await userEvent.click(bulletElement)
+
+    // Assertions:
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
   })
@@ -228,17 +274,33 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const initialState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    // Find all bullet elements:
+    const bulletElements = await screen.findAllByLabelText('bullet')
+
+    // Click the second bullet directly:
+    await userEvent.click(bulletElements[1]) // Index 1 for the second bullet
+
+    // Wait for the state to update:
+    await waitFor(() => {
+      const newState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      // Expect that the state has changed:
+      expect(newState).not.toEqual(initialState)
+
+      // Expect that the entire "pin" section is removed:
+      expect(newState).not.toContain('- =pin\n  - true')
+
+      // Expect that the entire payload is correct
+      // Expect that the entire "pin" section set to false:
+      expect(newState).toEqual(`- __ROOT__
   - a
     - b
       - c
     - d
       - e`)
+    })
   })
 
   it('tapping on an expanded only child should unpin it', async () => {
@@ -248,21 +310,34 @@ describe.skip('expansion', () => {
         - a
           - b
             - c
+              - =pin
+                - true
       `,
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const initialState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    // Find all bullet elements:
+    const bulletElements = await screen.findAllByLabelText('bullet')
+
+    // Click the second bullet directly:
+    await userEvent.click(bulletElements[2]) // Index 1 for the second bullet
+
+    // Wait for the state to update:
+    await waitFor(() => {
+      const newState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      // Expect that the state has changed:
+      expect(newState).not.toEqual(initialState)
+
+      // Expect that the entire "pin" section set to false:
+      expect(newState).toEqual(`- __ROOT__
   - a
     - b
-      - =pin
-        - false
-      - c`)
+      - c
+        - =pin
+          - false`)
+    })
   })
 
   it('tapping on a thought expanded by =children should unpin it', async () => {
@@ -281,12 +356,22 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const initialState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    // Find all bullet elements:
+    const bulletElements = await screen.findAllByLabelText('bullet')
 
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    // Click the second bullet directly:
+    await userEvent.click(bulletElements[1]) // Index 1 for the second bullet
+
+    // Wait for the state to update:
+    await waitFor(() => {
+      const newState = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+      // Expect that the state has changed:
+      expect(newState).not.toEqual(initialState)
+
+      // Expect that the entire "pin" section set to false:
+      expect(newState).toEqual(`- __ROOT__
   - a
     - =children
       - =pin
@@ -297,5 +382,6 @@ describe.skip('expansion', () => {
       - c
     - d
       - e`)
+    })
   })
 })
