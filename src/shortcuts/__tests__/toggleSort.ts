@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/dom'
 import { findAllByPlaceholderText } from '@testing-library/react'
+import Context from '../../@types/Context'
 import SimplePath from '../../@types/SimplePath'
 import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
@@ -463,7 +464,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -490,7 +490,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -519,7 +518,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -880,7 +878,6 @@ describe.skip('DOM', () => {
         (dispatch, getState) =>
           dispatch(
             editThought({
-              context: ['test'],
               oldValue: 'a',
               newValue: '',
               path: contextToPath(getState(), ['test', 'a']) as SimplePath,
