@@ -1,4 +1,6 @@
+import Index from '../../@types/IndexType'
 import State from '../../@types/State'
+import Thought from '../../@types/Thought'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import createId from '../../util/createId'
@@ -43,7 +45,7 @@ it('contextToThoughtId', () => {
           rank: 0,
           updatedBy: '',
         },
-      },
+      } as Index<Thought>,
     },
   }
 
