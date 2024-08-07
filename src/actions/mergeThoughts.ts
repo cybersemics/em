@@ -88,7 +88,7 @@ const mergeThoughts = (
           // update Lexeme
           lexemeIndexUpdates: lexeme
             ? {
-                [key]: removeContext(state, lexeme, sourceThought.id),
+                [key]: removeContext(lexeme, sourceThought.id),
               }
             : {},
         }),

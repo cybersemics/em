@@ -87,7 +87,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   // The new Lexeme is typically the old Lexeme less the deleted context.
   // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
-  const lexemeWithoutContext = lexeme ? removeContext(state, lexeme, thoughtId) : null
+  const lexemeWithoutContext = lexeme ? removeContext(lexeme, thoughtId) : null
 
   const lexemeNew = persist
     ? lexemeWithoutContext?.contexts.length
@@ -131,7 +131,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
         // The new Lexeme is typically the old Lexeme less the deleted context.
         // However, during deallocation we should not remove a single context, which would create an invalid context superscript. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
-        const lexemeChildWithoutContext = lexemeChild ? removeContext(state, lexemeChild, child.id) : null
+        const lexemeChildWithoutContext = lexemeChild ? removeContext(lexemeChild, child.id) : null
         const lexemeChildNew = persist
           ? lexemeChildWithoutContext?.contexts.length
             ? lexemeChildWithoutContext

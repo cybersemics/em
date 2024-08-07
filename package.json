@@ -1,6 +1,6 @@
 {
   "name": "em",
-  "version": "300.30.9",
+  "version": "300.30.10",
   "author": "Raine Revere <raine@cybersemics.org>",
   "description": "A beautiful, minimalistic note-taking app for personal sensemaking.",
   "license": "NoHarm-draft",
@@ -64,8 +64,8 @@
     "resetMocks": false
   },
   "resolutions": {
-    "@typescript-eslint/eslint-plugin": "^7.7.0",
-    "@typescript-eslint/parser": "^7.7.0"
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0"
   },
   "dependencies": {
     "@capacitor/android": "^4.8.2",
@@ -93,10 +93,11 @@
     "immer": "^10.1.1",
     "ipfs-http-client": "^43.0.1",
     "lodash": "^4.17.21",
+    "marked": "^13.0.3",
     "moize": "^6.1.6",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.0.7",
-    "openai": "^4.52.3",
+    "openai": "^4.54.0",
     "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^3.1.0",
@@ -109,7 +110,7 @@
     "react-dom": "18.3.1",
     "react-error-boundary": "^4.0.13",
     "react-gravatar": "^2.6.3",
-    "react-native-gesture-handler": "^2.17.1",
+    "react-native-gesture-handler": "^2.18.1",
     "react-native-web": "^0.19.12",
     "react-redux": "^9.1.2",
     "react-signature-pad-wrapper": "^3.4.0",
@@ -153,7 +154,7 @@
     "@types/jest-image-snapshot": "^6.4.0",
     "@types/lodash": "^4.17.5",
     "@types/murmurhash3js": "^3.0.7",
-    "@types/node": "^20.14.2",
+    "@types/node": "^22.1.0",
     "@types/pluralize": "0.0.33",
     "@types/react": "^18.3.3",
     "@types/react-dnd-multi-backend": "^6.0.6",

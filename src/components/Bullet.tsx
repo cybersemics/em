@@ -57,6 +57,7 @@ const BulletLeaf = ({
         gray: missing,
         graypulse: pending,
       })}
+      data-bullet='leaf'
       ry={radius}
       rx={radius}
       cy='298'
@@ -104,6 +105,7 @@ const BulletParent = ({
   return (
     <path
       className={classNames({ 'glyph-fg': true, triangle: true, gray: childrenMissing, graypulse: pending })}
+      data-bullet='parent'
       style={{
         transformOrigin: calculateTransformOrigin(),
       }}

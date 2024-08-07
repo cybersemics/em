@@ -1,11 +1,11 @@
 import classNames from 'classnames'
 import React from 'react'
-import { ConnectDropTarget } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import testFlags from '../e2e/testFlags'
+import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -17,21 +17,15 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import strip from '../util/strip'
-import DragAndDropSubthoughts from './DragAndDropSubthoughts'
 import DragOnly from './DragOnly'
 
 /** The amount of space to shift the drop target to the right so the user's finger is not in the way on mobile (em). */
 const DROPEND_FINGERSHIFT = isTouch ? 5 : 0
 
-/** An identify function that returns the value passed to it. */
-const identity = <T,>(x: T): T => x
-
 /** The drop target at the end of the Subthoughts. The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts.  */
 const DropEnd = ({
   depth,
   distance,
-  dropTarget,
-  isHovering,
   // specifies if this is the last thought
   // renders the component with additional click area below and to the left since there are no thoughts below to obscure
   last,
@@ -39,8 +33,6 @@ const DropEnd = ({
 }: {
   depth: number
   distance?: number
-  dropTarget?: ConnectDropTarget
-  isHovering?: boolean
   last?: boolean
   path?: Path
 }) => {
@@ -51,6 +43,8 @@ const DropEnd = ({
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value)
   const dropHoverColor = useDropHoverColor(depth + 1)
+
+  const { isHovering, dropTarget } = useDragAndDropSubThought({ path })
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
 
   // a boolean indicating if the drop-hover component is shown
@@ -91,12 +85,13 @@ const DropEnd = ({
     return (isThoughtHovering || isSubthoughtsHovering) && compareReasonable(draggingThoughtValue, lastChildValue) > 0
   })
 
-  return (dropTarget || identity)(
+  return (
     <li
       className={classNames({
         'drop-end': true,
         last,
       })}
+      ref={dropTarget}
       style={{
         display: 'list-item',
         backgroundColor: testFlags.simulateDrop ? `hsl(170, 50%, ${20 + 5 * (depth % 2)}%)` : undefined,
@@ -134,13 +129,11 @@ const DropEnd = ({
           }}
         ></span>
       )}
-    </li>,
+    </li>
   )
 }
 
-const DragAndDropDropEnd = DragAndDropSubthoughts(DropEnd)
-
-const DropEndMemo = React.memo(DragAndDropDropEnd)
+const DropEndMemo = React.memo(DropEnd)
 DropEndMemo.displayName = 'DropEnd'
 
 /** DropEnd that is only rendered when a drag-and-drop is in progress.. */
