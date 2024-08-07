@@ -1,14 +1,14 @@
-import Commands from '../@types/Commands'
+import Commands, { commands } from '../@types/Commands'
 
 /**
- * This is a utility for creating opening and closing markup tags.
+ * This is a utility for creating opening and closing markup tag.
  */
-const createTag = (tag: string) => ({
-  open: `<${tag}>`,
-  close: `</${tag}>`,
+const createTag = (tags: string) => ({
+  open: `<${tags}>`,
+  close: `</${tags}>`,
 })
 
-const tag = {
+const tags = {
   bold: createTag('b'),
   italic: createTag('i'),
   underline: createTag('u'),
@@ -29,56 +29,51 @@ const getThoughtCommands = (thought: string): Commands => {
       strikethrough: false,
     }
   }
-  // Boolean values to track which commands have applied to the entire thought so far
-  let allBold = true
-  let allItalic = true
-  let allUnderline = true
-  let allStrikethrough = true
-  // Boolean values to track which commands apply at the cursor while walking through the thought
-  let bold = false
-  let italic = false
-  let underline = false
-  let strikethrough = false
-  // Walk through the thought until the end is reached, checking for markup tags
+  // Tracks which commands have applied to the entire thought so far
+  const matches: Commands = {
+    bold: true,
+    italic: true,
+    underline: true,
+    strikethrough: true,
+  }
+  // Tracks which commands apply at the cursor while walking through the thought
+  const cursor: Commands = {
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+  }
+  // Walk through the thought until the end is reached, checking for markup tag
   while (thought.length > 0) {
-    if (!bold && thought.startsWith(tag.bold.open)) {
-      bold = true
-      thought = thought.substring(tag.bold.open.length)
-    } else if (!italic && thought.startsWith(tag.italic.open)) {
-      italic = true
-      thought = thought.substring(tag.italic.open.length)
-    } else if (!underline && thought.startsWith(tag.underline.open)) {
-      underline = true
-      thought = thought.substring(tag.underline.open.length)
-    } else if (!strikethrough && thought.startsWith(tag.strikethrough.open)) {
-      strikethrough = true
-      thought = thought.substring(tag.strikethrough.open.length)
-    } else if (bold && thought.startsWith(tag.bold.close)) {
-      bold = false
-      thought = thought.substring(tag.bold.close.length)
-    } else if (italic && thought.startsWith(tag.italic.close)) {
-      italic = false
-      thought = thought.substring(tag.italic.close.length)
-    } else if (underline && thought.startsWith(tag.underline.close)) {
-      underline = false
-      thought = thought.substring(tag.underline.close.length)
-    } else if (strikethrough && thought.startsWith(tag.strikethrough.close)) {
-      strikethrough = false
-      thought = thought.substring(tag.strikethrough.close.length)
-    } else {
-      thought = thought.substring(1)
-      allBold &&= bold
-      allItalic &&= italic
-      allUnderline &&= underline
-      allStrikethrough &&= strikethrough
+    let foundTag = false
+    for (const command of commands) {
+      // Check for an opening tag and parse it
+      if (!cursor[command] && thought.startsWith(tags[command].open)) {
+        foundTag = true
+        cursor[command] = true
+        thought = thought.substring(tags[command].open.length)
+        continue
+      }
+      // Check for a closing tag and parse it
+      if (cursor[command] && thought.startsWith(tags[command].close)) {
+        foundTag = true
+        cursor[command] = false
+        thought = thought.substring(tags[command].close.length)
+        continue
+      }
+    }
+    // Check for more tags, to avoid parsing a subsequent character as a non-tag character
+    if (foundTag) {
+      continue
+    }
+    // Handle the next non-tag character
+    thought = thought.substring(1)
+    for (const command of commands) {
+      // The thought does not fully match the command if the character does not
+      matches[command] &&= cursor[command]
     }
   }
-  return {
-    bold: allBold,
-    italic: allItalic,
-    underline: allUnderline,
-    strikethrough: allStrikethrough,
-  }
+  return matches
 }
 
 export default getThoughtCommands
