@@ -255,6 +255,7 @@ const Bullet = ({
 
   return (
     <span
+      data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
       className={classNames({
         bullet: true,

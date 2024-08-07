@@ -1,8 +1,9 @@
-import { screen, within } from '@testing-library/dom'
+import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
@@ -129,6 +130,8 @@ describe('render', () => {
 
 describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
+    const unrankedPath = ['a', 'b']
+
     await dispatch([
       importText({
         text: `
@@ -138,21 +141,22 @@ describe('expansion', () => {
           - d
       `,
       }),
-      setCursor(['a', 'b']),
+      setCursor(unrankedPath),
     ])
 
-    const thoughts = screen.getAllByLabelText('tree-node')
+    const context = contextToPath(store.getState(), unrankedPath)
+    const pathOfThoughtB = context!.join('')
+    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
-    const subthoughtB = thoughts[1]
-    const bulletOfSubthoughtB = within(subthoughtB).getByLabelText('bullet')
-
-    userEvent.click(bulletOfSubthoughtB)
+    userEvent.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
   })
 
   it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
+    const unrankedPath = ['x', 'a', 'b', 'c']
+
     await dispatch([
       importText({
         text: `
@@ -163,15 +167,14 @@ describe('expansion', () => {
           - d
       `,
       }),
-      setCursor(['x', 'a', 'b', 'c']),
+      setCursor(unrankedPath),
     ])
 
-    // Select visable thoughts
-    const thoughtContainers = screen.queryAllByTestId(/^thought/)
-    const thoughtA = thoughtContainers[0]
-    const bulletofThoughtA = within(thoughtA).getByLabelText('bullet')
+    const context = contextToPath(store.getState(), unrankedPath)
+    const pathOfThoughtA = context?.slice(0, 2).join('')
+    const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
 
-    userEvent.click(bulletofThoughtA)
+    userEvent.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -209,9 +212,8 @@ describe('expansion', () => {
       }),
     ])
 
-    const thoughtContainers = screen.queryAllByTestId(/^thought/)
-    const thoughtB = thoughtContainers[1]
-    const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+    const bullets = await screen.findAllByLabelText('bullet')
+    const bulletofThoughtB = bullets[1]
 
     userEvent.click(bulletofThoughtB)
 
@@ -234,9 +236,8 @@ describe('expansion', () => {
       }),
     ])
 
-    const thoughtContainers = screen.queryAllByTestId(/^thought/)
-    const thoughtB = thoughtContainers[1]
-    const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+    const bullets = await screen.findAllByLabelText('bullet')
+    const bulletofThoughtB = bullets[1]
 
     userEvent.click(bulletofThoughtB)
 
@@ -260,11 +261,10 @@ describe('expansion', () => {
       }),
     ])
 
-    const thoughtContainers = screen.queryAllByTestId(/^thought/)
-    const thoughtB = thoughtContainers[1]
-    const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+    const bullets = await screen.findAllByLabelText('bullet')
+    const bulletOfThoughtB = bullets[1]
 
-    userEvent.click(bulletofThoughtB)
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -291,11 +291,10 @@ describe('expansion', () => {
       }),
     ])
 
-    const thoughtContainers = screen.queryAllByTestId(/^thought/)
-    const thoughtB = thoughtContainers[1]
-    const bulletofThoughtB = within(thoughtB).getByLabelText('bullet')
+    const bullets = await screen.findAllByLabelText('bullet')
+    const bulletOfThoughtB = bullets[1]
 
-    userEvent.click(bulletofThoughtB)
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
