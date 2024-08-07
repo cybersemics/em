@@ -28,6 +28,7 @@ it.skip('edit context value', async () => {
   const editableBM = await getFirstSubthought(editableB!)
   const editableBMTextContent = await editableBM.getProperty('textContent')
   expect(await editableBMTextContent?.jsonValue()).toBe('m')
+  // @ts-ignore
   await editableBM.asElement()!.click()
 
   // toggle context view
@@ -38,6 +39,7 @@ it.skip('edit context value', async () => {
   const editableBMA = await getFirstSubthought(editableBM)
   const editableBMATextContent = await editableBMA.getProperty('textContent')
   expect(await editableBMATextContent?.jsonValue()).toBe('a')
+  // @ts-ignore
   await editableBMA.asElement()!.click()
 
   // edit b/m~/a to "apple"
