@@ -110,7 +110,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   }, [])
 
   const onTapUp = useCallback(
-    id => {
+    (id: ShortcutId) => {
       setPressingToolbarId(null)
       onSelect?.(shortcutById(id))
     },
