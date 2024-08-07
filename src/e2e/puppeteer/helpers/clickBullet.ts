@@ -19,6 +19,7 @@ const clickBullet = async (page: Page, value: string) => {
 
   if (!bulletNode) throw new Error('Bullet node not found.')
 
+  // @ts-ignore - https://github.com/puppeteer/puppeteer/issues/8852
   await bulletNode.asElement()?.click()
 }
 
