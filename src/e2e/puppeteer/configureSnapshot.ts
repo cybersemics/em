@@ -31,7 +31,7 @@ export function createImageSnapshotConfig({ fileName }: { fileName: string }) {
     failureThreshold: 8,
     // custom identifier for snapshots based on the title of the test
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
-      return `${defaultIdentifier.replace('snapshot-ts-src-e-2-e-puppeteer-tests-snapshot-ts-', '').toLocaleLowerCase()}`
+      return `${defaultIdentifier.replace(`${fileName}-ts-src-e-2-e-puppeteer-tests-${fileName}-ts-`, '').toLocaleLowerCase()}`
     },
     // Setting snapshot directory to __image_snapshots__/{platform} to avoid conflicts between platforms.
     customSnapshotsDir: path.join(__dirname, '__tests__', '__image_snapshots__', snapshotDirectory, fileName),
