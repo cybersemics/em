@@ -185,6 +185,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
                   lastScrollLeft={lastScrollLeft}
                   onTapDown={selectPressingToolbarId}
                   onTapUp={onTapUp}
+                  onMouseLeave={deselectPressingToolbarId}
                   selected={selected === id}
                   shortcutId={id}
                 />

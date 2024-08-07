@@ -21,6 +21,7 @@ export interface ToolbarButtonProps {
   lastScrollLeft: MutableRefObject<number>
   onTapDown?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
   onTapUp?: (id: ShortcutId, e: React.MouseEvent | React.TouchEvent) => void
+  onMouseLeave?: () => void
   selected?: boolean
   shortcutId: ShortcutId
 }
@@ -34,6 +35,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   lastScrollLeft,
   onTapDown,
   onTapUp,
+  onMouseLeave,
   selected,
   shortcutId,
 }) => {
@@ -77,8 +79,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       const iconEl = e.target as HTMLElement
       const toolbarEl = iconEl.closest('.toolbar')!
       const scrolled = isTouch && Math.abs(lastScrollLeft.current - toolbarEl.scrollLeft) >= 5
-
-      if (!customize && isButtonExecutable && !disabled && !scrolled) {
+      if (!customize && isButtonExecutable && !disabled && !scrolled && isPressing) {
         exec(store.dispatch, store.getState, e, { type: 'toolbar' })
 
         // prevent Editable blur
@@ -94,7 +95,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [longPressTapUp, customize, isButtonExecutable, disabled, onTapUp],
+    [longPressTapUp, customize, isButtonExecutable, disabled, isPressing, onTapUp],
   )
 
   /** Handles the onMouseDown/onTouchEnd event. Updates lastScrollPosition for tapUp. */
@@ -170,6 +171,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         paddingBottom: isDraggingAny ? '7em' : 0,
       }}
       className='toolbar-icon'
+      onMouseLeave={onMouseLeave}
       {...fastClick(tapUp, tapDown, undefined, touchMove)}
     >
       {
