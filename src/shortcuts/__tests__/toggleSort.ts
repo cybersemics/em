@@ -1,6 +1,5 @@
 import { screen } from '@testing-library/dom'
 import { findAllByPlaceholderText } from '@testing-library/react'
-import Context from '../../@types/Context'
 import SimplePath from '../../@types/SimplePath'
 import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
