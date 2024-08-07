@@ -1,17 +1,12 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
-import { createImageSnapshotConfig } from '../configureSnapshot'
+import configureSnapshots from '../configureSnapshots'
 import helpers from '../helpers'
 
-// Get the full path of the current file
-const fullFilePath = __filename
-
-// Extract the file name from the full path
-const fileName = path.basename(fullFilePath).replace('.ts', '')
-
-/** Snapshot configurations to extend. */
-const toMatchImageSnapshot = createImageSnapshotConfig({ fileName })
-expect.extend({ toMatchImageSnapshot })
+// configure toMatchImageSnapshot to write the snapshots to __image_snapshots__/{platform}/{filename}
+expect.extend({
+  toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
+})
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 

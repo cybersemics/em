@@ -8,10 +8,13 @@ import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
 import os from 'os'
 import path from 'path'
 
-const snapshotDirectory = os.platform() === 'darwin' ? 'macos' : 'ubuntu'
-
 /** Configures snapshot test settings. */
-export function createImageSnapshotConfig({ fileName }: { fileName: string }) {
+function configureSnapshots({
+  fileName,
+}: {
+  /** The file name of the test file. This is used to group snapshots into an identically-named subdirectory under the platform directory. */
+  fileName: string
+}) {
   return configureToMatchImageSnapshot({
     /** Apply a Gaussian Blur on compared images (radius in pixels). Used to normalize small rendering differences between platforms. */
     // blur of 1.25 and threshold of 0.2 has false negatives
@@ -33,7 +36,15 @@ export function createImageSnapshotConfig({ fileName }: { fileName: string }) {
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
       return `${defaultIdentifier.replace(`${fileName}-ts-src-e-2-e-puppeteer-tests-${fileName}-ts-`, '').toLocaleLowerCase()}`
     },
-    // Setting snapshot directory to __image_snapshots__/{platform} to avoid conflicts between platforms.
-    customSnapshotsDir: path.join(__dirname, '__tests__', '__image_snapshots__', snapshotDirectory, fileName),
+    // Set snapshot directory to __image_snapshots__/{platform}/{filename} to avoid conflicts between platforms and group snapshots by test file.
+    customSnapshotsDir: path.join(
+      __dirname,
+      '__tests__',
+      '__image_snapshots__',
+      os.platform() === 'darwin' ? 'macos' : 'ubuntu',
+      fileName,
+    ),
   })
 }
+
+export default configureSnapshots
