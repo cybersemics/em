@@ -1,5 +1,8 @@
+import Index from '../../@types/IndexType'
+import Lexeme from '../../@types/Lexeme'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import Thought from '../../@types/Thought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import hashThought from '../../util/hashThought'
@@ -82,11 +85,11 @@ const importExport = (roamJson: RoamPage[]) => {
       thoughtIndex: {
         ...state.thoughts.thoughtIndex,
         ...thoughtIndex,
-      },
+      } as Index<Thought>,
       lexemeIndex: {
         ...state.thoughts.lexemeIndex,
         ...lexemeIndex,
-      },
+      } as Index<Lexeme>,
     },
   }
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -233,7 +236,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
   }
 
   const thoughtIndexEntries = keyValueBy(thoughtIndex, (key, thought) => ({
-    [thought.value]: thought,
+    [thought!.value]: thought,
   }))
 
   expect(thoughtIndexEntries).toMatchObject({
