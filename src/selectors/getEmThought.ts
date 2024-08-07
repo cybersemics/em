@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import moize from 'moize'
 import Context from '../@types/Context'
+import Index from '../@types/IndexType'
 import State from '../@types/State'
 import { EM_TOKEN } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
@@ -14,7 +15,7 @@ import getThoughtById from './getThoughtById'
 const LOCAL_KEY = 'EM_THOUGHTS'
 
 /** Initializes cache of local storage on startup. */
-const localStorageCache = JSON.parse(storage.getItem(LOCAL_KEY) || '{}')
+const localStorageCache = JSON.parse(storage.getItem(LOCAL_KEY) || '{}') as Index<string>
 
 /** Save cache to local storage (debounced). */
 const saveCache = _.debounce(() => {
@@ -43,7 +44,7 @@ const getEmThought = (state: State, context: Context | string): string | undefin
 
   // cache to local storage
   if (!cached) {
-    localStorageCache[key] = true
+    localStorageCache[key] = value
     saveCache()
   }
 
