@@ -1,15 +1,14 @@
-import { DragSourceMonitor, DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
+import { DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
-import DragToolbarItem from '../@types/DragToolbarItem'
 import Path from '../@types/Path'
+import ShortcutId from '../@types/ShortcutId'
 import SimplePath from '../@types/SimplePath'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
-import { ToolbarButtonProps } from '../components/ToolbarButton'
 import { EM_TOKEN } from '../constants'
 import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
@@ -19,46 +18,21 @@ import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 
-export type DraggableToolbarButtonProps = ToolbarButtonProps & {
+type DraggableToolbarButtonProps = {
   path: Path
   simplePath: SimplePath
-}
-
-/** Returns true if the toolbar-button can be dragged. */
-const canDrag = (props: ToolbarButtonProps) => !!props.customize
-
-/** Handles drag start. */
-const beginDrag = ({ shortcutId }: ToolbarButtonProps): DragToolbarItem => {
-  // const offset = selection.offset()
-  store.dispatch(dragShortcut(shortcutId))
-  const shortcut = shortcutById(shortcutId)
-  return { shortcut, zone: DragShortcutZone.Toolbar, type: DragAndDropType.ToolbarButton }
-}
-
-/** Handles drag end. */
-const endDrag = () => {
-  store.dispatch(dragShortcut(null))
-  // setTimeout(() => {
-  //   store.dispatch([
-  //     dragInProgress({ value: false }),
-  //     dragHold({ value: false }),
-  //     (dispatch, getState) => {
-  //       if (getState().alert?.alertType === AlertType.DragAndDropHint) {
-  //         dispatch(alert(null))
-  //       }
-  //     },
-  //   ])
-  // })
+  shortcutId: ShortcutId
+  customize?: boolean
 }
 
 /** Handles dropping a toolbar button on a DropTarget. */
-const drop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
+const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
   const { shortcut } = monitor.getItem()
   const from = shortcut
-  const to = shortcutById(props.shortcutId)!
+  const to = shortcutById(shortcutId)!
 
   // initialize EM/Settings/Toolbar/Visible with default shortcuts
   store.dispatch([
@@ -105,37 +79,34 @@ const drop = (props: ToolbarButtonProps, monitor: DropTargetMonitor) => {
   ])
 }
 
-/** Collects props from the DragSource. */
-const dragCollect = (monitor: DragSourceMonitor) => ({
-  isDragging: monitor.isDragging(),
-})
-
-/** Collects props from the DropTarget. */
-const dropCollect = (monitor: DropTargetMonitor) => ({
-  dropZone: DragShortcutZone.Toolbar,
-  isHovering: monitor.isOver({ shallow: true }),
-})
-
 /** A draggable and droppable toolbar button. */
-const useDragAndDropToolBarButton = (props: Partial<DraggableToolbarButtonProps>) => {
-  const propsTypes = props as DraggableToolbarButtonProps
-
+const useDragAndDropToolBarButton = ({ shortcutId, customize }: DraggableToolbarButtonProps) => {
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     item: {
-      shortcut: shortcutById(propsTypes.shortcutId),
+      shortcut: shortcutById(shortcutId),
       zone: DragShortcutZone.Toolbar,
       type: DragAndDropType.ToolbarButton,
     },
-    begin: () => beginDrag(propsTypes),
-    canDrag: () => canDrag(propsTypes),
-    end: () => endDrag(),
-    collect: dragCollect,
+    begin: () => {
+      // const offset = selection.offset()
+      store.dispatch(dragShortcut(shortcutId))
+      const shortcut = shortcutById(shortcutId)
+      return { shortcut, zone: DragShortcutZone.Toolbar, type: DragAndDropType.ToolbarButton }
+    },
+    canDrag: () => !!customize,
+    end: () => store.dispatch(dragShortcut(null)),
+    collect: monitor => ({
+      isDragging: monitor.isDragging(),
+    }),
   })
 
   const [{ isHovering }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
-    drop: (item, monitor) => drop(propsTypes, monitor),
-    collect: dropCollect,
+    drop: (item, monitor) => drop(shortcutId, monitor),
+    collect: monitor => ({
+      dropZone: DragShortcutZone.Toolbar,
+      isHovering: monitor.isOver({ shallow: true }),
+    }),
   })
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
