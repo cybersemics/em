@@ -13,13 +13,6 @@ import { AlertText, AlertType } from '../constants'
 import theme from '../selectors/theme'
 import store from '../stores/app'
 
-export interface QuickDropIconProps {
-  alertType: AlertType
-  Icon: FC<IconType>
-  onHoverMessage: string | ((state: State, zone: DragThoughtZone) => string)
-  drop: (monitor: DropTargetMonitor) => void
-}
-
 /** Creates the props for drop. */
 const dropCollect = (monitor: DropTargetMonitor) => ({
   isDragInProgress: !!monitor.getItem(),
@@ -27,10 +20,27 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
   isHovering: monitor.isOver({ shallow: true }),
 })
 
-/** The inner quick drop component that has been wrapped in a DropTarget. */
-const DroppableQuickDropIcon = ({ alertType, Icon, onHoverMessage, drop }: QuickDropIconProps) => {
+/** An icon that a thought can be dropped on to execute a command. */
+const QuickDropIcon = ({
+  alertType,
+  Icon,
+  onDrop,
+  onHoverMessage,
+}: {
+  alertType: AlertType
+  Icon: FC<IconType>
+  onDrop: (state: State, item: DragThoughtItem) => void
+  onHoverMessage: (state: State, zone: DragThoughtZone) => string
+}) => {
+  const dispatch = useDispatch()
   const dark = useSelector(state => theme(state) !== 'Light')
   const fontSize = useSelector(state => state.fontSize)
+
+  /** Invokes onDrop with the DragThoughtItem. */
+  const drop = (monitor: DropTargetMonitor) => {
+    dispatch(dragInProgress({ value: false }))
+    onDrop(store.getState(), monitor.getItem())
+  }
 
   const [{ isHovering, zone }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
@@ -69,49 +79,23 @@ const DroppableQuickDropIcon = ({ alertType, Icon, onHoverMessage, drop }: Quick
   )
 
   return (
-    <div
-      className='z-index-stack'
-      ref={dropTarget}
-      style={{
-        padding: '1em',
-        borderRadius: '999px 0 0 999px',
-        backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
-      }}
-    >
-      <Icon
-        size={fontSize * 1.5}
-        fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
-        // disable default .icon transition so that highlight is immediate
-        style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
-      />
-    </div>
-  )
-}
-
-/** An icon that a thought can be dropped on to execute a command. */
-const QuickDropIcon = ({
-  alertType,
-  Icon,
-  onDrop,
-  onHoverMessage,
-}: {
-  alertType: AlertType
-  Icon: FC<IconType>
-  onDrop: (state: State, item: DragThoughtItem) => void
-  onHoverMessage: (state: State, zone: DragThoughtZone) => string
-}) => {
-  const dispatch = useDispatch()
-
-  /** Invokes onDrop with the DragThoughtItem. */
-  const drop = (monitor: DropTargetMonitor) => {
-    dispatch(dragInProgress({ value: false }))
-    onDrop(store.getState(), monitor.getItem())
-  }
-
-  // const Drop = DropTarget('thought', { drop }, dropCollect)(DroppableQuickDropIcon)
-  return (
     <div style={{ marginBottom: 10 }}>
-      <DroppableQuickDropIcon alertType={alertType} drop={drop} Icon={Icon} onHoverMessage={onHoverMessage} />
+      <div
+        className='z-index-stack'
+        ref={dropTarget}
+        style={{
+          padding: '1em',
+          borderRadius: '999px 0 0 999px',
+          backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
+        }}
+      >
+        <Icon
+          size={fontSize * 1.5}
+          fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
+          // disable default .icon transition so that highlight is immediate
+          style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
+        />
+      </div>
     </div>
   )
 }
