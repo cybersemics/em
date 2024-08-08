@@ -130,7 +130,7 @@ const ThoughtContainer = ({
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const children = useSelector(
+  const children = useSelector<Thought[]>(
     state => (childrenForced ? childIdsToThoughts(state, childrenForced) : getChildrenRanked(state, head(simplePath))),
     // only compare id, value, and rank for re-renders
     equalChildren,

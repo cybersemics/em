@@ -17,11 +17,10 @@ it('types', () => {
     noDefault: { decode: (s: string | null) => 'noDefault' },
   })
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  type NonAny<T> = 0 extends 1 & T ? never : unknown
+  type NonAny<T> = T extends any ? (any extends T ? never : T) : T
 
   /** Asserts that a value is not typed as any. */
-  const assertNotAny = <T extends NonAny<T>>(value: T) => true
+  const assertNotAny = <T>(value: NonAny<T>) => true
 
   /** Asserts the type of an expression. */
   const assertType = <T>(value: T) => true

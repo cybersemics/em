@@ -19,6 +19,7 @@ it('contextToThoughtId', () => {
         [HOME_TOKEN]: {
           id: HOME_TOKEN,
           childrenMap: { [ids[0]]: ids[0] },
+          created: timestamp(),
           lastUpdated: timestamp(),
           value: HOME_TOKEN,
           rank: 0,
@@ -29,6 +30,7 @@ it('contextToThoughtId', () => {
           id: ids[0],
           value: 'A',
           childrenMap: { [ids[1]]: ids[1] },
+          created: timestamp(),
           lastUpdated: timestamp(),
           rank: 0,
           parentId: HOME_TOKEN,
@@ -38,6 +40,7 @@ it('contextToThoughtId', () => {
           id: ids[1],
           value: 'B',
           childrenMap: {},
+          created: timestamp(),
           lastUpdated: timestamp(),
           parentId: ids[0],
           rank: 0,

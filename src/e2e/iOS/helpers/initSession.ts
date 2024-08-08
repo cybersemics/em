@@ -2,9 +2,13 @@ import { Browser } from 'webdriverio'
 import waitForElement from '../helpers/waitForElement'
 import tap from './tap'
 
+declare module global {
+  const browser: Browser<'async'>
+}
+
 /** Returns a function that starts a new browserstack session and skips the tutorial. The function will reload the session after the first test. */
 const initSession = (): (() => Promise<Browser<'async'>>) => {
-  const mobileBrowser = browser as unknown as Browser<'async'>
+  const mobileBrowser = global.browser
   let isFirstTest = true
 
   return async () => {

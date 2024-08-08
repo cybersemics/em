@@ -12,7 +12,7 @@ const useSharedType = <T>(yobj: Y.AbstractType<T>): Index<ExtractYEvent<T>> => {
   const [state, setState] = useState<Index<ExtractYEvent<T>>>(yobj.toJSON())
 
   const updateState = useCallback(
-    async e => {
+    async () => {
       const stateNew: Index<ExtractYEvent<T>> = yobj.toJSON()
       setState((stateOld: Index<ExtractYEvent<T>>) => (!shallowEqual(stateNew, stateOld) ? stateNew : stateOld))
     },

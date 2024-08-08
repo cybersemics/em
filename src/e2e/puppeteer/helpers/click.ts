@@ -42,9 +42,9 @@ const click = async (
   if (!boundingBox) throw new Error('Bouding box of editable not found.')
 
   /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
+  const offsetCoordinates = (): Promise<{ x: number; y: number } | undefined> =>
     page.evaluate(
-      (node: HTMLElement, offset: number) => {
+      (node: HTMLElement, offset: number): { x: number; y: number } | undefined => {
         const textNode = node.firstChild
         if (!textNode || textNode.nodeName !== '#text') return
         const range = document.createRange()
@@ -55,7 +55,7 @@ const click = async (
           y: top + height / 2,
         }
       },
-      nodeHandle,
+      nodeHandle as unknown as HTMLElement,
       offset || 0,
     )
 

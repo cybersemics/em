@@ -73,7 +73,7 @@ const generateThought: Shortcut = {
     // generate thought
     let valueNew = thought.value
     const res = await fetch(import.meta.env.VITE_AI_URL!, { method: 'POST', body: input })
-    const { content, err } = await res.json()
+    const { content, err } = (await res.json()) as { content: string; err: { status: number; message: string } }
     if (err) {
       if (err.status === 429) {
         dispatch(alert('Rate limit reached. Please try again later.', { clearDelay: 3000 }))
