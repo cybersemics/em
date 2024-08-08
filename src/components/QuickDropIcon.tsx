@@ -1,6 +1,8 @@
 import { FC, useEffect } from 'react'
-import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { DropTargetMonitor, useDrop } from 'react-dnd'
+import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import IconType from '../@types/Icon'
@@ -11,30 +13,30 @@ import { AlertText, AlertType } from '../constants'
 import theme from '../selectors/theme'
 import store from '../stores/app'
 
+export interface QuickDropIconProps {
+  alertType: AlertType
+  Icon: FC<IconType>
+  onHoverMessage: string | ((state: State, zone: DragThoughtZone) => string)
+  drop: (monitor: DropTargetMonitor) => void
+}
+
 /** Creates the props for drop. */
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
+const dropCollect = (monitor: DropTargetMonitor) => ({
   isDragInProgress: !!monitor.getItem(),
   zone: monitor.getItem()?.zone || null,
   isHovering: monitor.isOver({ shallow: true }),
 })
 
 /** The inner quick drop component that has been wrapped in a DropTarget. */
-const DroppableQuickDropIcon = ({
-  alertType,
-  dropTarget,
-  Icon,
-  isDragInProgress,
-  isHovering,
-  onHoverMessage,
-  zone,
-}: {
-  alertType: AlertType
-  Icon: FC<IconType>
-  onHoverMessage: string | ((state: State, zone: DragThoughtZone) => string)
-} & ReturnType<typeof dropCollect>) => {
+const DroppableQuickDropIcon = ({ alertType, Icon, onHoverMessage, drop }: QuickDropIconProps) => {
   const dark = useSelector(state => theme(state) !== 'Light')
   const fontSize = useSelector(state => state.fontSize)
+
+  const [{ isHovering, zone }, dropTarget] = useDrop({
+    accept: [DragAndDropType.Thought, NativeTypes.FILE],
+    drop: (item, monitor) => drop(monitor),
+    collect: dropCollect,
+  })
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {
@@ -66,9 +68,10 @@ const DroppableQuickDropIcon = ({
     [isHovering],
   )
 
-  return dropTarget(
+  return (
     <div
       className='z-index-stack'
+      ref={dropTarget}
       style={{
         padding: '1em',
         borderRadius: '999px 0 0 999px',
@@ -81,7 +84,7 @@ const DroppableQuickDropIcon = ({
         // disable default .icon transition so that highlight is immediate
         style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
       />
-    </div>,
+    </div>
   )
 }
 
@@ -100,15 +103,15 @@ const QuickDropIcon = ({
   const dispatch = useDispatch()
 
   /** Invokes onDrop with the DragThoughtItem. */
-  const drop = (props: unknown, monitor: DropTargetMonitor) => {
+  const drop = (monitor: DropTargetMonitor) => {
     dispatch(dragInProgress({ value: false }))
     onDrop(store.getState(), monitor.getItem())
   }
 
-  const Drop = DropTarget('thought', { drop }, dropCollect)(DroppableQuickDropIcon)
+  // const Drop = DropTarget('thought', { drop }, dropCollect)(DroppableQuickDropIcon)
   return (
     <div style={{ marginBottom: 10 }}>
-      <Drop alertType={alertType} Icon={Icon} onHoverMessage={onHoverMessage} />
+      <DroppableQuickDropIcon alertType={alertType} drop={drop} Icon={Icon} onHoverMessage={onHoverMessage} />
     </div>
   )
 }
