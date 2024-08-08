@@ -1,13 +1,6 @@
-export enum Command {
-  bold = 'bold',
-  italic = 'italic',
-  underline = 'underline',
-  strikethrough = 'strikethrough',
-}
-
-export const commands = Object.values(Command)
+import FormattingCommand from './FormattingCommand'
 
 /** The set of commands applied to text (bold, italic, underline, strikethrough). */
-type CommandState = Record<Command, boolean>
+type CommandState = Record<FormattingCommand, boolean>
 
 export default CommandState

@@ -1,4 +1,7 @@
-import CommandState, { commands } from '../@types/CommandState'
+import CommandState from '../@types/CommandState'
+import FormattingCommand from '../@types/FormattingCommand'
+
+const commands = Object.values(FormattingCommand)
 
 /**
  * This is a utility for creating opening and closing markup tag.
