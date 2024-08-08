@@ -27,7 +27,6 @@ export const resetCommandState = () => {
 export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
-  const thought = pathToThought(state, state.cursor)
   const isActive = selection.isActive()
   const action = isActive
     ? {
@@ -36,7 +35,7 @@ export const updateCommandState = () => {
         underline: document.queryCommandState('underline'),
         strikethrough: document.queryCommandState('strikethrough'),
       }
-    : getThoughtCommands(thought.value)
+    : getThoughtCommands(pathToThought(state, state.cursor).value)
   commandStateStore.update(action)
 }
 
