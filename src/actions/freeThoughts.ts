@@ -69,9 +69,11 @@ const freeThoughts = (state: State) => {
         ...getAllChildren(state, head(path)),
         // preserve context view (including context ancestors)
         ...(showContexts
-          ? getContexts(state, getThoughtById(state, head(path)).value).flatMap(cxid => thoughtToPath(state, cxid))
+          ? (getContexts(state, getThoughtById(state, head(path)).value).flatMap(cxid =>
+              thoughtToPath(state, cxid),
+            ) as ThoughtId[])
           : []),
-      ] as ThoughtId[]
+      ]
     }),
     // preserve EM context
     ...getDescendantThoughtIds(state, EM_TOKEN),
