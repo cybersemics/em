@@ -2,9 +2,7 @@ import { DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
-import Path from '../@types/Path'
 import ShortcutId from '../@types/ShortcutId'
-import SimplePath from '../@types/SimplePath'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
@@ -17,13 +15,6 @@ import getRankBefore from '../selectors/getRankBefore'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
-
-type DraggableToolbarButtonProps = {
-  path: Path
-  simplePath: SimplePath
-  shortcutId: ShortcutId
-  customize?: boolean
-}
 
 /** Handles dropping a toolbar button on a DropTarget. */
 const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
@@ -80,7 +71,7 @@ const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
 }
 
 /** A draggable and droppable toolbar button. */
-const useDragAndDropToolbarButton = ({ shortcutId, customize }: DraggableToolbarButtonProps) => {
+const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: ShortcutId; customize?: boolean }) => {
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     item: {
       shortcut: shortcutById(shortcutId),
