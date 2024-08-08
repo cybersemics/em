@@ -27,8 +27,7 @@ export const resetCommandState = () => {
 export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
-  const isActive = selection.isActive()
-  const action = isActive
+  const action = selection.isActive()
     ? {
         bold: document.queryCommandState('bold'),
         italic: document.queryCommandState('italic'),
