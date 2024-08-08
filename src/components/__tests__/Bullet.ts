@@ -10,6 +10,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestA
 import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -143,7 +144,7 @@ describe('expansion', () => {
     ])
 
     const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = path!.join('')
+    const pathOfThoughtB = hashPath(path)
     const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
     userEvent.click(bulletOfThoughtB)
@@ -167,7 +168,7 @@ describe('expansion', () => {
     ])
 
     const path = contextToPath(store.getState(), ['x', 'a'])
-    const pathOfThoughtA = path?.join('')
+    const pathOfThoughtA = hashPath(path)
     const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
 
     userEvent.click(bulletOfThoughtA)
