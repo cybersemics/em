@@ -69,8 +69,11 @@ const getThoughtCommands = (thought: string): CommandState => {
     if (foundTag) {
       continue
     }
-    // Handle the next non-tag character
-    thought = thought.substring(1)
+    // Handle all of the subsequent non-tag characters
+    const nonTagCharacters = thought.match(/^[^<]+/)
+    // Default to parsing a single `<` character if it has been determined to be a non-tag character
+    const length = nonTagCharacters?.[0].length ?? 1
+    thought = thought.substring(length)
     for (const command of commands) {
       // The thought does not fully match the command if the character does not
       matches[command] &&= cursor[command]
