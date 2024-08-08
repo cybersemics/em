@@ -36,24 +36,24 @@ const ordinal = (n: number) => {
 /** Renders all of a shortcut's details as a table row. */
 const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
   const colors = useSelector(themeColors)
-  const [{ isDragging }, dragSource] = useDrag(() => ({
-    item: {
-      shortcut: shortcut,
-      zone: DragShortcutZone.Remove,
-      type: DragAndDropType.ToolbarButton,
-    },
-    begin: (): DragToolbarItem => {
+  const [{ isDragging }, dragSource] = useDrag({
+    type: DragAndDropType.ToolbarButton,
+    item: (): DragToolbarItem => {
       store.dispatch(dragShortcut(shortcut?.id || null))
-      return { shortcut: shortcut!, zone: DragShortcutZone.Remove, type: DragAndDropType.ToolbarButton }
+      return { shortcut: shortcut!, zone: DragShortcutZone.Remove }
     },
     canDrag: () => !!shortcut && !!customize,
     end: () => store.dispatch(dragShortcut(null)),
-    collect: (monitor: DragSourceMonitor) => ({
-      dragPreview: noop,
-      isDragging: monitor.isDragging(),
-      zone: monitor.getItem()?.zone,
-    }),
-  }))
+    collect: (monitor: DragSourceMonitor) => {
+      const item = monitor.getItem() as DragToolbarItem
+
+      return {
+        dragPreview: noop,
+        isDragging: monitor.isDragging(),
+        zone: item?.zone,
+      }
+    },
+  })
 
   const description = useSelector(state => {
     if (!shortcut) return ''

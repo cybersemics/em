@@ -69,11 +69,11 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
 const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) => {
-  const [{ isHovering, sourceZone }, dropTarget] = useDrop(() => ({
+  const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item, monitor) => drop(monitor),
     collect: dropCollect,
-  }))
+  })
   const dispatch = useDispatch()
   const dragShortcut = useSelector(state => state.dragShortcut)
 
