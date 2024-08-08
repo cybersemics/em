@@ -22,9 +22,9 @@ const tags = {
  * This determines which commands (bold, italic, underline, strikethrough)
  * apply to an entire thought string.
  */
-const getThoughtCommands = (thought: string): CommandState => {
-  // Special case to return early for empty thoughts, treated as having no commands applied
-  if (thought.length === 0) {
+const getCommandState = (value: string): CommandState => {
+  // Special case to return early for empty values, treated as having no commands applied
+  if (value.length === 0) {
     return {
       bold: false,
       italic: false,
@@ -32,36 +32,36 @@ const getThoughtCommands = (thought: string): CommandState => {
       strikethrough: false,
     }
   }
-  // Tracks which commands have applied to the entire thought so far
+  // Tracks which commands have applied to the entire value so far
   const matches: CommandState = {
     bold: true,
     italic: true,
     underline: true,
     strikethrough: true,
   }
-  // Tracks which commands apply at the cursor while walking through the thought
+  // Tracks which commands apply at the cursor while walking through the value
   const cursor: CommandState = {
     bold: false,
     italic: false,
     underline: false,
     strikethrough: false,
   }
-  // Walk through the thought until the end is reached, checking for markup tag
-  while (thought.length > 0) {
+  // Walk through the value until the end is reached, checking for markup tag
+  while (value.length > 0) {
     let foundTag = false
     for (const command of commands) {
       // Check for an opening tag and parse it
-      if (!cursor[command] && thought.startsWith(tags[command].open)) {
+      if (!cursor[command] && value.startsWith(tags[command].open)) {
         foundTag = true
         cursor[command] = true
-        thought = thought.substring(tags[command].open.length)
+        value = value.substring(tags[command].open.length)
         continue
       }
       // Check for a closing tag and parse it
-      if (cursor[command] && thought.startsWith(tags[command].close)) {
+      if (cursor[command] && value.startsWith(tags[command].close)) {
         foundTag = true
         cursor[command] = false
-        thought = thought.substring(tags[command].close.length)
+        value = value.substring(tags[command].close.length)
         continue
       }
     }
@@ -70,16 +70,16 @@ const getThoughtCommands = (thought: string): CommandState => {
       continue
     }
     // Handle all of the subsequent non-tag characters
-    const nonTagCharacters = thought.match(/^[^<]+/)
+    const nonTagCharacters = value.match(/^[^<]+/)
     // Default to parsing a single `<` character if it has been determined to be a non-tag character
     const length = nonTagCharacters?.[0].length ?? 1
-    thought = thought.substring(length)
+    value = value.substring(length)
     for (const command of commands) {
-      // The thought does not fully match the command if the character does not
+      // The value does not fully match the command if the character does not
       matches[command] &&= cursor[command]
     }
   }
   return matches
 }
 
-export default getThoughtCommands
+export default getCommandState

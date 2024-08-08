@@ -1,7 +1,7 @@
-import getThoughtCommands from '../getThoughtCommands'
+import getCommandState from '../getCommandState'
 
 it('empty thought', () => {
-  expect(getThoughtCommands('')).toStrictEqual({
+  expect(getCommandState('')).toStrictEqual({
     bold: false,
     italic: false,
     underline: false,
@@ -10,7 +10,7 @@ it('empty thought', () => {
 })
 
 it('bold thought', () => {
-  expect(getThoughtCommands('<b>text</b>')).toStrictEqual({
+  expect(getCommandState('<b>text</b>')).toStrictEqual({
     bold: true,
     italic: false,
     underline: false,
@@ -19,7 +19,7 @@ it('bold thought', () => {
 })
 
 it('italic thought', () => {
-  expect(getThoughtCommands('<i>text</i>')).toStrictEqual({
+  expect(getCommandState('<i>text</i>')).toStrictEqual({
     bold: false,
     italic: true,
     underline: false,
@@ -28,7 +28,7 @@ it('italic thought', () => {
 })
 
 it('underline thought', () => {
-  expect(getThoughtCommands('<u>text</u>')).toStrictEqual({
+  expect(getCommandState('<u>text</u>')).toStrictEqual({
     bold: false,
     italic: false,
     underline: true,
@@ -37,7 +37,7 @@ it('underline thought', () => {
 })
 
 it('strikethrough thought', () => {
-  expect(getThoughtCommands('<strike>text</strike>')).toStrictEqual({
+  expect(getCommandState('<strike>text</strike>')).toStrictEqual({
     bold: false,
     italic: false,
     underline: false,
@@ -46,7 +46,7 @@ it('strikethrough thought', () => {
 })
 
 it('partially styled thought', () => {
-  expect(getThoughtCommands('<b>Bold</b><i>Italic</i><u>Underline</u><strike>strikethrough</strike>')).toStrictEqual({
+  expect(getCommandState('<b>Bold</b><i>Italic</i><u>Underline</u><strike>strikethrough</strike>')).toStrictEqual({
     bold: false,
     italic: false,
     underline: false,
@@ -55,7 +55,7 @@ it('partially styled thought', () => {
 })
 
 it('fully styled thought', () => {
-  expect(getThoughtCommands('<b><i><u><strike>text</strike></u></i></b>')).toStrictEqual({
+  expect(getCommandState('<b><i><u><strike>text</strike></u></i></b>')).toStrictEqual({
     bold: true,
     italic: true,
     underline: true,

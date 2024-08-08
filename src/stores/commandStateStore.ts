@@ -1,7 +1,7 @@
 import CommandState from '../@types/CommandState'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
-import getThoughtCommands from '../util/getThoughtCommands'
+import getCommandState from '../util/getCommandState'
 import store from './app'
 import reactMinistore from './react-ministore'
 
@@ -34,7 +34,7 @@ export const updateCommandState = () => {
         underline: document.queryCommandState('underline'),
         strikethrough: document.queryCommandState('strikethrough'),
       }
-    : getThoughtCommands(pathToThought(state, state.cursor).value)
+    : getCommandState(pathToThought(state, state.cursor).value)
   commandStateStore.update(action)
 }
 
