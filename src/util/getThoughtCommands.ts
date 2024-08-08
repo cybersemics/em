@@ -1,4 +1,4 @@
-import Commands, { commands } from '../@types/Commands'
+import CommandState, { commands } from '../@types/CommandState'
 
 /**
  * This is a utility for creating opening and closing markup tag.
@@ -19,7 +19,7 @@ const tags = {
  * This determines which commands (bold, italic, underline, strikethrough)
  * apply to an entire thought string.
  */
-const getThoughtCommands = (thought: string): Commands => {
+const getThoughtCommands = (thought: string): CommandState => {
   // Special case to return early for empty thoughts, treated as having no commands applied
   if (thought.length === 0) {
     return {
@@ -30,14 +30,14 @@ const getThoughtCommands = (thought: string): Commands => {
     }
   }
   // Tracks which commands have applied to the entire thought so far
-  const matches: Commands = {
+  const matches: CommandState = {
     bold: true,
     italic: true,
     underline: true,
     strikethrough: true,
   }
   // Tracks which commands apply at the cursor while walking through the thought
-  const cursor: Commands = {
+  const cursor: CommandState = {
     bold: false,
     italic: false,
     underline: false,

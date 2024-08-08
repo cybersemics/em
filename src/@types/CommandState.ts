@@ -8,6 +8,6 @@ export enum Command {
 export const commands = Object.values(Command)
 
 /** The set of commands applied to text (bold, italic, underline, strikethrough). */
-type Commands = Record<Command, boolean>
+type CommandState = Record<Command, boolean>
 
-export default Commands
+export default CommandState

@@ -1,4 +1,4 @@
-import Commands from '../@types/Commands'
+import CommandState from '../@types/CommandState'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 import getThoughtCommands from '../util/getThoughtCommands'
@@ -6,7 +6,7 @@ import store from './app'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state. */
-const commandStateStore = reactMinistore<Commands>({
+const commandStateStore = reactMinistore<CommandState>({
   bold: false,
   italic: false,
   underline: false,
