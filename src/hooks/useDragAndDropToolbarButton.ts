@@ -72,7 +72,7 @@ const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
 
 /** A draggable and droppable toolbar button. */
 const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: ShortcutId; customize?: boolean }) => {
-  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+  const [{ isDragging }, dragSource, dragPreview] = useDrag(() => ({
     item: {
       shortcut: shortcutById(shortcutId),
       zone: DragShortcutZone.Toolbar,
@@ -89,16 +89,16 @@ const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: Sh
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-  })
+  }))
 
-  const [{ isHovering }, dropTarget] = useDrop({
+  const [{ isHovering }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item, monitor) => drop(shortcutId, monitor),
     collect: monitor => ({
       dropZone: DragShortcutZone.Toolbar,
       isHovering: monitor.isOver({ shallow: true }),
     }),
-  })
+  }))
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }

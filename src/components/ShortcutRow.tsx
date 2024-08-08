@@ -36,7 +36,7 @@ const ordinal = (n: number) => {
 /** Renders all of a shortcut's details as a table row. */
 const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
   const colors = useSelector(themeColors)
-  const [{ isDragging }, dragSource] = useDrag({
+  const [{ isDragging }, dragSource] = useDrag(() => ({
     item: {
       shortcut: shortcut,
       zone: DragShortcutZone.Remove,
@@ -53,7 +53,7 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
       isDragging: monitor.isDragging(),
       zone: monitor.getItem()?.zone,
     }),
-  })
+  }))
 
   const description = useSelector(state => {
     if (!shortcut) return ''

@@ -163,12 +163,12 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropSubThought = (props: Partial<DroppableSubthoughts>) => {
   const propsTypes = props as DroppableSubthoughts
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-  })
+  }))
 
   return { isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
