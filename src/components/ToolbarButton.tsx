@@ -4,13 +4,13 @@ import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
+import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
-import DragAndDropToolbarButton, { DraggableToolbarButtonProps } from './DragAndDropToolbarButton'
 
 export interface ToolbarButtonProps {
   // see ToolbarProps.customize
@@ -27,14 +27,10 @@ export interface ToolbarButtonProps {
 }
 
 /** A single button in the Toolbar. */
-const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
+const ToolbarButton: FC<ToolbarButtonProps> = ({
   customize,
   disabled,
-  dragSource,
-  dropTarget,
   fontSize,
-  isDragging,
-  isHovering,
   isPressing,
   lastScrollLeft,
   onTapCancel,
@@ -61,6 +57,7 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     useSelector(state => (customize ? selected : !isActive || isActive(() => state))) || (!customize && commandState)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
+  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,
@@ -145,89 +142,83 @@ const ToolbarButtonComponent: FC<DraggableToolbarButtonProps> = ({
     [buttonError, colors, dropToRemove, fontSize, isButtonActive, isButtonExecutable, isDragging, longPress.isPressed],
   )
 
-  return dropTarget(
-    dragSource(
-      <div
-        {...longPress.props}
-        aria-label={shortcut.label}
-        key={shortcutId}
-        title={`${shortcut.label}${buttonError ? '\nError: ' + buttonError : ''}`}
-        style={{
-          // animate maxWidth to avoid having to know the exact width of the toolbar icon
-          // maxWidth just needs to exceed the width
-          maxWidth: fontSize * 2,
-          ...(dropToRemove
-            ? {
-                // offset 1toolbar-icon padding
-                marginLeft: -10,
-                maxWidth: 10,
-              }
-            : null),
-          // offset top to avoid changing container height
-          // marginBottom: isPressing ? -10 : 0,
-          // top: isButtonExecutable && isPressing ? 10 : 0,
-          transform: `translateY(${
-            isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0
-          }em`,
-          position: 'relative',
-          cursor: isButtonExecutable ? 'pointer' : 'default',
-          transition: 'transform 200ms ease-out, max-width 200ms ease-out, margin-left 200ms ease-out',
-          // extend drop area down, otherwise the drop hover is blocked by the user's finger
-          // must match toolbar marginBottom
-          paddingBottom: isDraggingAny ? '7em' : 0,
-        }}
-        className='toolbar-icon'
-        {...fastClick(tapUp, tapDown, onTapCancel ? e => onTapCancel(shortcutId, e) : undefined, touchMove)}
-      >
-        {
-          // selected top dash
-          selected && !dropToRemove ? (
-            <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div>
-          ) : null
-        }
+  return (
+    <div
+      {...longPress.props}
+      aria-label={shortcut.label}
+      ref={node => dragSource(dropTarget(node))}
+      key={shortcutId}
+      title={`${shortcut.label}${buttonError ? '\nError: ' + buttonError : ''}`}
+      style={{
+        // animate maxWidth to avoid having to know the exact width of the toolbar icon
+        // maxWidth just needs to exceed the width
+        maxWidth: fontSize * 2,
+        ...(dropToRemove
+          ? {
+              // offset 1toolbar-icon padding
+              marginLeft: -10,
+              maxWidth: 10,
+            }
+          : null),
+        // offset top to avoid changing container height
+        // marginBottom: isPressing ? -10 : 0,
+        // top: isButtonExecutable && isPressing ? 10 : 0,
+        transform: `translateY(${isButtonExecutable && isPressing && !longPress.isPressed && !isDragging ? 0.25 : 0}em`,
+        position: 'relative',
+        cursor: isButtonExecutable ? 'pointer' : 'default',
+        transition: 'transform 200ms ease-out, max-width 200ms ease-out, margin-left 200ms ease-out',
+        // extend drop area down, otherwise the drop hover is blocked by the user's finger
+        // must match toolbar marginBottom
+        paddingBottom: isDraggingAny ? '7em' : 0,
+      }}
+      className='toolbar-icon'
+      {...fastClick(tapUp, tapDown, onTapCancel ? e => onTapCancel(shortcutId, e) : undefined, touchMove)}
+    >
+      {
+        // selected top dash
+        selected && !dropToRemove ? (
+          <div style={{ height: 2, backgroundColor: colors.highlight, width: fontSize }}></div>
+        ) : null
+      }
 
-        {
-          // drag-and-drop circle overlay
-          (longPress.isPressed || isDragging) && !dropToRemove && (
-            <div
-              style={{
-                borderRadius: 999,
-                width: fontSize * 1.75,
-                height: fontSize * 1.75,
-                backgroundColor: colors.gray33,
-                position: 'absolute',
-                top: 9,
-                left: 2,
-              }}
-            />
-          )
-        }
+      {
+        // drag-and-drop circle overlay
+        (longPress.isPressed || isDragging) && !dropToRemove && (
+          <div
+            style={{
+              borderRadius: 999,
+              width: fontSize * 1.75,
+              height: fontSize * 1.75,
+              backgroundColor: colors.gray33,
+              position: 'absolute',
+              top: 9,
+              left: 2,
+            }}
+          />
+        )
+      }
 
-        {
-          // drop hover
-          (isHovering || dropToRemove) && (
-            <div
-              style={{
-                borderRight: dropToRemove ? `dashed 1px ${colors.gray}` : undefined,
-                position: 'absolute',
-                top: fontSize / 2 + 3,
-                left: dropToRemove ? 15 : -2,
-                // match the height of the inverted button
-                height: fontSize * 1.5,
-                width: dropToRemove ? 2 : 3,
-                // dropToRemove uses dashed border instead of background color
-                backgroundColor: dropToRemove ? undefined : colors.highlight,
-              }}
-            />
-          )
-        }
-        <SVG size={fontSize} style={style} />
-      </div>,
-    ),
+      {
+        // drop hover
+        (isHovering || dropToRemove) && (
+          <div
+            style={{
+              borderRight: dropToRemove ? `dashed 1px ${colors.gray}` : undefined,
+              position: 'absolute',
+              top: fontSize / 2 + 3,
+              left: dropToRemove ? 15 : -2,
+              // match the height of the inverted button
+              height: fontSize * 1.5,
+              width: dropToRemove ? 2 : 3,
+              // dropToRemove uses dashed border instead of background color
+              backgroundColor: dropToRemove ? undefined : colors.highlight,
+            }}
+          />
+        )
+      }
+      <SVG size={fontSize} style={style} />
+    </div>
   )
 }
-
-// export drag and drop higher order toolbar button component
-const ToolbarButton = DragAndDropToolbarButton(ToolbarButtonComponent)
 
 export default ToolbarButton
