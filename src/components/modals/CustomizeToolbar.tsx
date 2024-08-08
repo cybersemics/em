@@ -29,7 +29,7 @@ import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
 
 /** Handles dropping a toolbar button on DropToRemoveFromToolbar. */
-const drop = (props: unknown, monitor: DropTargetMonitor) => {
+const drop = (monitor: DropTargetMonitor) => {
   const state = store.getState()
   const { shortcut } = monitor.getItem() as DragToolbarItem
   const from = shortcut
@@ -71,7 +71,7 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) => {
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
-    drop: (item, monitor) => drop({}, monitor),
+    drop: (item, monitor) => drop(monitor),
     collect: dropCollect,
   })
   const dispatch = useDispatch()
