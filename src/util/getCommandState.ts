@@ -39,8 +39,8 @@ const getCommandState = (value: string): CommandState => {
     underline: true,
     strikethrough: true,
   }
-  // Tracks which commands apply at the cursor while walking through the value
-  const cursor: CommandState = {
+  // Tracks which commands are currently applied while walking through the value
+  const currentCommandState: CommandState = {
     bold: false,
     italic: false,
     underline: false,
@@ -51,16 +51,16 @@ const getCommandState = (value: string): CommandState => {
     let foundTag = false
     for (const command of commands) {
       // Check for an opening tag and parse it
-      if (!cursor[command] && value.startsWith(tags[command].open)) {
+      if (!currentCommandState[command] && value.startsWith(tags[command].open)) {
         foundTag = true
-        cursor[command] = true
+        currentCommandState[command] = true
         value = value.substring(tags[command].open.length)
         continue
       }
       // Check for a closing tag and parse it
-      if (cursor[command] && value.startsWith(tags[command].close)) {
+      if (currentCommandState[command] && value.startsWith(tags[command].close)) {
         foundTag = true
-        cursor[command] = false
+        currentCommandState[command] = false
         value = value.substring(tags[command].close.length)
         continue
       }
@@ -76,7 +76,7 @@ const getCommandState = (value: string): CommandState => {
     value = value.substring(length)
     for (const command of commands) {
       // The value does not fully match the command if the character does not
-      matches[command] &&= cursor[command]
+      matches[command] &&= currentCommandState[command]
     }
   }
   return matches
