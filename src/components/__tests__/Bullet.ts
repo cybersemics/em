@@ -130,8 +130,6 @@ describe('render', () => {
 
 describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
-    const unrankedPath = ['a', 'b']
-
     await dispatch([
       importText({
         text: `
@@ -141,10 +139,11 @@ describe('expansion', () => {
           - d
       `,
       }),
-      setCursor(unrankedPath),
+      setCursor(['a', 'b']),
     ])
 
-    const context = contextToPath(store.getState(), unrankedPath)
+    const context = contextToPath(store.getState(), ['a', 'b'])
+
     const pathOfThoughtB = context!.join('')
     const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
@@ -155,8 +154,6 @@ describe('expansion', () => {
   })
 
   it('tapping the cursor bullet on an ancestor should collapse all descendants', async () => {
-    const unrankedPath = ['x', 'a', 'b', 'c']
-
     await dispatch([
       importText({
         text: `
@@ -167,10 +164,10 @@ describe('expansion', () => {
           - d
       `,
       }),
-      setCursor(unrankedPath),
+      setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const context = contextToPath(store.getState(), unrankedPath)
+    const context = contextToPath(store.getState(), ['x', 'a', 'b', 'c'])
     const pathOfThoughtA = context?.slice(0, 2).join('')
     const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
 
