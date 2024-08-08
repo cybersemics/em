@@ -211,7 +211,7 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
   const propsTypes = props as ThoughtContainerProps
 
-  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+  const [{ isDragging }, dragSource, dragPreview] = useDrag(() => ({
     item: {
       path: props.path as Path,
       simplePath: props.simplePath as SimplePath,
@@ -222,14 +222,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps>) => {
     canDrag: () => canDrag(propsTypes),
     end: () => endDrag(),
     collect: dragCollect,
-  })
+  }))
 
-  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop({
+  const [{ isHovering, isBeingHoveredOver, isDeepHovering }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-  })
+  }))
 
   return { isDragging, dragSource, dragPreview, isHovering, isBeingHoveredOver, isDeepHovering, dropTarget }
 }
