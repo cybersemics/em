@@ -151,7 +151,7 @@ const ModalCustomizeToolbar: FC = () => {
     >
       <h1 className='modal-title'>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
-        &lt{' '}
+        &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
           Back to Settings
         </a>
@@ -209,7 +209,7 @@ const ModalCustomizeToolbar: FC = () => {
       </DropToRemoveFromToolbar>
 
       <p style={{ marginTop: '2em', marginBottom: '2em' }}>
-        &lt{' '}
+        &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
           Back to Settings
         </a>
