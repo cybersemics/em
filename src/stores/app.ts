@@ -28,12 +28,13 @@ if (!appReducer) {
 }
 
 const middlewareEnhancer = applyMiddleware(
-  debuggingMiddleware,
   // prevent accidentally passing a reducer to the dispatch function (dev and test only)
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
+  // must go after the thunk middleware, otherwise the Puppeteer cursor test fails
+  debuggingMiddleware,
   pullQueue,
   scrollCursorIntoView,
   updateJumpHistory,
