@@ -129,7 +129,7 @@ describe('render', () => {
 })
 
 describe('expansion', () => {
-  it.only('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
+  it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
     await dispatch([
       importText({
         text: `
@@ -166,8 +166,8 @@ describe('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const path = contextToPath(store.getState(), ['x', 'a', 'b', 'c'])
-    const pathOfThoughtA = path?.slice(0, 2).join('')
+    const path = contextToPath(store.getState(), ['x', 'a'])
+    const pathOfThoughtA = path?.join('')
     const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
 
     userEvent.click(bulletOfThoughtA)
