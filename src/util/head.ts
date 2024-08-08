@@ -6,10 +6,9 @@ import ThoughtId from '../@types/ThoughtId'
  * as part of the brand resolution.
  */
 
-/** Gets the last ThoughtId or value in a Path or Context. */
 function head(list: SimplePath): ThoughtId
 function head<T>(list: T[]): T
-// eslint-disable-next-line jsdoc/require-jsdoc
+/** Gets the last ThoughtId or value in a Path or Context. */
 function head<T>(list: T[]): T {
   return list[list.length - 1]
 }
