@@ -71,12 +71,9 @@ const testData: RoamPage[] = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const { thoughtIndexUpdates: thoughtIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
-    state,
-    HOME_PATH as SimplePath,
-    thoughtsJSON,
-    { skipRoot: false },
-  )
+  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJSON(state, HOME_PATH as SimplePath, thoughtsJSON, {
+    skipRoot: false,
+  })
 
   const stateNew: State = {
     ...initialState(),
@@ -84,12 +81,12 @@ const importExport = (roamJson: RoamPage[]) => {
       ...state.thoughts,
       thoughtIndex: {
         ...state.thoughts.thoughtIndex,
-        ...thoughtIndex,
-      } as Index<Thought>,
+        ...(thoughtIndexUpdates as Index<Thought>),
+      },
       lexemeIndex: {
         ...state.thoughts.lexemeIndex,
-        ...lexemeIndex,
-      } as Index<Lexeme>,
+        ...(lexemeIndexUpdates as Index<Lexeme>),
+      },
     },
   }
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -216,12 +213,9 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const { thoughtIndexUpdates: thoughtIndex, lexemeIndexUpdates: lexemeIndex } = importJSON(
-    initialState(),
-    HOME_PATH as SimplePath,
-    blocks,
-    { skipRoot: false },
-  )
+  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJSON(initialState(), HOME_PATH as SimplePath, blocks, {
+    skipRoot: false,
+  })
 
   /** Gets the edit-time of a RoamBlock. */
   const editTimeOf = (value: string) => {
@@ -235,8 +229,8 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     return roamBlock?.['create-time'] || null
   }
 
-  const thoughtIndexEntries = keyValueBy(thoughtIndex, (key, thought) => ({
-    [thought!.value]: thought,
+  const thoughtIndexEntries = keyValueBy(thoughtIndexUpdates as Index<Thought>, (key, thought) => ({
+    [thought.value]: thought,
   }))
 
   expect(thoughtIndexEntries).toMatchObject({
@@ -251,7 +245,7 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     Spinach: { lastUpdated: editTimeOf('Spinach') },
   })
 
-  expect(lexemeIndex).toMatchObject({
+  expect(lexemeIndexUpdates).toMatchObject({
     // RoamPages acquire the edit time of their first child for thoughts
     // TODO: This differs from thoughtIndex incidentally. Should normalize the edit times used for thoughtIndex and lexemeIndex.
     [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
