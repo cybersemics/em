@@ -6,9 +6,9 @@ const commands = Object.values(FormattingCommand)
 /**
  * This is a utility for creating opening and closing markup tag.
  */
-const createTag = (tags: string) => ({
-  open: `<${tags}>`,
-  close: `</${tags}>`,
+const createTag = (tag: string) => ({
+  open: `<${tag}>`,
+  close: `</${tag}>`,
 })
 
 const tags = {
