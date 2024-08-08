@@ -190,8 +190,11 @@ describe('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    userEvent.click(bullets[0])
+    const path = contextToPath(store.getState(), ['a'])
+    const pathOfThoughtA = hashPath(path)
+    const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
+
+    userEvent.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toBeNull()
@@ -209,10 +212,11 @@ describe('expansion', () => {
       }),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    const bulletofThoughtB = bullets[1]
+    const path = contextToPath(store.getState(), ['a', 'b'])
+    const pathOfThoughtB = hashPath(path)
+    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
-    userEvent.click(bulletofThoughtB)
+    userEvent.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
@@ -233,10 +237,11 @@ describe('expansion', () => {
       }),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    const bulletofThoughtB = bullets[1]
+    const path = contextToPath(store.getState(), ['a', 'b'])
+    const pathOfThoughtB = hashPath(path)
+    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
-    userEvent.click(bulletofThoughtB)
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -258,8 +263,9 @@ describe('expansion', () => {
       }),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    const bulletOfThoughtB = bullets[1]
+    const path = contextToPath(store.getState(), ['a', 'b'])
+    const pathOfThoughtB = hashPath(path)
+    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
     userEvent.click(bulletOfThoughtB)
 
@@ -288,8 +294,9 @@ describe('expansion', () => {
       }),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    const bulletOfThoughtB = bullets[1]
+    const path = contextToPath(store.getState(), ['a', 'b'])
+    const pathOfThoughtB = hashPath(path)
+    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
 
     userEvent.click(bulletOfThoughtB)
 
