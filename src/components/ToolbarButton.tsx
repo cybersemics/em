@@ -4,7 +4,7 @@ import DragShortcutZone from '../@types/DragShortcutZone'
 import Icon from '../@types/Icon'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
-import useDragAndDropToolBarButton from '../hooks/useDragAndDropToolbarButton'
+import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
 import { shortcutById } from '../shortcuts'
@@ -57,7 +57,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     useSelector(state => (customize ? selected : !isActive || isActive(() => state))) || (!customize && commandState)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
-  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolBarButton({ shortcutId, customize })
+  const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
   const dropToRemove = isDragging && dragShortcutZone === DragShortcutZone.Remove
   const longPress = useToolbarLongPress({
     disabled: !customize,

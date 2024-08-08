@@ -80,7 +80,7 @@ const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
 }
 
 /** A draggable and droppable toolbar button. */
-const useDragAndDropToolBarButton = ({ shortcutId, customize }: DraggableToolbarButtonProps) => {
+const useDragAndDropToolbarButton = ({ shortcutId, customize }: DraggableToolbarButtonProps) => {
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
     item: {
       shortcut: shortcutById(shortcutId),
@@ -112,4 +112,4 @@ const useDragAndDropToolBarButton = ({ shortcutId, customize }: DraggableToolbar
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }
 
-export default useDragAndDropToolBarButton
+export default useDragAndDropToolbarButton
