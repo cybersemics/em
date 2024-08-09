@@ -9,6 +9,24 @@ import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 
+/** Asserts that the cursor thought is valid. */
+const validateCursor = (stateNew: State) => {
+  const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
+  if (stateNew.cursor && !thought) {
+    const errorMessage = `Cursor thought does not exist: ${stateNew.cursor}`
+    console.error(errorMessage, {
+      cursor: stateNew.cursor,
+    })
+    throw new Error(errorMessage)
+  } else if (stateNew.cursor && isRoot(stateNew.cursor)) {
+    const errorMessage = `Cursor should be set to null, not [${HOME_TOKEN}]`
+    console.error(errorMessage, {
+      cursor: stateNew.cursor,
+    })
+    throw new Error(errorMessage)
+  }
+}
+
 /** Manages side effects from the cursor changing. */
 const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
@@ -16,26 +34,9 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     next(action)
     const stateNew = getState()
 
-    // validation
-    const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
-    if (stateNew.cursor && !thought) {
-      const errorMessage = `Cursor thought does not exist: ${stateNew.cursor}`
-      console.error(errorMessage, {
-        action,
-        cursor: stateNew.cursor,
-        previousCursor: stateOld.cursor,
-      })
-      throw new Error(errorMessage)
-    } else if (stateNew.cursor && isRoot(stateNew.cursor)) {
-      const errorMessage = `Cursor should be set to null, not [${HOME_TOKEN}]`
-      console.error(errorMessage, {
-        action,
-        cursor: stateNew.cursor,
-        previousCursor: stateOld.cursor,
-      })
-      throw new Error(errorMessage)
-    }
+    validateCursor(stateNew)
 
+    const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
     const value = thought?.value ?? null
 
     // clears the cursor selection if on divider or cursor is null.
