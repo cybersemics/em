@@ -39,18 +39,16 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
     const value = thought?.value ?? null
 
-    // clears the cursor selection if on divider or cursor is null.
-    const cursorCleared = // selection may still exist after jump to null
-      (!stateNew.cursor && selection.isThought()) ||
-      // clear selection when cursor is on divider
-      (!equalPath(stateOld.cursor, stateNew.cursor) && isDivider(value))
-
     // The live editing value is stored in a separate ministore to avoid Redux store churn.
     // When the cursor changes, update the editingValue store.
     editingValueStore.update(value)
 
-    // selection.clear() can trigger Editable.onBlur which leads to store.getState()
-    if (cursorCleared) {
+    // clear the browser selection if the cursor is on a divider or is null.
+    // Note: selection.clear() can trigger Editable.onBlur which leads to more actions
+    if (
+      (!stateNew.cursor && selection.isThought()) ||
+      (!equalPath(stateOld.cursor, stateNew.cursor) && isDivider(value))
+    ) {
       selection.clear()
     }
   }
