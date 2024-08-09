@@ -44,17 +44,14 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
       // clear selection when cursor is on divider
       (!equalPath(state.cursor, updatedState.cursor) && isDivider(value))
 
-    // defer till next tick because each of these side effects can trigger another state update
-    Promise.resolve().then(() => {
-      // The live editing value is stored in a separate ministore to avoid Redux store churn.
-      // When the cursor changes, update the editingValue store.
-      editingValueStore.update(value)
+    // The live editing value is stored in a separate ministore to avoid Redux store churn.
+    // When the cursor changes, update the editingValue store.
+    editingValueStore.update(value)
 
-      // selection.clear() can trigger Editable.onBlur which leads to store.getState()
-      if (cursorCleared) {
-        selection.clear()
-      }
-    })
+    // selection.clear() can trigger Editable.onBlur which leads to store.getState()
+    if (cursorCleared) {
+      selection.clear()
+    }
   }
 }
 
