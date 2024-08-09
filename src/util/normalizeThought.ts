@@ -57,7 +57,7 @@ const normalizeThought = moize(
       return s
     }
 
-    // Special case for single letters followed by 's'
+    // Avoid singularizing single letters followed by 's' so that 'as' does not match 'a'
     if (/^[a-z]s$/.test(strippedLowerCase)) {
       return strippedLowerCase
     }
