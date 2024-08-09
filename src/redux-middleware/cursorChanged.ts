@@ -12,26 +12,26 @@ import isRoot from '../util/isRoot'
 /** Manages side effects from the cursor changing. */
 const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
-    const state = getState()
+    const stateOld = getState()
     next(action)
-    const updatedState = getState()
+    const stateNew = getState()
 
     // validation
-    const thought = updatedState.cursor ? getThoughtById(updatedState, head(updatedState.cursor)) : null
-    if (updatedState.cursor && !thought) {
-      const errorMessage = `Cursor thought does not exist: ${updatedState.cursor}`
+    const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
+    if (stateNew.cursor && !thought) {
+      const errorMessage = `Cursor thought does not exist: ${stateNew.cursor}`
       console.error(errorMessage, {
         action,
-        cursor: updatedState.cursor,
-        previousCursor: state.cursor,
+        cursor: stateNew.cursor,
+        previousCursor: stateOld.cursor,
       })
       throw new Error(errorMessage)
-    } else if (updatedState.cursor && isRoot(updatedState.cursor)) {
+    } else if (stateNew.cursor && isRoot(stateNew.cursor)) {
       const errorMessage = `Cursor should be set to null, not [${HOME_TOKEN}]`
       console.error(errorMessage, {
         action,
-        cursor: updatedState.cursor,
-        previousCursor: state.cursor,
+        cursor: stateNew.cursor,
+        previousCursor: stateOld.cursor,
       })
       throw new Error(errorMessage)
     }
@@ -40,9 +40,9 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
 
     // clears the cursor selection if on divider or cursor is null.
     const cursorCleared = // selection may still exist after jump to null
-      (!updatedState.cursor && selection.isThought()) ||
+      (!stateNew.cursor && selection.isThought()) ||
       // clear selection when cursor is on divider
-      (!equalPath(state.cursor, updatedState.cursor) && isDivider(value))
+      (!equalPath(stateOld.cursor, stateNew.cursor) && isDivider(value))
 
     // The live editing value is stored in a separate ministore to avoid Redux store churn.
     // When the cursor changes, update the editingValue store.
