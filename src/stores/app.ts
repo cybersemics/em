@@ -9,6 +9,7 @@ import appReducer from '../actions/app'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import clearSelection from '../redux-middleware/clearSelection'
 import cursorChanged from '../redux-middleware/cursorChanged'
 import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
@@ -37,6 +38,7 @@ const middlewareEnhancer = applyMiddleware(
   debuggingMiddleware,
   pullQueue,
   scrollCursorIntoView,
+  clearSelection,
   cursorChanged,
   updateJumpHistory,
   updateUrlHistory,
