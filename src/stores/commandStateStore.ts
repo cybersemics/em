@@ -27,14 +27,17 @@ export const resetCommandState = () => {
 export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
-  const action = selection.isActive()
-    ? {
-        bold: document.queryCommandState('bold'),
-        italic: document.queryCommandState('italic'),
-        underline: document.queryCommandState('underline'),
-        strikethrough: document.queryCommandState('strikethrough'),
-      }
-    : getCommandState(pathToThought(state, state.cursor).value)
+
+  // document.queryCommandState is not defined in jsdom, so we need to make sure it exists
+  const action =
+    selection.isActive() && document.queryCommandState
+      ? {
+          bold: document.queryCommandState('bold'),
+          italic: document.queryCommandState('italic'),
+          underline: document.queryCommandState('underline'),
+          strikethrough: document.queryCommandState('strikethrough'),
+        }
+      : getCommandState(pathToThought(state, state.cursor).value)
   commandStateStore.update(action)
 }
 
