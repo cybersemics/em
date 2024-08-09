@@ -6,10 +6,10 @@ import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import appReducer from '../actions/app'
-import cursorChanged from '../redux-enhancers/cursorChanged'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import cursorChanged from '../redux-middleware/cursorChanged'
 import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
@@ -37,6 +37,7 @@ const middlewareEnhancer = applyMiddleware(
   debuggingMiddleware,
   pullQueue,
   scrollCursorIntoView,
+  cursorChanged,
   updateJumpHistory,
   updateUrlHistory,
   freeThoughts,
@@ -48,7 +49,6 @@ const store = createStore(
     middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
-    cursorChanged,
     // must go at the end to ensure it clears the pushQueue before other enhancers
     pushQueue,
   ),
