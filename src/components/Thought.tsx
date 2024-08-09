@@ -410,6 +410,7 @@ const ThoughtContainer = ({
           'thought-container': true,
           'single-line': !isEditing && isURL(value),
         })}
+        data-testid={'thought-' + hashPath(path)}
         style={{
           // ensure that ThoughtAnnotation is positioned correctly
           position: 'relative',
