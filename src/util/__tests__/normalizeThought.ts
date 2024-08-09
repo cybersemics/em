@@ -57,6 +57,10 @@ describe('html', () => {
   test('<b>text</b> should match text', () => {
     expect(normalizeThought('hello <b>world</b>')).toBe(normalizeThought('hello world'))
   })
+
+  test('bold with colon should match plain text', () => {
+    expect(normalizeThought('Hello')).toBe(normalizeThought('**Hello:**'))
+  })
 })
 
 describe('hyphen', () => {
@@ -105,6 +109,11 @@ describe('numbers', () => {
   test('ratios should be distinguished from numbers with the same digits', () => {
     expect(normalizeThought('1:2')).not.toBe(normalizeThought('12'))
   })
+  test('numbers with different decimal places should be distinguished', () => {
+    expect(normalizeThought('32')).not.toBe(normalizeThought('3.2'))
+    expect(normalizeThought('32')).not.toBe(normalizeThought('3, 2'))
+    expect(normalizeThought('3.2')).not.toBe(normalizeThought('3, 2'))
+  })
 })
 
 describe('plural', () => {
@@ -115,6 +124,10 @@ describe('plural', () => {
 
   test(`a lone 's' should not be considered plural`, () => {
     expect(normalizeThought('s')).not.toBe(normalizeThought(''))
+  })
+
+  test('single letters should not be pluralized', () => {
+    expect(normalizeThought('a')).not.toBe(normalizeThought('as'))
   })
 })
 

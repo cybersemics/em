@@ -26,6 +26,8 @@ const REGEX_NORMALIZE = new RegExp(
     '[:;!?](?=\\s|$)',
     /** Removes whitespace.  */
     '\\s',
+    /** Removes bold markdown and trailing colon. */
+    '\\*\\*|:\\*\\*$',
   ].join('|'),
   'gu',
 )
@@ -48,6 +50,17 @@ const normalizeThought = moize(
             .replace(/&/g, 'and')
 
     const strippedLowerCase = stripped.toLowerCase()
+
+    // Preserve number format, including decimal points and commas
+    if (/^-?\d+([.,]\d+)?$|^\d+,\s*\d+$/.test(strippedLowerCase)) {
+      // Return the original string to preserve the exact format
+      return s
+    }
+
+    // Avoid singularizing single letters followed by 's' so that 'as' does not match 'a'
+    if (/^[a-z]s$/.test(strippedLowerCase)) {
+      return strippedLowerCase
+    }
 
     // preserve lone 's', even though singularize would return ''
     // preserve lone emoji (Note: single emoji characters can have length > 1)
