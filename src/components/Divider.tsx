@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
+import attributeEquals from '../selectors/attributeEquals'
+import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
@@ -19,6 +21,8 @@ const Divider = ({ path }: { path: Path }) => {
   const dividerRef = createRef<HTMLDivElement>()
   const thoughtIndex = useSelector((state: State) => state.thoughts.thoughtIndex)
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
+
+  const isTableCol1 = attributeEquals(store.getState(), head(parentOf(path)), '=view', 'Table')
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -55,7 +59,8 @@ const Divider = ({ path }: { path: Path }) => {
       /** Find and set the max width of our selected elements. */
       const maxWidth = Math.max(
         ...Array.from(elements)
-          .filter(element => treeNode.classList.contains('table-col1') === element.classList.contains('table-col1'))
+          /** Filter out elements that don't share the same table column. */
+          .filter(element => isTableCol1 === element.classList.contains('table-col1'))
           .map(element => (element.querySelector('.thought') as HTMLElement).offsetWidth),
       )
 
