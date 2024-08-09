@@ -113,6 +113,7 @@ const Footer = () => {
   // })
 
   const firstUpdate = useRef(true)
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
   // alert when font size changes
   useEffect(() => {
@@ -123,7 +124,22 @@ const Footer = () => {
     } else {
       firstUpdate.current = false
     }
-  }, [dispatch, fontSize])
+  }, [dispatch, fontSize]);
+
+    useEffect(() => {
+    // Handle scroll position
+    const handleScroll = () => {
+      const distance = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+      setIsScrolledToBottom(distance);
+      document.documentElement.style.setProperty('--dynamic-bottom-margin', `${Math.min(distance, 20)}px`);
+
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // hide footer during tutorial
   // except for the last step that directs them to the Help link in the footer
