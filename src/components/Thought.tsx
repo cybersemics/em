@@ -411,6 +411,7 @@ const ThoughtContainer = ({
         ) : null}
 
         <div
+          data-testid={'thought-' + hashPath(path)}
           className={classNames({
             'thought-container': true,
             'single-line': !isEditing && isURL(value),

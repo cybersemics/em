@@ -1,4 +1,3 @@
-import { findAllByLabelText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
@@ -8,7 +7,7 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
-import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
+import { getBullet } from '../../test-helpers/queries/getBullet'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -128,8 +127,7 @@ describe('render', () => {
   })
 })
 
-// TODO: findSubthoughts is broken after LayoutTree
-describe.skip('expansion', () => {
+describe('expansion', () => {
   it('tapping an expanded cursor bullet should collapse the thought by moving the cursor up', async () => {
     await dispatch([
       importText({
@@ -143,9 +141,9 @@ describe.skip('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletsOfSubthoughtsA = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsA[0])
+    const bulletOfThoughtB = getBullet(['a', 'b'])
+
+    userEvent.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('a')
@@ -165,9 +163,9 @@ describe.skip('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const subthoughts = await findSubthoughts('x')
-    const bulletsOfSubthoughtsX = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletsOfSubthoughtsX[0])
+    const bulletOfThoughtA = getBullet(['x', 'a'])
+
+    userEvent.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('x')
@@ -186,8 +184,9 @@ describe.skip('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
-    const bullets = await screen.findAllByLabelText('bullet')
-    userEvent.click(bullets[0])
+    const bulletOfThoughtA = getBullet(['a'])
+
+    userEvent.click(bulletOfThoughtA)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toBeNull()
@@ -205,9 +204,9 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const bulletOfThoughtB = getBullet(['a', 'b'])
+
+    userEvent.click(bulletOfThoughtB)
 
     const thoughtCursor = await findCursor()
     expect(thoughtCursor).toHaveTextContent('b')
@@ -228,9 +227,9 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const bulletOfThoughtB = getBullet(['a', 'b'])
+
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -252,9 +251,9 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const bulletOfThoughtB = getBullet(['a', 'b'])
+
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
@@ -281,9 +280,9 @@ describe.skip('expansion', () => {
       }),
     ])
 
-    const subthoughts = await findSubthoughts('a')
-    const bulletB = await findAllByLabelText(subthoughts[0], 'bullet')
-    userEvent.click(bulletB[0])
+    const bulletOfThoughtB = getBullet(['a', 'b'])
+
+    userEvent.click(bulletOfThoughtB)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exported).toEqual(`- __ROOT__
