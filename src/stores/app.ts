@@ -10,13 +10,13 @@ import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
-import cursorChanged from '../redux-middleware/cursorChanged'
 import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
+import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateJumpHistory from '../redux-middleware/updateJumpHistory'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
@@ -39,7 +39,7 @@ const middlewareEnhancer = applyMiddleware(
   pullQueue,
   scrollCursorIntoView,
   clearSelection,
-  cursorChanged,
+  updateEditingValue,
   updateJumpHistory,
   updateUrlHistory,
   freeThoughts,
