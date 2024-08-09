@@ -152,7 +152,7 @@ describe('quotes', () => {
     expect(normalizeThought(`dog's`)).toBe(normalizeThought('dogs'))
   })
   test('curly quotes are ignored', () => {
-    expect(normalizeThought(`dog's`)).toBe(normalizeThought('dogs'))
+    expect(normalizeThought(`dog’s`)).toBe(normalizeThought('dogs'))
   })
 })
 
