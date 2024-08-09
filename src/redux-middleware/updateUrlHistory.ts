@@ -8,6 +8,7 @@ import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
 import isContextViewActive from '../selectors/isContextViewActive'
+import { updateCommandState } from '../stores/commandStateStore'
 import storageModel from '../stores/storageModel'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
@@ -28,8 +29,11 @@ const THROTTLE_MIDDLEWARE = 100
 /** Only write the cursor every 100 ms. */
 const SAVE_CURSOR_THROTTLE = 100
 
-// The last path that is passed to updateUrlHistory that is different from the current path. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
+// The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
+
+/** The last cursor value. Updated immediately on every action. */
+let cursorPrev: Path | null = null
 
 /** Encodes context array into a URL. */
 const pathToUrl = (state: State, path: Path) => {
@@ -121,7 +125,7 @@ const updateUrlHistory = (state: State, path: Path, { replace, contextViews }: O
   }
 }
 
-// throttle updateUrlHistory and passes it a fresh state when it is called.
+// throttles updateUrlHistory and passes it a fresh state when it is called.
 const updateUrlHistoryThrottled = _.throttle(getState => {
   const state = getState()
   updateUrlHistory(state, state.cursor)
@@ -132,6 +136,14 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
     next(action)
     updateUrlHistoryThrottled(getState)
+
+    // Update the command state whenever the cursor changes.
+    // Otherwise the command state will not update when the cursor is moved with no selection (mobile only, when the keyboard is down), since updateCommandState is otherwise only called on selection change.
+    const cursor = getState().cursor
+    if (!equalPath(cursor, cursorPrev)) {
+      updateCommandState()
+    }
+    cursorPrev = cursor
   }
 }
 

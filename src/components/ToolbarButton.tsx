@@ -50,11 +50,18 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
   }
 
-  const commandState = commandStateStore.useSelector(state => state[shortcutId])
-  const isDraggingAny = useSelector(state => !!state.dragShortcut)
+  // Determine if the button should be shown in an active state. Precedence is as follows:
+  // 1. If customize toolbar, use selected state.
+  // 2. If a formatting command, use the command state (i.e. bold, italic, underline, strikethrough).
+  // 3. Otherwise, use the shortcut's isActive method.
+  const commandState = commandStateStore.useSelector(
+    state => state[shortcutId as keyof typeof state] as boolean | undefined,
+  )
+  const isShortcutActive = useSelector(state => !isActive || isActive(() => state))
+  const isButtonActive = customize ? selected : commandState !== undefined ? commandState : isShortcutActive
+
   const dragShortcutZone = useSelector(state => state.dragShortcutZone)
-  const isButtonActive =
-    useSelector(state => (customize ? selected : !isActive || isActive(() => state))) || (!customize && commandState)
+  const isDraggingAny = useSelector(state => !!state.dragShortcut)
   const buttonError = useSelector(state => (!customize && shortcut.error ? shortcut.error(() => state) : null))
   const isButtonExecutable = useSelector(state => customize || !canExecute || canExecute(() => state))
   const { isDragging, dragSource, isHovering, dropTarget } = useDragAndDropToolbarButton({ shortcutId, customize })
