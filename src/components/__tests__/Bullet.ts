@@ -1,16 +1,14 @@
-import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
+import { getBullet } from '../../test-helpers/queries/getBullet'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import hashPath from '../../util/hashPath'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -143,9 +141,7 @@ describe('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = hashPath(path)
-    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
+    const bulletOfThoughtB = getBullet(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -167,9 +163,7 @@ describe('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const path = contextToPath(store.getState(), ['x', 'a'])
-    const pathOfThoughtA = hashPath(path)
-    const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
+    const bulletOfThoughtA = getBullet(['x', 'a'])
 
     userEvent.click(bulletOfThoughtA)
 
@@ -190,9 +184,7 @@ describe('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
-    const path = contextToPath(store.getState(), ['a'])
-    const pathOfThoughtA = hashPath(path)
-    const bulletOfThoughtA = screen.getByTestId('bullet-' + pathOfThoughtA)
+    const bulletOfThoughtA = getBullet(['a'])
 
     userEvent.click(bulletOfThoughtA)
 
@@ -212,9 +204,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = hashPath(path)
-    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
+    const bulletOfThoughtB = getBullet(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -237,9 +227,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = hashPath(path)
-    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
+    const bulletOfThoughtB = getBullet(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -263,9 +251,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = hashPath(path)
-    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
+    const bulletOfThoughtB = getBullet(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -294,9 +280,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const path = contextToPath(store.getState(), ['a', 'b'])
-    const pathOfThoughtB = hashPath(path)
-    const bulletOfThoughtB = screen.getByTestId('bullet-' + pathOfThoughtB)
+    const bulletOfThoughtB = getBullet(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
