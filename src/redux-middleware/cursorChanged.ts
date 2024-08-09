@@ -27,6 +27,27 @@ const validateCursor = (stateNew: State) => {
   }
 }
 
+/** The live editing value is stored in a separate ministore to avoid Redux store churn. When the cursor changes, update the editingValue store. */
+const updateEditingValue = (stateNew: State) => {
+  const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
+  const value = thought?.value ?? null
+
+  editingValueStore.update(value)
+}
+
+/** Clear the browser selection if the cursor is on a divider or is null. */
+const clearSelection = (stateNew: State, stateOld: State) => {
+  const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
+  const value = thought?.value ?? null
+  if (
+    (!stateNew.cursor && selection.isThought()) ||
+    (!equalPath(stateOld.cursor, stateNew.cursor) && isDivider(value))
+  ) {
+    // selection.clear() can trigger Editable.onBlur which leads to more actions
+    selection.clear()
+  }
+}
+
 /** Manages side effects from the cursor changing. */
 const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
@@ -35,22 +56,8 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     const stateNew = getState()
 
     validateCursor(stateNew)
-
-    const thought = stateNew.cursor ? getThoughtById(stateNew, head(stateNew.cursor)) : null
-    const value = thought?.value ?? null
-
-    // The live editing value is stored in a separate ministore to avoid Redux store churn.
-    // When the cursor changes, update the editingValue store.
-    editingValueStore.update(value)
-
-    // clear the browser selection if the cursor is on a divider or is null.
-    // Note: selection.clear() can trigger Editable.onBlur which leads to more actions
-    if (
-      (!stateNew.cursor && selection.isThought()) ||
-      (!equalPath(stateOld.cursor, stateNew.cursor) && isDivider(value))
-    ) {
-      selection.clear()
-    }
+    updateEditingValue(stateNew)
+    clearSelection(stateNew, stateOld)
   }
 }
 
