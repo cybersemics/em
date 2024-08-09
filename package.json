@@ -28,7 +28,7 @@
     "cap:sync:prod": "npm run build && NODE_ENV=production cap sync",
     "start": "vite --host --port 3000",
     "build": "vite build",
-    "clean": "rm -rf ./node_modules/.cache && rm -rf .eslintcache",
+    "clean": "rm -rf ./node_modules/.cache && rm -rf ./node_modules/.vite && rm -rf .eslintcache",
     "deploy:major": "npm run lint && npm version major && npm run build && firebase deploy --only hosting",
     "deploy:minor": "npm run lint && npm version minor && npm run build && firebase deploy --only hosting",
     "deploy:patch": "npm run lint && npm version patch && npm run build && firebase deploy --only hosting",
