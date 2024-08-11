@@ -4,9 +4,10 @@ import store from '../../stores/app'
 import hashPath from '../../util/hashPath'
 
 /** Get the bullet of a thought with the context. */
-export const getBullet = (context: string[]): HTMLElement => {
+export const getBulletByContext = (context: string[]): HTMLElement => {
   const path = contextToPath(store.getState(), context)
   const pathOfThought = hashPath(path)
+  console.log({ pathOfThought })
   const bulletOfThought = screen.getByTestId('bullet-' + pathOfThought)
 
   return bulletOfThought

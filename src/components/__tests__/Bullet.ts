@@ -7,7 +7,7 @@ import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { findCursor } from '../../test-helpers/queries/findCursor'
-import { getBullet } from '../../test-helpers/queries/getBullet'
+import { getBulletByContext } from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -141,7 +141,7 @@ describe('expansion', () => {
       setCursor(['a', 'b']),
     ])
 
-    const bulletOfThoughtB = getBullet(['a', 'b'])
+    const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -163,7 +163,7 @@ describe('expansion', () => {
       setCursor(['x', 'a', 'b', 'c']),
     ])
 
-    const bulletOfThoughtA = getBullet(['x', 'a'])
+    const bulletOfThoughtA = getBulletByContext(['x', 'a'])
 
     userEvent.click(bulletOfThoughtA)
 
@@ -184,7 +184,7 @@ describe('expansion', () => {
       setCursor(['a', 'b', 'c']),
     ])
 
-    const bulletOfThoughtA = getBullet(['a'])
+    const bulletOfThoughtA = getBulletByContext(['a'])
 
     userEvent.click(bulletOfThoughtA)
 
@@ -204,7 +204,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const bulletOfThoughtB = getBullet(['a', 'b'])
+    const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -227,7 +227,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const bulletOfThoughtB = getBullet(['a', 'b'])
+    const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -251,7 +251,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const bulletOfThoughtB = getBullet(['a', 'b'])
+    const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
@@ -280,7 +280,7 @@ describe('expansion', () => {
       }),
     ])
 
-    const bulletOfThoughtB = getBullet(['a', 'b'])
+    const bulletOfThoughtB = getBulletByContext(['a', 'b'])
 
     userEvent.click(bulletOfThoughtB)
 
