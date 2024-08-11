@@ -19,6 +19,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
+import { getThoughtByContext } from '../../test-helpers/queries/getThoughtContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleSortShortcut from '../toggleSort'
 
@@ -330,31 +331,29 @@ describe('store', () => {
   })
 })
 
-// TODO: toggleSort DOM tests broke with LayoutTree since the DOM hierarchy changed.
 describe.skip('DOM', () => {
-  beforeEach(async () => {
-    await createTestApp()
-  })
+  beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
   describe('local', () => {
-    it('home: Asc', async () => {
+    it('none -> home: Asc', async () => {
       store.dispatch([
-        newThought({ value: 'c' }),
-        newThought({ value: 'a' }),
-        newThought({ value: 'b' }),
-        setCursor(null),
-
-        toggleAttribute({
-          path: HOME_PATH,
-          values: ['=sort', 'Alphabetical'],
+        importText({
+          text: `
+            - c
+            - a
+            - b
+          `,
         }),
+        setCursor(null),
       ])
 
-      const thought = await findThoughtByText('c')
-      expect(thought).toBeTruthy()
+      executeShortcut(toggleSortShortcut, { store })
 
-      const thoughts = await screen.findAllByPlaceholderText('Add a thought')
+      const thoughtC = getThoughtByContext(['c'])
+      expect(thoughtC).toBeTruthy()
+
+      const thoughts = screen.getAllByTestId(/thought/)
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['a', 'b', 'c'])
     })
