@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { createRef } from 'react'
-import { wrapInTestContext } from 'react-dnd-test-utils'
+import { DndProvider } from 'react-dnd'
+import { TestBackend } from 'react-dnd-test-backend'
 import { act } from 'react-dom/test-utils'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
@@ -24,10 +25,13 @@ const createTestApp = async () => {
     // const root = document.body.appendChild(document.createElement('div'))
 
     // using test drag and drop backend and context
-    const TestApp = wrapInTestContext(App)
     const dndRef = createRef<HTMLElement>()
 
-    render(<TestApp ref={dndRef} />)
+    render(
+      <DndProvider backend={TestBackend}>
+        <App />
+      </DndProvider>,
+    )
 
     store.dispatch([
       // skip tutorial
