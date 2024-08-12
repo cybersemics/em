@@ -207,7 +207,7 @@
     "redux-mock-store": "^1.5.4",
     "tcp-port-used": "^1.0.2",
     "typescript": "5.4.5",
-    "vite": "^5.3.4",
+    "vite": "^5.4.0",
     "vite-plugin-checker": "^0.7.2",
     "vite-plugin-pwa": "^0.20.0",
     "vitest": "^1.6.0",
