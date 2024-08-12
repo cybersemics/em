@@ -365,23 +365,18 @@ describe.skip('DOM', () => {
         newThought({ value: '1' }),
         newThought({ value: '2' }),
         setCursor(['a']),
-
-        (dispatch, getState) =>
-          dispatch(
-            toggleAttribute({
-              path: contextToPath(getState(), ['a']),
-              values: ['=sort', 'Alphabetical'],
-            }),
-          ),
       ])
 
-      const thought = await findThoughtByText('a')
+      executeShortcut(toggleSortShortcut, { store })
+
+      const thought = getThoughtByContext(['a'])
       expect(thought).toBeTruthy()
 
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+      const pathOfThoughtA = contextToPath(store.getState(), ['a'])
+      const matcherThoughtA = new RegExp(`thought-${pathOfThoughtA}[^"]+`)
+      const thoughts = screen.getAllByTestId(matcherThoughtA)
 
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
     })
 
     it('home: Desc', async () => {
