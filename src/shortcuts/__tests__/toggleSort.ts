@@ -381,31 +381,24 @@ describe.skip('DOM', () => {
 
     it('home: Desc', async () => {
       store.dispatch([
-        newThought({ value: 'c' }),
-        newThought({ value: 'a' }),
-        newThought({ value: 'b' }),
+        importText({
+          text: `
+            - =sort
+              - Alphabetical
+            -c
+            -a
+            -b`,
+        }),
+
         setCursor(null),
       ])
 
-      store.dispatch([
-        toggleAttribute({
-          path: HOME_PATH,
-          values: ['=sort', 'Alphabetical'],
-        }),
-        (dispatch, getState) =>
-          dispatch(
-            setFirstSubthought({
-              path: contextToPath(getState(), ['=sort', 'Alphabetical'])!,
-              value: 'Desc',
-            }),
-          ),
-      ])
+      executeShortcut(toggleSortShortcut, { store })
 
-      const thought = await findThoughtByText('c')
+      const thought = getThoughtByContext(['c'])
       expect(thought).toBeTruthy()
 
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
 
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
