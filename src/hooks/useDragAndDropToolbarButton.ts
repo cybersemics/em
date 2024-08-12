@@ -2,6 +2,7 @@ import { DropTargetMonitor, useDrag, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
+import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
@@ -21,7 +22,7 @@ const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
   // no bubbling
   if (monitor.didDrop() || !monitor.isOver({ shallow: true })) return
 
-  const { shortcut } = monitor.getItem()
+  const { shortcut } = monitor.getItem() as { shortcut: Shortcut; zone: DragShortcutZone }
   const from = shortcut
   const to = shortcutById(shortcutId)!
 
@@ -72,33 +73,28 @@ const drop = (shortcutId: ShortcutId, monitor: DropTargetMonitor) => {
 
 /** A draggable and droppable toolbar button. */
 const useDragAndDropToolbarButton = ({ shortcutId, customize }: { shortcutId: ShortcutId; customize?: boolean }) => {
-  const [{ isDragging }, dragSource, dragPreview] = useDrag(() => ({
-    item: {
-      shortcut: shortcutById(shortcutId),
-      zone: DragShortcutZone.Toolbar,
-      type: DragAndDropType.ToolbarButton,
-    },
-    begin: () => {
-      // const offset = selection.offset()
+  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+    type: DragAndDropType.ToolbarButton,
+    item: () => {
       store.dispatch(dragShortcut(shortcutId))
       const shortcut = shortcutById(shortcutId)
-      return { shortcut, zone: DragShortcutZone.Toolbar, type: DragAndDropType.ToolbarButton }
+      return { shortcut, zone: DragShortcutZone.Toolbar }
     },
     canDrag: () => !!customize,
     end: () => store.dispatch(dragShortcut(null)),
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-  }))
+  })
 
-  const [{ isHovering }, dropTarget] = useDrop(() => ({
+  const [{ isHovering }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
     drop: (item, monitor) => drop(shortcutId, monitor),
     collect: monitor => ({
       dropZone: DragShortcutZone.Toolbar,
       isHovering: monitor.isOver({ shallow: true }),
     }),
-  }))
+  })
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }

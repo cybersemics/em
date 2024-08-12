@@ -14,11 +14,15 @@ import theme from '../selectors/theme'
 import store from '../stores/app'
 
 /** Creates the props for drop. */
-const dropCollect = (monitor: DropTargetMonitor) => ({
-  isDragInProgress: !!monitor.getItem(),
-  zone: monitor.getItem()?.zone || null,
-  isHovering: monitor.isOver({ shallow: true }),
-})
+const dropCollect = (monitor: DropTargetMonitor) => {
+  const item = monitor.getItem() as DragThoughtItem
+
+  return {
+    isDragInProgress: !!monitor.getItem(),
+    zone: item?.zone || null,
+    isHovering: monitor.isOver({ shallow: true }),
+  }
+}
 
 /** An icon that a thought can be dropped on to execute a command. */
 const QuickDropIcon = ({
@@ -42,11 +46,11 @@ const QuickDropIcon = ({
     onDrop(store.getState(), monitor.getItem())
   }
 
-  const [{ isHovering, zone }, dropTarget] = useDrop(() => ({
+  const [{ isHovering, zone }, dropTarget] = useDrop({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     drop: (item, monitor) => drop(monitor),
     collect: dropCollect,
-  }))
+  })
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {
