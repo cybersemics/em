@@ -5,7 +5,6 @@ import Thunk from '../../@types/Thunk'
 import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { setFirstSubthoughtActionCreator as setFirstSubthought } from '../../actions/setFirstSubthought'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleSortActionCreator } from '../../actions/toggleSort'
 import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
@@ -19,6 +18,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
+import { getSubthoughtsByContext } from '../../test-helpers/queries/getSubthoughtsByContext'
 import { getThoughtByContext } from '../../test-helpers/queries/getThoughtContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleSortShortcut from '../toggleSort'
@@ -331,7 +331,7 @@ describe('store', () => {
   })
 })
 
-describe.skip('DOM', () => {
+describe('DOM', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
 
@@ -372,9 +372,7 @@ describe.skip('DOM', () => {
       const thought = getThoughtByContext(['a'])
       expect(thought).toBeTruthy()
 
-      const pathOfThoughtA = contextToPath(store.getState(), ['a'])
-      const matcherThoughtA = new RegExp(`thought-${pathOfThoughtA}[^"]+`)
-      const subthoughtsOfA = screen.getAllByTestId(matcherThoughtA)
+      const subthoughtsOfA = getSubthoughtsByContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
     })
@@ -403,7 +401,7 @@ describe.skip('DOM', () => {
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
 
-    it('subthoughts: Desc', async () => {
+    it.only('subthoughts: Desc', async () => {
       store.dispatch([
         newThought({ value: 'a' }),
         newThought({ value: '3', insertNewSubthought: true }),
@@ -418,9 +416,7 @@ describe.skip('DOM', () => {
       const thoughtA = getThoughtByContext(['a'])
       expect(thoughtA).toBeTruthy()
 
-      const pathOfThoughtA = contextToPath(store.getState(), ['a'])
-      const matcherThoughtA = new RegExp(`thought-${pathOfThoughtA}[^"]+`)
-      const subthoughtsOfA = screen.getAllByTestId(matcherThoughtA)
+      const subthoughtsOfA = getSubthoughtsByContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
     })
