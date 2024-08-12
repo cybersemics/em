@@ -374,9 +374,9 @@ describe.skip('DOM', () => {
 
       const pathOfThoughtA = contextToPath(store.getState(), ['a'])
       const matcherThoughtA = new RegExp(`thought-${pathOfThoughtA}[^"]+`)
-      const thoughts = screen.getAllByTestId(matcherThoughtA)
+      const subthoughtsOfA = screen.getAllByTestId(matcherThoughtA)
 
-      expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
+      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
     })
 
     it('home: Desc', async () => {
@@ -412,30 +412,17 @@ describe.skip('DOM', () => {
         setCursor(['a']),
       ])
 
-      store.dispatch([
-        (dispatch, getState) =>
-          dispatch(
-            toggleAttribute({
-              path: contextToPath(getState(), ['a']),
-              values: ['=sort', 'Alphabetical'],
-            }),
-          ),
-        (dispatch, getState) =>
-          dispatch(
-            setFirstSubthought({
-              path: contextToPath(getState(), ['a', '=sort', 'Alphabetical'])!,
-              value: 'Desc',
-            }),
-          ),
-      ])
+      executeShortcut(toggleSortShortcut, { store })
+      executeShortcut(toggleSortShortcut, { store })
 
-      const thought = await findThoughtByText('a')
-      expect(thought).toBeTruthy()
+      const thoughtA = getThoughtByContext(['a'])
+      expect(thoughtA).toBeTruthy()
 
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
+      const pathOfThoughtA = contextToPath(store.getState(), ['a'])
+      const matcherThoughtA = new RegExp(`thought-${pathOfThoughtA}[^"]+`)
+      const subthoughtsOfA = screen.getAllByTestId(matcherThoughtA)
 
-      expect(thoughtChildren.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
+      expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
     })
   })
 
