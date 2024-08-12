@@ -42,11 +42,11 @@ const QuickDropIcon = ({
     onDrop(store.getState(), monitor.getItem())
   }
 
-  const [{ isHovering, zone }, dropTarget] = useDrop({
+  const [{ isHovering, zone }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     drop: (item, monitor) => drop(monitor),
     collect: dropCollect,
-  })
+  }))
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {

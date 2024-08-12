@@ -139,7 +139,7 @@ const dropCollect = (monitor: DropTargetMonitor) => ({
 const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) => {
   const propsTypes = props as DragAndDropFavoriteReturnType
 
-  const [{ isDragging }, dragSource, dragPreview] = useDrag({
+  const [{ isDragging }, dragSource, dragPreview] = useDrag(() => ({
     item: {
       path: props.path,
       simplePath: props.simplePath,
@@ -149,14 +149,14 @@ const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) 
     begin: () => beginDrag(propsTypes),
     end: () => endDrag(),
     collect: dragCollect,
-  })
+  }))
 
-  const [{ isHovering }, dropTarget] = useDrop({
+  const [{ isHovering }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-  })
+  }))
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }
