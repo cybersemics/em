@@ -108,9 +108,12 @@ const useLongPress = (
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
+      // If lock is true we should prevent opening context menu
+      if (lock) {
+        e.preventDefault()
+      }
       // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
       if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
-        e.preventDefault()
         e.stopPropagation()
         selection.clear()
         dispatch(editing({ value: false }))
