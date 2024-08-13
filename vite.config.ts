@@ -15,7 +15,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    checker({ typescript: true }),
+    checker({ typescript: process.env.NODE_ENV !== 'test' }),
     VitePWA({ injectRegister: null, strategies: 'injectManifest', srcDir: 'src', filename: 'service-worker.ts' }),
   ],
 })
