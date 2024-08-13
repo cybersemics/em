@@ -19,7 +19,7 @@ import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/delet
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
 import { getSubthoughtsByContext } from '../../test-helpers/queries/getSubthoughtsByContext'
-import { getThoughtByContext } from '../../test-helpers/queries/getThoughtContext'
+import { getThoughtByContext } from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleSortShortcut from '../toggleSort'
 
@@ -336,7 +336,7 @@ describe('DOM', () => {
   afterEach(cleanupTestApp)
 
   describe('local', () => {
-    it('none -> home: Asc', async () => {
+    it('home: Asc', async () => {
       store.dispatch([
         importText({
           text: `
@@ -745,7 +745,6 @@ describe('DOM', () => {
       expect(childrenString).toMatch('_')
     })
 
-    // TODO
     it('multiple contiguous empty thoughts', async () => {
       store.dispatch([
         importText({
