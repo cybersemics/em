@@ -5267,24 +5267,6 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
-dnd-core@15.0.1:
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/dnd-core/-/dnd-core-15.0.1.tgz#166333049d87537f6b964665da0845dc42f86db1"
-  integrity sha512-pqVsLKNYdIYwOesmeAC9wcfDmyAHsiZwLoIYs+bDXaUjnuGZc3h/QWFenPSPFgp2ichG50P9sIFy4yuBZd49JQ==
-  dependencies:
-    "@react-dnd/asap" "^4.0.0"
-    "@react-dnd/invariant" "^2.0.0"
-    redux "^4.1.1"
-
-dnd-core@15.0.0:
-  version "15.0.0"
-  resolved "https://registry.yarnpkg.com/dnd-core/-/dnd-core-15.0.0.tgz#385c83c99a79dad3fe6dcdb593354103d76b00a1"
-  integrity sha512-LbnfPLoW7LnaqOIeUShLd1FYc4iVdHjaLxu21kHUrL7UI+Uh6KtdVZKhPVzLB10TVE+y/m70pAJeDpEUDZ2VtA==
-  dependencies:
-    "@react-dnd/asap" "^4.0.0"
-    "@react-dnd/invariant" "^2.0.0"
-    redux "^4.1.1"
-
 dnd-core@^10.0.2:
   version "10.0.2"
   resolved "https://registry.yarnpkg.com/dnd-core/-/dnd-core-10.0.2.tgz#051dc119682ea1185622f954667670d3d5f6a574"
@@ -10059,14 +10041,6 @@ react-dnd-touch-backend@^10.0.2:
   dependencies:
     "@react-dnd/invariant" "^2.0.0"
     dnd-core "^10.0.2"
-
-react-dnd-touch-backend@^16.0.1:
-  version "16.0.1"
-  resolved "https://registry.yarnpkg.com/react-dnd-touch-backend/-/react-dnd-touch-backend-16.0.1.tgz#e73f8169e2b9fac0f687970f875cac0a4d02d6e2"
-  integrity sha512-NonoCABzzjyWGZuDxSG77dbgMZ2Wad7eQiCd/ECtsR2/NBLTjGksPUx9UPezZ1nQ/L7iD130Tz3RUshL/ClKLA==
-  dependencies:
-    "@react-dnd/invariant" "^4.0.1"
-    dnd-core "^16.0.1"
 
 react-dnd@^10.0.2:
   version "10.0.2"

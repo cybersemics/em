@@ -12,12 +12,6 @@ Dependency notes:
 
 module.exports = {
   reject: [
-    'react-dnd',
-    'react-dnd-html5-backend',
-    'react-dnd-multi-backend',
-    'react-dnd-touch-backend',
-    'react-dnd-test-utils',
-
     // TypeError: TextDecoder is not a constructor
     // TextDecoder is not exposed by jsdom v16
     // https://github.com/jsdom/jsdom/pull/2928
