@@ -35,6 +35,7 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
+import isAttribute from '../util/isAttribute'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -70,6 +71,17 @@ interface ResumeImport {
 }
 
 type ResumableFile = VirtualFile & ResumeImport
+
+export interface ImportFilesPayload {
+  /** Files to import into the path. Either files or resume must be set. */
+  files?: VirtualFile[]
+  /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
+  insertBefore?: boolean
+  /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
+  path?: Path
+  /** If true, resumes unfinished imports. Either files or resume must be set. */
+  resume?: boolean
+}
 
 // key for localStorage ResumeImport manifest
 // base for idb resume import file
@@ -168,21 +180,7 @@ const pullDuplicateDescendants =
 
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
-  ({
-    files,
-    insertBefore,
-    path,
-    resume,
-  }: {
-    /** Files to import into the path. Either files or resume must be set. */
-    files?: VirtualFile[]
-    /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
-    insertBefore?: boolean
-    /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
-    path?: Path
-    /** If true, resumes unfinished imports. Either files or resume must be set. */
-    resume?: boolean
-  }): Thunk =>
+  ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
       throw new Error('importFiles must specify files or resume.')
@@ -219,6 +217,9 @@ export const importFilesActionCreator =
           text: () => file.text(),
         }))
       : await resumeImportsManager.getFiles()
+
+    // keep track of whether the cursor has been set
+    let didSetCursor = false
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
@@ -350,9 +351,16 @@ export const importFilesActionCreator =
                   globals.preserveSet = new Set(cursorNew)
                 }
 
-                // set cursor to first imported thought
-                if (i === 0) {
-                  dispatch(setCursor({ path: cursorNew, editing: false }))
+                // set cursor to first imported visible thought
+                if (!didSetCursor) {
+                  const isThoughtVisible =
+                    stateAfterImport.showHiddenThoughts ||
+                    (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
+
+                  if (isThoughtVisible) {
+                    dispatch(setCursor({ path: cursorNew, editing: false }))
+                    didSetCursor = true
+                  }
                 }
               },
             ])
