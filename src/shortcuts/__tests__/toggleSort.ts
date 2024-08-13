@@ -523,7 +523,7 @@ describe('DOM', () => {
     })
   })
 
-  describe.skip('empty thought ordering is preserved at the point of creation', () => {
+  describe('empty thought ordering is preserved at the point of creation', () => {
     it('after first thought', async () => {
       store.dispatch([
         importText({
@@ -542,9 +542,7 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -570,9 +568,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -598,9 +595,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -626,9 +622,8 @@ describe('DOM', () => {
         newThought({ value: '', insertBefore: true }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -654,9 +649,8 @@ describe('DOM', () => {
         newThought({ value: '', insertBefore: true }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -682,9 +676,8 @@ describe('DOM', () => {
         newThought({ value: '', insertBefore: true }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -716,9 +709,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -744,11 +736,9 @@ describe('DOM', () => {
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
-      const thought = await findThoughtByText('a')
+      const thoughts = screen.getAllByTestId(/thought/)
 
-      const thoughtChildrenWrapper = thought!.closest('li')?.lastElementChild as HTMLElement
-      const thoughtChildren = await findAllByPlaceholderText(thoughtChildrenWrapper, 'Add a thought')
-      const childrenString = thoughtChildren
+      const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
         .join('')
@@ -756,7 +746,7 @@ describe('DOM', () => {
     })
 
     // TODO
-    it.skip('multiple contiguous empty thoughts', async () => {
+    it('multiple contiguous empty thoughts', async () => {
       store.dispatch([
         importText({
           text: `
@@ -775,9 +765,8 @@ describe('DOM', () => {
         newThought({ value: '' }),
       ])
 
-      const thought = await findThoughtByText('a')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -803,9 +792,8 @@ describe('DOM', () => {
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
-      const thought = await findThoughtByText('d')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -831,9 +819,8 @@ describe('DOM', () => {
         newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
       ])
 
-      const thought = await findThoughtByText('d')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
@@ -866,9 +853,8 @@ describe('DOM', () => {
           ),
       ])
 
-      const thought = await findThoughtByText('b')
-      const thoughtsWrapper = thought!.closest('ul') as HTMLElement
-      const thoughts = await findAllByPlaceholderText(thoughtsWrapper, 'Add a thought')
+      const thoughts = screen.getAllByTestId(/thought/)
+
       const childrenString = thoughts
         .map((child: HTMLElement) => child.textContent)
         .map(value => value || '_')
