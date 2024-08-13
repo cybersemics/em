@@ -718,8 +718,6 @@ const LayoutTree = () => {
                     .fill(0)
                     .map((x, i) => {
                       const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
-                      const simplePathEnd =
-                        -(cliff + i) < simplePath.length ? (simplePath.slice(0, cliff + i) as SimplePath) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
 
                       // After table col2, shift the DropEnd left by the width of col1.
@@ -741,11 +739,7 @@ const LayoutTree = () => {
                         >
                           <DropEnd
                             depth={pathEnd.length}
-                            indexDescendant={indexDescendant}
-                            leaf={false}
                             path={pathEnd}
-                            // not used, just provided since DropEnd props shares the ThoughtProps type
-                            simplePath={simplePathEnd}
                             // Extend the click area of the drop target when there is nothing below.
                             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
                             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below

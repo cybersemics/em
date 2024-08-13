@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -36,6 +36,16 @@
     <div id="debug"></div>
 
     <script>
+      // Prevent the React DevTools console message in Puppeteer tests.
+      // https://github.com/cybersemics/em/issues/2251
+      if (navigator.webdriver) {
+        const info = console.info.bind(console)
+        console.info = (...args) => {
+          if (typeof args[0] === 'string' && args[0].startsWith('%cDownload the React DevTools')) return
+          info(...args)
+        }
+      }
+
       // Note: theme needs to be loaded here before react loads, otherwise it causes a white flash.
       const theme = localStorage.getItem('storageCache/theme')?.toLowerCase() || 'dark'
       document.body.classList.add(theme)

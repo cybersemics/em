@@ -1,9 +1,8 @@
 import React, { PropsWithChildren } from 'react'
-import { GestureResponderEvent, PanResponder, View } from 'react-native'
+import { GestureResponderEvent, PanResponder, PanResponderInstance, View } from 'react-native'
 import { useSelector } from 'react-redux'
 import Direction from '../@types/Direction'
 import GesturePath from '../@types/GesturePath'
-import Index from '../@types/IndexType'
 import { Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
@@ -115,7 +114,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   minDistanceSquared = 0
   scrollYStart: number | null = null
   disableScroll = false
-  panResponder: { panHandlers: Index<unknown> }
+  panResponder: PanResponderInstance
   scrolling = false
   sequence: GesturePath = ''
 

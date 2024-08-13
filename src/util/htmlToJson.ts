@@ -106,7 +106,7 @@ const joinChildren = (nodes: (Block | Block[])[]) => {
       if (index === 0) return node
       return {
         ...accum,
-        children: [...(accum.children || []), ...(Array.isArray(node) ? node : [node])],
+        children: [...(accum.children || []), ...(Array.isArray(node) ? (node as Block[]) : [node])],
       }
     }),
   )

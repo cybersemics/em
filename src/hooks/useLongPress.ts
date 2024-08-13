@@ -86,7 +86,7 @@ const useLongPress = (
   // If the user moves, end the press.
   // If timerIdRef is set to 0, abort to prevent unnecessary calculations.
   const move = useCallback(
-    e => {
+    (e: React.TouchEvent) => {
       if (!timerIdRef.current) return
       const moveCoords = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
       if (

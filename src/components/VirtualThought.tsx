@@ -203,7 +203,7 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropUncle && <DropUncle depth={depth} simplePath={simplePath} />
+        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} />
       }
 
       {!shimHiddenThought && (
@@ -229,14 +229,11 @@ const VirtualThought = ({
       {isVisible && (
         <DropChild
           depth={depth}
-          indexDescendant={indexDescendant}
-          leaf={leaf}
           // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
           // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
           // TODO: DragAndDropSubthoughts should be able to handle this.
           path={path}
           simplePath={simplePath}
-          showContexts={showContexts}
         />
       )}
     </div>

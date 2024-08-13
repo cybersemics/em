@@ -111,7 +111,7 @@ const editThought = (state: State, { force, oldValue, newValue, path, rankInCont
   }
 
   // the old thought less the context
-  const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(state, lexemeOld, editedThoughtId) : null
+  const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(lexemeOld, editedThoughtId) : null
 
   const lexemeNew = addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
 

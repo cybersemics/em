@@ -10,7 +10,7 @@ async function waitForHiddenEditable(page: Page, value: string) {
       return window.getComputedStyle(element, null).color === 'rgba(255, 255, 255, 0)'
     },
     {},
-    editableElement,
+    editableElement.asElement()! as unknown as Element,
   )
 }
 

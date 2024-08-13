@@ -1,6 +1,6 @@
-import { FC } from 'react'
-import { DragSource, DragSourceConnector, DragSourceMonitor } from 'react-dnd'
+import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
 import GesturePath from '../@types/GesturePath'
@@ -21,8 +21,6 @@ interface ShortcutRowProps {
   shortcut: Shortcut | null
 }
 
-type DraggableShortcutRowProps = ShortcutRowProps & ReturnType<typeof dragCollect>
-
 /** Converts the integer into an ordinal, e.g. 1st, 2nd, 3rd, 4th, etc. */
 const ordinal = (n: number) => {
   const s = n.toString()
@@ -35,52 +33,38 @@ const ordinal = (n: number) => {
         : s + 'th'
 }
 
-/** Returns true if the toolbar-button can be dragged. */
-const canDrag = (props: ShortcutRowProps) => !!props.shortcut && !!props.customize
-
-/** Collects props from the DragSource. */
-const dragCollect = (connect: DragSourceConnector, monitor: DragSourceMonitor) => {
-  return {
-    dragSource: connect.dragSource(),
-    dragPreview: noop,
-    isDragging: monitor.isDragging(),
-    zone: monitor.getItem()?.zone,
-  }
-}
-
-/** Handles drag start. */
-const beginDrag = (props: ShortcutRowProps): DragToolbarItem => {
-  const shortcut = props.shortcut!
-  store.dispatch(dragShortcut(shortcut.id))
-  return { shortcut: shortcut, zone: DragShortcutZone.Remove }
-}
-
-/** Handles drag end. */
-const endDrag = () => {
-  store.dispatch(dragShortcut(null))
-}
-
 /** Renders all of a shortcut's details as a table row. */
-const ShortcutRow: FC<DraggableShortcutRowProps> = ({
-  customize,
-  dragSource,
-  isDragging,
-  onSelect,
-  selected,
-  shortcut,
-  indexInToolbar,
-}) => {
+const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
   const colors = useSelector(themeColors)
+  const [{ isDragging }, dragSource] = useDrag({
+    type: DragAndDropType.ToolbarButton,
+    item: (): DragToolbarItem => {
+      store.dispatch(dragShortcut(shortcut?.id || null))
+      return { shortcut: shortcut!, zone: DragShortcutZone.Remove }
+    },
+    canDrag: () => !!shortcut && !!customize,
+    end: () => store.dispatch(dragShortcut(null)),
+    collect: (monitor: DragSourceMonitor) => {
+      const item = monitor.getItem() as DragToolbarItem
+
+      return {
+        dragPreview: noop,
+        isDragging: monitor.isDragging(),
+        zone: item?.zone,
+      }
+    },
+  })
+
   const description = useSelector(state => {
     if (!shortcut) return ''
     return typeof shortcut.description === 'function' ? shortcut.description(() => state) : shortcut.description
   })
 
   return (
-    shortcut &&
-    dragSource(
+    shortcut && (
       <tr
         key={shortcut.id}
+        ref={dragSource}
         onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
         style={{
           ...(customize ? { cursor: 'pointer' } : null),
@@ -109,12 +93,9 @@ const ShortcutRow: FC<DraggableShortcutRowProps> = ({
             formatKeyboardShortcut(shortcut.keyboard)
           ) : null}
         </td>
-      </tr>,
+      </tr>
     )
   )
 }
 
-/** A draggable and droppable toolbar button. */
-const DragAndDropShortcutRow = DragSource('toolbar-button', { canDrag, beginDrag, endDrag }, dragCollect)(ShortcutRow)
-
-export default DragAndDropShortcutRow
+export default ShortcutRow

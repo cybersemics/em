@@ -1,6 +1,8 @@
 import { FC, useEffect } from 'react'
-import { DropTarget, DropTargetConnector, DropTargetMonitor } from 'react-dnd'
+import { DropTargetMonitor, useDrop } from 'react-dnd'
+import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
+import DragAndDropType from '../@types/DragAndDropType'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import IconType from '../@types/Icon'
@@ -12,29 +14,43 @@ import theme from '../selectors/theme'
 import store from '../stores/app'
 
 /** Creates the props for drop. */
-const dropCollect = (connect: DropTargetConnector, monitor: DropTargetMonitor) => ({
-  dropTarget: connect.dropTarget(),
-  isDragInProgress: !!monitor.getItem(),
-  zone: monitor.getItem()?.zone || null,
-  isHovering: monitor.isOver({ shallow: true }),
-})
+const dropCollect = (monitor: DropTargetMonitor) => {
+  const item = monitor.getItem() as DragThoughtItem
 
-/** The inner quick drop component that has been wrapped in a DropTarget. */
-const DroppableQuickDropIcon = ({
+  return {
+    isDragInProgress: !!monitor.getItem(),
+    zone: item?.zone || null,
+    isHovering: monitor.isOver({ shallow: true }),
+  }
+}
+
+/** An icon that a thought can be dropped on to execute a command. */
+const QuickDropIcon = ({
   alertType,
-  dropTarget,
   Icon,
-  isDragInProgress,
-  isHovering,
+  onDrop,
   onHoverMessage,
-  zone,
 }: {
   alertType: AlertType
   Icon: FC<IconType>
-  onHoverMessage: string | ((state: State, zone: DragThoughtZone) => string)
-} & ReturnType<typeof dropCollect>) => {
+  onDrop: (state: State, item: DragThoughtItem) => void
+  onHoverMessage: (state: State, zone: DragThoughtZone) => string
+}) => {
+  const dispatch = useDispatch()
   const dark = useSelector(state => theme(state) !== 'Light')
   const fontSize = useSelector(state => state.fontSize)
+
+  /** Invokes onDrop with the DragThoughtItem. */
+  const drop = (monitor: DropTargetMonitor) => {
+    dispatch(dragInProgress({ value: false }))
+    onDrop(store.getState(), monitor.getItem())
+  }
+
+  const [{ isHovering, zone }, dropTarget] = useDrop({
+    accept: [DragAndDropType.Thought, NativeTypes.FILE],
+    drop: (item, monitor) => drop(monitor),
+    collect: dropCollect,
+  })
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
   const hover = (isHovering: boolean, zone: DragThoughtZone) => {
@@ -66,49 +82,24 @@ const DroppableQuickDropIcon = ({
     [isHovering],
   )
 
-  return dropTarget(
-    <div
-      className='z-index-stack'
-      style={{
-        padding: '1em',
-        borderRadius: '999px 0 0 999px',
-        backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
-      }}
-    >
-      <Icon
-        size={fontSize * 1.5}
-        fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
-        // disable default .icon transition so that highlight is immediate
-        style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
-      />
-    </div>,
-  )
-}
-
-/** An icon that a thought can be dropped on to execute a command. */
-const QuickDropIcon = ({
-  alertType,
-  Icon,
-  onDrop,
-  onHoverMessage,
-}: {
-  alertType: AlertType
-  Icon: FC<IconType>
-  onDrop: (state: State, item: DragThoughtItem) => void
-  onHoverMessage: (state: State, zone: DragThoughtZone) => string
-}) => {
-  const dispatch = useDispatch()
-
-  /** Invokes onDrop with the DragThoughtItem. */
-  const drop = (props: unknown, monitor: DropTargetMonitor) => {
-    dispatch(dragInProgress({ value: false }))
-    onDrop(store.getState(), monitor.getItem())
-  }
-
-  const Drop = DropTarget('thought', { drop }, dropCollect)(DroppableQuickDropIcon)
   return (
     <div style={{ marginBottom: 10 }}>
-      <Drop alertType={alertType} Icon={Icon} onHoverMessage={onHoverMessage} />
+      <div
+        className='z-index-stack'
+        ref={dropTarget}
+        style={{
+          padding: '1em',
+          borderRadius: '999px 0 0 999px',
+          backgroundColor: isHovering ? 'rgba(40,40,40,0.8)' : 'rgba(30,30,30,0.8)',
+        }}
+      >
+        <Icon
+          size={fontSize * 1.5}
+          fill={isHovering ? (dark ? 'lightblue' : 'royalblue') : dark ? 'white' : 'black'}
+          // disable default .icon transition so that highlight is immediate
+          style={{ cursor: 'move', transition: 'none', verticalAlign: 'middle' }}
+        />
+      </div>
     </div>
   )
 }

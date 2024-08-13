@@ -463,7 +463,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -490,7 +489,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -519,7 +517,6 @@ describe.skip('DOM', () => {
         ((dispatch, getState) =>
           dispatch(
             editThought({
-              context: [EM_TOKEN, 'Settings', 'Global Sort'],
               oldValue: 'None',
               newValue: 'Alphabetical',
               path: contextToPath(getState(), [EM_TOKEN, 'Settings', 'Global Sort', 'None']) as SimplePath,
@@ -880,7 +877,6 @@ describe.skip('DOM', () => {
         (dispatch, getState) =>
           dispatch(
             editThought({
-              context: ['test'],
               oldValue: 'a',
               newValue: '',
               path: contextToPath(getState(), ['test', 'a']) as SimplePath,

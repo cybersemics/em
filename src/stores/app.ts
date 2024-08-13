@@ -6,15 +6,17 @@ import { applyMiddleware, createStore } from 'redux'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import thunk from 'redux-thunk'
 import appReducer from '../actions/app'
-import cursorChanged from '../redux-enhancers/cursorChanged'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import clearSelection from '../redux-middleware/clearSelection'
+import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
+import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateJumpHistory from '../redux-middleware/updateJumpHistory'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
@@ -32,8 +34,12 @@ const middlewareEnhancer = applyMiddleware(
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
+  // must go after the thunk middleware, otherwise the Puppeteer cursor test fails
+  debuggingMiddleware,
   pullQueue,
   scrollCursorIntoView,
+  clearSelection,
+  updateEditingValue,
   updateJumpHistory,
   updateUrlHistory,
   freeThoughts,
@@ -45,7 +51,6 @@ const store = createStore(
     middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
-    cursorChanged,
     // must go at the end to ensure it clears the pushQueue before other enhancers
     pushQueue,
   ),

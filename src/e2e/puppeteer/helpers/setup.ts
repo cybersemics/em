@@ -3,6 +3,11 @@ import { Browser, ConsoleMessage, Device, Page } from 'puppeteer'
 import { WEBSOCKET_TIMEOUT } from '../../../constants'
 import sleep from '../../../util/sleep'
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare module global {
+  const browser: Browser
+}
+
 export interface InitPageOptions {
   puppeteerBrowser?: Browser
   url?: string
@@ -12,7 +17,7 @@ export interface InitPageOptions {
 
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
-  puppeteerBrowser = browser as any,
+  puppeteerBrowser = global.browser,
   url = 'http://localhost:3000',
   emulatedDevice,
   skipTutorial = true,
