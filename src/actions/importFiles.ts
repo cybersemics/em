@@ -72,7 +72,7 @@ interface ResumeImport {
 
 type ResumableFile = VirtualFile & ResumeImport
 
-export interface ImportFilesPayload {
+interface ImportFilesPayload {
   /** Files to import into the path. Either files or resume must be set. */
   files?: VirtualFile[]
   /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
@@ -218,7 +218,8 @@ export const importFilesActionCreator =
         }))
       : await resumeImportsManager.getFiles()
 
-    // keep track of whether the cursor has been set
+    // Keep track of whether the cursor has been set.
+    // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
     let didSetCursor = false
 
     // import one file at a time
@@ -338,17 +339,17 @@ export const importFilesActionCreator =
                     value: block.scope,
                     idbSynced: updateAndResolve,
                   }),
-              // set cursor to new thought on the first iteration
+              // set the cursor to the first imported visible thought
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
                 const stateAfterImport = getState()
-                const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
+                const pathNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
 
                 // preserve cursor from being deallocated during import
                 // NOTE: This will clear all preserved thoughts, not just the import cursor.
                 // This is safe at the current time since the only other use of preserveSet is for export.
-                if (cursorNew) {
-                  globals.preserveSet = new Set(cursorNew)
+                if (pathNew) {
+                  globals.preserveSet = new Set(pathNew)
                 }
 
                 // set cursor to first imported visible thought
@@ -358,7 +359,7 @@ export const importFilesActionCreator =
                     (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
 
                   if (isThoughtVisible) {
-                    dispatch(setCursor({ path: cursorNew, editing: false }))
+                    dispatch(setCursor({ path: pathNew, editing: false }))
                     didSetCursor = true
                   }
                 }
