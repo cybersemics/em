@@ -33,7 +33,7 @@ const beginDrag = ({ path, simplePath }: DragThoughtItem): DragThoughtItem => {
       ...(offset != null ? { offset } : null),
     }),
   )
-  return { path, simplePath, zone: DragThoughtZone.Favorites, type: DragAndDropType.Thought }
+  return { path, simplePath, zone: DragThoughtZone.Favorites }
 }
 
 /** Handles drag end. */
@@ -140,23 +140,18 @@ const useDragAndDropFavorites = (props: Partial<DragAndDropFavoriteReturnType>) 
   const propsTypes = props as DragAndDropFavoriteReturnType
 
   const [{ isDragging }, dragSource, dragPreview] = useDrag({
-    item: {
-      path: props.path,
-      simplePath: props.simplePath,
-      zone: DragThoughtZone.Favorites,
-      type: DragAndDropType.Thought,
-    },
-    begin: () => beginDrag(propsTypes),
+    type: DragAndDropType.Thought,
+    item: () => beginDrag(propsTypes),
     end: () => endDrag(),
     collect: dragCollect,
   })
 
-  const [{ isHovering }, dropTarget] = useDrop({
+  const [{ isHovering }, dropTarget] = useDrop(() => ({
     accept: [DragAndDropType.Thought, NativeTypes.FILE],
     canDrop: (item, monitor) => canDrop(propsTypes, monitor),
     drop: (item, monitor) => drop(propsTypes, monitor),
     collect: dropCollect,
-  })
+  }))
 
   return { isDragging, dragSource, dragPreview, isHovering, dropTarget }
 }

@@ -15,7 +15,9 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    checker({ typescript: process.env.NODE_ENV !== 'test' }),
+    // Do not run vite-plugin-checker during tests, as it will clear the test output.
+    // The dev server is usually running anyway, and tsc is run in lint:tsc which is triggered prepush.
+    ...[!process.env.VITEST ? checker({ typescript: true }) : undefined],
     VitePWA({ injectRegister: null, strategies: 'injectManifest', srcDir: 'src', filename: 'service-worker.ts' }),
   ],
 })

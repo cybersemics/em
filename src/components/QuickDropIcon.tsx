@@ -14,11 +14,15 @@ import theme from '../selectors/theme'
 import store from '../stores/app'
 
 /** Creates the props for drop. */
-const dropCollect = (monitor: DropTargetMonitor) => ({
-  isDragInProgress: !!monitor.getItem(),
-  zone: monitor.getItem()?.zone || null,
-  isHovering: monitor.isOver({ shallow: true }),
-})
+const dropCollect = (monitor: DropTargetMonitor) => {
+  const item = monitor.getItem() as DragThoughtItem
+
+  return {
+    isDragInProgress: !!monitor.getItem(),
+    zone: item?.zone || null,
+    isHovering: monitor.isOver({ shallow: true }),
+  }
+}
 
 /** An icon that a thought can be dropped on to execute a command. */
 const QuickDropIcon = ({
