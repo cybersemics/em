@@ -10030,13 +10030,13 @@ react-dnd-test-utils@^16.0.1:
   resolved "https://registry.yarnpkg.com/react-dnd-test-utils/-/react-dnd-test-utils-16.0.1.tgz#9c64b424e165749fbceed162e68a4c1012600b53"
   integrity sha512-hKt6HYUAuN1oVtpVIpHwxeZLqtjwfzK2wFyfQUs7Pbi6muxXK+ZDOHEUmaI3WcoWb0nhZOyX3+FwmBsrA288Eg==
 
-react-dnd-touch-backend@15.0.1:
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/react-dnd-touch-backend/-/react-dnd-touch-backend-15.0.1.tgz#7f50519371f17ae7825affad5272d9f10b310e7e"
-  integrity sha512-DoigPaIAs70DRy4qd+i1U5+wLyyhtiuydqHuhXTObxjQzimG70UN7L3Qzx/3SXYQroOIj9fEOXvb9yzMsD2TMA==
+react-dnd-touch-backend@16.0.1:
+  version "16.0.1"
+  resolved "https://registry.yarnpkg.com/react-dnd-touch-backend/-/react-dnd-touch-backend-16.0.1.tgz#e73f8169e2b9fac0f687970f875cac0a4d02d6e2"
+  integrity sha512-NonoCABzzjyWGZuDxSG77dbgMZ2Wad7eQiCd/ECtsR2/NBLTjGksPUx9UPezZ1nQ/L7iD130Tz3RUshL/ClKLA==
   dependencies:
-    "@react-dnd/invariant" "^2.0.0"
-    dnd-core "15.0.1"
+    "@react-dnd/invariant" "^4.0.1"
+    dnd-core "^16.0.1"
 
 react-dnd-touch-backend@^10.0.2:
   version "10.0.2"
