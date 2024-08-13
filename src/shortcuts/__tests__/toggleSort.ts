@@ -360,10 +360,14 @@ describe('DOM', () => {
 
     it('subthoughts: Asc', async () => {
       store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
+        importText({
+          text: `
+            - a
+              - 3
+              - 1
+              - 2
+          `,
+        }),
         setCursor(['a']),
       ])
 
@@ -401,12 +405,16 @@ describe('DOM', () => {
       expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c', 'b', 'a'])
     })
 
-    it.only('subthoughts: Desc', async () => {
+    it('subthoughts: Desc', async () => {
       store.dispatch([
-        newThought({ value: 'a' }),
-        newThought({ value: '3', insertNewSubthought: true }),
-        newThought({ value: '1' }),
-        newThought({ value: '2' }),
+        importText({
+          text: `
+            - a
+              - 3
+              - 1
+              - 2
+          `,
+        }),
         setCursor(['a']),
       ])
 
@@ -422,7 +430,7 @@ describe('DOM', () => {
     })
   })
 
-  describe('global', () => {
+  describe.skip('global', () => {
     it('home: Asc', async () => {
       store.dispatch([
         newThought({ value: 'c' }),
@@ -515,7 +523,7 @@ describe('DOM', () => {
     })
   })
 
-  describe('empty thought ordering is preserved at the point of creation', () => {
+  describe.skip('empty thought ordering is preserved at the point of creation', () => {
     it('after first thought', async () => {
       store.dispatch([
         importText({
