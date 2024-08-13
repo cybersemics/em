@@ -35,6 +35,7 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import initialState from '../util/initialState'
+import isAttribute from '../util/isAttribute'
 import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
@@ -70,6 +71,17 @@ interface ResumeImport {
 }
 
 type ResumableFile = VirtualFile & ResumeImport
+
+interface ImportFilesPayload {
+  /** Files to import into the path. Either files or resume must be set. */
+  files?: VirtualFile[]
+  /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
+  insertBefore?: boolean
+  /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
+  path?: Path
+  /** If true, resumes unfinished imports. Either files or resume must be set. */
+  resume?: boolean
+}
 
 // key for localStorage ResumeImport manifest
 // base for idb resume import file
@@ -168,21 +180,7 @@ const pullDuplicateDescendants =
 
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
-  ({
-    files,
-    insertBefore,
-    path,
-    resume,
-  }: {
-    /** Files to import into the path. Either files or resume must be set. */
-    files?: VirtualFile[]
-    /** Insert the imported thoughts before the path instead of as children of the path. Creates a new empty thought to import into. */
-    insertBefore?: boolean
-    /** Import destination path. Ignored during resume import, where the path is stored in the ResumeImport manifest. */
-    path?: Path
-    /** If true, resumes unfinished imports. Either files or resume must be set. */
-    resume?: boolean
-  }): Thunk =>
+  ({ files, insertBefore, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!files && !resume) {
       throw new Error('importFiles must specify files or resume.')
@@ -219,6 +217,10 @@ export const importFilesActionCreator =
           text: () => file.text(),
         }))
       : await resumeImportsManager.getFiles()
+
+    // Keep track of whether the cursor has been set.
+    // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
+    let didSetCursor = false
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
@@ -337,22 +339,29 @@ export const importFilesActionCreator =
                     value: block.scope,
                     idbSynced: updateAndResolve,
                   }),
-              // set cursor to new thought on the first iteration
+              // set the cursor to the first imported visible thought
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
                 const stateAfterImport = getState()
-                const cursorNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
+                const pathNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
 
                 // preserve cursor from being deallocated during import
                 // NOTE: This will clear all preserved thoughts, not just the import cursor.
                 // This is safe at the current time since the only other use of preserveSet is for export.
-                if (cursorNew) {
-                  globals.preserveSet = new Set(cursorNew)
+                if (pathNew) {
+                  globals.preserveSet = new Set(pathNew)
                 }
 
-                // set cursor to first imported thought
-                if (i === 0) {
-                  dispatch(setCursor({ path: cursorNew, editing: false }))
+                // set cursor to first imported visible thought
+                if (!didSetCursor) {
+                  const isThoughtVisible =
+                    stateAfterImport.showHiddenThoughts ||
+                    (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
+
+                  if (isThoughtVisible) {
+                    dispatch(setCursor({ path: pathNew, editing: false }))
+                    didSetCursor = true
+                  }
                 }
               },
             ])
