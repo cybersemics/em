@@ -108,7 +108,7 @@ const useLongPress = (
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
-      // If lock is true we should prevent opening context menu
+      // If lock is true (longpress event occurs) we should prevent opening context menu
       if (lock) {
         e.preventDefault()
       }
