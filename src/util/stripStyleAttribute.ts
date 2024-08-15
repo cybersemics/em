@@ -15,7 +15,7 @@ const isColorWhite = (value: string) => whiteColors.includes(value.replace(/\s/g
 const allowedStyleProperties = [
   {
     property: 'color',
-    enabled: false,
+    enabled: true,
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       const background = styleProperties.find(property => property.name.startsWith('background'))
       return !((isColorBlack(styleProperty.value) || isColorWhite(styleProperty.value)) && !background)
@@ -39,6 +39,14 @@ const allowedStyleProperties = [
     },
   },
   {
+    property: 'background-color',
+    enabled: true,
+    test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
+      const color = styleProperties.find(property => property.name === 'color')
+      return !(isColorWhite(styleProperty.value) && !color)
+    },
+  },
+  {
     property: 'text',
     test: (styleProperty: StyleProperty, styleProperties: StyleProperty[]) => {
       if (styleProperty.value === 'none') {
@@ -51,7 +59,6 @@ const allowedStyleProperties = [
   { property: 'padding', enabled: false },
   { property: 'word', enabled: false },
   { property: 'box-shadow', enabled: false },
-  { property: 'color', enabled: false },
   { property: 'opacity', enabled: false },
   { property: 'white-space', enabled: false },
 ]

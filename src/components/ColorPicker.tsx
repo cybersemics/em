@@ -1,11 +1,14 @@
-import React, { FC, useLayoutEffect, useRef, useState } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { rgbToHex } from '@mui/material'
+import React, { FC, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-import getStyle from '../selectors/getStyle'
+// import getStyle from '../selectors/getStyle'
 import themeColors from '../selectors/themeColors'
+import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
-import head from '../util/head'
+// import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
 
@@ -42,15 +45,34 @@ const ColorSwatch: FC<{
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
-  const selected =
-    (color && cursorStyle?.color === color) || (backgroundColor && cursorStyle?.backgroundColor === backgroundColor)
+  const [selected, setSelected] = useState(false)
   size = size || fontSize * 1.2
+  const addAlphaToHex = (hex: string) => {
+    if (hex.length === 7) return hex + 'ff'
+    return hex
+  }
 
+  useEffect(() => {
+    let hex1 = color ? addAlphaToHex(rgbToHex(color)) : undefined
+    let hex2 = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
+    let hex3 = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
+    let hex4 = cursorStyle?.backgroundColor ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor)) : undefined
+    setSelected(!!((hex1 && hex1 === hex3) || (hex2 && hex2 === hex4)))
+  }, [cursorStyle])
   /** Toggles the text color to the clicked swatch. */
-  const toggleTextColor = (e: React.MouseEvent | React.TouchEvent) => {
+  const toggleTextColor = async (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
     e.stopPropagation()
-    dispatch(
+
+    // Apply text color to the selection
+    if (backgroundColor || color !== 'default')
+      await dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
+
+    // Apply background color to the selection
+    if (backgroundColor && backgroundColor !== colors.bg)
+      await dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+
+    await dispatch(
       textColor({
         ...(selected
           ? {
@@ -111,18 +133,10 @@ const ColorSwatch: FC<{
 const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fontSize, style }) => {
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
-  const cursorStyle = useSelector(
-    state =>
-      state.showColorPicker && state.cursor
-        ? {
-            // merge =style (which contains color) and =styleAnnotation (which contains backgroundColor)
-            // the style attribute name is not relevant here
-            ...(getStyle(state, head(state.cursor)) || ({} as React.CSSProperties)),
-            ...getStyle(state, head(state.cursor), { attributeName: '=styleAnnotation' }),
-          }
-        : undefined,
-    shallowEqual,
-  )
+  const cursorStyle = {
+    backgroundColor: commandStateStore.useSelector(state => state['backColor'] as string | undefined),
+    color: commandStateStore.useSelector(state => state['foreColor'] as string | undefined),
+  }
 
   const overflow = useWindowOverflow(ref)
 

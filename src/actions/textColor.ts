@@ -2,7 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
-import themeColors from '../selectors/themeColors'
+import pathToThought from '../selectors/pathToThought'
 import reducerFlow from '../util/reducerFlow'
 import deleteAttribute from './deleteAttribute'
 
@@ -13,29 +13,19 @@ const textColor = (
 ) => {
   if (!state.cursor) return state
   const path = state.cursor
-  const colors = themeColors(state)
 
-  return reducerFlow([
-    // set bullet to text color
-    color && color !== 'default'
-      ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
-      : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
+  const thought = pathToThought(state, state.cursor)
+  const sel = window.getSelection()
 
-    // set text color
-    // clear color if white
-    backgroundColor || color !== 'default'
-      ? setDescendant({ path, values: ['=style', 'color', color || 'rgba(0, 0, 0, 1)'] })
-      : deleteAttribute({ path, values: ['=style', 'color'] }),
-
-    // set background color
-    // clear background color if default or unset
-    backgroundColor && backgroundColor !== colors.bg
-      ? setDescendant({
-          path,
-          values: ['=styleAnnotation', 'backgroundColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor],
-        })
-      : deleteAttribute({ path, values: ['=styleAnnotation', 'backgroundColor'] }),
-  ])(state)
+  // set bullet to text color when the entire thought selected
+  if ((sel?.toString().length === 0 && thought.value.length !== 0) || sel?.toString().length === thought.value.length) {
+    return reducerFlow([
+      color && color !== 'default'
+        ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
+        : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
+    ])(state)
+  }
+  return state
 }
 
 /** Action-creator for textColor. */

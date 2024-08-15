@@ -6,7 +6,10 @@ import suppressFocusStore from '../stores/suppressFocus'
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline. */
 export const formatSelectionActionCreator =
-  (command: 'bold' | 'italic' | 'strikethrough' | 'underline'): Thunk =>
+  (
+    command: 'bold' | 'italic' | 'strikethrough' | 'underline' | 'foreColor' | 'backColor',
+    color: string = '#ffffff',
+  ): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     if (!state.cursor) return
@@ -26,10 +29,13 @@ export const formatSelectionActionCreator =
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
 
-      document.execCommand(command)
+      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
+      else document.execCommand(command)
       selection.restore(savedSelection)
     } else {
-      document.execCommand(command)
+      // Apply text and background color to the selected text and apply the command
+      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
+      else document.execCommand(command)
       updateCommandState()
     }
 

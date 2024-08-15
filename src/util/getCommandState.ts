@@ -16,6 +16,8 @@ const tags = {
   italic: createTag('i'),
   underline: createTag('u'),
   strikethrough: createTag('strike'),
+  foreColor: createTag('font'),
+  backColor: createTag('span'),
 }
 
 /**
@@ -30,6 +32,8 @@ const getCommandState = (value: string): CommandState => {
       italic: false,
       underline: false,
       strikethrough: false,
+      foreColor: 'rgb(227, 227, 227)',
+      backColor: 'rgb(0, 0, 0)',
     }
   }
   // Tracks which commands have applied to the entire value so far
@@ -38,6 +42,8 @@ const getCommandState = (value: string): CommandState => {
     italic: true,
     underline: true,
     strikethrough: true,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   }
   // Tracks which commands are currently applied while walking through the value
   const currentCommandState: CommandState = {
@@ -45,6 +51,8 @@ const getCommandState = (value: string): CommandState => {
     italic: false,
     underline: false,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   }
   // Walk through the value until the end is reached, checking for markup tag
   while (value.length > 0) {
