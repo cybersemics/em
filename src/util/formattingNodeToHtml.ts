@@ -3,7 +3,6 @@ import _ from 'lodash'
 import stripStyleAttribute from './stripStyleAttribute'
 
 /** Strip span and encode a <i> or <b> element as HTML. */
-
 const replaceFontToSpan = (node: Element) => {
   if (node.tagName === 'font') {
     node.tagName = 'span'
@@ -19,6 +18,7 @@ const replaceFontToSpan = (node: Element) => {
   return node
 }
 
+/** Converts a formatting node to HTML. */
 const formattingNodeToHtml = (node: Element) => {
   const content: string = node.children.reduce((acc, child) => {
     return acc + (child.type === 'text' ? child.content : child.type === 'comment' ? '' : formattingNodeToHtml(child))

@@ -47,18 +47,20 @@ const ColorSwatch: FC<{
   const fontSize = useSelector(state => state.fontSize)
   const [selected, setSelected] = useState(false)
   size = size || fontSize * 1.2
+
+  /** A function that adds an alpha channel to a hex color. */
   const addAlphaToHex = (hex: string) => {
     if (hex.length === 7) return hex + 'ff'
     return hex
   }
 
   useEffect(() => {
-    let hex1 = color ? addAlphaToHex(rgbToHex(color)) : undefined
-    let hex2 = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
-    let hex3 = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
-    let hex4 = cursorStyle?.backgroundColor ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor)) : undefined
+    const hex1 = color ? addAlphaToHex(rgbToHex(color)) : undefined
+    const hex2 = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
+    const hex3 = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
+    const hex4 = cursorStyle?.backgroundColor ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor)) : undefined
     setSelected(!!((hex1 && hex1 === hex3) || (hex2 && hex2 === hex4)))
-  }, [cursorStyle])
+  }, [cursorStyle, backgroundColor, color])
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = async (e: React.MouseEvent | React.TouchEvent) => {
     // stop toolbar button dip
@@ -134,8 +136,8 @@ const ColorPicker: FC<{ fontSize: number; style?: React.CSSProperties }> = ({ fo
   const colors = useSelector(themeColors)
   const ref = useRef<HTMLDivElement>(null)
   const cursorStyle = {
-    backgroundColor: commandStateStore.useSelector(state => state['backColor'] as string | undefined),
-    color: commandStateStore.useSelector(state => state['foreColor'] as string | undefined),
+    backgroundColor: commandStateStore.useSelector(state => state.backColor as string | undefined),
+    color: commandStateStore.useSelector(state => state.foreColor as string | undefined),
   }
 
   const overflow = useWindowOverflow(ref)
