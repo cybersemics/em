@@ -56,6 +56,8 @@ const getCommandState = (value: string): CommandState => {
   }
   // Walk through the value until the end is reached, checking for markup tag
   const savedValue = value
+  const fontRegex = /<\s*font\b[^>]*>/i
+  const spanRegex = /<\s*span\b[^>]*>/i
 
   while (value.length > 0) {
     let foundTag = false
@@ -89,7 +91,7 @@ const getCommandState = (value: string): CommandState => {
       matches[command] &&= currentCommandState[command]
     }
   }
-  if (savedValue.length > 0) {
+  if (savedValue.length > 0 && (savedValue.match(fontRegex) || savedValue.match(spanRegex))) {
     const parser = new DOMParser() // new DomParser
     const doc = parser.parseFromString(savedValue, 'text/html')
     const foreColor = doc.getElementsByTagName('font')[0]?.getAttribute('color')
