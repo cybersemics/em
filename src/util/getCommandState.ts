@@ -20,6 +20,25 @@ const tags = {
   backColor: createTag('span'),
 }
 
+/** Extracts the foreground and background colors from the given string.
+ * Returns an object with foreColor and backColor properties.
+ * If the string does not contain a font or span tag, the default colors are returned.
+ */
+const extractColors = (savedValue: string) => {
+  const foreColorRegex = /<font[^>]*\scolor=["']?([^"']+)["']?[^>]*>/i
+  const backColorRegex = /<span[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
+
+  // Attempt to extract the font color
+  const foreColorMatch = savedValue.match(foreColorRegex)
+  const foreColor = foreColorMatch ? foreColorMatch[1].trim() : 'rgb(227, 227, 227)'
+
+  // Attempt to extract the background-color from span
+  const backColorMatch = savedValue.match(backColorRegex)
+  const backColor = backColorMatch ? backColorMatch[1].trim() : 'rgb(0, 0, 0)'
+
+  return { foreColor, backColor }
+}
+
 /**
  * This determines which commands (bold, italic, underline, strikethrough)
  * apply to an entire thought string.
@@ -56,9 +75,6 @@ const getCommandState = (value: string): CommandState => {
   }
   // Walk through the value until the end is reached, checking for markup tag
   const savedValue = value
-  const fontRegex = /<\s*font\b[^>]*>/i
-  const spanRegex = /<\s*span\b[^>]*>/i
-
   while (value.length > 0) {
     let foundTag = false
     for (const command of commands) {
@@ -91,24 +107,10 @@ const getCommandState = (value: string): CommandState => {
       matches[command] &&= currentCommandState[command]
     }
   }
-  if (savedValue.length > 0 && (savedValue.match(fontRegex) || savedValue.match(spanRegex))) {
-    const parser = new DOMParser() // new DomParser
-    const doc = parser.parseFromString(savedValue, 'text/html')
-    const foreColor = doc.getElementsByTagName('font')[0]?.getAttribute('color')
-    const backColor = doc
-      .getElementsByTagName('span')[0]
-      ?.getAttribute('style')
-      ?.match(/background-color: (.*)/)?.[1]
-    for (const command of commands) {
-      // The value does not fully match the command if the character does not
-
-      if (command === 'foreColor') {
-        matches[command] = foreColor ?? 'rgb(227, 227, 227)'
-      }
-      if (command === 'backColor') {
-        matches[command] = backColor ?? 'rgb(0, 0, 0)'
-      }
-    }
+  if (savedValue.length > 0) {
+    const colors = extractColors(savedValue)
+    matches.foreColor = colors.foreColor
+    matches.backColor = colors.backColor
   }
   return matches
 }
