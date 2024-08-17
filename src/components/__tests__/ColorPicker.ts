@@ -1,7 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
-import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import click from '../../test-helpers/click'
@@ -12,6 +11,7 @@ let originalExecCommand: (commandId: string, showUI?: boolean, value?: string) =
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
+// Make sure to use document execCommand mock before each test
 beforeEach(() => {
   originalExecCommand = document.execCommand
   document.execCommand = (commandId: string, showUI?: boolean, value?: string) => {
@@ -31,10 +31,7 @@ it('Set the text color using the ColorPicker', async () => {
 
   const state = store.getState()
 
-  const thoughtId = typeof [HOME_TOKEN] === 'string' ? [HOME_TOKEN] : contextToThoughtId(state, [HOME_TOKEN])
-
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-  console.log('thoughtId - ', thoughtId)
   expect(exported).toEqual(`- __ROOT__
   - aaaaaabbbbbb
     - =bullet
