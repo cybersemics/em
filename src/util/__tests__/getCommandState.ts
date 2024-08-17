@@ -6,6 +6,8 @@ it('empty thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   })
 })
 
@@ -15,6 +17,8 @@ it('bold thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   })
 })
 
@@ -24,6 +28,8 @@ it('italic thought', () => {
     italic: true,
     underline: false,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   })
 })
 
@@ -33,6 +39,8 @@ it('underline thought', () => {
     italic: false,
     underline: true,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   })
 })
 
@@ -42,6 +50,8 @@ it('strikethrough thought', () => {
     italic: false,
     underline: false,
     strikethrough: true,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
   })
 })
 
@@ -51,14 +61,44 @@ it('partially styled thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 0)',
+  })
+})
+
+it('text color thought', () => {
+  expect(getCommandState('<font color="rgb(255, 0, 0)">text</font>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    foreColor: 'rgb(255, 0, 0)',
+    backColor: 'rgb(0, 0, 0)',
+  })
+})
+
+it('background color thought', () => {
+  expect(getCommandState('<span style="background-color: rgb(0, 0, 255)">text</span>')).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    foreColor: 'rgb(227, 227, 227)',
+    backColor: 'rgb(0, 0, 255)',
   })
 })
 
 it('fully styled thought', () => {
-  expect(getCommandState('<b><i><u><strike>text</strike></u></i></b>')).toStrictEqual({
+  expect(
+    getCommandState(
+      '<b><i><u><strike><font color="rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></font></strike></u></i></b>',
+    ),
+  ).toStrictEqual({
     bold: true,
     italic: true,
     underline: true,
     strikethrough: true,
+    foreColor: 'rgb(255, 0, 0)',
+    backColor: 'rgb(0, 0, 255)',
   })
 })

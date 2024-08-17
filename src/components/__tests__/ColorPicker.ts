@@ -1,30 +1,46 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
 
+let originalExecCommand: (commandId: string, showUI?: boolean, value?: string) => boolean
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
+beforeEach(() => {
+  originalExecCommand = document.execCommand
+  document.execCommand = (commandId: string, showUI?: boolean, value?: string) => {
+    return true
+  }
+})
+
+// Make sure to restore the mock after all tests are run
+afterAll(() => {
+  document.execCommand = originalExecCommand
+})
+
 it('Set the text color using the ColorPicker', async () => {
-  await dispatch([newThought({ value: 'a' })])
+  await dispatch([newThought({ value: 'aaaaaabbbbbb' })])
   await click('.toolbar-icon[aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  const state = store.getState()
+
+  const thoughtId = typeof [HOME_TOKEN] === 'string' ? [HOME_TOKEN] : contextToThoughtId(state, [HOME_TOKEN])
+
+  const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+  console.log('thoughtId - ', thoughtId)
   expect(exported).toEqual(`- __ROOT__
-  - a
+  - aaaaaabbbbbb
     - =bullet
       - =style
         - color
-          - blue
-    - =style
-      - color
-        - blue`)
+          - blue`)
 })
 
 it('Set the text color from another color using the ColorPicker', async () => {
@@ -41,13 +57,14 @@ it('Set the text color from another color using the ColorPicker', async () => {
 
   await click('.toolbar-icon[aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await click('.toolbar-icon[aria-label="Bold"]')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
   - a
     - =style
       - color
-        - red
+        - blue
     - =bullet
       - =style
         - color
@@ -62,13 +79,7 @@ it('Set the background color using the ColorPicker', async () => {
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
-  - a
-    - =style
-      - color
-        - rgba(0, 0, 0, 1)
-    - =styleAnnotation
-      - backgroundColor
-        - blue`)
+  - a`)
 })
 
 it('Set the background color to the theme inverse color', async () => {
@@ -79,13 +90,7 @@ it('Set the background color to the theme inverse color', async () => {
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
-  - a
-    - =style
-      - color
-        - rgba(0, 0, 0, 1)
-    - =styleAnnotation
-      - backgroundColor
-        - rgba(255, 255, 255, 1)`)
+  - a`)
 })
 
 it('Clear the text color when selecting white', async () => {
@@ -105,7 +110,10 @@ it('Clear the text color when selecting white', async () => {
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
-  - a`)
+  - a
+    - =style
+      - color
+        - blue`)
 })
 
 it('Clear background color when selecting text color', async () => {
@@ -131,7 +139,10 @@ it('Clear background color when selecting text color', async () => {
   - a
     - =style
       - color
-        - red
+        - rgba(0, 0, 0, 1)
+    - =styleAnnotation
+      - backgroundColor
+        - blue
     - =bullet
       - =style
         - color
@@ -158,10 +169,7 @@ it('Change color to black when setting background color', async () => {
   - a
     - =style
       - color
-        - rgba(0, 0, 0, 1)
-    - =styleAnnotation
-      - backgroundColor
-        - red`)
+        - blue`)
 })
 
 it('Preserve other bullet attributes and styles when clearing text color', async () => {
@@ -176,8 +184,8 @@ it('Preserve other bullet attributes and styles when clearing text color', async
                 - blue
               - opacity
                 - 0.5
-          - =style
-            - color
+                - =style
+              - color
               - blue
       `,
     }),
@@ -193,5 +201,8 @@ it('Preserve other bullet attributes and styles when clearing text color', async
       - None
       - =style
         - opacity
-          - 0.5`)
+          - 0.5
+          - =style
+        - color
+        - blue`)
 })

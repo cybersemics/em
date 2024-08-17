@@ -55,6 +55,8 @@ const getCommandState = (value: string): CommandState => {
     backColor: 'rgb(0, 0, 0)',
   }
   // Walk through the value until the end is reached, checking for markup tag
+  const savedValue = value
+
   while (value.length > 0) {
     let foundTag = false
     for (const command of commands) {
@@ -85,6 +87,25 @@ const getCommandState = (value: string): CommandState => {
     for (const command of commands) {
       // The value does not fully match the command if the character does not
       matches[command] &&= currentCommandState[command]
+    }
+  }
+  if (savedValue.length > 0) {
+    const parser = new DOMParser() // new DomParser
+    const doc = parser.parseFromString(savedValue, 'text/html')
+    const foreColor = doc.getElementsByTagName('font')[0]?.getAttribute('color')
+    const backColor = doc
+      .getElementsByTagName('span')[0]
+      ?.getAttribute('style')
+      ?.match(/background-color: (.*)/)?.[1]
+    for (const command of commands) {
+      // The value does not fully match the command if the character does not
+
+      if (command === 'foreColor') {
+        matches[command] = foreColor ?? 'rgb(227, 227, 227)'
+      }
+      if (command === 'backColor') {
+        matches[command] = backColor ?? 'rgb(0, 0, 0)'
+      }
     }
   }
   return matches
