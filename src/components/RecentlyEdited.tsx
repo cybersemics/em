@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
@@ -16,6 +16,18 @@ const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
   return dispatch(pull(paths.flat()))
 }
 
+/** A hook that flips its state after thn given amount of time. */
+const useDelayedState = (time: number) => {
+  const [done, setDone] = useState(false)
+  const timer = setTimeout(() => setDone(true), time)
+  const cancel = useCallback(() => clearTimeout(timer), [timer])
+  const flush = useCallback(() => {
+    clearTimeout(timer)
+    setDone(true)
+  }, [setDone, timer])
+  return [done, flush, cancel] as const
+}
+
 /** Recently edited thoughts derived from the jump history. */
 const RecentlyEdited = () => {
   const dispatch = useDispatch()
@@ -23,6 +35,9 @@ const RecentlyEdited = () => {
   // Only render when all the thoughts in the jump history have been pulled.
   // Otherwise thoughts can disappear as recentlyEdited is updated, which is visually disruptive.
   const [loaded, setLoaded] = useState(false)
+
+  // It is better to only show the loading ellipsis after a beat has passed rather than quickly flash it.
+  const [ready, flushReady] = useDelayedState(600)
 
   const jumpHistory = useSelector(recentlyEdited, _.isEqual)
 
@@ -34,13 +49,16 @@ const RecentlyEdited = () => {
     const p = dispatch(pullJumpHistory()) as unknown as Promise<void>
     p.then(() => {
       setLoaded(true)
+      flushReady()
     })
-  }, [dispatch])
+  }, [flushReady, dispatch])
 
   return (
     <div style={{ marginBottom: '4em', marginTop: '1.5em' }}>
       {!loaded ? (
-        <LoadingEllipsis />
+        ready ? (
+          <LoadingEllipsis />
+        ) : null
       ) : paths.length > 0 ? (
         <div>
           {paths.map(path => (
