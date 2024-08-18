@@ -32,7 +32,7 @@ const RecentlyEdited = () => {
   }, [dispatch])
 
   return (
-    <div style={{ marginTop: '1.5em' }}>
+    <div style={{ marginBottom: '4em', marginTop: '1.5em' }}>
       {paths.length > 0 ? (
         <div>
           {paths.map(path => (
