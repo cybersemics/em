@@ -1,4 +1,5 @@
 import { isSafari, isTouch } from '../browser'
+import { preventScrollDetection } from '../stores/navigated'
 import viewportStore from '../stores/viewport'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from './preventAutoscroll'
 
@@ -37,13 +38,15 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   const y = window.scrollY + rect.y
 
   // leave a margin between the element and the viewport edge equal to half the element's height
+  // add 40px to the bottom margin to prevent the element from being hidden by the footer
   const scrollYNew = isAboveViewport
-    ? y - (toolbarRect?.height ?? 0) - rect.height / 2
-    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5
+    ? y - (toolbarRect?.height ?? 0) - rect.height / 2 + 40
+    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5 + 40
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
+  preventScrollDetection()
   window.scrollTo(0, Math.max(1, scrollYNew))
 }
 
@@ -57,14 +60,15 @@ const scrollCursorIntoView = () => {
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
   if (window.scrollY === 0 && isTouch && isSafari()) {
+    preventScrollDetection()
     window.scrollBy(0, 1)
   }
 
-  // Wait for the next render as this function is called immediately after an action is dispatched.
-  // An animation frame should be enough time.
-  requestAnimationFrame(() => {
+  // Wait for 100ms as this function is called immediately after an action is dispatched.
+  // An animation frame is not enough time if multiple levels of thoughts are being pulled.
+  setTimeout(() => {
     scrollIntoViewIfNeeded(document.querySelector('.editing'))
-  })
+  }, 100)
 }
 
 export default scrollCursorIntoView

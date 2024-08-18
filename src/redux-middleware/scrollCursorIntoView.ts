@@ -5,6 +5,7 @@ import State from '../@types/State'
 import { LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import editingValueStore from '../stores/editingValue'
+import navigatedStore from '../stores/navigated'
 
 // store the last cursor
 let cursorLast: Path | null = null
@@ -27,6 +28,9 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
     // if the cursor has changed, scroll it into view
     const cursor = getState().cursor
     if (cursor !== cursorLast) {
+      // indicate that the cursor has changed and we want to scroll it into view
+      // this is needed for when thoughts need to be pulled from storage prior to scrolling
+      navigatedStore.update(true)
       scrollCursorIntoView()
     }
     cursorLast = cursor

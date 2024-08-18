@@ -8,11 +8,13 @@ import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
+import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import navigatedStore from '../stores/navigated'
 import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
@@ -177,6 +179,11 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
     await dispatch(pull(extendedPullQueueIds, { cancelRef, force }))
     syncStatusStore.update({ isPulling: false })
     pulling.delete(extendedPullQueueFiltered)
+
+    // scroll cursor into view if the pull was the result of navigation to a thought
+    if (navigatedStore.getState()) {
+      scrollCursorIntoView()
+    }
 
     // pull favorites in the background on the first pull
     // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
