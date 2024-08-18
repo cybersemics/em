@@ -8,25 +8,28 @@ import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 
 const pinChildrenShortcut: Shortcut = {
   id: 'pinChildren',
-  label: 'Pin Subthoughts',
-  labelInverse: 'Unpin Subthoughts',
-  description: "Pins open the current thought's subthoughts.",
-  descriptionInverse: "Unpins the current thought's subthoughts so their subthoughts are automatically hidden.",
+  label: 'Pin All',
+  labelInverse: 'Unpin All',
+  description: 'Pins open all thoughts at the current level.',
+  descriptionInverse: 'Unpins all thoughts at the current level.',
   keyboard: { key: 'p', meta: true, shift: true },
   svg: PinChildrenIcon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
     const { cursor } = state
-    if (!cursor) return
+    if (!cursor || isRoot(cursor)) return
 
-    const simplePath = simplifyPath(state, cursor)
+    const path = rootedParentOf(state, cursor)
+    const simplePath = simplifyPath(state, path)
     const thoughtId = head(simplePath)
 
     // if the user used the keyboard to activate the shortcut, show an alert describing the sort direction

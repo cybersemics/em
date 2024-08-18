@@ -22,7 +22,7 @@ it('toggle on when there is no =children attribute', () => {
             - g
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(pinChildrenShortcut, { store })
@@ -60,7 +60,7 @@ it('toggle on when =children/=pin is false', () => {
             - g
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(pinChildrenShortcut, { store })
@@ -98,7 +98,7 @@ it('remove =children when toggling off from true', () => {
             - g
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(pinChildrenShortcut, { store })
@@ -136,7 +136,7 @@ it('remove =pin/false from all subthoughts when toggling on', () => {
             - j
     `,
     }),
-    setCursor(['a']),
+    setCursor(['a', 'b']),
   ])
 
   executeShortcut(pinChildrenShortcut, { store })
