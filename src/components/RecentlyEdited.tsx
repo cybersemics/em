@@ -1,10 +1,9 @@
 import _ from 'lodash'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import Path from '../@types/Path'
 import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
-import pathToThought from '../selectors/pathToThought'
+import recentlyEdited from '../selectors/recentlyEdited'
 import hashPath from '../util/hashPath'
 import ThoughtLink from './ThoughtLink'
 
@@ -23,10 +22,7 @@ const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
 const RecentlyEdited = () => {
   const dispatch = useDispatch()
 
-  const jumpHistory = useSelector(
-    state => state.jumpHistory.filter(path => path && pathToThought(state, path)) as Path[],
-    _.isEqual,
-  )
+  const jumpHistory = useSelector(recentlyEdited, _.isEqual)
 
   // remove duplicates
   const paths = _.uniqBy(jumpHistory, hashPath)
