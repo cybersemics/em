@@ -118,9 +118,12 @@ const useDisableLongPressToSelect = () => {
   }, [onSelectionChange])
 }
 
-/** Cancel gesture if there is an active text selection or active drag. */
-const shouldCancelGesture = () =>
-  (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
+/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+const shouldCancelGesture = (): boolean =>
+  (selection.isActive() && !selection.isCollapsed()) ||
+  store.getState().dragInProgress ||
+  !!store.getState().showModal ||
+  store.getState().showSidebar
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
