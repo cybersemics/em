@@ -5,20 +5,19 @@ import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
 import recentlyEdited from '../selectors/recentlyEdited'
 import hashPath from '../util/hashPath'
+import nonNull from '../util/nonNull'
 import ThoughtLink from './ThoughtLink'
 
 /** Pulls all paths in the jump history. */
 const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
   const state = getState()
-  for (const path of state.jumpHistory) {
-    if (!path) continue
-    for (const id of path) {
-      await dispatch(pull([id], { force: true, maxDepth: 0 }))
-    }
-  }
+  const paths = state.jumpHistory.filter(nonNull)
+  // Pull all thoughts at once, rather than incrementally.
+  // Otherwise thoughts can disappear as recentlyEdited is updated, which is visually disruptive.
+  return dispatch(pull(paths.flat()))
 }
 
-/** Recently edited thoughts. */
+/** Recently edited thoughts derived from the jump history. */
 const RecentlyEdited = () => {
   const dispatch = useDispatch()
 
@@ -28,7 +27,8 @@ const RecentlyEdited = () => {
   const paths = _.uniqBy(jumpHistory, hashPath)
 
   useEffect(() => {
-    dispatch(pullJumpHistory())
+    // TODO: Fix type
+    dispatch(pullJumpHistory()) as unknown as Promise<void>
   }, [dispatch])
 
   return (
