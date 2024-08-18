@@ -3,7 +3,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
-import PinChildrenIcon from '../components/icons/PinChildrenIcon'
+import PinAllIcon from '../components/icons/PinAllIcon'
 import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
@@ -14,14 +14,14 @@ import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const pinChildrenShortcut: Shortcut = {
-  id: 'pinChildren',
+const pinAllShortcut: Shortcut = {
+  id: 'pinAll',
   label: 'Pin All',
   labelInverse: 'Unpin All',
   description: 'Pins open all thoughts at the current level.',
   descriptionInverse: 'Unpins all thoughts at the current level.',
   keyboard: { key: 'p', meta: true, shift: true },
-  svg: PinChildrenIcon,
+  svg: PinAllIcon,
   canExecute: getState => !!getState().cursor,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
@@ -88,4 +88,4 @@ const pinChildrenShortcut: Shortcut = {
   },
 }
 
-export default pinChildrenShortcut
+export default pinAllShortcut

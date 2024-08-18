@@ -174,7 +174,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'outdent',
   'indent',
   'pin',
-  'pinChildren',
+  'pinAll',
   'toggleTableView',
   'toggleSort',
   'toggleDone',
