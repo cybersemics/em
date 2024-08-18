@@ -31,7 +31,7 @@ it('default', () => {
   expect(contexts).toEqual([
     ['d', 'e', 'ff'],
     ['a', 'b', 'cc'],
-    // first jump p point from initial import
+    // first jump point from initial import
     ['d'],
   ])
 })
@@ -55,6 +55,26 @@ it('filter out deleted thoughts', () => {
     setCursor(['d', 'e', 'f']),
     editThought(['d', 'e', 'f'], 'ff'),
     deleteThought(['d']),
+  ])
+
+  const state = store.getState()
+  const contexts = recentlyEdited(state).map(path => pathToContext(state, path))
+  expect(contexts).toEqual([['a', 'b', 'cc']])
+})
+
+it('filter out adjacent ancestors', () => {
+  const store = createTestStore()
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+      `,
+    }),
+    setCursor(['a', 'b', 'c']),
+    editThought(['a', 'b', 'c'], 'cc'),
   ])
 
   const state = store.getState()
