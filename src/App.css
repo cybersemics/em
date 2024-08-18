@@ -364,6 +364,11 @@ a.text-link {
   text-decoration: none;
 }
 
+.breadcrumbs a:active {
+  color: #909090;
+  -webkit-text-stroke-width: 0.05em;
+}
+
 .context-breadcrumbs {
   font-size: 0.867em;
   color: gray;
@@ -1121,6 +1126,10 @@ body.dark {
 
 .link {
   word-break: break-word;
+}
+
+.link:active {
+  -webkit-text-stroke-width: 0.05em;
 }
 
 .superscript-container {
