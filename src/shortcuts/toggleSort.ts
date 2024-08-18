@@ -2,11 +2,12 @@ import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { toggleSortActionCreator as toggleSort } from '../actions/toggleSort'
 import Icon from '../components/icons/Sort'
-import { HOME_PATH } from '../constants'
 import { getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
+import isRoot from '../util/isRoot'
 
 const toggleSortShortcut: Shortcut = {
   id: 'toggleSort',
@@ -17,7 +18,10 @@ const toggleSortShortcut: Shortcut = {
   svg: Icon,
   exec: (dispatch, getState, e, { type }) => {
     const state = getState()
-    const simplePath = state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH
+    if (!state.cursor || isRoot(state.cursor)) return
+
+    const path = rootedParentOf(state, state.cursor)
+    const simplePath = simplifyPath(state, path)
     const id = head(simplePath)
 
     dispatch(toggleSort({ simplePath }))
@@ -37,17 +41,18 @@ const toggleSortShortcut: Shortcut = {
   },
   isActive: getState => {
     const state = getState()
-    const { cursor } = state
+    if (!state.cursor || isRoot(state.cursor)) return false
 
-    const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-
+    const path = simplifyPath(state, rootedParentOf(state, state.cursor))
     return getSortPreference(state, head(path)).type === 'Alphabetical'
   },
   // Show an error if the ranks do not match the sort condition.
   // This is only needed for migrating to permasort, and can be removed after the migration is complete.
   error: getState => {
     const state = getState()
-    const simplePath = state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH
+    if (!state.cursor || isRoot(state.cursor)) return null
+
+    const simplePath = simplifyPath(state, state.cursor)
     const id = head(simplePath)
     const sortPreference = getSortPreference(state, id)
     if (sortPreference.type === 'None') return null
