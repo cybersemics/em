@@ -3,6 +3,7 @@ import thunk from 'redux-thunk'
 import State from '../@types/State'
 import appReducer from '../actions/app'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import updateJumpHistoryEnhancer from '../redux-enhancers/updateJumpHistoryEnhancer'
 import multi from '../redux-middleware/multi'
 
 /**
@@ -10,7 +11,10 @@ import multi from '../redux-middleware/multi'
  */
 export const createTestStore = () => {
   // TODO: Type properly
-  const store = createStore(appReducer, compose(applyMiddleware(multi, thunk), undoRedoEnhancer) as any)
+  const store = createStore(
+    appReducer,
+    compose(applyMiddleware(multi, thunk), undoRedoEnhancer, updateJumpHistoryEnhancer) as any,
+  )
 
   store.dispatch([
     // skip tutorial
