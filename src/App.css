@@ -1933,6 +1933,15 @@ h1 .num-contexts {
   }
 }
 
+@keyframes pulse-light {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
 .animate-pulse {
   animation: pulse 1s infinite alternate;
 }
