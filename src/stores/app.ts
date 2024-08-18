@@ -9,6 +9,7 @@ import appReducer from '../actions/app'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
+import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
 import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
@@ -17,7 +18,6 @@ import multi from '../redux-middleware/multi'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
-import updateJumpHistory from '../redux-middleware/updateJumpHistory'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 
 // composeWithDevTools is typed as redux.compose, which hard codes up to four function arguments.
@@ -40,7 +40,6 @@ const middlewareEnhancer = applyMiddleware(
   scrollCursorIntoView,
   clearSelection,
   updateEditingValue,
-  updateJumpHistory,
   updateUrlHistory,
   freeThoughts,
 )
@@ -51,6 +50,7 @@ const store = createStore(
     middlewareEnhancer,
     storageCache,
     undoRedoEnhancer,
+    updateJumpHistory,
     // must go at the end to ensure it clears the pushQueue before other enhancers
     pushQueue,
   ),

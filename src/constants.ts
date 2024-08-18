@@ -471,9 +471,6 @@ export enum Settings {
   hideSuperscripts = 'hideSuperscripts',
 }
 
-// maximum size of state.jumpHistory
-export const MAX_JUMPS = 100
-
 // max time attempting to connect before moving to offline mode (milliseconds)
 export const WEBSOCKET_TIMEOUT = 3000
 
