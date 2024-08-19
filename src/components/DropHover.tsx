@@ -21,10 +21,12 @@ const DropHoverIfVisible = ({
   isHovering,
   prevChildId,
   simplePath,
+  isTableCol1,
 }: {
   isHovering: boolean
   prevChildId?: ThoughtId
   simplePath: SimplePath
+  isTableCol1?: boolean
 }) => {
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
@@ -69,11 +71,11 @@ const DropHoverIfVisible = ({
     )
   })
 
-  return showDropHover ? <DropHover simplePath={simplePath} /> : null
+  return showDropHover ? <DropHover isTableCol1={isTableCol1} simplePath={simplePath} /> : null
 }
 
 /** Renders a drop-hover element unconditionally. */
-const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
+const DropHover = ({ simplePath, isTableCol1 }: { simplePath: SimplePath; isTableCol1?: boolean }) => {
   const dropHoverColor = useDropHoverColor(simplePath.length)
   const highlight2 = useSelector(state => themeColors(state)?.highlight2)
   const animateHover = useSelector(state => {
@@ -89,6 +91,8 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
       style={{
         display: 'inline',
         backgroundColor: animateHover ? highlight2 : dropHoverColor,
+        width: isTableCol1 ? '50vw' : undefined,
+        marginLeft: isTableCol1 ? 'calc(0.9em - 12px)' : undefined,
         animation: animateHover
           ? `pulse-light ${token('durations.hoverPulseDuration')} linear infinite alternate`
           : undefined,

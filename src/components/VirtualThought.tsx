@@ -75,6 +75,7 @@ const VirtualThought = ({
   simplePath: SimplePath
   singleLineHeight: number
   style?: React.CSSProperties
+  isTableCol1: boolean
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean

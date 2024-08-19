@@ -165,6 +165,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
+<<<<<<< HEAD
   it('drop target last child in cliff', async () => {
     await paste(`
         - a
@@ -196,6 +197,24 @@ describe('drag', () => {
     await simulateDragAndDrop({ drop: true })
 
     await dragAndDropThought('b', 'c', { position: 'after' })
+=======
+  it('drop hover after first thought of column one', async () => {
+    await paste(`
+        - x
+        - a
+          - =view
+            - Table
+          - =pin
+            - true
+          - b
+            - c
+          - d
+            - e
+      `)
+
+    await clickThought('x')
+    await dragAndDropThought('x', 'd', { position: 'before' })
+>>>>>>> 266ea60e3b (fix drop-hover of table column one thoughts)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

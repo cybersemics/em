@@ -89,6 +89,7 @@ export interface ThoughtContainerProps {
   style?: React.CSSProperties
   styleContainer?: React.CSSProperties
   updateSize?: () => void
+  isTableCol1?: boolean
 }
 
 /** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
@@ -125,6 +126,7 @@ const ThoughtContainer = ({
   style: styleProp,
   styleContainer: styleContainerProp,
   updateSize,
+  isTableCol1,
 }: ThoughtContainerProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
@@ -430,7 +432,12 @@ const ThoughtContainer = ({
           />
         )}
 
-        <DropHover isHovering={isHovering} prevChildId={prevChildId} simplePath={simplePath} />
+        <DropHover
+          isTableCol1={isTableCol1}
+          isHovering={isHovering}
+          prevChildId={prevChildId}
+          simplePath={simplePath}
+        />
 
         <StaticThought
           allowSingleContext={allowSingleContext}
