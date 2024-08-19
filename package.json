@@ -79,7 +79,7 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@hocuspocus/provider": "^2.13.5",
-    "@mui/material": "^5.15.20",
+    "@mui/material": "^5.16.7",
     "algoliasearch": "^4.24.0",
     "axios": "^1.7.2",
     "classnames": "^2.5.1",
