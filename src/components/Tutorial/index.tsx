@@ -60,7 +60,7 @@ if (!newThoughtShortcut) {
 
 /** Tutorial component. */
 const Tutorial: FC = () => {
-  const { isVisible, elementRef } = useIsVisible<HTMLDivElement>()
+  const { isVisible, elementRef } = useIsVisible<HTMLDivElement>(true)
   const tutorialStep = useSelector(state => {
     const step = +(getSetting(state, 'Tutorial Step') || 1)
     return isNaN(step) ? 1 : step

@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 /**
  * Determines if an element is visible.
  */
-const useIsVisible = <T extends HTMLElement>() => {
-  const [isVisible, setIsVisible] = useState(false)
+const useIsVisible = <T extends HTMLElement>(initialValue = false) => {
+  const [isVisible, setIsVisible] = useState(initialValue)
   const elementRef = useRef<T | null>(null)
 
   useEffect(() => {

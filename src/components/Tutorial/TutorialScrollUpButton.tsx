@@ -1,4 +1,5 @@
 import { FC, useCallback } from 'react'
+import useScrollPosition from '../../hooks/useScrollPosition'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 interface TutorialScrollUpButtonProps {
@@ -7,6 +8,8 @@ interface TutorialScrollUpButtonProps {
 
 /** A button to scroll up to the tutorial. */
 const TutorialScrollUpButton: FC<TutorialScrollUpButtonProps> = ({ show }) => {
+  const scrollPosition = useScrollPosition()
+
   /**
    * Scrolls to the top of the window.
    */
@@ -23,8 +26,8 @@ const TutorialScrollUpButton: FC<TutorialScrollUpButtonProps> = ({ show }) => {
         visibility: show ? 'visible' : 'hidden',
         opacity: show ? 1 : 0,
         width: '100%',
-        position: 'fixed',
-        top: show ? '0.5em' : '-2em',
+        position: 'absolute',
+        top: show ? `calc(${scrollPosition}px + 0.5em)` : '-2em',
         left: 0,
         transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
         display: 'flex',
