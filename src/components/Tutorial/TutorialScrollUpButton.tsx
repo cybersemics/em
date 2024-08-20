@@ -3,12 +3,8 @@ import scrollTo from '../../device/scrollTo'
 import useScrollPosition from '../../hooks/useScrollPosition'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
-interface TutorialScrollUpButtonProps {
-  show: boolean
-}
-
 /** A button to scroll up to the tutorial. */
-const TutorialScrollUpButton: FC<TutorialScrollUpButtonProps> = ({ show }) => {
+const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
   const scrollPosition = useScrollPosition()
 
   /**
