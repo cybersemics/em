@@ -1,4 +1,5 @@
 import { FC, useCallback } from 'react'
+import scrollTo from '../../device/scrollTo'
 import useScrollPosition from '../../hooks/useScrollPosition'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
@@ -14,10 +15,7 @@ const TutorialScrollUpButton: FC<TutorialScrollUpButtonProps> = ({ show }) => {
    * Scrolls to the top of the window.
    */
   const scrollUp = useCallback(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    })
+    scrollTo('top', 'smooth')
   }, [])
 
   return (
