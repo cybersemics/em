@@ -24,6 +24,7 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // toolbar element is not present when distractionFreeTyping is activated
   const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
   const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
+  const navbarRect = document.querySelector('.nav.nav-bottom')?.getBoundingClientRect()
   const viewport = viewportStore.getState()
   const isAboveViewport = rect.top < toolbarBottom
   const isBelowViewport = rect.bottom > viewport.innerHeight - viewport.virtualKeyboardHeight
@@ -37,9 +38,10 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   const y = window.scrollY + rect.y
 
   // leave a margin between the element and the viewport edge equal to half the element's height
+  // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
   const scrollYNew = isAboveViewport
-    ? y - (toolbarRect?.height ?? 0) - rect.height / 2
-    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5
+    ? y - (toolbarRect?.height ?? 0) - rect.height / 2 + (navbarRect?.height ?? 0)
+    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5 + (navbarRect?.height ?? 0)
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
