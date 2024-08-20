@@ -24,13 +24,17 @@ editingValueStore.subscribe(
   }, 400),
 )
 
+// store the previous isPulling value, to only invoke scrollCursorIntoView when it changes to `false`
+let prevIsPulling: boolean | null = null
 /**
  * Scroll the cursor into view if the sync was the result of navigation to a thought.
  */
 syncStatusStore.subscribe(state => {
-  if (!state.isPulling && navigated) {
-    scrollCursorIntoView({ isNavigated: true })
+  if (!state.isPulling && prevIsPulling && navigated) {
+    scrollCursorIntoView({ navigated: true })
   }
+
+  prevIsPulling = state.isPulling
 })
 
 /**
@@ -55,7 +59,7 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
       // indicate that the cursor has changed and we want to scroll it into view
       // this is needed for when thoughts need to be pulled from storage prior to scrolling
       navigated = true
-      scrollCursorIntoView({ isNavigated: true })
+      scrollCursorIntoView({ navigated: true })
     }
     cursorLast = cursor
   }

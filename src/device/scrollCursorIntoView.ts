@@ -17,7 +17,7 @@ export const isAutoScrolling = () => autoScrolling
 /**
  * Prepares the navigatedStore to ignore scroll events that are triggered programmatically.
  */
-export const preventScrollDetection = () => {
+const startAutoScroll = () => {
   // Clear pending timeouts
   if (autoScrollingTimeout) {
     clearTimeout(autoScrollingTimeout)
@@ -69,18 +69,18 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
-  preventScrollDetection()
+  startAutoScroll()
   window.scrollTo(0, Math.max(1, scrollYNew))
 }
 
 /** Scrolls the cursor into view if needed. */
 const scrollCursorIntoView = ({
-  isNavigated,
+  navigated,
 }: {
   /**
    * If this scroll is the result of a navigation, the scroll will add a longer artificial delay to not conflict with additional syncs.
    */
-  isNavigated?: boolean
+  navigated?: boolean
 } = {}) => {
   // web only
   // TODO: Implement on React Native
@@ -90,7 +90,7 @@ const scrollCursorIntoView = ({
   // otherwise Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
   if (window.scrollY === 0 && isTouch && isSafari()) {
-    preventScrollDetection()
+    startAutoScroll()
     window.scrollBy(0, 1)
   }
 
@@ -100,7 +100,7 @@ const scrollCursorIntoView = ({
     () => {
       scrollIntoViewIfNeeded(document.querySelector('.editing'))
     },
-    isNavigated ? 100 : 0,
+    navigated ? 100 : 0,
   )
 }
 
