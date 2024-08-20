@@ -130,14 +130,16 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const onTapUp = useCallback(
     (id: ShortcutId) => {
       deselectPressingToolbarId()
-      if (id === 'newThought') {
-        dispatch(showTip({ tip: TipId.NewThought }))
-      } else if (id === 'newSubthought') {
-        dispatch(showTip({ tip: TipId.NewSubthought }))
+      if (!customize) {
+        if (id === 'newThought') {
+          dispatch(showTip({ tip: TipId.NewThought }))
+        } else if (id === 'newSubthought') {
+          dispatch(showTip({ tip: TipId.NewSubthought }))
+        }
       }
       onSelect?.(shortcutById(id))
     },
-    [onSelect, deselectPressingToolbarId, dispatch],
+    [onSelect, deselectPressingToolbarId, dispatch, customize],
   )
 
   return (
