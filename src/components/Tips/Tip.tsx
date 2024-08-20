@@ -13,13 +13,13 @@ const Tip: FC<PropsWithChildren<TipProps>> = ({ display, children }, ref) => {
         bottom: '1em',
         left: 0,
         width: '100%',
-        zIndex: 20,
         display: 'flex',
         justifyContent: 'center',
         transform: display ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 200ms ease-in-out, opacity 200ms ease-in-out',
         opacity: display ? 1 : 0,
       }}
+      className='z-index-popup'
     >
       <div
         style={{
