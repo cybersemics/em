@@ -16,7 +16,7 @@ const tags = {
   italic: createTag('i'),
   underline: createTag('u'),
   strikethrough: createTag('strike'),
-  foreColor: createTag('font'),
+  foreColor: createTag('span'),
   backColor: createTag('span'),
 }
 
@@ -30,11 +30,11 @@ const extractColors = (savedValue: string) => {
 
   // Attempt to extract the font color
   const foreColorMatch = savedValue.match(foreColorRegex)
-  const foreColor = foreColorMatch ? foreColorMatch[1].trim() : 'rgb(227, 227, 227)'
+  const foreColor = foreColorMatch ? foreColorMatch[1].trim() : undefined
 
   // Attempt to extract the background-color from span
   const backColorMatch = savedValue.match(backColorRegex)
-  const backColor = backColorMatch ? backColorMatch[1].trim() : 'rgb(0, 0, 0)'
+  const backColor = backColorMatch ? backColorMatch[1].trim() : undefined
 
   return { foreColor, backColor }
 }
@@ -51,8 +51,8 @@ const getCommandState = (value: string): CommandState => {
       italic: false,
       underline: false,
       strikethrough: false,
-      foreColor: 'rgb(227, 227, 227)',
-      backColor: 'rgb(0, 0, 0)',
+      foreColor: undefined,
+      backColor: undefined,
     }
   }
   // Tracks which commands have applied to the entire value so far
@@ -61,8 +61,8 @@ const getCommandState = (value: string): CommandState => {
     italic: true,
     underline: true,
     strikethrough: true,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   }
   // Tracks which commands are currently applied while walking through the value
   const currentCommandState: CommandState = {
@@ -70,8 +70,8 @@ const getCommandState = (value: string): CommandState => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   }
   // Walk through the value until the end is reached, checking for markup tag
   const savedValue = value

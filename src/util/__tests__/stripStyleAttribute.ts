@@ -1,6 +1,6 @@
 import stripStyleAttribute from '../stripStyleAttribute'
 
-it('only allow font weight, font-style, and text-decoration', () => {
+it('only allow font weight, font-style, color, background-color and text-decoration', () => {
   expect(
     stripStyleAttribute(
       'color: red; background-color: white; font-weight: bold; font-size: 14px; font-style: italic; text-decoration: underline;',

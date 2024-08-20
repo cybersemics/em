@@ -11,6 +11,12 @@ export const formatSelectionActionCreator =
     color: string = '#ffffff',
   ): Thunk =>
   (dispatch, getState) => {
+    // Apply text and background color to the selected text and apply the command
+    const execCommand = () => {
+      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
+      else document.execCommand(command)
+    }
+
     const state = getState()
     if (!state.cursor) return
 
@@ -29,13 +35,10 @@ export const formatSelectionActionCreator =
       // must suppress focus events in the Editable component, otherwise selecting text will set editing:true on mobile
       sel?.selectAllChildren(thoughtContentEditable)
 
-      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
-      else document.execCommand(command)
+      execCommand()
       selection.restore(savedSelection)
     } else {
-      // Apply text and background color to the selected text and apply the command
-      if (command === 'backColor' || command === 'foreColor') document.execCommand(command, false, color)
-      else document.execCommand(command)
+      execCommand()
       updateCommandState()
     }
 

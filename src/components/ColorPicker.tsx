@@ -4,11 +4,9 @@ import { useDispatch, useSelector } from 'react-redux'
 import { formatSelectionActionCreator as formatSelection } from '../actions/formatSelection'
 import { textColorActionCreator as textColor } from '../actions/textColor'
 import { isTouch } from '../browser'
-// import getStyle from '../selectors/getStyle'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
-// import head from '../util/head'
 import TriangleDown from './TriangleDown'
 import TextColorIcon from './icons/TextColor'
 
@@ -55,11 +53,18 @@ const ColorSwatch: FC<{
   }
 
   useEffect(() => {
-    const hex1 = color ? addAlphaToHex(rgbToHex(color)) : undefined
-    const hex2 = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
-    const hex3 = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
-    const hex4 = cursorStyle?.backgroundColor ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor)) : undefined
-    setSelected(!!((hex1 && hex1 === hex3) || (hex2 && hex2 === hex4)))
+    const textHexColor = color ? addAlphaToHex(rgbToHex(color)) : undefined
+    const backHexColor = backgroundColor ? addAlphaToHex(rgbToHex(backgroundColor)) : undefined
+    const selectedTextHexColor = cursorStyle?.color ? addAlphaToHex(rgbToHex(cursorStyle?.color)) : undefined
+    const selectedBackHexColor = cursorStyle?.backgroundColor
+      ? addAlphaToHex(rgbToHex(cursorStyle?.backgroundColor))
+      : undefined
+    setSelected(
+      !!(
+        (textHexColor && textHexColor === selectedTextHexColor) ||
+        (backHexColor && backHexColor === selectedBackHexColor)
+      ),
+    )
   }, [cursorStyle, backgroundColor, color])
   /** Toggles the text color to the clicked swatch. */
   const toggleTextColor = async (e: React.MouseEvent | React.TouchEvent) => {
@@ -67,12 +72,12 @@ const ColorSwatch: FC<{
     e.stopPropagation()
 
     // Apply text color to the selection
-    if (backgroundColor || color !== 'default')
-      await dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
+    if (backgroundColor || color !== 'default') dispatch(formatSelection('foreColor', color || 'rgba(0, 0, 0, 1)'))
 
     // Apply background color to the selection
-    if (backgroundColor && backgroundColor !== colors.bg)
-      await dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+    backgroundColor && backgroundColor !== colors.bg
+      ? dispatch(formatSelection('backColor', backgroundColor === 'inverse' ? colors.fg : backgroundColor))
+      : dispatch(formatSelection('backColor', colors.fg))
 
     await dispatch(
       textColor({

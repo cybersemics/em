@@ -6,8 +6,8 @@ it('empty thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -17,8 +17,8 @@ it('bold thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -28,8 +28,8 @@ it('italic thought', () => {
     italic: true,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -39,8 +39,8 @@ it('underline thought', () => {
     italic: false,
     underline: true,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -50,8 +50,8 @@ it('strikethrough thought', () => {
     italic: false,
     underline: false,
     strikethrough: true,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -61,8 +61,8 @@ it('partially styled thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -73,7 +73,7 @@ it('text color thought', () => {
     underline: false,
     strikethrough: false,
     foreColor: 'rgb(255, 0, 0)',
-    backColor: 'rgb(0, 0, 0)',
+    backColor: undefined,
   })
 })
 
@@ -83,7 +83,7 @@ it('background color thought', () => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
+    foreColor: undefined,
     backColor: 'rgb(0, 0, 255)',
   })
 })

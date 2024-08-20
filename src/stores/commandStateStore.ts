@@ -11,8 +11,8 @@ const commandStateStore = reactMinistore<CommandState>({
   italic: false,
   underline: false,
   strikethrough: false,
-  foreColor: 'rgb(227, 227, 227)',
-  backColor: 'rgb(0, 0, 0)',
+  foreColor: undefined,
+  backColor: undefined,
 })
 
 /** Resets the command state to false. */
@@ -22,8 +22,8 @@ export const resetCommandState = () => {
     italic: false,
     underline: false,
     strikethrough: false,
-    foreColor: 'rgb(227, 227, 227)',
-    backColor: 'rgb(0, 0, 0)',
+    foreColor: undefined,
+    backColor: undefined,
   })
 }
 

@@ -2,6 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
+import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 import reducerFlow from '../util/reducerFlow'
 import deleteAttribute from './deleteAttribute'
@@ -15,17 +16,15 @@ const textColor = (
   const path = state.cursor
 
   const thought = pathToThought(state, state.cursor)
-  const sel = window.getSelection()
-
+  const thoughtText = thought.value.replace(/<[^>]*>/g, '')
   // set bullet to text color when the entire thought selected
-  if ((sel?.toString().length === 0 && thought.value.length !== 0) || sel?.toString().length === thought.value.length) {
+  if ((selection.text()?.length === 0 && thoughtText.length !== 0) || selection.text()?.length === thoughtText.length) {
     return reducerFlow([
       color && color !== 'default'
         ? setDescendant({ path, values: ['=bullet', '=style', 'color', backgroundColor || color] })
         : deleteAttribute({ path, values: ['=bullet', '=style', 'color'] }),
     ])(state)
-  }
-  return state
+  } else return reducerFlow([deleteAttribute({ path, values: ['=bullet', '=style', 'color'] })])(state)
 }
 
 /** Action-creator for textColor. */
