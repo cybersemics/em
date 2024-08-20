@@ -2,13 +2,13 @@ import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
+import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import themeColors from '../../selectors/themeColors'
 import newThoughtShortcut from '../../shortcuts/newThought'
 import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
-import removeToolbarButton from '../../util/removeToolbarButton'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
 
@@ -60,7 +60,7 @@ const NewThoughtTip: FC<NewThoughtTipProps> = ({ display }) => {
           <a
             tabIndex={-1}
             {...fastClick(() => {
-              removeToolbarButton('newThought')
+              store.dispatch(removeToolbarButton('newThought'))
               store.dispatch(dismissTip())
             })}
             className='button'
