@@ -17,18 +17,27 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
   return (
     <div
       style={{
-        visibility: show ? 'visible' : 'hidden',
-        opacity: show ? 1 : 0,
-        width: '100%',
         position: 'absolute',
-        top: show ? `calc(${scrollPosition}px + 0.5em)` : '-2em',
+        top: scrollPosition,
         left: 0,
-        transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
-        display: 'flex',
-        justifyContent: 'center',
+        width: '100%',
       }}
     >
-      <TutorialNavigationButton clickHandler={scrollUp} value='Scroll up for tutorial' />
+      <div
+        style={{
+          visibility: show ? 'visible' : 'hidden',
+          opacity: show ? 1 : 0,
+          width: '100%',
+          position: 'absolute',
+          top: show ? '0.5em' : '-2em',
+          left: 0,
+          transition: 'opacity 0.25s ease-in-out, visibility 0.25s ease-in-out, top 0.25s ease-in-out',
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
+        <TutorialNavigationButton clickHandler={scrollUp} value='Scroll up for tutorial' />
+      </div>
     </div>
   )
 }
