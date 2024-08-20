@@ -38,10 +38,9 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
   const y = window.scrollY + rect.y
 
   // leave a margin between the element and the viewport edge equal to half the element's height
-  // add 40px to the bottom margin to prevent the element from being hidden by the footer
   const scrollYNew = isAboveViewport
-    ? y - (toolbarRect?.height ?? 0) - rect.height / 2 + 40
-    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5 + 40
+    ? y - (toolbarRect?.height ?? 0) - rect.height / 2
+    : y - viewport.innerHeight + viewport.virtualKeyboardHeight + rect.height * 1.5
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
