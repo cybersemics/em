@@ -3,12 +3,16 @@ import { ThunkMiddleware } from 'redux-thunk'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
-import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import scrollCursorIntoView, { isAutoScrolling } from '../device/scrollCursorIntoView'
 import editingValueStore from '../stores/editingValue'
-import navigatedStore from '../stores/navigated'
+import scrollTopStore from '../stores/scrollTop'
+import syncStatusStore from '../stores/syncStatus'
 
 // store the last cursor
 let cursorLast: Path | null = null
+
+// Tracks whether the cursor has changed as a result of navigation to a thought
+let navigated: boolean = false
 
 // Scroll the cursor into view after it is edited, e.g. toggling bold in a long, sorted context.
 editingValueStore.subscribe(
@@ -20,6 +24,26 @@ editingValueStore.subscribe(
   }, 400),
 )
 
+/**
+ * Scroll the cursor into view if the sync was the result of navigation to a thought.
+ */
+syncStatusStore.subscribe(state => {
+  if (!state.isPulling && navigated) {
+    scrollCursorIntoView({ isNavigated: true })
+  }
+})
+
+/**
+ * Whenever the user scrolls, we set `navigated` to false. This prevents `scrollCursorIntoView` from being called
+ * after loading new thoughts.
+ */
+scrollTopStore.subscribe(() => {
+  // Ignore scroll events that are triggered programmatically.
+  if (isAutoScrolling()) return
+
+  navigated = false
+})
+
 /** Runs a throttled session keepalive on every action. */
 const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) => {
   return next => action => {
@@ -30,8 +54,8 @@ const scrollCursorIntoViewMiddleware: ThunkMiddleware<State> = ({ getState }) =>
     if (cursor !== cursorLast) {
       // indicate that the cursor has changed and we want to scroll it into view
       // this is needed for when thoughts need to be pulled from storage prior to scrolling
-      navigatedStore.update(true)
-      scrollCursorIntoView()
+      navigated = true
+      scrollCursorIntoView({ isNavigated: true })
     }
     cursorLast = cursor
   }

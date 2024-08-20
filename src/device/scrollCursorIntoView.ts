@@ -1,10 +1,34 @@
 import { isSafari, isTouch } from '../browser'
-import { preventScrollDetection } from '../stores/navigated'
 import viewportStore from '../stores/viewport'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from './preventAutoscroll'
 
 /** Returns true if the given element is visible within the vertical viewport. */
 // const isElementInViewport = (el: Element) => {}
+
+// Keep track of whether a programmatic scroll will occur in order to ignore events.
+let autoScrolling = false
+let autoScrollingTimeout: NodeJS.Timeout | undefined
+
+/**
+ * Returns true if a programmatic scroll is in progress.
+ */
+export const isAutoScrolling = () => autoScrolling
+
+/**
+ * Prepares the navigatedStore to ignore scroll events that are triggered programmatically.
+ */
+export const preventScrollDetection = () => {
+  // Clear pending timeouts
+  if (autoScrollingTimeout) {
+    clearTimeout(autoScrollingTimeout)
+  }
+
+  autoScrolling = true
+
+  autoScrollingTimeout = setTimeout(() => {
+    autoScrolling = false
+  }, 50)
+}
 
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
@@ -50,7 +74,14 @@ const scrollIntoViewIfNeeded = (el: Element | null | undefined) => {
 }
 
 /** Scrolls the cursor into view if needed. */
-const scrollCursorIntoView = () => {
+const scrollCursorIntoView = ({
+  isNavigated,
+}: {
+  /**
+   * If this scroll is the result of a navigation, the scroll will add a longer artificial delay to not conflict with additional syncs.
+   */
+  isNavigated?: boolean
+} = {}) => {
   // web only
   // TODO: Implement on React Native
   if (typeof window === 'undefined' || typeof document === 'undefined' || !document.querySelector) return
@@ -65,9 +96,12 @@ const scrollCursorIntoView = () => {
 
   // Wait for 100ms as this function is called immediately after an action is dispatched.
   // An animation frame is not enough time if multiple levels of thoughts are being pulled.
-  setTimeout(() => {
-    scrollIntoViewIfNeeded(document.querySelector('.editing'))
-  }, 100)
+  setTimeout(
+    () => {
+      scrollIntoViewIfNeeded(document.querySelector('.editing'))
+    },
+    isNavigated ? 100 : 0,
+  )
 }
 
 export default scrollCursorIntoView
