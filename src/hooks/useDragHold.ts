@@ -63,7 +63,7 @@ const useDragHold = ({
     })
   }, [dispatch, isDragging])
 
-  const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT)
+  const props = useLongPress(onLongPressStart, onLongPressEnd, null, TIMEOUT_LONG_PRESS_THOUGHT, true)
 
   return {
     isPressed,

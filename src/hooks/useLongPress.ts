@@ -19,6 +19,7 @@ const useLongPress = (
   onLongPressEnd: (() => void) | null = noop,
   onTouchStart: (() => void) | null = noop,
   ms = 250,
+  preventLongPressOnContextMenu?: boolean,
 ) => {
   const [pressed, setPressed] = useState(false)
   // useState doesn't work for some reason (???)
@@ -27,13 +28,26 @@ const useLongPress = (
   const timerIdRef = useRef<number | undefined>()
   const dispatch = useDispatch()
   const unmounted = useRef(false)
+  const savedSelectionRange = useRef<Range | null>(null)
 
   /** Starts the timer. Unless it is cleared by stop or unmount, it will set pressed and call onLongPressStart after the delay. */
   // track that long press has started on mouseDown or touchStart
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // Save the current selection to restore it when user right clicks
+      const windowSelection = window.getSelection()
+      if (windowSelection && !windowSelection.isCollapsed) {
+        savedSelectionRange.current = windowSelection?.getRangeAt(0).cloneRange() ?? null
+      }
+
+      // do not call `onLongPressStart` when user opens context menu by using right click
       // do not stop propagation, or it will break MultiGesture
-      if (lock) return
+      if (
+        (preventLongPressOnContextMenu && e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) ||
+        lock
+      ) {
+        return
+      }
 
       if ('touches' in e) {
         clientCoords.current = { x: e.touches?.[0]?.clientX, y: e.touches?.[0]?.clientY }
@@ -108,10 +122,17 @@ const useLongPress = (
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
-      // If lock is true (longpress event occurs) we should prevent opening context menu
-      if (lock) {
-        e.preventDefault()
-      }
+      const widnowSelection = window.getSelection()
+
+      // Restore the selection after the context menu is closed
+      setTimeout(() => {
+        if (savedSelectionRange.current) {
+          widnowSelection?.removeAllRanges()
+          widnowSelection?.addRange(savedSelectionRange.current)
+          savedSelectionRange.current = null
+        }
+      }, 0)
+
       // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
       if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
         e.stopPropagation()
