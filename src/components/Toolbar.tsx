@@ -10,7 +10,7 @@ Test:
 */
 import classNames from 'classnames'
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import ShortcutType from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
@@ -19,7 +19,6 @@ import { showTipActionCreator as showTip } from '../actions/showTip'
 import { TOOLBAR_DEFAULT_SHORTCUTS, TOOLBAR_PRESS_ANIMATION_DURATION } from '../constants'
 import getUserToolbar from '../selectors/getUserToolbar'
 import { shortcutById } from '../shortcuts'
-import store from '../stores/app'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import ToolbarButton from './ToolbarButton'
 import TriangleLeft from './TriangleLeft'
@@ -34,6 +33,7 @@ interface ToolbarProps {
 
 /** Toolbar component. */
 const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
+  const dispatch = useDispatch()
   // track scrollLeft after each touchend
   // this is used to reset pressingToolbarId when the user has scrolled at least 5px
   const lastScrollLeft = useRef<number>(0)
@@ -131,13 +131,13 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     (id: ShortcutId) => {
       deselectPressingToolbarId()
       if (id === 'newThought') {
-        store.dispatch(showTip({ tip: TipId.NewThought }))
+        dispatch(showTip({ tip: TipId.NewThought }))
       } else if (id === 'newSubthought') {
-        store.dispatch(showTip({ tip: TipId.NewSubthought }))
+        dispatch(showTip({ tip: TipId.NewSubthought }))
       }
       onSelect?.(shortcutById(id))
     },
-    [onSelect, deselectPressingToolbarId],
+    [onSelect, deselectPressingToolbarId, dispatch],
   )
 
   return (
