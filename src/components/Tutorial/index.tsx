@@ -60,7 +60,7 @@ if (!newThoughtShortcut) {
 
 /** Tutorial component. */
 const Tutorial: FC = () => {
-  const { isVisible, elementRef } = useIsVisible<HTMLDivElement>(true)
+  const [isVisible, nextRef] = useIsVisible<HTMLAnchorElement>(true)
   const tutorialStep = useSelector(state => {
     const step = +(getSetting(state, 'Tutorial Step') || 1)
     return isNaN(step) ? 1 : step
@@ -109,7 +109,7 @@ const Tutorial: FC = () => {
   const cursorHeadValue = useSelector(state => state.cursor && headValue(state, state.cursor))
 
   return (
-    <div className='tutorial' ref={elementRef}>
+    <div className='tutorial'>
       <div className='tutorial-inner'>
         <a
           className='upper-right tutorial-skip text-small'
@@ -133,7 +133,7 @@ const Tutorial: FC = () => {
               )}
             </TransitionGroup>
           </div>
-          <TutorialNavigation tutorialStep={tutorialStep} />
+          <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
         {isTouch &&

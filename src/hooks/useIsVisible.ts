@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 /** Determines if an element is partially visible in the viewport. */
-const useIsVisible = <T extends HTMLElement>(initialValue = false) => {
+const useIsVisible = <T extends HTMLElement>(initialValue = false): [boolean, React.RefObject<T>] => {
   const [isVisible, setIsVisible] = useState(initialValue)
   const elementRef = useRef<T | null>(null)
 
@@ -31,7 +31,7 @@ const useIsVisible = <T extends HTMLElement>(initialValue = false) => {
     }
   }, [])
 
-  return { isVisible, elementRef }
+  return [isVisible, elementRef]
 }
 
 export default useIsVisible

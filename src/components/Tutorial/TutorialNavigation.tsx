@@ -1,4 +1,5 @@
 import classNames from 'classnames'
+import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
@@ -20,7 +21,7 @@ import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
+const TutorialNavigation = ({ tutorialStep, nextRef }: { tutorialStep: number; nextRef: Ref<HTMLAnchorElement> }) => {
   const dispatch = useDispatch()
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },
@@ -77,7 +78,7 @@ const TutorialNavigation = ({ tutorialStep }: { tutorialStep: number }) => {
       ) : (
         <>
           <TutorialNavigationPrev tutorialStep={tutorialStep} />
-          <TutorialNavigationNext tutorialStep={tutorialStep} />
+          <TutorialNavigationNext tutorialStep={tutorialStep} ref={nextRef} />
         </>
       )}
     </div>
