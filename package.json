@@ -212,6 +212,6 @@
     "vite-plugin-checker": "^0.7.2",
     "vite-plugin-pwa": "^0.20.1",
     "vitest": "^2.0.5",
-    "webdriverio": "^7.36.0"
+    "webdriverio": "^9.0.5"
   }
 }
