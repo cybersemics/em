@@ -20,6 +20,7 @@ import refresh from './refresh'
 import remove from './remove'
 import screenshot from './screenshot'
 import scroll from './scroll'
+import setColor from './setColor'
 import setup from './setup'
 import simulateDragAndDrop from './simulateDragAndDrop'
 import type from './type'
@@ -65,6 +66,7 @@ const helpers = {
   simulateDragAndDrop,
   dragAndDropThought,
   dragAndDrop,
+  setColor,
 }
 
 /** Setup up the Page instance for all helpers and returns an index of test helpers with the Page instance partially applied. Passes arguments to the setup function. */
