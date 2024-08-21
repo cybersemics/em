@@ -20,7 +20,12 @@ import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
 
-// eslint-disable-next-line jsdoc/require-jsdoc
+/**
+ * TutorialNavigation component for navigating through the tutorial steps.
+ *
+ * @param props.tutorialStep - The current step in the tutorial.
+ * @param props.nextRef - A reference passed to the "next" navigation button.
+ */
 const TutorialNavigation = ({ tutorialStep, nextRef }: { tutorialStep: number; nextRef: Ref<HTMLAnchorElement> }) => {
   const dispatch = useDispatch()
   const tutorialOptions = [
