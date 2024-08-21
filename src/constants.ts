@@ -442,6 +442,8 @@ export enum AlertType {
   GestureHint = 'GestureHint',
   // shown when importing one or more files via drag-and-drop or a large paste
   ImportFile = 'ImportFile',
+  // shown when the user redoes an action
+  Redo = 'Redo',
   // shown the first time the user types space to indent
   SpaceToIndentHint = 'SpaceToIndentHint',
   // shown when the sort setting is changed
@@ -458,6 +460,8 @@ export enum AlertType {
   ToolbarButtonRemoved = 'ToolbarButtonRemoved',
   // shown when the user has exceeded the maximimum number of characters allowed in feedback
   ModalFeedbackMaxChars = 'ModalFeedbackMaxChars',
+  // shown when the user undoes an action
+  Undo = 'Undo',
 }
 
 // User settings that can be saved to /EM/Settings/

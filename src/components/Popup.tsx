@@ -16,18 +16,16 @@ const Popup = React.forwardRef<
   PropsWithChildren<{
     // used to cancel imports
     importFileId?: string
-    isInline?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     textAlign?: 'center' | 'left' | 'right'
     value?: string | null
   }>
->(({ children, importFileId, isInline, onClose, textAlign = 'center' }, ref) => {
+>(({ children, importFileId, onClose, textAlign = 'center' }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const padding = useSelector(state => state.fontSize / 2 + 2)
   const useSwipeToDismissProps = useSwipeToDismiss({
-    ...(isInline ? { dx: '-50%' } : null),
     // dismiss after animation is complete to avoid touch events going to the Toolbar
     onDismissEnd: () => {
       dispatch(alert(null))
@@ -54,8 +52,6 @@ const Popup = React.forwardRef<
         maxHeight: '100%',
         maxWidth: '100%',
         textAlign,
-        /* if inline, leave room on the left side so the user can click undo/redo */
-        ...(isInline ? { left: '50%', width: 'auto' } : null),
         ...(isTouch ? useSwipeToDismissProps.style : null),
       }}
     >
