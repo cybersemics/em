@@ -1,4 +1,4 @@
-import { FC, Fragment } from 'react'
+import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import TipId from '../../@types/TipId'
 import NewSubthoughtTip from './NewSubthoughtTip'
@@ -8,10 +8,10 @@ import NewThoughtTip from './NewThoughtTip'
 const Tips: FC = () => {
   const tip = useSelector(state => state.tips[0])
   return (
-    <Fragment>
+    <>
       <NewThoughtTip display={tip === TipId.NewThought} />
       <NewSubthoughtTip display={tip === TipId.NewSubthought} />
-    </Fragment>
+    </>
   )
 }
 
