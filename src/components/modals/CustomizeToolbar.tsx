@@ -10,53 +10,19 @@ import DragToolbarItem from '../../@types/DragToolbarItem'
 import Shortcut from '../../@types/Shortcut'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
-import { deleteThoughtActionCreator as deleteThought } from '../../actions/deleteThought'
 import { dragShortcutZoneActionCreator as dragShortcutZone } from '../../actions/dragShortcutZone'
 import { initUserToolbarActionCreator as initUserToolbar } from '../../actions/initUserToolbar'
+import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
-import { AlertText, AlertType, EM_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
-import findDescendant from '../../selectors/findDescendant'
-import { getChildrenRanked } from '../../selectors/getChildren'
+import { AlertText, AlertType } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import { shortcutById } from '../../shortcuts'
-import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import ShortcutRow from './../ShortcutRow'
 import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
-
-/** Handles dropping a toolbar button on DropToRemoveFromToolbar. */
-const drop = (monitor: DropTargetMonitor) => {
-  const state = store.getState()
-  const { shortcut } = monitor.getItem() as DragToolbarItem
-  const from = shortcut
-
-  // initialize EM/Settings/Toolbar/Visible with default shortcuts
-  store.dispatch(initUserToolbar())
-  const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
-  const userShortcutChildren = getChildrenRanked(store.getState(), userToolbarThoughtId)
-  const userShortcutIds = userShortcutChildren.map(subthought => subthought.value)
-
-  // user shortcuts must exist since it was created above
-  const userShortcutsPath = contextToPath(store.getState(), [EM_TOKEN, 'Settings', 'Toolbar'])!
-  const fromIndex = userShortcutIds.indexOf(from.id)
-  if (fromIndex === -1) return
-  const fromThoughtId = userShortcutChildren[fromIndex].id
-
-  store.dispatch([
-    alert(`Removed ${shortcut.label} from toolbar`, {
-      alertType: AlertType.ToolbarButtonRemoved,
-      clearDelay: 5000,
-    }),
-    deleteThought({
-      thoughtId: fromThoughtId,
-      pathParent: userShortcutsPath,
-    }),
-  ])
-}
 
 /** Collects props from the DropTarget. */
 const dropCollect = (monitor: DropTargetMonitor) => {
@@ -69,12 +35,14 @@ const dropCollect = (monitor: DropTargetMonitor) => {
 
 /** A drag-and-drop wrapper component that will remove the toolbar-button from the toolbar when dropped on. */
 const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) => {
+  const dispatch = useDispatch()
   const [{ isHovering, sourceZone }, dropTarget] = useDrop({
     accept: [DragAndDropType.ToolbarButton, NativeTypes.FILE],
-    drop: (item, monitor) => drop(monitor),
+    drop: (item: DragToolbarItem) => {
+      dispatch(removeToolbarButton(item.shortcut.id))
+    },
     collect: dropCollect,
   })
-  const dispatch = useDispatch()
   const dragShortcut = useSelector(state => state.dragShortcut)
 
   useEffect(() => {

@@ -30,6 +30,7 @@ import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
+import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
@@ -254,6 +255,7 @@ const AppComponent: FC = () => {
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
       <Alert />
+      <Tips />
       <CommandPalette />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}

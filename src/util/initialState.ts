@@ -132,6 +132,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     showSplitView: !!storage.getItem('showSplitView'),
     splitPosition: parseJsonSafe(storage.getItem('splitPosition') || null, 50),
     status: 'disconnected',
+    tips: [],
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
