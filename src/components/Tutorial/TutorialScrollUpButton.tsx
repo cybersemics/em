@@ -1,11 +1,11 @@
 import { FC, useCallback } from 'react'
 import scrollTo from '../../device/scrollTo'
-import useScrollPosition from '../../hooks/useScrollPosition'
+import scrollTopStore from '../../stores/scrollTop'
 import TutorialNavigationButton from './TutorialNavigationButton'
 
 /** A button to scroll up to the tutorial. */
 const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
-  const scrollPosition = useScrollPosition()
+  const scrollTop = scrollTopStore.useState()
 
   /**
    * Scrolls to the top of the window.
@@ -18,7 +18,7 @@ const TutorialScrollUpButton: FC<{ show: boolean }> = ({ show }) => {
     <div
       style={{
         position: 'absolute',
-        top: scrollPosition,
+        top: scrollTop,
         left: 0,
         width: '100%',
       }}
