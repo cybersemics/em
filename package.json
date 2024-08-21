@@ -35,7 +35,7 @@
     "deploy:staging": "npm run lint && npm run build && firebase hosting:channel:deploy staging --expires 30d",
     "deploy:staging2": "npm run lint && npm run build && firebase hosting:channel:deploy staging2 --expires 30d",
     "deploy:dev": "npm run lint && npm run build && firebase hosting:channel:deploy dev --expires 30d",
-    "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output lint:*",
+    "lint": "FORCE_COLOR=1 npm-run-all --parallel --aggregate-output \"lint:*\"",
     "lint:src": "FORCE_COLOR=1 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
@@ -51,15 +51,16 @@
   "lockfile-lint": {
     "allowed-schemes": [
       "https:",
-      "git+https:"
+      "git+https:",
+      "npm:",
+      "patch:",
+      "workspace:"
     ],
     "allowed-hosts": [
       "github.com",
-      "node.bit.dev",
       "npm",
       "yarn"
     ],
-    "empty-hostname": false,
     "path": "yarn.lock"
   },
   "jest": {
@@ -100,7 +101,7 @@
     "murmurhash3js": "^3.0.1",
     "nanoid": "^5.0.7",
     "openai": "^4.56.0",
-    "page-lifecycle": "git+https://git@github.com/magic-akari/page-lifecycle#feat/add-types",
+    "page-lifecycle": "git+https://github.com/magic-akari/page-lifecycle#feat/add-types",
     "pluralize": "^8.0.0",
     "qrcode.react": "^3.1.0",
     "react": "18.3.1",
@@ -213,5 +214,6 @@
     "vite-plugin-pwa": "^0.20.1",
     "vitest": "^2.0.5",
     "webdriverio": "^7.36.0"
-  }
+  },
+  "packageManager": "yarn@4.4.0"
 }

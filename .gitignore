@@ -5,6 +5,14 @@ yarn-debug.log*
 yarn-error.log*
 local.log
 
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
 .eslintcache
 .firebase
 .firebaserc
