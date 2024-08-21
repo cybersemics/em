@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import GesturePath from '../../@types/GesturePath'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { removeToolbarButtonActionCreator as removeToolbarButton } from '../../actions/removeToolbarButton'
@@ -7,7 +7,6 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isMac, isTouch } from '../../browser'
 import themeColors from '../../selectors/themeColors'
 import newSubthoughtShortcut from '../../shortcuts/newSubthought'
-import store from '../../stores/app'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
 import Tip from './Tip'
@@ -18,6 +17,7 @@ interface NewSubthoughtTipProps {
 
 /** A tip that explains how to add a new subthought. */
 const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
+  const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const commandKey = isMac ? 'COMMAND' : 'CONTROL'
   const returnKey = isMac ? 'RETURN' : 'ENTER'
@@ -45,7 +45,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
           <a
             className='button'
             {...fastClick(() => {
-              store.dispatch(dismissTip())
+              dispatch(dismissTip())
             })}
           >
             Okay
@@ -61,8 +61,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
           <a
             tabIndex={-1}
             {...fastClick(() => {
-              store.dispatch(removeToolbarButton('newSubthought'))
-              store.dispatch(dismissTip())
+              dispatch([removeToolbarButton('newSubthought'), dismissTip()])
             })}
             className='button'
           >
@@ -73,7 +72,7 @@ const NewSubthoughtTip: FC<NewSubthoughtTipProps> = ({ display }) => {
           (you can customize the toolbar in{' '}
           <a
             {...fastClick(() => {
-              store.dispatch([dismissTip(), showModal({ id: 'settings' })])
+              dispatch([dismissTip(), showModal({ id: 'settings' })])
             })}
           >
             Settings
