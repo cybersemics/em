@@ -134,7 +134,6 @@ interface State {
   // shortcut of a toolbar button that is being long pressed in the customize modal
   toolbarLongPress?: Shortcut
   transientFocus?: boolean
-  tutorialStep?: number
   undoPatches: Patch[]
 }
 
