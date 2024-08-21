@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import scrollTopStore from '../stores/scrollTop'
 
-/** Determines if an element is partially visible in the viewport. */
+/**
+ * Determines if an element is partially visible in the viewport.
+ *
+ * @param [initialValue=false] - The initial visibility state of the element.
+ * @returns An array containing the visibility state and the ref object of the element to check.
+ */
 const useIsVisible = <T extends HTMLElement>(initialValue = false): [boolean, React.RefObject<T>] => {
   const scrollTop = scrollTopStore.useState()
   const [isVisible, setIsVisible] = useState(initialValue)
