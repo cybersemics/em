@@ -22,11 +22,16 @@ import TutorialNavigationPrev from './TutorialNavigationPrev'
 
 /**
  * TutorialNavigation component for navigating through the tutorial steps.
- *
- * @param props.tutorialStep - The current step in the tutorial.
- * @param props.nextRef - A reference passed to the "next" navigation button.
  */
-const TutorialNavigation = ({ tutorialStep, nextRef }: { tutorialStep: number; nextRef: Ref<HTMLAnchorElement> }) => {
+const TutorialNavigation = ({
+  tutorialStep,
+  nextRef,
+}: {
+  /** The current step in the tutorial. */
+  tutorialStep: number
+  /** A reference passed to the "next" navigation button. */
+  nextRef: Ref<HTMLAnchorElement>
+}) => {
   const dispatch = useDispatch()
   const tutorialOptions = [
     { key: TUTORIAL_VERSION_TODO, value: TUTORIAL_VERSION_TODO, textValue: 'To-Do List' },
