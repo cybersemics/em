@@ -8,7 +8,6 @@ const useIsVisible = <T extends HTMLElement>(
   /** The initial visibility state of the element. */
   initialValue = false,
 ): [boolean, React.RefObject<T>] => {
-  const scrollTop = scrollTopStore.useState()
   const [isVisible, setIsVisible] = useState(initialValue)
   const elementRef = useRef<T | null>(null)
 
@@ -27,6 +26,8 @@ const useIsVisible = <T extends HTMLElement>(
     }
   }
 
+  scrollTopStore.useEffect(checkVisibility)
+
   useEffect(() => {
     checkVisibility()
     window.addEventListener('resize', checkVisibility)
@@ -34,7 +35,7 @@ const useIsVisible = <T extends HTMLElement>(
     return () => {
       window.removeEventListener('resize', checkVisibility)
     }
-  }, [scrollTop])
+  }, [])
 
   return [isVisible, elementRef]
 }
