@@ -1,8 +1,10 @@
+import classNames from 'classnames'
 import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { alertActionCreator } from '../actions/alert'
 import { AlertType } from '../constants'
+import { isUndoEnabled } from '../selectors/isUndoEnabled'
 import redoShortcut from '../shortcuts/redo'
 import undoShortcut from '../shortcuts/undo'
 import alertStore from '../stores/alert'
@@ -20,6 +22,8 @@ const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
   const value = alertStoreValue ?? alert?.value
+  const undoEnabled = useSelector(isUndoEnabled)
+  const redoEnabled = useSelector(state => state.redoPatches.length > 0)
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
@@ -32,7 +36,7 @@ const Alert: FC = () => {
   const buttons = undoOrRedo ? (
     <div style={{ marginTop: '0.5em' }}>
       <a
-        className='button button-small'
+        className={classNames('button button-small', { disabled: !undoEnabled })}
         style={{ margin: '0.25em' }}
         {...fastClick(e => {
           undoShortcut.exec(dispatch, store.getState, e, { type: 'toolbar' })
@@ -42,7 +46,7 @@ const Alert: FC = () => {
         Undo
       </a>
       <a
-        className='button button-small'
+        className={classNames('button button-small', { disabled: !redoEnabled })}
         style={{ margin: '0.25em' }}
         {...fastClick(e => {
           redoShortcut.exec(dispatch, store.getState, e, { type: 'toolbar' })
