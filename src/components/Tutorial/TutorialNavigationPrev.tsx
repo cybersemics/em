@@ -10,7 +10,7 @@ const TutorialNavigationPrev = ({ tutorialStep }: { tutorialStep: number }) => {
     <TutorialNavigationButton
       classes='tutorial-prev'
       disabled={tutorialStep === TUTORIAL_STEP_START}
-      clickHandler={() => dispatch(tutorialPrev())}
+      clickHandler={() => tutorialStep > 1 && dispatch(tutorialPrev())}
       value='Prev'
     />
   )
