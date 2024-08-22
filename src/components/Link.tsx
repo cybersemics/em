@@ -46,7 +46,6 @@ const Link = React.memo(({ className, simplePath, label, charLimit = 32, style }
       })}
       style={{
         userSelect: 'none',
-        color: 'inherit',
         textDecoration: 'none',
         ...style,
       }}

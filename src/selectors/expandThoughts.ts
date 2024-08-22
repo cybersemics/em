@@ -50,9 +50,9 @@ const isTableColumn1 = (state: State, path: Path) => attributeEquals(state, head
 
 /**
  * Check for =publish/=attributes/=children/=pin in publish mode.
- * Note: Use 'pinChildren' so it is not interpreted in editing mode.
+ * Note: Use 'pinAll' so it is not interpreted in editing mode.
  */
-const publishPinChildren = (state: State, context: Context) => {
+const publishPinAll = (state: State, context: Context) => {
   const id = contextToThoughtId(state, unroot([...context, '=publish', '=attributes']) as Context)
   return id && publishMode() && childrenPinned(state, id)
 }
@@ -145,7 +145,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     childrenPinned(state, thoughtId) !== false
 
   const childrenExpanded =
-    isTable(state, thoughtId) || hasOnlyChild || publishPinChildren(state, simplePath)
+    isTable(state, thoughtId) || hasOnlyChild || publishPinAll(state, simplePath)
       ? // all children are expanded
         visibleChildren
       : // some children expanded

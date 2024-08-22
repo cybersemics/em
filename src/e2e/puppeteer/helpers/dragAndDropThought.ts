@@ -26,6 +26,14 @@ const dragAndDropThought = async (
   const sourceElement = await getEditable(page, sourceValue)
   const destElement = await getEditable(page, destValue)
 
+  if (!sourceElement.boundingBox) {
+    console.error({ sourceElement, sourceValue, destElement, destValue })
+    throw new Error('Source element has no bounding box')
+  } else if (!destElement.boundingBox) {
+    console.error({ sourceElement, sourceValue, destElement, destValue })
+    throw new Error('Drag element has no bounding box')
+  }
+
   const dragStart = await sourceElement.boundingBox()
   const dragEnd = await destElement.boundingBox()
 

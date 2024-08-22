@@ -1,7 +1,7 @@
 import IconType from '../../@types/Icon'
 
-/** PinChildren icon. */
-const PinChildrenIcon = ({ size = 20, style }: IconType) => {
+/** PinAll icon. */
+const PinAllIcon = ({ size = 20, style }: IconType) => {
   return (
     <svg
       version='1.1'
@@ -25,4 +25,4 @@ const PinChildrenIcon = ({ size = 20, style }: IconType) => {
   )
 }
 
-export default PinChildrenIcon
+export default PinAllIcon

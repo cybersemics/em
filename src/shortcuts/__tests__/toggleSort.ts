@@ -37,7 +37,7 @@ describe('store', () => {
               - e
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -61,7 +61,7 @@ describe('store', () => {
               - e
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -85,7 +85,7 @@ describe('store', () => {
               - d
               - e`,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -107,7 +107,7 @@ describe('store', () => {
               - 4`,
         }),
 
-        setCursor(null),
+        setCursor(['a']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -127,7 +127,7 @@ describe('store', () => {
             -b`,
         }),
 
-        setCursor(null),
+        setCursor(['a']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -267,7 +267,7 @@ describe('store', () => {
           values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
         }),
 
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -293,7 +293,7 @@ describe('store', () => {
           values: ['Settings', 'Global Sort', 'Alphabetical', 'Desc'],
         }),
 
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -319,7 +319,7 @@ describe('store', () => {
           values: ['Settings', 'Global Sort', 'Alphabetical'],
         }),
 
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       executeShortcut(toggleSortShortcut, { store })
@@ -343,7 +343,7 @@ describe.skip('DOM', () => {
         newThought({ value: 'c' }),
         newThought({ value: 'a' }),
         newThought({ value: 'b' }),
-        setCursor(null),
+        setCursor(['a']),
 
         toggleAttribute({
           path: HOME_PATH,
@@ -365,7 +365,7 @@ describe.skip('DOM', () => {
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
 
         (dispatch, getState) =>
           dispatch(
@@ -390,7 +390,7 @@ describe.skip('DOM', () => {
         newThought({ value: 'c' }),
         newThought({ value: 'a' }),
         newThought({ value: 'b' }),
-        setCursor(null),
+        setCursor(['a']),
       ])
 
       store.dispatch([
@@ -422,7 +422,7 @@ describe.skip('DOM', () => {
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
       ])
 
       store.dispatch([
@@ -458,7 +458,7 @@ describe.skip('DOM', () => {
         newThought({ value: 'c' }),
         newThought({ value: 'b' }),
         newThought({ value: 'a' }),
-        setCursor(null),
+        setCursor(['a']),
 
         ((dispatch, getState) =>
           dispatch(
@@ -485,7 +485,7 @@ describe.skip('DOM', () => {
         newThought({ value: '3', insertNewSubthought: true }),
         newThought({ value: '1' }),
         newThought({ value: '2' }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         ((dispatch, getState) =>
           dispatch(
             editThought({
@@ -512,7 +512,7 @@ describe.skip('DOM', () => {
         newThought({ value: '1' }),
         newThought({ value: '2' }),
 
-        setCursor(['a']),
+        setCursor(['a', 'b']),
 
         ((dispatch, getState) =>
           dispatch(
@@ -557,7 +557,7 @@ describe.skip('DOM', () => {
             - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '' }),
       ])
 
@@ -641,7 +641,7 @@ describe.skip('DOM', () => {
             - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '', insertBefore: true }),
       ])
 
@@ -725,9 +725,9 @@ describe.skip('DOM', () => {
             - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '', insertBefore: true }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '' }),
         setCursor(['c']),
         newThought({ value: '' }),
@@ -759,7 +759,7 @@ describe.skip('DOM', () => {
             - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
@@ -818,7 +818,7 @@ describe.skip('DOM', () => {
               - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '', insertNewSubthought: true }),
       ])
 
@@ -846,7 +846,7 @@ describe.skip('DOM', () => {
               - f
           `,
         }),
-        setCursor(['a']),
+        setCursor(['a', 'b']),
         newThought({ value: '', insertNewSubthought: true, insertBefore: true }),
       ])
 

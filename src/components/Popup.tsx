@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
+import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
@@ -33,11 +34,13 @@ const Popup = React.forwardRef<
     },
   })
 
+  const combinedRefs = useCombinedRefs(isTouch ? [useSwipeToDismissProps.ref, ref] : [ref])
+
   return (
     <div
-      ref={ref}
       className='popup z-index-popup'
       {...(isTouch ? useSwipeToDismissProps : null)}
+      ref={combinedRefs}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
         position: 'fixed',

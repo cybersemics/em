@@ -13,37 +13,21 @@
 
 ## Setup
 
-```
-yarn install
-```
-
-To setup the websocket server for device syncing, you also need to install dependencies in the server subpackage:
+Install dependencies:
 
 ```
-cd server && npm install
+yarn
 ```
 
-## Web App Development
-
-Start the live-reload server for local development:
+Start the dev server for local development:
 
 ```sh
-# starts a live-reload server at http://localhost:3000
-npm start
+yarn start
 ```
-
-To enable device syncing, start the websocket server:
-
-```sh
-# starts a hocuspocus server at http://localhost:3001
-npm run websocket-server
-```
-
-For more information about configuring and deploying the websocket server, see https://github.com/cybersemics/em/tree/yjs-multiplex/server.
 
 ## Native App Development
 
-To get started, run `npm run cap:ios` or `npm run cap:android`.
+**em** is a highly optimized PWA that runs on native platforms using [Capacitor](https://capacitorjs.com/). To get started, run `yarn cap:ios` or `yarn cap:android`.
 
 Scripts:
 
@@ -65,19 +49,11 @@ Environment variables are set in the appropriate .env file: `.env.development` a
 
 ```sh
 # build the static HTML/CSS/JS app in the /build directory
-npm run build
+yarn build
 
 # Run the static build with npx serve -s build -l 3000
-npm servebuild
+yarn servebuild
 ```
-
-Device syncing requires a websocket server. You can start the websocket server with:
-
-```sh
-npm run websocket-server
-```
-
-See: https://github.com/cybersemics/em/tree/yjs-multiplex/server
 
 ## Component Hierarchy
 
@@ -107,7 +83,3 @@ Each thought consists of many layers of components that provide various function
 - `<StaticThought>` - Contains the Editable and ThoughtAnnotation.
 - `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript.
 - `<Editable>` - Renders the thought text as a content-editable and handles live editing, throttled updates, selection, pasting, and all other editing capacities.
-
-### Known issues
-
-- Not tested in Firefox

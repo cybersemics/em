@@ -48,6 +48,7 @@ type MultiGestureProps = PropsWithChildren<{
   // if this is too high, there is an awkward distance between a click and a gesture where nothing happens
   // related: https://github.com/cybersemics/em/issues/1268
   minDistance?: number
+  /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
   shouldCancelGesture?: () => boolean
 }>
 
@@ -80,7 +81,7 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number): Direction | 
         : 'l'
 }
 
-/** An overlay for the scroll zone. */
+/** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const colors = useSelector(themeColors)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
