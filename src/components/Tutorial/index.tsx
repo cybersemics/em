@@ -24,6 +24,7 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
+import useIsVisible from '../../hooks/useIsVisible'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
 import { shortcutById } from '../../shortcuts'
@@ -32,6 +33,7 @@ import headValue from '../../util/headValue'
 import once from '../../util/once'
 import GestureDiagram from '../GestureDiagram'
 import TutorialNavigation from './TutorialNavigation'
+import TutorialScrollUpButton from './TutorialScrollUpButton'
 import TutorialStepComponentMap from './TutorialStepComponentMap'
 
 const NO_CHILDREN: Thought[] = []
@@ -58,6 +60,7 @@ if (!newThoughtShortcut) {
 
 /** Tutorial component. */
 const Tutorial: FC = () => {
+  const [isVisible, nextRef] = useIsVisible<HTMLAnchorElement>(true)
   const tutorialStep = useSelector(state => {
     const step = +(getSetting(state, 'Tutorial Step') || 1)
     return isNaN(step) ? 1 : step
@@ -130,7 +133,7 @@ const Tutorial: FC = () => {
               )}
             </TransitionGroup>
           </div>
-          <TutorialNavigation tutorialStep={tutorialStep} />
+          <TutorialNavigation nextRef={nextRef} tutorialStep={tutorialStep} />
         </div>
 
         {isTouch &&
@@ -165,6 +168,7 @@ const Tutorial: FC = () => {
           </div>
         ) : null}
       </div>
+      <TutorialScrollUpButton show={!isVisible} />
     </div>
   )
 }
