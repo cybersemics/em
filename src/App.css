@@ -563,6 +563,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   user-select: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
+  width: 100%;
 }
 
 .editable-annotation {
@@ -584,7 +585,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   height: 1em;
   display: inline-block;
   overflow: hidden;
-
+  position: relative;
   z-index: var(--z-index-thought-annotation-link);
 }
 
