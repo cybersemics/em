@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -47,6 +47,7 @@ import Bullet from './Bullet'
 import Byline from './Byline'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
 import DropHover from './DropHover'
+import { TreeMapContext } from './LayoutTree'
 import Note from './Note'
 import StaticThought from './StaticThought'
 
@@ -142,6 +143,19 @@ const ThoughtContainer = ({
   const expandedContextThought = useSelector(state => state.expandedContextThought)
   const view = useSelector(state => attribute(state, head(simplePath), '=view'))
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
+  const ref = useRef<HTMLDivElement>(null)
+  const { setTreeMap } = useContext(TreeMapContext)
+
+  useEffect(() => {
+    const hash = hashPath(path)
+    setTreeMap(treeMap => ({
+      ...treeMap,
+      [hash]: {
+        ...treeMap[hash],
+        thought: ref.current,
+      },
+    }))
+  }, [path, setTreeMap])
 
   // Note: An active expand hover top thought cannot be a cursor's grandparent as it is already treated as cursor's parent.
   const isCursorGrandparent = useSelector(state => {
@@ -406,6 +420,7 @@ const ThoughtContainer = ({
       ) : null}
 
       <div
+        ref={ref}
         className={classNames({
           'thought-container': true,
           'single-line': !isEditing && isURL(value),

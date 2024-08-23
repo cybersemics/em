@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
@@ -346,9 +346,30 @@ const linearizeTree = (
   return thoughts
 }
 
+type TreeMapProviderType = {
+  treeMap: TreeMapContextType
+  setTreeMap: React.Dispatch<React.SetStateAction<TreeMapContextType>>
+}
+
+export type TreeMapContextType = {
+  [key: string]: any
+  treeNode?: React.RefObject<HTMLDivElement>
+  virtualThought?: React.RefObject<HTMLDivElement>
+  subthought?: React.RefObject<HTMLDivElement>
+  thought?: React.RefObject<HTMLDivElement>
+  staticThought?: React.RefObject<HTMLDivElement>
+  nodeData?: TreeThoughtPositioned
+}
+
+export const TreeMapContext = createContext<TreeMapProviderType>({
+  treeMap: {},
+  setTreeMap: () => {},
+})
+
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
 const LayoutTree = () => {
   const { sizes, setSize } = useSizeTracking()
+  const [treeMap, setTreeMap] = useState<TreeMapContextType>({})
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
   const dragInProgress = useSelector(state => state.dragInProgress)
@@ -610,29 +631,29 @@ const LayoutTree = () => {
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   return (
-    <div
-      style={{
-        // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-        transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
-        marginTop: '0.501em',
-      }}
-    >
+    <TreeMapContext.Provider value={{ treeMap, setTreeMap }}>
       <div
         style={{
-          // Set a container height that fits all thoughts.
-          // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
-          height: totalHeight + spaceBelow,
-          // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
-          // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
-          transform: `translateX(${1.5 - indent}em`,
-          transition: 'transform 0.75s ease-out',
-          // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
-          marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
+          // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+          transform: `translateY(${-spaceAboveExtended + viewportHeight}px)`,
+          marginTop: '0.501em',
         }}
       >
-        {treeThoughtsPositioned.map(
-          (
-            {
+        <div
+          style={{
+            // Set a container height that fits all thoughts.
+            // Otherwise scrolling down quickly will bottom out as virtualized thoughts are re-rendered and the document height is built back up.
+            height: totalHeight + spaceBelow,
+            // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
+            // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
+            transform: `translateX(${1.5 - indent}em`,
+            transition: 'transform 0.75s ease-out',
+            // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
+            marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
+          }}
+        >
+          {treeThoughtsPositioned.map((node, index) => {
+            const {
               belowCursor,
               cliff,
               depth,
@@ -655,9 +676,8 @@ const LayoutTree = () => {
               width,
               x,
               y,
-            },
-            index,
-          ) => {
+            } = node
+
             // List Virtualization
             // Do not render thoughts that are below the viewport.
             // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
@@ -665,20 +685,26 @@ const LayoutTree = () => {
             // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
             if (belowCursor && !isCursor && y > viewportBottom + height) return null
 
+            const hashedPath = hashPath(path)
+
             return (
               <div
                 aria-label='tree-node'
                 // The key must be unique to the thought, both in normal view and context view, in case they are both on screen.
                 // It should not be based on editable values such as Path, value, rank, etc, otherwise moving the thought would make it appear to be a completely new thought to React.
                 key={key}
-                data-path={hashPath(path)}
-                className={classNames({
-                  'tree-node': true,
-                  'top-level': simplePath.length === 1,
-                  'table-col1': isTableCol1,
-                  'table-col2': isTableCol2,
-                  'thought-divider': isDivider(thought.value),
-                })}
+                ref={current => {
+                  if (current && !treeMap[hashedPath]?.treeNode) {
+                    setTreeMap(treeMap => ({
+                      ...treeMap,
+                      [hashedPath]: {
+                        ...treeMap[hashedPath],
+                        treeNode: current,
+                        nodeData: node,
+                      },
+                    }))
+                  }
+                }}
                 style={{
                   position: 'absolute',
                   // Cannot use transform because it creates a new stacking context, which causes later siblings' DropChild to be covered by previous siblings'.
@@ -764,10 +790,10 @@ const LayoutTree = () => {
                     })}
               </div>
             )
-          },
-        )}
+          })}
+        </div>
       </div>
-    </div>
+    </TreeMapContext.Provider>
   )
 }
 

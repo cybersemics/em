@@ -1,6 +1,6 @@
 import classNames from 'classnames'
 import _ from 'lodash'
-import React, { useLayoutEffect } from 'react'
+import React, { useContext, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -11,6 +11,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
 import thoughtToPath from '../selectors/thoughtToPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -20,6 +21,7 @@ import Divider from './Divider'
 import Editable from './Editable'
 import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
+import { TreeMapContext } from './LayoutTree'
 import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
@@ -110,6 +112,19 @@ const StaticThought = ({
   const editableRef = React.useRef<HTMLInputElement>(null)
   const multiline = useMultiline(editableRef, simplePath, isEditing)
   const placeholder = usePlaceholder({ isEditing, simplePath })
+  const ref = useRef<HTMLDivElement>(null)
+  const { setTreeMap } = useContext(TreeMapContext)
+
+  useEffect(() => {
+    const hash = hashPath(path)
+    setTreeMap(treeMap => ({
+      ...treeMap,
+      [hash]: {
+        ...treeMap[hash],
+        staticThought: ref.current,
+      },
+    }))
+  }, [path, setTreeMap])
 
   useLayoutEffect(() => {
     updateSize?.()
@@ -160,6 +175,7 @@ const StaticThought = ({
       />
       <div
         aria-label='thought'
+        ref={ref}
         className={classNames({
           thought: true,
           // invert placeholder color if the color is inverted (such as when a background color is applied)

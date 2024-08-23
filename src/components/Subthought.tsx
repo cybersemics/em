@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useContext, useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
@@ -14,9 +14,11 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
+import { TreeMapContext } from './LayoutTree'
 import NoOtherContexts from './NoOtherContexts'
 import Thought from './Thought'
 
@@ -65,6 +67,18 @@ const Subthought = ({
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
+  const { setTreeMap } = useContext(TreeMapContext)
+
+  useEffect(() => {
+    const hash = hashPath(path)
+    setTreeMap(treeMap => ({
+      ...treeMap,
+      [hash]: {
+        ...treeMap[hash],
+        subthought: ref.current,
+      },
+    }))
+  }, [path, setTreeMap])
 
   const childrenAttributeId = useSelector(
     state =>

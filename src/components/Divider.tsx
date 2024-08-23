@@ -1,8 +1,7 @@
 import classNames from 'classnames'
-import React, { createRef, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useDispatch } from 'react-redux'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import attributeEquals from '../selectors/attributeEquals'
 import store from '../stores/app'
@@ -10,7 +9,9 @@ import editingValueStore from '../stores/editingValue'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
+import { TreeMapContext, TreeMapContextType } from './LayoutTree'
 
 const DIVIDER_PLUS_PX = 20
 const DIVIDER_MIN_WIDTH = 85
@@ -18,11 +19,57 @@ const DIVIDER_MIN_WIDTH = 85
 /** A custom horizontal rule. */
 const Divider = ({ path }: { path: Path }) => {
   const dispatch = useDispatch()
-  const dividerRef = createRef<HTMLDivElement>()
-  const thoughtIndex = useSelector((state: State) => state.thoughts.thoughtIndex)
+  const dividerRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(DIVIDER_MIN_WIDTH)
+  const { treeMap } = useContext(TreeMapContext)
 
-  const isTableCol1 = attributeEquals(store.getState(), head(parentOf(path)), '=view', 'Table')
+  const parentPath = parentOf(path)
+  const grandparentPath = parentOf(parentPath)
+  const isTable = attributeEquals(store.getState(), head(grandparentPath), '=view', 'Table')
+  const isTableCol1 = attributeEquals(store.getState(), head(parentPath), '=view', 'Table')
+
+  /** Check if the element is a new divider, which initially has an empty value causing isDivider to return a false negative. */
+  const isNewDivider = (treeMapItem: TreeMapContextType) => {
+    const emptyValue = treeMapItem[1].nodeData.thought.value === ''
+    const hasDividerClass = treeMapItem[1].treeNode.querySelector('.divider')
+    return emptyValue && hasDividerClass
+  }
+
+  /** Get nearby elements to calculate divider width. */
+  const elements = useMemo(() => {
+    if (Object.keys(treeMap).length === 0) return []
+    const hashedParentPath = hashPath(parentPath)
+
+    let entries = Object.entries(treeMap).filter(
+      ([key, { nodeData, staticThought }]) =>
+        key.startsWith(hashedParentPath) &&
+        (isTable || key !== hashedParentPath) &&
+        !isDivider(nodeData.thought.value) &&
+        staticThought,
+    )
+
+    if (isTable && entries.length <= 1) {
+      const hashedGrandparentPath = hashPath(grandparentPath)
+
+      entries = Object.entries(treeMap).filter(
+        ([key, { nodeData, staticThought }]) =>
+          key.startsWith(hashedGrandparentPath) &&
+          key !== hashedGrandparentPath &&
+          !isDivider(nodeData.thought.value) &&
+          staticThought,
+      )
+    }
+
+    return entries
+      .map(entry => {
+        // TODO: Figure out why isTableCol1 is not being updated correctly on an element's nodeData from LayoutTree.
+        // Sometimes it's false on nodes that should be true.
+        // This works around it by recalculating it, but it's more expensive.
+        const isTableCol1 = attributeEquals(store.getState(), head(parentOf(entry[1].nodeData.path)), '=view', 'Table')
+        return [entry[0], { ...entry[1], nodeData: { ...entry[1].nodeData, isTableCol1 } }]
+      })
+      .filter(element => isTableCol1 === element[1].nodeData.isTableCol1 && !isNewDivider(element))
+  }, [grandparentPath, isTable, isTableCol1, parentPath, treeMap])
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {
@@ -32,46 +79,11 @@ const Divider = ({ path }: { path: Path }) => {
 
   /** Get the max width of nearby elements, add DIVIDER_PLUS_PX and set this width for divider. */
   const setStyle = () => {
-    if (dividerRef.current) {
-      const parentPath = parentOf(path)
-
-      const treeNode = dividerRef.current.closest('div.tree-node') as HTMLElement
-      if (!treeNode) throw new Error('Divider tree node not found')
-
-      const thoughtPath = treeNode.dataset.path
-      if (!thoughtPath || thoughtPath === '') throw new Error('Divider path not found on tree node')
-
-      let elements = document.querySelectorAll(`.tree-node[data-path^="${hashPath(parentPath)}"]:not(.thought-divider)`)
-
-      if (elements.length === 1) {
-        /** If this divider is an only child, search further up the tree. */
-        const grandparentPath = parentOf(parentPath)
-        if (!grandparentPath) throw new Error('Divider grandparent not found')
-
-        elements = document.querySelectorAll(
-          `.tree-node[data-path^="${hashPath(grandparentPath)}"]:not(.thought-divider)`,
-        )
-      } else if (!elements.length) {
-        /** This is a top-level divider, use its siblings instead. */
-        elements = document.querySelectorAll('.tree-node.top-level:not(.thought-divider)')
-      }
-
-      /** Find and set the max width of our selected elements. */
-      const maxWidth = Math.max(
-        ...Array.from(elements)
-          /** Filter out elements that don't share the same table column. */
-          .filter(element => isTableCol1 === element.classList.contains('table-col1'))
-          .map(element => (element.querySelector('.thought') as HTMLElement).offsetWidth),
-      )
-
-      setWidth(maxWidth + DIVIDER_PLUS_PX)
-    }
+    setWidth(Math.max(...elements.map(element => element[1].staticThought.offsetWidth)) + DIVIDER_PLUS_PX)
   }
 
-  // Suppress the exhaustive-deps linter rule so that we can ignore dividerRef. Refs do not work in useEffect dependencies, as mutations do not trigger a re-render.
-  // We could use a callback ref to trigger setStyle every time the DOM node changes, but subscribing to the thoughtIndex (which is included for other thought updates) seems to cover all cases.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(setStyle, [path, thoughtIndex])
+  /** Trigger setStyle when appropriate. */
+  useEffect(setStyle, [elements])
   editingValueStore.useEffect(setStyle)
 
   return (

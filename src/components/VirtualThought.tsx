@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -14,10 +14,12 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
 import editingValueStore from '../stores/editingValue'
 import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import noteValue from '../util/noteValue'
 import DropChild from './DropChild'
 import DropUncle from './DropUncle'
+import { TreeMapContext } from './LayoutTree'
 import Subthought from './Subthought'
 
 /** A resize handler that should be called whenever a thought's height has changed. */
@@ -88,6 +90,18 @@ const VirtualThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const note = useSelector(state => noteValue(state, thought.id))
   const ref = useRef<HTMLDivElement>(null)
+  const { setTreeMap } = useContext(TreeMapContext)
+
+  useEffect(() => {
+    const hash = hashPath(path)
+    setTreeMap(treeMap => ({
+      ...treeMap,
+      [hash]: {
+        ...treeMap[hash],
+        virtualThought: ref.current,
+      },
+    }))
+  }, [path, setTreeMap])
 
   /***************************
    * VirtualThought properties
