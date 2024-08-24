@@ -57,29 +57,31 @@ yarn servebuild
 
 ## Component Hierarchy
 
-Root containers:
-
-Each thought consists of many layers of components that provide various functionalities. This is necessary from a performance perspective to avoid re-rendering all thought components when a small slice changes, when a thought falls outside the viewport and can be virtualized.
+To the user, a thought just consists of a bullet, text, and superscript indicating the number of contexts the thought appears in. The component hierarchy, however, consists of several components that control positioning (LayoutTree), window virtualization (VirtualThought), and superscript positioning (ThoughtAnnotation). The deep hierarchy ensures that if a thought is hidden, complex selectors and other computations are short-circuited.
 
 ```
 └─Content
   └─LayoutTree
-    └─LayoutShim
-      └─VirtualThought
-        └─ThoughtContainer
+    └─VirtualThought
+      └─Subthought
+        └─Thought
           ├─Bullet
           └─StaticThought
-            ├─ThoughtAnnotation
-            │ └─StaticSuperscript
-            └─Editable
-            │ └─Superscript
+            ├─ThoughtAnnotationContainer
+            │ └─ThoughtAnnotation
+            │   └─StaticSuperscript
+            ├─Editable
+            └─Superscript
 ```
 
 - `<Content>` - Root container that defines the margins of the thoughtspace and handles clicking on empty space.
-- `<LayoutTree>` - Renders all visible thoughts as absolutely positioned siblings to allow for conditional rendering of ancestors, list virtualization, and cross-hierarchy animation.
+- `<LayoutTree>` - Renders all visible thoughts as absolutely positioned siblings to allow for conditional rendering of ancestors, list virtualization, and animation across levels.
 - `<VirtualThought>` - Conditionally renders a shim when the thought is hidden by autofocus. The shim is a simple div with a height attribute matching the thought's height.
-- `<ThoughtContainer>` - Contains the Bullet, ThoughtAnnotation, and StaticThought for a single thought.
+- `<Subthought>`
+- `<Thought>` - Renders the Bullet and the Thought.
 - `<Bullet>` - This is, unsurprisingly, the bullet of the thought.
 - `<StaticThought>` - Contains the Editable and ThoughtAnnotation.
-- `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript.
+- `<ThoughtAnnotationContainer>` - Conditionally renders the ThoughtAnnotation only when needed.
+- `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript at the end of the Thought. This is needed because the Thought has an extended click area, while the Superscript needs to be rendered flush to the right edge of the text.
 - `<Editable>` - Renders the thought text as a content-editable and handles live editing, throttled updates, selection, pasting, and all other editing capacities.
+- `<Superscript>`

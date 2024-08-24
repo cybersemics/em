@@ -491,6 +491,6 @@ const ThoughtContainer = ({
 
 ThoughtContainer.displayName = 'ThoughtContainer'
 const ThoughtComponentMemo = React.memo(ThoughtContainer)
-ThoughtComponentMemo.displayName = 'ThoughtComponent'
+ThoughtComponentMemo.displayName = 'Thought'
 
 export default ThoughtComponentMemo
