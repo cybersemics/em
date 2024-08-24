@@ -70,8 +70,7 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
             ├─ThoughtAnnotationContainer
             │ └─ThoughtAnnotation
             │   └─StaticSuperscript
-            ├─Editable
-            └─Superscript
+            └─Editable
 ```
 
 - `<Content>` - Root container that defines the margins of the thoughtspace and handles clicking on empty space.
@@ -83,5 +82,5 @@ To the user, a thought just consists of a bullet, text, and superscript indicati
 - `<StaticThought>` - Contains the Editable and ThoughtAnnotation.
 - `<ThoughtAnnotationContainer>` - Conditionally renders the ThoughtAnnotation only when needed.
 - `<ThoughtAnnotation>` - A non-interactive, hidden clone of the Thought that is used to position the Superscript at the end of the Thought. This is needed because the Thought has an extended click area, while the Superscript needs to be rendered flush to the right edge of the text.
+- `<StaticSuperscript>` - Renders the number of contexts a thought appears in as a superscript.
 - `<Editable>` - Renders the thought text as a content-editable and handles live editing, throttled updates, selection, pasting, and all other editing capacities.
-- `<Superscript>`
