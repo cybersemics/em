@@ -19,7 +19,7 @@ interface SuperscriptProps {
 const NO_CONTEXTS: ThoughtId[] = []
 
 /** Renders superscript if there are other contexts. Optionally pass thoughts (used by ContextBreadcrumbs) or simplePath (used by Subthought). */
-const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript = true }) => {
+const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath }) => {
   const [numContexts, setNumContexts] = useState(0)
   const ref = useRef<HTMLElement>(null)
 
@@ -28,7 +28,7 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, superscript
   const show = useSelector(state => {
     const value = getThoughtById(state, head(simplePath))?.value || ''
     const emptyThought = value.length === 0
-    return !emptyThought && superscript && numContexts! > (showSingle ? 0 : 1)
+    return !emptyThought && numContexts! > (showSingle ? 0 : 1)
   })
 
   const contexts = useSelector(state => (show ? getContexts(state, head(simplePath)) : NO_CONTEXTS), shallowEqual)

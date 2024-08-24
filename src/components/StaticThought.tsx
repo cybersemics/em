@@ -20,7 +20,6 @@ import Divider from './Divider'
 import Editable from './Editable'
 import useMultiline from './Editable/useMultiline'
 import usePlaceholder from './Editable/usePlaceholder'
-import Superscript from './Superscript'
 import ThoughtAnnotation from './ThoughtAnnotation'
 import HomeIcon from './icons/HomeIcon'
 
@@ -193,8 +192,6 @@ const StaticThought = ({
             onEdit={onEdit}
           />
         )}
-
-        <Superscript simplePath={simplePathLive} superscript={false} />
       </div>
     </>
   )

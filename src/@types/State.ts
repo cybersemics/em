@@ -14,6 +14,7 @@ import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
+import Tip from './TipId'
 
 interface State {
   absoluteContextTime?: Timestamp
@@ -131,10 +132,10 @@ interface State {
   // See: /redux-enhancers/storageCache.ts
   storageCache?: StorageCache
   thoughts: ThoughtIndices
+  tips: Tip[]
   // shortcut of a toolbar button that is being long pressed in the customize modal
   toolbarLongPress?: Shortcut
   transientFocus?: boolean
-  tutorialStep?: number
   undoPatches: Patch[]
 }
 

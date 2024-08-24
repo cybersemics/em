@@ -77,7 +77,7 @@ const groups: {
   },
   {
     title: 'Visibility',
-    shortcuts: ['pin', 'pinChildren', 'toggleDone', 'toggleHiddenThoughts'],
+    shortcuts: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
   },
 ]
 

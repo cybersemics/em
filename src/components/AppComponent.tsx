@@ -30,6 +30,7 @@ import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import QuickDropPanel from './QuickDropPanel'
 import Sidebar from './Sidebar'
+import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
 import * as modals from './modals'
@@ -118,9 +119,12 @@ const useDisableLongPressToSelect = () => {
   }, [onSelectionChange])
 }
 
-/** Cancel gesture if there is an active text selection or active drag. */
-const shouldCancelGesture = () =>
-  (selection.isActive() && !selection.isCollapsed()) || store.getState().dragInProgress || !!store.getState().showModal
+/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+const shouldCancelGesture = (): boolean =>
+  (selection.isActive() && !selection.isCollapsed()) ||
+  store.getState().dragInProgress ||
+  !!store.getState().showModal ||
+  store.getState().showSidebar
 
 /**
  * Wrap an element in the MultiGesture component if the user has a touch screen.
@@ -251,6 +255,7 @@ const AppComponent: FC = () => {
     <div className={componentClassNames}>
       <GlobalStyles styles={globalStyles} />
       <Alert />
+      <Tips />
       <CommandPalette />
       <ErrorMessage />
       {enableLatestShortcutsDiagram && <LatestShortcutsDiagram position='bottom' />}

@@ -34,7 +34,7 @@ function configureSnapshots({
     failureThreshold: 8,
     // custom identifier for snapshots based on the title of the test
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
-      return `${defaultIdentifier.replace(`${fileName}-ts-src-e-2-e-puppeteer-tests-${fileName}-ts-`, '').toLocaleLowerCase()}`
+      return `${defaultIdentifier.replace(`${fileName}-ts-`, '').toLocaleLowerCase()}`
     },
     // Set snapshot directory to __image_snapshots__/{platform}/{filename} to avoid conflicts between platforms and group snapshots by test file.
     customSnapshotsDir: path.join(
