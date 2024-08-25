@@ -294,7 +294,7 @@ a.button-variable-width {
   min-width: 0;
 }
 
-a.button[disabled] {
+a.button.disabled {
   opacity: 0.25;
   pointer-events: none;
   user-select: none;

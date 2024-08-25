@@ -10,7 +10,6 @@ interface Options {
   alertType?: keyof typeof AlertType
   showCloseLink?: boolean
   value: string | null
-  isInline?: boolean
   // used to cancel imports
   importFileId?: string
 }
@@ -21,7 +20,7 @@ const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 let clearAlertTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 /** Set an alert with an optional close link. */
-const alertReducer = (state: State, { alertType, showCloseLink, value, isInline = false, importFileId }: Options) => {
+const alertReducer = (state: State, { alertType, showCloseLink, value, importFileId }: Options) => {
   if (value === state.alert?.value) return state
   return {
     ...state,
@@ -31,7 +30,6 @@ const alertReducer = (state: State, { alertType, showCloseLink, value, isInline 
           showCloseLink: showCloseLink !== false,
           value,
           importFileId,
-          isInline,
         }
       : null,
   }
@@ -52,7 +50,6 @@ export const alertActionCreator =
       alertType,
       showCloseLink,
       clearDelay,
-      isInline,
       importFileId,
     }: Omit<Alert, 'value'> & {
       clearDelay?: number
@@ -79,7 +76,6 @@ export const alertActionCreator =
           alertType,
           showCloseLink,
           value: null,
-          isInline,
         })
       })
       clearAlertTimeoutId = null
@@ -107,7 +103,6 @@ export const alertActionCreator =
       showCloseLink,
       value,
       importFileId,
-      isInline,
     })
   }
 
