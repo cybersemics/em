@@ -23,6 +23,7 @@
     <meta name="theme-color" content="#000" />
     <title>em</title>
 
+    <!-- Set background color to black in dark mode to avoid white flash while CSS loads. -->
     <style>
       body.dark {
         color: white;
@@ -46,7 +47,7 @@
         }
       }
 
-      // Note: theme needs to be loaded here before react loads, otherwise it causes a white flash.
+      // Load theme synchronously before React loads, otherwise it causes a white flash.
       const theme = localStorage.getItem('storageCache/theme')?.toLowerCase() || 'dark'
       document.body.classList.add(theme)
     </script>
