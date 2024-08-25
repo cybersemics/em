@@ -42,6 +42,9 @@ const NavBar = ({ position }: { position: string }) => {
 
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
+  const boxShadow = useSelector(state =>
+    state.cursor && state.cursor.length > 0 ? '0 20px 15px 25px black' : undefined,
+  )
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -68,6 +71,7 @@ const NavBar = ({ position }: { position: string }) => {
           })}
           style={{
             backgroundColor,
+            boxShadow,
           }}
         >
           <div className='nav-inset'>
