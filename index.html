@@ -36,9 +36,9 @@
     <div id="debug"></div>
 
     <script>
-      // Prevent the React DevTools console message in Puppeteer tests.
+      // Prevent the React DevTools advertisement in Puppeteer tests and development mode.
       // https://github.com/cybersemics/em/issues/2251
-      if (navigator.webdriver) {
+      if (navigator.webdriver || '%MODE%' === 'development') {
         const info = console.info.bind(console)
         console.info = (...args) => {
           if (typeof args[0] === 'string' && args[0].startsWith('%cDownload the React DevTools')) return
