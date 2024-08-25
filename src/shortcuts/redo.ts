@@ -1,9 +1,7 @@
 import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
-import { alertActionCreator as alert } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import RedoIcon from '../components/RedoIcon'
-import { AlertType } from '../constants'
 import getLatestActionType from '../util/getLastActionType'
 
 const redoShortcut: Shortcut = {
@@ -19,20 +17,8 @@ const redoShortcut: Shortcut = {
     return 'Redo'
   },
   svg: RedoIcon,
-  exec: (dispatch, getState) => {
-    const lastActionType = getLatestActionType(getState().redoPatches)
-
+  exec: dispatch => {
     dispatch(redo())
-
-    if (!lastActionType) return
-
-    dispatch(
-      alert(`Redo: ${startCase(lastActionType)}`, {
-        clearDelay: 3000,
-        showCloseLink: false,
-        alertType: AlertType.Redo,
-      }),
-    )
   },
   canExecute: getState => getState().redoPatches.length > 0,
 }

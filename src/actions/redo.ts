@@ -1,4 +1,22 @@
+import { startCase } from 'lodash'
 import Thunk from '../@types/Thunk'
+import { AlertType } from '../constants'
+import getLatestActionType from '../util/getLastActionType'
+import { alertActionCreator as alert } from './alert'
 
 /** Action-creator for redo. */
-export const redoActionCreator = (): Thunk => dispatch => dispatch({ type: 'redo' })
+export const redoActionCreator = (): Thunk => (dispatch, getState) => {
+  const lastActionType = getLatestActionType(getState().redoPatches)
+
+  dispatch({ type: 'redo' })
+
+  if (!lastActionType) return
+
+  dispatch(
+    alert(`Redo: ${startCase(lastActionType)}`, {
+      clearDelay: 3000,
+      showCloseLink: false,
+      alertType: AlertType.Redo,
+    }),
+  )
+}

@@ -3,12 +3,11 @@ import React, { FC, useCallback, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { alertActionCreator } from '../actions/alert'
+import { redoActionCreator as redo } from '../actions/redo'
+import { undoActionCreator as undo } from '../actions/undo'
 import { AlertType } from '../constants'
 import { isUndoEnabled } from '../selectors/isUndoEnabled'
-import redoShortcut from '../shortcuts/redo'
-import undoShortcut from '../shortcuts/undo'
 import alertStore from '../stores/alert'
-import store from '../stores/app'
 import fastClick from '../util/fastClick'
 import Popup from './Popup'
 import RedoIcon from './RedoIcon'
@@ -39,7 +38,7 @@ const Alert: FC = () => {
         className={classNames('button button-small', { disabled: !undoEnabled })}
         style={{ margin: '0.25em' }}
         {...fastClick(e => {
-          undoShortcut.exec(dispatch, store.getState, e, { type: 'toolbar' })
+          dispatch(undo())
         })}
       >
         <UndoIcon fill='black' style={{ position: 'relative', top: '0.25em', right: '0.25em' }} />
@@ -49,7 +48,7 @@ const Alert: FC = () => {
         className={classNames('button button-small', { disabled: !redoEnabled })}
         style={{ margin: '0.25em' }}
         {...fastClick(e => {
-          redoShortcut.exec(dispatch, store.getState, e, { type: 'toolbar' })
+          dispatch(redo())
         })}
       >
         Redo
