@@ -73,17 +73,6 @@ div.z-index-sidebar {
   z-index: var(--z-index-sidebar);
 }
 
-/* fixed debug box in bottom right */
-#debug {
-  position: fixed;
-  bottom: 0;
-  right: 10px;
-  white-space: pre;
-  font-family: monospace;
-  font-size: 10px;
-  color: lightblue;
-}
-
 html,
 body,
 #root,
