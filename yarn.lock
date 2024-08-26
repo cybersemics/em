@@ -4514,10 +4514,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@total-typescript/ts-reset@npm:^0.5.1":
-  version: 0.5.1
-  resolution: "@total-typescript/ts-reset@npm:0.5.1"
-  checksum: 10c0/0339e975034ae648e83f08d0d408d9bda926fdb0cbaddf8efebd3105b378847be8bc9c2f1aa1435e2221f5958019bc2cb562211745a52fe076a109645c8a31f0
+"@total-typescript/ts-reset@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@total-typescript/ts-reset@npm:0.6.0"
+  checksum: 10c0/7bfe874747b5d0c9a13b1bdc01ee27087622d98b19125185ccd9684c80a3b84575009af9be3fbe32e1c50badefa7b93fc1e77169f12e350ca5573128d89c08e2
   languageName: node
   linkType: hard
 
@@ -8134,7 +8134,7 @@ __metadata:
     "@testing-library/jest-dom": "npm:^6.4.8"
     "@testing-library/react": "npm:^12.1.5"
     "@testing-library/user-event": "npm:^13.5.0"
-    "@total-typescript/ts-reset": "npm:^0.5.1"
+    "@total-typescript/ts-reset": "npm:^0.6.0"
     "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
     "@types/classnames": "npm:^2.3.1"
     "@types/clipboard": "npm:^2.0.7"

@@ -643,7 +643,7 @@ describe('taskQueue', { retry: 10 }, () => {
       tasks: [delayedValueTimeout('a', 10), delayedValueTimeout('b', 20, 999), delayedValueTimeout('c', 30)],
     })
 
-    const errorMessage = await queue.end.catch(e => e.message)
+    const errorMessage = await queue.end.catch((err: Error) => err.message)
 
     expect(errorMessage).toBe('Task timed out and retries exceeded. delayedValueTimeout: b')
 

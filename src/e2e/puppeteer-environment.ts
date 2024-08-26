@@ -29,9 +29,9 @@ const PuppeteerEnvironment: Environment = {
         timeout: 60000,
       })
       // catch and log a launch error, otherwise it will not appear in the CI logs
-      .catch(e => {
-        console.error('Error launching puppeteer:', e)
-        throw e
+      .catch((err: Error) => {
+        console.error('Error launching puppeteer:', err)
+        throw err
       })
 
     const { Window, GlobalWindow } = await import('happy-dom')

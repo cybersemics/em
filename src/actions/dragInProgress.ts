@@ -61,7 +61,7 @@ const Shaker = <T>(
   const SHAKE_THRESHOLD = 6
 
   let repeatedMax = 0
-  const repeatedIds: Map<string, number> = new Map()
+  const repeatedIds = new Map<string, number>()
 
   /** Resets the repeat counts. */
   const reset = () => {
