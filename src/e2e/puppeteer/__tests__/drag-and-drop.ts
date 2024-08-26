@@ -16,15 +16,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { paste, remove, screenshot, dragAndDropThought, simulateDragAndDrop, clickThought } = helpers()
-
-/** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
-const removeHUD = async () => {
-  await remove('[aria-label="footer"]')
-  await remove('[aria-label="menu"]')
-  await remove('[aria-label="nav"]')
-  await remove('[aria-label="toolbar"]')
-}
+const { paste, removeHUD, screenshot, dragAndDropThought, simulateDragAndDrop, clickThought } = helpers()
 
 describe('drag', () => {
   beforeEach(removeHUD)

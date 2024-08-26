@@ -16,15 +16,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { click, paste, press, remove, screenshot, scroll, type } = helpers()
-
-/** Removes the huds-up-display (header, footer, etc) so that only the thoughts are shown. */
-const removeHUD = async () => {
-  await remove('[aria-label="footer"]')
-  await remove('[aria-label="menu"]')
-  await remove('[aria-label="nav"]')
-  await remove('[aria-label="toolbar"]')
-}
+const { click, paste, press, removeHUD, screenshot, scroll, type } = helpers()
 
 /** Set up the snapshot tests. These are defined in a function so they can be run at different font sizes (via adjusting the font size in beforeEach). */
 const testSuite = () => {
