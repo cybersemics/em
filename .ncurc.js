@@ -18,10 +18,6 @@ module.exports = {
     // https://github.com/jsdom/whatwg-encoding/pull/11
     'ipfs-http-client',
 
-    // Broken:  ^6.0.1 → ^7.0.5
-    // InstalledClock not exported; need to troubleshoot
-    '@sinonjs/fake-timers',
-
     // ts-key-enum v3 does not work with @babel/plugin-transform-typescript which is a subdependency of react-scripts
     // Currently v2 appears to be published to the latest tag, but keep this locked in case v3 is published to latest in the future. Minor and patch versions are safe to upgrade to.
     // https://gitlab.com/nfriend/ts-key-enum#which-version-should-i-use
