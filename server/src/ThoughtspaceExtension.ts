@@ -95,8 +95,8 @@ const bindState = async ({
   const updateDiff = Y.encodeStateAsUpdate(doc, stateVectorPersisted)
   if (updateDiff.length > 2) {
     // TODO: Do we need await? db.getYDoc has already succeeded, so it seems that storing the update from the client can happen in the background.
-    await db.storeUpdate(docName, updateDiff).catch(e => {
-      console.error('bindState: initial storeUpdate error', e)
+    await db.storeUpdate(docName, updateDiff).catch((err: Error) => {
+      console.error('bindState: initial storeUpdate error', err)
     })
   }
 

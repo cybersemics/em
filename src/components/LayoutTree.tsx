@@ -105,7 +105,7 @@ const useSizeTracking = () => {
 
   // Track debounced height removals
   // See: removeSize
-  const sizeRemovalTimeouts = useRef<Map<string, number>>(new Map())
+  const sizeRemovalTimeouts = useRef(new Map<string, number>())
 
   // Removing a size immediately on unmount can cause an infinite mount-unmount loop as the VirtualThought re-render triggers a new height calculation (iOS Safari only).
   // Debouncing size removal mitigates the issue.

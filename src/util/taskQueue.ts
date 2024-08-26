@@ -192,7 +192,7 @@ const taskQueue = <
 
           tick()
         })
-        .catch(err => {
+        .catch((err: Error) => {
           paused = true
 
           err.stack = `${
