@@ -104,11 +104,13 @@ const useLongPress = (
     [onLongPressEnd, pressed],
   )
 
+  // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
+  // Allow double tap to open the context menu as usual.
   // Android passes React.PointerEvent
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
-      // Double tap activation of context menu produces a pointerType of `touch` whereas long press activation of context menu produces pointer type of `mouse`
+      // On Android, double tap activation of context menu produces a pointerType of `mouse` whereas long press produces `touch`
       if (!isTouch || ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch')) {
         e.preventDefault()
         e.stopPropagation()
