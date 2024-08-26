@@ -557,16 +557,28 @@ This prevents table cols being rendered as multiline content, which causes inaac
   user-select: none;
   /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
   box-sizing: border-box;
+  width: 100%;
 }
 
 .editable-annotation {
   display: inline-block;
-  width: 100%;
+  /* Use max width to make sure the .editable-annotation takes up exact same space as parent  */
+  max-width: 100%;
   padding: 0 0.333em;
   box-sizing: border-box;
+
+  /*
+    Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
+    To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
+   */
+  margin: -0.5px 0 0 calc(1em - 18px);
 }
 
 .thought-annotation a {
+  /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
+  height: 1em;
+  display: inline-block;
+  overflow: hidden;
   position: relative;
   z-index: var(--z-index-thought-annotation-link);
 }
@@ -612,10 +624,13 @@ This prevents table cols being rendered as multiline content, which causes inaac
   --min-thought-height: 1.9em;
 }
 
+.child .editable {
+    /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
+    margin: -0.5px 0 0 calc(1em - 18px);
+}
+
 .child .editable,
 .editable-annotation-text {
-  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-  margin: -0.5px 0 0 calc(1em - 18px);
   /* create stacking order to position above thought-annotation so that function background color does not mask thought */
   position: relative;
   /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
@@ -623,6 +638,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   /* Use minimum height to the cover the gap left by clip-path */
   min-height: var(--min-thought-height);
 }
+
 
 /** Assign annotation height on single line truncated url */
 .single-line .thought {
@@ -1812,6 +1828,12 @@ h1 .num-contexts {
   overflow: hidden;
   white-space: nowrap;
   max-width: 100%;
+  /*
+    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
+    Here is the reference to the reason.
+    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
+   */
+  vertical-align: top;
 }
 
 .single-line .thought {
@@ -1823,13 +1845,9 @@ h1 .num-contexts {
   max-width: calc(100% - 2em);
 }
 
-/* Fix a tag position after overflow:hidden applined on span tag. */
-.single-line .thought-annotation .editable-annotation-text + a {
-  position: absolute;
-}
-.single-line .thought-annotation .editable-annotation-text + a + .superscript-container {
-  position: absolute;
-  right: -22px;
+.single-line .thought-annotation .editable-annotation {
+  /* make url icon on the same line when singline is applied */
+  white-space: nowrap;
 }
 
 .multiline.multiline.multiline.multiline.editable-annotation {
