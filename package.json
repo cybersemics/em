@@ -77,7 +77,7 @@
     "@capacitor/ios": "^4.8.2",
     "@capacitor/keyboard": "^4.1.1",
     "@capacitor/status-bar": "^4.1.1",
-    "@emotion/react": "^11.13.0",
+    "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@hocuspocus/provider": "^2.13.5",
     "@mui/material": "^5.16.7",
