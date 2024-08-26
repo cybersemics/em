@@ -16,7 +16,7 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 */
 
-const { paste, press, screenshot, removeHUD } = helpers()
+const { click, paste, press, screenshot, removeHUD, scroll } = helpers()
 
 // Tests the following cases:
 // - Single line url
@@ -39,27 +39,51 @@ it('single line', async () => {
   expect(image).toMatchImageSnapshot()
 })
 
-// Tests the following cases:
-// - Placeholder with url child
-// - Multiline url (ellipsized)
-// - Multiline url (with cursor)
-it('multiline', async () => {
-  await removeHUD()
+describe('multiline', () => {
+  /** Tests the following cases:
+   * - Placeholder with url child.
+   * - Multiline url (ellipsized).
+   * - Multiline url (with cursor).
+   */
+  const multilineTest = async () => {
+    await removeHUD()
 
-  await paste(`
+    await paste(`
     - https://test.com/single-line
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url
     - https://test.com/some/very/very/very/very/very/very/very/very/very/very/very/very/very/very/long/url/with-cursor
     - This thought tests the line height of the above thought
   `)
 
-  await press('ArrowUp')
+    await press('ArrowUp')
 
-  // wait for render animation to complete
-  await sleep(1000)
+    // wait for render animation to complete
+    await sleep(1000)
 
-  const image = await screenshot()
-  expect(image).toMatchImageSnapshot()
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  }
+
+  it('Font Size: 18 (default)', multilineTest)
+
+  it('Font Size: 13', async () => {
+    // TODO: identify what needs to be waited for specifically
+    await sleep(1000)
+
+    await click('.decrease-font') // 17
+    await click('.decrease-font') // 16
+    await click('.decrease-font') // 15
+    await click('.decrease-font') // 14
+    await click('.decrease-font') // 13
+
+    // close alert
+    await click('.status-close-x')
+
+    // scroll to top
+    await scroll(0, 0)
+
+    await multilineTest()
+  })
 })
 
 it('collapsed thought with url child', async () => {
