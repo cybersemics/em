@@ -4,7 +4,7 @@ import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
-import { findThoughtByText } from '../../test-helpers/queries'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 /**

@@ -6,8 +6,8 @@ import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import { findCursor } from '../../test-helpers/queries/findCursor'
-import { getBulletByContext } from '../../test-helpers/queries/getBulletByContext'
+import findCursor from '../../test-helpers/queries/findCursor'
+import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
