@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Underline icon. */
@@ -8,7 +9,7 @@ const UnderlineIcon = ({ style, size }: Icon) => (
     x='0'
     y='0'
     viewBox='-80 -100 460 460'
-    className='icon'
+    className={icon()}
     width={size}
     height={size}
     style={{ ...style }}

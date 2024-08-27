@@ -1,21 +1,17 @@
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** A pencil icon. */
 const PencilIcon = ({ fill, size = 20, style }: Icon) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
-      className={'icon'}
+      className={icon()}
       x='0px'
       y='0px'
       width={size}
       height={size}
-      style={{
-        fill: fill || colors.fg,
-        ...style,
-      }}
+      style={{ fill: fill || token('colors.fg'), ...style }}
       viewBox='0 0 98 98'
     >
       <g transform='translate(0,-952.36218)'>

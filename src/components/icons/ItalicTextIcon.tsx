@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Italic icon. */
@@ -9,7 +10,7 @@ const ItalicTextIcon = ({ style, size }: Icon) => {
       x='0'
       y='0'
       viewBox='-5 -0.5 31.5 20'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
       style={{ ...style }}
