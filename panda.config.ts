@@ -16,7 +16,18 @@ export default defineConfig({
 
   // Useful for theme customization
   theme: {
-    extend: {},
+    extend: {
+      tokens: {
+        fontSizes: {
+          sm: {
+            value: '80%',
+          },
+          md: {
+            value: '90%',
+          },
+        },
+      },
+    },
   },
 
   // The output directory for your css system
