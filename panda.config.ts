@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig } from '@pandacss/dev'
+import globalStyles from './src/globalStyles'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -44,6 +45,8 @@ export default defineConfig({
       },
     },
   },
+
+  globalCss: globalStyles,
 
   conditions: {
     light: '[data-color-mode=light] &',

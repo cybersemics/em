@@ -1,44 +1,4 @@
-/* z-index schedule
-   Keep these in one place to make it easier to determine interactions and prevent conflicts.
-   Javascript should use z-index-* classnames so that z-indexes themselves are all defined here. */
-:root {
-  --z-index-popup: 1500;
-  --z-index-gesture-trace: 50;
-  --z-index-command-palette: 45;
-  --z-index-modal: 40;
-  --z-index-hamburger-menu: 30;
-  --z-index-sidebar: 25;
-  --z-index-toolbar-container: 20;
-  --z-index-toolbar-overlay: 15;
-  --z-index-toolbar-arrow: 15;
-  --z-index-toolbar: 10;
-  /* above Sidebar */
-  --z-index-navbar: 10;
-  --z-index-latest-shortcuts: 10;
-  /* above .children */
-  --z-index-tutorial-trace-gesture: 5;
-  /* above normal .drop-hover and subthoughts-drop-end */
-  --z-index-drop-empty: 6;
-  /* above thought and bullet. */
-  --z-index-subthoughts-drop-end: 5;
-  /* above .children */
-  --z-index-tutorial: 3;
-  /* above footer and breadcrumbs */
-  --z-index-scroll-zone: 2;
-  /* set z-index on .thought-annotation links so they are above .editable and thus clickable */
-  --z-index-thought-annotation-link: 2;
-  --z-index-resizer: 2;
-  /* place above .thought-container to preserve click area of bullet
-   otherwise clicking on the bottom edge of the bullet will activate cursorUp from the child */
-  --z-index-bullet: 2;
-  /* define a single var to place any element in a stacking context */
-  --z-index-stack: 1;
-  --z-index-hide: -1;
-  /* Sidebar is set inline to z-index: 1 */
 
-  --safe-area-top: env(safe-area-inset-top);
-  --safe-area-bottom: env(safe-area-inset-bottom);
-}
 
 .z-index-popup {
   z-index: var(--z-index-popup);
@@ -73,62 +33,6 @@ div.z-index-sidebar {
   z-index: var(--z-index-sidebar);
 }
 
-html,
-body,
-#root,
-#app {
-  height: 100%;
-  font-size: 16px;
-}
-
-body,
-textarea {
-  font-weight: 300;
-  font-family: 'Helvetica';
-  line-height: 1.25;
-}
-
-body {
-  /* Disables pull-to-refresh but allows overscroll glow effects. */
-  overscroll-behavior-y: contain;
-}
-
-button {
-  font-size: 1.2em;
-}
-
-a {
-  cursor: pointer;
-  text-decoration-line: underline;
-  outline: none;
-  color: #1b6f9a;
-  font-weight: 400;
-}
-
-/* Headings */
-h1 {
-  font-size: 32px;
-  font-weight: 400;
-  margin-top: 0;
-  margin-bottom: 12px;
-}
-
-h2 {
-  font-size: 100%;
-  font-weight: 300;
-  border-bottom: solid 1px black;
-  margin-bottom: 25px;
-}
-
-.dark h2 {
-  border-bottom: solid 1px white;
-}
-
-ul {
-  margin-left: 1.5em;
-  padding-left: 0;
-}
-
 ul ul {
   margin-left: 1.2em;
 }
@@ -137,64 +41,6 @@ ul ul.context-chain {
   margin-left: 1.6em;
 }
 
-li {
-  list-style: none;
-}
-
-input[type='email'],
-input[type='password'],
-input[type='text'] {
-  width: 40%;
-  min-width: 300px;
-  display: block;
-  margin: 0 auto;
-  padding: 10px;
-  font-size: 16px;
-  border: solid 1px #ddd;
-  border-radius: 5px;
-  margin-bottom: 2vh;
-}
-input:focus {
-  border: solid 1px #eee;
-  outline: 0 none;
-}
-
-/** Aligns checkbox and label vertically. */
-input[type='checkbox'] {
-  vertical-align: middle;
-  position: relative;
-  bottom: 1px;
-}
-
-label {
-  display: block;
-}
-
-.dark input:focus {
-  border: solid 1px #999;
-}
-
-.dark input {
-  color: white;
-  border: solid 1px #333;
-  background-color: black;
-}
-
-textarea {
-  width: calc(100% - 40px);
-  display: block;
-  margin: 0 auto;
-  height: 50vh;
-  padding: 10px;
-  font-size: 16px;
-  border: solid 1px #ddd;
-}
-
-.dark textarea {
-  color: white;
-  border: solid 1px #333;
-  background-color: black;
-}
 
 .clear {
   clear: both;
@@ -284,13 +130,6 @@ a.button-variable-width {
 }
 
 a.button.disabled {
-  opacity: 0.25;
-  pointer-events: none;
-  user-select: none;
-  cursor: auto;
-}
-
-button[disabled] {
   opacity: 0.25;
   pointer-events: none;
   user-select: none;
@@ -737,11 +576,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
 .content-tutorial {
   min-height: auto;
   padding-bottom: 20px;
-}
-
-body.dark {
-  color: white;
-  background-color: black;
 }
 
 .dark .root,
@@ -2950,8 +2784,4 @@ a.advance-setting-link {
 
 .copy-icon-wrapper svg {
   cursor: pointer;
-}
-
-a {
-  user-select: none;
 }
