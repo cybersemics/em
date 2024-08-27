@@ -13,7 +13,7 @@ const CheckIcon: FC<Icon> = ({ fill, size = 20, style }) => {
       viewBox='0 290.2 6 7'
       width={size}
       height={size}
-      fill={fill || token('fg')}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>

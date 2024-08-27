@@ -11,7 +11,7 @@ const PencilIcon = ({ fill, size = 20, style }: Icon) => {
       y='0px'
       width={size}
       height={size}
-      style={{ fill: fill || token('fg'), ...style }}
+      style={{ fill: fill || token('colors.fg'), ...style }}
       viewBox='0 0 98 98'
     >
       <g transform='translate(0,-952.36218)'>

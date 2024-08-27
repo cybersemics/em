@@ -11,8 +11,8 @@ const Icon = ({ fill, size = 20, style }: IconType) => {
       xmlns='http://www.w3.org/2000/svg'
       width={size}
       height={size}
-      fill={fill || token('fg')}
-      stroke={fill || token('fg')}
+      fill={fill || token('colors.fg')}
+      stroke={fill || token('colors.fg')}
       style={{ ...style, fill: style?.fill === 'gray' ? 'none' : style?.fill }}
       viewBox='0 0 20 21'
       enableBackground='new 0 0 19.481 19.481'

@@ -13,7 +13,7 @@ const HomeIcon = ({ className, fill, size, style }: IconType) => {
         height={sizeCalculated}
         viewBox='0 0 24 24'
         className={`logo ${className}`}
-        fill={fill || token('fg')}
+        fill={fill || token('colors.fg')}
         style={{
           height: sizeCalculated,
           width: sizeCalculated,

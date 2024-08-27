@@ -18,7 +18,7 @@ const MetaIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
       className={icon()}
       width={size}
       height={size}
-      fill={fill || token('fg')}
+      fill={fill || token('colors.fg')}
       style={{ ...style }}
     >
       <g>
