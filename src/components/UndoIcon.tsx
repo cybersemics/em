@@ -13,7 +13,7 @@ const UndoIcon = ({ fill, size = 18, style }: Icon) => {
       y='0px'
       width={size}
       height={size}
-      fill={fill || token('fg')}
+      fill={fill || token('colors.fg')}
       style={style}
       viewBox='0 -50 600 600'
     >

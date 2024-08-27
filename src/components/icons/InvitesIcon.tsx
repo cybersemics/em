@@ -19,7 +19,7 @@ const InvitesIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
       viewBox='0 0 19 20'
       width={size}
       height={size}
-      fill={fill || token('fg')}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>

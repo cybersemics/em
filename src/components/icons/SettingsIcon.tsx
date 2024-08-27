@@ -13,7 +13,7 @@ const SettingsIcon: FC<IconType> = ({ fill, size = 20, style }) => {
       viewBox='100 0 600 600'
       width={size}
       height={size}
-      fill={fill || token('fg')}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>
