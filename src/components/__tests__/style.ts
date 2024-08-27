@@ -2,7 +2,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import { findThoughtByText } from '../../test-helpers/queries'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)

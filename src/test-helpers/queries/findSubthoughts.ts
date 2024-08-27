@@ -1,5 +1,5 @@
 import { findAllByLabelText } from '@testing-library/dom'
-import { findThoughtByText } from './findThoughtByText'
+import findThoughtByText from './findThoughtByText'
 import { getClosestByLabel } from './getClosestByLabel'
 
 /** Finds all the subthoughts of a thought. Returns the child of each. Use findAllByLabelText([CHILD], 'thought') to select a child thought or use findSubthoughts(CHILD) to find child subthoughts. */
