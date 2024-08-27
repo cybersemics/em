@@ -1,9 +1,9 @@
-import classNames from 'classnames'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { anchorButton } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
@@ -186,9 +186,8 @@ const ModalCustomizeToolbar: FC = () => {
       <div className='center'>
         <a
           {...fastClick(() => dispatch(closeModal()))}
-          className={classNames({
-            button: true,
-            'action-button': true,
+          className={anchorButton({
+            actionButton: true,
           })}
           style={{
             color: colors.bg,
