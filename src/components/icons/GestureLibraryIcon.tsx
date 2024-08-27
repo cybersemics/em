@@ -1,20 +1,19 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** Gesture Library icon that looks like a finger pressing a button. */
 const GestureLibraryIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
       x='0'
       y='0'
       viewBox='50 0 700 700'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('fg')}
       style={{ ...style }}
     >
       <g>
