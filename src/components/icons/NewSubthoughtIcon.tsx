@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** New subthought icon. */
@@ -9,7 +10,7 @@ const NewSubthoughtIcon = ({ style, size }: Icon) => {
       x='0'
       y='0'
       viewBox='0 0 86.16 61.01'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
       style={{ ...style }}

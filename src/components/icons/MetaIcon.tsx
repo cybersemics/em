@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** Meta icon that shows code under a magnifying glass. */
 // https://thenounproject.com/icon/inspect-element-4199164/
@@ -10,16 +10,15 @@ import themeColors from '../../selectors/themeColors'
 // https://thenounproject.com/icon/search-486819/
 // https://thenounproject.com/icon/search-document-486836/
 const MetaIcon: FC<Icon> = ({ fill, style, size = 20 }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
       x='0'
       y='0'
       viewBox='100 60 550 550'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('fg')}
       style={{ ...style }}
     >
       <g>
