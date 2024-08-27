@@ -1,6 +1,6 @@
-import classNames from 'classnames'
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { anchorButton } from '../../styled-system/recipes'
 import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 import Loader from './Loader'
@@ -34,12 +34,11 @@ export const ActionButton = ({
   const colors = useSelector(themeColors)
   return (
     <a
-      className={classNames({
-        button: true,
-        'button-active': active,
-        'button-inactive': inActive,
-        'button-small': small,
-        'action-button': true,
+      className={anchorButton({
+        // 'button-active': active, // removed because unused
+        inActive,
+        small,
+        actionButton: true,
         disabled: isDisabled,
       })}
       style={
