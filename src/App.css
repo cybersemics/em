@@ -1074,6 +1074,42 @@ body.dark {
   transition: opacity 400ms ease-in-out;
 }
 
+/* fade for tutorial*/
+.fade-t-exit {
+  opacity: 1;
+}
+.fade-t-exit-active {
+  opacity: 0;
+  transition: opacity 50.5s ease-out;
+}
+
+/* Fade in the new text */
+.fade-t-enter {
+  opacity: 0;
+}
+.fade-t-enter-active {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-in-enter-active {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.fade-out-exit-active {
+  opacity: 0;
+}
+
 /* react-transition-group animation: slide */
 .slide-enter {
   transform: translateX(100vw);

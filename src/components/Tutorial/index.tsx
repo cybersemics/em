@@ -42,7 +42,7 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
 
   const Component = component
   return (
-    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='slide'>
+    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='fade-t'>
       <div ref={nodeRef}>
         <Component {...props} />
       </div>
