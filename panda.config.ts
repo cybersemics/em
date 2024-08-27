@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig } from '@pandacss/dev'
 import globalStyles from './src/globalStyles'
+import iconRecipe from './src/recipes/icon'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -31,6 +32,9 @@ export default defineConfig({
             value: '90%',
           },
         },
+      },
+      recipes: {
+        icon: iconRecipe,
       },
       semanticTokens: {
         colors: {
