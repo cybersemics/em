@@ -90,13 +90,21 @@ const pushQueue: StoreEnhancer<any> =
           }
         })
 
-        // push batch updates to database
-        db.updateThoughts({
-          thoughtIndexUpdates: dbBatch.thoughtIndexUpdates,
-          lexemeIndexUpdates: dbBatch.lexemeIndexUpdates,
-          lexemeIndexUpdatesOld: dbBatch.lexemeIndexUpdatesOld,
-          schemaVersion: dbBatch.updates?.schemaVersion,
-        }).then(dbBatch.idbSynced)
+        /**
+         * Push updates to database sequentially.
+         */
+        const applyDbQueue = async () => {
+          for (const batch of dbQueue ?? []) {
+            await db.updateThoughts({
+              thoughtIndexUpdates: batch.thoughtIndexUpdates,
+              lexemeIndexUpdates: batch.lexemeIndexUpdates,
+              lexemeIndexUpdatesOld: batch.lexemeIndexUpdatesOld,
+              schemaVersion: batch.updates?.schemaVersion,
+            })
+          }
+        }
+
+        applyDbQueue().then(dbBatch.idbSynced)
       }
 
       // free up memory of thoughts that have been deleted

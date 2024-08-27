@@ -183,20 +183,26 @@ const resolvable = <T, E = any>() => {
 }
 
 /** Dispatches updateThoughts with all updates in the throttle period. */
-const updateThoughtsThrottled = throttleConcat<PushBatch, void>((batches: PushBatch[]) => {
-  const merged = batches.reduce(mergeBatch, {
-    thoughtIndexUpdates: {},
-    lexemeIndexUpdates: {},
-    lexemeIndexUpdatesOld: {},
-  })
+const updateThoughtsThrottled = throttleConcat<PushBatch, void>(
+  (batches: PushBatch[]) => {
+    const merged = batches.reduce(mergeBatch, {
+      thoughtIndexUpdates: {},
+      lexemeIndexUpdates: {},
+      lexemeIndexUpdatesOld: {},
+    })
 
-  // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
-  setTimeout(() => {
-    config.then(({ onUpdateThoughts: updateThoughts }) =>
-      updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
-    )
-  })
-}, UPDATE_THOUGHTS_THROTTLE)
+    // dispatch on next tick, since the leading edge is synchronous and can be triggered during a reducer
+    setTimeout(() => {
+      config.then(({ onUpdateThoughts: updateThoughts }) =>
+        updateThoughts?.({ ...merged, local: false, remote: false, repairCursor: true }),
+      )
+    })
+  },
+  UPDATE_THOUGHTS_THROTTLE,
+  // Disable leading edge to avoid a superscript flash when `swapParent` is executed
+  // and the same lexemes are updated in fast succession.
+  { leading: false },
+)
 
 /** Convert a Thought to a ThoughtDb for efficient storage. */
 const thoughtToDb = (thought: Thought): ThoughtDb => ({
