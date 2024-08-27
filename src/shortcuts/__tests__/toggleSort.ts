@@ -18,7 +18,7 @@ import { createTestStore } from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { findThoughtByText } from '../../test-helpers/queries'
-import { getSubthoughtsByContext } from '../../test-helpers/queries/getSubthoughtsByContext'
+import { getDescendantsOfContext } from '../../test-helpers/queries/getDescendantsOfContext'
 import { getThoughtByContext } from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import toggleSortShortcut from '../toggleSort'
@@ -376,7 +376,7 @@ describe('DOM', () => {
       const thought = getThoughtByContext(['a'])
       expect(thought).toBeTruthy()
 
-      const subthoughtsOfA = getSubthoughtsByContext(['a'])
+      const subthoughtsOfA = getDescendantsOfContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['1', '2', '3'])
     })
@@ -424,7 +424,7 @@ describe('DOM', () => {
       const thoughtA = getThoughtByContext(['a'])
       expect(thoughtA).toBeTruthy()
 
-      const subthoughtsOfA = getSubthoughtsByContext(['a'])
+      const subthoughtsOfA = getDescendantsOfContext(['a'])
 
       expect(subthoughtsOfA.map((child: HTMLElement) => child.textContent)).toMatchObject(['3', '2', '1'])
     })
