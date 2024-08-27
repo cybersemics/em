@@ -30,9 +30,14 @@ import getContexts from './getContexts'
 // pin state map
 const pinStateMap = { false: false, true: true }
 
-/** Returns true if a thought is pinned with =pin/true, false if =pin/false, and null if not pinned. */
+/** Returns true if a thought is pinned with =pin/true or =pin, false if =pin/false, and null if not pinned. */
 const pinned = (state: State, id: ThoughtId | null): boolean | null => {
+  const hasPinAttribute = findDescendant(state, id, '=pin')
   const pinState = attribute(state, id, '=pin') as keyof typeof pinStateMap
+
+  // Handle case =pin
+  if (hasPinAttribute && pinState == null) return true
+
   return pinStateMap[pinState] ?? null
 }
 
