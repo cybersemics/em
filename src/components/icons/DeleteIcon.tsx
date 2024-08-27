@@ -1,12 +1,11 @@
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** A delete icon. */
 const DeleteIcon = ({ fill, size = 18, style }: Icon) => {
-  const colors = useSelector(themeColors)
   return (
-    <svg className='icon' width={size} height={size} fill={fill || colors.fg} viewBox='50 0 600 600' style={style}>
+    <svg className={icon()} width={size} height={size} fill={fill || token('fg')} viewBox='50 0 600 600' style={style}>
       <g>
         <path d='m260.91 178.18h25.453v280h-25.453z' />
         <path d='m413.64 178.18h25.453v280h-25.453z' />
