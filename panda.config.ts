@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig } from '@pandacss/dev'
+import anchorButtonRecipe from './src/recipes/anchorButton'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -30,6 +31,9 @@ export default defineConfig({
             value: '90%',
           },
         },
+      },
+      recipes: {
+        anchorButton: anchorButtonRecipe,
       },
       semanticTokens: {
         colors: {
