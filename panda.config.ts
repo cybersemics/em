@@ -1,6 +1,7 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig } from '@pandacss/dev'
 import globalStyles from './src/globalStyles'
+import anchorButtonRecipe from './src/recipes/anchorButton'
 import iconRecipe from './src/recipes/icon'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
@@ -35,6 +36,7 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+        anchorButton: anchorButtonRecipe,
       },
       semanticTokens: {
         colors: {
