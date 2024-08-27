@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
-import themeColors from '../../selectors/themeColors'
 
 interface IconProps {
   fill?: string
@@ -11,16 +11,15 @@ interface IconProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
-      className='icon'
+      className={icon()}
       x='0px'
       y='0px'
       viewBox='0 0 46 50'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('fg')}
       style={style}
     >
       <path d='M42.24,6.433l-0.83-0.832c-0.902-0.9-2.367-0.9-3.268,0L23.73,20.013c-0.094,0.094-0.164,0.211-0.201,0.339l-1.246,4.215  c-0.084,0.281-0.006,0.585,0.201,0.792s0.51,0.284,0.791,0.201l4.215-1.246c0.129-0.038,0.244-0.107,0.338-0.202L42.24,9.699  C43.143,8.799,43.143,7.333,42.24,6.433z M40.279,6.731l0.832,0.831c0.277,0.278,0.277,0.729,0,1.007l-0.943,0.942L38.33,7.673  l0.943-0.941C39.551,6.454,40.002,6.454,40.279,6.731z M25.109,23.351c-0.152-0.254-0.363-0.466-0.617-0.618L25.004,21l1.838,1.838  L25.109,23.351z' />
