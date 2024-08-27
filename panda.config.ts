@@ -24,10 +24,10 @@ export default defineConfig({
       tokens: {
         colors: colorTokens,
         fontSizes: {
-          small: {
+          sm: {
             value: '80%',
           },
-          medium: {
+          md: {
             value: '90%',
           },
         },
