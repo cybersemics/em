@@ -31,7 +31,17 @@ export default defineConfig({
           },
         },
       },
-      semanticTokens: colorSemanticTokens,
+      semanticTokens: {
+        colors: {
+          ...colorSemanticTokens,
+          bgMuted: {
+            value: {
+              base: '#ddd',
+              _dark: '#333',
+            },
+          },
+        },
+      },
     },
   },
 
