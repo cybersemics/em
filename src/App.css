@@ -316,21 +316,12 @@ a.text-link {
 .toolbar-icon {
   cursor: pointer;
   display: inline-block;
-  padding: 5px 8px;
+  padding: 15px 8px 5px 8px;
   border-radius: 3px;
   z-index: var(--z-index-stack);
 }
 
-.toolbar-icon .icon {
-  padding-top: 10px;
-  flex: 1;
-}
-
-/* TextColor icon is used inside the toolbar-popup, so we need to revert the padding from .toolbar-icon .icon. More resilient than making .toolbar-icon .icon into a child selector. */
-.toolbar-popup .icon {
-  padding-top: 0;
-}
-
+/* unused */
 .icon-text {
   flex: 8;
   font-size: 12px;
