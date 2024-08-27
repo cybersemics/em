@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** New thought icon. */
@@ -9,7 +10,7 @@ const NewThoughtIcon = ({ style, size }: Icon) => {
       x='0'
       y='0'
       viewBox='0 0 83.46 83.46'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
       style={{ ...style }}

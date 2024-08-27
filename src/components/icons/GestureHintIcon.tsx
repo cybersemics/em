@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
-import theme from '../../selectors/theme'
 
 // Gesture icon:
 //   https://thenounproject.com/icon/gesture-2211316/
@@ -18,17 +18,16 @@ const GestureHintIcon: FC<{
   size: number
   style?: Index<string>
 }> = ({ fill, size = 20, style }) => {
-  const dark = useSelector(state => theme(state) === 'dark')
   return (
     <svg
       version='1.1'
       x='0px'
       y='0px'
       viewBox='50 -50 575 575'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
-      fill={fill || (dark ? 'white' : 'black')}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>
