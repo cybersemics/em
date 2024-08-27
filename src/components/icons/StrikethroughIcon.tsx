@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Strikethrough icon. */
@@ -9,7 +10,7 @@ const StrikethroughIcon = ({ style, size = 20 }: Icon) => {
       x='0'
       y='0'
       viewBox='-50 0 700 500'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
       style={{ ...style }}
