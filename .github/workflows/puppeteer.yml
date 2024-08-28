@@ -15,6 +15,13 @@ jobs:
   run:
     name: Puppeteer
     runs-on: macos-latest
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
 
     steps:
       - name: Clone repository

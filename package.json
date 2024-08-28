@@ -46,7 +46,8 @@
     "test": "vitest --project unit",
     "test:ios": "jest ./src/e2e/iOS --verbose",
     "test:puppeteer": "vitest --project puppeteer-e2e",
-    "websocket-server": "cd server && npm run build && npm start"
+    "websocket-server": "cd server && npm run build && npm start",
+    "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome"
   },
   "lockfile-lint": {
     "allowed-schemes": [
