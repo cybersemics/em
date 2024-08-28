@@ -321,12 +321,6 @@ a.text-link {
   z-index: var(--z-index-stack);
 }
 
-/* unused */
-.icon-text {
-  flex: 8;
-  font-size: 12px;
-}
-
 /* Toolbar mask */
 .toolbar-mask {
   position: absolute;
@@ -2253,11 +2247,6 @@ code,
   cursor: pointer;
   flex: 1;
   transition: all 0.1s ease-in-out;
-}
-
-.icon-text {
-  flex: 8;
-  font-size: 12px;
 }
 
 .divider-container {
