@@ -32,6 +32,10 @@ export default defineConfig({
             value: '90%',
           },
         },
+        spacing: {
+          'safe-area-top': { value: 'env(safe-area-inset-top)' },
+          'safe-area-bottom': { value: 'env(safe-area-inset-bottom)' },
+        },
         zIndex: {
           popup: { value: 1500 },
           'gesture-trace': { value: 50 },
