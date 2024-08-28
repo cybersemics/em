@@ -67,26 +67,20 @@ const pushQueue: StoreEnhancer<any> =
         batch.local || batch.remote ? 'dbQueue' : 'freeQueue',
       ) as { dbQueue?: PushBatch[]; freeQueue?: PushBatch[] }
 
-      // merge batches
-      // last write wins
-      const dbBatch = (dbQueue || []).reduce(mergeBatch, {
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {},
-        lexemeIndexUpdatesOld: {},
-      })
-      const freeBatch = (freeQueue || []).reduce(mergeBatch, {
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {},
-        lexemeIndexUpdatesOld: {},
-      })
-
-      if (Object.keys(dbBatch.thoughtIndexUpdates).length > 0 || Object.keys(dbBatch.lexemeIndexUpdates).length > 0) {
+      if (
+        dbQueue?.some(
+          batch =>
+            Object.keys(batch.thoughtIndexUpdates).length > 0 || Object.keys(batch.lexemeIndexUpdates).length > 0,
+        )
+      ) {
         // cache updated settings
         const settingsIds = getSettingsIds(stateNew)
         Object.entries(settingsIds).forEach(([name, id]) => {
-          if (id && id in dbBatch.thoughtIndexUpdates) {
-            const thought = getThoughtById(stateNew, id) as Thought | undefined
-            cacheSetting(name, thought?.value || null)
+          for (const batch of dbQueue ?? []) {
+            if (id && id in batch.thoughtIndexUpdates) {
+              const thought = getThoughtById(stateNew, id) as Thought | undefined
+              cacheSetting(name, thought?.value || null)
+            }
           }
         })
 
@@ -104,8 +98,16 @@ const pushQueue: StoreEnhancer<any> =
           }
         }
 
-        applyDbQueue().then(dbBatch.idbSynced)
+        applyDbQueue().then(() => {
+          dbQueue?.forEach(batch => batch.idbSynced?.())
+        })
       }
+
+      const freeBatch = (freeQueue || []).reduce(mergeBatch, {
+        thoughtIndexUpdates: {},
+        lexemeIndexUpdates: {},
+        lexemeIndexUpdatesOld: {},
+      })
 
       // free up memory of thoughts that have been deleted
       Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {
