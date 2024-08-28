@@ -672,19 +672,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   display: none;
 }
 
-.error-message {
-  position: fixed;
-  top: var(--safe-area-top);
-  left: 0;
-  right: 0;
-  padding: 5px 25px 5px 5px; /* extra padding-right to make room for x */
-  background-color: #c23;
-  color: white;
-  text-align: center;
-  z-index: var(--z-index-popup);
-  word-break: break-word; /* break at normal word boundary but also within word if it exceeds width of container */
-}
-
+/* appears unused */
 .status {
   color: #aaa;
   background-color: rgba(255, 255, 255, 0.8);
