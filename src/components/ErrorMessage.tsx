@@ -19,7 +19,7 @@ const ErrorMessage: FC = () => {
             ref={errorMessageRef}
             className={css({
               position: 'fixed',
-              top: 'safe-area-top',
+              top: 'safeAreaTop',
               left: '0',
               right: '0',
               padding: '5px 25px 5px 5px',
