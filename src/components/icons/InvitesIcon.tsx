@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Index from '../../@types/IndexType'
-import themeColors from '../../selectors/themeColors'
 
 export interface IconProps {
   fill?: string
@@ -11,16 +11,15 @@ export interface IconProps {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const InvitesIcon: FC<IconProps> = ({ fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
-      className='icon'
+      className={icon()}
       x='0px'
       y='0px'
       viewBox='0 0 19 20'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>

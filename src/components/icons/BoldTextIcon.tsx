@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 
 /** Bold icon. */
@@ -9,7 +10,7 @@ const BoldTextIcon = ({ style, size = 20 }: Icon) => {
       x='0'
       y='0'
       viewBox='-200 -210 900 900'
-      className='icon'
+      className={icon()}
       width={size}
       height={size}
       style={{ ...style }}

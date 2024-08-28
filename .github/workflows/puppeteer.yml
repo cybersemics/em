@@ -31,6 +31,9 @@ jobs:
       - name: Install npm dependencies
         run: yarn
 
+      - name: Generate PandaCSS utilities
+        run: yarn prepare
+
       - name: Build
         run: yarn build
 
