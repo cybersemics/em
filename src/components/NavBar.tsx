@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import { useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
@@ -43,7 +44,7 @@ const NavBar = ({ position }: { position: string }) => {
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const backgroundColor = useSelector(state => (state.cursor && state.cursor.length > 0 ? colors.bg : undefined))
   const boxShadow = useSelector(state =>
-    state.cursor && state.cursor.length > 0 ? '0 20px 15px 25px black' : undefined,
+    state.cursor && state.cursor.length > 0 ? `0 20px 15px 25px ${token('colors.bg')}` : undefined,
   )
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
