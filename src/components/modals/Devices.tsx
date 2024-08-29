@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
@@ -45,6 +46,7 @@ const ModalDevices = () => {
 
   const onBack = useCallback(() => setSelected(null), [])
 
+  const modalClasses = modalText()
   return (
     <ModalComponent
       id='devices'
@@ -55,7 +57,7 @@ const ModalDevices = () => {
         !selected ? <ActionButton key='close' title='Close' {...fastClick(() => close())} /> : null
       }
     >
-      <div className='modal-wrapper'>
+      <div className={modalClasses.wrapper}>
         <TransitionGroup>
           {selected && permissions[selected] ? (
             <CSSTransition
@@ -137,9 +139,11 @@ const ShareList = React.forwardRef<
     [],
   )
 
+  const modalClasses = modalText()
+
   return (
     <div ref={ref}>
-      <p className='modal-description'>Add or remove devices that can access and edit this thoughtspace.</p>
+      <p className={modalClasses.description}>Add or remove devices that can access and edit this thoughtspace.</p>
 
       {status === 'connected' ? (
         <>

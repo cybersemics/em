@@ -1,4 +1,5 @@
 import { shallowEqual, useSelector } from 'react-redux'
+import { modalText } from '../../styled-system/recipes'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import { isTouch } from '../browser'
@@ -116,6 +117,8 @@ const ShortcutTable = ({
     return userShortcutIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_SHORTCUTS
   }, shallowEqual)
 
+  const modalClasses = modalText()
+
   return (
     <div style={{ textAlign: 'left' }}>
       {groups.map(group => {
@@ -128,7 +131,7 @@ const ShortcutTable = ({
 
         return (
           <div key={group.title}>
-            <h2 className='modal-subtitle'>{group.title}</h2>
+            <h2 className={modalClasses.subtitle}>{group.title}</h2>
             <table className='shortcuts'>
               <tbody>
                 {shortcuts.map(shortcut => {

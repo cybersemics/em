@@ -1,5 +1,6 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { modal, modalText } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -73,11 +74,14 @@ const HelpMenu = ({ onSelect }: { onSelect: (section: Section) => void }) => (
 const Tutorials = () => {
   const dispatch = useDispatch()
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+
+  const { subtitle } = modalText()
+  const modalClasses = modal({ stack: true })
   return (
     <section className='popup-section' id='tutorials'>
-      <h2 className='modal-subtitle'>Tutorials</h2>
+      <h2 className={subtitle}>Tutorials</h2>
 
-      <div className='modal-actions modal-actions-stack center' style={{ alignItems: 'flex-start' }}>
+      <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>
         <div>
           <a
             className='button'
@@ -126,9 +130,10 @@ const Options = ({ options }: { options: string[] }) => (
 
 /** A help section that lists all metaprogramming attributes. */
 const Metaprogramming = () => {
+  const modalClasses = modalText({ compact: true })
   return (
     <div>
-      <h2 id='meta' className='modal-subtitle modal-subtitle-compact'>
+      <h2 id='meta' className={modalClasses.subtitle}>
         Metaprogramming
       </h2>
 

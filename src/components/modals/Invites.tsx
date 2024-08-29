@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
@@ -129,6 +130,8 @@ const Invites = () => {
   //   return <div>You arent allowed to view this page. </div>
   // }
 
+  const modalClasses = modalText()
+
   return (
     <ModalComponent
       id='invites'
@@ -140,8 +143,8 @@ const Invites = () => {
         </div>
       )}
     >
-      <div className='modal-wrapper'>
-        <p className='modal-description'>
+      <div className={modalClasses.wrapper}>
+        <p className={modalClasses.description}>
           You get three shiny gift codes to share <b>em</b> with anyone you choose!
         </p>
         {isFetchingInvites && <p style={{ fontSize: '18px' }}>Fetching your shiny codes ✨...</p>}
