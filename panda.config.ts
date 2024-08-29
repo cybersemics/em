@@ -1,6 +1,8 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import iconRecipe from './src/recipes/icon'
+import modalRecipe from './src/recipes/modal'
+import modalTextRecipe from './src/recipes/modalText'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -132,6 +134,11 @@ const globalCss = defineGlobalStyles({
     userSelect: 'none',
     cursor: 'auto',
   },
+  // Sets default link color in recipes/modal color
+  '.modal__root': {
+    '& a': { color: 'lightblue' },
+    '& p': { margin: '0 0 1em 0' },
+  },
 })
 
 export default defineConfig({
@@ -150,6 +157,7 @@ export default defineConfig({
   // Useful for theme customization
   theme: {
     extend: {
+      keyframes,
       tokens: {
         colors: colorTokens,
         fontSizes: {
@@ -191,6 +199,10 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+      },
+      slotRecipes: {
+        modal: modalRecipe,
+        modalText: modalTextRecipe,
       },
       semanticTokens: {
         colors: {
