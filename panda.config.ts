@@ -183,6 +183,28 @@ export default defineConfig({
             },
           },
         },
+        durations: {
+          highlightPulseDuration: {
+            value: {
+              base: '500ms',
+              _test: '0s',
+            },
+          },
+          /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
+          layoutSlowShiftDuration: {
+            value: {
+              base: '750ms',
+              _test: '0s',
+            },
+          },
+          /** The animation duration of a node in the LayoutTree component. */
+          layoutNodeAnimationDuration: {
+            value: {
+              base: '150ms',
+              _test: '0s',
+            },
+          },
+        },
       },
     },
   },
@@ -192,6 +214,7 @@ export default defineConfig({
   conditions: {
     light: '[data-color-mode=light] &',
     dark: '[data-color-mode=dark] &',
+    test: '[data-env=test] &',
   },
 
   // The output directory for your css system

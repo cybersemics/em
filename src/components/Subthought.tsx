@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import Autofocus from '../@types/Autofocus'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -105,7 +106,9 @@ const Subthought = ({
   // If autofocus has not changed, it means that the thought is being rendered for the first time, such as the children of a thought that was just expanded. In this case, match the tree-node top animation (150ms) to ensure that the newly rendered thoughts fade in to fill the space that is being opened up from the next uncle animating down.
   // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
   const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
-  const opacityTransition = autofocusChanged ? 'opacity 0.75s ease-out' : 'opacity 0.15s ease-in'
+  const opacityTransition = autofocusChanged
+    ? `opacity ${token('durations.layoutSlowShiftDuration')} ease-out`
+    : `opacity ${token('durations.layoutNodeAnimationDuration')} ease-in`
   useEffect(() => {
     if (!ref.current) return
     // start opacity at 0 and set to actual opacity in useEffect

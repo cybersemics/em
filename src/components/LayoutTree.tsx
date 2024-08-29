@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import _ from 'lodash'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import Index from '../@types/IndexType'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
@@ -10,7 +11,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { isTouch } from '../browser'
-import { HOME_PATH, LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
+import { HOME_PATH } from '../constants'
 import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
@@ -624,7 +625,7 @@ const LayoutTree = () => {
           // Use translateX instead of marginLeft to prevent multiline thoughts from continuously recalculating layout as their width changes during the transition.
           // Instead of using spaceAbove, we use -min(spaceAbove, c) + c, where c is the number of pixels of hidden thoughts above the cursor before cropping kicks in.
           transform: `translateX(${1.5 - indent}em`,
-          transition: 'transform 0.75s ease-out',
+          transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out`,
           // Add a negative marginRight equal to translateX to ensure the thought takes up the full width. Not animated for a more stable visual experience.
           marginRight: `${-indent + (isTouch ? 2 : -1)}em`,
         }}
@@ -677,7 +678,7 @@ const LayoutTree = () => {
                   // Unfortunately left causes layout recalculation, so we may want to hoist DropChild into a parent and manually control the position.
                   left: x,
                   top: y,
-                  transition: `left ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out,top ${LAYOUT_NODE_ANIMATION_DURATION}ms ease-out`,
+                  transition: `left ${token('durations.layoutNodeAnimationDuration')} ease-out,top ${token('durations.layoutNodeAnimationDuration')} ease-out`,
                   // Table col1 uses its exact width since cannot extend to the right edge of the screen.
                   // All other thoughts extend to the right edge of the screen. We cannot use width auto as it causes the text to wrap continuously during the counter-indentation animation, which is jarring. Instead, use a fixed width of the available space so that it changes in a stepped fashion as depth changes and the word wrap will not be animated. Use x instead of depth in order to accommodate ancestor tables.
                   // 1em + 10px is an eyeball measurement at font sizes 14 and 18
