@@ -123,9 +123,6 @@ const modalRecipe = defineSlotRecipe({
       true: {
         actions: {
           textAlign: 'center',
-          '& a.button': {
-            marginBottom: '1em',
-          },
           '@media screen and (min-width: 480px)': {
             display: 'flex',
             justifyContent: 'center',

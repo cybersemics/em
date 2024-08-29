@@ -1,6 +1,7 @@
 import { FC, useCallback, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { modal, modalText } from '../../../styled-system/recipes'
+import { css, cx } from '../../../styled-system/css'
+import { anchorButton, modal, modalText } from '../../../styled-system/recipes'
 import Icon from '../../@types/Icon'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
@@ -84,7 +85,7 @@ const Tutorials = () => {
       <div className={modalClasses.actions} style={{ alignItems: 'flex-start' }}>
         <div>
           <a
-            className='button'
+            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
@@ -100,7 +101,7 @@ const Tutorials = () => {
         </div>
         <div>
           <a
-            className='button'
+            className={cx(anchorButton({ thin: true }), css({ marginBottom: '1em' }))}
             {...fastClick(() => {
               dispatch([
                 tutorial({ value: true }),
