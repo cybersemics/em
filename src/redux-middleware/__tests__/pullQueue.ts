@@ -10,7 +10,7 @@ import getThoughtByIdFromDB from '../../data-providers/data-helpers/getThoughtBy
 import db from '../../data-providers/yjs/thoughtspace'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import { deleteThoughtAtFirstMatchActionCreator } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'

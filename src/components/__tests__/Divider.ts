@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import windowEvent from '../../test-helpers/windowEvent'
 

@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import paste from '../../test-helpers/paste'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 
