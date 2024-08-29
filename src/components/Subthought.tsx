@@ -127,6 +127,11 @@ const Subthought = ({
           opacity: thought.value === '' ? opacity : '0',
           transition: opacityTransition,
           pointerEvents: !isVisible ? 'none' : undefined,
+          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+          // This caused the thought to jerk slightly to the left at the end of the horizontal shift animation.
+          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+          // allowing the browser to optimize the animation.
+          willChange: 'opacity',
         }}
       >
         <Thought
