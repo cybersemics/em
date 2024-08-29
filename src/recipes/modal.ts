@@ -49,18 +49,6 @@ const modalRecipe = defineSlotRecipe({
     },
     actions: {
       textAlign: 'center',
-      '& a.button': {
-        textDecoration: 'none',
-        backgroundColor: 'fg',
-        color: 'bg',
-        paddingTop: '2px',
-        paddingBottom: '2px',
-        marginTop: '2px',
-        marginBottom: '2px',
-      },
-      '& a.button.button-inactive': {
-        backgroundColor: '#aaa',
-      },
     },
     content: {
       maxWidth: '40em',
