@@ -135,7 +135,6 @@ const ModalAuth = () => {
           <ActionButton
             key={activeMode.modalKey}
             title={activeMode.modalTitle}
-            active={true}
             isLoading={isSubmitting}
             {...fastClick(() => submitAction(closeModal, email, password))}
           />

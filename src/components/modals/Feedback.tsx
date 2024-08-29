@@ -78,7 +78,6 @@ const ModalFeedback = () => {
           <ActionButton
             key='send'
             title='Send'
-            active={true}
             isLoading={isSubmitting}
             isDisabled={isDisabled}
             {...fastClick(() => onSubmit({ close }))}

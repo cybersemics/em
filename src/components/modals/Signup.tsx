@@ -148,7 +148,6 @@ const ModalSignup = () => {
                 <ActionButton
                   key={modes.signup.modalKey}
                   title={modes.signup.modalTitle}
-                  active={true}
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
                   {...fastClick(() => submitAction(closeModal))}

@@ -7,7 +7,6 @@ import Loader from './Loader'
 
 interface ActionButtonProps {
   title: string
-  active?: boolean
   onClick?: (e: React.MouseEvent | React.TouchEvent) => void
   inActive?: boolean
   small?: boolean
@@ -22,7 +21,6 @@ interface ActionButtonProps {
  */
 export const ActionButton = ({
   title,
-  active,
   inActive,
   inverse,
   small,
@@ -36,7 +34,6 @@ export const ActionButton = ({
     <a
       className={classNames({
         button: true,
-        'button-active': active,
         'button-inactive': inActive,
         'button-small': small,
         'action-button': true,
