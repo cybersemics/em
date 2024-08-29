@@ -1,5 +1,3 @@
-
-
 .z-index-popup {
   z-index: var(--z-index-popup);
 }
@@ -40,7 +38,6 @@ ul ul {
 ul ul.context-chain {
   margin-left: 1.6em;
 }
-
 
 .clear {
   clear: both;
@@ -449,8 +446,8 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 
 .child .editable {
-    /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-    margin: -0.5px 0 0 calc(1em - 18px);
+  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
+  margin: -0.5px 0 0 calc(1em - 18px);
 }
 
 .child .editable,
@@ -462,7 +459,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
   /* Use minimum height to the cover the gap left by clip-path */
   min-height: var(--min-thought-height);
 }
-
 
 /** Assign annotation height on single line truncated url */
 .single-line .thought {
@@ -580,8 +576,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 
 .dark .root,
-.dark .content,
-.dark .modal {
+.dark .content {
   background-color: black;
   color: #e3e3e3;
 }
@@ -1684,11 +1679,6 @@ h1 .num-contexts {
 
 .dark .modal a {
   color: lightblue;
-}
-
-.modal-home {
-  margin-left: 20px;
-  margin-top: -5px;
 }
 
 /* higher precendence than ".dark .modal .a" */
