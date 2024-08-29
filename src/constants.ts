@@ -499,9 +499,6 @@ export const FREE_THOUGHTS_THROTTLE = 1000
 /** Controls the delay when enabling distraction free typing. */
 export const THROTTLE_DISTRACTION_FREE_TYPING = 100
 
-/** The animation duration of a node in the LayoutTree component. */
-export const LAYOUT_NODE_ANIMATION_DURATION = 150
-
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 

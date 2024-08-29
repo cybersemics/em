@@ -1,9 +1,9 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
+import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isSafari, isTouch } from '../browser'
-import { LAYOUT_NODE_ANIMATION_DURATION } from '../constants'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import editingValueStore from '../stores/editingValue'
 import scrollTopStore from '../stores/scrollTop'
@@ -100,7 +100,7 @@ const scrollCursorIntoView = () => {
       scrollIntoViewIfNeeded(document.querySelector('.editing'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : LAYOUT_NODE_ANIMATION_DURATION,
+    userInteractedAfterNavigation ? 0 : parseInt(token('animations.layoutNodeAnimationDuration')),
   )
 }
 
@@ -110,7 +110,7 @@ editingValueStore.subscribe(
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
   _.throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, LAYOUT_NODE_ANIMATION_DURATION)
+    setTimeout(scrollCursorIntoView, parseInt(token('animations.layoutNodeAnimationDuration')))
   }, 400),
 )
 
