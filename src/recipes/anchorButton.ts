@@ -50,6 +50,12 @@ const anchorButtonRecipe = defineRecipe({
         marginBottom: '2px',
       },
     },
+    smallGapX: {
+      true: {
+        marginLeft: 5,
+        marginRight: 5,
+      },
+    },
     lessPadding: {
       true: {
         padding: '4px 12px',
