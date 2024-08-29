@@ -1,9 +1,28 @@
 // https://panda-css.com/docs/references/config
-import { defineConfig, defineGlobalStyles } from '@pandacss/dev'
+import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import iconRecipe from './src/recipes/icon'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
+
+const keyframes = defineKeyframes({
+  fademostlyin: {
+    from: {
+      opacity: 0,
+    },
+    to: {
+      opacity: 0.85,
+    },
+  },
+  fadein: {
+    from: {
+      opacity: 0,
+    },
+    to: {
+      opacity: 0.99,
+    },
+  },
+})
 
 const globalCss = defineGlobalStyles({
   /* z-index schedule
