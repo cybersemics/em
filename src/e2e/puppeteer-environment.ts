@@ -8,6 +8,9 @@ const PuppeteerEnvironment: Environment = {
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 
+    // Disable Chrome features that crash GitHub Actions with "Protocol error (Target.createTarget): Target closed."
+    // See: https://stackoverflow.com/a/66994528/480608
+    // List of Chromium switches: https://peter.sh/experiments/chromium-command-line-switches/
     const args = [
       '--deterministic-fetch',
       '--disable-dev-shm-usage',
@@ -24,7 +27,7 @@ const PuppeteerEnvironment: Environment = {
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch((err: Error) => {
         // eslint-disable-next-line no-console
-        console.log('Could not connect to browserless.\nMake sure to run `yarn browserless` before running the tests.')
+        console.log('Could not connect to browserless.')
         throw err
       })
 
