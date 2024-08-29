@@ -1,5 +1,6 @@
 // https://panda-css.com/docs/references/config
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import anchorButtonRecipe from './src/recipes/anchorButton'
 import iconRecipe from './src/recipes/icon'
 import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
@@ -199,6 +200,7 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+        anchorButton: anchorButtonRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
