@@ -274,7 +274,7 @@ const ThoughtContainer = ({
       ...(isChildHovering
         ? {
             WebkitTextStrokeWidth: '0.05em',
-            animation: `pulse-light ${token('animations.highlightPulseDuration')} linear infinite alternate`,
+            animation: `pulse-light ${token('durations.highlightPulseDuration')} linear infinite alternate`,
             color: colors.highlight,
           }
         : null),
@@ -356,7 +356,7 @@ const ThoughtContainer = ({
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',
-        transition: `transform ${token('animations.layoutSlowShiftDuration')} ease-out, opacity ${token('animations.layoutSlowShiftDuration')} ease-out`,
+        transition: `transform ${token('durations.layoutSlowShiftDuration')} ease-out, opacity ${token('durations.layoutSlowShiftDuration')} ease-out`,
         ...style,
         ...styleContainer,
         // extend the click area to the left (except if table column 2)

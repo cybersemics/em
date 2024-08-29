@@ -107,8 +107,8 @@ const Subthought = ({
   // Note that ease-in is used in contrast to the tree-node's ease-out. This gives a little more time for the next uncle to animate down and clear space before the newly rendered thought fades in. Otherwise they overlap too much during the transition.
   const opacity = autofocus === 'show' ? '1' : autofocus === 'dim' ? '0.5' : '0'
   const opacityTransition = autofocusChanged
-    ? `opacity ${token('animations.layoutSlowShiftDuration')} ease-out`
-    : `opacity ${token('animations.layoutNodeAnimationDuration')} ease-in`
+    ? `opacity ${token('durations.layoutSlowShiftDuration')} ease-out`
+    : `opacity ${token('durations.layoutNodeAnimationDuration')} ease-in`
   useEffect(() => {
     if (!ref.current) return
     // start opacity at 0 and set to actual opacity in useEffect

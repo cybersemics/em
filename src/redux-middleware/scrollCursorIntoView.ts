@@ -100,7 +100,7 @@ const scrollCursorIntoView = () => {
       scrollIntoViewIfNeeded(document.querySelector('.editing'))
     },
     // If this is the result of a navigation, wait for the layout animation to complete to not get false bounding rect values
-    userInteractedAfterNavigation ? 0 : parseInt(token('animations.layoutNodeAnimationDuration')),
+    userInteractedAfterNavigation ? 0 : parseInt(token('durations.layoutNodeAnimationDuration')),
   )
 }
 
@@ -110,7 +110,7 @@ editingValueStore.subscribe(
   // Throttle aggressively since scrollCursorIntoView reads from the DOM and this is called on all edits.
   _.throttle(() => {
     // we need to wait for the cursor to animate into its final position before scrollCursorIntoView can accurately determine if it is in the viewport
-    setTimeout(scrollCursorIntoView, parseInt(token('animations.layoutNodeAnimationDuration')))
+    setTimeout(scrollCursorIntoView, parseInt(token('durations.layoutNodeAnimationDuration')))
   }, 400),
 )
 

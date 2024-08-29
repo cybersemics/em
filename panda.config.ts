@@ -183,7 +183,7 @@ export default defineConfig({
             },
           },
         },
-        animations: {
+        durations: {
           highlightPulseDuration: {
             value: {
               base: '500ms',
