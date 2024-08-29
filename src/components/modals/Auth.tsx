@@ -1,5 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { button } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { loginActionCreator as login } from '../../actions/login'
@@ -142,7 +143,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.login) && (
             <button
               disabled={isSubmitting}
-              className='button'
+              className={button()}
               {...fastClick(showLogin)}
               style={{ textDecoration: 'underline', marginTop: 15 }}
             >
@@ -153,7 +154,7 @@ const ModalAuth = () => {
           {!isModeActive(modes.resetPassword) && (
             <button
               disabled={isSubmitting}
-              className='button'
+              className={button()}
               style={{ textDecoration: 'underline', marginTop: 15 }}
               {...fastClick(signInWithGoogle)}
             >
@@ -163,7 +164,7 @@ const ModalAuth = () => {
 
           <button
             disabled={isSubmitting}
-            className='button'
+            className={button()}
             key='cancel'
             style={{ fontSize: '1.2rem', opacity: 0.5, marginTop: 12 }}
           >

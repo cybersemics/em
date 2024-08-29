@@ -1,5 +1,6 @@
 import { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { button } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -155,7 +156,7 @@ const ModalSignup = () => {
               )}
               <button
                 disabled={isSubmitting}
-                className='button'
+                className={button()}
                 {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
                 style={{ textDecoration: 'underline', marginTop: 15 }}
               >

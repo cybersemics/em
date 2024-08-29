@@ -54,19 +54,6 @@ const modalRecipe = defineSlotRecipe({
       maxWidth: '40em',
       margin: '0 auto',
       maxHeight: 'none',
-      '& .button': {
-        cursor: 'pointer',
-        background: 'transparent',
-        color: '#ccc',
-        display: 'block',
-        border: '0 none',
-        margin: '10px auto 0',
-      },
-      '& .button:focus': {
-        color: '#fff',
-        outline: '0 none',
-        border: '0 none',
-      },
     },
     close: {
       position: 'absolute',
