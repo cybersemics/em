@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
@@ -36,7 +37,16 @@ const Popup = React.forwardRef<
 
   return (
     <div
-      className='popup z-index-popup'
+      className={css({
+        boxShadow: 'none',
+        border: 'none',
+        display: 'block',
+        width: '100%',
+        padding: '8%',
+        boxSizing: 'border-box',
+        zIndex: 'popup',
+        backgroundColor: 'bg',
+      })}
       {...(isTouch ? useSwipeToDismissProps : null)}
       ref={combinedRefs}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
