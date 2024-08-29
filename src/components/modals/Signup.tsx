@@ -137,7 +137,6 @@ const ModalSignup = () => {
     <ModalComponent
       id='signup'
       title={modes.signup.modalTitle}
-      className='popup'
       center
       preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (

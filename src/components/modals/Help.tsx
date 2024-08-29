@@ -380,7 +380,6 @@ const ModalHelp = () => {
     <ModalComponent
       id='help'
       title='Help'
-      className='popup'
       actions={({ close }) => <ActionButton key='close' title='Close' {...fastClick(() => close())} />}
       style={{ fontSize }}
     >

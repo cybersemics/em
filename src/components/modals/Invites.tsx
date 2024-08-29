@@ -133,7 +133,6 @@ const Invites = () => {
     <ModalComponent
       id='invites'
       title='Gift codes'
-      className='popup'
       center
       actions={({ close }) => (
         <div>

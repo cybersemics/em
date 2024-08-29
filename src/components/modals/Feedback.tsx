@@ -72,7 +72,6 @@ const ModalFeedback = () => {
     <ModalComponent
       id='feedback'
       title='Feedback'
-      className='popup'
       center
       actions={({ close }) => (
         <div>

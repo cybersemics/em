@@ -1,5 +1,5 @@
-import classNames from 'classnames'
 import React, { PropsWithChildren } from 'react'
+import { modal } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { FADEOUT_DURATION } from '../../constants'
@@ -11,9 +11,7 @@ interface ModalActionHelpers {
 }
 
 export type ModalProps = PropsWithChildren<{
-  arrow?: string
   center?: boolean
-  className?: string
   hideClose?: boolean
   hideModalActions?: boolean
   id: ModalType
@@ -78,47 +76,30 @@ class ModalComponent extends React.Component<ModalProps> {
   }
 
   render() {
-    const { actions, arrow, center, children, className, hideClose, hideModalActions, id, opaque, style, title, top } =
-      this.props
+    const { actions, center, children, hideClose, hideModalActions, id, opaque, style, title, top } = this.props
+
+    const modalClasses = modal({ id, center, opaque })
 
     return (
-      <div
-        ref={this.ref}
-        style={{ ...style, ...(top ? { top: 55 } : null) }}
-        className={
-          className +
-          ' ' +
-          classNames({
-            modal: true,
-            animate: true,
-            [`modal-${id}`]: true,
-            center,
-            opaque,
-          })
-        }
-      >
+      <div ref={this.ref} style={{ ...style, ...(top ? { top: 55 } : null) }} className={modalClasses.root}>
         {!this.props.preventCloseOnEscape && !hideClose && (
-          <a className='upper-right popup-close-x' {...fastClick(this.close)}>
+          <a className={modalClasses.closeX} {...fastClick(this.close)}>
             ✕
           </a>
         )}
-        <div
-          className={classNames({
-            'modal-content': true,
-            ...(arrow && { [arrow]: arrow }),
-          })}
-        >
-          {title && <h1 className='modal-title'>{title}</h1>}
-          <div className='modal-text'>{children}</div>
+        <div className={modalClasses.content}>
+          {title && <h1 className={modalClasses.title}>{title}</h1>}
+          <div className={modalClasses.text}>{children}</div>
           {!hideModalActions && actions && (
-            <div className='modal-actions center'>
+            <div className={modalClasses.actions}>
               {actions({
                 close: this.close,
               })}
             </div>
           )}
           {!hideClose && (
-            <a className='modal-close' {...fastClick(() => this.close())}>
+            // TODO: should be controlled by hideClose, not class
+            <a className={modalClasses.close} {...fastClick(() => this.close())}>
               <span>✕</span>
             </a>
           )}

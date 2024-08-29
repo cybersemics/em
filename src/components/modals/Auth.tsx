@@ -128,7 +128,6 @@ const ModalAuth = () => {
     <ModalComponent
       id='auth'
       title={activeMode.modalTitle}
-      className='popup'
       center
       preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (

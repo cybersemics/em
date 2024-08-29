@@ -95,7 +95,6 @@ const ModalSettings = () => {
     <ModalComponent
       id='settings'
       title='Settings'
-      className='popup'
       actions={({ close }) => (
         <div style={{ textAlign: 'center' }}>
           <ActionButton key='close' title='Close' {...fastClick(() => close())} />

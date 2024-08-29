@@ -49,7 +49,6 @@ const ModalDevices = () => {
     <ModalComponent
       id='devices'
       title='Device Management'
-      className='popup'
       center
       // do not show the close button on the detail view, since it renders the "Remove device" link at the very bottom of the page
       actions={({ close }) =>

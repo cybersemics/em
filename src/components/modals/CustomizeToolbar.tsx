@@ -110,14 +110,16 @@ const ModalCustomizeToolbar: FC = () => {
   const colors = useSelector(themeColors)
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
 
+  const id = 'customizeToolbar'
+  const modalClasses = modal({ id })
+
   return (
     <ModalComponent
-      id='customizeToolbar'
+      id={id}
       // omit title since we need to make room for the toolbar
       title=''
-      className='popup'
     >
-      <h1 className='modal-title'>Customize Toolbar</h1>
+      <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
         &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
