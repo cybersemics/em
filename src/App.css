@@ -118,10 +118,6 @@ a.button-less-padding {
   background-color: #dcdcdc;
 }
 
-.dark .tutorial-text a.button {
-  color: black;
-}
-
 a.button-variable-width {
   min-width: 0;
 }
@@ -581,8 +577,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
   color: #e3e3e3;
 }
 
-.dark .footer a,
-.dark .tutorial-text a {
+.dark .footer a {
   color: #87ceeb;
 }
 
@@ -1807,30 +1802,8 @@ code,
   font-style: italic;
 }
 
-.tutorial .button {
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-step-bullet {
-  color: inherit;
-  text-decoration: none;
-  font-size: 32px;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet {
-  opacity: 0.25;
-  margin-left: 1px;
-  margin-right: 1px;
-  transition: all 400ms ease-in-out;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet.active {
-  opacity: 1;
 }
 
 .tutorial-trace-gesture {

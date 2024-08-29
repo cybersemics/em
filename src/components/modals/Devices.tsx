@@ -1,10 +1,10 @@
-import classNames from 'classnames'
 import _ from 'lodash'
 import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { modalText } from '../../../styled-system/recipes'
+import { cx } from '../../../styled-system/css'
+import { anchorButton, modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
@@ -191,9 +191,8 @@ const ShareList = React.forwardRef<
                   <div style={{ marginTop: '1em' }}>
                     <a
                       {...fastClick(() => setShowDeviceForm(true))}
-                      className={classNames({
-                        button: true,
-                        'button-outline': true,
+                      className={anchorButton({
+                        outline: true,
                       })}
                       style={{
                         display: 'inline-block',
@@ -325,9 +324,8 @@ const AddDeviceForm = ({
       <div>
         <a
           {...fastClick(() => onSubmit({ name, role: 'owner' }))}
-          className={classNames({
-            button: true,
-            'button-outline': true,
+          className={anchorButton({
+            outline: true,
           })}
           style={{
             display: 'inline-block',
@@ -546,11 +544,12 @@ const ShareDetail = React.memo(
           {onBack && (
             <a
               {...fastClick(onBack)}
-              className={classNames({
-                button: true,
-                'action-button': true,
-                'extend-tap': true,
-              })}
+              className={cx(
+                anchorButton({
+                  actionButton: true,
+                }),
+                'extend-tap',
+              )}
               style={{
                 color: colors.bg,
                 fontSize,

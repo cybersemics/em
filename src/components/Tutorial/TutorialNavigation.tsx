@@ -1,6 +1,6 @@
-import classNames from 'classnames'
 import { Ref } from 'react'
 import { useDispatch } from 'react-redux'
+import { cva } from '../../../styled-system/css'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialChoiceActionCreator as tutorialChoice } from '../../actions/tutorialChoice'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
@@ -19,6 +19,25 @@ import fastClick from '../../util/fastClick'
 import TutorialNavigationButton from './TutorialNavigationButton'
 import TutorialNavigationNext from './TutorialNavigationNext'
 import TutorialNavigationPrev from './TutorialNavigationPrev'
+
+const tutorialStepBullet = cva({
+  base: {
+    color: 'inherit',
+    textDecoration: 'none',
+    fontSize: '32px',
+    opacity: 0.25,
+    marginLeft: '1px',
+    marginRight: '1px',
+    transition: 'all 400ms ease-in-out',
+  },
+  variants: {
+    active: {
+      true: {
+        opacity: 1,
+      },
+    },
+  },
+})
 
 /**
  * TutorialNavigation component for navigating through the tutorial steps.
@@ -51,10 +70,7 @@ const TutorialNavigation = ({
             const step = i + (tutorialStep < TUTORIAL2_STEP_START ? 1 : TUTORIAL2_STEP_START)
             return (
               <a
-                className={classNames({
-                  'tutorial-step-bullet': true,
-                  active: step === Math.floor(tutorialStep),
-                })}
+                className={tutorialStepBullet({ active: step === Math.floor(tutorialStep) })}
                 key={step}
                 {...fastClick(() => dispatch(setTutorialStep({ value: step })))}
               >
