@@ -1432,24 +1432,6 @@ h1 .num-contexts {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.modal {
-  background-color: white;
-  box-shadow: 2px 5px 5px rgba(0, 0, 0, 0.5);
-  border: solid 1px rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  position: absolute;
-  display: inline-block;
-  line-height: 1.5;
-  width: calc(100% - 100px);
-  z-index: var(--z-index-modal);
-  animation: fademostlyin 0.4s;
-  min-width: 200px;
-}
-
-.modal.opaque {
-  animation: fadein 0.4s;
-}
-
 @keyframes fadein {
   from {
     opacity: 0;
@@ -1468,35 +1450,6 @@ h1 .num-contexts {
   }
 }
 
-.modal p {
-  margin: 0 0 1em 0;
-}
-
-.modal.center {
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-}
-
-.popup {
-  box-shadow: none;
-  border: none;
-  display: block;
-  width: 100%;
-  padding: 8%;
-  box-sizing: border-box;
-}
-
-.popup-close-x {
-  /* extend click area */
-  padding: 10px 20px;
-  margin: -10px -20px;
-  position: fixed;
-  top: calc(9px - 0.2em);
-  right: 11px;
-  color: inherit;
-  text-decoration: none;
-}
 
 .status-close-x {
   font-size: 16px;
@@ -1507,100 +1460,8 @@ h1 .num-contexts {
   text-decoration: none;
 }
 
-.dark .modal a.popup-close-x {
-  color: inherit;
-}
-
-.popup .modal-content {
-  max-width: 40em;
-  margin: 0 auto;
-  max-height: none;
-}
-
-.popup .modal-title {
-  font-weight: 700;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.popup .modal-subtitle {
-  font-family: 'Helvetica Neue';
-  font-size: 1.7em;
-}
-
-.popup .modal-subtitle-compact {
-  margin-bottom: 0.8em;
-}
-
-.popup .modal-text {
-  margin-bottom: 2em;
-}
-
-.popup .modal-actions a.button {
-  text-decoration: none;
-  background-color: black;
-  color: white;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  margin-top: 2px;
-  margin-bottom: 2px;
-}
-
 .popup-section {
   margin-bottom: 50px;
-}
-
-.modal-welcome {
-  height: 100%;
-  font-size: 26px;
-  padding-top: 2em;
-}
-
-.modal-welcome .modal-title {
-  margin-bottom: 0;
-  line-height: 1;
-}
-
-.modal-welcome .modal-text {
-  margin-top: 2em;
-  margin-bottom: 2.5em;
-  font-size: 75%;
-}
-
-.modal-welcome .modal-actions {
-  font-size: 0.75em;
-}
-
-.dark .popup .modal-actions a.button {
-  color: black;
-  background-color: white;
-}
-
-.modal-content .button {
-  cursor: pointer;
-  background: transparent;
-  color: #ccc;
-  display: block;
-  border: 0 none;
-  margin: 10px auto 0;
-}
-.modal-content .button:focus {
-  color: #fff;
-  outline: 0 none;
-  border: 0 none;
-}
-
-.dark .popup .modal-actions a {
-  color: white;
-}
-
-.popup .modal-actions a.button.button-inactive {
-  background-color: #aaa;
-}
-
-/** Use .modal-actions-stack for buttons that switch to vertical layout on small screen sizes. */
-.popup .modal-actions.modal-actions-stack a.button {
-  margin-bottom: 0.5em;
 }
 
 .single-line .thought .editable,
@@ -1636,76 +1497,13 @@ h1 .num-contexts {
   padding-right: 1em;
 }
 
-@media screen and (min-width: 480px) {
-  .popup .modal-actions.modal-actions-stack {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .popup .modal-actions.modal-actions-stack > * {
-    margin-top: 1em;
-  }
-  .popup .modal-actions.modal-actions-stack > :not(:last-child) {
-    margin-right: 1em;
-  }
-}
 
 .popup .logo {
   width: 44px;
   vertical-align: text-bottom;
 }
 
-.modal-title {
-  font-weight: 400;
-}
-
-.modal-actions a {
-  font-weight: normal;
-  margin: 0 5px;
-  text-decoration: underline;
-  white-space: nowrap;
-  line-height: 2;
-}
-
-.dark .modal {
-  background-color: #333;
-  border: solid 1px rgba(255, 255, 255, 0.1);
-}
-
-.dark .popup {
-  background-color: black;
-  border: none;
-}
-
-.dark .modal a {
-  color: lightblue;
-}
-
 /* higher precendence than ".dark .modal .a" */
-.modal-close {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 12px;
-  vertical-align: middle;
-  text-align: center;
-  padding: 10px;
-}
-
-.popup .modal-close {
-  display: none;
-}
-
-.modal-close span {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-}
-
-.dark a.modal-close span {
-  color: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.3);
-}
 
 .animate {
   transition: all 0.4s ease-out;
@@ -2621,17 +2419,6 @@ a.advance-setting-link {
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */
-
-.modal .modal-wrapper {
-  display: flex;
-  min-height: 100px;
-  flex-direction: column;
-}
-
-.modal .modal-description {
-  font-size: 18px;
-  margin-bottom: 30px;
-}
 
 .gift-code-wrapper {
   display: flex;
