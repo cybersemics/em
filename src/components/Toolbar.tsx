@@ -179,6 +179,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             id='toolbar'
             ref={toolbarRef}
             className='toolbar'
+            data-scroll-at-edge={customize}
             onScroll={onScroll}
             style={{
               marginLeft: customize ? -3 : 0,
