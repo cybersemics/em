@@ -1,8 +1,10 @@
 interface Key {
-  alt?: boolean // Mac: Option, Windows: Alt
+  /** Mac: Option, Windows: Alt. */
+  alt?: boolean
   control?: boolean
   key: string
-  meta?: boolean // Mac: Command, Windows: Control
+  /** Mac: Command, Windows: Control. */
+  meta?: boolean
   shift?: boolean
 }
 
