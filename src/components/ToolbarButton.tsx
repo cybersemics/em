@@ -42,13 +42,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
-    throw new Error('Missing shortcut: ' + shortcutId)
+    console.error('Missing shortcut: ' + shortcutId)
   }
   const { svg, exec, isActive, canExecute } = shortcut
-
-  if (!svg) {
-    throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
-  }
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.

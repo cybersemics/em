@@ -87,6 +87,7 @@ const archiveShortcut: Shortcut = {
 // add aliases to help with mis-swipes since MultiGesture does not support diagonal swipes
 export const archiveAliases: Shortcut = {
   id: 'archiveAliases',
+  svg: Icon,
   label: 'Archive',
   hideFromHelp: true,
   gesture: [

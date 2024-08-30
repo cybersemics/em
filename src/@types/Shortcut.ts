@@ -70,7 +70,7 @@ interface Shortcut {
   }
 
   // an icon that represents the shortcut in the Toolbar
-  svg?: (icon: Icon) => React.ReactNode
+  svg: (icon: Icon) => React.ReactNode
 }
 
 export default Shortcut
