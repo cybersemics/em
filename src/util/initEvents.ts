@@ -48,6 +48,10 @@ const SELECTION_CHANGE_THROTTLE = 200
 // See: onStateChange
 let passiveTimeout = 0
 
+// cache the autoscroll container on start for performance
+// if the Sidebar is open on touch start, this is set to the .sidebar element
+let scrollContainer: Window | HTMLElement = window
+
 /** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
 const autoscroll = (() => {
   /** Cubic easing function. */
@@ -59,14 +63,10 @@ const autoscroll = (() => {
   // scroll speed (-1 to 1)
   const rate = { x: 0, y: 0 }
 
-  // cache the autoscroll container on start for performance
-  // if the Sidebar is open on touch start, this is set to the .sidebar element
-  let scrollContainer: Window | HTMLElement = window
-
   /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
     const el = scrollContainer || window
-    // if scrollContainer is undefined or window, use the document scrollTop
+
     const scrollLeft = (scrollContainer as HTMLElement).scrollLeft ?? document.documentElement.scrollLeft
     const scrollLeftNew = Math.max(0, scrollLeft + rate.x)
     const scrollTop = (scrollContainer as HTMLElement).scrollTop ?? document.documentElement.scrollTop
@@ -100,11 +100,6 @@ const autoscroll = (() => {
     // if already scrolling, just adjust the scroll rate and bail
     if (autoscrolling) return
 
-    // otherwise set the scroll container and kick off the autoscroll
-    scrollContainer =
-      (document.querySelector('.toolbar') as HTMLElement | null) ||
-      (document.querySelector('.sidebar') as HTMLElement | null) ||
-      window
     autoscrolling = true
     scroll()
   }
@@ -183,6 +178,7 @@ const initEvents = (store: Store<State, any>) => {
   // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
+    const target = e.target as HTMLElement
 
     if (state.dragShortcut) {
       const x = e.touches[0].clientX
@@ -207,6 +203,7 @@ const initEvents = (store: Store<State, any>) => {
       !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
     ) {
       const y = e.touches[0].clientY
+      scrollContainer = (target.closest('[data-autoscroll]') as HTMLElement) || window
 
       // start scrolling up when within 120px of the top edge of the screen
       if (y < WINDOW_AUTOSCROLL_UP_SIZE) {
