@@ -2,10 +2,9 @@ import DragThoughtItem from '../@types/DragThoughtItem'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
-import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
+import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
 import { toggleAttributeActionCreator as toggleAttribute } from '../actions/toggleAttribute'
 import { AlertType } from '../constants'
-import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import ellipsize from '../util/ellipsize'
@@ -27,14 +26,7 @@ const drop = (state: State, { simplePath, path, zone }: DragThoughtItem) => {
       }),
     ])
   } else if (zone === DragThoughtZone.Thoughts) {
-    store.dispatch([
-      deleteThoughtWithCursor({ path }),
-      alert(deleteThoughtAlertText(state, path || simplePath), {
-        alertType: AlertType.DeleteThoughtComplete,
-        clearDelay: 8000,
-        showCloseLink: true,
-      }),
-    ])
+    store.dispatch(archiveThought({ path }))
   } else {
     console.error(`Unsupported DragThoughtZone: ${zone}`)
   }
