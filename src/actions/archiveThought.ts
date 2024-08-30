@@ -170,9 +170,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
                 })
               : null,
 
-          // undo alert
+          // alert
           alert({
-            value: `Archived ${alertLabel}`,
+            value: `Deleted ${alertLabel}`,
             // provide an alertType so the delete shortcut can null the alert after a delay
             alertType: AlertType.ThoughtArchived,
             showCloseLink: true,

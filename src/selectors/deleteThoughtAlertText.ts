@@ -12,7 +12,7 @@ import simplifyPath from './simplifyPath'
 const deleteThoughtAlertText = (state: State, path: Path): string => {
   const showContexts = isContextViewActive(state, parentOf(path))
   const value = getThoughtById(state, head(simplifyPath(state, path))).value
-  return `Deleted ${value ? ellipsize(value) : 'empty thought'}${
+  return `Permanently deleted ${value ? ellipsize(value) : 'empty thought'}${
     showContexts ? ' from ' + ellipsize(headValue(state, path)) : ''
   }`
 }
