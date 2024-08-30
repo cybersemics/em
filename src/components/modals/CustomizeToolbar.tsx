@@ -78,20 +78,22 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
           showCloseLink: false,
         }),
       )
-    } else if (isHovering) {
-      dispatch([
-        alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
-          alertType: AlertType.ToolbarButtonRemoveHint,
-          showCloseLink: false,
-        }),
-      ])
-    } else {
-      dispatch([
-        alert(AlertText.DragAndDropToolbar, {
-          alertType: AlertType.DragAndDropToolbarHint,
-          showCloseLink: false,
-        }),
-      ])
+    } else if (sourceZone === DragShortcutZone.Toolbar) {
+      if (isHovering) {
+        dispatch([
+          alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
+            alertType: AlertType.ToolbarButtonRemoveHint,
+            showCloseLink: false,
+          }),
+        ])
+      } else {
+        dispatch([
+          alert(AlertText.DragAndDropToolbar, {
+            alertType: AlertType.DragAndDropToolbarHint,
+            showCloseLink: false,
+          }),
+        ])
+      }
     }
   }, [dispatch, dragShortcut, isHovering, sourceZone])
 
