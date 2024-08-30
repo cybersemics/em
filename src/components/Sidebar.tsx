@@ -92,7 +92,7 @@ const Sidebar = () => {
       >
         <div
           className='sidebar'
-          data-autoscroll
+          data-scroll-at-edge
           style={{
             userSelect: 'none',
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled

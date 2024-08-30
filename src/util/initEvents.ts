@@ -32,14 +32,14 @@ declare global {
   }
 }
 
-// the width of the autoscroll zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
-const TOOLBAR_AUTOSCROLL_SIZE = 50
-const WINDOW_AUTOSCROLL_UP_SIZE = 120
-const WINDOW_AUTOSCROLL_DOWN_SIZE = 100
+// the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
+const TOOLBAR_SCROLLATEDGE_SIZE = 50
+const WINDOW_SCROLLATEDGE_UP_SIZE = 120
+const WINDOW_SCROLLATEDGE_DOWN_SIZE = 100
 
-// the top speed of the autoscroll expressed pixels per % of autoscroll zone
-const TOOLBAR_AUTOSCROLL_SPEED = 1.25
-const WINDOW_AUTOSCROLL_SPEED = 2
+// the top speed of the scroll-at-edge expressed pixels per % of scroll-at-edge zone
+const TOOLBAR_SCROLLATEDGE_SPEED = 1.25
+const WINDOW_SCROLLATEDGE_SPEED = 2
 
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
@@ -48,12 +48,12 @@ const SELECTION_CHANGE_THROTTLE = 200
 // See: onStateChange
 let passiveTimeout = 0
 
-// cache the autoscroll container on start for performance
+// cache the scroll-at-edge container on start for performance
 // if the Sidebar is open on touch start, this is set to the .sidebar element
 let scrollContainer: Window | HTMLElement = window
 
-/** An autoscroll function that will continue scrolling smoothly in a given direction until autoscroll.stop is called. Takes a number of pixels to scroll each iteration. */
-const autoscroll = (() => {
+/** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
+const scrollAtEdge = (() => {
   /** Cubic easing function. */
   const ease = (n: number) => Math.pow(n, 3)
 
@@ -87,7 +87,7 @@ const autoscroll = (() => {
     })
   }
 
-  /** Starts the autoscroll or, if already scrolling, updates the scroll rate (-1 to 1). */
+  /** Starts the scroll-at-edge or, if already scrolling, updates the scroll rate (-1 to 1). */
   const start = ({ x, y }: { x?: number; y?: number }) => {
     // update the scroll rate
     if (x != null) {
@@ -174,60 +174,61 @@ const initEvents = (store: Store<State, any>) => {
     leading: true,
   })
 
-  /** Handles auto scroll on drag near the edge of the screen on mobile. */
-  // TOOD: Autoscroll for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
+  /** Handles scroll-at-edge on drag near the edge of the screen on mobile. */
+  // TOOD: Scroll-at-edge for desktop. mousemove is not propagated when drag-and-drop is activated. We may need to tap into canDrop.
   const onTouchMove = (e: TouchEvent) => {
     const state = store.getState()
     const target = e.target as HTMLElement
 
     if (state.dragShortcut) {
       const x = e.touches[0].clientX
-      if (x < TOOLBAR_AUTOSCROLL_SIZE) {
-        const rate = 1 + ((TOOLBAR_AUTOSCROLL_SIZE - x) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
-        autoscroll.start({ x: -rate })
+      if (x < TOOLBAR_SCROLLATEDGE_SIZE) {
+        const rate = 1 + ((TOOLBAR_SCROLLATEDGE_SIZE - x) * TOOLBAR_SCROLLATEDGE_SPEED) / TOOLBAR_SCROLLATEDGE_SIZE
+        scrollAtEdge.start({ x: -rate })
       }
       // start scrolling down when within 100px of the right edge of the screen
-      else if (x > window.innerWidth - TOOLBAR_AUTOSCROLL_SIZE) {
+      else if (x > window.innerWidth - TOOLBAR_SCROLLATEDGE_SIZE) {
         const rate =
-          1 + ((x - window.innerWidth + TOOLBAR_AUTOSCROLL_SIZE) * TOOLBAR_AUTOSCROLL_SPEED) / TOOLBAR_AUTOSCROLL_SIZE
-        autoscroll.start({ x: rate })
+          1 +
+          ((x - window.innerWidth + TOOLBAR_SCROLLATEDGE_SIZE) * TOOLBAR_SCROLLATEDGE_SPEED) / TOOLBAR_SCROLLATEDGE_SIZE
+        scrollAtEdge.start({ x: rate })
       }
       // stop scrolling when not near the edge of the screen
       else {
-        autoscroll.stop()
+        scrollAtEdge.stop()
       }
     }
-    // do not auto scroll when hovering over QuickDrop component
+    // do not scroll-at-edge when hovering over QuickDrop component
     else if (
       state.dragInProgress &&
       !(state.alert?.alertType === AlertType.DeleteDropHint || state.alert?.alertType === AlertType.CopyOneDropHint)
     ) {
       const y = e.touches[0].clientY
-      scrollContainer = (target.closest('[data-autoscroll]') as HTMLElement) || window
+      scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
 
       // start scrolling up when within 120px of the top edge of the screen
-      if (y < WINDOW_AUTOSCROLL_UP_SIZE) {
-        const rate = 1 + ((WINDOW_AUTOSCROLL_UP_SIZE - y) * WINDOW_AUTOSCROLL_SPEED) / WINDOW_AUTOSCROLL_UP_SIZE
-        autoscroll.start({ y: -rate })
+      if (y < WINDOW_SCROLLATEDGE_UP_SIZE) {
+        const rate = 1 + ((WINDOW_SCROLLATEDGE_UP_SIZE - y) * WINDOW_SCROLLATEDGE_SPEED) / WINDOW_SCROLLATEDGE_UP_SIZE
+        scrollAtEdge.start({ y: -rate })
       }
       // start scrolling down when within 100px of the bottom edge of the screen
-      else if (y > window.innerHeight - WINDOW_AUTOSCROLL_DOWN_SIZE) {
+      else if (y > window.innerHeight - WINDOW_SCROLLATEDGE_DOWN_SIZE) {
         const rate =
           1 +
-          ((y - window.innerHeight + WINDOW_AUTOSCROLL_DOWN_SIZE) * WINDOW_AUTOSCROLL_SPEED) /
-            WINDOW_AUTOSCROLL_DOWN_SIZE
-        autoscroll.start({ y: rate })
+          ((y - window.innerHeight + WINDOW_SCROLLATEDGE_DOWN_SIZE) * WINDOW_SCROLLATEDGE_SPEED) /
+            WINDOW_SCROLLATEDGE_DOWN_SIZE
+        scrollAtEdge.start({ y: rate })
       }
       // stop scrolling when not near the edge of the screen
       else {
-        autoscroll.stop()
+        scrollAtEdge.stop()
       }
     }
   }
 
-  /** Stops the autoscroll when dragging stops. */
+  /** Stops the scroll-at-edge when dragging stops. */
   const onTouchEnd = (e: TouchEvent) => {
-    autoscroll.stop()
+    scrollAtEdge.stop()
   }
 
   /** Warns on close if saving is in progress. */
