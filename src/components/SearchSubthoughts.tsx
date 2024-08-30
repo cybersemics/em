@@ -106,7 +106,6 @@ const SearchSubthoughts: FC = () => {
 
   return (
     <div
-      className='search-children'
       // must go into DOM to modify the parent li classname since we do not want the li to re-render
       ref={onRef}
     >

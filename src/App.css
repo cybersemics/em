@@ -996,7 +996,6 @@ h1 .num-contexts {
 }
 
 .text-note,
-.placeholder,
 [placeholder]:empty::before {
   font-style: italic;
   color: rgba(7, 7, 7, 0.5);
@@ -1014,7 +1013,6 @@ h1 .num-contexts {
 }
 
 .dark .text-note,
-.dark .placeholder,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
 }
@@ -1022,12 +1020,10 @@ h1 .num-contexts {
 /* The placeholder color should be inversed when a light background color is applied. */
 /* See: StaticThought */
 .text-note.inverse,
-.placeholder.inverse,
 .thought.inverse [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
 }
 .dark .text-note.inverse,
-.dark .placeholder.inverse,
 .dark .thought.inverse [placeholder]:empty::before {
   color: rgba(7, 7, 7, 0.5);
 }
@@ -1759,11 +1755,6 @@ code,
   display: inline-block;
   margin-top: 5px;
   margin-left: 18px;
-}
-
-.search-children a.button {
-  /* TODO: Fix the markup rather than overriding the margin; */
-  margin: 10px 0 15px -25px;
 }
 
 .tutorial {

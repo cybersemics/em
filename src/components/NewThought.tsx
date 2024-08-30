@@ -1,6 +1,7 @@
-import classNames from 'classnames'
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { anchorButton } from '../../styled-system/recipes'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
@@ -78,11 +79,24 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
         {type === 'bullet' ? <span className='bullet' /> : null}
         <div className='thought'>
           <a
-            className={classNames({
-              placeholder: type === 'bullet',
-              button: type === 'button',
-              'button-variable-width': type === 'button',
-            })}
+            className={
+              type === 'bullet'
+                ? css({
+                    fontStyle: 'italic',
+                    color: {
+                      base: 'rgba(7, 7, 7, 0.5)',
+                      _dark: 'rgba(255, 255, 255, 0.5)',
+                    },
+                  })
+                : cx(
+                    anchorButton({
+                      variableWidth: true,
+                    }),
+                  )
+            }
+            // PandaCSS cannot statically generate styles in css({...}) here due to the condition. Currently only type === 'button' is being used.
+            /* TODO: Fix the markup rather than overriding the margin; */
+            style={type === 'button' ? { margin: '10px 0 15px -25px' } : undefined}
             {...fastClick(onClick)}
           >
             {label || <>Add a {showContexts ? 'context' : 'thought'}</>}
