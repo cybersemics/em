@@ -97,7 +97,11 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
     }
   }, [dispatch, dragShortcut, isHovering, sourceZone])
 
-  return <div ref={dropTarget}>{children}</div>
+  return (
+    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
+      {children}
+    </div>
+  )
 }
 
 /** Customize Toolbar modal. */

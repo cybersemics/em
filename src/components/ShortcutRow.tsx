@@ -74,7 +74,7 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
           WebkitTextStrokeWidth: isDragging || selected ? '0.05em' : undefined,
           ...(customize
             ? {
-                '&:active': {
+                '&:active, [data-drop-to-remove-from-toolbar-hovering] &': {
                   WebkitTextStrokeWidth: '0.05em',
                 },
               }
