@@ -1,8 +1,10 @@
-import { useCallback, useLayoutEffect, useState } from 'react'
+import { head } from 'lodash'
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import useSelectorEffect from '../../hooks/useSelectorEffect'
+import getThoughtById from '../../selectors/getThoughtById'
 import editingValueStore from '../../stores/editingValue'
 import viewportStore from '../../stores/viewport'
 
@@ -50,6 +52,15 @@ const useMultiline = (contentRef: React.RefObject<HTMLElement>, simplePath: Simp
   // This is necessary because the width of thoughts change as the autofocus indent changes.
   // (do not re-render component unless multiline changes)
   useSelectorEffect(updateMultiline, selectCursor, shallowEqual)
+
+  // Recalculate height after thought value changes.
+  // Otherwise, the hight is not recalculated after splitThought.
+  // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
+  const splitThoughtValue = useSelector(state => {
+    const thoughtId = head(simplePath)
+    return thoughtId ? getThoughtById(state, thoughtId).value : null
+  })
+  useEffect(updateMultiline, [splitThoughtValue, updateMultiline])
 
   viewportStore.useEffect(updateMultiline)
 

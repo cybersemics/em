@@ -169,6 +169,15 @@ const VirtualThought = ({
   // shimHiddenThought will re-render as needed.
   useSelectorEffect(updateSize, selectCursor, shallowEqual)
 
+  // Recalculate height after thought value changes.
+  // Otherwise, the hight is not recalculated after splitThought.
+  // TODO: useLayoutEffect does not work for some reason, causing the thought to briefly render at the incorrect height.
+  const value = useSelector(state => {
+    const thoughtId = head(simplePath)
+    return thoughtId ? getThoughtById(state, thoughtId).value : null
+  })
+  useEffect(updateSize, [updateSize, value])
+
   // trigger onResize with null on unmount to allow subscribers to clean up
   useEffect(
     () => {
