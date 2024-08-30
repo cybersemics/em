@@ -142,6 +142,7 @@ export default defineConfig({
           },
         },
         spacing: {
+          modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
         },

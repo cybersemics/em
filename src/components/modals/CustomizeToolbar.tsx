@@ -4,6 +4,7 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../../styled-system/css'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
@@ -125,7 +126,20 @@ const ModalCustomizeToolbar: FC = () => {
         </a>
       </p>
 
-      <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
+      <div
+        className={css({
+          // mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          backgroundColor: selectedShortcut ? 'bg' : undefined,
+          position: 'sticky',
+          top: '0px',
+          marginBottom: '1em',
+          // extend element to mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          marginLeft: '-modalPadding',
+          paddingLeft: 'modalPadding',
+          // above ShortcutRow, which has position: relative for the selected bar
+          zIndex: 1,
+        })}
+      >
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* selected toolbar button details */}

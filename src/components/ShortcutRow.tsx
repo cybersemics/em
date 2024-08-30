@@ -83,7 +83,30 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
         ref={dragSource}
         onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
       >
-        <th>
+        <th
+          className={css({
+            // create a container for the selected bar equal to the height of the row
+            position: 'relative',
+          })}
+        >
+          {
+            // selected bar
+            selected && (
+              <div
+                className={css({
+                  width: '0.25em',
+                  // set the height so it is flush with the bottom of the shortcut row description
+                  height: 'calc(100% - 1.375em)',
+                  backgroundColor: 'highlight',
+                  position: 'absolute',
+                  // hanng off the left edge of the shortcut row
+                  left: '-1em',
+                  // set the top so it is flush with the top of the shortcut row label
+                  top: '0.25em',
+                })}
+              />
+            )
+          }
           {customize && indexInToolbar && (
             <span className='dim' title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}>
               {indexInToolbar}.{' '}
