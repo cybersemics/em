@@ -86,13 +86,6 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
             showCloseLink: false,
           }),
         ])
-      } else {
-        dispatch([
-          alert(AlertText.DragAndDropToolbar, {
-            alertType: AlertType.DragAndDropToolbarHint,
-            showCloseLink: false,
-          }),
-        ])
       }
     }
   }, [dispatch, dragShortcut, isHovering, sourceZone])
