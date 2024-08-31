@@ -18,16 +18,47 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 
+type SidebarSection = 'favorites' | 'recentEdited' | 'deletedEdited'
+
+/** A link to a sidebar section. */
+const SidebarLink = ({
+  active,
+  section,
+  setSection,
+  text,
+}: {
+  active?: boolean
+  section: SidebarSection
+  setSection: (section: SidebarSection) => void
+  text: string
+}) => {
+  const colors = useSelector(themeColors)
+  return (
+    <a
+      {...fastClick(() => setSection(section))}
+      style={{
+        color: active ? colors.fg : colors.gray50,
+        display: 'inline-block',
+        fontSize: '1.2em',
+        fontWeight: 600,
+        margin: '0.5em 1em 0 0',
+        textDecoration: 'none',
+      }}
+    >
+      {text}
+    </a>
+  )
+}
+
 /** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const containerRef = useRef<HTMLInputElement>(null)
   const sidebarMenuRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
-  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<'favorites' | 'recent' | 'deleted'>('favorites')
+  const [section, setSection] = useState<SidebarSection>('favorites')
 
   /** Toggle the sidebar. */
   const toggleSidebar = (value: boolean) => {
@@ -109,53 +140,32 @@ const Sidebar = () => {
                 marginLeft: fontSize * 1.3 + 30,
               }}
             >
-              <a
-                {...fastClick(() => setSection('favorites'))}
-                style={{
-                  color: section === 'favorites' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Favorites
-              </a>
-              <a
-                {...fastClick(() => setSection('recent'))}
-                style={{
-                  color: section === 'recent' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Recently Edited
-              </a>
-              <a
-                {...fastClick(() => setSection('deleted'))}
-                style={{
-                  color: section === 'deleted' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Recently Deleted
-              </a>
+              <SidebarLink
+                active={section === 'favorites'}
+                section='favorites'
+                setSection={setSection}
+                text='Favorites'
+              />
+              <SidebarLink
+                active={section === 'recentEdited'}
+                section='recentEdited'
+                setSection={setSection}
+                text='Recently Edited'
+              />
+              <SidebarLink
+                active={section === 'deletedEdited'}
+                section='deletedEdited'
+                setSection={setSection}
+                text='Recently Deleted'
+              />
             </div>
           </CSSTransition>
 
           {section === 'favorites' ? (
             <Favorites disableDragAndDrop={isSwiping} />
-          ) : section === 'recent' ? (
+          ) : section === 'recentEdited' ? (
             <RecentlyEdited />
-          ) : section === 'deleted' ? (
+          ) : section === 'deletedEdited' ? (
             <RecentlyDeleted />
           ) : (
             'Not yet implemented'
