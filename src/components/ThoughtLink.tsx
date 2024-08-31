@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import Thought from '../@types/Thought'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -31,7 +32,10 @@ const ThoughtLink = ({
 }) => {
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
-  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
+  const value = useSelector(state => {
+    const thought = getThoughtById(state, head(simplePath)) as Thought | undefined
+    return thought?.value
+  })
   const colors = useSelector(themeColors)
   const style = useMemo(() => ({ color: colors.fg, ...styleLink }), [colors, styleLink])
 
