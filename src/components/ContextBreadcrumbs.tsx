@@ -1,35 +1,89 @@
 import classNames from 'classnames'
-import { unescape as decodeCharacterEntities } from 'lodash'
-import React, { useMemo } from 'react'
+import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
+import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
+import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
+import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import useEllipsizedThoughts from './ContextBreadcrumbs.useEllipsizedThoughts'
+import strip from '../util/strip'
 import HomeLink from './HomeLink'
 import Link from './Link'
 import Superscript from './Superscript'
 
-export interface ContextBreadcrumbProps {
-  charLimit?: number
-  classNamesObject?: Index<boolean>
-  // renders an invisible ContextBreadcrumbs
-  // useful for ThoughtAnnotation spacing
-  hidden?: boolean
-  homeContext?: boolean
-  path: Path
-  // disables click on breadcrumb fragments
-  staticText?: boolean
-  thoughtsLimit?: number
+type OverflowChild = {
+  id: ThoughtId
+  value: string
+  nodeRef: React.RefObject<HTMLElement>
+  label?: string
+  isOverflow?: boolean
+}
+
+type OverflowPath = OverflowChild[]
+
+/** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
+const useEllipsizedThoughts = (
+  path: Path,
+  { disabled, thoughtsLimit, charLimit }: { disabled?: boolean; thoughtsLimit?: number; charLimit?: number },
+): OverflowPath => {
+  // calculate if overflow occurs during ellipsized view
+  // 0 if thoughtsLimit is not defined
+  const thoughtsOverflow = thoughtsLimit && path.length > thoughtsLimit ? path.length - thoughtsLimit + 1 : 0
+
+  const editingValue = editingValueStore.useState()
+
+  // convert the path to a list of thought values
+  // if editing, use the live editing value
+  const thoughtValuesLive = useSelector(
+    state =>
+      path.map(id =>
+        editingValue && state.cursor && id === head(state.cursor)
+          ? editingValue
+          : ((getThoughtById(state, id)?.value || null) as string | null),
+      ),
+    isEqual,
+  )
+
+  // if charLimit is exceeded then replace the remaining characters with an ellipsis
+  const charLimitedThoughts: OverflowPath = path.map((id, i) => {
+    const value = thoughtValuesLive[i]
+    return {
+      // It is possible that the thought is no longer in state, in which case value will be null.
+      // The component is hopefully being unmounted, so the value shouldn't matter as long as it does not error out.
+      value: value ?? '',
+      id,
+      nodeRef: createRef(),
+      // add ellipsized label
+      ...(!disabled && value != null
+        ? {
+            label: strip(
+              // subtract 2 so that additional '...' is still within the char limit
+              value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
+            ),
+          }
+        : {}),
+    }
+  })
+
+  // after character limit is applied we need to remove the overflow thoughts if any and add isOverflow flag to render ellipsis at that position
+  const ellipsizedThoughts: OverflowPath =
+    thoughtsOverflow && !disabled
+      ? charLimitedThoughts
+          .slice(0, charLimitedThoughts.length - 1 - thoughtsOverflow)
+          .concat({ isOverflow: true } as OverflowChild, charLimitedThoughts.slice(charLimitedThoughts.length - 1))
+      : charLimitedThoughts
+
+  return ellipsizedThoughts
 }
 
 /** Renders single BreadCrumb. If isDeleting and no overflow, only renders divider dot. */
@@ -84,7 +138,7 @@ const BreadCrumb = React.memo(
 
 BreadCrumb.displayName = 'BreadCrumb'
 
-/** Breadcrumbs for contexts within the context views. */
+/** Renders the ancestor chain of a path as links. */
 const ContextBreadcrumbs = ({
   charLimit,
   classNamesObject,
@@ -93,7 +147,20 @@ const ContextBreadcrumbs = ({
   path,
   staticText,
   thoughtsLimit,
-}: ContextBreadcrumbProps) => {
+}: {
+  charLimit?: number
+  classNamesObject?: Index<boolean>
+  /**
+   * Renders an invisible ContextBreadcrumbs.
+   * Useful for ThoughtAnnotation spacing.
+   */
+  hidden?: boolean
+  homeContext?: boolean
+  path: Path
+  /** Disables click on breadcrumb fragments. */
+  staticText?: boolean
+  thoughtsLimit?: number
+}) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
