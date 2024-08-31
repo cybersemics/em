@@ -15,14 +15,6 @@ import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
 
-export interface PullOptions {
-  /** See: cancelRef param to fetchDescendants. */
-  cancelRef?: { canceled: boolean }
-  /** Pull descendants regardless of pending status. */
-  force?: boolean
-  maxDepth?: number
-}
-
 /** Iterate through an async iterable and invoke a callback on each yield. */
 async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) {
   for await (const item of it) {
@@ -60,7 +52,20 @@ const getPendingDescendants = (state: State, thoughtIds: ThoughtId[]): ThoughtId
  * WARNING: Unknown behavior if thoughtsPending takes longer than throttleFlushPending.
  */
 export const pullActionCreator =
-  (thoughtIds: ThoughtId[], { cancelRef, force, maxDepth }: PullOptions = {}): Thunk<Promise<Thought[]>> =>
+  (
+    thoughtIds: ThoughtId[],
+    {
+      cancelRef,
+      force,
+      maxDepth,
+    }: {
+      /** See: cancelRef param to fetchDescendants. */
+      cancelRef?: { canceled: boolean }
+      /** Pull descendants regardless of pending status. */
+      force?: boolean
+      maxDepth?: number
+    } = {},
+  ): Thunk<Promise<Thought[]>> =>
   async (dispatch, getState) => {
     // pull only pending thoughts unless forced
     const filteredThoughtIds = force

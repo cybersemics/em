@@ -10,24 +10,25 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
 
-interface ThoughtLinkProps {
-  charLimit?: number
-  hideContext?: boolean
-  staticBreadcrumbs?: boolean
-  path: Path
-  styleLink?: React.CSSProperties
-  thoughtsLimit?: number
-}
-
-/** Link to thought with ContextBreadcrumbs. */
+/** Renders a link to a thought and its ancestors as ContextBreadcrumbs. */
 const ThoughtLink = ({
   charLimit,
+  hideArchive,
   hideContext,
   path,
   styleLink,
   thoughtsLimit,
   staticBreadcrumbs,
-}: ThoughtLinkProps) => {
+}: {
+  charLimit?: number
+  /** Hide just the =archive thought, but show the rest of the path. */
+  hideArchive?: boolean
+  hideContext?: boolean
+  staticBreadcrumbs?: boolean
+  path: Path
+  styleLink?: React.CSSProperties
+  thoughtsLimit?: number
+}) => {
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
   const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
@@ -38,6 +39,7 @@ const ThoughtLink = ({
     <div>
       {!hideContext && (
         <ContextBreadcrumbs
+          hideArchive={hideArchive}
           path={parentPath}
           staticText={staticBreadcrumbs}
           charLimit={charLimit || 32}

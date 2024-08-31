@@ -1,8 +1,9 @@
 import _ from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
+import useDelayedState from '../hooks/useDelayedState'
 import recentlyEdited from '../selectors/recentlyEdited'
 import hashPath from '../util/hashPath'
 import nonNull from '../util/nonNull'
@@ -14,18 +15,6 @@ const pullJumpHistory = (): Thunk => async (dispatch, getState) => {
   const state = getState()
   const paths = state.jumpHistory.filter(nonNull)
   return dispatch(pull(paths.flat()))
-}
-
-/** A hook that flips its state after thn given amount of time. */
-const useDelayedState = (time: number) => {
-  const [done, setDone] = useState(false)
-  const timer = setTimeout(() => setDone(true), time)
-  const cancel = useCallback(() => clearTimeout(timer), [timer])
-  const flush = useCallback(() => {
-    clearTimeout(timer)
-    setDone(true)
-  }, [setDone, timer])
-  return [done, flush, cancel] as const
 }
 
 /** Recently edited thoughts derived from the jump history. */
@@ -45,12 +34,13 @@ const RecentlyEdited = () => {
   const paths = _.uniqBy(jumpHistory, hashPath)
 
   useEffect(() => {
-    // TODO: Fix type
-    const p = dispatch(pullJumpHistory()) as unknown as Promise<void>
-    p.then(() => {
+    // prettier adds a semicolon and eslint tries to remove it
+    // eslint-disable-next-line no-extra-semi
+    ;(async () => {
+      await dispatch(pullJumpHistory())
       setLoaded(true)
       flushReady()
-    })
+    })()
   }, [flushReady, dispatch])
 
   return (

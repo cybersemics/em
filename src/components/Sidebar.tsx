@@ -10,6 +10,7 @@ import { isTouch } from '../browser'
 import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
+import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
@@ -26,7 +27,7 @@ const Sidebar = () => {
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<'favorites' | 'recent'>('favorites')
+  const [section, setSection] = useState<'favorites' | 'recent' | 'deleted'>('favorites')
 
   /** Toggle the sidebar. */
   const toggleSidebar = (value: boolean) => {
@@ -134,10 +135,31 @@ const Sidebar = () => {
               >
                 Recently Edited
               </a>
+              <a
+                {...fastClick(() => setSection('deleted'))}
+                style={{
+                  color: section === 'deleted' ? colors.fg : colors.gray50,
+                  display: 'inline-block',
+                  fontSize: '1.2em',
+                  fontWeight: 600,
+                  margin: '0.5em 1em 0 0',
+                  textDecoration: 'none',
+                }}
+              >
+                Recently Deleted
+              </a>
             </div>
           </CSSTransition>
 
-          {section === 'favorites' ? <Favorites disableDragAndDrop={isSwiping} /> : <RecentlyEdited />}
+          {section === 'favorites' ? (
+            <Favorites disableDragAndDrop={isSwiping} />
+          ) : section === 'recent' ? (
+            <RecentlyEdited />
+          ) : section === 'deleted' ? (
+            <RecentlyDeleted />
+          ) : (
+            'Not yet implemented'
+          )}
         </div>
       </div>
     </SwipeableDrawerWithClasses>

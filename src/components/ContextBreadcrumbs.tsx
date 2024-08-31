@@ -142,6 +142,7 @@ BreadCrumb.displayName = 'BreadCrumb'
 const ContextBreadcrumbs = ({
   charLimit,
   classNamesObject,
+  hideArchive,
   hidden,
   homeContext,
   path,
@@ -150,6 +151,8 @@ const ContextBreadcrumbs = ({
 }: {
   charLimit?: number
   classNamesObject?: Index<boolean>
+  /** Hide just the =archive thought, but show the rest of the path. */
+  hideArchive?: boolean
   /**
    * Renders an invisible ContextBreadcrumbs.
    * Useful for ThoughtAnnotation spacing.
@@ -163,7 +166,11 @@ const ContextBreadcrumbs = ({
 }) => {
   const [disabled, setDisabled] = React.useState(false)
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-  const ellipsizedThoughts = useEllipsizedThoughts(path, { charLimit, disabled, thoughtsLimit })
+  const pathFiltered = useSelector(
+    state => (hideArchive ? (path.filter(id => getThoughtById(state, id).value !== '=archive') as Path) : path),
+    shallowEqual,
+  )
+  const ellipsizedThoughts = useEllipsizedThoughts(pathFiltered, { charLimit, disabled, thoughtsLimit })
 
   /** Clones the direct breadcrumb children to inject isDeleting animation state. */
   const factoryManager = (child: React.ReactElement) => {
@@ -175,9 +182,10 @@ const ContextBreadcrumbs = ({
     return React.cloneElement(child, { ...child.props }, updatedGrandChild)
   }
 
+  /** The list of ancestor paths: [a], [a, b], [a, b, c], etc. */
   const ancestors = useMemo(() => {
-    return path.map((id, i) => path.slice(0, i + 1) as Path)
-  }, [path])
+    return pathFiltered.map((id, i) => pathFiltered.slice(0, i + 1) as Path)
+  }, [pathFiltered])
 
   return (
     <div
