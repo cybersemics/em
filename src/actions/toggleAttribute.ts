@@ -31,6 +31,13 @@ const toggleAttribute = (
   // base case: delete or overwrite the first subthought with the last value in the sequence
   if (_values.length === 1) {
     const firstThought = getThoughtById(state, getAllChildren(state, thoughtId)[0])
+
+    // Handle standalone attributes, e.g. =pin as opposed to =pin/true, skip deleting the attribute
+    // The parent recursion will take care of deleting the attribute if it is set to true.
+    if (!firstThought && _values[0] === 'true') {
+      return state
+    }
+
     return firstThought?.value === _values[0]
       ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id })
       : setFirstSubthought(state, {
