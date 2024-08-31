@@ -4,9 +4,9 @@ import exportContext from '../../selectors/exportContext'
 import { createTestStore } from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import pinAllShortcut from '../pinAll'
+import pinShortcut from '../pin'
 
-it('toggle on when there is no =children attribute', () => {
+it('toggle on when there is no =pin attribute', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -25,15 +25,13 @@ it('toggle on when there is no =children attribute', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeShortcut(pinShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
   - a
-    - =children
-      - =pin
-        - true
     - b
+      - =pin
       - c
       - d
     - e
@@ -41,7 +39,7 @@ it('toggle on when there is no =children attribute', () => {
       - g`)
 })
 
-it('toggle on when =children/=pin is false', () => {
+it('toggle on when =pin/false', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -49,10 +47,9 @@ it('toggle on when =children/=pin is false', () => {
     importText({
       text: `
         - a
-          - =children
+          - b
             - =pin
               - false
-          - b
             - c
             - d
           - e
@@ -63,14 +60,46 @@ it('toggle on when =children/=pin is false', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeShortcut(pinShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
   - a
-    - =children
+    - b
       - =pin
         - true
+      - c
+      - d
+    - e
+      - f
+      - g`)
+})
+
+it('remove =pin when toggling off', () => {
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - =pin
+            - c
+            - d
+          - e
+            - f
+            - g
+    `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  executeShortcut(pinShortcut, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
     - b
       - c
       - d
@@ -79,18 +108,16 @@ it('toggle on when =children/=pin is false', () => {
       - g`)
 })
 
-it('remove =children when toggling off from =pin/true', () => {
+it('remove =pin/true when toggling off', () => {
   const store = createTestStore()
 
-  // import thoughts
   store.dispatch([
     importText({
       text: `
         - a
-          - =children
+          - b
             - =pin
               - true
-          - b
             - c
             - d
           - e
@@ -101,7 +128,7 @@ it('remove =children when toggling off from =pin/true', () => {
     setCursor(['a', 'b']),
   ])
 
-  executeShortcut(pinAllShortcut, { store })
+  executeShortcut(pinShortcut, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- __ROOT__
@@ -112,82 +139,4 @@ it('remove =children when toggling off from =pin/true', () => {
     - e
       - f
       - g`)
-})
-
-it('remove =children when toggling off from =pin', () => {
-  const store = createTestStore()
-
-  // import thoughts
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - =children
-            - =pin
-          - b
-            - c
-            - d
-          - e
-            - f
-            - g
-    `,
-    }),
-    setCursor(['a', 'b']),
-  ])
-
-  executeShortcut(pinAllShortcut, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g`)
-})
-
-it('remove =pin/false from all subthoughts when toggling on', () => {
-  const store = createTestStore()
-
-  store.dispatch([
-    importText({
-      text: `
-        - a
-          - b
-            - =pin
-              - false
-            - c
-            - d
-          - e
-            - =pin
-              - false
-            - f
-            - g
-          - h
-            - i
-            - j
-    `,
-    }),
-    setCursor(['a', 'b']),
-  ])
-
-  executeShortcut(pinAllShortcut, { store })
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
-  - a
-    - =children
-      - =pin
-        - true
-    - b
-      - c
-      - d
-    - e
-      - f
-      - g
-    - h
-      - i
-      - j`)
 })
