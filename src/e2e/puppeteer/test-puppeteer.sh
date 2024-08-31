@@ -27,7 +27,7 @@ cleanup() {
 # Set up trap to call cleanup function on script exit or if the program crashes
 trap cleanup EXIT INT TERM
 
-# Check if we're running in a GitHub Action
+# Check if we're running outside of a GitHub Action
 if [ -z "$GITHUB_ACTIONS" ]; then
     # We're not in a GitHub Action, so start the browserless docker container
     echo "Starting browserless docker container..."
@@ -36,10 +36,7 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     # Wait for the container to be ready
     echo "Waiting for browserless to be ready..."
     sleep 5
-fi
 
-# Check if we're not in GitHub Actions
-if [ -z "$GITHUB_ACTIONS" ]; then
     # Check if a development server is running
     if ! nc -z localhost 3000; then
         echo "Creating build..."

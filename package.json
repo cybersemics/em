@@ -45,7 +45,7 @@
     "servebuild": "npx serve -s build -l 3000",
     "test": "vitest --project unit",
     "test:ios": "jest ./src/e2e/iOS --verbose",
-    "test:puppeteer": "scripts/test-puppeteer.sh",
+    "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "websocket-server": "cd server && npm run build && npm start",
     "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome"
   },
