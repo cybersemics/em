@@ -175,6 +175,7 @@ const AppComponent: FC = () => {
 
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
+    document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
     if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }

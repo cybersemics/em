@@ -1,5 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 
 beforeEach(createTestApp)

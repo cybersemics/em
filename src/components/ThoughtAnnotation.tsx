@@ -20,6 +20,7 @@ import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isEmail from '../util/isEmail'
 import isURL from '../util/isURL'
 import isVisibleContext from '../util/isVisibleContext'
@@ -251,7 +252,10 @@ const ThoughtAnnotation = React.memo(
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
-          style={styleAnnotation}
+          style={{
+            fontFamily: isAttribute(value) ? 'monospace' : undefined,
+            ...styleAnnotation,
+          }}
         >
           <span
             className='editable-annotation-text'

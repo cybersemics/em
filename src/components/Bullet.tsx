@@ -257,6 +257,7 @@ const Bullet = ({
 
   return (
     <span
+      data-testid={'bullet-' + hashPath(path)}
       aria-label='bullet'
       className={classNames({
         bullet: true,
@@ -281,6 +282,11 @@ const Bullet = ({
         className='glyph'
         viewBox='0 0 600 600'
         style={{
+          // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
+          // This caused the bullet slide animation to end with a jerky movement.
+          // By setting "will-change: transform;", we hint to the browser that the transform property will change in the future,
+          // allowing the browser to optimize the animation.
+          willChange: 'transform',
           height: lineHeight,
           width: lineHeight,
           marginLeft: -lineHeight,

@@ -1,20 +1,19 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { icon } from '../../../styled-system/recipes'
+import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/Icon'
-import themeColors from '../../selectors/themeColors'
 
 /** Check icon used for toggleDone. */
 const CheckIcon: FC<Icon> = ({ fill, size = 20, style }) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
-      className='icon'
+      className={icon()}
       x='0px'
       y='0px'
       viewBox='0 290.2 6 7'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
     >
       <g>

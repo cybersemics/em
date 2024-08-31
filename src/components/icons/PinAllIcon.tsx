@@ -1,3 +1,4 @@
+import { icon } from '../../../styled-system/recipes'
 import IconType from '../../@types/Icon'
 
 /** PinAll icon. */
@@ -5,7 +6,7 @@ const PinAllIcon = ({ size = 20, style }: IconType) => {
   return (
     <svg
       version='1.1'
-      className='icon'
+      className={icon()}
       viewBox='0 0 23 20'
       width={size * 1.2}
       height={size}

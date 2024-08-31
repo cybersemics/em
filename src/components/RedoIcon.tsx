@@ -1,18 +1,17 @@
-import { useSelector } from 'react-redux'
+import { icon } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import Icon from '../@types/Icon'
-import themeColors from '../selectors/themeColors'
 
 /** A redo icon. */
 const RedoIcon = ({ fill, size = 18, style }: Icon) => {
-  const colors = useSelector(themeColors)
   return (
     <svg
       version='1.1'
-      className={'icon'}
+      className={icon()}
       xmlns='http://www.w3.org/2000/svg'
       width={size}
       height={size}
-      fill={fill || colors.fg}
+      fill={fill || token('colors.fg')}
       style={style}
       viewBox='0 -50 600 600'
     >
