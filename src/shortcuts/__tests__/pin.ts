@@ -1,7 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pinShortcut from '../pin'

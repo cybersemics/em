@@ -8,7 +8,7 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 

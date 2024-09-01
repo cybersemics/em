@@ -4,7 +4,7 @@ import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/t
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
