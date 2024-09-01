@@ -3,7 +3,7 @@ import findThoughtByText from './findThoughtByText'
 import getClosestByLabel from './getClosestByLabel'
 
 /** Finds all the subthoughts of a thought. Returns the child of each. Use findAllByLabelText([CHILD], 'thought') to select a child thought or use findSubthoughts(CHILD) to find child subthoughts. */
-export const findSubthoughts = async (value?: HTMLElement | string | null): Promise<HTMLElement[]> => {
+export default async function findSubthoughts(value?: HTMLElement | string | null): Promise<HTMLElement[]> {
   if (!value) return []
   const thought = typeof value === 'string' ? await findThoughtByText(value) : value
   const container = getClosestByLabel(thought, 'child')!

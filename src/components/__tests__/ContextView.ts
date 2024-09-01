@@ -5,7 +5,7 @@ import { toggleContextViewActionCreator as toggleContextView } from '../../actio
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { findAllThoughtsByText } from '../../test-helpers/queries/findAllThoughtsByText'
-import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
+import findSubthoughts from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
