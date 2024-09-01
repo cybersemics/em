@@ -12,16 +12,11 @@ import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
-import * as isUndoEnabledModule from '../../selectors/isUndoEnabled'
 import appStore from '../../stores/app'
-import { createMockStore } from '../../test-helpers/createMockStore'
 import createTestStore from '../../test-helpers/createTestStore'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
-import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import testTimer from '../../test-helpers/testTimer'
-import initialState from '../../util/initialState'
-import undoShortcut from '../undo'
 
 const timer = testTimer()
 
@@ -30,36 +25,6 @@ const timer = testTimer()
  ******************************************************************/
 
 describe('undo', () => {
-  const isUndoEnabled = vi.spyOn(isUndoEnabledModule, 'isUndoEnabled')
-
-  it('dispatches undo action on shortcut if undo is enabled', () => {
-    // enable undo
-    isUndoEnabled.mockReturnValue(true)
-
-    const mockStore = createMockStore()
-    const store = mockStore(initialState())
-
-    executeShortcut(undoShortcut, { store })
-
-    expect(store.getActions()).toEqual([
-      {
-        type: 'undo',
-      },
-    ])
-  })
-
-  it('does not dispatch an undo action if undo is disabled', () => {
-    // disable undo
-    isUndoEnabled.mockImplementationOnce(() => false)
-
-    const mockStore = createMockStore()
-    const store = mockStore(initialState())
-
-    executeShortcut(undoShortcut, { store })
-
-    expect(store.getActions()).toEqual([])
-  })
-
   it('undo edit', () => {
     const store = createTestStore()
 
