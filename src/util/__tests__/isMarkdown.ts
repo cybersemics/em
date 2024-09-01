@@ -1,4 +1,4 @@
-import { isMarkdown } from '../isMarkdown'
+import isMarkdown from '../isMarkdown'
 
 describe('isMarkdown', () => {
   it('should identify markdown with headings', () => {

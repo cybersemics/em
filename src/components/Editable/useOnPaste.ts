@@ -9,7 +9,7 @@ import * as selection from '../../device/selection'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
-import { isMarkdown } from '../../util/isMarkdown'
+import isMarkdown from '../../util/isMarkdown'
 import strip from '../../util/strip'
 import timestamp from '../../util/timestamp'
 
