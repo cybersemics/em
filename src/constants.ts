@@ -1,3 +1,5 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Defines app-wide constants. */
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
