@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import _ from 'lodash'
 import * as murmurHash3 from 'murmurhash3js'
 import { SCHEMA_HASHKEYS, SCHEMA_ROOT } from '../constants'

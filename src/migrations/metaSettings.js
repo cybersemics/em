@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { importTextActionCreator as importText } from '../actions/importText'
 import {
   EM_TOKEN,
