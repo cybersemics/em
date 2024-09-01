@@ -4,7 +4,7 @@
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
-import { emojiRegex } from './emojiRegex'
+import emojiRegex from './emojiRegex'
 import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
