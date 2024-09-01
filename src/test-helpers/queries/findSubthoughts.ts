@@ -1,6 +1,6 @@
 import { findAllByLabelText } from '@testing-library/dom'
 import findThoughtByText from './findThoughtByText'
-import { getClosestByLabel } from './getClosestByLabel'
+import getClosestByLabel from './getClosestByLabel'
 
 /** Finds all the subthoughts of a thought. Returns the child of each. Use findAllByLabelText([CHILD], 'thought') to select a child thought or use findSubthoughts(CHILD) to find child subthoughts. */
 export const findSubthoughts = async (value?: HTMLElement | string | null): Promise<HTMLElement[]> => {
