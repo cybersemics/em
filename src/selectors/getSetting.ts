@@ -5,7 +5,7 @@ import { EM_TOKEN } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import isAttribute from '../util/isAttribute'
-import { resolveArray } from '../util/memoizeResolvers'
+import resolveArray from '../util/resolveArray'
 import getThoughtById from './getThoughtById'
 
 /** Returns subthoughts of /em/Settings/...context, not including meta subthoughts. Returns undefined if the setting has no subthoughts. */

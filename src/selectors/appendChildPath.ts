@@ -2,11 +2,15 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import head from '../util/head'
-import { resolveArray, resolvePath } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
+import resolveArray from '../util/resolveArray'
 import unroot from '../util/unroot'
 import isContextViewActive from './isContextViewActive'
+
+/** A memoize resolver for Paths and Child[]. */
+const resolvePath = (pathlike: ThoughtId[] | null): string | null => (pathlike ? resolveArray(pathlike) : pathlike)
 
 /** A memoize resolver that handles child and simplePath value equality for getChildPath. */
 const resolve = (state: State, childPath: SimplePath, parentThoughtsResolved?: Path) =>
