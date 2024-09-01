@@ -8,7 +8,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
-import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
@@ -35,6 +34,9 @@ const urlLinkStyle = {
   marginLeft: 3,
   textDecoration: 'none',
 }
+
+/** Returns true if a link is to a thought within the user's thoughtspace. */
+const isInternalLink = (url: string) => typeof window === 'undefined' || url.startsWith(window.location.origin)
 
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
 const addMissingProtocol = (url: string) =>
