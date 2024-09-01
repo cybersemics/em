@@ -42,12 +42,12 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     # Check if a development server is running
     if ! nc -z localhost 3000; then
         echo "Creating build..."
-        yarn build > /dev/null 2>&1
+        yarn build >/dev/null 2>&1
 
         echo "Serving build..."
-        yarn servebuild > /dev/null 2>&1 &
+        yarn servebuild >/dev/null 2>&1 &
         DEV_SERVER_PID=$!
-        
+
         # Wait for the server to be ready
         echo "Waiting for server to be ready..."
         while ! nc -z localhost 3000; do
