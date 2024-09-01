@@ -1,4 +1,4 @@
-/** Here's documentation for all shortcuts. */
+/* eslint-disable import/prefer-default-export */
 
 export { default as archive, archiveAliases } from './archive'
 export { default as bindContext } from './bindContext'
