@@ -36,7 +36,7 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     # Wait for the container to be ready
     echo "Waiting for browserless to be ready..."
     while ! nc -z localhost 7566; do
-        sleep 1
+        sleep 0.1
     done
 
     # Check if a development server is running
@@ -51,7 +51,7 @@ if [ -z "$GITHUB_ACTIONS" ]; then
         # Wait for the server to be ready
         echo "Waiting for server to be ready..."
         while ! nc -z localhost 3000; do
-            sleep 1
+            sleep 0.1
         done
         echo "Server is ready."
     else
