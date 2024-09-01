@@ -8,7 +8,7 @@ import { findAllThoughtsByText } from '../../test-helpers/queries/findAllThought
 import { findSubthoughts } from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { getClosestByLabel } from '../../test-helpers/queries/getClosestByLabel'
-import { queryThoughtByText } from '../../test-helpers/queries/queryThoughtByText'
+import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import series from '../../util/series'
 
