@@ -11,6 +11,7 @@ const waitForEditable = async (browser: Browser<'async'>, value: string) => {
             .length > 0
         )
       }, value),
+    { timeout: 15000 },
   )
   return await getEditable(browser, value)
 }
