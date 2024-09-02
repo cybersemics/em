@@ -123,6 +123,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     expanded: {},
     fontSize: storageModel.get('fontSize'),
     expandHoverDownPaths: {},
+    importThoughtPath: null,
     invalidState: false,
     isLoading: true,
     jumpHistory: storageModel.get('jumpHistory'),

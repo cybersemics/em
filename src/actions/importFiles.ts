@@ -44,8 +44,7 @@ import series from '../util/series'
 import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
-import { preserveThoughtsActionCreator } from './preserveThoughts'
-import { unpreserveThoughtsActionCreator } from './unpreserveThoughts'
+import { setImportThoughtPathActionCreator as setImportThoughtPath } from './setImportThoughtPath'
 
 /** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
 interface VirtualFile {
@@ -220,9 +219,6 @@ export const importFilesActionCreator =
     // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
     let didSetCursor = false
 
-    /** A references to the preserved importThoughtPath that is used to prevent freeThoughts from deallocating the path where thoughts are being imported. Note that unpreserveThoughtsActionCreator requires the exact reference passed to preserveThoughtsActionCreator. */
-    let preservedThoughts: Parameters<typeof unpreserveThoughtsActionCreator>[0] | null = null
-
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
       /** An action-creator that imports a block. */
@@ -307,14 +303,7 @@ export const importFilesActionCreator =
 
             dispatch([
               // preserve import thought path from being deallocated during import
-              dispatch => {
-                // unpreserve the old import thought path
-                dispatch(unpreserveThoughtsActionCreator(preservedThoughts))
-
-                // update and preserve the new importThoughtPath
-                preservedThoughts = [...importThoughtPath]
-                dispatch(preserveThoughtsActionCreator(preservedThoughts))
-              },
+              setImportThoughtPath(importThoughtPath),
 
               // delete empty destination thought
               i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
@@ -423,7 +412,7 @@ export const importFilesActionCreator =
       // otherwise thoughts will get imported out of order
       await series(importTasks)
       await manager.del()
-      dispatch(unpreserveThoughtsActionCreator(preservedThoughts))
+      dispatch(setImportThoughtPath(null))
     })
 
     // import files serially
