@@ -8244,7 +8244,7 @@ __metadata:
     vite: "npm:^5.4.2"
     vite-plugin-checker: "npm:^0.7.2"
     vite-plugin-html: "npm:^3.2.2"
-    vite-plugin-pwa: "npm:^0.20.1"
+    vite-plugin-pwa: "npm:^0.20.2"
     vitest: "npm:^2.0.5"
     webdriverio: "npm:^7.36.0"
     workbox-build: "npm:^7.1.1"
@@ -18171,9 +18171,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-pwa@npm:^0.20.1":
-  version: 0.20.1
-  resolution: "vite-plugin-pwa@npm:0.20.1"
+"vite-plugin-pwa@npm:^0.20.2":
+  version: 0.20.2
+  resolution: "vite-plugin-pwa@npm:0.20.2"
   dependencies:
     debug: "npm:^4.3.4"
     pretty-bytes: "npm:^6.1.1"
@@ -18188,7 +18188,7 @@ __metadata:
   peerDependenciesMeta:
     "@vite-pwa/assets-generator":
       optional: true
-  checksum: 10c0/febd7d7ebb2f31825b6e73b07d1a3c98bc9c2934722e6da914d099630f718d54c2b4a92eb618e29ef2f004a3121f99d4a28998c23ca200eff469e4f65f7958ff
+  checksum: 10c0/ee9bdbc66b4f54ec585084734a81ad25b483a2bfcd884a770a0226a03be99f8e7fe6952c1c54bd923c260f5e267af754c327b95fbcdf670e4517ddc1220f4ab2
   languageName: node
   linkType: hard
 
