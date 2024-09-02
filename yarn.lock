@@ -8173,7 +8173,7 @@ __metadata:
     eslint-config-prettier: "npm:^9.1.0"
     eslint-config-raine: "npm:^0.5.0"
     eslint-config-react-app: "npm:^7.0.1"
-    eslint-config-standard: "npm:^16.0.3"
+    eslint-config-standard: "npm:^17.1.0"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
     eslint-plugin-import: "npm:^2.29.1"
     eslint-plugin-jsdoc: "npm:^50.2.2"
@@ -8827,15 +8827,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-standard@npm:^16.0.3":
-  version: 16.0.3
-  resolution: "eslint-config-standard@npm:16.0.3"
+"eslint-config-standard@npm:^17.1.0":
+  version: 17.1.0
+  resolution: "eslint-config-standard@npm:17.1.0"
   peerDependencies:
-    eslint: ^7.12.1
-    eslint-plugin-import: ^2.22.1
-    eslint-plugin-node: ^11.1.0
-    eslint-plugin-promise: ^4.2.1 || ^5.0.0
-  checksum: 10c0/6c7276b15329c3ed3c516b442b99cab9b30cb750a58b3bc6994574103f843bf7ea4f7e86bb815c206a610b12fb765d9cd283e45580f9e8549c6d9510fc8177c5
+    eslint: ^8.0.1
+    eslint-plugin-import: ^2.25.2
+    eslint-plugin-n: "^15.0.0 || ^16.0.0 "
+    eslint-plugin-promise: ^6.0.0
+  checksum: 10c0/d32f37ec4bea541debd3a8c9e05227673a9b1a9977da078195ee55fb371813ddf1349c75f2c33d76699fe3412f1e303181795f146e8d0e546b94fa0dce2bfbf9
   languageName: node
   linkType: hard
 
