@@ -8239,7 +8239,7 @@ __metadata:
     tcp-port-used: "npm:^1.0.2"
     text-block-parser: "npm:^1.1.1"
     truncate-html: "npm:^1.1.2"
-    ts-key-enum: "npm:^2.0.12"
+    ts-key-enum: "npm:^3.0.13"
     typescript: "npm:5.4.5"
     use-onclickoutside: "npm:^0.4.1"
     vite: "npm:^5.4.2"
@@ -17563,10 +17563,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-key-enum@npm:^2.0.12":
-  version: 2.0.12
-  resolution: "ts-key-enum@npm:2.0.12"
-  checksum: 10c0/1d9cf8085785bdc324827c5c38f6359b09d9438deab81dfab7fa6d8315c618280ba7527e98d06b68c11066a5a81b06ef84eb378a48bf80ca5772ab0e4c6683d5
+"ts-key-enum@npm:^3.0.13":
+  version: 3.0.13
+  resolution: "ts-key-enum@npm:3.0.13"
+  checksum: 10c0/904006b051016186431624587bbf318f96f33a791cecd36f4170932dc52921b064dac8070e1ccaa63e3553647ff2c2b0227f26e64eb8cf253b9bb75f8313d4a6
   languageName: node
   linkType: hard
 

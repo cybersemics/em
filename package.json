@@ -128,7 +128,7 @@
     "reselect": "^5.1.1",
     "text-block-parser": "^1.1.1",
     "truncate-html": "^1.1.2",
-    "ts-key-enum": "^2.0.12",
+    "ts-key-enum": "^3.0.13",
     "use-onclickoutside": "^0.4.1",
     "vite-plugin-html": "^3.2.2",
     "workbox-build": "^7.1.1",
