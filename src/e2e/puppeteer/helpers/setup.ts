@@ -19,7 +19,7 @@ export interface InitPageOptions {
 const setup = async ({
   puppeteerBrowser = global.browser,
   // Use host.docker.internal to connect to the host machine from inside the container. On Github actions, host.docker.internal is not available, so use 172.17.0.1 instead.
-  // We're using port 3001 for a dev server with SSL, required to access the clipboard.
+  // We're using port 3001 for local proxy with SSL, required to access the clipboard.
   url = process.env.CI ? 'https://172.17.0.1:3001' : 'https://host.docker.internal:3001',
   // url = 'https://google.com',
   emulatedDevice,

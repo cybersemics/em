@@ -204,6 +204,7 @@
     "jest-extended": "^4.0.2",
     "jest-image-snapshot": "^6.4.0",
     "jsdom": "^24.1.1",
+    "local-ssl-proxy": "^2.0.5",
     "lockfile-lint": "^4.14.0",
     "npm-run-all": "^4.1.5",
     "postinstall-postinstall": "^2.1.0",
@@ -216,7 +217,6 @@
     "typescript": "5.4.5",
     "vite": "^5.4.2",
     "vite-plugin-checker": "^0.7.2",
-    "vite-plugin-mkcert": "^1.17.6",
     "vite-plugin-pwa": "^0.20.1",
     "vitest": "^2.0.5",
     "webdriverio": "^7.36.0"
