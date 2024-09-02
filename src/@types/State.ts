@@ -12,6 +12,7 @@ import Shortcut from './Shortcut'
 import ShortcutId from './ShortcutId'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import ThoughtId from './ThoughtId'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
@@ -87,6 +88,8 @@ interface State {
   hoveringPath?: Path
   /** Type of thought drop target being hovered over. */
   hoverZone?: DropThoughtZone
+  /** Thoughts that are prevented from being deallocated by freeThoughts. Only modify through preserveThoughts and unpreserveThoughts. */
+  preservedThoughts?: ThoughtId[][]
   invalidState: boolean
   /**
    * Displays a loading screen when the app starts.

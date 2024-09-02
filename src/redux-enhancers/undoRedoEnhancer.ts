@@ -94,6 +94,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   newThought: true,
   outdent: true,
   prependRevision: false,
+  preserveThoughts: false,
   rerank: false,
   search: false,
   searchContexts: false,
@@ -135,6 +136,7 @@ const UNDOABLE_ACTIONS: ActionFlags = {
   tutorialStep: false,
   undoArchive: false,
   unknownAction: false,
+  unpreserveThoughts: false,
   updateSplitPosition: false,
   updateThoughts: false,
 }

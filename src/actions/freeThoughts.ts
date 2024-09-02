@@ -10,7 +10,6 @@ import {
   FREE_THOUGHT_JUMPS,
   HOME_TOKEN,
 } from '../constants'
-import globals from '../globals'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
@@ -58,8 +57,7 @@ const freeThoughts = (state: State) => {
     HOME_TOKEN,
     // preserve the last few jump history points
     ...state.jumpHistory.slice(0, FREE_THOUGHT_JUMPS).flatMap(path => path || []),
-    // a special back channel for import/export
-    ...globals.preserveSet.keys(),
+    ...(state.preservedThoughts?.flat() ?? []),
     // preserve expanded thoughts and their children
     ...Object.values(state.expanded).flatMap(path => {
       const showContexts = isContextViewActive(state, path)

@@ -17,7 +17,6 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
-import globals from '../globals'
 import contextToPath from '../selectors/contextToPath'
 import { exportContext } from '../selectors/exportContext'
 import findDescendant from '../selectors/findDescendant'
@@ -45,6 +44,8 @@ import series from '../util/series'
 import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
+import { preserveThoughtsActionCreator } from './preserveThoughts'
+import { unpreserveThoughtsActionCreator } from './unpreserveThoughts'
 
 /** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
 interface VirtualFile {
@@ -92,9 +93,6 @@ const resumeImportKey = (id: string) => `${RESUME_IMPORTS_KEY}-${id}`
 
 /** Deletes the ResumeImport file manifest and raw file in IDB. */
 export const deleteResumableFile = async (id: string) => {
-  // NOTE: This will clear all preserved thoughts, not just the import cursor.
-  // This is safe at the current time since the only other use of preserveSet is for export.
-  globals.preserveSet.clear()
   await idb.del(resumeImportKey(id))
   const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
   storage.setItem(RESUME_IMPORTS_KEY, JSON.stringify(_.omit(resumeImports, id)))
@@ -222,6 +220,9 @@ export const importFilesActionCreator =
     // This is necessary because the cursor is set on the first visible thought that is imported, which may be preceded by one or more hidden meta attributes. We wait until the first visible thought, then flip didSetCursor so that the cursor is not set again.
     let didSetCursor = false
 
+    /** A references to the preserved importThoughtPath that is used to prevent freeThoughts from deallocating the path where thoughts are being imported. Note that unpreserveThoughtsActionCreator requires the exact reference passed to preserveThoughtsActionCreator. */
+    let preservedThoughts: Parameters<typeof unpreserveThoughtsActionCreator>[0] | null = null
+
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
       /** An action-creator that imports a block. */
@@ -305,6 +306,16 @@ export const importFilesActionCreator =
             const updateAndResolve = () => updateImportProgress().then(resolve)
 
             dispatch([
+              // preserve import thought path from being deallocated during import
+              dispatch => {
+                // unpreserve the old import thought path
+                dispatch(unpreserveThoughtsActionCreator(preservedThoughts))
+
+                // update and preserve the new importThoughtPath
+                preservedThoughts = [...importThoughtPath]
+                dispatch(preserveThoughtsActionCreator(preservedThoughts))
+              },
+
               // delete empty destination thought
               i === 0 && destEmpty ? deleteThought({ pathParent: parentPath, thoughtId: head(importPath) }) : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
@@ -344,13 +355,6 @@ export const importFilesActionCreator =
               (dispatch, getState) => {
                 const stateAfterImport = getState()
                 const pathNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
-
-                // preserve cursor from being deallocated during import
-                // NOTE: This will clear all preserved thoughts, not just the import cursor.
-                // This is safe at the current time since the only other use of preserveSet is for export.
-                if (pathNew) {
-                  globals.preserveSet = new Set(pathNew)
-                }
 
                 // set cursor to first imported visible thought
                 if (!didSetCursor) {
@@ -419,6 +423,7 @@ export const importFilesActionCreator =
       // otherwise thoughts will get imported out of order
       await series(importTasks)
       await manager.del()
+      dispatch(unpreserveThoughtsActionCreator(preservedThoughts))
     })
 
     // import files serially
