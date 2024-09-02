@@ -306,8 +306,9 @@ const Editable = ({
       // Note: Joining every line does not work well for multiple paragraphs or bulleted lists with multiline items. It may be better to not split or join newlines at all, and make the user explicitly execute a join or split command. This gives them the ability to manually split on paragraphs and then use the join command on each. Indentation is not preserved in OCR, so it is not possible to completely automate multi paragraph restoration.
       const ocrDetected = oldValue === '' && /<div>(?!<br>)/.test(e.target.value)
 
-      const newValue = e.target
-        ? stripEmptyFormattingTags(
+      const newValue = ocrDetected
+        ? // If we detect OCR, we need to clean and escape the value
+          stripEmptyFormattingTags(
             addEmojiSpace(
               unescapeHtml(
                 // When paragraphs from books are scanned with OCR, the value will consist of separate lines (wrapped in <div>...</div>).
@@ -319,7 +320,8 @@ const Editable = ({
               ),
             ),
           )
-        : oldValue
+        : // Otherwise, we avoid unescaping the value to preserve escaped HTML characters.
+          stripEmptyFormattingTags(addEmojiSpace(e.target.value))
 
       /* The realtime editingValue must always be updated (and not short-circuited) since oldValueRef is throttled. Otherwise, editingValueStore becomes stale and heights are not recalculated in VirtualThought.
 

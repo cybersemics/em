@@ -27,7 +27,6 @@ import { markdownToText } from '../util/markdownToText'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
-import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -125,11 +124,7 @@ const importText = (
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (!preventInline && numLines <= 1 && !isRoam && !isRoot(path)) {
-    // TODO: textToHtml already strips the text, but one test fails if we remove it
-    // See: "single-line nested html tags" in importText test
-    const textNormalized = strip(convertedText, { preserveFormatting: true })
-
-    // insert the textNormalized into the destValue in the correct place
+    // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
     const replacedDestValue = state.cursorCleared
       ? ''
@@ -138,8 +133,8 @@ const importText = (
     const newValue = `${replacedDestValue.slice(
       0,
       replaceStart || caretPosition,
-    )}${textNormalized}${replacedDestValue.slice(replaceStart || caretPosition)}`
-    const offset = caretPosition + getTextContentFromHTML(textNormalized).length
+    )}${text}${replacedDestValue.slice(replaceStart || caretPosition)}`
+    const offset = caretPosition + getTextContentFromHTML(text).length
 
     return reducerFlow([
       editThought({

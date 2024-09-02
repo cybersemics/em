@@ -19,11 +19,17 @@ export interface InitPageOptions {
 const setup = async ({
   puppeteerBrowser = global.browser,
   // Use host.docker.internal to connect to the host machine from inside the container. On Github actions, host.docker.internal is not available, so use 172.17.0.1 instead.
-  url = process.env.CI ? 'http://172.17.0.1:3000' : 'http://host.docker.internal:3000',
+  // We're using port 3001 for a dev server with SSL, required to access the clipboard.
+  url = process.env.CI ? 'https://172.17.0.1:3001' : 'https://host.docker.internal:3001',
+  // url = 'https://google.com',
   emulatedDevice,
   skipTutorial = true,
 }: InitPageOptions = {}): Promise<Page> => {
   const context = await puppeteerBrowser.createBrowserContext()
+
+  // Grant permissions to read and write to the clipboard, only works with https.
+  await context.overridePermissions(url.replace(/:\d+/, ''), ['clipboard-read', 'clipboard-write'])
+
   const page: Page = await context.newPage()
 
   if (emulatedDevice) {

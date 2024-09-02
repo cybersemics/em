@@ -11,6 +11,7 @@ import dragAndDropThought from './dragAndDropThought'
 import getComputedColor from './getComputedColor'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
+import getPage from './getPage'
 import getSelection from './getSelection'
 import newThought from './newThought'
 import openModal from './openModal'
@@ -47,6 +48,7 @@ const helpers = {
   getComputedColor,
   getEditable,
   getEditingText,
+  getPage,
   getSelection,
   newThought,
   openModal,

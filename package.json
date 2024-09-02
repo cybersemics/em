@@ -216,6 +216,7 @@
     "typescript": "5.4.5",
     "vite": "^5.4.2",
     "vite-plugin-checker": "^0.7.2",
+    "vite-plugin-mkcert": "^1.17.6",
     "vite-plugin-pwa": "^0.20.1",
     "vitest": "^2.0.5",
     "webdriverio": "^7.36.0"
