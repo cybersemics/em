@@ -36,16 +36,16 @@ cleanup() {
 # Set up trap to call cleanup function on script exit or if the program crashes
 trap cleanup EXIT INT TERM
 
+# Start local ssl proxy to allow puppeteer access to the clipboard
+echo "Starting SSL proxy..."
+yarn local-ssl-proxy --source 3001 --target 3000 --key ./src/e2e/puppeteer/puppeteer-key.pem --cert ./src/e2e/puppeteer/puppeteer.pem &
+SSL_PROXY_PID=$!
+
 # Check if we're running outside of a GitHub Action
 if [ -z "$GITHUB_ACTIONS" ]; then
     # We're not in a GitHub Action, so start the browserless docker container
     echo "Starting browserless docker container..."
     CONTAINER_ID=$(docker run -d --rm -p 7566:3000 -e "CONNECTION_TIMEOUT=-1" browserless/chrome)
-
-    # Start local ssl proxy to allow puppeteer access to the clipboard
-    echo "Starting SSL proxy..."
-    yarn local-ssl-proxy --source 3001 --target 3000 --key ./src/e2e/puppeteer/puppeteer-key.pem --cert ./src/e2e/puppeteer/puppeteer.pem &
-    SSL_PROXY_PID=$!
 
     # Wait for the container to be ready
     echo "Waiting for browserless to be ready..."
