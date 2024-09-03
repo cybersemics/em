@@ -33,6 +33,7 @@ const pasteHTML = async (html: string) => {
   await page.evaluate(html => {
     navigator.clipboard.write([
       new ClipboardItem({
+        'text/plain': new Blob(['Plain text should be ignored when pasting as HTML.'], { type: 'text/plain' }),
         'text/html': new Blob([html], { type: 'text/html' }),
       }),
     ])
