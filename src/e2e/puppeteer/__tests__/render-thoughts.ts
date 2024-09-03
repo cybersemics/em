@@ -184,7 +184,7 @@ describe('Font Size: 13', () => {
     await click('.decrease-font') // 13
 
     // close alert
-    await click('.status-close-x')
+    await click('[data-testid=close-button]')
 
     // scroll to top
     await scroll(0, 0)
@@ -208,7 +208,7 @@ describe('Font Size: 22', () => {
     await click('.increase-font') // 22
 
     // close alert
-    await click('.status-close-x')
+    await click('[data-testid=close-button]')
 
     // scroll to top
     await scroll(0, 0)
