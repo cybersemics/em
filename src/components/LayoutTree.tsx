@@ -61,7 +61,7 @@ type TreeThought = {
   simplePath: SimplePath
   // style inherited from parents with =children/=style and grandparents with =grandchildren/=style
   style?: React.CSSProperties | null
-  thought: Thought
+  thoughtId: string
   // keys of visible children
   // only used in table view to calculate the width of column 1
   visibleChildrenKeys?: string[]
@@ -311,7 +311,7 @@ const linearizeTree = (
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,
-      thought: child,
+      thoughtId: child.id,
       ...(isTable
         ? { visibleChildrenKeys: getChildren(state, child.id).map(child => crossContextualKey(contextChain, child.id)) }
         : null),
@@ -651,7 +651,7 @@ const LayoutTree = () => {
               simplePath,
               singleLineHeightWithCliff,
               style,
-              thought,
+              thoughtId,
               width,
               x,
               y,
@@ -691,7 +691,7 @@ const LayoutTree = () => {
                 <VirtualThought
                   debugIndex={testFlags.simulateDrop ? indexChild : undefined}
                   depth={depth}
-                  dropUncle={thought.id === cursorUncleId}
+                  dropUncle={thoughtId === cursorUncleId}
                   env={env}
                   indexDescendant={indexDescendant}
                   // isMultiColumnTable={isMultiColumnTable}

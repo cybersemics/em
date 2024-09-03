@@ -240,7 +240,24 @@ const VirtualThought = ({
   )
 }
 
-const VirtualThoughtMemo = React.memo(VirtualThought)
+type VirtualThoughtPropsKeys = keyof typeof VirtualThought
+
+const VirtualThoughtMemo = React.memo(VirtualThought, (prevProps, nextProps) => {
+  let isEqual = true
+
+  for (const key in prevProps) {
+    if (key === 'path' || key === 'simplePath') {
+      isEqual = equalPath(prevProps[key], nextProps[key])
+      if (!isEqual) break
+    } else if (prevProps[key as VirtualThoughtPropsKeys] !== nextProps[key as VirtualThoughtPropsKeys]) {
+      isEqual = false
+      break
+    }
+  }
+
+  return isEqual
+})
+
 VirtualThoughtMemo.displayName = 'VirtualThought'
 
 export default VirtualThoughtMemo
