@@ -3,7 +3,7 @@ import helpers from '../helpers'
 
 vi.setConfig({ testTimeout: 20000 })
 
-const { $, getEditable, getPage, press, type } = helpers()
+const { getPage, press, type, waitForEditable } = helpers()
 
 /** Custom helper for pasting plain text, avoiding the existing `paste` helper that uses `importText` internally. */
 const pastePlainText = async (text: string) => {
@@ -50,10 +50,8 @@ it('escapes typed HTML', async () => {
   await type('hello <b>world</b>')
   await press('Enter', { delay: 10 })
 
-  const editable = (await getEditable('hello <b>world</b>')).asElement()!
-
-  const text = await (await editable.getProperty('innerHTML')).jsonValue()
-  expect(text).toBe('hello &lt;b&gt;world&lt;/b&gt;')
+  const editable = await waitForEditable('hello &lt;b&gt;world&lt;/b&gt;')
+  expect(editable).toBeTruthy()
 })
 
 it('preserves pasted HTML as text/html', async () => {
@@ -62,10 +60,8 @@ it('preserves pasted HTML as text/html', async () => {
 
   await sleep(1000)
 
-  const editable = (await $('div.editing .editable'))!.asElement()!
-
-  const text = await (await editable.getProperty('innerHTML')).jsonValue()
-  expect(text).toBe('hello <b>world</b>')
+  const editable = await waitForEditable('hello <b>world</b>')
+  expect(editable).toBeTruthy()
 })
 
 it('escapes pasted HTML as text/plain', async () => {
@@ -74,8 +70,6 @@ it('escapes pasted HTML as text/plain', async () => {
 
   await sleep(1000)
 
-  const editable = (await $('div.editing .editable'))!.asElement()!
-
-  const text = await (await editable.getProperty('innerHTML')).jsonValue()
-  expect(text).toBe('hello &lt;b&gt;world&lt;/b&gt;')
+  const editable = await waitForEditable('hello &lt;b&gt;world&lt;/b&gt;')
+  expect(editable).toBeTruthy()
 })
