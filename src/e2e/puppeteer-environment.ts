@@ -20,6 +20,7 @@ const PuppeteerEnvironment: Environment = {
       '--no-first-run',
       '--no-sandbox',
       '--no-zygote',
+      '--ignore-certificate-errors',
     ]
 
     const browser = await puppeteer
