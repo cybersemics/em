@@ -40,7 +40,7 @@ const exec: Shortcut['exec'] = (dispatch, getState, e) => {
       clearTimeout(undoArchiveTimer)
 
       // close the alert after a delay
-      // only close the alert if it is an undo alert
+      // only close the alert if it is a ThoughtArchive alert
       undoArchiveTimer = window.setTimeout(() => {
         const state = getState()
         if (state.alert && state.alert.alertType === AlertType.ThoughtArchived) {
