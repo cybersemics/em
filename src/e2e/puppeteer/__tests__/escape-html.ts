@@ -58,8 +58,6 @@ it('preserves pasted HTML as text/html', async () => {
   await press('Enter', { delay: 10 })
   await pasteHTML('hello <b>world</b>')
 
-  await sleep(1000)
-
   const editable = await waitForEditable('hello <b>world</b>')
   expect(editable).toBeTruthy()
 })
@@ -67,8 +65,6 @@ it('preserves pasted HTML as text/html', async () => {
 it('escapes pasted HTML as text/plain', async () => {
   await press('Enter', { delay: 10 })
   await pastePlainText('hello <b>world</b>')
-
-  await sleep(1000)
 
   const editable = await waitForEditable('hello &lt;b&gt;world&lt;/b&gt;')
   expect(editable).toBeTruthy()
