@@ -19,7 +19,7 @@ const serverConfig =
     : {}
 
 const config: CapacitorConfig = {
-  appId: 'com.emtheapp.em',
+  appId: 'com.thinkwithem.em',
   appName: 'em',
   webDir: 'build',
   ...serverConfig,
