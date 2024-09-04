@@ -1,13 +1,16 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -25,6 +28,12 @@ const DropHover = ({
 }) => {
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
   const dropHoverColor = useDropHoverColor(simplePath.length)
+  const highlight2 = useSelector(state => themeColors(state)?.highlight2)
+
+  const parent = parentOf(simplePath)
+  const autofocus = useSelector(calculateAutofocus(simplePath))
+  const autofocusParent = useSelector(calculateAutofocus(parent))
+  const animateHover = autofocus === 'dim' && autofocusParent === 'hide'
 
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
@@ -74,7 +83,10 @@ const DropHover = ({
           className='drop-hover'
           style={{
             display: 'inline',
-            backgroundColor: dropHoverColor,
+            backgroundColor: animateHover ? highlight2 : dropHoverColor,
+            animation: animateHover
+              ? `pulse-light ${token('durations.hoverPulseDuration')} linear infinite alternate`
+              : undefined,
           }}
         />
       )}
