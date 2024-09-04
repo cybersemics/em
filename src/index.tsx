@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import App from './components/App'
+import { App } from './components/App'
 import './index.css'
 import { initialize } from './initialize'
 import { register } from './serviceWorkerRegistration'

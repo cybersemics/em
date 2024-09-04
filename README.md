@@ -60,7 +60,6 @@ yarn servebuild
 To the user, a thought just consists of a bullet, text, and superscript indicating the number of contexts the thought appears in. The component hierarchy, however, consists of several components that control positioning (LayoutTree), window virtualization (VirtualThought), and superscript positioning (ThoughtAnnotation). The deep hierarchy ensures that if a thought is hidden, complex selectors and other computations are short-circuited.
 
 ```
-App
 └─Content
   └─LayoutTree
     └─VirtualThought
