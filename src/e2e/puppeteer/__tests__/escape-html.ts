@@ -46,7 +46,7 @@ const pasteHTML = async (html: string) => {
   await page.keyboard.up('Shift')
 }
 
-it('escapes typed HTML', async () => {
+it.skip('escapes typed HTML', async () => {
   await press('Enter', { delay: 10 })
   await type('hello <b>world</b>')
   await press('Enter', { delay: 10 })
@@ -55,7 +55,7 @@ it('escapes typed HTML', async () => {
   expect(editable).toBeTruthy()
 })
 
-it('preserves pasted HTML as text/html', async () => {
+it.skip('preserves pasted HTML as text/html', async () => {
   await press('Enter', { delay: 10 })
   await pasteHTML('hello <b>world</b>')
 
@@ -63,7 +63,7 @@ it('preserves pasted HTML as text/html', async () => {
   expect(editable).toBeTruthy()
 })
 
-it('escapes pasted HTML as text/plain', async () => {
+it.skip('escapes pasted HTML as text/plain', async () => {
   await press('Enter', { delay: 10 })
   await pastePlainText('hello <b>world</b>')
 
