@@ -22,7 +22,6 @@ const config: CapacitorConfig = {
   appId: 'com.emtheapp.em',
   appName: 'em',
   webDir: 'build',
-  bundledWebRuntime: false,
   ...serverConfig,
   ios: {
     backgroundColor: '000000',
