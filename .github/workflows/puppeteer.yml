@@ -22,6 +22,12 @@ jobs:
           - 7566:3000
         env:
           CONNECTION_TIMEOUT: -1
+      ssl-proxy:
+        image: esplo/docker-local-ssl-termination-proxy
+        ports:
+          - 3001:443
+        env:
+          PORT: 3000
 
     steps:
       - name: Clone repository
