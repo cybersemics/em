@@ -71,7 +71,7 @@ type TreeThought = {
 }
 
 /** 2nd Pass: A thought with position information after its height has been measured. */
-type TreeThoughtPositioned = TreeThought & {
+export type TreeThoughtPositioned = TreeThought & {
   cliff: number
   height: number
   singleLineHeightWithCliff: number
@@ -352,7 +352,7 @@ const linearizeTree = (
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
-const LayoutTree = () => {
+const LayoutTree = ({ calculateThoughtPosition }: { calculateThoughtPosition: any }) => {
   const { sizes, setSize } = useSizeTracking()
   const treeThoughts = useSelector(linearizeTree, _.isEqual)
   const fontSize = useSelector(state => state.fontSize)
@@ -611,6 +611,11 @@ const LayoutTree = () => {
 
   // get the scroll position before the render so it can be preserved
   const scrollY = window.scrollY
+
+  // When a thought is hovered over a sorted context, determine the position of arrow.
+  useEffect(() => {
+    calculateThoughtPosition(treeThoughtsPositioned)
+  }, [calculateThoughtPosition, treeThoughtsPositioned])
 
   // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
   useEffect(

@@ -1,6 +1,8 @@
 import classNames from 'classnames'
-import React, { FC, useMemo, useRef, useState } from 'react'
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react'
+import { useDragDropManager } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
@@ -10,16 +12,22 @@ import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/
 import { isTouch } from '../browser'
 import { ABSOLUTE_PATH, HOME_PATH, TUTORIAL2_STEP_SUCCESS } from '../constants'
 import * as selection from '../device/selection'
+import attributeEquals from '../selectors/attributeEquals'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
+import getSortedRank from '../selectors/getSortedRank'
+import getThoughtById from '../selectors/getThoughtById'
 import isTutorial from '../selectors/isTutorial'
+import store from '../stores/app'
+import viewportStore from '../stores/viewport'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isAbsolute from '../util/isAbsolute'
+import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import Editable from './Editable'
 import EmptyThoughtspace from './EmptyThoughtspace'
-import LayoutTree from './LayoutTree'
+import LayoutTree, { TreeThoughtPositioned } from './LayoutTree'
 import Search from './Search'
 
 const transientChildPath = ['TRANSIENT_THOUGHT_ID'] as SimplePath
@@ -47,6 +55,66 @@ const Content: FC = () => {
     return children.length
   })
   const isAbsoluteContext = useSelector(state => isAbsolute(state.rootContext))
+  const visibilityRef = useRef<'above' | 'below' | null>(null)
+  const hoveringPath = useSelector(state => state.hoveringPath)
+  const contextParentPath = parentOf(hoveringPath || [])
+
+  const isSortedContext = useSelector(state => {
+    return attributeEquals(state, head(contextParentPath), '=sort', 'Alphabetical')
+  })
+
+  const dragDropManager = useDragDropManager()
+  const monitor = dragDropManager.getMonitor()
+
+  const item = monitor.getItem()
+
+  const sourceThought = useSelector(state => {
+    const sourceThoughtId = head(item?.path || [])
+    const sourceThought = getThoughtById(state, sourceThoughtId)
+    return sourceThought
+  })
+
+  const newRank = useSelector(state => getSortedRank(state, head(contextParentPath), sourceThought?.value || ''))
+  const scrollY = window.scrollY
+  const viewportHeight = viewportStore.useSelector(state => state.innerHeight)
+  // The arbitrary space above the first thought
+  const spaceAbove = 100
+
+  /** Calculate the visibiltiy of thought being dragged in a sorted context.  */
+  const calculateHoverArrowPosition = useCallback(
+    (thoughts: TreeThoughtPositioned[]) => {
+      const state = store.getState()
+      visibilityRef.current = null
+
+      let lastSortedThought: TreeThoughtPositioned | null = null
+
+      thoughts.some((thought, index) => {
+        const path = thought.path
+        const currentThought = getThoughtById(state, head(path))
+        lastSortedThought = isSortedContext ? thought : null
+
+        if (isSortedContext && Math.floor(newRank) === currentThought.rank) {
+          const y = thought.y
+
+          if (y > viewportHeight + scrollY) {
+            visibilityRef.current = 'below'
+          } else if (y < scrollY - spaceAbove) {
+            visibilityRef.current = 'above'
+          }
+
+          return true
+        }
+
+        if (lastSortedThought && lastSortedThought.y > viewportHeight + scrollY) {
+          visibilityRef.current = 'below'
+          return true
+        }
+
+        return false
+      })
+    },
+    [isSortedContext, newRank, scrollY, viewportHeight],
+  )
 
   /** Removes the cursor if the click goes all the way through to the content. Extends cursorBack with logic for closing modals. */
   const clickOnEmptySpace: Thunk = (dispatch: Dispatch, getState) => {
@@ -91,6 +159,22 @@ const Content: FC = () => {
         {...fastClick(() => dispatch(clickOnEmptySpace))}
         onMouseDown={() => setIsPressed(true)}
       >
+        {isSortedContext && visibilityRef.current && (
+          <div
+            style={{
+              width: '0',
+              height: '0',
+              borderLeft: '10px solid transparent',
+              borderRight: '10px solid transparent',
+              position: 'fixed',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              borderBottom: '20px solid rgb(155, 170, 220)',
+              ...(visibilityRef.current === 'below' && { bottom: '80px', rotate: '180deg' }),
+              animation: `bobble ${token('durations.arrowBobbleAnimation')} infinite`,
+            }}
+          ></div>
+        )}
         {search != null ? (
           <Search />
         ) : (
@@ -101,7 +185,7 @@ const Content: FC = () => {
               TransientEditable
             ) : (
               /* <Subthoughts simplePath={isAbsoluteContext ? ABSOLUTE_PATH : HOME_PATH} expandable={true} /> */
-              <LayoutTree />
+              <LayoutTree calculateThoughtPosition={calculateHoverArrowPosition} />
             )}
           </>
         )}
