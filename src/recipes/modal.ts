@@ -101,13 +101,6 @@ const modalRecipe = defineSlotRecipe({
         },
         actions: { fontSize: '0.75em' },
       },
-      home: {
-        // unused, from .modal-home, not sure what this is for
-        root: {
-          marginLeft: '20px',
-          marginTop: '-5px',
-        },
-      },
       auth: {},
       customizeToolbar: {},
       devices: {},
@@ -155,7 +148,6 @@ const modalRecipe = defineSlotRecipe({
       },
     },
   },
-  jsx: ['Devices', 'Help', 'ShortcutTable', 'Auth', 'ModalComponent'],
   staticCss: ['*'],
 })
 
