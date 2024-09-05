@@ -183,7 +183,6 @@
     "dotenv": "16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
-    "eslint-config-raine": "^0.5.0",
     "eslint-config-react-app": "^7.0.1",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-export-default-identifier": "0.3.0",

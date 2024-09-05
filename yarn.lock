@@ -8170,7 +8170,6 @@ __metadata:
     emoji-regex: "npm:^10.3.0"
     eslint: "npm:^8.57.0"
     eslint-config-prettier: "npm:^9.1.0"
-    eslint-config-raine: "npm:^0.5.0"
     eslint-config-react-app: "npm:^7.0.1"
     eslint-config-standard: "npm:^16.0.3"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
@@ -8785,20 +8784,6 @@ __metadata:
   bin:
     eslint-config-prettier: bin/cli.js
   checksum: 10c0/6d332694b36bc9ac6fdb18d3ca2f6ac42afa2ad61f0493e89226950a7091e38981b66bac2b47ba39d15b73fff2cd32c78b850a9cf9eed9ca9a96bfb2f3a2f10d
-  languageName: node
-  linkType: hard
-
-"eslint-config-raine@npm:^0.5.0":
-  version: 0.5.0
-  resolution: "eslint-config-raine@npm:0.5.0"
-  peerDependencies:
-    eslint: ">=8"
-    eslint-config-standard: ">=17"
-    eslint-plugin-import: ">=2.25.0"
-    eslint-plugin-jsdoc: ">=37"
-    eslint-plugin-n: ">=11"
-    eslint-plugin-promise: ">=6"
-  checksum: 10c0/010132e9a4c1ab6d0f8d36e2ff9e55940b1620337f75eadef907b0938817ffbf6a3bf72c0a66747907d9a0d750f14d2194956621a778f5990c217ec4b7fd05b5
   languageName: node
   linkType: hard
 
