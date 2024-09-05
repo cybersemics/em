@@ -78,11 +78,13 @@ const index = <T extends any[]>(...setupArgs: T) => {
 
   beforeEach(async () => {
     pageRef.current = await setup(...setupArgs)
-  })
+  }, 60000)
 
   afterEach(async () => {
     if (pageRef.current) {
-      await pageRef.current.browserContext().close()
+      await pageRef.current.close().catch(() => {
+        // Ignore errors when closing the page.
+      })
     }
   })
 

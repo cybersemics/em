@@ -18,7 +18,10 @@ export interface InitPageOptions {
 /** Opens em in a new incognito window in Puppeteer. */
 const setup = async ({
   puppeteerBrowser = global.browser,
-  url = 'http://localhost:3000',
+  // Use host.docker.internal to connect to the host machine from inside the container. On Github actions, host.docker.internal is not available, so use 172.17.0.1 instead.
+  // We're using port 3001 for local proxy with SSL, required to access the clipboard.
+  url = process.env.CI ? 'https://172.17.0.1:2552' : 'https://host.docker.internal:2552',
+  // url = 'https://google.com',
   emulatedDevice,
   skipTutorial = true,
 }: InitPageOptions = {}): Promise<Page> => {
