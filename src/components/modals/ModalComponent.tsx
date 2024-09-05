@@ -1,4 +1,5 @@
 import React, { PropsWithChildren } from 'react'
+import { css } from '../../../styled-system/css'
 import { modal } from '../../../styled-system/recipes'
 import ModalType from '../../@types/Modal'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
@@ -83,11 +84,29 @@ class ModalComponent extends React.Component<ModalProps> {
     return (
       <div ref={this.ref} style={{ ...style, ...(top ? { top: 55 } : null) }} className={modalClasses.root}>
         {!this.props.preventCloseOnEscape && !hideClose && (
-          <a className={modalClasses.closeX} {...fastClick(this.close)}>
+          <a
+            className={css({
+              /* extend click area */
+              padding: '10px 20px',
+              margin: '-10px -20px',
+              position: 'fixed',
+              top: 'calc(9px - 0.2em)',
+              right: '11px',
+              color: 'inherit',
+              textDecoration: 'none',
+            })}
+            {...fastClick(this.close)}
+          >
             ✕
           </a>
         )}
-        <div className={modalClasses.content}>
+        <div
+          className={css({
+            maxWidth: '40em',
+            margin: '0 auto',
+            maxHeight: 'none',
+          })}
+        >
           {title && <h1 className={modalClasses.title}>{title}</h1>}
           <div className={modalClasses.text}>{children}</div>
           {!hideModalActions && actions && (
@@ -99,7 +118,32 @@ class ModalComponent extends React.Component<ModalProps> {
           )}
           {!hideClose && (
             // TODO: should be controlled by hideClose, not class
-            <a className={modalClasses.close} {...fastClick(() => this.close())}>
+            <a
+              className={css({
+                position: 'absolute',
+                top: '-5px',
+                right: '-5px',
+                fontSize: '12px',
+                verticalAlign: 'middle',
+                textAlign: 'center',
+                padding: '10px',
+                display: 'none',
+                '& span': {
+                  display: 'inline-block',
+                  width: '11px',
+                  height: '11px',
+                  color: {
+                    base: 'rgba(0, 0, 0, 0.3)',
+                    _dark: 'rgba(255, 255, 255, 0.3)',
+                  },
+                  borderColor: {
+                    base: 'rgba(0, 0, 0, 0.3)',
+                    _dark: 'rgba(255, 255, 255, 0.3)',
+                  },
+                },
+              })}
+              {...fastClick(() => this.close())}
+            >
               <span>✕</span>
             </a>
           )}

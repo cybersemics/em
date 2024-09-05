@@ -4,12 +4,9 @@ import { defineSlotRecipe } from '@pandacss/dev'
 const modalRecipe = defineSlotRecipe({
   slots: [
     'root',
-    'closeX',
-    'content',
     'title',
     'text',
     'actions',
-    'close',
     // below must be styled in descendant selectors, since not in ModalComponent
   ],
   className: 'modal',
@@ -49,44 +46,6 @@ const modalRecipe = defineSlotRecipe({
     },
     actions: {
       textAlign: 'center',
-    },
-    content: {
-      maxWidth: '40em',
-      margin: '0 auto',
-      maxHeight: 'none',
-    },
-    close: {
-      position: 'absolute',
-      top: '-5px',
-      right: '-5px',
-      fontSize: '12px',
-      verticalAlign: 'middle',
-      textAlign: 'center',
-      padding: '10px',
-      display: 'none',
-      '& span': {
-        display: 'inline-block',
-        width: '11px',
-        height: '11px',
-        color: {
-          base: 'rgba(0, 0, 0, 0.3)',
-          _dark: 'rgba(255, 255, 255, 0.3)',
-        },
-        borderColor: {
-          base: 'rgba(0, 0, 0, 0.3)',
-          _dark: 'rgba(255, 255, 255, 0.3)',
-        },
-      },
-    },
-    closeX: {
-      /* extend click area */
-      padding: '10px 20px',
-      margin: '-10px -20px',
-      position: 'fixed',
-      top: 'calc(9px - 0.2em)',
-      right: '11px',
-      color: 'inherit',
-      textDecoration: 'none',
     },
   },
   variants: {
