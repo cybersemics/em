@@ -5,7 +5,7 @@ module.exports = {
     mocha: true,
     jest: true,
   },
-  extends: ['standard', 'react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'prettier'],
+  extends: ['react-app', 'plugin:react/recommended', 'plugin:import/typescript', 'prettier'],
   // to be removed later
   globals: {
     Atomics: 'readonly',
