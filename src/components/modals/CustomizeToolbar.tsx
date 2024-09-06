@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
@@ -20,7 +20,7 @@ import { AlertText, AlertType } from '../../constants'
 import themeColors from '../../selectors/themeColors'
 import { shortcutById } from '../../shortcuts'
 import fastClick from '../../util/fastClick'
-import ShortcutRow from './../ShortcutRow'
+import ShortcutTableOnly from '../ShortcutTableOnly'
 import ShortcutTable from './../ShortcutTable'
 import Toolbar from './../Toolbar'
 import ModalComponent from './ModalComponent'
@@ -109,6 +109,7 @@ const ModalCustomizeToolbar: FC = () => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
+  const shortcuts = useMemo(() => [selectedShortcut], [selectedShortcut])
 
   const id = 'customizeToolbar'
   const modalClasses = modal({ id })
@@ -170,11 +171,7 @@ const ModalCustomizeToolbar: FC = () => {
                 position: 'relative',
               }}
             >
-              <table className='shortcuts'>
-                <tbody>
-                  <ShortcutRow shortcut={selectedShortcut} />
-                </tbody>
-              </table>
+              <ShortcutTableOnly shortcuts={shortcuts} />
             </div>
           </div>
         </CSSTransition>

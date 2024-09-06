@@ -1627,26 +1627,6 @@ code,
   margin: 2px 5px 10px;
 }
 
-.shortcuts {
-  font-size: 14px;
-}
-
-.shortcuts th {
-  padding-right: 1em;
-  text-align: left;
-  font-weight: normal;
-}
-
-.shortcuts td {
-  min-width: 10rem;
-}
-
-/* center gesture diagrams */
-.mobile .shortcuts td {
-  text-align: center;
-  min-width: auto;
-}
-
 .mobile.drag-in-progress * {
   user-select: none;
 }
