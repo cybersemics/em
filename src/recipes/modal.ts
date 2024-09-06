@@ -99,13 +99,6 @@ const modalRecipe = defineSlotRecipe({
         },
       },
     },
-    opaque: {
-      true: {
-        root: {
-          animation: 'fadein 0.4s',
-        },
-      },
-    },
   },
   staticCss: ['*'],
 })

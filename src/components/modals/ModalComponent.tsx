@@ -18,7 +18,6 @@ export type ModalProps = PropsWithChildren<{
   id: ModalType
   onClose?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
-  opaque?: boolean
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
   title?: string
@@ -77,9 +76,9 @@ class ModalComponent extends React.Component<ModalProps> {
   }
 
   render() {
-    const { actions, center, children, hideClose, hideModalActions, id, opaque, style, title, top } = this.props
+    const { actions, center, children, hideClose, hideModalActions, id, style, title, top } = this.props
 
-    const modalClasses = modal({ id, center, opaque })
+    const modalClasses = modal({ id, center })
 
     return (
       <div ref={this.ref} style={{ ...style, ...(top ? { top: 55 } : null) }} className={modalClasses.root}>
