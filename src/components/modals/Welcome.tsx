@@ -73,7 +73,6 @@ const ModalWelcome = () => {
       <ModalComponent
         id='welcome'
         title='Welcome to em'
-        className='popup'
         hideModalActions={false}
         hideClose={true}
         center

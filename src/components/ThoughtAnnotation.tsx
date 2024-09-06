@@ -2,6 +2,7 @@ import classNames from 'classnames'
 import moize from 'moize'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -30,10 +31,15 @@ import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
 
-const urlLinkStyle = {
+const urlLinkStyle = css({
+  height: '1em',
+  display: 'inline-block',
+  overflow: 'hidden',
+  position: 'relative',
+  zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
-}
+})
 
 /** Returns true if a link is to a thought within the user's thoughtspace. */
 const isInternalLink = (url: string) => typeof window === 'undefined' || url.startsWith(window.location.origin)
@@ -50,7 +56,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
-      style={urlLinkStyle}
+      className={urlLinkStyle}
       {...fastClick(e => {
         e.stopPropagation() // prevent Editable onMouseDown
         if (isInternalLink(url)) {
@@ -73,7 +79,7 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' style={urlLinkStyle}>
+  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' className={urlLinkStyle}>
     {' '}
     <EmailIcon />
   </a>

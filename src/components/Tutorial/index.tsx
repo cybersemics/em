@@ -112,7 +112,7 @@ const Tutorial: FC = () => {
     <div className='tutorial'>
       <div className='tutorial-inner'>
         <a
-          className='upper-right tutorial-skip text-small'
+          className={'upper-right tutorial-skip text-small'}
           style={{
             visibility:
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',

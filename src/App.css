@@ -118,10 +118,6 @@ a.button-less-padding {
   background-color: #dcdcdc;
 }
 
-.dark .tutorial-text a.button {
-  color: black;
-}
-
 a.button-variable-width {
   min-width: 0;
 }
@@ -576,14 +572,12 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 
 .dark .root,
-.dark .content,
-.dark .modal {
+.dark .content {
   background-color: black;
   color: #e3e3e3;
 }
 
-.dark .footer a,
-.dark .tutorial-text a {
+.dark .footer a {
   color: #87ceeb;
 }
 
@@ -1002,7 +996,6 @@ h1 .num-contexts {
 }
 
 .text-note,
-.placeholder,
 [placeholder]:empty::before {
   font-style: italic;
   color: rgba(7, 7, 7, 0.5);
@@ -1020,7 +1013,6 @@ h1 .num-contexts {
 }
 
 .dark .text-note,
-.dark .placeholder,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
 }
@@ -1028,12 +1020,10 @@ h1 .num-contexts {
 /* The placeholder color should be inversed when a light background color is applied. */
 /* See: StaticThought */
 .text-note.inverse,
-.placeholder.inverse,
 .thought.inverse [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
 }
 .dark .text-note.inverse,
-.dark .placeholder.inverse,
 .dark .thought.inverse [placeholder]:empty::before {
   color: rgba(7, 7, 7, 0.5);
 }
@@ -1433,24 +1423,6 @@ h1 .num-contexts {
   color: rgba(255, 255, 255, 0.5);
 }
 
-.modal {
-  background-color: white;
-  box-shadow: 2px 5px 5px rgba(0, 0, 0, 0.5);
-  border: solid 1px rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  position: absolute;
-  display: inline-block;
-  line-height: 1.5;
-  width: calc(100% - 100px);
-  z-index: var(--z-index-modal);
-  animation: fademostlyin 0.4s;
-  min-width: 200px;
-}
-
-.modal.opaque {
-  animation: fadein 0.4s;
-}
-
 @keyframes fadein {
   from {
     opacity: 0;
@@ -1469,130 +1441,18 @@ h1 .num-contexts {
   }
 }
 
-.modal p {
-  margin: 0 0 1em 0;
-}
 
-.modal.center {
-  left: 0;
+.status-close-x {
+  font-size: 16px;
+  top: 0;
   right: 0;
-  margin: 0 auto;
-}
-
-.popup {
-  box-shadow: none;
-  border: none;
-  display: block;
-  width: 100%;
-  padding: 8%;
-  box-sizing: border-box;
-}
-
-.popup-close-x {
-  /* extend click area */
-  padding: 10px 20px;
-  margin: -10px -20px;
-  position: fixed;
-  top: calc(9px - 0.2em);
-  right: 11px;
+  padding: 0.4em 0.5em 1em 1em; /* extra tap area */
   color: inherit;
   text-decoration: none;
-}
-
-.dark .modal a.popup-close-x {
-  color: inherit;
-}
-
-.popup .modal-content {
-  max-width: 40em;
-  margin: 0 auto;
-  max-height: none;
-}
-
-.popup .modal-title {
-  font-weight: 700;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-.popup .modal-subtitle {
-  font-family: 'Helvetica Neue';
-  font-size: 1.7em;
-}
-
-.popup .modal-subtitle-compact {
-  margin-bottom: 0.8em;
-}
-
-.popup .modal-text {
-  margin-bottom: 2em;
-}
-
-.popup .modal-actions a.button {
-  text-decoration: none;
-  background-color: black;
-  color: white;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  margin-top: 2px;
-  margin-bottom: 2px;
 }
 
 .popup-section {
   margin-bottom: 50px;
-}
-
-.modal-welcome {
-  height: 100%;
-  font-size: 26px;
-  padding-top: 2em;
-}
-
-.modal-welcome .modal-title {
-  margin-bottom: 0;
-  line-height: 1;
-}
-
-.modal-welcome .modal-text {
-  margin-top: 2em;
-  margin-bottom: 2.5em;
-  font-size: 75%;
-}
-
-.modal-welcome .modal-actions {
-  font-size: 0.75em;
-}
-
-.dark .popup .modal-actions a.button {
-  color: black;
-  background-color: white;
-}
-
-.modal-content .button {
-  cursor: pointer;
-  background: transparent;
-  color: #ccc;
-  display: block;
-  border: 0 none;
-  margin: 10px auto 0;
-}
-.modal-content .button:focus {
-  color: #fff;
-  outline: 0 none;
-  border: 0 none;
-}
-
-.dark .popup .modal-actions a {
-  color: white;
-}
-
-.popup .modal-actions a.button.button-inactive {
-  background-color: #aaa;
-}
-
-/** Use .modal-actions-stack for buttons that switch to vertical layout on small screen sizes. */
-.popup .modal-actions.modal-actions-stack a.button {
-  margin-bottom: 0.5em;
 }
 
 .single-line .thought .editable,
@@ -1628,81 +1488,13 @@ h1 .num-contexts {
   padding-right: 1em;
 }
 
-@media screen and (min-width: 480px) {
-  .popup .modal-actions.modal-actions-stack {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .popup .modal-actions.modal-actions-stack > * {
-    margin-top: 1em;
-  }
-  .popup .modal-actions.modal-actions-stack > :not(:last-child) {
-    margin-right: 1em;
-  }
-}
 
 .popup .logo {
   width: 44px;
   vertical-align: text-bottom;
 }
 
-.modal-title {
-  font-weight: 400;
-}
-
-.modal-actions a {
-  font-weight: normal;
-  margin: 0 5px;
-  text-decoration: underline;
-  white-space: nowrap;
-  line-height: 2;
-}
-
-.dark .modal {
-  background-color: #333;
-  border: solid 1px rgba(255, 255, 255, 0.1);
-}
-
-.dark .popup {
-  background-color: black;
-  border: none;
-}
-
-.dark .modal a {
-  color: lightblue;
-}
-
-.modal-home {
-  margin-left: 20px;
-  margin-top: -5px;
-}
-
 /* higher precendence than ".dark .modal .a" */
-.modal-close {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 12px;
-  vertical-align: middle;
-  text-align: center;
-  padding: 10px;
-}
-
-.popup .modal-close {
-  display: none;
-}
-
-.modal-close span {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-}
-
-.dark a.modal-close span {
-  color: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.3);
-}
 
 .animate {
   transition: all 0.4s ease-out;
@@ -1965,11 +1757,6 @@ code,
   margin-left: 18px;
 }
 
-.search-children a.button {
-  /* TODO: Fix the markup rather than overriding the margin; */
-  margin: 10px 0 15px -25px;
-}
-
 .tutorial {
   padding: 40px 20px 20px;
   background-color: #ddd;
@@ -2006,30 +1793,8 @@ code,
   font-style: italic;
 }
 
-.tutorial .button {
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
 .tutorial-step-bullets {
   margin-bottom: 10px;
-}
-
-.tutorial-step-bullet {
-  color: inherit;
-  text-decoration: none;
-  font-size: 32px;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet {
-  opacity: 0.25;
-  margin-left: 1px;
-  margin-right: 1px;
-  transition: all 400ms ease-in-out;
-}
-
-.tutorial-step-bullets .tutorial-step-bullet.active {
-  opacity: 1;
 }
 
 .tutorial-trace-gesture {
@@ -2265,53 +2030,6 @@ code,
 
 .dark .function > .thought-container > .editable-annotation {
   background-color: #222;
-}
-
-.modal-export-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.modal-btn-export {
-  font-family: Helvetica;
-  text-align: center;
-  cursor: pointer;
-  outline: none;
-  padding: 2px 30px;
-  min-width: 90px;
-  display: inline-block;
-  border-radius: 99px;
-  margin: 0 5px 15px 5px;
-  white-space: nowrap;
-  line-height: 2;
-  text-decoration: none;
-  border: none;
-}
-
-.modal-export-btns-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-btn-cancel {
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background: none;
-}
-
-.modal-export-publish {
-  border-top: solid 1px #ccc;
-  margin-top: 30px;
-  margin-bottom: 20px;
-  padding-top: 40px;
-  text-align: center;
-}
-
-.dark .modal-export-publish {
-  border-top-color: #444;
 }
 
 .cp-clipboard-wrapper {
@@ -2665,17 +2383,6 @@ a.advance-setting-link {
   transform: rotate(45deg);
 }
 /* Custom checkbox style ends */
-
-.modal .modal-wrapper {
-  display: flex;
-  min-height: 100px;
-  flex-direction: column;
-}
-
-.modal .modal-description {
-  font-size: 18px;
-  margin-bottom: 30px;
-}
 
 .gift-code-wrapper {
   display: flex;

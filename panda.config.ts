@@ -1,9 +1,33 @@
 // https://panda-css.com/docs/references/config
-import { defineConfig, defineGlobalStyles } from '@pandacss/dev'
+import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
+import anchorButtonRecipe from './src/recipes/anchorButton'
+import buttonRecipe from './src/recipes/button'
 import iconRecipe from './src/recipes/icon'
+import linkRecipe from './src/recipes/link'
+import modalRecipe from './src/recipes/modal'
+import modalTextRecipe from './src/recipes/modalText'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
+
+const keyframes = defineKeyframes({
+  fademostlyin: {
+    from: {
+      opacity: 0,
+    },
+    to: {
+      opacity: 0.85,
+    },
+  },
+  fadein: {
+    from: {
+      opacity: 0,
+    },
+    to: {
+      opacity: 0.99,
+    },
+  },
+})
 
 const globalCss = defineGlobalStyles({
   /* z-index schedule
@@ -48,7 +72,7 @@ const globalCss = defineGlobalStyles({
     cursor: 'pointer',
     textDecorationLine: 'underline',
     outline: 'none',
-    color: '#1b6f9a',
+    color: { base: '#1b6f9a', _dark: '#87ceeb' },
     fontWeight: 400,
     userSelect: 'none',
   },
@@ -113,6 +137,20 @@ const globalCss = defineGlobalStyles({
     userSelect: 'none',
     cursor: 'auto',
   },
+  // Sets default link color in recipes/modal color
+  '.modal__root': {
+    '& p': { margin: '0 0 1em 0' },
+  },
+  '.modal__actions': {
+    '& a': {
+      fontWeight: 'normal',
+      margin: '0 5px',
+      textDecoration: 'underline',
+      whiteSpace: 'nowrap',
+      lineHeight: 2,
+      color: 'fg',
+    },
+  },
 })
 
 export default defineConfig({
@@ -131,6 +169,7 @@ export default defineConfig({
   // Useful for theme customization
   theme: {
     extend: {
+      keyframes,
       tokens: {
         colors: colorTokens,
         fontSizes: {
@@ -173,6 +212,13 @@ export default defineConfig({
       },
       recipes: {
         icon: iconRecipe,
+        anchorButton: anchorButtonRecipe,
+        button: buttonRecipe,
+        link: linkRecipe,
+      },
+      slotRecipes: {
+        modal: modalRecipe,
+        modalText: modalTextRecipe,
       },
       semanticTokens: {
         colors: {

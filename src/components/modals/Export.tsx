@@ -12,6 +12,7 @@ import React, {
 } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import useOnClickOutside from 'use-onclickoutside'
+import { css } from '../../../styled-system/css'
 import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
@@ -527,10 +528,16 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
   )
 
   return (
-    <ModalComponent id='export' title={isTouch ? 'Share' : 'Export'} className='popup'>
+    <ModalComponent id='export' title={isTouch ? 'Share' : 'Export'}>
       {/* Export message */}
-      <div className='modal-export-wrapper'>
-        <span className='modal-content-to-export'>
+      <div
+        className={css({
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '10px',
+        })}
+      >
+        <span>
           <span>
             {exportWord}{' '}
             {
@@ -591,9 +598,29 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
       </div>
 
       {/* Download button */}
-      <div className='modal-export-btns-wrapper'>
+      <div
+        className={css({
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        })}
+      >
         <button
-          className='modal-btn-export'
+          className={css({
+            fontFamily: 'Helvetica',
+            textAlign: 'center',
+            cursor: 'pointer',
+            outline: 'none',
+            padding: '2px 30px',
+            minWidth: '90px',
+            display: 'inline-block',
+            borderRadius: '99px',
+            margin: '0 5px 15px 5px',
+            whiteSpace: 'nowrap',
+            lineHeight: 2,
+            textDecoration: 'none',
+            border: 'none',
+          })}
           disabled={exportContent === null}
           {...fastClick(onExportClick)}
           style={{ color: colors.bg, backgroundColor: colors.fg }}
@@ -646,7 +673,16 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
       {/* isDocumentEditable() && (
         <>
-          <div className='modal-export-publish'>
+          <div className={css({
+            borderTop: {
+              base:"solid 1px #ccc",
+              _dark:"solid 1px #444"
+            },
+            marginTop: "30px",
+            marginBottom: "20px",
+            paddingTop: "40px",
+            textAlign: "center"
+          })}>
             {publishedCIDs.length > 0 ? (
               <div>
                 Published:{' '}
@@ -681,9 +717,28 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
             )}
           </div>
 
-          <div className='modal-export-btns-wrapper'>
+          <div className={css({
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            })}
+          >
             <button
-              className='modal-btn-export'
+              className={css({
+                fontFamily: 'Helvetica',
+                textAlign: 'center',
+                cursor: 'pointer',
+                outline: 'none',
+                padding: '2px 30px',
+                minWidth: '90px',
+                display: 'inline-block',
+                borderRadius: '99px',
+                margin: '0 5px 15px 5px',
+                whiteSpace: 'nowrap',
+                lineHeight: 2,
+                textDecoration: 'none',
+                border: 'none',
+              })}
               disabled={!exportContent || publishing || publishedCIDs.length > 0}
               {...fastClick(publish))}
               style={{ color: colors.bg, backgroundColor: colors.fg }}
@@ -693,7 +748,12 @@ const ModalExport: FC<{ simplePath: SimplePath }> = ({ simplePath }) => {
 
             {(publishing || publishedCIDs.length > 0) && (
               <button
-                className='modal-btn-cancel'
+                className={css({
+                  cursor: "pointer",
+                  border: "none",
+                  outline: "none",
+                  background: "none"
+                })}
                 {...fastClick(()) => {
                   dispatch([alert(null), closeModal()])
                 })}

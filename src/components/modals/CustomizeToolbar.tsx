@@ -1,10 +1,10 @@
-import classNames from 'classnames'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
+import { anchorButton, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
 import DragToolbarItem from '../../@types/DragToolbarItem'
@@ -110,14 +110,16 @@ const ModalCustomizeToolbar: FC = () => {
   const colors = useSelector(themeColors)
   const shortcutsContainerRef = useRef<HTMLDivElement>(null)
 
+  const id = 'customizeToolbar'
+  const modalClasses = modal({ id })
+
   return (
     <ModalComponent
-      id='customizeToolbar'
+      id={id}
       // omit title since we need to make room for the toolbar
       title=''
-      className='popup'
     >
-      <h1 className='modal-title'>Customize Toolbar</h1>
+      <h1 className={modalClasses.title}>Customize Toolbar</h1>
       <p style={{ marginTop: '-1em', marginBottom: '1em' }}>
         &lt;{' '}
         <a {...fastClick(() => dispatch(showModal({ id: 'settings' })))} className='extend-tap'>
@@ -199,9 +201,8 @@ const ModalCustomizeToolbar: FC = () => {
       <div className='center'>
         <a
           {...fastClick(() => dispatch(closeModal()))}
-          className={classNames({
-            button: true,
-            'action-button': true,
+          className={anchorButton({
+            actionButton: true,
           })}
           style={{
             color: colors.bg,

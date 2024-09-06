@@ -1,5 +1,6 @@
 import { ChangeEventHandler, useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
+import { button } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -137,7 +138,6 @@ const ModalSignup = () => {
     <ModalComponent
       id='signup'
       title={modes.signup.modalTitle}
-      className='popup'
       center
       preventCloseOnEscape={true}
       actions={({ close: closeModal }) => (
@@ -149,7 +149,6 @@ const ModalSignup = () => {
                 <ActionButton
                   key={modes.signup.modalKey}
                   title={modes.signup.modalTitle}
-                  active={true}
                   isDisabled={isSubmitting}
                   isLoading={isSubmitting}
                   {...fastClick(() => submitAction(closeModal))}
@@ -157,7 +156,7 @@ const ModalSignup = () => {
               )}
               <button
                 disabled={isSubmitting}
-                className='button'
+                className={button()}
                 {...fastClick(() => dispatch(showModal({ id: 'auth' })))}
                 style={{ textDecoration: 'underline', marginTop: 15 }}
               >
