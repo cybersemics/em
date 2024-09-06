@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import Modal from '../@types/Modal'
 import { alertActionCreator as alert } from '../actions/alert'
@@ -9,11 +10,25 @@ import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/yjs'
 import scrollTo from '../device/scrollTo'
-import { useFooterUseSelectors } from '../hooks/Footer.useSelectors'
+import getSetting from '../selectors/getSetting'
+import isTutorial from '../selectors/isTutorial'
 import themeColors from '../selectors/themeColors'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
+
+/** Helper hook that allows web and native to share selectors for the footer component. */
+const useFooterUseSelectors = () => {
+  return useSelector(
+    state => ({
+      authenticated: state.authenticated,
+      tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),
+      isTutorialOn: isTutorial(state),
+      fontSize: state.fontSize,
+    }),
+    shallowEqual,
+  )
+}
 
 /** Show the user's connection status. */
 const Status = () => {

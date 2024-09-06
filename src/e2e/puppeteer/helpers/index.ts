@@ -11,6 +11,7 @@ import dragAndDropThought from './dragAndDropThought'
 import getComputedColor from './getComputedColor'
 import getEditable from './getEditable'
 import getEditingText from './getEditingText'
+import getPage from './getPage'
 import getSelection from './getSelection'
 import newThought from './newThought'
 import openModal from './openModal'
@@ -47,6 +48,7 @@ const helpers = {
   getComputedColor,
   getEditable,
   getEditingText,
+  getPage,
   getSelection,
   newThought,
   openModal,
@@ -76,11 +78,13 @@ const index = <T extends any[]>(...setupArgs: T) => {
 
   beforeEach(async () => {
     pageRef.current = await setup(...setupArgs)
-  })
+  }, 60000)
 
   afterEach(async () => {
     if (pageRef.current) {
-      await pageRef.current.browserContext().close()
+      await pageRef.current.close().catch(() => {
+        // Ignore errors when closing the page.
+      })
     }
   })
 

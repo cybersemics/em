@@ -1,5 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import { deleteThoughtAtFirstMatchActionCreator as deleteThought } from '../../test-helpers/deleteThoughtAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'

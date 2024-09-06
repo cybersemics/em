@@ -6,7 +6,6 @@ import { modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import InviteCode from '../../@types/InviteCode'
 import { alertActionCreator as alert } from '../../actions/alert'
-import { baseUrl } from '../../device/router'
 import themeColors from '../../selectors/themeColors'
 import fastClick from '../../util/fastClick'
 import timestamp from '../../util/timestamp'
@@ -15,6 +14,8 @@ import CheckmarkIcon from './../icons/CheckmarkIcon'
 import CopyClipboard from './../icons/CopyClipboard'
 import InvitesIcon from './../icons/InvitesIcon'
 import ModalComponent from './ModalComponent'
+
+const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
 
 /**
  * Get all the invite codes that belongs to the given user.

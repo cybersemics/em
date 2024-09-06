@@ -34,7 +34,7 @@ const middlewareEnhancer = applyMiddleware(
 /**
  * Returns new store for test.
  */
-export const createTestStore = () => {
+export default function createTestStore() {
   // TODO: Type properly
   const store = createStore(
     appReducer,

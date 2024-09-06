@@ -14,7 +14,14 @@ env:
 jobs:
   run:
     name: Puppeteer
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
 
     steps:
       - name: Clone repository
@@ -33,6 +40,9 @@ jobs:
 
       - name: Generate PandaCSS utilities
         run: yarn prepare
+
+      - name: Start SSL proxy
+        run: docker run -d --rm --add-host=host.docker.internal:host-gateway -e "PORT=3000" -p 2552:443 esplo/docker-local-ssl-termination-proxy
 
       - name: Build
         run: yarn build

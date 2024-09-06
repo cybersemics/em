@@ -55,6 +55,7 @@ export const newSubthoughtAliases: Shortcut = {
     'rldldru',
     'rldldlru',
   ],
+  svg: Icon,
   canExecute: () => isDocumentEditable(),
   exec,
 }

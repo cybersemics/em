@@ -1,5 +1,6 @@
 import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
+import { css } from '../../styled-system/css'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragShortcutZone from '../@types/DragShortcutZone'
 import DragToolbarItem from '../@types/DragToolbarItem'
@@ -8,7 +9,6 @@ import Shortcut from '../@types/Shortcut'
 import { dragShortcutActionCreator as dragShortcut } from '../actions/dragShortcut'
 import { isTouch } from '../browser'
 import { noop } from '../constants'
-import themeColors from '../selectors/themeColors'
 import { formatKeyboardShortcut } from '../shortcuts'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
@@ -35,7 +35,6 @@ const ordinal = (n: number) => {
 
 /** Renders all of a shortcut's details as a table row. */
 const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }: ShortcutRowProps) => {
-  const colors = useSelector(themeColors)
   const [{ isDragging }, dragSource] = useDrag({
     type: DragAndDropType.ToolbarButton,
     item: (): DragToolbarItem => {
@@ -64,19 +63,50 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
     shortcut && (
       <tr
         key={shortcut.id}
-        ref={dragSource}
-        onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
-        style={{
-          ...(customize ? { cursor: 'pointer' } : null),
+        className={css({
+          cursor: customize ? 'pointer' : undefined,
           ...(isDragging || selected
             ? {
-                color: colors.highlight,
+                color: 'highlight',
                 WebkitTextStrokeWidth: '0.05em',
               }
-            : undefined),
-        }}
+            : null),
+          WebkitTextStrokeWidth: isDragging || selected ? '0.05em' : undefined,
+          ...(customize
+            ? {
+                '&:active, [data-drop-to-remove-from-toolbar-hovering] &': {
+                  WebkitTextStrokeWidth: '0.05em',
+                },
+              }
+            : null),
+        })}
+        ref={dragSource}
+        onClick={onSelect ? () => onSelect(selected ? null : shortcut) : undefined}
       >
-        <th>
+        <th
+          className={css({
+            // create a container for the selected bar equal to the height of the row
+            position: 'relative',
+          })}
+        >
+          {
+            // selected bar
+            selected && (
+              <div
+                className={css({
+                  width: '0.25em',
+                  // set the height so it is flush with the bottom of the shortcut row description
+                  height: 'calc(100% - 1.375em)',
+                  backgroundColor: 'highlight',
+                  position: 'absolute',
+                  // hanng off the left edge of the shortcut row
+                  left: '-1em',
+                  // set the top so it is flush with the top of the shortcut row label
+                  top: '0.25em',
+                })}
+              />
+            )
+          }
           {customize && indexInToolbar && (
             <span className='dim' title={`This is the ${ordinal(indexInToolbar)} button in the toolbar`}>
               {indexInToolbar}.{' '}

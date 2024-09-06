@@ -1,8 +1,10 @@
+/* eslint-disable import/prefer-default-export */
+
 /** Defines app-wide constants. */
 import ShortcutId from './@types/ShortcutId'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
-import { emojiRegex } from './emojiRegex'
+import emojiRegex from './emojiRegex'
 import { colors } from './selectors/themeColors'
 
 // maximum number of characters of children to allow expansion
@@ -173,6 +175,7 @@ export const TOOLBAR_DEFAULT_SHORTCUTS: ShortcutId[] = [
   'favorite',
   'outdent',
   'indent',
+  'swapParent',
   'pin',
   'pinAll',
   'toggleTableView',
@@ -497,9 +500,6 @@ export const FREE_THOUGHTS_THROTTLE = 1000
 
 /** Controls the delay when enabling distraction free typing. */
 export const THROTTLE_DISTRACTION_FREE_TYPING = 100
-
-/** The animation duration of a node in the LayoutTree component. */
-export const LAYOUT_NODE_ANIMATION_DURATION = 150
 
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80

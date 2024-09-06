@@ -1,5 +1,7 @@
-// action types for the doclog
-// See: doclog
+/**
+ * Action types for the doclog.
+ * See: doclog.
+ */
 enum DocLogAction {
   Delete,
   Update,

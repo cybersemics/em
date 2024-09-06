@@ -1,4 +1,4 @@
-/** Here's documentation for all shortcuts. */
+/* eslint-disable import/prefer-default-export */
 
 export { default as archive, archiveAliases } from './archive'
 export { default as bindContext } from './bindContext'
@@ -64,3 +64,4 @@ export { default as bold } from './bold'
 export { default as italic } from './italic'
 export { default as underline } from './underline'
 export { default as undo } from './undo'
+export { default as swapParent } from './swapParent'

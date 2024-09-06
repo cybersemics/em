@@ -10,6 +10,7 @@ import { isTouch } from '../browser'
 import themeColors from '../selectors/themeColors'
 import fastClick from '../util/fastClick'
 import Favorites from './Favorites'
+import RecentlyDeleted from './RecentlyDeleted'
 import RecentlyEdited from './RecentlyEdited'
 
 // extend SwipeableDrawer with classes prop
@@ -17,16 +18,47 @@ const SwipeableDrawerWithClasses = SwipeableDrawer as unknown as React.Component
   SwipeableDrawerProps & { classes: any; ref: any }
 >
 
+type SidebarSection = 'favorites' | 'recentEdited' | 'deletedEdited'
+
+/** A link to a sidebar section. */
+const SidebarLink = ({
+  active,
+  section,
+  setSection,
+  text,
+}: {
+  active?: boolean
+  section: SidebarSection
+  setSection: (section: SidebarSection) => void
+  text: string
+}) => {
+  const colors = useSelector(themeColors)
+  return (
+    <a
+      {...fastClick(() => setSection(section))}
+      style={{
+        color: active ? colors.fg : colors.gray50,
+        display: 'inline-block',
+        fontSize: '1.2em',
+        fontWeight: 600,
+        margin: '0.5em 1em 0 0',
+        textDecoration: 'none',
+      }}
+    >
+      {text}
+    </a>
+  )
+}
+
 /** The sidebar component. */
 const Sidebar = () => {
   const [isSwiping, setIsSwiping] = useState(false)
   const containerRef = useRef<HTMLInputElement>(null)
   const sidebarMenuRef = useRef<HTMLInputElement>(null)
   const showSidebar = useSelector(state => state.showSidebar)
-  const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
   const dispatch = useDispatch()
-  const [section, setSection] = useState<'favorites' | 'recent'>('favorites')
+  const [section, setSection] = useState<SidebarSection>('favorites')
 
   /** Toggle the sidebar. */
   const toggleSidebar = (value: boolean) => {
@@ -92,6 +124,7 @@ const Sidebar = () => {
       >
         <div
           className='sidebar'
+          data-scroll-at-edge
           style={{
             userSelect: 'none',
             // must be position:relative to ensure drop hovers are positioned correctly when sidebar is scrolled
@@ -107,36 +140,36 @@ const Sidebar = () => {
                 marginLeft: fontSize * 1.3 + 30,
               }}
             >
-              <a
-                {...fastClick(() => setSection('favorites'))}
-                style={{
-                  color: section === 'favorites' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Favorites
-              </a>
-              <a
-                {...fastClick(() => setSection('recent'))}
-                style={{
-                  color: section === 'recent' ? colors.fg : colors.gray50,
-                  display: 'inline-block',
-                  fontSize: '1.2em',
-                  fontWeight: 600,
-                  margin: '0.5em 1em 0 0',
-                  textDecoration: 'none',
-                }}
-              >
-                Recently Edited
-              </a>
+              <SidebarLink
+                active={section === 'favorites'}
+                section='favorites'
+                setSection={setSection}
+                text='Favorites'
+              />
+              <SidebarLink
+                active={section === 'recentEdited'}
+                section='recentEdited'
+                setSection={setSection}
+                text='Recently Edited'
+              />
+              <SidebarLink
+                active={section === 'deletedEdited'}
+                section='deletedEdited'
+                setSection={setSection}
+                text='Recently Deleted'
+              />
             </div>
           </CSSTransition>
 
-          {section === 'favorites' ? <Favorites disableDragAndDrop={isSwiping} /> : <RecentlyEdited />}
+          {section === 'favorites' ? (
+            <Favorites disableDragAndDrop={isSwiping} />
+          ) : section === 'recentEdited' ? (
+            <RecentlyEdited />
+          ) : section === 'deletedEdited' ? (
+            <RecentlyDeleted />
+          ) : (
+            'Not yet implemented'
+          )}
         </div>
       </div>
     </SwipeableDrawerWithClasses>

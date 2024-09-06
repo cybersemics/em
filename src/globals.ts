@@ -1,5 +1,4 @@
 /* eslint-disable prefer-const */
-import ThoughtId from './@types/ThoughtId'
 
 /** THE BAD PLACE where mutable globals are defined. */
 
@@ -22,9 +21,6 @@ let offlineTimer = 0
 
 // Clear error ERROR_TIMEOUT milliseconds after firing. Cancelled if closed manually.
 let errorTimer = 0
-
-// A back channel to add thoughts to the freeThought preserve set. Used to prevent freeThoughts from deallocating the import target during import, and the parent docKey during export.
-let preserveSet = new Set<ThoughtId>()
 
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
 let suppressExpansion = false // eslint-disable-line prefer-const
@@ -53,7 +49,6 @@ const globals = {
   ellipsizeContextThoughts,
   errorTimer,
   offlineTimer,
-  preserveSet,
   longpressing,
   rendered,
   suppressExpansion,

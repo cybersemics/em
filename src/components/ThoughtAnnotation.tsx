@@ -9,7 +9,6 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
-import { isInternalLink } from '../device/router'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
@@ -21,12 +20,13 @@ import equalPath from '../util/equalPath'
 import fastClick from '../util/fastClick'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isEmail from '../util/isEmail'
 import isURL from '../util/isURL'
 import isVisibleContext from '../util/isVisibleContext'
-import { resolveArray } from '../util/memoizeResolvers'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
+import resolveArray from '../util/resolveArray'
 import StaticSuperscript from './StaticSuperscript'
 import EmailIcon from './icons/EmailIcon'
 import UrlIcon from './icons/UrlIcon'
@@ -40,6 +40,9 @@ const urlLinkStyle = css({
   marginLeft: 3,
   textDecoration: 'none',
 })
+
+/** Returns true if a link is to a thought within the user's thoughtspace. */
+const isInternalLink = (url: string) => typeof window === 'undefined' || url.startsWith(window.location.origin)
 
 /** Adds https to the url if it is missing. Ignores urls at localhost. */
 const addMissingProtocol = (url: string) =>
@@ -257,7 +260,10 @@ const ThoughtAnnotation = React.memo(
             // disable intrathought linking until add, edit, delete, and expansion can be implemented
             // 'subthought-highlight': isEditing && focusOffset != null && subthought.contexts.length > (subthought.text === value ? 1 : 0) && subthoughtUnderSelection() && subthought.text === subthoughtUnderSelection().text
           })}
-          style={styleAnnotation}
+          style={{
+            fontFamily: isAttribute(value) ? 'monospace' : undefined,
+            ...styleAnnotation,
+          }}
         >
           <span
             className='editable-annotation-text'

@@ -1,6 +1,7 @@
 import Shortcut from '../@types/Shortcut'
 import { alertActionCreator as alert } from '../actions/alert'
 import { pullActionCreator as pull } from '../actions/pull'
+import SettingsIcon from '../components/icons/SettingsIcon'
 import { AlertType } from '../constants'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
@@ -19,6 +20,8 @@ const copyCursorShortcut: Shortcut = {
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   hideFromHelp: true,
+  // TODO: Create unique icon
+  svg: SettingsIcon,
   canExecute: getState =>
     // do not copy cursor if there is a browser selection
     selection.isCollapsed() && !!getState().cursor && isDocumentEditable(),

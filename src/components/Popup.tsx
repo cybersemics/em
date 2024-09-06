@@ -8,8 +8,8 @@ import useCombinedRefs from '../hooks/useCombinedRefs'
 import useSwipeToDismiss from '../hooks/useSwipeToDismiss'
 import themeColors from '../selectors/themeColors'
 import syncStatusStore from '../stores/syncStatus'
-import fastClick from '../util/fastClick'
 import strip from '../util/strip'
+import CloseButton from './CloseButton'
 
 /** A popup component that can be dismissed. */
 const Popup = React.forwardRef<
@@ -25,6 +25,7 @@ const Popup = React.forwardRef<
 >(({ children, importFileId, onClose, textAlign = 'center' }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
+  const fontSize = useSelector(state => state.fontSize)
   const padding = useSelector(state => state.fontSize / 2 + 2)
   const useSwipeToDismissProps = useSwipeToDismiss({
     // dismiss after animation is complete to avoid touch events going to the Toolbar
@@ -51,6 +52,7 @@ const Popup = React.forwardRef<
       ref={combinedRefs}
       // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
       style={{
+        fontSize,
         position: 'fixed',
         top: 0,
         width: '100%',
@@ -66,7 +68,10 @@ const Popup = React.forwardRef<
       }}
     >
       <div
-        style={{ padding: '0.25em 0.5em', backgroundColor: colors.bgOverlay80 }}
+        style={{
+          padding: '0.25em',
+          backgroundColor: colors.bgOverlay80,
+        }}
         dangerouslySetInnerHTML={
           typeof children === 'string'
             ? {
@@ -88,11 +93,7 @@ const Popup = React.forwardRef<
           cancel
         </a>
       )}
-      {onClose ? (
-        <a className='upper-right status-close-x text-small no-swipe-to-dismiss' {...fastClick(onClose)}>
-          ✕
-        </a>
-      ) : null}
+      {onClose ? <CloseButton onClose={onClose} disableSwipeToDismiss /> : null}
     </div>
   )
 })

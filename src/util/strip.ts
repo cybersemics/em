@@ -1,12 +1,15 @@
 import DOMPurify from 'dompurify'
 import { HimalayaNode, parse } from 'himalaya'
-import { unescape as unescapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import { ALLOWED_ATTR, ALLOWED_FORMATTING_TAGS } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
 
-type StripOptions = { preserveFormatting?: boolean; preventTrim?: boolean; stripAttributes?: boolean }
+type StripOptions = {
+  preserveFormatting?: boolean
+  preventTrim?: boolean
+  stripAttributes?: boolean
+}
 
 const REGEX_NBSP = /&nbsp;/gim
 const REGEX_DECIMAL_SPACE = /&#32;/gim
@@ -26,14 +29,12 @@ const strip = (
     .replace(REGEX_DECIMAL_SPACE, ' ') // Some text editors use decimal code for space character
     .replace(REGEX_EMPTY_FORMATTING_TAGS, '') // Remove empty formatting tags
 
-  const sanitizedHtml = unescapeHtml(
-    DOMPurify.sanitize(replacedHtml, {
-      ALLOWED_TAGS: preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
-      ALLOWED_ATTR,
-    })
-      // DOMPurify replaces spaces with &nbsp;, so we need to replace them after sanitizing rather than in the replacedHtml replacements above
-      .replace(REGEX_NBSP, ' '),
-  )
+  const sanitizedHtml = DOMPurify.sanitize(replacedHtml, {
+    ALLOWED_TAGS: preserveFormatting ? ALLOWED_FORMATTING_TAGS : [],
+    ALLOWED_ATTR,
+  })
+    // DOMPurify replaces spaces with &nbsp;, so we need to replace them after sanitizing rather than in the replacedHtml replacements above
+    .replace(REGEX_NBSP, ' ')
 
   let finalHtml = sanitizedHtml
 

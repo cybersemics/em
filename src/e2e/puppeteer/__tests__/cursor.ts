@@ -1,4 +1,3 @@
-import { LAYOUT_NODE_ANIMATION_DURATION } from '../../../constants'
 import sleep from '../../../util/sleep'
 import helpers from '../helpers'
 
@@ -38,8 +37,6 @@ it('set the cursor on a subthought on load', async () => {
   await waitForEditable('b')
   await clickThought('b')
   await waitForEditable('z')
-  // getting intermittent test failures so try waiting before clicking
-  await sleep(LAYOUT_NODE_ANIMATION_DURATION)
   await clickThought('z')
 
   // wait for browser selection to update
@@ -123,7 +120,6 @@ it('do nothing when clicking on a hidden great uncle', async () => {
   // click c to hide d
   // for some reason we need to sleep before clicking c, otherwise the cursor is moved to d
   await waitForEditable('c')
-  await sleep(LAYOUT_NODE_ANIMATION_DURATION)
   await clickThought('c')
   await clickThought('d')
 

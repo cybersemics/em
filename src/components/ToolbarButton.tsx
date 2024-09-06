@@ -7,7 +7,7 @@ import { isTouch } from '../browser'
 import useDragAndDropToolbarButton from '../hooks/useDragAndDropToolbarButton'
 import useToolbarLongPress from '../hooks/useToolbarLongPress'
 import themeColors from '../selectors/themeColors'
-import { shortcutById } from '../shortcuts'
+import { formatKeyboardShortcut, shortcutById } from '../shortcuts'
 import store from '../stores/app'
 import commandStateStore from '../stores/commandStateStore'
 import fastClick from '../util/fastClick'
@@ -42,13 +42,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
   const colors = useSelector(themeColors)
   const shortcut = shortcutById(shortcutId)
   if (!shortcut) {
-    throw new Error('Missing shortcut: ' + shortcutId)
+    console.error('Missing shortcut: ' + shortcutId)
   }
   const { svg, exec, isActive, canExecute } = shortcut
-
-  if (!svg) {
-    throw new Error('The svg property is required to render a shortcut in the Toolbar. ' + shortcutId)
-  }
 
   // Determine if the button should be shown in an active state. Precedence is as follows:
   // 1. If customize toolbar, use selected state.
@@ -154,7 +150,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       aria-label={shortcut.label}
       ref={node => dragSource(dropTarget(node))}
       key={shortcutId}
-      title={`${shortcut.label}${buttonError ? '\nError: ' + buttonError : ''}`}
+      title={`${shortcut.label}${(shortcut.keyboard ?? shortcut.overlay?.keyboard) ? ` (${formatKeyboardShortcut((shortcut.keyboard ?? shortcut.overlay?.keyboard)!)})` : ''}${buttonError ? '\nError: ' + buttonError : ''}`}
       style={{
         // animate maxWidth to avoid having to know the exact width of the toolbar icon
         // maxWidth just needs to exceed the width

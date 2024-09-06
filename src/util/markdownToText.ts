@@ -1,7 +1,7 @@
 import { Token, Tokens, marked } from 'marked'
 
 /** Converts markdown to text compatible with `importText`. */
-export const markdownToText = (markdown: string): string => {
+export default function markdownToText(markdown: string): string {
   const tokens = marked.lexer(markdown.trim())
 
   // Accumulate the result

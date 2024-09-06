@@ -4,7 +4,7 @@ import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../..
 import { HOME_TOKEN } from '../../constants'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createRtlTestApp'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'

@@ -8,6 +8,7 @@ import { HOME_PATH } from '../constants'
 import attribute from '../selectors/attribute'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
+import isPinned from '../selectors/isPinned'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
@@ -84,7 +85,8 @@ const pinAllShortcut: Shortcut = {
     const state = getState()
     const { cursor } = state
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
-    return !!findDescendant(state, head(path), ['=children', '=pin', 'true'])
+    const childrenAttributeId = findDescendant(state, head(path), '=children')
+    return isPinned(state, childrenAttributeId) ?? false
   },
 }
 

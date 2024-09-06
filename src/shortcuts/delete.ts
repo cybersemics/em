@@ -12,6 +12,7 @@ import getUserSetting from '../selectors/getUserSetting'
 import simplifyPath from '../selectors/simplifyPath'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
+import isDocumentEditable from '../util/isDocumentEditable'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 
@@ -52,9 +53,9 @@ const deleteShortcut: Shortcut = {
   id: 'delete',
   label: 'Delete',
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
-  gesture: 'ldl',
-  keyboard: { key: Key.Backspace, shift: true, meta: true },
-  isActive: getState => !!getState().cursor,
+  gesture: 'ldldl',
+  keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
+  canExecute: getState => isDocumentEditable() && !!getState().cursor,
   exec,
   svg: Icon,
 }

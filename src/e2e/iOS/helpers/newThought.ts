@@ -1,5 +1,5 @@
 import { Browser } from 'webdriverio'
-import { gestures } from '../../../test-helpers/constants'
+import gestures from '../../../test-helpers/gestures'
 import editThought from './editThought'
 import gesture from './gesture'
 import waitForEditable from './waitForEditable'

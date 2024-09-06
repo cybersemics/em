@@ -5,7 +5,6 @@
  * See: https://github.com/americanexpress/jest-image-snapshot
  */
 import { configureToMatchImageSnapshot } from 'jest-image-snapshot'
-import os from 'os'
 import path from 'path'
 
 /** Configures snapshot test settings. */
@@ -36,14 +35,8 @@ function configureSnapshots({
     customSnapshotIdentifier: ({ defaultIdentifier }) => {
       return `${defaultIdentifier.replace(`${fileName}-ts-`, '').toLocaleLowerCase()}`
     },
-    // Set snapshot directory to __image_snapshots__/{platform}/{filename} to avoid conflicts between platforms and group snapshots by test file.
-    customSnapshotsDir: path.join(
-      __dirname,
-      '__tests__',
-      '__image_snapshots__',
-      os.platform() === 'darwin' ? 'macos' : 'ubuntu',
-      fileName,
-    ),
+    // Set snapshot directory to __image_snapshots__/{filename}.
+    customSnapshotsDir: path.join(__dirname, '__tests__', '__image_snapshots__', fileName),
   })
 }
 

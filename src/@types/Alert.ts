@@ -4,7 +4,7 @@ type Alert = {
   alertType?: keyof typeof AlertType
   showCloseLink?: boolean
   value: string | null
-  // used to cancel imports
+  /** Used to cancel imports. */
   importFileId?: string
 }
 

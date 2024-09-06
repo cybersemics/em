@@ -6,7 +6,6 @@ import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
 import { commandPaletteActionCreator as commandPalette } from '../actions/commandPalette'
-import { errorActionCreator as error } from '../actions/error'
 import { isTouch } from '../browser'
 import { GESTURE_CANCEL_ALERT_TEXT } from '../constants'
 import { disableScroll, enableScroll } from '../device/disableScroll'
@@ -22,7 +21,6 @@ import {
 } from '../shortcuts'
 import gestureStore from '../stores/gesture'
 import storageModel from '../stores/storageModel'
-import fastClick from '../util/fastClick'
 import GestureDiagram from './GestureDiagram'
 import Popup from './Popup'
 
@@ -122,9 +120,6 @@ const CommandSearch: FC<{
         }}
         style={{ marginLeft: 0, marginBottom: 0, border: 'none' }}
       />
-      <a className='upper-right status-close-x text-small' {...fastClick(() => dispatch(error({ value: null })))}>
-        ✕
-      </a>
     </div>
   )
 }

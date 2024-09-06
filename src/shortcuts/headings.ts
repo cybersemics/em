@@ -1,5 +1,6 @@
 import Shortcut from '../@types/Shortcut'
 import { headingActionCreator as heading } from '../actions/heading'
+import SettingsIcon from '../components/icons/SettingsIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 export const headingLabels = {
@@ -28,6 +29,8 @@ const headingShortcut = (level: HeadingLevel): Shortcut => ({
       }`
     : 'Sets a heading to normal text.',
   keyboard: { key: level.toString(), meta: true, alt: true },
+  // TODO: Create unique icon
+  svg: SettingsIcon,
   canExecute: getState => !!getState().cursor && isDocumentEditable(),
   exec: dispatch => {
     dispatch(heading({ level }))

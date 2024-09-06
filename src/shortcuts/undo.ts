@@ -2,7 +2,7 @@ import { startCase } from 'lodash'
 import Shortcut from '../@types/Shortcut'
 import { undoActionCreator as undo } from '../actions/undo'
 import UndoIcon from '../components/UndoIcon'
-import { isUndoEnabled } from '../selectors/isUndoEnabled'
+import isUndoEnabled from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
 const undoShortcut: Shortcut = {

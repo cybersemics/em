@@ -6,9 +6,9 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { pullActionCreator as pull } from '../actions/pull'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID } from '../constants'
+import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import db from '../data-providers/yjs/thoughtspace'
-import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getChildren } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../selectors/getThoughtById'
@@ -27,9 +27,6 @@ const flushPullQueueDelay = 100
 
 /** Tracks if any pulls have executed yet. Used to pull favorites only on the first pull. */
 let pulled = false
-
-/** A set of all four root contexts. */
-const rootContextSet = new Set<ThoughtId>([ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, ROOT_PARENT_ID])
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Record<ThoughtId, true> => ({
@@ -90,20 +87,6 @@ const pullFavorites = (): Thunk => async (dispatch, getState) => {
   const lexeme = await db.getLexemeById(hashThought('=favorite'))
   return dispatch(pullAncestors(lexeme?.contexts || [], { force: true, maxDepth: 0 }))
 }
-
-/** An action-creator that pulls the ancestors of one or more thoughts. */
-const pullAncestors =
-  (ids: ThoughtId[], { force, maxDepth }: { force?: boolean; maxDepth?: number } = {}): Thunk =>
-  async (dispatch, getState) => {
-    // pull all ancestors so that breadcrumbs can be displayed
-    while (ids.length > 0) {
-      await dispatch(pull(ids, { force, maxDepth }))
-
-      // enqueue parents
-      const thoughts = childIdsToThoughts(getState(), ids)
-      ids = thoughts.map(thought => thought.parentId).filter(id => !rootContextSet.has(id))
-    }
-  }
 
 /** Middleware that manages the in-memory thought cache (state.thoughts). Marks contexts to be loaded based on cursor and expanded contexts. Queues missing contexts every (debounced) action so that they may be fetched from the data providers and flushes the queue at a throttled interval.
  *

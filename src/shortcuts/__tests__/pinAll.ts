@@ -1,7 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import { createTestStore } from '../../test-helpers/createTestStore'
+import createTestStore from '../../test-helpers/createTestStore'
 import executeShortcut from '../../test-helpers/executeShortcut'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import pinAllShortcut from '../pinAll'
@@ -79,7 +79,7 @@ it('toggle on when =children/=pin is false', () => {
       - g`)
 })
 
-it('remove =children when toggling off from true', () => {
+it('remove =children when toggling off from =pin/true', () => {
   const store = createTestStore()
 
   // import thoughts
@@ -90,6 +90,40 @@ it('remove =children when toggling off from true', () => {
           - =children
             - =pin
               - true
+          - b
+            - c
+            - d
+          - e
+            - f
+            - g
+    `,
+    }),
+    setCursor(['a', 'b']),
+  ])
+
+  executeShortcut(pinAllShortcut, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- __ROOT__
+  - a
+    - b
+      - c
+      - d
+    - e
+      - f
+      - g`)
+})
+
+it('remove =children when toggling off from =pin', () => {
+  const store = createTestStore()
+
+  // import thoughts
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - =children
+            - =pin
           - b
             - c
             - d

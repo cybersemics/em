@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import Path from '../@types/Path'
+import Thought from '../@types/Thought'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -10,27 +11,31 @@ import ContextBreadcrumbs from './ContextBreadcrumbs'
 import Link from './Link'
 import Superscript from './Superscript'
 
-interface ThoughtLinkProps {
-  charLimit?: number
-  hideContext?: boolean
-  staticBreadcrumbs?: boolean
-  path: Path
-  styleLink?: React.CSSProperties
-  thoughtsLimit?: number
-}
-
-/** Link to thought with ContextBreadcrumbs. */
+/** Renders a link to a thought and its ancestors as ContextBreadcrumbs. */
 const ThoughtLink = ({
   charLimit,
+  hideArchive,
   hideContext,
   path,
   styleLink,
   thoughtsLimit,
   staticBreadcrumbs,
-}: ThoughtLinkProps) => {
+}: {
+  charLimit?: number
+  /** Hide just the =archive thought, but show the rest of the path. */
+  hideArchive?: boolean
+  hideContext?: boolean
+  staticBreadcrumbs?: boolean
+  path: Path
+  styleLink?: React.CSSProperties
+  thoughtsLimit?: number
+}) => {
   const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
   const parentPath = useSelector(state => rootedParentOf(state, path), shallowEqual)
-  const value = useSelector(state => getThoughtById(state, head(simplePath)).value)
+  const value = useSelector(state => {
+    const thought = getThoughtById(state, head(simplePath)) as Thought | undefined
+    return thought?.value
+  })
   const colors = useSelector(themeColors)
   const style = useMemo(() => ({ color: colors.fg, ...styleLink }), [colors, styleLink])
 
@@ -38,6 +43,7 @@ const ThoughtLink = ({
     <div>
       {!hideContext && (
         <ContextBreadcrumbs
+          hideArchive={hideArchive}
           path={parentPath}
           staticText={staticBreadcrumbs}
           charLimit={charLimit || 32}

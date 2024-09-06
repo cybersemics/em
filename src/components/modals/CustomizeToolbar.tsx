@@ -3,6 +3,7 @@ import { DropTargetMonitor, useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition } from 'react-transition-group'
+import { css } from '../../../styled-system/css'
 import { anchorButton, modal } from '../../../styled-system/recipes'
 import DragAndDropType from '../../@types/DragAndDropType'
 import DragShortcutZone from '../../@types/DragShortcutZone'
@@ -77,24 +78,23 @@ const DropToRemoveFromToolbar = ({ children }: { children: React.ReactNode }) =>
           showCloseLink: false,
         }),
       )
-    } else if (isHovering) {
-      dispatch([
-        alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
-          alertType: AlertType.ToolbarButtonRemoveHint,
-          showCloseLink: false,
-        }),
-      ])
-    } else {
-      dispatch([
-        alert(AlertText.DragAndDropToolbar, {
-          alertType: AlertType.DragAndDropToolbarHint,
-          showCloseLink: false,
-        }),
-      ])
+    } else if (sourceZone === DragShortcutZone.Toolbar) {
+      if (isHovering) {
+        dispatch([
+          alert(`Drop to remove ${shortcutById(dragShortcut).label} from toolbar`, {
+            alertType: AlertType.ToolbarButtonRemoveHint,
+            showCloseLink: false,
+          }),
+        ])
+      }
     }
   }, [dispatch, dragShortcut, isHovering, sourceZone])
 
-  return <div ref={dropTarget}>{children}</div>
+  return (
+    <div data-drop-to-remove-from-toolbar-hovering={isHovering ? '' : undefined} ref={dropTarget}>
+      {children}
+    </div>
+  )
 }
 
 /** Customize Toolbar modal. */
@@ -127,7 +127,20 @@ const ModalCustomizeToolbar: FC = () => {
         </a>
       </p>
 
-      <div style={{ position: 'sticky', top: 0, marginBottom: '1em' }}>
+      <div
+        className={css({
+          // mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          backgroundColor: selectedShortcut ? 'bg' : undefined,
+          position: 'sticky',
+          top: '0px',
+          marginBottom: '1em',
+          // extend element to mask the selected bar that is rendered outside thn left edge of the ShortcutRow
+          marginLeft: '-modalPadding',
+          paddingLeft: 'modalPadding',
+          // above ShortcutRow, which has position: relative for the selected bar
+          zIndex: 1,
+        })}
+      >
         <Toolbar customize onSelect={toggleSelectedShortcut} selected={selectedShortcut?.id} />
 
         {/* selected toolbar button details */}

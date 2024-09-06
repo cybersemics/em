@@ -18,12 +18,13 @@ export const dragShortcutActionCreator =
   (dispatch, getState) => {
     const state = getState()
     const alertType = state.alert?.alertType
-    // get the screen-relative y coordinate of the toolbar
-    const toolbarTop = (shortcutId && document.querySelector('.toolbar')?.getBoundingClientRect().top) || 0
+    const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
+    const toolbarTop = toolbarRect?.top ?? 0
+    const toolbarHeight = toolbarRect?.height ?? 0
 
     dispatch([
-      // do not show the alert if the toolbar is within 50px of the top of screen, otherwise it blocks the toolbar
-      shortcutId && toolbarTop >= 50
+      // do not show the alert if the alert would cover the sticky toolbar
+      shortcutId && toolbarTop >= toolbarHeight
         ? alert(AlertText.DragAndDropToolbar, {
             alertType: AlertType.DragAndDropToolbarHint,
             showCloseLink: false,
