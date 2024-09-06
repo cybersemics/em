@@ -342,11 +342,6 @@ a.text-link {
 
 /* Thoughts */
 
-[contenteditable] {
-  outline: none;
-  user-select: text;
-}
-
 [contenteditable].active-underline:focus {
   border-bottom: solid 1px;
 }
@@ -575,10 +570,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
 .dark .content {
   background-color: black;
   color: #e3e3e3;
-}
-
-.dark .footer a {
-  color: #87ceeb;
 }
 
 .logo {
@@ -995,17 +986,9 @@ h1 .num-contexts {
   cursor: default;
 }
 
-.text-note,
-[placeholder]:empty::before {
+.text-note {
   font-style: italic;
   color: rgba(7, 7, 7, 0.5);
-}
-
-/* empty class is set dynamically by javascript during editing. */
-/* :empty does not work because thought may contain <br> */
-[placeholder]:empty::before {
-  content: attr(placeholder);
-  cursor: text;
 }
 
 .search:empty::before {
@@ -1370,10 +1353,6 @@ h1 .num-contexts {
   width: 100%;
   /* above ScrollZone */
   z-index: var(--z-index-modal);
-}
-
-.dark .footer a {
-  color: skyblue;
 }
 
 .footer .support-link {

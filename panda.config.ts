@@ -137,6 +137,18 @@ const globalCss = defineGlobalStyles({
     userSelect: 'none',
     cursor: 'auto',
   },
+  '[contenteditable]': {
+    outline: 'none',
+    userSelect: 'text',
+  },
+  /* empty class is set dynamically by javascript during editing. */
+  /* :empty does not work because thought may contain <br> */
+  '[placeholder]:empty::before': {
+    fontStyle: 'italic',
+    color: 'rgba(7, 7, 7, 0.5)',
+    content: 'attr(placeholder)',
+    cursor: 'text',
+  },
   // Sets default link color in recipes/modal color
   '.modal__root': {
     '& p': { margin: '0 0 1em 0' },
