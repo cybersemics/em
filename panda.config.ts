@@ -288,6 +288,13 @@ export default defineConfig({
     light: '[data-color-mode=light] &',
     dark: '[data-color-mode=dark] &',
     test: '[data-env=test] &',
+    chrome: '[data-browser=chrome] &',
+    safari: '[data-browser=safari] &',
+    mobile: '[data-device=mobile] &',
+    desktop: '[data-device=desktop] &',
+    android: '[data-platform=android] &',
+    mac: '[data-platform=mac] &',
+    iphone: '[data-platform=iphone] &',
   },
 
   // The output directory for your css system

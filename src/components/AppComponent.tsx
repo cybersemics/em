@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import SplitPane from 'react-split-pane'
 import Index from '../@types/IndexType'
 import { updateSplitPositionActionCreator as updateSplitPosition } from '../actions/updateSplitPosition'
-import { isAndroid, isSafari, isTouch } from '../browser'
+import { isAndroid, isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
@@ -176,6 +176,12 @@ const AppComponent: FC = () => {
   useLayoutEffect(() => {
     document.body.classList[dark ? 'add' : 'remove']('dark')
     document.body.setAttribute('data-color-mode', dark ? 'dark' : 'light')
+    document.body.setAttribute('data-device', isTouch ? 'mobile' : 'desktop')
+    document.body.setAttribute('data-platform', isAndroid ? 'android' : isMac ? 'mac' : isiPhone ? 'iphone' : 'other')
+    document.body.setAttribute(
+      'data-browser',
+      /Chrome/.test(navigator.userAgent) ? 'chrome' : isSafari() ? 'safari' : 'other',
+    )
     if (testFlags.simulateDrag) {
       document.body.classList.add('debug-simulate-drag')
     }
