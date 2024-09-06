@@ -118,7 +118,7 @@ const Tutorial: FC = () => {
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
           }}
           {...fastClick(() => {
-            if (window.confirm('Do you really want to close?')) {
+            if (window.confirm('Do you really want to close the tutorial?')) {
               dispatch(tutorial({ value: false }))
             }
           })}
