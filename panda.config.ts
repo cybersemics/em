@@ -72,7 +72,7 @@ const globalCss = defineGlobalStyles({
     cursor: 'pointer',
     textDecorationLine: 'underline',
     outline: 'none',
-    color: '#1b6f9a',
+    color: { base: '#1b6f9a', _dark: '#87ceeb' },
     fontWeight: 400,
     userSelect: 'none',
   },
@@ -139,7 +139,6 @@ const globalCss = defineGlobalStyles({
   },
   // Sets default link color in recipes/modal color
   '.modal__root': {
-    '& a': { color: 'lightblue' },
     '& p': { margin: '0 0 1em 0' },
   },
   '.modal__actions': {

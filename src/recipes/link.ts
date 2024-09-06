@@ -6,25 +6,9 @@ const linkRecipe = defineRecipe({
   base: {},
   variants: {
     in: {
-      modal: {
-        color: 'lightblue',
-      },
       breadcrumbs: {
         color: 'inherit',
         textDecoration: 'none',
-      },
-      thoughtAnnotation: {
-        height: '1em',
-        display: 'inline-block',
-        overflow: 'hidden',
-        position: 'relative',
-        zIndex: 'thoughtAnnotationLink',
-      },
-      footer: {
-        color: { _dark: 'skyblue' },
-      },
-      tutorialText: {
-        color: { _dark: '#87ceeb' },
       },
     },
   },

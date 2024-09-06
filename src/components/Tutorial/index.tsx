@@ -1,8 +1,6 @@
 import React, { FC, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { cx } from '../../../styled-system/css'
-import { link } from '../../../styled-system/recipes'
 import GesturePath from '../../@types/GesturePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
@@ -114,7 +112,7 @@ const Tutorial: FC = () => {
     <div className='tutorial'>
       <div className='tutorial-inner'>
         <a
-          className={cx(link({ in: 'tutorialText' }), 'upper-right tutorial-skip text-small')}
+          className={'upper-right tutorial-skip text-small'}
           style={{
             visibility:
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',

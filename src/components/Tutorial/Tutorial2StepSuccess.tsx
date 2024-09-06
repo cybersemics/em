@@ -1,5 +1,4 @@
 import { useDispatch } from 'react-redux'
-import { link } from '../../../styled-system/recipes'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { isTouch } from '../../browser'
 import fastClick from '../../util/fastClick'
@@ -16,10 +15,7 @@ const Tutorial2StepSuccess = () => {
       <p>
         That's right; you're on your own now. But you can always replay this tutorial or explore all of the available{' '}
         {isTouch ? 'gestures' : 'keyboard shortcuts'} by clicking the{' '}
-        <a className={link({ in: 'tutorialText' })} {...fastClick(() => dispatch(showModal({ id: 'help' })))}>
-          Help
-        </a>{' '}
-        link in the footer.
+        <a {...fastClick(() => dispatch(showModal({ id: 'help' })))}>Help</a> link in the footer.
       </p>
       <p>Happy Sensemaking!</p>
     </>
