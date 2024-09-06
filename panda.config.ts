@@ -241,6 +241,12 @@ export default defineConfig({
               _dark: '#333',
             },
           },
+          dim: {
+            value: {
+              base: 'rgba(7, 7, 7, 0.5)',
+              _dark: 'rgba(255, 255, 255, 0.5)',
+            },
+          },
         },
         durations: {
           highlightPulseDuration: {
