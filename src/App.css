@@ -207,10 +207,6 @@ a.text-link {
   padding-top: 0.5em;
 }
 
-.thought-annotation .context-breadcrumbs {
-  margin-right: 2px;
-}
-
 /* required to avoid iPhone converting to emoji
  https://stackoverflow.com/questions/11178433/how-do-i-stop-ios-from-converting-a-small-pointing-right-triangle-character-into
  */
@@ -340,61 +336,6 @@ a.text-link {
   border-bottom: solid 1px;
 }
 
-.thought,
-.thought-annotation {
-  max-width: 100%;
-  /* do not set font-weight or it will override =heading style. */
-  margin-top: 0;
-  display: inline-block;
-  vertical-align: top;
-  white-space: pre-wrap;
-}
-
-/* Need to override max-width for table cols since they are rendered within the calculated width, instead of a whole line.
-This prevents table cols being rendered as multiline content, which causes inaacurate initial render */
-.table-col1 .thought,
-.table-col1 .thought-annotation {
-  max-width: 100%;
-}
-
-.thought-annotation {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-  /* offset parent container (.child) padding-left since position:absolute changes the width calculation; */
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.editable-annotation {
-  display: inline-block;
-  /* Use max width to make sure the .editable-annotation takes up exact same space as parent  */
-  max-width: 100%;
-  padding: 0 0.333em;
-  box-sizing: border-box;
-
-  /*
-    Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-    To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
-   */
-  margin: -0.5px 0 0 calc(1em - 18px);
-}
-
-.thought-annotation a {
-  /* set height of this a tag to 1em to make sure the a tag doesn't affect .thought annotation's line height */
-  height: 1em;
-  display: inline-block;
-  overflow: hidden;
-  position: relative;
-  z-index: var(--z-index-thought-annotation-link);
-}
-
-.editable-annotation-text,
-.thought-annotation .breadcrumbs {
-  visibility: hidden;
-  /* color: tomato; */
-}
-
 .subthought-highlight {
   border-bottom: solid 1px;
 }
@@ -411,91 +352,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
 }
 .child.expanded:not(.leaf) + .child > .thought-container .bullet {
   top: 0.3em;
-}
-
-.child .editable {
-  /* Add some padding-right for increased click area. */
-  /* Add some padding-left otherwise caret is invisible on empty elements. */
-  /* Cannot use padding-top on editable, as clicking it causes the selection to go to the beginning. */
-  /* Cannot use padding-bottom on editable, as clicking it causes the selection to go to the end. */
-  padding: 0 1em 0 0.333em;
-  box-sizing: border-box;
-}
-
-.thought {
-  --min-thought-height: 1.9em;
-}
-
-.child .editable {
-  /* slide editable up so that it overlaps with the previous thought, ensuring there is no dead click zone from clip-path */
-  margin: -0.5px 0 0 calc(1em - 18px);
-}
-
-.child .editable,
-.editable-annotation-text {
-  /* create stacking order to position above thought-annotation so that function background color does not mask thought */
-  position: relative;
-  /* Prevent the selection from being incorrectly set to the beginning of the thought when the top edge is clicked, and the end of the thought when the bottom edge is clicked. Instead, we want the usual behavior of the selection being placed near the click. */
-  clip-path: inset(0.001px 0 0.1em 0);
-  /* Use minimum height to the cover the gap left by clip-path */
-  min-height: var(--min-thought-height);
-}
-
-/** Assign annotation height on single line truncated url */
-.single-line .thought {
-  /**
-    .single-line element has display: inline-block property, it affects the height calculation of the .thought div so we need to set the height manually.
-  */
-  height: var(--min-thought-height);
-}
-
-/* On Safari, the caret is not lined up with the placeholder text on empty thoughts (due to either negative margin or line-height).
-   Add padding-top to shift the caret down.
-   This bumps the placeholder text off, so we need to shift the placeholder text up by the same amount.
-*/
-.safari .child .editable:empty {
-  padding-top: 0.2em;
-  margin-bottom: -0.2em; /* offset padding-top, otherwise next sibling will be bumped down */
-}
-/* shift placeholder up to offset padding-top */
-.safari .child .editable:empty::before {
-  top: -0.2em;
-  position: relative;
-}
-
-/* TODO: Safari only? */
-.mobile .child .editable {
-  margin-top: -2px;
-}
-
-/* Define the correct line-height for multiline thoughts. This is not used by single-line thoughts where line-height is used instead of padding in order to preserve click behavior. See ".thought-container" and ".child .editable" above. Increase specificity to override ".mobiile .child .editable". */
-.multiline.multiline.multiline.multiline {
-  line-height: 1.25;
-  margin-top: -0.12em;
-  padding-bottom: 0.5em;
-  padding-top: 0.33em;
-  /* A small amount of margin-bottom may make multiline thoughts feel less crunched. However, this must be prevented or overridden when the thought has a note, otherwise there will be too much space in between the thought and the note. */
-}
-
-.safari .multiline.multiline.multiline.multiline {
-  padding-top: 0.3em;
-}
-
-/* Hacky, nonlinear multiline padding-top that works across all font sizes on mobile Safari. Otherwise the thought goes out of alignment with the bullet when it becomes multiline. */
-.mobile.safari .multiline.multiline.multiline.multiline {
-  /* 0.2em works at font size 13 */
-  /* 0.24em works at font size 18 */
-  /* works without max at font sizes 18–24 */
-  padding-top: calc(max(0.5em, 7.5px) - 5px);
-}
-
-.child .editable,
-.editable-annotation-text {
-  word-break: break-word; /* breaks urls; backwards-compatible with regular text unlike break-all */
-}
-
-.mobile .child .editable {
-  padding-bottom: 0;
 }
 
 .children-subheading {
@@ -856,21 +712,12 @@ This prevents table cols being rendered as multiline content, which causes inaac
   margin-left: 12px;
 }
 
-.from > :first-child > .thought-container > .thought {
-  font-weight: 400;
-}
-
 .add-new-thought {
   outline: none;
   min-width: 3.75em;
   display: inline-block;
   border-bottom: solid 1px #ccc;
   margin-left: -2px;
-}
-
-.search[contenteditable] {
-  display: block;
-  padding-top: 0;
 }
 
 .center-in-content {
@@ -897,10 +744,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
   color: rgba(7, 7, 7, 0.5);
 }
 
-.search:empty::before {
-  padding-top: 2px;
-}
-
 .dark .text-note,
 .dark [placeholder]:empty::before {
   color: rgba(255, 255, 255, 0.5);
@@ -908,12 +751,10 @@ This prevents table cols being rendered as multiline content, which causes inaac
 
 /* The placeholder color should be inversed when a light background color is applied. */
 /* See: StaticThought */
-.text-note.inverse,
-.thought.inverse [placeholder]:empty::before {
+.text-note.inverse {
   color: rgba(255, 255, 255, 0.5);
 }
-.dark .text-note.inverse,
-.dark .thought.inverse [placeholder]:empty::before {
+.dark .text-note.inverse {
   color: rgba(7, 7, 7, 0.5);
 }
 
@@ -1071,11 +912,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
     margin-right: -0.1em;
   }
 
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -0.1px;
-    margin-left: 0.5em;
-  }
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -1087,12 +923,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
     margin-left: -100px; /* must use margin-left not left so that content wrapping is not affected
   margin-top: 0.501em; /* Match editable padding */
     padding: 1px 0 0.2px 100px;
-  }
-
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -2.1px;
-    margin-left: 0.5em;
   }
 }
 
@@ -1158,11 +988,7 @@ This prevents table cols being rendered as multiline content, which causes inaac
     top: -0.1em;
     margin-right: -0.1em;
   }
-  .android .thought,
-  .android .thought-annotation {
-    margin-top: -0.1px;
-    margin-left: 0.5em;
-  }
+
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -1331,40 +1157,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
 .popup-section {
   margin-bottom: 50px;
 }
-
-.single-line .thought .editable,
-.single-line .thought-annotation .editable-annotation-text {
-  display: inline-block;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 100%;
-  /*
-    vertical-align: top; - This fixes the height difference problem of .thought-annotation and .thought
-    Here is the reference to the reason.
-    https://stackoverflow.com/questions/20310690/overflowhidden-on-inline-block-adds-height-to-parent
-   */
-  vertical-align: top;
-}
-
-.single-line .thought {
-  max-width: calc(100% - 1em);
-}
-
-.single-line .thought-annotation {
-  /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
-  max-width: calc(100% - 2em);
-}
-
-.single-line .thought-annotation .editable-annotation {
-  /* make url icon on the same line when singline is applied */
-  white-space: nowrap;
-}
-
-.multiline.multiline.multiline.multiline.editable-annotation {
-  padding-right: 1em;
-}
-
 
 .popup .logo {
   width: 44px;
@@ -1871,24 +1663,6 @@ code,
   display: flex;
 }
 
-.search-container > .thought {
-  flex: 1;
-  display: flex;
-}
-
-.function > .thought-container > .thought > .editable {
-  font-family: monospace;
-}
-
-.function > .thought-container > .editable-annotation {
-  background-color: #ddd;
-  font-family: monospace;
-}
-
-.dark .function > .thought-container > .editable-annotation {
-  background-color: #222;
-}
-
 .cp-clipboard-wrapper {
   margin-bottom: 15px;
   text-align: center;
@@ -2078,20 +1852,6 @@ code,
 
 .empty-thoughtspace {
   animation: 0.4s ease-out 0s normal forwards fadein;
-}
-
-/* See: https://stackoverflow.com/a/60712537/480608 */
-@keyframes preventAutoscroll {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.preventAutoscroll {
-  animation: 0.01s 1 preventAutoscroll;
 }
 
 @keyframes ripple_loader {

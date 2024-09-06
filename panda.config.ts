@@ -2,11 +2,14 @@
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import buttonRecipe from './src/recipes/button'
+import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalTextRecipe from './src/recipes/modalText'
+import multilineRecipe from './src/recipes/multiline'
+import thoughtRecipe from './src/recipes/thought'
 import convertColorsToPandaCSS from './src/util/convertColorsToPandaCSS'
 
 const { colorTokens, colorSemanticTokens } = convertColorsToPandaCSS()
@@ -26,6 +29,14 @@ const keyframes = defineKeyframes({
     },
     to: {
       opacity: 0.99,
+    },
+  },
+  preventAutoscroll: {
+    '0%': {
+      opacity: 0,
+    },
+    '100%': {
+      opacity: 1,
     },
   },
 })
@@ -193,6 +204,9 @@ export default defineConfig({
             value: '90%',
           },
         },
+        sizes: {
+          minThoughtHeight: { value: '1.9em' },
+        },
         spacing: {
           modalPadding: { value: '8%' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
@@ -229,6 +243,9 @@ export default defineConfig({
         button: buttonRecipe,
         link: linkRecipe,
         extendTap: extendTapRecipe,
+        thought: thoughtRecipe,
+        editable: editableRecipe,
+        multiline: multilineRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,

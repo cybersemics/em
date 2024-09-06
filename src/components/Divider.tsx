@@ -50,10 +50,10 @@ const Divider = ({ path }: { path: Path }) => {
       {...fastClick(setCursorToDivider)}
     >
       <div
+        aria-label={'editable-' + head(path)}
         className={classNames({
           divider: true,
           // requires editable-hash className to be selected by the cursor navigation via editableNode
-          ['editable-' + head(path)]: true,
         })}
       />
     </div>

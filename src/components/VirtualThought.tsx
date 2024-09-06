@@ -131,7 +131,7 @@ const VirtualThought = ({
     // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
     const heightNew = Math.max(
       ref.current.getBoundingClientRect().height,
-      ref.current.querySelector('.thought-annotation')?.getBoundingClientRect().height || 0,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
     )
     const widthNew = ref.current.querySelector('.editable')?.getBoundingClientRect().width
 

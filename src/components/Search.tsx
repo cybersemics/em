@@ -2,6 +2,8 @@ import _ from 'lodash'
 import React, { FC, useRef } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch } from 'react-redux'
+import { css, cx } from '../../styled-system/css'
+import { editable, thought } from '../../styled-system/recipes'
 import { searchActionCreator as search } from '../actions/search'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import store from '../stores/app'
@@ -70,9 +72,21 @@ const Search: FC = () => {
           <span className='bullet-search' role='img' aria-label='Search'>
             <SearchIcon size={16} />
           </span>
-          <div className='thought'>
+          <div className={thought({ flex: true })}>
             <ContentEditable
-              className='editable search'
+              className={cx(
+                editable(),
+                css({
+                  '&[contenteditable]': {
+                    display: 'block',
+                    paddingTop: 0,
+                  },
+                  // 'empty'
+                  '&:empty::before': {
+                    paddingTop: '2px',
+                  },
+                }),
+              )}
               html={state.search ?? ''}
               placeholder='Search'
               innerRef={focusOnRef}
