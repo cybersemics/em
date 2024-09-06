@@ -76,11 +76,13 @@ const DropHoverIfVisible = ({
 const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
   const dropHoverColor = useDropHoverColor(simplePath.length)
   const highlight2 = useSelector(state => themeColors(state)?.highlight2)
+  const animateHover = useSelector(state => {
+    const parent = parentOf(simplePath)
+    const autofocus = calculateAutofocus(state, simplePath)
+    const autofocusParent = calculateAutofocus(state, parent)
+    return autofocus === 'dim' && autofocusParent === 'hide'
+  })
 
-  const parent = parentOf(simplePath)
-  const autofocus = useSelector(calculateAutofocus(simplePath))
-  const autofocusParent = useSelector(calculateAutofocus(parent))
-  const animateHover = autofocus === 'dim' && autofocusParent === 'hide'
   return (
     <span
       className='drop-hover'
