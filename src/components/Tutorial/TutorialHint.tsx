@@ -25,7 +25,13 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
           }),
           css({ fontSize: 'sm' }),
         )}
-        {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
+        {...fastClick(() =>
+          dispatch(
+            setTutorialStep({
+              value: !hint ? tutorialStep + 0.1 : Math.floor(tutorialStep),
+            }),
+          ),
+        )}
       >
         hint
       </a>
