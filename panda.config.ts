@@ -237,6 +237,12 @@ export default defineConfig({
               _test: '0s',
             },
           },
+          hoverPulseDuration: {
+            value: {
+              base: '300ms',
+              _test: '0s',
+            },
+          },
           /** The animation duration for the slower opacity transition and horizontal shift of the LayoutTree as the depth of the cursor changes. */
           layoutSlowShiftDuration: {
             value: {

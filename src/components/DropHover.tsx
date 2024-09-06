@@ -1,20 +1,23 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
+import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
 import useDropHoverColor from '../hooks/useDropHoverColor'
+import calculateAutofocus from '../selectors/calculateAutofocus'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import themeColors from '../selectors/themeColors'
 import { compareReasonable } from '../util/compareThought'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
-const DropHover = ({
+const DropHoverIfVisible = ({
   isHovering,
   prevChildId,
   simplePath,
@@ -23,9 +26,6 @@ const DropHover = ({
   prevChildId?: ThoughtId
   simplePath: SimplePath
 }) => {
-  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
-  const dropHoverColor = useDropHoverColor(simplePath.length)
-
   // true if a thought is being dragged over this drop hover
   const showDropHover = useSelector(state => {
     // Typically we show the drop hover if the thought is being directly hovered over.
@@ -57,6 +57,8 @@ const DropHover = ({
     // TODO: Show the first drop-hover with distance === 2. How to determine?
     // const distance = state.cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, state.cursor.length - depth!)) : 0
 
+    const value = getThoughtById(state, head(simplePath))?.value
+
     return (
       (isThoughtHovering || isSubthoughtsHovering) &&
       draggingThoughtValue &&
@@ -67,22 +69,35 @@ const DropHover = ({
     )
   })
 
+  return showDropHover ? <DropHover simplePath={simplePath} /> : null
+}
+
+/** Renders a drop-hover element unconditionally. */
+const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
+  const dropHoverColor = useDropHoverColor(simplePath.length)
+  const highlight2 = useSelector(state => themeColors(state)?.highlight2)
+  const animateHover = useSelector(state => {
+    const parent = parentOf(simplePath)
+    const autofocus = calculateAutofocus(state, simplePath)
+    const autofocusParent = calculateAutofocus(state, parent)
+    return autofocus === 'dim' && autofocusParent === 'hide'
+  })
+
   return (
-    <>
-      {showDropHover && (
-        <span
-          className='drop-hover'
-          style={{
-            display: 'inline',
-            backgroundColor: dropHoverColor,
-          }}
-        />
-      )}
-    </>
+    <span
+      className='drop-hover'
+      style={{
+        display: 'inline',
+        backgroundColor: animateHover ? highlight2 : dropHoverColor,
+        animation: animateHover
+          ? `pulse-light ${token('durations.hoverPulseDuration')} linear infinite alternate`
+          : undefined,
+      }}
+    />
   )
 }
 
-const DropHoverMemo = React.memo(DropHover)
+const DropHoverMemo = React.memo(DropHoverIfVisible)
 DropHoverMemo.displayName = 'DropHover'
 
 export default DropHoverMemo
