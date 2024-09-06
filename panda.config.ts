@@ -2,6 +2,7 @@
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import buttonRecipe from './src/recipes/button'
+import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
@@ -227,6 +228,7 @@ export default defineConfig({
         anchorButton: anchorButtonRecipe,
         button: buttonRecipe,
         link: linkRecipe,
+        extendTap: extendTapRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
