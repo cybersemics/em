@@ -1,0 +1,64 @@
+import State from '../../@types/State'
+import addMulticursor from '../../actions/addMulticursor'
+import newThought from '../../actions/newThought'
+import removeMulticursor from '../../actions/removeMulticursor'
+import contextToPath from '../../selectors/contextToPath'
+import setCursor from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
+import initialState from '../../util/initialState'
+import reducerFlow from '../../util/reducerFlow'
+
+describe('removeMulticursor', () => {
+  it('removes a multicursor', () => {
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      setCursor(['a']),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
+      (state: State) => removeMulticursor(state, { path: contextToPath(state, ['a'])! }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const b = contextToPath(stateNew, ['b'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(b)]: b,
+    })
+    expect(stateNew.cursorBeforeMulticursor).toEqual(contextToPath(stateNew, ['a'])!)
+  })
+
+  it('does nothing when removing non-existent multicursor', () => {
+    const steps = [
+      newThought('a'),
+      newThought('b'),
+      setCursor(['a']),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
+      (state: State) => removeMulticursor(state, { path: contextToPath(state, ['b'])! }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const a = contextToPath(stateNew, ['a'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(a)]: a,
+    })
+    expect(stateNew.cursorBeforeMulticursor).toEqual(a)
+  })
+
+  it('removes last multicursor', () => {
+    const steps = [
+      newThought('a'),
+      setCursor(['a']),
+      (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
+      (state: State) => removeMulticursor(state, { path: contextToPath(state, ['a'])! }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.multicursors).toEqual({})
+    expect(stateNew.cursorBeforeMulticursor).toEqual(contextToPath(stateNew, ['a'])!)
+  })
+})
