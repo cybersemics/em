@@ -20,6 +20,7 @@ const modalRecipe = defineSlotRecipe({
       position: 'absolute',
       //   display: 'inline-block',
       lineHeight: 1.5,
+      zIndex: 'modal',
       //   width: 'calc(100% - 100px)',
       //   zIndex: 'var(--z-index-modal)',
       // ^above are .modal styles, below are .popup
@@ -31,7 +32,6 @@ const modalRecipe = defineSlotRecipe({
       width: '100%',
       padding: '8%',
       boxSizing: 'border-box',
-      zIndex: 'popup',
       backgroundColor: 'bg',
       transition: 'all 0.4s ease-out',
     },

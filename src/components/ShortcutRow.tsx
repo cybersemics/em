@@ -87,6 +87,9 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
           className={css({
             // create a container for the selected bar equal to the height of the row
             position: 'relative',
+            paddingRight: '1em',
+            textAlign: 'left',
+            fontWeight: 'normal',
           })}
         >
           {
@@ -115,7 +118,8 @@ const ShortcutRow = ({ customize, onSelect, selected, shortcut, indexInToolbar }
           <b>{shortcut.label}</b>
           <p>{description}</p>
         </th>
-        <td>
+        {/* center gesture diagrams on mobile */}
+        <td className={css({ minWidth: { base: '10rem', _mobile: 'auto' }, textAlign: { _mobile: 'center' } })}>
           {isTouch && shortcut.gesture ? (
             // GesturePath[]
             <GestureDiagram path={shortcut.gesture as GesturePath} size={48} arrowSize={12} />

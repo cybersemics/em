@@ -2,6 +2,7 @@
 import { defineConfig, defineGlobalStyles, defineKeyframes } from '@pandacss/dev'
 import anchorButtonRecipe from './src/recipes/anchorButton'
 import buttonRecipe from './src/recipes/button'
+import extendTapRecipe from './src/recipes/extendTap'
 import iconRecipe from './src/recipes/icon'
 import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
@@ -137,6 +138,18 @@ const globalCss = defineGlobalStyles({
     userSelect: 'none',
     cursor: 'auto',
   },
+  '[contenteditable]': {
+    outline: 'none',
+    userSelect: 'text',
+  },
+  /* empty class is set dynamically by javascript during editing. */
+  /* :empty does not work because thought may contain <br> */
+  '[placeholder]:empty::before': {
+    fontStyle: 'italic',
+    color: 'rgba(7, 7, 7, 0.5)',
+    content: 'attr(placeholder)',
+    cursor: 'text',
+  },
   // Sets default link color in recipes/modal color
   '.modal__root': {
     '& p': { margin: '0 0 1em 0' },
@@ -215,6 +228,7 @@ export default defineConfig({
         anchorButton: anchorButtonRecipe,
         button: buttonRecipe,
         link: linkRecipe,
+        extendTap: extendTapRecipe,
       },
       slotRecipes: {
         modal: modalRecipe,
@@ -227,6 +241,12 @@ export default defineConfig({
             value: {
               base: '#ddd',
               _dark: '#333',
+            },
+          },
+          dim: {
+            value: {
+              base: 'rgba(7, 7, 7, 0.5)',
+              _dark: 'rgba(255, 255, 255, 0.5)',
             },
           },
         },
@@ -268,6 +288,13 @@ export default defineConfig({
     light: '[data-color-mode=light] &',
     dark: '[data-color-mode=dark] &',
     test: '[data-env=test] &',
+    chrome: '[data-browser=chrome] &',
+    safari: '[data-browser=safari] &',
+    mobile: '[data-device=mobile] &',
+    desktop: '[data-device=desktop] &',
+    android: '[data-platform=android] &',
+    mac: '[data-platform=mac] &',
+    iphone: '[data-platform=iphone] &',
   },
 
   // The output directory for your css system

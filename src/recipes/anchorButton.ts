@@ -1,4 +1,5 @@
 import { defineRecipe } from '@pandacss/dev'
+import extendTapRecipe from './extendTap'
 
 const anchorButtonRecipe = defineRecipe({
   className: 'anchor-button',
@@ -35,6 +36,10 @@ const anchorButtonRecipe = defineRecipe({
         alignItems: 'center',
         transition: 'all 100ms ease-in-out',
       },
+    },
+    extendTap: {
+      // overrides default button padding
+      true: extendTapRecipe.base!,
     },
     small: {
       true: {

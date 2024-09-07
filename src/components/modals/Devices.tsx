@@ -3,7 +3,6 @@ import { QRCodeSVG } from 'qrcode.react'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import { cx } from '../../../styled-system/css'
 import { anchorButton, modalText } from '../../../styled-system/recipes'
 import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
@@ -544,12 +543,11 @@ const ShareDetail = React.memo(
           {onBack && (
             <a
               {...fastClick(onBack)}
-              className={cx(
-                anchorButton({
-                  actionButton: true,
-                }),
-                'extend-tap',
-              )}
+              className={anchorButton({
+                actionButton: true,
+                // extendTap overrides default button padding
+                extendTap: true,
+              })}
               style={{
                 color: colors.bg,
                 fontSize,
