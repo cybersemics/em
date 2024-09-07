@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React, { FC, ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector, useStore } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import Shortcut from '../@types/Shortcut'
 import ShortcutId from '../@types/ShortcutId'
 import State from '../@types/State'
@@ -598,6 +599,7 @@ const CommandPaletteWithTransition: FC = () => {
             // only show the close link on desktop
             // do not show the close link on touch devices since the CommandPalette is automatically dismissed when the gesture ends.
             {...(!isTouch ? { onClose } : null)}
+            cssRaw={css.raw({ zIndex: 'commandPalette' })}
           >
             <CommandPalette />
           </Popup>
