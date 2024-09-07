@@ -604,55 +604,6 @@ This prevents table cols being rendered as multiline content, which causes inaac
   padding-bottom: calc(max(10px, var(--safe-area-bottom)));
 }
 
-.home .logo-wrapper {
-  display: flex;
-  align-items: center;
-}
-
-.nav .home {
-  position: relative;
-  z-index: var(--z-index-stack);
-}
-
-.nav-top .home {
-  float: left;
-  margin-right: 2px; /* spacing before breadcrumbs */
-}
-
-.nav-bottom .home {
-  position: absolute;
-  left: -2px;
-}
-
-.modal .home {
-  display: inline-block;
-  position: relative;
-  top: 5px;
-  margin-top: -10px;
-}
-
-.thought .home {
-  position: relative;
-  top: -4px;
-  left: -2px;
-}
-
-.breadcrumbs .home {
-  /* override .nav-bottom .home */
-  position: static;
-}
-
-.breadcrumbs .home .logo-wrapper {
-  /* override .home .logo-wrapper */
-  display: inline;
-  position: relative;
-  top: 3px;
-}
-
-.thought-annotation .home {
-  display: none;
-}
-
 .dark .offline {
   color: #666;
 }

@@ -3,6 +3,7 @@ import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { CSSTransition, TransitionGroup } from 'react-transition-group'
+import { css } from '../../styled-system/css'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
@@ -110,6 +111,7 @@ const BreadCrumb = React.memo(
       verticalAlign: 1,
       userSelect: 'none',
     }
+    const superscriptCss = { position: 'relative', left: '-2px', top: '-3px' }
     return !isOverflow ? (
       <span ref={ref} style={{ fontSize: staticText ? '0.8em' : undefined }}>
         {/* possible delimiter symbols: ⇢ */}
@@ -118,13 +120,11 @@ const BreadCrumb = React.memo(
           (staticText ? (
             ellipsize(decodeCharacterEntities(value))
           ) : label === HOME_TOKEN ? (
-            <HomeLink color='gray' size={16} />
+            <HomeLink color='gray' size={16} className={css({ position: 'static' })} />
           ) : (
             <Link className='extend-tap-small' simplePath={simplePath} label={label} />
           ))}
-        {!isDeleting && (
-          <Superscript simplePath={simplePath} css={{ position: 'relative', left: '-2px', top: '-3px' }} />
-        )}
+        {!isDeleting && <Superscript simplePath={simplePath} css={superscriptCss} />}
       </span>
     ) : (
       <span ref={ref}>
@@ -189,6 +189,8 @@ const ContextBreadcrumbs = ({
     return pathFiltered.map((id, i) => pathFiltered.slice(0, i + 1) as Path)
   }, [pathFiltered])
 
+  const homeIconStyle: React.CSSProperties = { position: 'relative', left: -1, top: 2 }
+
   return (
     <div
       aria-label={hidden ? undefined : 'context-breadcrumbs'}
@@ -218,7 +220,7 @@ const ContextBreadcrumbs = ({
       - The "c/d" context will render "d" as a thought and "c" as the breadcrumbs.
     */
         !homeContext ? (
-          <HomeLink color='gray' size={16} style={{ position: 'relative', left: -1, top: 2 }} />
+          <HomeLink className={css({ position: 'static' })} color='gray' size={16} iconStyle={homeIconStyle} />
         ) : null
       ) : (
         <TransitionGroup childFactory={factoryManager}>
