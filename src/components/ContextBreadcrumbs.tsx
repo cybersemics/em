@@ -122,7 +122,9 @@ const BreadCrumb = React.memo(
           ) : (
             <Link className='extend-tap-small' simplePath={simplePath} label={label} />
           ))}
-        {!isDeleting && <Superscript simplePath={simplePath} />}
+        {!isDeleting && (
+          <Superscript simplePath={simplePath} css={{ position: 'relative', left: '-2px', top: '-3px' }} />
+        )}
       </span>
     ) : (
       <span ref={ref}>
