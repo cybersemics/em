@@ -31,7 +31,8 @@ const Tutorial2StepContextViewOpen = ({
   })
   const contextViewClosed = useSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
-    return !contextViews[
+
+    return contextViews[
       contextToThoughtId(state, [
         (cursorThoughts &&
         cursorThoughts[0].value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase()
