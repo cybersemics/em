@@ -24,7 +24,10 @@ const modalRecipe = defineSlotRecipe({
       //   width: 'calc(100% - 100px)',
       //   zIndex: 'var(--z-index-modal)',
       // ^above are .modal styles, below are .popup
-      animation: 'fademostlyin 0.4s',
+      animation: {
+        base: 'fademostlyin 0.4s',
+        _test: 'none',
+      },
       minWidth: '200px',
       boxShadow: 'none',
       border: 'none',
@@ -33,7 +36,10 @@ const modalRecipe = defineSlotRecipe({
       padding: '8%',
       boxSizing: 'border-box',
       backgroundColor: 'bg',
-      transition: 'all 0.4s ease-out',
+      transition: {
+        base: 'all 0.4s ease-out',
+        _test: 'none',
+      },
     },
     title: {
       //   fontWeight: 400, from
