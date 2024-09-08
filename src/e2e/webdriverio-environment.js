@@ -36,7 +36,7 @@ class WebdriverIOEnvironment extends JsDomEnvironment {
     console.info(chalk.yellow('Setup Test Environment for webdriverio.'))
     await super.setup()
 
-    // port must match npm run servebuild
+    // port must match yarn servebuild
     if (await portUsed.check(3000, 'localhost')) {
       console.info(chalk.yellow('Using the currently running app on http://localhost:3000'))
     } else {
