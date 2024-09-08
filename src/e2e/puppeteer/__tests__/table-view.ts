@@ -3,7 +3,6 @@ import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import helpers from '../helpers'
 
-// configure toMatchImageSnapshot to write the snapshots to __image_snapshots__/{platform}/{filename}
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })

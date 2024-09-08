@@ -1,5 +1,5 @@
 /* Visual regression tests
- * Snapshot Directory: ./__image_snapshots__/{platform}/{filename}
+ * Snapshot Directory: ./__image_snapshots__/{filename}
  * Run `jest -u` to update failed snapshots.
  * Press i in jest watch to update failing snapshots interactively.
  * See: https://github.com/americanexpress/jest-image-snapshot
@@ -11,11 +11,11 @@ import path from 'path'
 function configureSnapshots({
   fileName,
 }: {
-  /** The file name of the test file. This is used to group snapshots into an identically-named subdirectory under the platform directory. */
+  /** The file name of the test file (excluding extension). This is used to group snapshots into an identically-named subdirectory. */
   fileName: string
 }) {
   return configureToMatchImageSnapshot({
-    /** Apply a Gaussian Blur on compared images (radius in pixels). Used to normalize small rendering differences between platforms. */
+    /** Apply a Gaussian Blur on compared images (radius in pixels). */
     // blur of 1.25 and threshold of 0.2 has false negatives
     // blur of 2 and threshold of 0.1 has false negatives
     // blur of 2.5 and threshold of 0.1 has false negatives
