@@ -17,7 +17,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleColorPickerActionCreator as toggleColorPicker } from '../actions/toggleColorPicker'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
-import { isIOS, isSafari, isTouch } from '../browser'
+import { isIOS, isMac, isSafari, isTouch } from '../browser'
 import {
   EDIT_THROTTLE,
   EM_TOKEN,
@@ -37,6 +37,7 @@ import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursorSelector from '../selectors/hasMulticursor'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { shortcutEmitter } from '../shortcuts'
 import store from '../stores/app'
@@ -56,8 +57,14 @@ import * as positionFixed from './Editable/positionFixed'
 import useEditMode from './Editable/useEditMode'
 import useOnPaste from './Editable/useOnPaste'
 
-/** Stops propagation of an event. */
-const stopPropagation = (e: React.MouseEvent) => e.stopPropagation()
+/** Stops propagation of an event, if CMD/CTRL is not pressed. */
+const stopPropagation = (e: React.MouseEvent) => {
+  const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+
+  if (!isMultiselectClick) {
+    e.stopPropagation()
+  }
+}
 
 interface EditableProps {
   editableRef?: React.RefObject<HTMLInputElement>
@@ -119,6 +126,7 @@ const Editable = ({
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const fontSize = useSelector(state => state.fontSize)
   const isCursorCleared = useSelector(state => !!isEditing && state.cursorCleared)
+  const hasMulticursor = useSelector(hasMulticursorSelector)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
   const nullRef = useRef<HTMLInputElement>(null)
@@ -293,6 +301,13 @@ const Editable = ({
       shortcutEmitter.off('shortcut', flush)
     }
   }, [])
+
+  useEffect(() => {
+    // if there is a multicursor, blur the contentRef
+    if (hasMulticursor && contentRef.current && contentRef.current === document.activeElement) {
+      contentRef.current.blur()
+    }
+  }, [hasMulticursor])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
@@ -498,6 +513,13 @@ const Editable = ({
   /** Sets the cursor on the thought on mousedown or tap. Handles hidden elements, drags, and editing mode. */
   const onTap = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // If CMD/CTRL is pressed, don't focus the editable.
+      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
+      if (isMultiselectClick) {
+        e.preventDefault()
+        return
+      }
+
       // stop propagation to prevent clickOnEmptySpace onClick handler in Content component
       if (e.nativeEvent instanceof MouseEvent) {
         e.stopPropagation()
@@ -525,7 +547,7 @@ const Editable = ({
       if (
         disabled ||
         // dragInProgress: not sure if this can happen, but I observed some glitchy behavior with the cursor moving when a drag and drop is completed so check dragInProgress to be safe
-        (!globals.touching && !state.dragInProgress && (!editingOrOnCursor || !isVisible))
+        (!globals.touching && !state.dragInProgress && !state.dragHold && (!editingOrOnCursor || !isVisible))
       ) {
         // do not set cursor on hidden thought
         e.preventDefault()

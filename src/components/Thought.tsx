@@ -10,7 +10,8 @@ import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { expandContextThoughtActionCreator as expandContextThought } from '../actions/expandContextThought'
-import { isTouch } from '../browser'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isMac, isTouch } from '../browser'
 import { AlertType, MAX_DISTANCE_FROM_CURSOR, REGEX_TAGS } from '../constants'
 import testFlags from '../e2e/testFlags'
 import globals from '../globals'
@@ -28,6 +29,7 @@ import { getAllChildrenAsThoughts, getChildrenRanked, hasChildren } from '../sel
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import themeColors from '../selectors/themeColors'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -208,6 +210,7 @@ const ThoughtContainer = ({
     isDragging,
     simplePath,
     sourceZone: DragThoughtZone.Thoughts,
+    toggleMulticursorOnLongPress: true,
   })
 
   const homeContext = useSelector(state => {
@@ -350,11 +353,25 @@ const ThoughtContainer = ({
   const showContextBreadcrumbs =
     showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
+  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
+
+  /** Handles multicursor activation. */
+  const handleMultiselect = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isTouch && (isMac ? (e as React.MouseEvent).metaKey : (e as React.MouseEvent).ctrlKey)) {
+        e.preventDefault()
+        dispatch(toggleMulticursor({ path }))
+      }
+    },
+    [dispatch, path],
+  )
+
   return (
     <div
       {...dragHoldResult.props}
       ref={node => dragSource(dropTarget(node))}
       aria-label='child'
+      onClick={isTouch ? undefined : handleMultiselect}
       style={{
         // so that .thought can be sized at 100% and .thought .bullet-cursor-overlay bullet can be positioned correctly.
         position: 'relative',
@@ -422,6 +439,7 @@ const ThoughtContainer = ({
           <Bullet
             isContextPending={isContextPending}
             isDragging={isDragging}
+            isMulticursor={isMulticursor}
             isEditing={isEditing}
             leaf={leaf}
             path={path}

@@ -69,6 +69,9 @@ const setCursor = (
   const thoughtsResolved = path && contextChain.length > 0 ? chain(state, contextChain, simplePath!) : path
   const thought = thoughtsResolved && getThoughtById(state, head(thoughtsResolved))
 
+  // TODO: Implement multicursor transition
+  const isMulticursorTransaction = false
+
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews
   // shallow copy
@@ -147,6 +150,12 @@ const setCursor = (
     expanded,
     noteFocus,
     cursorInitialized: true,
+    ...(!isMulticursorTransaction
+      ? {
+          multicursors: {},
+          cursorBeforeMulticursor: null,
+        }
+      : null),
     ...(!thoughtsResolved ? { showColorPicker: false } : null),
   }
 

@@ -1,7 +1,9 @@
 import IconType from '../@types/Icon'
 import Shortcut from '../@types/Shortcut'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import * as selection from '../device/selection'
+import hasMulticursor from '../selectors/hasMulticursor'
 // import directly since util/index is not loaded yet when shortcut is initialized
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
@@ -30,7 +32,16 @@ const cursorBackShortcut: Shortcut = {
   svg: Icon,
   keyboard: 'Escape',
   exec: throttleByAnimationFrame((dispatch, getState) => {
-    const { cursor, search } = getState()
+    const state = getState()
+
+    // if there is a multicursor, clear it instead
+    if (hasMulticursor(state)) {
+      dispatch(clearMulticursors())
+      return
+    }
+
+    const { cursor, search } = state
+
     if (cursor || search != null) {
       dispatch(cursorBack())
 

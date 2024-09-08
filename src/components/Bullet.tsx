@@ -27,6 +27,7 @@ interface BulletProps {
   // See: ThoughtProps['isContextPending']
   isContextPending?: boolean
   isDragging?: boolean
+  isMulticursor?: boolean
   isEditing?: boolean
   leaf?: boolean
   publish?: boolean
@@ -388,6 +389,7 @@ const BulletCursorOverlay = ({
 const Bullet = ({
   isContextPending,
   isDragging,
+  isMulticursor,
   isEditing,
   leaf,
   path,
@@ -411,7 +413,7 @@ const Bullet = ({
   )
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
-    return isHolding || isDragging
+    return isHolding || isDragging || isMulticursor
   })
 
   /** Returns true if the thought is pending. */

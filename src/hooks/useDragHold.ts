@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
 import useLongPress from './useLongPress'
 
@@ -13,9 +14,11 @@ const useDragHold = ({
   disabled,
   simplePath,
   sourceZone,
+  toggleMulticursorOnLongPress,
 }: {
   isDragging: boolean
   disabled?: boolean
+  toggleMulticursorOnLongPress?: boolean
   simplePath: SimplePath
   sourceZone: DragThoughtZone
 }) => {
@@ -23,11 +26,14 @@ const useDragHold = ({
   // See: https://stackoverflow.com/questions/923782/disable-the-text-highlighting-magnifier-on-touch-hold-on-mobile-safari-webkit
   const [isPressed, setIsPressed] = useState(false)
   const dispatch = useDispatch()
+  // keep track of whether the drag moved; use true by default to prevent false positive onLongPressEnd calls
+  const didMove = useRef(true)
 
   /** Highlight bullet and show alert on long press on Thought. */
   const onLongPressStart = useCallback(
     () => {
       if (disabled) return
+      didMove.current = false
       setIsPressed(true)
       dispatch(dragHold({ value: true, simplePath, sourceZone }))
     },
@@ -39,12 +45,19 @@ const useDragHold = ({
   const onLongPressEnd = useCallback(
     () => {
       if (disabled) return
+
       setIsPressed(false)
       dispatch((dispatch, getState) => {
         if (getState().dragHold) {
           dispatch([dragHold({ value: false }), alert(null)])
         }
       })
+
+      // the user did not move the thought, toggle the multicursor
+      if (!didMove.current && toggleMulticursorOnLongPress) {
+        didMove.current = true
+        dispatch(toggleMulticursor({ path: simplePath }))
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -55,6 +68,11 @@ const useDragHold = ({
   // or if no longer dragging and dragHold never got cleared.
   //
   useEffect(() => {
+    // track that the drag actually moved
+    if (isDragging) {
+      didMove.current = true
+    }
+
     dispatch((dispatch, getState) => {
       if (isDragging || getState().dragHold) {
         setIsPressed(false)
