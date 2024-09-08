@@ -212,6 +212,8 @@ describe('drag', () => {
             - e
       `)
 
+    await simulateDragAndDrop({ drop: true })
+
     await clickThought('x')
     await dragAndDropThought('x', 'd', { position: 'before' })
 >>>>>>> 266ea60e3b (fix drop-hover of table column one thoughts)

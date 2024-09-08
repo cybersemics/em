@@ -39,7 +39,6 @@ const Subthought = ({
   simplePath,
   style,
   zoomCursor,
-  isTableCol1,
 }: {
   autofocus: Autofocus
   debugIndex?: number
@@ -56,7 +55,6 @@ const Subthought = ({
   simplePath: SimplePath
   style?: React.CSSProperties
   zoomCursor?: boolean
-  isTableCol1?: boolean
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
@@ -157,7 +155,6 @@ const Subthought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={styleSelf}
-          isTableCol1={isTableCol1}
         />
       </div>
 

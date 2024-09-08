@@ -715,10 +715,9 @@ const LayoutTree = () => {
                   showContexts={showContexts}
                   simplePath={simplePath}
                   singleLineHeight={singleLineHeightWithCliff}
-                  isTableCol1={isTableCol1}
                   // Add a bit of space after a cliff to give nested lists some breathing room.
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
-                  style={cliff < 0 ? cliffPaddingStyle : undefined}
+                  style={cliff < 0 || isTableCol1 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
                   prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
                   isLastVisible={isLastVisible}
