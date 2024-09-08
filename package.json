@@ -48,7 +48,7 @@
     "test:ios": "jest ./src/e2e/iOS --verbose",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
-    "websocket-server": "cd server && npm run build && npm start"
+    "websocket-server": "cd server && yarn build && yarn start"
   },
   "lockfile-lint": {
     "allowed-schemes": [
