@@ -769,25 +769,6 @@ a.text-link {
   user-select: none;
 }
 
-/* Style bullet glyph with CSS to allow .graypulse animation to override it. */
-.bullet .glyph {
-  fill: rgba(39, 39, 39, 1);
-}
-.dark .bullet .glyph {
-  fill: rgba(217, 217, 217, 1);
-}
-
-.child > .thought-container > .bullet .glyph {
-  position: relative;
-  /*margin-right: 10px;    this causes the li to break at the beginning with longer text */
-}
-
-.child > .thought-container > .bullet .glyph .glyph-fg {
-  transition:
-    transform 0.1s ease-out,
-    fill-opacity 0.5s ease-out;
-}
-
 .search-container > .bullet-search {
   position: absolute;
   margin-top: -2px;
@@ -796,37 +777,6 @@ a.text-link {
 
 .mobile .child > .thought-container > .bullet.show-contexts {
   margin-right: -1.5px;
-}
-
-.mobile .child > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 80%;
-  left: -0.08em;
-  top: 0.05em;
-}
-
-.child.expanded:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.editing:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle,
-.child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph .glyph-fg.triangle {
-  transform: rotate(90deg) translateX(10px);
-}
-
-.mobile .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg,
-.mobile .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph .glyph-fg {
-  left: -0.02em;
-}
-
-.child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  font-size: 90%;
-  top: -0.05em;
-}
-
-.mobile .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-  top: 0;
-  left: -0.3em;
-  margin-right: calc(-0.48em - 5px); /* offset from .child > .thought-container > .bullet .glyph margin-right */
 }
 
 .archive-check {
@@ -855,63 +805,6 @@ a.text-link {
     margin-left: -3px;
   }
 
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.9;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    left: 3px;
-    font-size: 16px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 160%;
-    left: 1px;
-    top: -8.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 2px;
-    font-size: 20px;
-    top: -2.5px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet .glyph {
-    left: 2px;
-    top: -1.6px;
-    font-size: 19px;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
-  }
-
   .android .children-subheading {
     position: relative;
     margin-top: -8px;
@@ -934,59 +827,12 @@ a.text-link {
     margin-left: -3px;
   }
 
-  .android .child > .thought-container > .bullet .glyph {
-    position: relative;
-    margin-left: -16.8px;
-    opacity: 0.8;
-    transition: opacity 0.75s ease-in-out;
-    margin-right: -5px; /* increase click area */
-    left: 4px;
-    font-size: 28px;
-  }
-
-  /* Contexted Styles */
-  .android .child > .thought-container > .bullet.show-contexts .glyph {
-    font-size: 149%;
-    left: 2px;
-    top: -5.1px;
-  }
-
-  .android .child.leaf > .thought-container > .bullet.show-contexts .glyph {
-    position: relative;
-    font-size: 171%;
-    left: 2px;
-    top: -7.1px;
-    margin-right: -5px;
-    padding-right: 10px;
-  }
-
-  .android .child.expanded:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.editing:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-parent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph,
-  .android .child.cursor-grandparent:not(.leaf) > .thought-container > .bullet.show-contexts .glyph {
-    left: 3px;
-    top: -5.1px;
-  }
-
   .android
     .child.show-contexts:first-of-type
     > .thought-container
     > .thought
     .bullet-cursor-overlay.bullet-cursor-overlay-highlighted {
     margin-top: calc(0.18em - 4px); /* */
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    content: '+';
-    left: -0.15em;
-    top: -0.05em;
-    margin-right: -0.3em;
-  }
-
-  .android .children-new .child > .thought-container > .bullet .glyph {
-    left: 0.05em;
-    top: -0.1em;
-    margin-right: -0.1em;
   }
 
   .android .children-subheading {
@@ -1032,21 +878,6 @@ a.text-link {
   top: -0.15em;
 }
 */
-
-/* overlay bullet for cursor */
-
-.children-new .child > .thought-container > .bullet .glyph {
-  content: '+';
-  left: -0.15em;
-  top: -0.05em;
-  margin-right: -0.3em;
-}
-
-.mobile .children-new .child > .thought-container > .bullet .glyph {
-  left: 0.05em;
-  top: -0.1em;
-  margin-right: -0.1em;
-}
 
 /* autofocus */
 
