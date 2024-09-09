@@ -4,7 +4,9 @@ import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutoria
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_START,
@@ -31,7 +33,6 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
     const tutorialChoice = useSelector(state => +(getSetting(state, 'Tutorial Choice') || 0))
     const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : null))
     const expanded = useSelector(state => state.expanded)
-
     useSelector(state => state.thoughts.thoughtIndex)
 
     return [
@@ -41,6 +42,10 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
       TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
       TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
       TUTORIAL2_STEP_SUCCESS,
+      TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
+      TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
+      TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
+      TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
     ].includes(tutorialStep) ||
       (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
       ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||
@@ -54,16 +59,11 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
       <TutorialNavigationButton
         clickHandler={() => dispatch(tutorialNext({}))}
         value={tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS ? 'Finish' : 'Next'}
-        ref={ref}
       />
     ) : (
-      <span className='tutorial-next-wait text-small' ref={ref}>
-        Complete the instructions to continue
-      </span>
+      <span className='tutorial-next-wait text-small'>Complete the instructions to continue</span>
     )
   },
 )
-
-TutorialNavigationNext.displayName = 'TutorialNavigationNext'
 
 export default TutorialNavigationNext

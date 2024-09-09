@@ -156,7 +156,8 @@ const setCursor = (
 /** Action-creator for setCursor. */
 export const setCursorActionCreator =
   (payload: Parameters<typeof setCursor>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
     dispatch({ type: 'setCursor', ...payload })
+  }
 
 export default _.curryRight(setCursor)

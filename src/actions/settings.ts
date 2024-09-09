@@ -7,6 +7,8 @@ import toggleAttribute from './toggleAttribute'
 
 /** Sets a setting thought. */
 const settings = (state: State, { key, value }: { key: string; value: string }) => {
+  // value = value == '15' || value == '15.1' ? '16' : value
+
   const emContext = ['Settings', key, value]
   const exists = !!findDescendant(state, EM_TOKEN, emContext)
   return exists ? state : toggleAttribute(state, { path: [EM_TOKEN], values: emContext })
