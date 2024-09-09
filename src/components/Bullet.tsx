@@ -94,7 +94,7 @@ const glyph = cva({
         },
       },
     },
-    isCursor: { true: {} },
+    isBulletExpanded: { true: {} },
     // childrenNew currently unused as NewThought is not importing Bullet
     childrenNew: {
       true: {
@@ -162,7 +162,7 @@ const glyph = cva({
     },
     {
       leaf: false,
-      isCursor: true,
+      isBulletExpanded: true,
       css: {
         '@media (max-width: 500px)': {
           _android: {
@@ -179,7 +179,7 @@ const glyph = cva({
     {
       leaf: false,
       showContexts: true,
-      isCursor: true,
+      isBulletExpanded: true,
       css: {
         '@media (max-width: 500px)': {
           _android: {
@@ -232,13 +232,13 @@ const glyphFg = cva({
       true: {},
     },
     showContexts: { true: {} },
-    isCursor: { true: {} },
+    isBulletExpanded: { true: {} },
   },
   compoundVariants: [
     {
       leaf: false,
       triangle: true,
-      isCursor: true,
+      isBulletExpanded: true,
       css: {
         transform: 'rotate(90deg) translateX(10px)',
       },
@@ -246,7 +246,7 @@ const glyphFg = cva({
     {
       leaf: false,
       showContexts: true,
-      isCursor: true,
+      isBulletExpanded: true,
       css: {
         _mobile: {
           left: '-0.02em',
@@ -266,14 +266,14 @@ const BulletLeaf = ({
   missing,
   pending,
   showContexts,
-  isCursor,
+  isBulletExpanded,
 }: {
   fill?: string
   isHighlighted?: boolean
   missing?: boolean
   pending?: boolean
   showContexts?: boolean
-  isCursor?: boolean
+  isBulletExpanded?: boolean
 } = {}) => {
   const colors = useSelector(themeColors)
   const radius = isIOSSafari ? 105 : 92
@@ -285,7 +285,7 @@ const BulletLeaf = ({
         graypulse: pending,
         showContexts,
         leaf: true,
-        isCursor,
+        isBulletExpanded,
       })}
       data-bullet='leaf'
       ry={radius}
@@ -310,7 +310,7 @@ const BulletParent = ({
   childrenMissing,
   pending,
   showContexts,
-  isCursor,
+  isBulletExpanded,
 }: {
   currentScale?: number
   fill?: string
@@ -318,7 +318,7 @@ const BulletParent = ({
   childrenMissing?: boolean
   pending?: boolean
   showContexts?: boolean
-  isCursor?: boolean
+  isBulletExpanded?: boolean
 } = {}) => {
   const colors = useSelector(themeColors)
   const path = isIOSSafari
@@ -340,7 +340,7 @@ const BulletParent = ({
         triangle: true,
         gray: childrenMissing,
         graypulse: pending,
-        isCursor,
+        isBulletExpanded,
         showContexts,
         leaf: false,
       })}
@@ -448,7 +448,7 @@ const Bullet = ({
   })
 
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-  const isCursor = isCursorParent || isCursorGrandparent || isEditing || isExpanded
+  const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
 
   // offset margin with padding by equal amounts proportional to the font size to extend the click area
   const extendClickWidth = fontSize * 1.2
@@ -523,7 +523,7 @@ const Bullet = ({
       onClick={clickHandler}
     >
       <svg
-        className={glyph({ isCursor, showContexts, leaf })}
+        className={glyph({ isBulletExpanded, showContexts, leaf })}
         viewBox='0 0 600 600'
         style={{
           // Safari has a known issue with subpixel calculations, especially during animations and with SVGs.
@@ -564,7 +564,7 @@ const Bullet = ({
               missing={missing}
               pending={pending}
               showContexts={showContexts}
-              isCursor={isCursor}
+              isBulletExpanded={isBulletExpanded}
             />
           ) : (
             <BulletParent
@@ -574,7 +574,7 @@ const Bullet = ({
               childrenMissing={childrenMissing}
               pending={pending}
               showContexts={showContexts}
-              isCursor={isCursor}
+              isBulletExpanded={isBulletExpanded}
             />
           )}
         </g>
