@@ -1,4 +1,4 @@
-import { FC, PropsWithChildren } from 'react'
+import { FC, PropsWithChildren, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
@@ -47,9 +47,10 @@ const Setting: FC<
 /** A font size control. */
 const FontSize = () => {
   const dispatch = useDispatch()
-  const fontSize = useSelector(state => state.fontSize)
+  const fontSizeSelector = useSelector(state => state.fontSize)
+  const [fontSize, setFontSize] = useState<number>(fontSizeSelector)
   const label =
-    fontSize <= MIN_FONT_SIZE
+    fontSizeSelector <= MIN_FONT_SIZE
       ? 'minimum reached'
       : fontSize >= MAX_FONT_SIZE
         ? 'maximum reached'
@@ -65,18 +66,21 @@ const FontSize = () => {
         min={MIN_FONT_SIZE}
         max={MAX_FONT_SIZE}
         value={fontSize}
-        onChange={e => {
+        onBlur={e => {
+          if (fontSize < MIN_FONT_SIZE || fontSize > MAX_FONT_SIZE) return
           dispatch(fontSizeActionCreator(+e.target.value))
         }}
+        onChange={e => setFontSize(+e.target.value)}
         style={{
-          fontSize,
+          fontSize: fontSizeSelector,
           padding: '0.5em',
         }}
       />
-      {fontSize !== DEFAULT_FONT_SIZE && (
+      {fontSizeSelector !== DEFAULT_FONT_SIZE && (
         <a
           onClick={() => {
             dispatch(fontSizeActionCreator(DEFAULT_FONT_SIZE))
+            setFontSize(DEFAULT_FONT_SIZE)
           }}
           style={{ marginLeft: '0.5em' }}
         >
