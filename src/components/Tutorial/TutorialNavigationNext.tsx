@@ -66,4 +66,6 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
   },
 )
 
+TutorialNavigationNext.displayName = 'TutorialNavigationNext'
+
 export default TutorialNavigationNext
