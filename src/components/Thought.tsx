@@ -343,16 +343,6 @@ const ThoughtContainer = ({
   //   ...dragHoldResult.props,
   // })
 
-  // thought does not exist
-  if (value == null) return null
-
-  // prevent fading out cursor parent
-  // there is a special case here for the cursor grandparent when the cursor is a leaf
-  // See: Subthoughts render
-
-  const showContextBreadcrumbs =
-    showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
-
   const isMulticursor = useSelector(state => isMulticursorPath(state, path))
 
   /** Handles multicursor activation. */
@@ -365,6 +355,16 @@ const ThoughtContainer = ({
     },
     [dispatch, path],
   )
+
+  // thought does not exist
+  if (value == null) return null
+
+  // prevent fading out cursor parent
+  // there is a special case here for the cursor grandparent when the cursor is a leaf
+  // See: Subthoughts render
+
+  const showContextBreadcrumbs =
+    showContexts && (!globals.ellipsizeContextThoughts || equalPath(path, expandedContextThought as Path | null))
 
   return (
     <div

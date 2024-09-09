@@ -307,7 +307,7 @@ const Editable = ({
     if (hasMulticursor && contentRef.current && contentRef.current === document.activeElement) {
       contentRef.current.blur()
     }
-  }, [hasMulticursor])
+  }, [hasMulticursor, contentRef])
 
   /** Performs meta validation and calls thoughtChangeHandler immediately or using throttled reference. */
   const onChangeHandler = useCallback(
