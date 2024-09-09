@@ -15,6 +15,7 @@ import debuggingMiddleware from '../redux-middleware/debuggingMiddleware'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
 import multi from '../redux-middleware/multi'
+import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
 import scrollCursorIntoView from '../redux-middleware/scrollCursorIntoView'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
@@ -42,6 +43,7 @@ const middlewareEnhancer = applyMiddleware(
   updateEditingValue,
   updateUrlHistory,
   freeThoughts,
+  multicursorAlertMiddleware,
 )
 
 const store = createStore(

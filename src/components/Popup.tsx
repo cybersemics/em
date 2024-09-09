@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import { alertActionCreator as alert } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
 import { isTouch } from '../browser'
 import useCombinedRefs from '../hooks/useCombinedRefs'
@@ -18,13 +19,15 @@ const Popup = React.forwardRef<
   PropsWithChildren<{
     // used to cancel imports
     importFileId?: string
+    // used to cancel multicursor alerts
+    multicursor?: boolean
     /** If defined, will show a small x in the upper right corner. */
     onClose?: () => void
     textAlign?: 'center' | 'left' | 'right'
     value?: string | null
     cssRaw?: SystemStyleObject
   }>
->(({ children, importFileId, onClose, textAlign = 'center', cssRaw }, ref) => {
+>(({ children, multicursor, importFileId, onClose, textAlign = 'center', cssRaw }, ref) => {
   const dispatch = useDispatch()
   const colors = useSelector(themeColors)
   const fontSize = useSelector(state => state.fontSize)
@@ -92,6 +95,16 @@ const Popup = React.forwardRef<
           onClick={() => {
             deleteResumableFile(importFileId!)
             syncStatusStore.update({ importProgress: 1 })
+            onClose?.()
+          }}
+        >
+          cancel
+        </a>
+      )}
+      {multicursor && (
+        <a
+          onClick={() => {
+            dispatch(clearMulticursors())
             onClose?.()
           }}
         >

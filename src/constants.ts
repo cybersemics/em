@@ -445,6 +445,8 @@ export enum AlertType {
   GestureHint = 'GestureHint',
   // shown when importing one or more files via drag-and-drop or a large paste
   ImportFile = 'ImportFile',
+  // shown when a multicursor selection is active
+  MulticursorActive = 'MulticursorActive',
   // shown when the user redoes an action
   Redo = 'Redo',
   // shown the first time the user types space to indent
