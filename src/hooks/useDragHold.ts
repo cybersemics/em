@@ -3,9 +3,11 @@ import { useDispatch } from 'react-redux'
 import DragThoughtZone from '../@types/DragThoughtZone'
 import SimplePath from '../@types/SimplePath'
 import { alertActionCreator as alert } from '../actions/alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { dragHoldActionCreator as dragHold } from '../actions/dragHold'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../constants'
+import hasMulticursor from '../selectors/hasMulticursor'
 import useLongPress from './useLongPress'
 
 /** Set state.dragHold on longPress. */
@@ -66,7 +68,6 @@ const useDragHold = ({
   // react-dnd stops propagation so onLongPressEnd sometimes does't get called
   // so disable dragHold and isPressed as soon as we are dragging
   // or if no longer dragging and dragHold never got cleared.
-  //
   useEffect(() => {
     // track that the drag actually moved
     if (isDragging) {
@@ -74,9 +75,15 @@ const useDragHold = ({
     }
 
     dispatch((dispatch, getState) => {
-      if (isDragging || getState().dragHold) {
+      const state = getState()
+
+      if (isDragging || state.dragHold) {
         setIsPressed(false)
         dispatch([dragHold({ value: false }), alert(null)])
+
+        if (hasMulticursor(state)) {
+          dispatch(clearMulticursors())
+        }
       }
     })
   }, [dispatch, isDragging])
