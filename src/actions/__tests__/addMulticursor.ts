@@ -74,7 +74,6 @@ describe('addMulticursor', () => {
       newSubthought('a1'),
       setCursor(['a']),
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
-      setCursor(['a', 'a1']),
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['a', 'a1'])! }),
     ]
 

@@ -39,6 +39,7 @@ export const isNavigation = (actionType: string) => NAVIGATION_ACTIONS[actionTyp
 // a list of all undoable actions
 // assumes that reducer names match their action types
 const UNDOABLE_ACTIONS: ActionFlags = {
+  addAllMulticursor: false,
   addLatestShortcuts: false,
   addMulticursor: false,
   alert: false,

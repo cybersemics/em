@@ -23,7 +23,7 @@ const subCategorizeAllShortcut: Shortcut = {
   id: 'subcategorizeAll',
   label: 'Subcategorize All',
   description: 'Move all thoughts at the current level into a new, empty thought.',
-  gesture: 'ldr',
+  gesture: 'ldrlu',
   keyboard: { key: 'a', meta: true, alt: true },
   svg: Icon,
   canExecute: getState => isDocumentEditable() && !!getState().cursor,

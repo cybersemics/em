@@ -26,6 +26,7 @@ const groups: {
       'commandPalette',
       'home',
       'search',
+      'selectAll',
     ],
   },
   {
