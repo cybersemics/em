@@ -13,16 +13,13 @@ const TutorialHint: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <>
-      {!hint ? (
-        <a
-          className='button button-variable-width button-status button-less-padding text-small button-dim'
-          {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
-        >
-          hint
-        </a>
-      ) : (
-        children
-      )}
+      <a
+        className={`button button-variable-width button-status button-less-padding text-small ${hint ? 'button-dim' : ''}`}
+        {...fastClick(() => dispatch(setTutorialStep({ value: tutorialStep + 0.1 })))}
+      >
+        hint
+      </a>
+      {hint && children}
     </>
   )
 }

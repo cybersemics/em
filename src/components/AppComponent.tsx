@@ -276,9 +276,7 @@ const AppComponent: FC = () => {
             {showTutorial ? <Tutorial /> : null}
             {DISABLE_SPLIT_PANE ? (
               // overflow: hidden is needed to prevent the content from briefly scrolling horizontally during a gesture.
-              <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>
-                <Content />
-              </div>
+              <div style={{ position: 'relative', fontSize, overflow: 'hidden' }}>{<Content />}</div>
             ) : (
               <SplitPane
                 className={isSplitting ? 'animating' : undefined}

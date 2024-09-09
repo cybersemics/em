@@ -4,7 +4,9 @@ import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutoria
 import {
   HOME_TOKEN,
   TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
+  TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
   TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
   TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
   TUTORIAL2_STEP_START,
@@ -30,7 +32,6 @@ const TutorialNavigationNext: FC<{ tutorialStep: number }> = ({ tutorialStep }) 
   const tutorialChoice = useSelector(state => +(getSetting(state, 'Tutorial Choice') || 0))
   const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : null))
   const expanded = useSelector(state => state.expanded)
-
   useSelector(state => state.thoughts.thoughtIndex)
 
   return [
@@ -40,6 +41,10 @@ const TutorialNavigationNext: FC<{ tutorialStep: number }> = ({ tutorialStep }) 
     TUTORIAL2_STEP_CONTEXT_VIEW_OPEN,
     TUTORIAL2_STEP_CONTEXT_VIEW_EXAMPLES,
     TUTORIAL2_STEP_SUCCESS,
+    TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT,
+    TUTORIAL2_STEP_CONTEXT1_SUBTHOUGHT_HINT,
+    TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT,
+    TUTORIAL2_STEP_CONTEXT2_SUBTHOUGHT_HINT,
   ].includes(tutorialStep) ||
     (tutorialStep === TUTORIAL_STEP_AUTOEXPAND && Object.keys(expanded).length === 0) ||
     ((tutorialStep === TUTORIAL_STEP_FIRSTTHOUGHT_ENTER ||

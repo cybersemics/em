@@ -42,7 +42,7 @@ const WithCSSTransition = ({ component, ...props }: { component: FC<any>; [props
 
   const Component = component
   return (
-    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='slide'>
+    <CSSTransition nodeRef={nodeRef} in={true} key={Math.floor(props.transitionKey)} timeout={400} classNames='fade-t'>
       <div ref={nodeRef}>
         <Component {...props} />
       </div>
@@ -114,7 +114,11 @@ const Tutorial: FC = () => {
             visibility:
               tutorialStep !== TUTORIAL_STEP_SUCCESS && tutorialStep !== TUTORIAL2_STEP_SUCCESS ? 'visible' : 'hidden',
           }}
-          {...fastClick(() => dispatch(tutorial({ value: false })))}
+          {...fastClick(() => {
+            if (window.confirm('Do you really want to close?')) {
+              dispatch(tutorial({ value: false }))
+            }
+          })}
         >
           ✕ close tutorial
         </a>

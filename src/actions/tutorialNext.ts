@@ -24,7 +24,7 @@ const tutorialNext = (state: State, { hint }: { hint?: boolean }) => {
 /** Action-creator for tutorialNext. */
 export const tutorialNextActionCreator =
   (payload: Parameters<typeof tutorialNext>[1]): Thunk =>
-  dispatch =>
+  dispatch => {
     dispatch({ type: 'tutorialNext', ...payload })
-
+  }
 export default _.curryRight(tutorialNext)
