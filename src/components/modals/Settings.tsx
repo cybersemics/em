@@ -50,7 +50,7 @@ const FontSize = () => {
   const fontSizeSelector = useSelector(state => state.fontSize)
   const [fontSize, setFontSize] = useState<number>(fontSizeSelector)
   const label =
-  fontSize <= MIN_FONT_SIZE
+    fontSize <= MIN_FONT_SIZE
       ? 'minimum reached'
       : fontSize >= MAX_FONT_SIZE
         ? 'maximum reached'
