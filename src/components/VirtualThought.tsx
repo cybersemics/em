@@ -57,6 +57,7 @@ const VirtualThought = ({
   style,
   crossContextualKey,
   zoomCursor,
+  deepestDepth,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
@@ -76,6 +77,7 @@ const VirtualThought = ({
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
   zoomCursor?: boolean
+  deepestDepth?: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -212,7 +214,9 @@ const VirtualThought = ({
                 - d
               - e
          */
-        !isVisible && dropUncle && <DropUncle depth={depth} path={path} simplePath={simplePath} />
+        !isVisible && dropUncle && (
+          <DropUncle depth={depth} path={path} simplePath={simplePath} deepestDepth={deepestDepth} />
+        )
       }
 
       {!shimHiddenThought && (

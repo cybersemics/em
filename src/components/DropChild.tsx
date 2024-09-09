@@ -11,6 +11,7 @@ import useDropHoverColor from '../hooks/useDropHoverColor'
 import useHoveringPath from '../hooks/useHoveringPath'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import { calculateCliffThoughtsHeight } from '../util/cliffThoughtHeight'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
@@ -53,6 +54,10 @@ const DropChild = ({ depth, last, path, simplePath }: DropChildProps) => {
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path, simplePath })
   useHoveringPath(path, !!isHovering, DropThoughtZone.SubthoughtsDrop)
+  const dragInProgress = useSelector(state => state.dragInProgress)
+
+  // Calculate the height for the child thought over cliff
+  const dynamicHeight = calculateCliffThoughtsHeight({ depth })
 
   return (
     <li className='drop-empty' style={{ position: 'relative' }}>
@@ -70,6 +75,7 @@ const DropChild = ({ depth, last, path, simplePath }: DropChildProps) => {
           opacity: 0.9,
           // add some additional padding to empty subthought drop targets to avoid gaps in between sibling's subthought drop targets. This provides a smoother experience when dragging across many siblings. The user can still shift left to be clear of the empty subthought drop targets and drop on a child drop target.
           paddingBottom: '1em',
+          height: dragInProgress ? `${0.5 + dynamicHeight}em` : undefined,
         }}
       >
         {testFlags.simulateDrop && (

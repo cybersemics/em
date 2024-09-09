@@ -604,10 +604,11 @@ const LayoutTree = () => {
   )
 
   const navAndFooterHeight = useNavAndFooterHeight()
-
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
+  // Calculate deepest depth for the drop targets
+  let deepestDepth = 0
 
   return (
     <div
@@ -707,6 +708,7 @@ const LayoutTree = () => {
                   // Do this as padding instead of y, otherwise there will be a gap between drop targets.
                   style={cliff < 0 ? cliffPaddingStyle : undefined}
                   crossContextualKey={key}
+                  deepestDepth={deepestDepth}
                 />
 
                 {/* DropEnd (cliff) */}
@@ -721,6 +723,7 @@ const LayoutTree = () => {
                       const pathEnd = -(cliff + i) < path.length ? (path.slice(0, cliff + i) as Path) : HOME_PATH
                       const cliffDepth = unroot(pathEnd).length
 
+                      deepestDepth = Math.max(deepestDepth, depth)
                       // After table col2, shift the DropEnd left by the width of col1.
                       // This correctly positions the drop target for dropping after the table view.
                       // Otherwise it would be too far to the right.
@@ -741,6 +744,7 @@ const LayoutTree = () => {
                           <DropEnd
                             depth={pathEnd.length}
                             path={pathEnd}
+                            deepestDepth={deepestDepth}
                             // Extend the click area of the drop target when there is nothing below.
                             // The last visible drop-end will always be a dimmed thought at distance 1 (an uncle).
                             // Dimmed thoughts at distance 0 should not be extended, as they are dimmed siblings and sibling descendants that have thoughts below
