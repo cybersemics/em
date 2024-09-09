@@ -256,7 +256,7 @@ const Editable = ({
     oldValueRef.current = newValue
 
     const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as TutorialChoice
-    const tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
+    let tutorialStep = +(getSetting(state, 'Tutorial Step') || 1)
     if (
       newValue &&
       ((Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT1_PARENT &&
@@ -267,6 +267,11 @@ const Editable = ({
           Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT2) &&
           newValue.toLowerCase() === TUTORIAL_CONTEXT[tutorialChoice].toLowerCase()))
     ) {
+      if (tutorialStep === TUTORIAL2_STEP_CONTEXT1) {
+        tutorialStep++
+        dispatch(tutorialNext({}))
+      }
+
       dispatch(tutorialNext({}))
     }
 
