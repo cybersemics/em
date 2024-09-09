@@ -8,6 +8,7 @@ import ThoughtId from '../@types/ThoughtId'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 // import testFlags from '../e2e/testFlags'
 import attributeEquals from '../selectors/attributeEquals'
@@ -476,6 +477,12 @@ const Bullet = ({
       // useLongPress stop is activated in onMouseUp but is delayed to ensure that dragHold is still true here
       // stopping propagation from useLongPress was not working either due to bubbling order or mismatched event type
       if (dragHold) return
+
+      // short circuit if toggling multiselect
+      if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+        dispatch(toggleMulticursor({ path: simplePath }))
+        return
+      }
 
       dispatch((dispatch, getState) => {
         const state = getState()
