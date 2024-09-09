@@ -94,7 +94,7 @@ const ThoughtAnnotationContainer = React.memo(
     simplePath,
     minContexts = 2,
     multiline,
-    singleline,
+    ellipsizedUrl,
     placeholder,
     invalidState,
     style,
@@ -106,7 +106,7 @@ const ThoughtAnnotationContainer = React.memo(
     invalidState?: boolean
     minContexts?: number
     multiline?: boolean
-    singleline?: boolean
+    ellipsizedUrl?: boolean
     path: Path
     placeholder?: string
     showContextBreadcrumbs?: boolean
@@ -193,7 +193,7 @@ const ThoughtAnnotationContainer = React.memo(
           simplePath,
           isEditing,
           multiline,
-          singleline,
+          ellipsizedUrl: ellipsizedUrl,
           numContexts,
           showSuperscript,
           style,
@@ -214,7 +214,7 @@ const ThoughtAnnotation = React.memo(
     email,
     isEditing,
     multiline,
-    singleline,
+    ellipsizedUrl,
     numContexts,
     showSuperscript,
     simplePath,
@@ -228,7 +228,7 @@ const ThoughtAnnotation = React.memo(
     email?: string
     isEditing?: boolean
     multiline?: boolean
-    singleline?: boolean
+    ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
     simplePath: SimplePath
@@ -272,7 +272,7 @@ const ThoughtAnnotation = React.memo(
           verticalAlign: 'top',
           whiteSpace: 'pre-wrap',
           /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
-          maxWidth: singleline ? 'calc(100% - 2em)' : '100%',
+          maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
           '@media (max-width: 500px)': {
             marginTop: { _android: '-2.1px' },
             marginLeft: { _android: '0.5em' },
@@ -299,7 +299,7 @@ const ThoughtAnnotation = React.memo(
                 maxWidth: '100%',
                 padding: '0 0.333em',
                 boxSizing: 'border-box',
-                whiteSpace: singleline ? 'nowrap' : undefined,
+                whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
                 /*
                   Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
                   To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text
@@ -323,7 +323,7 @@ const ThoughtAnnotation = React.memo(
               clipPath: 'inset(0.001px 0 0.1em 0)',
               minHeight: 'minThoughtHeight',
               wordBreak: 'break-word',
-              ...(singleline && {
+              ...(ellipsizedUrl && {
                 display: 'inline-block',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',

@@ -36,7 +36,7 @@ export interface ThoughtProps {
   // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
   isContextPending?: boolean
   isEditing?: boolean
-  singleline?: boolean
+  ellipsizedUrl?: boolean
   isPublishChild?: boolean
   // true if the thought is not hidden by autofocus, i.e. actualDistance < 2
   // currently this does not control visibility, but merely tracks it
@@ -92,7 +92,7 @@ const StaticThought = ({
   env,
   isContextPending,
   isEditing,
-  singleline,
+  ellipsizedUrl,
   isVisible,
   onEdit,
   path,
@@ -154,7 +154,7 @@ const StaticThought = ({
         env={env}
         minContexts={allowSingleContext ? 0 : 2}
         multiline={multiline}
-        singleline={singleline}
+        ellipsizedUrl={ellipsizedUrl}
         placeholder={placeholder}
         path={path}
         showContextBreadcrumbs={showContextBreadcrumbs}
@@ -165,7 +165,7 @@ const StaticThought = ({
       <div
         aria-label='thought'
         className={thought({
-          singleline,
+          ellipsizedUrl,
           inverse: (dark && isBlack(styleAnnotation?.color)) || (!dark && isWhite(styleAnnotation?.color)),
         })}
         style={{
@@ -196,7 +196,7 @@ const StaticThought = ({
             className={css({
               ...(isTableCol1 && { maxWidth: '100%' }),
               ...(isAttribute(value) && { fontFamily: 'monospace' }),
-              ...(singleline && {
+              ...(ellipsizedUrl && {
                 display: 'inline-block',
                 textOverflow: 'ellipsis',
                 overflow: 'hidden',
