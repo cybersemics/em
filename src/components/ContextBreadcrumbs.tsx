@@ -32,6 +32,8 @@ type OverflowChild = {
 
 type OverflowPath = OverflowChild[]
 
+const superscriptCss = { position: 'relative', left: '-2px', top: '-3px' }
+
 /** Ellipsizes thoughts in a path by thoughtsLimit and charLimit. Complexity: O(n), but does not work if thoughtsLimit or charLimit are undefined. */
 const useEllipsizedThoughts = (
   path: Path,
@@ -111,7 +113,6 @@ const BreadCrumb = React.memo(
       verticalAlign: 1,
       userSelect: 'none',
     }
-    const superscriptCss = { position: 'relative', left: '-2px', top: '-3px' }
     return !isOverflow ? (
       <span ref={ref} style={{ fontSize: staticText ? '0.8em' : undefined }}>
         {/* possible delimiter symbols: ⇢ */}
